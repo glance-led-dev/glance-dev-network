@@ -1,0 +1,24 @@
+gdn: 1
+id: ported-biorhythm
+version: 0.1.0
+name: Biorhythm
+author: your-name
+description: The tidbyt/community "Biorhythm" app, ported to GDN — translated then hand-finished.
+category: Science
+entry: app.star
+
+# tronbyt/Pixlet native size.
+width: 64
+height: 32
+refresh: 300
+
+pages: [main]
+
+inputs:
+  # schema.DateTime "Birthdate" -> string (YYYY-MM-DD).
+  - key: bday
+    type: string
+    app_input_type: free-text
+    label: Birthdate
+    default: "1990-06-15"
+    help: Your birthdate, YYYY-MM-DD.

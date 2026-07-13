@@ -1,0 +1,28 @@
+gdn: 1
+id: ported-weather
+version: 0.1.0
+name: Ported Weather
+author: your-name
+description: A Pixlet/tronbyt app ported to GDN — scaffolded by `gdn translate`, then hand-finished.
+category: Weather
+entry: app.star
+
+# tronbyt/Pixlet apps are natively 64x32. Our firmware handles that size fine.
+width: 64
+height: 32
+refresh: 300
+
+pages: [main]
+
+inputs:
+  - key: city
+    type: string
+    app_input_type: free-text
+    label: City
+    default: NYC
+  - key: units
+    type: choice
+    app_input_type: dropdown
+    label: Units
+    default: metric
+    choices: [metric, imperial]

@@ -1,0 +1,31 @@
+gdn: 1
+id: local-fires
+version: 0.1.0
+name: Local Fires
+author: your-name
+description: Wildfire risk and the nearest active fire for a US zip code.
+category: News
+entry: app.star
+
+width: 128
+height: 32
+refresh: 300
+
+pages: [status, nearest]
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "90210"
+    help: A US zip code.
+  - key: city
+    type: string
+    app_input_type: free-text
+    label: City label
+    default: LOS ANGELES
+
+# Icons you drop in this folder (or assets/) and draw with c.image().
+assets:
+  - flame.png

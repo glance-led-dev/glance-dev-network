@@ -1,0 +1,31 @@
+gdn: 1
+id: local-aqi
+version: 0.1.0
+name: Local AQI
+author: your-name
+description: US Air Quality Index and health guidance for a zip code.
+category: Weather
+entry: app.star
+
+width: 128
+height: 32
+refresh: 300
+
+pages: [now, health]
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "90210"
+    help: A US zip code.
+  - key: city
+    type: string
+    app_input_type: free-text
+    label: City label
+    default: LOS ANGELES
+
+assets:
+  - leaf.png
+  - mask.png

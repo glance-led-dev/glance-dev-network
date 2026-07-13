@@ -1,0 +1,18 @@
+gdn: 1
+id: stocks
+version: 0.1.0
+name: Stock Ticker
+author: your-name
+description: A stock price and daily change for a ticker symbol (mock data).
+category: Finance
+entry: app.star
+width: 128
+height: 32
+refresh: 300
+pages: [price]
+inputs:
+  - key: symbol
+    type: string
+    app_input_type: free-text
+    label: Ticker symbol
+    default: AAPL

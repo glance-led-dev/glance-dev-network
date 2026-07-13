@@ -1,0 +1,38 @@
+gdn: 1
+id: message
+version: 0.1.0
+name: Message Sign
+author: AJ - GLANCE
+description: A custom two-line message board in the colors you choose.
+category: Lifestyle
+entry: app.star
+width: 192
+height: 32
+refresh: 3600
+pages: [sign]
+inputs:
+  - key: line1
+    type: string
+    app_input_type: free-text
+    label: Line 1
+    default: GO
+  - key: line2
+    type: string
+    app_input_type: free-text
+    label: Line 2 (optional)
+    default: GATORS
+  - key: color1
+    type: choice
+    app_input_type: dropdown
+    label: Line 1 color
+    default: orange
+    choices: [white, red, green, blue, yellow, cyan, orange, magenta]
+  - key: color2
+    type: choice
+    app_input_type: dropdown
+    label: Line 2 color
+    default: blue
+    choices: [white, red, green, blue, yellow, cyan, orange, magenta]
+
+assets:
+  - gator.png

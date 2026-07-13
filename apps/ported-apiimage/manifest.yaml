@@ -1,0 +1,50 @@
+gdn: 1
+id: ported-apiimage
+version: 0.1.0
+name: Ported Apiimage
+description: Ported from a Pixlet/tronbyt app by `gdn translate`.
+category: Fun
+entry: app.star
+
+# Pixlet's native size is 64x32. GDN supports up to 384 wide — set yours.
+width: 64
+height: 32
+refresh: 60
+
+pages: [main]
+
+inputs:
+  - key: api_url
+    type: string
+    app_input_type: free-text
+    label: API URL
+    default: ""
+  - key: response_path
+    type: string
+    app_input_type: free-text
+    label: JSON response path
+    default: ""
+  - key: request_headers
+    type: string
+    app_input_type: free-text
+    label: Request headers
+    default: ""
+  - key: ttl_seconds
+    type: choice
+    app_input_type: dropdown
+    label: Refresh rate
+  - key: base_url
+    type: string
+    app_input_type: free-text
+    label: Base URL
+    default: ""
+  - key: fit_screen
+    type: string
+    app_input_type: free-text
+    label: Fit screen
+    default: "false"
+  - key: debug_output
+    type: string
+    app_input_type: free-text
+    label: Toggle debug messages
+    default: "false"

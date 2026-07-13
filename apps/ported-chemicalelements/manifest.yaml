@@ -1,0 +1,15 @@
+gdn: 1
+id: ported-chemicalelements
+version: 0.1.0
+name: Chemical Elements
+author: your-name
+description: The tidbyt/community "Chemical Elements" app, ported to GDN — translated then hand-finished.
+category: Science
+entry: app.star
+
+# tronbyt/Pixlet native size.
+width: 64
+height: 32
+refresh: 300
+
+pages: [main]

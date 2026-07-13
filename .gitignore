@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# GDN
+.gdn/                 # local http/cache dir
+secrets.dev.yaml      # per-app dev API keys, never commit
+**/build/             # gdn build output inside app folders
+*.gdnapp              # packaged submission bundles
+
+# OS / editor
+*.stackdump
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

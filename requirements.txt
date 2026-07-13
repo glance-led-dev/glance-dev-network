@@ -1,0 +1,4 @@
+# Installs the GDN package (from pyproject.toml, which pulls Pillow, PyYAML,
+# Flask, jsonschema, starlark-pyo3, requests) plus the production web server.
+.
+gunicorn>=21.2

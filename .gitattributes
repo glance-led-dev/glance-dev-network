@@ -1,0 +1,5 @@
+# Keep launcher line endings correct across platforms.
+# Shell scripts MUST be LF or they won't run on macOS/Linux; .bat stays CRLF.
+*.sh        text eol=lf
+*.command   text eol=lf
+*.bat       text eol=crlf

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glance-dev-network"
+version = "0.1.0"
+description = "Glance Developer Network SDK — build LED-panel visuals (import: gdn)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Proprietary" }
+authors = [{ name = "Glance" }]
+dependencies = [
+    "Pillow>=9",
+    "PyYAML>=6",
+    "Flask>=2.2",
+    "jsonschema>=4.18",
+    "starlark-pyo3>=2026.1",
+    "requests>=2.28",
+]
+
+[project.scripts]
+gdn = "gdn.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["gdn*"]
+
+[tool.setuptools.package-data]
+gdn = ["data/*.json", "templates/example/*", "templates/example-star/*"]

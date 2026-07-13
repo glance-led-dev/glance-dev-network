@@ -1,0 +1,36 @@
+gdn: 1
+id: ported-bigclock
+version: 0.1.0
+name: Big Clock
+author: your-name
+description: The tidbyt/community "Big Clock" app, ported to GDN — translated then hand-finished.
+category: Time
+entry: app.star
+
+# tronbyt/Pixlet native size.
+width: 64
+height: 32
+refresh: 60
+
+pages: [main]
+
+inputs:
+  # schema.Location -> a plain UTC-offset number (GDN's ctx.now is UTC).
+  - key: tz_offset
+    type: number
+    app_input_type: free-text
+    label: UTC offset (hours)
+    default: -5
+    help: e.g. -5 for US Eastern, 0 for UTC, 1 for CET.
+  - key: hour_format
+    type: choice
+    app_input_type: dropdown
+    label: Hour format
+    default: "24"
+    choices: ["24", "12"]
+  - key: leading_zero
+    type: choice
+    app_input_type: dropdown
+    label: Leading zero
+    default: "no"
+    choices: ["no", "yes"]

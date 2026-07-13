@@ -1,0 +1,21 @@
+name: Validate apps
+
+# Runs on every pull request and every push to main. If a submitted app doesn't
+# render or fails the safety validator, the check fails and the PR can't merge.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the GDN SDK
+        run: pip install .
+      - name: Validate every app
+        run: gdn validate --all

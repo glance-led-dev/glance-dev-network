@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdn.glance-led.com/scene.schema.json",
+  "title": "GDN Scene (display list)",
+  "type": "object",
+  "required": ["gdn_scene", "app", "pages"],
+  "additionalProperties": false,
+  "properties": {
+    "gdn_scene": { "const": 1 },
+    "app": {
+      "type": "object",
+      "required": ["id", "width", "height"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]{3,40}$" },
+        "width": { "type": "integer", "minimum": 1, "maximum": 384 },
+        "height": { "const": 32 },
+        "refresh": { "type": "integer", "minimum": 60 }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/page" }
+    }
+  },
+  "$defs": {
+    "coord": { "type": "integer", "minimum": -4096, "maximum": 4096 },
+    "color": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        { "type": "string", "maxLength": 16 }
+      ]
+    },
+    "page": {
+      "type": "object",
+      "required": ["name", "ops"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z0-9_]{1,32}$" },
+        "title": { "type": "string", "maxLength": 64 },
+        "background": { "$ref": "#/$defs/color" },
+        "ops": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": { "$ref": "#/$defs/op" }
+        }
+      }
+    },
+    "op": {
+      "oneOf": [
+        { "$ref": "#/$defs/op_fill" },
+        { "$ref": "#/$defs/op_pixel" },
+        { "$ref": "#/$defs/op_rect" },
+        { "$ref": "#/$defs/op_line" },
+        { "$ref": "#/$defs/op_text" },
+        { "$ref": "#/$defs/op_text_stroke" },
+        { "$ref": "#/$defs/op_bitmap" },
+        { "$ref": "#/$defs/op_image" }
+      ]
+    },
+    "op_fill": {
+      "type": "object",
+      "required": ["op", "color"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "fill" },
+        "color": { "$ref": "#/$defs/color" }
+      }
+    },
+    "op_pixel": {
+      "type": "object",
+      "required": ["op", "x", "y", "color"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "pixel" },
+        "x": { "$ref": "#/$defs/coord" },
+        "y": { "$ref": "#/$defs/coord" },
+        "color": { "$ref": "#/$defs/color" }
+      }
+    },
+    "op_rect": {
+      "type": "object",
+      "required": ["op", "x0", "y0", "x1", "y1"],
+      "additionalProperties": false,
+      "anyOf": [{ "required": ["fill"] }, { "required": ["outline"] }],
+      "properties": {
+        "op": { "const": "rect" },
+        "x0": { "$ref": "#/$defs/coord" },
+        "y0": { "$ref": "#/$defs/coord" },
+        "x1": { "$ref": "#/$defs/coord" },
+        "y1": { "$ref": "#/$defs/coord" },
+        "fill": { "$ref": "#/$defs/color" },
+        "outline": { "$ref": "#/$defs/color" }
+      }
+    },
+    "op_line": {
+      "type": "object",
+      "required": ["op", "x0", "y0", "x1", "y1", "color"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "line" },
+        "x0": { "$ref": "#/$defs/coord" },
+        "y0": { "$ref": "#/$defs/coord" },
+        "x1": { "$ref": "#/$defs/coord" },
+        "y1": { "$ref": "#/$defs/coord" },
+        "color": { "$ref": "#/$defs/color" }
+      }
+    },
+    "op_text": {
+      "type": "object",
+      "required": ["op", "text", "x", "y"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "text" },
+        "text": { "type": "string", "maxLength": 256 },
+        "x": { "$ref": "#/$defs/coord" },
+        "y": { "$ref": "#/$defs/coord" },
+        "font": { "type": "string", "maxLength": 24 },
+        "color": { "$ref": "#/$defs/color" },
+        "align": { "enum": ["left", "center", "right"] }
+      }
+    },
+    "op_text_stroke": {
+      "type": "object",
+      "required": ["op", "text", "x", "y"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "text_stroke" },
+        "text": { "type": "string", "maxLength": 256 },
+        "x": { "$ref": "#/$defs/coord" },
+        "y": { "$ref": "#/$defs/coord" },
+        "font": { "type": "string", "maxLength": 24 },
+        "color": { "$ref": "#/$defs/color" },
+        "stroke": { "$ref": "#/$defs/color" },
+        "thickness": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "align": { "enum": ["left", "center", "right"] }
+      }
+    },
+    "op_bitmap": {
+      "type": "object",
+      "required": ["op", "rows", "x", "y", "color"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "bitmap" },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 384,
+            "items": { "type": "integer", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "x": { "$ref": "#/$defs/coord" },
+        "y": { "$ref": "#/$defs/coord" },
+        "color": { "$ref": "#/$defs/color" }
+      }
+    },
+    "op_image": {
+      "type": "object",
+      "required": ["op", "asset", "x", "y"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "image" },
+        "asset": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9_./-]+$" },
+        "x": { "$ref": "#/$defs/coord" },
+        "y": { "$ref": "#/$defs/coord" },
+        "w": { "type": "integer", "minimum": 1, "maximum": 384 },
+        "h": { "type": "integer", "minimum": 1, "maximum": 64 }
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+# GDN app manifest — metadata + declared inputs. This file is the source of
+# truth for how your app appears in the Studio and how it's reviewed.
+name: Weather Ticker
+author: your-name
+description: A two-page weather visual — current conditions + the week ahead.
+
+# Panel geometry. Height is 32 (fixed panel height); width up to 384.
+width: 192
+height: 32
+
+# How often the panel re-renders this app, in seconds.
+refresh: 300
+
+# Inputs the user fills in (like the zip code).
+#   type            — data type: string | number | choice
+#   app_input_type  — UI widget: free-text | dropdown | selection | checkbox | date | date-past | color
+#                     (optional; inferred from `type` when omitted)
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "90210"
+    help: US zip; used to look up local weather.
+  - key: city
+    type: string
+    app_input_type: free-text
+    label: City label
+    default: BEVERLY HILLS
+
+# Pages are static frames the panel rotates through, in order.
+pages:
+  - current
+  - week
