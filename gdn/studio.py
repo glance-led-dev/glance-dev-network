@@ -14,7 +14,7 @@ Routes (all bound to localhost):
     POST /starter     write a starter file into an app that's missing one
     GET  /frames.json render every page of the app (the live preview)
     GET  /validate    render-check + lint the app, with plain-language results
-    GET  /submit      validate, then push the app to a fork and open a pull request
+    POST /submit      validate, create a fork if needed, push the app, open a pull request
 """
 from __future__ import annotations
 
@@ -636,6 +636,22 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 .modal .setrow select { flex: 0 0 128px; width: auto; }
 .modal .setrow input { flex: 1 1 auto; width: auto; min-width: 0; }
 .setrow .setremove { flex: 0 0 auto; padding: 4px 10px; }
+
+/* ---- Publish (Validate & Submit) modal ------------------------------ */
+.modal ol.pubsteps { margin: 0 0 12px; padding-left: 20px; font-size: 12.5px;
+         color: var(--muted); line-height: 1.5; }
+.modal ol.pubsteps li { margin: 5px 0; }
+.modal ol.pubsteps b { color: var(--text); font-weight: 700; }
+.pubnote { font-size: 12px; color: var(--dim); margin: 0 0 12px; }
+.pubagree { display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px;
+         color: var(--text); cursor: pointer; padding: 10px 12px; border-radius: 9px;
+         border: 1px solid var(--border2); background: var(--surface2); }
+.pubagree input { width: 16px; height: 16px; margin: 1px 0 0; flex: 0 0 auto;
+         accent-color: var(--green); cursor: pointer; }
+.pubprogress { font: 12px/1.5 'JetBrains Mono', ui-monospace, monospace;
+         color: var(--green-soft); margin: 12px 0 0; display: flex; align-items: center; gap: 8px; }
+.pubprogress .pubok { color: var(--green-soft); }
+.pubprogress .pubok a { color: var(--green); text-decoration: underline; }
 [hidden] { display: none !important; }
 """
 
@@ -1027,7 +1043,49 @@ async function runCheck(url, btn) {
   }
 }
 function validate() { return runCheck('validate', $('validate')); }
-function validateSubmit() { return runCheck('submit', $('mergebtn')); }
+/* ---- Publish (Validate & Submit): confirm, then fork + push + PR ----- */
+function openSubmitModal() {
+  $('pubslug').textContent = currentApp || 'your app';
+  $('submitagree').checked = false;
+  $('submitagree').disabled = false;
+  $('submitgo').disabled = true;
+  $('submitgo').textContent = 'Publish';
+  $('submitgo').onclick = doSubmit;
+  $('submitcancel').hidden = false;
+  $('submitcancel').disabled = false;
+  $('submiterr').textContent = '';
+  $('pubprogress').hidden = true; $('pubprogress').innerHTML = '';
+  $('submitmodal').hidden = false;
+}
+function closeSubmitModal() { $('submitmodal').hidden = true; }
+async function doSubmit() {
+  $('submitgo').disabled = true; $('submitcancel').disabled = true; $('submitagree').disabled = true;
+  $('submiterr').textContent = '';
+  $('pubprogress').hidden = false;
+  $('pubprogress').innerHTML = '<span class="sp"></span> Publishing&hellip; creating your fork the first time can take a few seconds.';
+  setStatus('Publishing…');
+  try {
+    const d = await (await fetch('submit?' + appQS(), { method: 'POST' })).json();
+    if (d.ok) {
+      const link = d.pr_url ? ' <a href="' + esc(d.pr_url) + '" target="_blank" rel="noopener">View it on GitHub &#8599;</a>' : '';
+      $('pubprogress').innerHTML = '<span class="pubok">Your pull request is open.' + link + '</span>';
+      setStatus(d.message, 'ok');
+      $('submitgo').textContent = 'Done'; $('submitgo').disabled = false; $('submitgo').onclick = closeSubmitModal;
+      $('submitcancel').hidden = true;
+    } else {
+      $('pubprogress').hidden = true;
+      $('submiterr').textContent = d.message || 'Publishing didn’t finish.';
+      setStatus(d.message || 'Publishing didn’t finish.', 'bad');
+      showCheckResults(d);
+      $('submitcancel').disabled = false; $('submitagree').disabled = false;
+      $('submitgo').disabled = !$('submitagree').checked;
+    }
+  } catch (e) {
+    $('pubprogress').hidden = true;
+    $('submiterr').textContent = 'Couldn’t reach Studio. Is it still running?';
+    $('submitcancel').disabled = false; $('submitagree').disabled = false; $('submitgo').disabled = false;
+  }
+}
 
 /* Download each rendered page as a crisp (nearest-neighbor upscaled) PNG. */
 function savePng() {
@@ -1987,7 +2045,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     rebuildInputs(); loadFiles();
   });
   $('validate').addEventListener('click', validate);
-  $('mergebtn').addEventListener('click', validateSubmit);
+  $('mergebtn').addEventListener('click', openSubmitModal);
   $('pngbtn').addEventListener('click', savePng);
   setInterval(pollDisk, 2000);   // auto-reload when the files change on disk
   // Drag a PNG anywhere onto Studio to import it into the app.
@@ -2064,8 +2122,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!$('inputmodal').hidden) closeInputModal();
     if (!$('tbxmodal').hidden) closeToolbox();
     if (!$('sprmodal').hidden) closeSprModal();
+    if (!$('submitmodal').hidden && !$('submitagree').disabled) closeSubmitModal();
     if (!$('tbxcoach').hidden) dismissTbxCoach(false);
   });
+  // Publish modal
+  $('submitagree').addEventListener('change', () => { $('submitgo').disabled = !$('submitagree').checked; });
+  $('submitcancel').addEventListener('click', closeSubmitModal);
+  $('submitmodal').addEventListener('click', e => { if (e.target === $('submitmodal') && !$('submitagree').disabled) closeSubmitModal(); });
   // pixel-art sprite editor
   $('sprbtn').addEventListener('click', openSprModal);
   $('sprcancel').addEventListener('click', closeSprModal);
@@ -2424,6 +2487,33 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
   </div>
 </div>
 
+<!-- Validate & Submit: explain what publishing does, get the OK, then do it -->
+<div class="overlay" id="submitmodal" hidden>
+  <div class="modal">
+    <h2>Publish your app</h2>
+    <p>Publishing does these steps for you, using the GitHub sign-in you already use
+       for git. Studio runs them on your behalf:</p>
+    <ol class="pubsteps">
+      <li>Make sure you have your own <b>fork</b> of the Glance app repo, and create one
+          if you don't have it yet.</li>
+      <li>Commit <b id="pubslug">your app</b> and push it to your fork on its own branch.</li>
+      <li>Open a <b>pull request</b> to add it to the app catalog.</li>
+    </ol>
+    <p class="pubnote">Nothing is merged automatically, the Glance team reviews every app.
+       Your other files aren't touched, and you can publish more apps the same way with no
+       re-setup.</p>
+    <label class="pubagree"><input type="checkbox" id="submitagree">
+      <span>I understand Studio will create a fork if needed and run these git and GitHub
+      actions for me.</span></label>
+    <div class="pubprogress" id="pubprogress" hidden></div>
+    <div class="mErr" id="submiterr"></div>
+    <div class="modal-btns">
+      <button class="ghost" id="submitcancel" type="button">Cancel</button>
+      <button class="accent" id="submitgo" type="button" disabled>Publish</button>
+    </div>
+  </div>
+</div>
+
 <script>__JS__</script>
 </body></html>"""
 
@@ -2772,30 +2862,32 @@ def create_server(app_dir: Path):
     def validate():
         return jsonify(_check(_resolve()))
 
-    @server.get("/submit")
+    @server.post("/submit")
     def submit():
-        # Validate, then commit + push the app to the developer's fork and open
-        # GitHub's "create pull request" page (all the git work is in gdn/submit.py).
-        from .submit import prepare_pr, SubmitError
+        # Validate, then create a fork (if needed), push the app, and open a pull
+        # request, all through the developer's GitHub sign-in. The git/GitHub work is
+        # in gdn/submit.py; the browser modal takes their OK before this runs.
+        from .submit import submit_via_fork, SubmitError
         d = _resolve()
         result = _check(d)
         if not result["ok"]:
             result["message"] = "Fix this first, details below"
             return jsonify(result)
         try:
-            info = prepare_pr(d)
+            info = submit_via_fork(d)
         except SubmitError as e:
             msg = str(e)
             return jsonify({"ok": False, "message": msg.split("\n", 1)[0], "problems": [msg]})
         except Exception as e:  # noqa: BLE001
-            return jsonify({"ok": False, "message": f"Couldn't submit: {e}"})
+            return jsonify({"ok": False, "message": f"Couldn't publish: {e}"})
         try:
-            webbrowser.open(info["compare_url"])
+            webbrowser.open(info["pr_url"])
         except Exception:  # noqa: BLE001
             pass
+        forked = "Created your fork, then " if info.get("created_fork") else ""
         return jsonify({"ok": True,
-                        "message": f"Pushed to {info['fork']}. Opening GitHub to finish your pull request…",
-                        "tips": [f"On branch {info['branch']}. If the page didn't open, go to: {info['compare_url']}"]})
+                        "pr_url": info["pr_url"], "fork": info["fork"], "branch": info["branch"],
+                        "message": f"{forked}opened your pull request on {info['fork']}."})
 
     return server
 
