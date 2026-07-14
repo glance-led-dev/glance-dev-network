@@ -16,7 +16,7 @@ import subprocess
 from pathlib import Path
 
 # The public repo apps are submitted to. Pull requests open against its `main`.
-UPSTREAM = "iampluto954/glance-dev-network"
+UPSTREAM = "glance-led-dev/glance-dev-network"
 
 
 class SubmitError(Exception):
