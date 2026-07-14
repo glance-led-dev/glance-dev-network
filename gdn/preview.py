@@ -32,6 +32,55 @@ def render_frames(app_dir, inputs: Optional[Dict[str, object]], now=None) -> dic
     return _render_frames_python(app_dir, inputs)
 
 
+# Catalog preview images: 5x nearest-neighbor upscale, pages stacked with a small gap.
+PREVIEW_SCALE = 5
+PREVIEW_GAP = 6
+PREVIEW_GAP_COLOR = (16, 16, 16)
+
+
+def write_previews(app_dir, inputs=None, now=None):
+    """Render every page and save it under the app's preview/ folder: preview/<page>.png
+    at native LED resolution, plus preview/preview.png, a 5x poster of every page stacked
+    vertically (the catalog thumbnail). Overwrites so the previews always match the current
+    code. Returns the list of written Paths."""
+    from PIL import Image
+    app_dir = Path(app_dir)
+    inputs = inputs or {}
+    if (app_dir / "app.star").exists():
+        scene = run_star_app_sandboxed(app_dir, inputs, now=now)
+        canvases = render_scene(scene, asset_dir=app_dir)
+        order = [p["name"] for p in scene["pages"]]
+    else:
+        app = load_app(app_dir)
+        canvases = render_all(app, inputs=inputs, asset_dir=app_dir)
+        order = [p.name for p in app.pages]
+
+    out = app_dir / "preview"
+    out.mkdir(parents=True, exist_ok=True)
+    written, imgs = [], []
+    for name in order:
+        c = canvases[name]
+        p = out / f"{name}.png"
+        c.save_png(p)
+        written.append(p)
+        imgs.append(c.img.convert("RGB"))
+
+    if imgs:
+        s = PREVIEW_SCALE
+        scaled = [im.resize((im.width * s, im.height * s), Image.NEAREST) for im in imgs]
+        w = max(im.width for im in scaled)
+        total_h = sum(im.height for im in scaled) + PREVIEW_GAP * (len(scaled) - 1)
+        poster = Image.new("RGB", (w, total_h), PREVIEW_GAP_COLOR)
+        y = 0
+        for im in scaled:
+            poster.paste(im, (0, y))
+            y += im.height + PREVIEW_GAP
+        pp = out / "preview.png"
+        poster.save(pp)
+        written.append(pp)
+    return written
+
+
 def _render_frames_star(app_dir: Path, inputs, now=None) -> dict:
     manifest = load_manifest(app_dir)
     app_meta = {

@@ -224,11 +224,19 @@ def cmd_validate(args) -> int:
                 scene = run_star_app_sandboxed(d, {}, only_page=pg,
                                                now=_parse_now(getattr(args, "now", None)))
                 render_scene(scene, asset_dir=d)   # full render == full validation
-            print(f"PASS {d.name}  ({pages} page{'s' if pages != 1 else ''})")
         except (StarError, StarTimeout, SceneError) as e:
             msg = getattr(e, "message", None) or "; ".join(getattr(e, "errors", []) or [str(e)])
             print(f"FAIL {d.name}: {msg}")
             fails += 1
+            continue
+        # It renders; now the manifest/code lint (undeclared assets, unused settings, ...).
+        from .check import check_app
+        lint_errors, _ = check_app(d)
+        if lint_errors:
+            print(f"FAIL {d.name}: " + "; ".join(lint_errors))
+            fails += 1
+        else:
+            print(f"PASS {d.name}  ({pages} page{'s' if pages != 1 else ''})")
     print()
     if fails:
         print(f"{fails} app(s) failed validation.", file=sys.stderr)
@@ -238,7 +246,7 @@ def cmd_validate(args) -> int:
 
 
 def cmd_submit(args) -> int:
-    from .submit import prepare_pr, SubmitError
+    from .submit import submit_via_fork, SubmitError, UPSTREAM
     d = Path(args.dir).resolve()
     if not (d / "app.star").exists():
         print(f"error: {d} has no app.star", file=sys.stderr)
@@ -248,16 +256,28 @@ def cmd_submit(args) -> int:
     if rc != 0:
         print("Fix the validation errors above before submitting.", file=sys.stderr)
         return rc
+    # Publishing creates a fork (if needed) and pushes with your GitHub sign-in.
+    print(f"\nThis will publish '{d.name}': make sure you have a fork of {UPSTREAM},")
+    print("push your app to it, and open a pull request, using your GitHub sign-in.")
+    if not getattr(args, "yes", False):
+        try:
+            if input("Continue? [y/N] ").strip().lower() not in ("y", "yes"):
+                print("Cancelled.")
+                return 1
+        except EOFError:
+            print("Cancelled (no confirmation).", file=sys.stderr)
+            return 1
     try:
-        info = prepare_pr(d)
+        info = submit_via_fork(d, log=lambda m: print(f"  {m}"))
     except SubmitError as e:
         print(f"\n{e}", file=sys.stderr)
         return 1
-    print(f"\nPushed {d.name} to {info['fork']} (branch {info['branch']}).")
-    print(f"Finish your pull request here:\n  {info['compare_url']}")
+    if info.get("created_fork"):
+        print(f"\nCreated your fork {info['fork']}.")
+    print(f"\nOpened your pull request:\n  {info['pr_url']}")
     try:
         import webbrowser
-        webbrowser.open(info["compare_url"])
+        webbrowser.open(info["pr_url"])
     except Exception:  # noqa: BLE001
         pass
     return 0
@@ -346,6 +366,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     su = sub.add_parser("submit", help="validate an app, then open a pull request to publish it")
     su.add_argument("dir", help="the app folder, e.g. apps/my-app")
+    su.add_argument("-y", "--yes", action="store_true", help="skip the confirmation prompt")
     su.set_defaults(func=cmd_submit)
 
     f = sub.add_parser("fonts", help="list bundled bitmap fonts")
