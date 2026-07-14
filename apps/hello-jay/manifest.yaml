@@ -1,0 +1,24 @@
+gdn: 1
+id: hello-jay
+version: 0.1.0
+name: "hello-jay"
+author: "your-name"
+description: A new Glance app.
+category: Lifestyle
+entry: app.star
+width: 128
+height: 32
+refresh: 300
+pages: [main]
+inputs:
+  - key: setting_1
+    type: string
+    app_input_type: free-text
+    label: "Setting 1"
+    default: ""
+assets:
+  - download-4.png
+  - download-3.png
+  - download-2.png
+  - glance_mktg_black.png
+  - download.png
