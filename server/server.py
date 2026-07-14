@@ -1,14 +1,5 @@
 """GDN render service, a tiny web app for Render.com (or any Python host).
 
-Renders any published app to a live PNG:
-
-    /render/<app_id>?page=1&zip=90210
-
-This is the endpoint your panels / render pipeline call. It runs the app in the SAME
-sandboxed subprocess used everywhere else, so a bad app can't hang it.
-
-It lives in this repo alongside the SDK (gdn/) and the catalog (apps/), so Render deploys
-it straight from here and picks up new apps automatically on every merge to main.
 
 Run locally (from the repo root):  python server/server.py   -> http://localhost:8000/
 On Render:                          gunicorn server.server:app
