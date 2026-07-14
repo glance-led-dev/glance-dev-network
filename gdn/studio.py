@@ -535,7 +535,8 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
         border: 1px solid var(--border); }
 .screen { position: relative; display: inline-block; line-height: 0; border-radius: 3px;
           box-shadow: 0 0 40px rgba(0,255,0,.10); }
-.screen img { image-rendering: pixelated; display: block; }
+.screen img { image-rendering: pixelated; display: block;
+       -webkit-user-drag: none; user-select: none; }   /* never native-drag the panel image */
 .screen.grid::after { content: ""; position: absolute; inset: 0; pointer-events: none;
    background-image: linear-gradient(to right, rgba(0,0,0,.34) 1px, transparent 1px),
      linear-gradient(to bottom, rgba(0,0,0,.34) 1px, transparent 1px);
@@ -547,7 +548,8 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 .imgbox { position: absolute; box-sizing: border-box; cursor: move; z-index: 5;
           outline: 1px dashed rgba(0,255,0,.6); outline-offset: -1px;
           background-size: 100% 100%; background-repeat: no-repeat; image-rendering: pixelated;
-          background-image: none; opacity: 0; transition: opacity .1s; touch-action: none; }
+          background-image: none; opacity: 0; transition: opacity .1s; touch-action: none;
+          -webkit-user-drag: none; user-select: none; }
 .placing .imgbox { opacity: .6; }                                /* visible outline while the tool is open */
 .imgbox:hover, .imgbox.sel { opacity: 1; }                       /* full outline on hover/select */
 .imgbox.sel { outline-style: solid; outline-color: var(--green); }
@@ -1233,7 +1235,7 @@ async function render(showBusy) {
       return `<div class="panel"><div class="h">${label ? `<span class="name">${esc(label)}</span>` : ''}
         <span class="dims">${p.w}×${p.h} pixels</span></div>
         <div class="screen-wrap"><div class="${cls}" style="--cell:${scale}px" data-page="${esc(p.name)}">
-          <img src="${p.dataUri}" width="${p.w * scale}" height="${p.h * scale}"></div></div></div>`;
+          <img src="${p.dataUri}" width="${p.w * scale}" height="${p.h * scale}" draggable="false"></div></div></div>`;
     }).join('');
     wireHover();
   }
@@ -2085,6 +2087,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (![...(e.dataTransfer ? e.dataTransfer.types : [])].includes('Files')) return;
     e.preventDefault(); _dragDepth = 0; document.body.classList.remove('dropping');
     const file = [...e.dataTransfer.files][0]; if (file) askImport(file);   // confirm before importing
+  });
+  // Never let a drag that STARTS inside the preview become a native image-drag: Chrome
+  // hands the panel <img> back to the drop handler as a "download.png" file, which then
+  // re-imports it. Box moves use pointer events, so this doesn't affect moving an image.
+  document.addEventListener('dragstart', e => {
+    if (e.target && e.target.closest && e.target.closest('#panels')) e.preventDefault();
   });
   $('importcancel').addEventListener('click', closeImport);
   $('importok').addEventListener('click', confirmImport);
