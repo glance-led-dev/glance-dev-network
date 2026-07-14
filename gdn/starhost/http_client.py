@@ -31,10 +31,12 @@ from pathlib import Path
 
 import requests
 
-# Hard per-request timeout. Must stay comfortably below the sandbox wall-time
-# limit in run_star_app_sandboxed (30s) so a slow endpoint fails cleanly inside
-# the app instead of getting the whole render killed.
-REQUEST_TIMEOUT = 10.0
+# Hard per-request timeout: an API slower than this is treated as down. Any
+# endpoint that can't answer in 5s is too slow for a live panel, so we fail fast
+# rather than tie up a render worker. Stays well below the sandbox wall-time in
+# run_star_app_sandboxed so a slow endpoint fails cleanly inside the app instead
+# of getting the whole render killed.
+REQUEST_TIMEOUT = 5.0
 DEFAULT_TTL = 300
 MAX_BODY_BYTES = 1_000_000          # cap huge responses; body is truncated
 MAX_REQUESTS_PER_RUN = 8            # an app can't hammer an API in one render

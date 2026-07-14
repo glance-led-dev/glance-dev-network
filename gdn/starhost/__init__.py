@@ -31,7 +31,7 @@ def run_star_app_sandboxed(app_dir, inputs: Optional[dict] = None,
     scene dict (or `(scene, logs)` when `return_logs=True`), or raises
     StarError/StarTimeout. This is how preview (and any server) stays alive even
     if an app contains an infinite loop. The default wall-time (30s) leaves room
-    for `http.get` calls, which each carry their own 10s request timeout inside
+    for `http.get` calls, which each carry their own 5s request timeout inside
     the child, so a slow endpoint fails cleanly in the app instead of getting the
     whole render killed. `now` (a datetime or ISO string) time-travels `ctx.now`.
     `logs` are the app's own `print()` lines."""
