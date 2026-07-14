@@ -2860,7 +2860,16 @@ def create_server(app_dir: Path):
 
     @server.get("/validate")
     def validate():
-        return jsonify(_check(_resolve()))
+        d = _resolve()
+        result = _check(d)
+        if result.get("ok"):
+            # Refresh the app's catalog preview images so preview/ always matches the code.
+            try:
+                from .preview import write_previews
+                write_previews(d)
+            except Exception:  # noqa: BLE001
+                pass           # never fail validation because a preview couldn't be saved
+        return jsonify(result)
 
     @server.post("/submit")
     def submit():

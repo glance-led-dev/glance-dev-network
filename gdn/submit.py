@@ -150,6 +150,14 @@ def submit_via_fork(app_dir, log=None) -> dict:
     up_owner, up_repo = UPSTREAM.split("/")
     branch = f"submit-{slug}"
 
+    # Render the catalog preview images so preview/<page>.png ships with the app.
+    note("Rendering preview images…")
+    try:
+        from .preview import write_previews
+        write_previews(app_dir)
+    except Exception:  # noqa: BLE001
+        pass           # previews are a nice-to-have, never block a submit on them
+
     note("Signing in to GitHub…")
     _user, token = _token(root)
     st, me = _api("GET", "/user", token)
