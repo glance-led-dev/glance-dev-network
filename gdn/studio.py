@@ -259,11 +259,11 @@ def _toolbox_payload():
     return _toolbox_cache
 
 
-def _scaffold_new_app(dest, slug, name, width, category, settings):
+def _scaffold_new_app(dest, slug, name, width, category, settings, refresh=300):
     """Write a fresh, working starter app tailored to the Create New App dialog: the
-    chosen panel width, its category, and a list of starter settings (each a
-    {"type", "label"} the user picked). Always starts from a working example so the
-    new app renders on the very first Save, never a blank page."""
+    chosen panel width, its category, how often it refreshes, and a list of starter
+    settings (each a {"type", "label"} the user picked). Always starts from a working
+    example so the new app renders on the very first Save, never a blank page."""
     dest.mkdir(parents=True, exist_ok=True)
     try:
         from .cli import _git_author
@@ -291,7 +291,7 @@ def _scaffold_new_app(dest, slug, name, width, category, settings):
         "entry: app.star\n"
         f"width: {width}\n"
         "height: 32\n"
-        "refresh: 300\n"
+        f"refresh: {int(refresh)}\n"
         "pages: [main]\n"
         + inputs, encoding="utf-8")
 
@@ -517,6 +517,11 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
        font: inherit; font-size: 12.5px; }
 .inputs input[type=color] { padding: 2px; width: 60px; height: 30px; }
 .inputs input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--green); }
+
+/* the "+ Add page" bar under the rendered pages */
+.addpagebar { display: flex; align-items: center; gap: 10px; margin: 2px 0 20px; }
+.addpagebar .addpagehint { color: var(--muted); font-size: 12px; }
+#addpagebtn { border-style: dashed; }
 
 /* each rendered page of the app */
 .panel { margin-bottom: 20px; }
@@ -2094,6 +2099,7 @@ function openNewModal() {
   $('newslug').textContent = '';
   $('newwidth').value = '128';
   $('newcat').value = 'Lifestyle';
+  $('newrefresh').value = '300';
   $('newsettings').innerHTML = '';
   addSettingRow('free-text', '');   // start with one text setting
   $('newmodal').hidden = false;
@@ -2107,6 +2113,7 @@ async function createApp() {
     name: name,
     width: parseInt($('newwidth').value, 10) || 128,
     category: $('newcat').value,
+    refresh: parseInt($('newrefresh').value, 10) || 300,
     settings: collectNewSettings(),
   };
   try {
@@ -2121,6 +2128,89 @@ async function createApp() {
     rebuildInputs();
     loadFiles();
   } catch (e) { $('newerr').textContent = "Couldn't reach the Studio server."; }
+}
+
+/* ---- Add a page: name it, then wire up manifest.yaml + app.star together ----
+   A page is a name in manifest `pages:` AND a matching `def <name>(c, ctx)` in
+   app.star; the two must stay in lock-step or the render errors. This adds both at
+   once from a single "name it" prompt, so a new page draws immediately. */
+// Names Starlark won't accept as a function, plus the globals Studio injects.
+const PAGE_RESERVED = new Set(['and','or','not','in','is','if','elif','else','for',
+  'while','def','return','pass','break','continue','load','lambda','as','assert','del',
+  'import','from','global','nonlocal','raise','try','except','finally','with','yield',
+  'class','true','false','none','c','ctx','color','math','http','fmt','struct','print']);
+function pageSlugify(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '').replace(/^([0-9])/, 'p$1');
+}
+function openAddPageModal() {
+  if (!currentApp) { setStatus('Open an app first, then add a page.', 'bad'); return; }
+  if (missing.includes('app.star')) {
+    setStatus('Adding a page needs an app.star app.', 'bad'); return; }
+  $('pageerr').textContent = '';
+  $('pagename').value = '';
+  $('pageslug').textContent = '';
+  $('pagemodal').hidden = false;
+  $('pagename').focus();
+}
+function closeAddPageModal() { $('pagemodal').hidden = true; const b = $('addpagebtn'); if (b) b.focus(); }
+/* Add `slug` to the manifest `pages:` list, handling both the flow form
+   (pages: [a, b]) and the block form (pages:\n  - a). Returns {text} or {error}. */
+function addPageToManifest(m, slug) {
+  const flow = m.match(/^([ \t]*)pages:[ \t]*\[([^\]]*)\]/m);
+  if (flow) {
+    const items = flow[2].split(',').map(s => s.trim()).filter(Boolean);
+    if (items.includes(slug)) return {error: 'already'};
+    return {text: m.replace(flow[0], flow[1] + 'pages: [' + items.concat(slug).join(', ') + ']')};
+  }
+  const block = m.match(/^([ \t]*)pages:[ \t]*(#.*)?\r?\n((?:[ \t]*-[ \t]*.*(?:\r?\n|$))+)/m);
+  if (block) {
+    const names = [...block[3].matchAll(/^[ \t]*-[ \t]*(.+?)[ \t]*$/gm)].map(x => x[1]);
+    if (names.includes(slug)) return {error: 'already'};
+    const ind = (block[3].match(/^([ \t]*)-/m) || [null, '  '])[1];
+    const chunk = block[0].endsWith('\n') ? block[0] : block[0] + '\n';
+    return {text: m.replace(block[0], chunk + ind + '- ' + slug + '\n')};
+  }
+  return {text: m.replace(/\s*$/, '') + '\npages: [' + slug + ']\n'};   // no pages: key yet
+}
+function pageDefExists(src, slug) {
+  return new RegExp('^[ \\t]*def[ \\t]+' + slug + '[ \\t]*\\(', 'm').test(src);
+}
+function appendPageDef(src, slug) {
+  const stub = 'def ' + slug + '(c, ctx):\n' +
+               '    c.fill("black")\n' +
+               '    c.text_center("' + slug.toUpperCase().slice(0, 18) + '", 12, font="6x8", color="green")\n';
+  return src.replace(/\s*$/, '') + '\n\n\n' + stub;
+}
+async function doAddPage() {
+  const raw = $('pagename').value.trim();
+  const slug = pageSlugify(raw);
+  if (!slug) { $('pageerr').textContent = 'Give the page a name (letters, numbers, or underscores).'; return; }
+  if (PAGE_RESERVED.has(slug)) { $('pageerr').textContent = '“' + slug + '” is a reserved word, pick another name.'; return; }
+  files[activeTab] = $('ed').value;                 // stash the current edits first
+  const star = files['app.star'] || '';
+  if (pageDefExists(star, slug)) { $('pageerr').textContent = 'A page called “' + slug + '” already exists.'; return; }
+  const res = addPageToManifest(files['manifest.yaml'] || '', slug);
+  if (res.error === 'already') { $('pageerr').textContent = 'A page called “' + slug + '” is already listed.'; return; }
+  files['manifest.yaml'] = res.text;
+  files['app.star'] = appendPageDef(star, slug);
+  try {
+    const d = await apiFetch('files?' + appQS(), {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({'app.star': files['app.star'], 'manifest.yaml': files['manifest.yaml']})}, 'add page');
+    if (d && d.ok === false) { $('pageerr').textContent = d.error || 'Couldn’t save the new page.'; return; }
+  } catch (e) { $('pageerr').textContent = 'Couldn’t reach Studio to save the page.'; return; }
+  pristine['app.star'] = files['app.star'];
+  pristine['manifest.yaml'] = files['manifest.yaml'];
+  closeAddPageModal();
+  activeTab = 'app.star';                            // show the new def, ready to draw
+  $('ed').value = files['app.star'];
+  paintTabs(); paintHl();
+  const at = files['app.star'].search(new RegExp('^def[ \\t]+' + slug + '\\b', 'm'));
+  if (at >= 0) { $('ed').focus(); $('ed').setSelectionRange(at, at); }
+  rebuildInputs();
+  render(true);
+  setStatus('Added page “' + slug + '”. Draw it in the ' + slug + '() function.', 'ok');
 }
 
 /* ---- Delete app: confirm with a checkbox, then remove the folder ---- */
@@ -2427,6 +2517,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('newname').addEventListener('input', () =>
     { $('newslug').textContent = 'Folder: apps/' + slugify($('newname').value || ''); });
   $('newname').addEventListener('keydown', e => { if (e.key === 'Enter') createApp(); });
+  $('addpagebtn').addEventListener('click', openAddPageModal);
+  $('pageok').addEventListener('click', doAddPage);
+  $('pagecancel').addEventListener('click', closeAddPageModal);
+  $('pagemodal').addEventListener('click', e => { if (e.target === $('pagemodal')) closeAddPageModal(); });
+  $('pagename').addEventListener('input', () => {
+    const s = pageSlugify($('pagename').value);
+    $('pageslug').textContent = s ? 'Function: def ' + s + '(c, ctx):' : '';
+  });
+  $('pagename').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAddPage(); } });
   $('newmodal').addEventListener('click', e => { if (e.target === $('newmodal')) closeNewModal(); });
   $('newaddsetting').addEventListener('click', () => addSettingRow('free-text', ''));
   $('newsettings').addEventListener('click', e => {
@@ -2479,6 +2578,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (!$('newmodal').hidden) closeNewModal();
+    if (!$('pagemodal').hidden) closeAddPageModal();
     if (!$('inputmodal').hidden) closeInputModal();
     if (!$('tbxmodal').hidden) closeToolbox();
     if (!$('sprmodal').hidden) closeSprModal();
@@ -2709,6 +2809,11 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
     <div class="rbody">
       <div class="busy" id="busy" hidden><span class="sp"></span> Rendering&hellip;</div>
       <div id="panels"><p class="rhint">Rendering your preview&hellip;</p></div>
+      <div class="addpagebar" id="addpagebar">
+        <button class="ghost small" id="addpagebtn"
+                title="Add another screen your app cycles through">+ Add page</button>
+        <span class="addpagehint">A page is one screen. Glance cycles through them.</span>
+      </div>
       <div class="card" id="placecard" hidden>
         <div class="card-head">
           <span class="card-title">Place an image</span>
@@ -2760,6 +2865,18 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
       <option>Entertainment</option><option>Science</option><option>Fun</option>
       <option>Other</option>
     </select>
+    <label class="mlabel" for="newrefresh">Refresh every</label>
+    <select id="newrefresh" class="mfull">
+      <option value="60">1 minute</option>
+      <option value="300" selected>5 minutes</option>
+      <option value="900">15 minutes</option>
+      <option value="1800">30 minutes</option>
+      <option value="3600">1 hour</option>
+      <option value="21600">6 hours</option>
+      <option value="86400">1 day</option>
+    </select>
+    <div class="mhint">How often Glance fetches fresh data and redraws your app. You can
+       change this any time in <code>manifest.yaml</code> (the <code>refresh:</code> line).</div>
     <label class="mlabel">Settings to start with</label>
     <div class="mhint">Pick a type for each. You can add more, or fine-tune them, later.</div>
     <div class="newsettings" id="newsettings"></div>
@@ -2768,6 +2885,26 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
     <div class="modal-btns">
       <button class="ghost" id="newcancel">Cancel</button>
       <button class="accent" id="newok">Create app</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add-page dialog -->
+<div class="overlay" id="pagemodal" hidden>
+  <div class="modal">
+    <h2>Add a page</h2>
+    <p>A page is one screen your app shows, and Glance cycles through them. Studio adds it
+       to your <code>manifest.yaml</code> and writes a matching <code>def</code> in your
+       code, so the new page draws right away, ready for you to edit.</p>
+    <label class="mlabel" for="pagename">Page name</label>
+    <input id="pagename" placeholder="e.g. scores" maxlength="40">
+    <div class="slug" id="pageslug"></div>
+    <div class="mhint">Used as the page's function name in <code>app.star</code>, so stick to
+       letters, numbers, and underscores.</div>
+    <div class="mErr" id="pageerr"></div>
+    <div class="modal-btns">
+      <button class="ghost" id="pagecancel">Cancel</button>
+      <button class="accent" id="pageok">Add page</button>
     </div>
   </div>
 </div>
@@ -3196,6 +3333,11 @@ def create_server(app_dir: Path):
             width = int(data.get("width") or 128)
             width = 128 if (width < 1 or width > 384) else width
             category = str(data.get("category") or "Other").strip() or "Other"
+            try:
+                refresh = int(data.get("refresh") or 300)
+            except (TypeError, ValueError):
+                refresh = 300
+            refresh = 60 if refresh < 60 else (86400 if refresh > 86400 else refresh)
             raw = data.get("settings")
             if isinstance(raw, list):
                 specs = [s for s in raw if isinstance(s, dict)][:8]
@@ -3205,7 +3347,7 @@ def create_server(app_dir: Path):
                 specs = [{"type": "free-text"} for _ in range(max(0, min(8, raw)))]
             else:
                 specs = []
-            _scaffold_new_app(dest, slug, name, width, category, specs)
+            _scaffold_new_app(dest, slug, name, width, category, specs, refresh=refresh)
             return jsonify({"ok": True, "app": slug})
         except Exception as e:  # noqa: BLE001
             return jsonify({"ok": False, "error": f"Couldn't create the app: {e}"})
