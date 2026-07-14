@@ -13,13 +13,3 @@ height: 32
 refresh: 300
 
 pages: [main]
-
-inputs:
-  # schema.Dropdown "Scroll speed" -> choice (kept for fidelity; the GDN port is
-  # static so it does not scroll).
-  - key: scroll_speed
-    type: choice
-    app_input_type: dropdown
-    label: Scroll speed
-    default: Normal
-    choices: [Slow, Slower, Normal, Fast, Faster]

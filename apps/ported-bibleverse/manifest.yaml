@@ -21,9 +21,3 @@ inputs:
     app_input_type: free-text
     label: Reference color
     default: "#00FF00"
-  - key: translation
-    type: choice
-    app_input_type: dropdown
-    label: Translation
-    default: kjv
-    choices: [kjv, asv, web, oeb-us]

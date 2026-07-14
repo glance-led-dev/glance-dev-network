@@ -79,6 +79,14 @@ def check_app(app_dir) -> tuple:
             errors.append(f"draws `{a}` but it's not listed under `assets:`")
         for a in sorted(declared - used):
             warns.append(f"asset `{a}` is declared but never drawn")
+        # Every declared setting must actually be read in the code. Settings are read as
+        # ctx.inputs.get("key") / ctx.inputs["key"], so the key appears as a quoted string;
+        # if it never does, the setting is dead and confuses people who fill it in.
+        for i in (m.get("inputs") or []):
+            k = str(i.get("key", "")).strip() if isinstance(i, dict) else ""
+            if k and not re.search(r"""['"]""" + re.escape(k) + r"""['"]""", src):
+                errors.append(f"setting `{k}` is declared but never used in app.star "
+                              f'(read it with ctx.inputs.get("{k}"), or remove it from the manifest)')
         for lit in re.findall(r"""c\.text[a-z_]*\(\s*['"]([^'"]*)['"]""", src):
             if any(ch.islower() for ch in lit):
                 warns.append(f'text "{lit}" has lowercase; fonts are UPPERCASE-only, call .upper()')

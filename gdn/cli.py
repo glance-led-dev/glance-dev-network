@@ -224,11 +224,19 @@ def cmd_validate(args) -> int:
                 scene = run_star_app_sandboxed(d, {}, only_page=pg,
                                                now=_parse_now(getattr(args, "now", None)))
                 render_scene(scene, asset_dir=d)   # full render == full validation
-            print(f"PASS {d.name}  ({pages} page{'s' if pages != 1 else ''})")
         except (StarError, StarTimeout, SceneError) as e:
             msg = getattr(e, "message", None) or "; ".join(getattr(e, "errors", []) or [str(e)])
             print(f"FAIL {d.name}: {msg}")
             fails += 1
+            continue
+        # It renders; now the manifest/code lint (undeclared assets, unused settings, ...).
+        from .check import check_app
+        lint_errors, _ = check_app(d)
+        if lint_errors:
+            print(f"FAIL {d.name}: " + "; ".join(lint_errors))
+            fails += 1
+        else:
+            print(f"PASS {d.name}  ({pages} page{'s' if pages != 1 else ''})")
     print()
     if fails:
         print(f"{fails} app(s) failed validation.", file=sys.stderr)
