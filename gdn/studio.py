@@ -556,6 +556,9 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 .imgbox.drag { opacity: 1; outline-style: solid; outline-color: var(--green);
                background-image: var(--img); }                   /* show the PNG only while dragging */
 .imgbox.locked { cursor: default; outline-color: rgba(255,255,255,.35); }
+.imgbox.art { outline-color: rgba(120,210,255,.75); }            /* pixel art: a distinct hue from images */
+.imgbox.art.sel { outline-color: rgba(120,210,255,1); }
+.imgbox.art.drag { outline-color: rgba(120,210,255,1); background-image: none; }   /* no PNG to show */
 .imgbox::after { content: ""; position: absolute; inset: -6px; }   /* fat hit area for tiny sprites */
 .imgbox .rz { position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px;
               background: var(--green); border: 1px solid #04210b; border-radius: 2px;
@@ -617,6 +620,47 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 #console .prob { color: var(--red); }
 #console .tip { color: #e8d48a; }
 
+/* ---- Debug log (failed requests) ------------------------------------- */
+#dbgbtn { position: fixed; right: 14px; bottom: 14px; z-index: 69;
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px;
+  border-radius: 999px; cursor: pointer;
+  font: 600 11.5px 'Montserrat', sans-serif; color: var(--dim);
+  background: var(--surface2); border: 1px solid var(--border); }
+#dbgbtn:hover { color: var(--muted); border-color: var(--border2); }
+.dbg-count { min-width: 17px; height: 17px; padding: 0 5px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font: 700 10.5px 'JetBrains Mono', ui-monospace, monospace;
+  color: var(--red); background: var(--red-bg); border: 1px solid var(--red-border); }
+.dbgpanel { position: fixed; right: 14px; bottom: 52px; z-index: 70;
+  width: min(520px, calc(100vw - 28px)); max-height: min(60vh, 540px);
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 12px;
+  box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(0,255,0,.08); }
+.dbg-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  border-bottom: 1px solid var(--border); }
+.dbg-title { font: 800 13px 'Montserrat', sans-serif; color: var(--text); }
+.dbg-hint { font-size: 11px; color: var(--dim); }
+.dbg-list { overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.dbg-empty { padding: 14px 10px; font-size: 12px; color: var(--dim); }
+.dbg-item { border: 1px solid var(--border); border-radius: 9px; background: var(--surface2); }
+.dbg-item summary { display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+  cursor: pointer; list-style: none; min-width: 0; }
+.dbg-item summary::-webkit-details-marker { display: none; }
+.dbg-item[open] > summary { border-bottom: 1px solid var(--border); }
+.dbg-badge { flex: 0 0 auto; padding: 1px 7px; border-radius: 999px;
+  font: 700 10.5px 'JetBrains Mono', ui-monospace, monospace;
+  color: var(--red); background: var(--red-bg); border: 1px solid var(--red-border); }
+.dbg-label { font: 600 12px 'JetBrains Mono', ui-monospace, monospace; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbg-n { flex: 0 0 auto; color: var(--red); font: 700 11px 'JetBrains Mono', ui-monospace, monospace; }
+.dbg-time { margin-left: auto; flex: 0 0 auto;
+  font: 11px 'JetBrains Mono', ui-monospace, monospace; color: var(--dim); }
+.dbg-msg { padding: 8px 10px 0; font-size: 12px; color: var(--red); }
+.dbg-detail { margin: 6px 10px 10px; padding: 9px 10px; border-radius: 7px;
+  background: var(--bg); border: 1px solid var(--border);
+  font: 11.5px/1.55 'JetBrains Mono', ui-monospace, monospace; color: var(--muted);
+  white-space: pre-wrap; word-break: break-word; overflow: auto; max-height: 220px; }
+
 /* ---- Create-New-App modal ------------------------------------------- */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.62); display: flex;
            align-items: center; justify-content: center; z-index: 40; }
@@ -656,6 +700,63 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 .pubprogress .pubok a { color: var(--green); text-decoration: underline; }
 .importprev { max-width: 100%; image-rendering: pixelated; background: #000;
          border: 1px solid var(--border2); border-radius: 6px; padding: 6px; margin: 0 0 6px; display: block; }
+/* Delete-app: a red-tinted ghost button + a red confirm button */
+.ghost.danger:hover { color: #ffd0d0; border-color: var(--red-border); background: var(--red-bg); }
+.accent.danger { background: #d94651; color: #fff; box-shadow: 0 0 14px rgba(217,70,81,.35); }
+.accent.danger:hover { background: #e35862; }
+.accent.danger:disabled { background: #4a2a2d; color: #b99; box-shadow: none; cursor: default; }
+/* ---- Validate result popup (LED pixel check / X) --------------------- */
+.vpop { position: fixed; left: 50%; top: 40%; z-index: 60;
+        transform: translate(-50%, -50%);
+        display: flex; flex-direction: column; align-items: center; gap: 4px;
+        min-width: 264px; max-width: 340px; padding: 24px 34px 22px;
+        background: var(--surface); border: 1px solid var(--border2); border-radius: 14px;
+        box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(0,255,0,.08);
+        text-align: center; }
+.vpop::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+        background: repeating-linear-gradient(0deg, rgba(0,0,0,.2) 0 1px, transparent 1px 3px);
+        opacity: .5; }
+.vpop.ok   { border-color: rgba(43,255,110,.45); cursor: pointer; }
+.vpop.fail { border-color: var(--red-border);
+        box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 22px rgba(255,120,120,.14); }
+.vpop.in { animation: vin .28s cubic-bezier(.2,1.4,.4,1) both; }
+.vpop.ok.in { animation: vin .28s cubic-bezier(.2,1.4,.4,1) both,
+              vpulse .8s ease-in-out .3s 2; }
+.vpop.out { animation: vout .18s ease-in forwards; }
+@keyframes vin  { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.88); }
+                  70% { transform: translate(-50%,-50%) scale(1.03); }
+                  100% { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+@keyframes vout { to { opacity: 0; transform: translate(-50%,-50%) scale(.95); } }
+@keyframes vpulse {
+  0%, 100% { box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 16px rgba(0,255,0,.14); }
+  50%      { box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 36px rgba(0,255,0,.38); } }
+.vicon { height: 66px; display: flex; align-items: center; justify-content: center; margin: 2px 0 8px; }
+.vmark { position: relative; width: 56px; height: 56px; display: inline-block; }
+#vcheck { color: var(--green); filter: drop-shadow(0 0 8px rgba(0,255,0,.55)); }
+#vcross { color: var(--red);   filter: drop-shadow(0 0 8px rgba(255,120,120,.45)); }
+#vcheck .ck { position: absolute; left: 16px; top: 3px; width: 19px; height: 40px;
+              border: solid currentColor; border-width: 0 7px 7px 0; transform: rotate(45deg); }
+#vcross .x1, #vcross .x2 { position: absolute; left: 3px; top: 24px; width: 50px; height: 7px;
+              background: currentColor; border-radius: 4px; }
+#vcross .x1 { transform: rotate(45deg); }
+#vcross .x2 { transform: rotate(-45deg); }
+.vmark.play { animation: vmpop .34s cubic-bezier(.2,1.5,.4,1) both; }   /* mark pops in */
+@keyframes vmpop { 0% { opacity: 0; transform: scale(.4); }
+                   60% { opacity: 1; transform: scale(1.12); }
+                   100% { opacity: 1; transform: scale(1); } }
+.vhead { font-size: 17px; font-weight: 800; letter-spacing: -.2px; }
+.vpop.ok .vhead   { color: var(--green-soft); }
+.vpop.fail .vhead { color: var(--red); }
+.vsub { font: 12px/1.5 'JetBrains Mono', ui-monospace, monospace; color: var(--muted); }
+.vclose { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; padding: 0;
+          display: none; align-items: center; justify-content: center;
+          background: transparent; border: 1px solid transparent; border-radius: 7px;
+          color: var(--dim); font-size: 12px; line-height: 1; cursor: pointer; }
+.vpop.fail .vclose { display: inline-flex; }
+.vclose:hover { color: var(--red); border-color: var(--red-border); background: var(--red-bg); }
+@media (prefers-reduced-motion: reduce) {
+  .vpop.in, .vpop.ok.in, .vpop.out, .vicon svg.play .px {
+    animation-duration: 1ms; animation-delay: 0ms; } }
 [hidden] { display: none !important; }
 """
 
@@ -679,6 +780,104 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
 const $ = id => document.getElementById(id);
 const appQS = () => currentApp ? 'app=' + encodeURIComponent(currentApp) : '';
 const slugify = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'my-app';
+
+/* ==== Debug log: a structured record of every failed Studio request ==== */
+const DBG_MAX = 50;
+const dbgLog = [];     // newest first: {t, label, method, url, status, message, detail, n}
+let dbgUnseen = 0;
+const _dbgStamp = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
+function dbgAdd(e) {
+  const top = dbgLog[0];
+  if (top && top.label === e.label && String(top.status) === String(e.status)
+      && top.message === e.message && top.detail === e.detail) {
+    top.n += 1; top.t = _dbgStamp();     // repeat of the same failure: count it, don't spam
+  } else {
+    e.n = 1; e.t = _dbgStamp();
+    dbgLog.unshift(e);
+    if (dbgLog.length > DBG_MAX) dbgLog.pop();
+    if ($('dbgpanel').hidden) dbgUnseen++;
+  }
+  dbgPaintBadge();
+  if (!$('dbgpanel').hidden) dbgRender();
+}
+function dbgPaintBadge() {
+  const b = $('dbgcount');
+  b.textContent = dbgUnseen > 99 ? '99+' : String(dbgUnseen);
+  b.hidden = dbgUnseen === 0;
+}
+function dbgToggle(show) {
+  const p = $('dbgpanel');
+  p.hidden = (show === undefined) ? !p.hidden : !show;
+  if (!p.hidden) { dbgUnseen = 0; dbgPaintBadge(); dbgRender(); }
+}
+function dbgRender() {
+  const list = $('dbglist');
+  if (!dbgLog.length) {
+    list.innerHTML = '<div class="dbg-empty">No failures recorded. When a request to the Studio server fails, the details land here.</div>';
+    return;
+  }
+  list.innerHTML = dbgLog.map((e, i) => `
+    <details class="dbg-item"${i === 0 ? ' open' : ''}>
+      <summary>
+        <span class="dbg-badge">${esc(String(e.status))}</span>
+        <span class="dbg-label">${esc(e.label)}</span>
+        ${e.n > 1 ? '<span class="dbg-n">x' + e.n + '</span>' : ''}
+        <span class="dbg-time">${esc(e.t.slice(11))}</span>
+      </summary>
+      ${e.message ? '<div class="dbg-msg">' + esc(e.message) + '</div>' : ''}
+      <pre class="dbg-detail">${esc(e.method + ' ' + e.url + (e.detail ? '\n\n' + e.detail : ''))}</pre>
+    </details>`).join('');
+}
+async function dbgCopy() {
+  const lines = ['Glance Dev Studio debug log (newest first)',
+                 'Page: ' + location.href, 'App: ' + (currentApp || '?'), ''];
+  dbgLog.forEach(e => {
+    lines.push('[' + e.t + '] ' + e.label + (e.n > 1 ? ' (x' + e.n + ')' : ''));
+    lines.push('  ' + e.method + ' ' + e.url + '  ->  ' + e.status);
+    if (e.message) lines.push('  ' + e.message);
+    if (e.detail) lines.push(e.detail.split('\n').map(l => '  | ' + l).join('\n'));
+    lines.push('');
+  });
+  const text = lines.join('\n');
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  }
+  const b = $('dbgcopy'); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy log'; }, 1200);
+}
+/* fetch wrapper: same return shape as `await (await fetch(u)).json()`, but any failure
+   (network throw, non-JSON reply, non-2xx status, or {ok:false}) is recorded first. */
+async function apiFetch(url, opts, label) {
+  opts = opts || {};
+  const method = (opts.method || 'GET').toUpperCase();
+  label = label || url.split('?')[0];
+  let r;
+  try { r = await fetch(url, opts); }
+  catch (e) {
+    dbgAdd({label, method, url, status: 'network',
+            message: 'No response at all. Studio may have stopped, or this tab outlived it.',
+            detail: String(e)});
+    throw e;
+  }
+  const raw = await r.text();
+  let d = null;
+  try { d = JSON.parse(raw); } catch (e) {}
+  if (d === null) {
+    const msg = 'HTTP ' + r.status + ' with a non-JSON reply. Another program may be on this port, or the server hit an unhandled error.';
+    dbgAdd({label, method, url, status: r.status, message: msg,
+            detail: raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1500)});
+    throw new Error(msg);
+  }
+  if (!r.ok || d.ok === false) {
+    dbgAdd({label, method, url, status: r.status,
+            message: d.error || d.message || ('HTTP ' + r.status),
+            detail: d.detail || d.where || ''});
+  }
+  if (!r.ok && d.ok !== false) throw new Error(d.error || ('HTTP ' + r.status));
+  return d;
+}
 // named colors -> hex, so a color setting whose default is "red" doesn't show black
 const COLOR_HEX = {white:'#ffffff', black:'#000000', red:'#ff0000', green:'#00ff00',
   blue:'#0000ff', yellow:'#ffff00', cyan:'#00ffff', orange:'#ffa500', magenta:'#ff00ff'};
@@ -807,7 +1006,7 @@ function setStatus(msg, cls) {
 /* ---- the app picker -------------------------------------------------- */
 async function loadApps(selectName) {
   try {
-    const d = await (await fetch('apps')).json();
+    const d = await apiFetch('apps', {}, 'list apps');
     // ?app=<name> in the address bar deep-links straight to that app
     const urlApp = new URLSearchParams(location.search).get('app');
     if (!currentApp) currentApp = (urlApp && d.apps.includes(urlApp)) ? urlApp : d.current;
@@ -897,7 +1096,7 @@ async function loadFiles() {
   const seq = ++loadSeq;
   $('save').disabled = true;   // no saving until we know which app's files we hold
   try {
-    const d = await (await fetch('files?' + appQS())).json();
+    const d = await apiFetch('files?' + appQS(), {}, 'load files');
     // A newer switch superseded us, or the response is for a different app: drop it,
     // so app A's files can never be written into app B's folder.
     if (seq !== loadSeq || (d.app && d.app !== currentApp)) return;
@@ -1021,6 +1220,39 @@ async function save() {
 }
 
 /* ---- checking (Validate / Validate & Merge) --------------------------- */
+/* ---- Validate result popup (LED pixel check / X) --------------------- */
+let vresTimer = 0;
+function hideValidateResult() {
+  const el = $('vresult');
+  if (el.hidden) return;
+  clearTimeout(vresTimer); vresTimer = 0;
+  el.classList.remove('in');
+  el.classList.add('out');
+  setTimeout(() => { el.hidden = true; el.classList.remove('out'); }, 180);
+}
+function showValidateResult(ok, message, nProblems) {
+  const el = $('vresult');
+  clearTimeout(vresTimer); vresTimer = 0;
+  el.classList.remove('out');
+  el.classList.toggle('ok', !!ok);
+  el.classList.toggle('fail', !ok);
+  $('vcheck').hidden = !ok;
+  $('vcross').hidden = !!ok;
+  $('vhead').textContent = ok ? 'Looks good' : 'Found problems';
+  let sub = message || '';
+  if (ok) sub = sub.replace(/^looks good[,.!]?\s*/i, '') || 'Every page draws cleanly';
+  else if (typeof nProblems === 'number' && nProblems > 0)
+    sub = nProblems + ' issue' + (nProblems === 1 ? '' : 's') + ', see the console';
+  else sub = sub.replace(/^problem found[,.!]?\s*/i, '') || 'See the console below';
+  $('vsub').textContent = sub.charAt(0).toUpperCase() + sub.slice(1);
+  el.hidden = false;
+  // restart the pop-in and the pixel-by-pixel draw, even if already showing
+  el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+  const icon = ok ? $('vcheck') : $('vcross');
+  $('vcheck').classList.remove('play'); $('vcross').classList.remove('play');
+  void icon.getBoundingClientRect(); icon.classList.add('play');
+  if (ok) vresTimer = setTimeout(hideValidateResult, 2000);   // success dismisses itself
+}
 function showCheckResults(d) {
   const lines = [];
   (d.problems || []).forEach(p => lines.push('<span class="prob">✗ ' + esc(p) + '</span>'));
@@ -1037,9 +1269,10 @@ async function runCheck(url, btn) {
   btn.innerHTML = '<span class="sp"></span> Checking&hellip;';
   setStatus('Checking…');
   try {
-    const d = await (await fetch(url + '?' + appQS())).json();
+    const d = await apiFetch(url + '?' + appQS(), {}, url);
     setStatus(d.message, d.ok ? 'ok' : 'bad');
     showCheckResults(d);
+    showValidateResult(d.ok, d.message, (d.problems || []).length);
   } catch (e) {
     setStatus('Couldn’t run the check. Is Studio still running?', 'bad');
   } finally {
@@ -1069,7 +1302,7 @@ async function doSubmit() {
   $('pubprogress').innerHTML = '<span class="sp"></span> Publishing&hellip; creating your fork the first time can take a few seconds.';
   setStatus('Publishing…');
   try {
-    const d = await (await fetch('submit?' + appQS(), { method: 'POST' })).json();
+    const d = await apiFetch('submit?' + appQS(), { method: 'POST' }, 'publish');
     if (d.ok) {
       const link = d.pr_url ? ' <a href="' + esc(d.pr_url) + '" target="_blank" rel="noopener">View it on GitHub &#8599;</a>' : '';
       $('pubprogress').innerHTML = '<span class="pubok">Your pull request is open.' + link + '</span>';
@@ -1198,7 +1431,7 @@ async function render(showBusy) {
   if (nowv) parts.push('now=' + encodeURIComponent(nowv));
   let d;
   try {
-    d = await (await fetch('frames.json?' + parts.filter(Boolean).join('&'))).json();
+    d = await apiFetch('frames.json?' + parts.filter(Boolean).join('&'), {}, 'render preview');
   } catch (e) {
     if (seq === renderSeq)
       $('panels').innerHTML = '<div class="err">Couldn’t reach the Studio server. Is it still running?</div>';
@@ -1314,9 +1547,52 @@ function parseImages(text) {
     }
     if (nums.x === null || nums.y === null) editable = false;
     const ord = (counts[file] = (counts[file] || 0) + 1);
-    list.push({key: file + '#' + ord, file, recv: m[1], x: nums.x, y: nums.y,
+    list.push({key: file + '#' + ord, file, kind: 'image', recv: m[1], x: nums.x, y: nums.y,
       w: nums.w, h: nums.h, spans, callStart: m.index, callEnd: m.index + m[0].length,
       closeParen: m.index + m[0].length - 1, page: pageOf(m.index), editable});
+  }
+  // Also make c.bitmap(matrix, x, y, color) and c.sprite("...", x, y, ...) draggable. Their
+  // first argument holds commas/brackets, so scan arguments by nesting depth, not a flat regex.
+  const paRe = /([A-Za-z_]\w*)\.(bitmap|sprite)\(/g;
+  const paCounts = {}; let pm2;
+  while ((pm2 = paRe.exec(text))) {
+    const recv = pm2[1], fn = pm2[2], openParen = pm2.index + pm2[0].length - 1;
+    const ls = text.lastIndexOf('\n', pm2.index) + 1;
+    if (text.slice(ls, pm2.index).indexOf('#') !== -1) continue;   // commented out
+    let depth = 0, str = null, escd = false; const commas = []; let close = -1;
+    for (let i = openParen; i < text.length; i++) {
+      const ch = text[i];
+      if (str) { if (escd) escd = false; else if (ch === '\\') escd = true; else if (ch === str) str = null; continue; }
+      if (ch === '"' || ch === "'") str = ch;
+      else if (ch === '(' || ch === '[' || ch === '{') depth++;
+      else if (ch === ')' || ch === ']' || ch === '}') { if (--depth === 0) { close = i; break; } }
+      else if (ch === ',' && depth === 1) commas.push(i);
+    }
+    if (close === -1 || commas.length < 2) continue;               // need first-arg, x, y
+    const arg0 = text.slice(openParen + 1, commas[0]);
+    const xRaw = text.slice(commas[0] + 1, commas[1]);
+    const yRaw = text.slice(commas[1] + 1, commas.length > 2 ? commas[2] : close);
+    const xm2 = xRaw.match(/-?\d+/), ym2 = yRaw.match(/-?\d+/);
+    if (!xm2 || !ym2) continue;
+    const xs = commas[0] + 1 + xRaw.indexOf(xm2[0]), ys = commas[1] + 1 + yRaw.indexOf(ym2[0]);
+    let w = 8, h = 8;
+    if (fn === 'bitmap') {
+      h = Math.max(1, (arg0.match(/\[/g) || []).length - 1);       // outer bracket + one per row
+      const fr = arg0.match(/\[([^\[\]]*)\]/);
+      w = fr ? fr[1].split(',').length : 8;
+    } else {
+      const sm = arg0.match(/(['"])([\s\S]*?)\1/), body = sm ? sm[2] : '';
+      const lines = body.split(/\\n|\n/);
+      h = lines.length; w = Math.max(1, ...lines.map(l => l.length));
+      const scM = text.slice(commas[1], close).match(/scale\s*=\s*(\d+)/);
+      const sc = scM ? parseInt(scM[1], 10) : 1; w *= sc; h *= sc;
+    }
+    const ord2 = (paCounts[fn] = (paCounts[fn] || 0) + 1);
+    list.push({key: fn + '#' + ord2, file: fn + ' art', kind: fn, recv,
+      x: parseInt(xm2[0], 10), y: parseInt(ym2[0], 10), w, h,
+      spans: {x: [xs, xs + xm2[0].length], y: [ys, ys + ym2[0].length], w: null, h: null},
+      callStart: pm2.index, callEnd: close + 1, closeParen: close,
+      page: pageOf(pm2.index), editable: true, noResize: true});
   }
   return list;
 }
@@ -1390,18 +1666,21 @@ function positionBox(box, call, scr) {
 }
 function createBox(call, scr) {
   const box = document.createElement('div');
-  box.className = 'imgbox' + (call.editable ? '' : ' locked');
+  box.className = 'imgbox' + (call.editable ? '' : ' locked') + (call.kind !== 'image' ? ' art' : '');
   box.tabIndex = 0; box.dataset.key = call.key; box._call = call;
-  box.style.setProperty('--img', `url(asset?${appQS()}&file=${encodeURIComponent(call.file)})`);
-  const rz = document.createElement('div'); rz.className = 'rz'; box.appendChild(rz);
+  if (call.kind === 'image')                                    // pixel art has no asset image
+    box.style.setProperty('--img', `url(asset?${appQS()}&file=${encodeURIComponent(call.file)})`);
+  if (!call.noResize) { const rz = document.createElement('div'); rz.className = 'rz'; box.appendChild(rz); }
   const x = document.createElement('div'); x.className = 'imgx'; x.textContent = '×'; x.title = 'Remove'; box.appendChild(x);
   positionBox(box, call, scr); scr.appendChild(box); wireBox(box);
-  const dk = currentApp + '/' + call.file;
-  if ((call.w == null || call.h == null) && !assetDims[dk]) {
-    const probe = new Image();
-    probe.onload = () => { assetDims[dk] = {w: probe.naturalWidth, h: probe.naturalHeight};
-      const c2 = placedByKey[box.dataset.key]; if (box.isConnected && c2) positionBox(box, c2, box.closest('.screen')); };
-    probe.src = 'asset?' + appQS() + '&file=' + encodeURIComponent(call.file);
+  if (call.kind === 'image') {
+    const dk = currentApp + '/' + call.file;
+    if ((call.w == null || call.h == null) && !assetDims[dk]) {
+      const probe = new Image();
+      probe.onload = () => { assetDims[dk] = {w: probe.naturalWidth, h: probe.naturalHeight};
+        const c2 = placedByKey[box.dataset.key]; if (box.isConnected && c2) positionBox(box, c2, box.closest('.screen')); };
+      probe.src = 'asset?' + appQS() + '&file=' + encodeURIComponent(call.file);
+    }
   }
   return box;
 }
@@ -1563,8 +1842,8 @@ function updateEditButtons(hasImg) {
     let btn = h.querySelector('.editimg');
     if (hasImg && !btn) {
       btn = document.createElement('button');
-      btn.className = 'editimg'; btn.type = 'button'; btn.textContent = 'Edit images';
-      btn.title = 'Drag the pictures on this panel to move them';
+      btn.className = 'editimg'; btn.type = 'button'; btn.textContent = 'Edit art';
+      btn.title = 'Drag the images and pixel art on this panel to move them';
       h.appendChild(btn);
     } else if (!hasImg && btn) { btn.remove(); }
     if (btn) btn.classList.toggle('active', placeActive);
@@ -1628,7 +1907,7 @@ async function uploadDroppedImage(file) {
   setStatus('Adding ' + file.name + '…');
   const fd = new FormData(); fd.append('file', file);
   let d;
-  try { d = await (await fetch('upload-image?' + appQS(), {method: 'POST', body: fd})).json(); }
+  try { d = await apiFetch('upload-image?' + appQS(), {method: 'POST', body: fd}, 'upload image'); }
   catch (e) { setStatus('Couldn’t upload. Is Studio still running?', 'bad'); return; }
   if (!d.ok) { setStatus(d.error, 'bad'); return; }
   assetDims[currentApp + '/' + d.name] = {w: d.w, h: d.h};     // so insertImage centers for the true size
@@ -1842,6 +2121,38 @@ async function createApp() {
     rebuildInputs();
     loadFiles();
   } catch (e) { $('newerr').textContent = "Couldn't reach the Studio server."; }
+}
+
+/* ---- Delete app: confirm with a checkbox, then remove the folder ---- */
+function openDeleteModal() {
+  if (!currentApp) { setStatus('No app is selected to delete.', 'bad'); return; }
+  $('delname').textContent = currentApp; $('delname2').textContent = currentApp;
+  $('delagree').checked = false; $('delagree').disabled = false;
+  $('delok').disabled = true; $('delcancel').disabled = false;
+  $('delerr').textContent = '';
+  $('delmodal').hidden = false;
+}
+function closeDeleteModal() { $('delmodal').hidden = true; }
+async function doDeleteApp() {
+  $('delok').disabled = true; $('delcancel').disabled = true; $('delagree').disabled = true;
+  $('delerr').textContent = '';
+  try {
+    const d = await apiFetch('delete-app?' + appQS(), {method: 'POST'}, 'delete app');
+    if (d.ok) {
+      closeDeleteModal();
+      currentApp = d.next;
+      await loadApps(d.next);
+      rebuildInputs(); loadFiles();
+      setStatus('Deleted ' + d.deleted + '. Now showing ' + d.next + '.', 'ok');
+    } else {
+      $('delerr').textContent = d.error || 'Couldn’t delete the app.';
+      $('delcancel').disabled = false; $('delagree').disabled = false;
+      $('delok').disabled = !$('delagree').checked;
+    }
+  } catch (e) {
+    $('delerr').textContent = 'Couldn’t reach Studio. Is it still running?';
+    $('delcancel').disabled = false; $('delagree').disabled = false; $('delok').disabled = false;
+  }
 }
 
 /* ==== Toolbox: fonts + drawing-helper inventory ==== */
@@ -2072,6 +2383,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     rebuildInputs(); loadFiles();
   });
   $('validate').addEventListener('click', validate);
+  $('dbgbtn').addEventListener('click', () => dbgToggle());
+  $('dbgclose').addEventListener('click', () => dbgToggle(false));
+  $('dbgcopy').addEventListener('click', dbgCopy);
+  $('dbgclear').addEventListener('click', () => { dbgLog.length = 0; dbgUnseen = 0; dbgPaintBadge(); dbgRender(); });
+  $('vclose').addEventListener('click', hideValidateResult);
+  $('vresult').addEventListener('click', () => {
+    if ($('vresult').classList.contains('ok')) hideValidateResult();   // click skips the wait
+  });
   $('mergebtn').addEventListener('click', openSubmitModal);
   $('pngbtn').addEventListener('click', savePng);
   setInterval(pollDisk, 2000);   // auto-reload when the files change on disk
@@ -2100,6 +2419,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('newbtn').addEventListener('click', openNewModal);
   $('newok').addEventListener('click', createApp);
   $('newcancel').addEventListener('click', closeNewModal);
+  $('delbtn').addEventListener('click', openDeleteModal);
+  $('delagree').addEventListener('change', () => { $('delok').disabled = !$('delagree').checked; });
+  $('delcancel').addEventListener('click', closeDeleteModal);
+  $('delok').addEventListener('click', doDeleteApp);
+  $('delmodal').addEventListener('click', e => { if (e.target === $('delmodal')) closeDeleteModal(); });
   $('newname').addEventListener('input', () =>
     { $('newslug').textContent = 'Folder: apps/' + slugify($('newname').value || ''); });
   $('newname').addEventListener('keydown', e => { if (e.key === 'Enter') createApp(); });
@@ -2160,6 +2484,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!$('sprmodal').hidden) closeSprModal();
     if (!$('submitmodal').hidden && !$('submitagree').disabled) closeSubmitModal();
     if (!$('importmodal').hidden) closeImport();
+    if (!$('delmodal').hidden) closeDeleteModal();
+    if (!$('vresult').hidden) hideValidateResult();
     if (!$('tbxcoach').hidden) dismissTbxCoach(false);
   });
   // Publish modal
@@ -2311,6 +2637,8 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
   </label>
   <button class="ghost" id="newbtn"
           title="Start a brand-new app from a working example">+ Create New App</button>
+  <button class="ghost danger" id="delbtn"
+          title="Permanently delete the current app from apps/">Delete app</button>
   <span class="spacer"></span>
   <span class="status" id="status">Ready</span>
   <button class="ghost" id="validate"
@@ -2524,6 +2852,17 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
   </div>
 </div>
 
+<!-- Validate result: an LED-pixel check or X that draws itself, pixel by pixel -->
+<div class="vpop" id="vresult" hidden>
+  <button class="vclose" id="vclose" type="button" title="Dismiss" aria-label="Dismiss">&#10005;</button>
+  <div class="vicon">
+    <span class="vmark" id="vcheck"><i class="ck"></i></span>
+    <span class="vmark" id="vcross" hidden><i class="x1"></i><i class="x2"></i></span>
+  </div>
+  <div class="vhead" id="vhead">Looks good</div>
+  <div class="vsub" id="vsub"></div>
+</div>
+
 <!-- Validate & Submit: explain what publishing does, get the OK, then do it -->
 <div class="overlay" id="submitmodal" hidden>
   <div class="modal">
@@ -2551,6 +2890,22 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
   </div>
 </div>
 
+<!-- Delete-app confirmation: a checkbox the user must tick, then it removes the folder -->
+<div class="overlay" id="delmodal" hidden>
+  <div class="modal">
+    <h2>Delete this app?</h2>
+    <p>This permanently removes <b id="delname">this app</b> and its whole folder from
+       <code>apps/</code>, its code, images, and previews. This can't be undone.</p>
+    <label class="pubagree"><input type="checkbox" id="delagree">
+      <span>Yes, permanently delete <b id="delname2">this app</b> from apps/.</span></label>
+    <div class="mErr" id="delerr"></div>
+    <div class="modal-btns">
+      <button class="ghost" id="delcancel" type="button">Cancel</button>
+      <button class="accent danger" id="delok" type="button" disabled>Delete app</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm before importing a dropped image file -->
 <div class="overlay" id="importmodal" hidden>
   <div class="modal">
@@ -2564,6 +2919,24 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
     </div>
   </div>
 </div>
+
+<!-- Debug log: failed Studio requests, for pasting into a bug report -->
+<button id="dbgbtn" type="button"
+        title="Recent request failures. Copy the log when reporting a problem.">
+  Debug<span class="dbg-count" id="dbgcount" hidden>0</span>
+</button>
+<aside class="dbgpanel" id="dbgpanel" hidden>
+  <div class="dbg-head">
+    <span class="dbg-title">Debug log</span>
+    <span class="dbg-hint">Failed requests, newest first</span>
+    <span class="spacer"></span>
+    <button class="ghost small" id="dbgcopy" type="button"
+            title="Copy the whole log so you can paste it into a report">Copy log</button>
+    <button class="ghost small" id="dbgclear" type="button">Clear</button>
+    <button class="ghost small" id="dbgclose" type="button" aria-label="Close">&#10005;</button>
+  </div>
+  <div class="dbg-list" id="dbglist"></div>
+</aside>
 
 <script>__JS__</script>
 </body></html>"""
@@ -2647,7 +3020,21 @@ def create_server(app_dir: Path):
         # the browser serve a stale page/script, or a restart silently runs old JS.
         resp.headers["Cache-Control"] = "no-store, must-revalidate"
         resp.headers["Pragma"] = "no-cache"
+        resp.headers["X-GDN-Studio"] = "1"     # so the client can tell a real 500 from a wrong-port page
         return resp
+
+    @server.errorhandler(Exception)
+    def _json_errors(e):
+        # The UI always expects JSON. This is a local dev tool, so returning the real
+        # exception text + traceback is a feature (the browser Debug log shows it verbatim),
+        # not a leak. An HTML 500 page would only reach the front end as a parse failure.
+        import traceback
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return jsonify({"ok": False, "error": f"{e.code} {e.name}: {e.description}",
+                            "where": request.path}), e.code
+        return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}",
+                        "where": request.path, "detail": traceback.format_exc()[-4000:]}), 500
 
     # ---- the page -----------------------------------------------------
     @server.get("/")
@@ -2822,6 +3209,27 @@ def create_server(app_dir: Path):
             return jsonify({"ok": True, "app": slug})
         except Exception as e:  # noqa: BLE001
             return jsonify({"ok": False, "error": f"Couldn't create the app: {e}"})
+
+    @server.post("/delete-app")
+    def delete_app():
+        """Permanently delete an app folder from apps/. The browser dialog confirms first
+        (a checkbox the user must tick), and this refuses anything outside apps/."""
+        import shutil
+        name = request.args.get("app") or (request.get_json(silent=True) or {}).get("app")
+        if not name:
+            return jsonify({"ok": False, "error": "No app was specified to delete."})
+        cand = (base / name).resolve()
+        if cand.parent != base.resolve() or not cand.is_dir():
+            return jsonify({"ok": False, "error": "That app isn't inside the apps/ folder."})
+        others = [a for a in _list_apps() if a != cand.name]
+        if not others:
+            return jsonify({"ok": False,
+                            "error": "This is your only app. Create another before deleting this one."})
+        try:
+            shutil.rmtree(cand)
+        except Exception as e:  # noqa: BLE001
+            return jsonify({"ok": False, "error": f"Couldn't delete the folder: {e}"})
+        return jsonify({"ok": True, "deleted": cand.name, "apps": others, "next": others[0]})
 
     @server.post("/starter")
     def starter_file():
