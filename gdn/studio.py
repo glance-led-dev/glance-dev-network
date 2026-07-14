@@ -2491,11 +2491,11 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
 <div class="overlay" id="submitmodal" hidden>
   <div class="modal">
     <h2>Publish your app</h2>
-    <p>Publishing does these steps for you, using the GitHub sign-in you already use
-       for git. Studio runs them on your behalf:</p>
+    <p>You don't need to know git or how to fork, Studio does it all for you with the
+       GitHub sign-in you already use. Here's what happens when you click Publish:</p>
     <ol class="pubsteps">
-      <li>Make sure you have your own <b>fork</b> of the Glance app repo, and create one
-          if you don't have it yet.</li>
+      <li>Make sure you have your own <b>fork</b> (your personal copy of the app catalog on
+          GitHub), and <b>create one for you</b> if you don't have it yet.</li>
       <li>Commit <b id="pubslug">your app</b> and push it to your fork on its own branch.</li>
       <li>Open a <b>pull request</b> to add it to the app catalog.</li>
     </ol>
