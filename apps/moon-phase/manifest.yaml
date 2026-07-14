@@ -1,0 +1,24 @@
+gdn: 1
+id: moon-phase
+version: 0.1.0
+name: Moon Phase
+author: Mark
+description: Tonight's moon, drawn pixel by pixel. Phase name, percent illuminated, and days until the next full moon.
+category: Lifestyle
+entry: app.star
+width: 192
+height: 32
+refresh: 3600
+pages: [moon]
+inputs:
+  - key: hemisphere
+    type: string
+    app_input_type: dropdown
+    label: Hemisphere
+    options: [Northern, Southern]
+    default: Northern
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#FFB347"
