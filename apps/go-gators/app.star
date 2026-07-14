@@ -19,8 +19,8 @@ def sign(c, ctx):
     #    UPPERCASE only, so .upper() everything or it won't draw.
     l1 = ctx.inputs.get("line1", "GO").upper()
     l2 = ctx.inputs.get("line2", "GATORS").upper()
-    col1 = ctx.inputs.get("color1", "orange")   # Florida orange for line 1
-    col2 = ctx.inputs.get("color2", "blue")     # Florida blue for line 2
+    col1 = ctx.inputs.get("color1", "#FA4616")   # Gators orange for line 1
+    col2 = ctx.inputs.get("color2", "#0021A5")   # Gators blue for line 2
 
     # 2. Start from a blank (black) panel.
     c.fill("black")

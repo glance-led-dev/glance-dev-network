@@ -1,9 +1,9 @@
 gdn: 1
-id: message
+id: go-gators
 version: 0.1.0
-name: Message Sign
+name: Go Gators
 author: AJ - GLANCE
-description: A custom two-line message board in the colors you choose.
+description: A two-line Gators message board with a logo, in the colors you choose.
 category: Lifestyle
 entry: app.star
 width: 192
@@ -22,17 +22,15 @@ inputs:
     label: Line 2 (optional)
     default: GATORS
   - key: color1
-    type: choice
-    app_input_type: dropdown
+    type: string
+    app_input_type: color
     label: Line 1 color
-    default: orange
-    choices: [white, red, green, blue, yellow, cyan, orange, magenta]
+    default: "#FA4616"
   - key: color2
-    type: choice
-    app_input_type: dropdown
+    type: string
+    app_input_type: color
     label: Line 2 color
-    default: blue
-    choices: [white, red, green, blue, yellow, cyan, orange, magenta]
+    default: "#0021A5"
 
 assets:
   - gator.png
