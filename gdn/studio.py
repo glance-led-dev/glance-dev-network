@@ -533,6 +533,11 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
            border-radius: 6px; border: 1px solid var(--border2); background: transparent;
            color: var(--muted); cursor: pointer; align-self: center; }
 .editimg:hover { border-color: rgba(43,255,110,.5); color: var(--green-soft); }
+/* the per-page remove button (only shown when an app has more than one page) */
+.pagex { margin-left: 6px; width: 22px; height: 22px; padding: 0; line-height: 1;
+         border-radius: 6px; border: 1px solid var(--border2); background: transparent;
+         color: var(--muted); cursor: pointer; font-size: 15px; align-self: center; }
+.pagex:hover { border-color: rgba(229,72,77,.6); color: #ff6b6b; background: rgba(229,72,77,.08); }
 .editimg.active { background: var(--green); color: var(--green-dark); border-color: var(--green);
                   box-shadow: 0 0 10px rgba(0,255,0,.25); }
 .screen-wrap { overflow-x: auto; display: flex; justify-content: safe center; padding: 16px; border-radius: 12px;
@@ -1470,8 +1475,11 @@ async function render(showBusy) {
       // The raw page-function name ("sign") means nothing to a user; only label a panel when
       // it has a real title, or when there are several pages to tell apart.
       const label = (p.title && p.title !== p.name) ? p.title : (d.pages.length > 1 ? p.name : '');
+      // Only offer to remove a page when there's more than one (an app needs at least one).
+      const rmx = d.pages.length > 1
+        ? `<button class="pagex" data-page="${esc(p.name)}" title="Remove this page">×</button>` : '';
       return `<div class="panel"><div class="h">${label ? `<span class="name">${esc(label)}</span>` : ''}
-        <span class="dims">${p.w}×${p.h} pixels</span></div>
+        <span class="dims">${p.w}×${p.h} pixels</span>${rmx}</div>
         <div class="screen-wrap"><div class="${cls}" style="--cell:${scale}px" data-page="${esc(p.name)}">
           <img src="${p.dataUri}" width="${p.w * scale}" height="${p.h * scale}" draggable="false"></div></div></div>`;
     }).join('');
@@ -2213,6 +2221,64 @@ async function doAddPage() {
   setStatus('Added page “' + slug + '”. Draw it in the ' + slug + '() function.', 'ok');
 }
 
+/* ---- Remove a page: the × on a panel, undoing an Add page ----
+   Strips the page from manifest `pages:` and deletes its `def` block from app.star. */
+let _pageToRemove = null;
+function reEsc(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function removePageFromManifest(m, slug) {
+  const flow = m.match(/^([ \t]*)pages:[ \t]*\[([^\]]*)\]/m);
+  if (flow) {
+    const items = flow[2].split(',').map(s => s.trim()).filter(Boolean).filter(x => x !== slug);
+    return flow[1] === undefined ? m : m.replace(flow[0], flow[1] + 'pages: [' + items.join(', ') + ']');
+  }
+  const block = m.match(/^([ \t]*)pages:[ \t]*(#.*)?\r?\n((?:[ \t]*-[ \t]*.*(?:\r?\n|$))+)/m);
+  if (block) {
+    const re = new RegExp('^[ \\t]*-[ \\t]*' + reEsc(slug) + '[ \\t]*\\r?\\n?', 'm');
+    return m.replace(block[3], block[3].replace(re, ''));
+  }
+  return m;
+}
+function removePageDef(src, slug) {
+  if (!src.endsWith('\n')) src += '\n';
+  // the def line, then every blank or indented (body) line until the next top-level line
+  const re = new RegExp('^[ \\t]*def[ \\t]+' + reEsc(slug) +
+    '[ \\t]*\\([^\\n]*\\)[ \\t]*:[^\\n]*\\n(?:[ \\t]*\\n|[ \\t]+[^\\n]*\\n)*', 'm');
+  return src.replace(re, '').replace(/\n{3,}/g, '\n\n');
+}
+function openRemovePageModal(page) {
+  if (!page) return;
+  if ((lastPages ? lastPages.length : 0) <= 1) {
+    setStatus('An app needs at least one page, so this one can’t be removed.', 'bad'); return; }
+  _pageToRemove = page;
+  $('pagedelname').textContent = page;
+  $('pagedelname2').textContent = page;
+  $('pagedelerr').textContent = '';
+  $('pagedelmodal').hidden = false;
+  $('pagedelcancel').focus();
+}
+function closeRemovePageModal() { $('pagedelmodal').hidden = true; _pageToRemove = null; }
+async function doRemovePage() {
+  const slug = _pageToRemove;
+  if (!slug) { closeRemovePageModal(); return; }
+  files[activeTab] = $('ed').value;                      // stash edits first
+  files['manifest.yaml'] = removePageFromManifest(files['manifest.yaml'] || '', slug);
+  files['app.star'] = removePageDef(files['app.star'] || '', slug);
+  try {
+    const d = await apiFetch('files?' + appQS(), {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({'app.star': files['app.star'], 'manifest.yaml': files['manifest.yaml']})}, 'remove page');
+    if (d && d.ok === false) { $('pagedelerr').textContent = d.error || 'Couldn’t save the change.'; return; }
+  } catch (e) { $('pagedelerr').textContent = 'Couldn’t reach Studio to remove the page.'; return; }
+  pristine['app.star'] = files['app.star'];
+  pristine['manifest.yaml'] = files['manifest.yaml'];
+  closeRemovePageModal();
+  if (activeTab === 'app.star') { $('ed').value = files['app.star']; paintHl(); }
+  else if (activeTab === 'manifest.yaml') { $('ed').value = files['manifest.yaml']; paintHl(); }
+  rebuildInputs();
+  render(true);
+  setStatus('Removed page “' + slug + '”.', 'ok');
+}
+
 /* ---- Delete app: confirm with a checkbox, then remove the folder ---- */
 function openDeleteModal() {
   if (!currentApp) { setStatus('No app is selected to delete.', 'bad'); return; }
@@ -2526,6 +2592,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     $('pageslug').textContent = s ? 'Function: def ' + s + '(c, ctx):' : '';
   });
   $('pagename').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAddPage(); } });
+  $('pagedelok').addEventListener('click', doRemovePage);
+  $('pagedelcancel').addEventListener('click', closeRemovePageModal);
+  $('pagedelmodal').addEventListener('click', e => { if (e.target === $('pagedelmodal')) closeRemovePageModal(); });
   $('newmodal').addEventListener('click', e => { if (e.target === $('newmodal')) closeNewModal(); });
   $('newaddsetting').addEventListener('click', () => addSettingRow('free-text', ''));
   $('newsettings').addEventListener('click', e => {
@@ -2579,6 +2648,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (e.key !== 'Escape') return;
     if (!$('newmodal').hidden) closeNewModal();
     if (!$('pagemodal').hidden) closeAddPageModal();
+    if (!$('pagedelmodal').hidden) closeRemovePageModal();
     if (!$('inputmodal').hidden) closeInputModal();
     if (!$('tbxmodal').hidden) closeToolbox();
     if (!$('sprmodal').hidden) closeSprModal();
@@ -2614,6 +2684,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('nowclear').addEventListener('click', () => { $('nowfld').value = ''; render(); });
   $('placebtn').addEventListener('click', () => { placeActive ? closePlace() : openPlace(); });
   $('panels').addEventListener('click', e => {
+    const px = e.target.closest('.pagex');
+    if (px) { openRemovePageModal(px.dataset.page); return; }
     if (e.target.closest('.editimg')) { placeActive ? closePlace() : openPlace(); }
   });
   $('placeclose').addEventListener('click', closePlace);
@@ -2905,6 +2977,21 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
     <div class="modal-btns">
       <button class="ghost" id="pagecancel">Cancel</button>
       <button class="accent" id="pageok">Add page</button>
+    </div>
+  </div>
+</div>
+
+<!-- Remove-page confirm dialog -->
+<div class="overlay" id="pagedelmodal" hidden>
+  <div class="modal">
+    <h2>Remove the “<span id="pagedelname">page</span>” page?</h2>
+    <p>This deletes the <code id="pagedelname2">page</code> entry from
+       <code>manifest.yaml</code> and its <code>def</code> function from <code>app.star</code>.
+       You can still undo it in the editor (Ctrl+Z) or with git.</p>
+    <div class="mErr" id="pagedelerr"></div>
+    <div class="modal-btns">
+      <button class="ghost" id="pagedelcancel">Cancel</button>
+      <button class="ghost danger" id="pagedelok">Remove page</button>
     </div>
   </div>
 </div>
