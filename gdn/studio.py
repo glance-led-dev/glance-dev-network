@@ -652,6 +652,8 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
          color: var(--green-soft); margin: 12px 0 0; display: flex; align-items: center; gap: 8px; }
 .pubprogress .pubok { color: var(--green-soft); }
 .pubprogress .pubok a { color: var(--green); text-decoration: underline; }
+.importprev { max-width: 100%; image-rendering: pixelated; background: #000;
+         border: 1px solid var(--border2); border-radius: 6px; padding: 6px; margin: 0 0 6px; display: block; }
 [hidden] { display: none !important; }
 """
 
@@ -1641,6 +1643,29 @@ async function uploadDroppedImage(file) {
   }
   setStatus('Added ' + d.name + (d.resized ? ' (shrunk to fit the panel)' : '') + '. Drag it into place.', 'ok');
 }
+/* Confirm before importing a dropped file, so a stray drag (e.g. while trying to move
+   an image) can't silently copy a file into the app and add a draw call. */
+let _pendingImport = null, _pendingImportURL = null;
+function askImport(file) {
+  _pendingImport = file;
+  $('importname').textContent = file.name || 'this image';
+  const pv = $('importpreview');
+  if (_pendingImportURL) { URL.revokeObjectURL(_pendingImportURL); _pendingImportURL = null; }
+  if (/^image\//.test(file.type || '')) {
+    _pendingImportURL = URL.createObjectURL(file); pv.src = _pendingImportURL; pv.hidden = false;
+  } else pv.hidden = true;
+  $('importmodal').hidden = false;
+}
+function closeImport() {
+  $('importmodal').hidden = true; _pendingImport = null;
+  if (_pendingImportURL) { URL.revokeObjectURL(_pendingImportURL); _pendingImportURL = null; }
+}
+function confirmImport() {
+  const f = _pendingImport;
+  $('importmodal').hidden = true; _pendingImport = null;
+  if (_pendingImportURL) { URL.revokeObjectURL(_pendingImportURL); _pendingImportURL = null; }
+  if (f) uploadDroppedImage(f);
+}
 
 /* ---- pixel-art sprite editor (paints a grid, writes c.bitmap / c.sprite) ---- */
 let sprGrid = [], sprW = 16, sprH = 16, sprColor = 'green', sprEdit = null, _sprDrag = null;
@@ -2059,8 +2084,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('drop', e => {
     if (![...(e.dataTransfer ? e.dataTransfer.types : [])].includes('Files')) return;
     e.preventDefault(); _dragDepth = 0; document.body.classList.remove('dropping');
-    const file = [...e.dataTransfer.files][0]; if (file) uploadDroppedImage(file);
+    const file = [...e.dataTransfer.files][0]; if (file) askImport(file);   // confirm before importing
   });
+  $('importcancel').addEventListener('click', closeImport);
+  $('importok').addEventListener('click', confirmImport);
+  $('importmodal').addEventListener('click', e => { if (e.target === $('importmodal')) closeImport(); });
   $('newbtn').addEventListener('click', openNewModal);
   $('newok').addEventListener('click', createApp);
   $('newcancel').addEventListener('click', closeNewModal);
@@ -2123,6 +2151,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!$('tbxmodal').hidden) closeToolbox();
     if (!$('sprmodal').hidden) closeSprModal();
     if (!$('submitmodal').hidden && !$('submitagree').disabled) closeSubmitModal();
+    if (!$('importmodal').hidden) closeImport();
     if (!$('tbxcoach').hidden) dismissTbxCoach(false);
   });
   // Publish modal
@@ -2510,6 +2539,20 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
     <div class="modal-btns">
       <button class="ghost" id="submitcancel" type="button">Cancel</button>
       <button class="accent" id="submitgo" type="button" disabled>Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm before importing a dropped image file -->
+<div class="overlay" id="importmodal" hidden>
+  <div class="modal">
+    <h2>Import this image?</h2>
+    <p>Studio will copy <b id="importname">this image</b> into this app's <code>assets/</code>
+       folder and add a line to draw it. Only import images you meant to add to your app.</p>
+    <img id="importpreview" class="importprev" alt="Dropped image preview" hidden>
+    <div class="modal-btns">
+      <button class="ghost" id="importcancel" type="button">Cancel</button>
+      <button class="accent" id="importok" type="button">Import image</button>
     </div>
   </div>
 </div>
