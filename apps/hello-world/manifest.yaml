@@ -1,0 +1,12 @@
+gdn: 1
+id: hello-world
+version: 0.1.0
+name: "hello-world"
+author: "your-name"
+description: A new Glance app.
+category: Fun
+entry: app.star
+width: 64
+height: 32
+refresh: 300
+pages: [main]
