@@ -1,0 +1,19 @@
+gdn: 1
+id: us-sky-clock
+version: 0.1.0
+name: US Clock With Sky
+author: Mark Ploski
+description: A big clock for any US time zone with a live sky that shifts through sunrise, day, sunset, and night. Colors and moon phase track the local time. Handles daylight saving automatically.
+category: Lifestyle
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages: [clock]
+inputs:
+  - key: zone
+    type: string
+    app_input_type: dropdown
+    label: Time zone
+    options: ["EASTERN", "CENTRAL", "MOUNTAIN", "ARIZONA", "PACIFIC", "ALASKA", "HAWAII"]
+    default: "EASTERN"
