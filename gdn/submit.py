@@ -70,17 +70,28 @@ def _app_paths(app_dir):
 
 def _token(root: Path):
     """Return (username, token) from the developer's git credential helper for
-    github.com, the same sign-in `git push` uses. Raises SubmitError if none."""
+    github.com, the same sign-in `git push` uses. Never blocks on a prompt (so a
+    machine that was never signed in fails in seconds, not minutes) and raises a
+    clear SubmitError telling the developer how to sign in."""
+    not_signed_in = SubmitError(
+        "You're not signed in to GitHub yet, so there's nothing to publish with.\n"
+        "Sign in once from a terminal, then click Publish again:\n"
+        "  - macOS / Linux:  gh auth login   (or just run `git push` once)\n"
+        "  - Windows:        git push        (the sign-in window opens automatically)")
+    env = dict(os.environ)
+    env["GIT_TERMINAL_PROMPT"] = "0"        # fail fast instead of hanging on a prompt
     try:
         r = subprocess.run(["git", "-C", str(root), "credential", "fill"],
                            input="protocol=https\nhost=github.com\n\n",
-                           capture_output=True, text=True, timeout=180)
+                           capture_output=True, text=True, timeout=25, env=env)
+    except subprocess.TimeoutExpired:
+        raise SubmitError(
+            "Timed out reaching your GitHub sign-in. Sign in from a terminal "
+            "(`gh auth login`, or run `git push` once), then publish again.")
     except (OSError, subprocess.SubprocessError):
         raise SubmitError("Couldn't reach your git credential manager to sign in to GitHub.")
     if r.returncode != 0:
-        raise SubmitError(
-            "You're not signed in to GitHub for git yet. Do one normal `git push` (or sign in "
-            "through your credential manager), then publish again.")
+        raise not_signed_in
     user = tok = ""
     for line in r.stdout.splitlines():
         if line.startswith("username="):
@@ -88,7 +99,7 @@ def _token(root: Path):
         elif line.startswith("password="):
             tok = line[9:]
     if not tok:
-        raise SubmitError("Your GitHub sign-in didn't return an access token. Sign in again and retry.")
+        raise not_signed_in
     return user, tok
 
 
@@ -150,6 +161,15 @@ def submit_via_fork(app_dir, log=None) -> dict:
     up_owner, up_repo = UPSTREAM.split("/")
     branch = f"submit-{slug}"
 
+    # Check the GitHub sign-in FIRST, before any slow work, so a not-signed-in
+    # machine fails in seconds with a clear message instead of after a long wait.
+    note("Signing in to GitHub…")
+    _user, token = _token(root)
+    st, me = _api("GET", "/user", token)
+    if st != 200 or not me.get("login"):
+        raise SubmitError("Couldn't confirm your GitHub account from your sign-in. Sign in again and retry.")
+    login = me["login"]
+
     # Render the catalog preview images so preview/<page>.png ships with the app.
     note("Rendering preview images…")
     try:
@@ -157,13 +177,6 @@ def submit_via_fork(app_dir, log=None) -> dict:
         write_previews(app_dir)
     except Exception:  # noqa: BLE001
         pass           # previews are a nice-to-have, never block a submit on them
-
-    note("Signing in to GitHub…")
-    _user, token = _token(root)
-    st, me = _api("GET", "/user", token)
-    if st != 200 or not me.get("login"):
-        raise SubmitError("Couldn't confirm your GitHub account from your sign-in. Sign in again and retry.")
-    login = me["login"]
 
     if login.lower() == up_owner.lower():
         # You can't fork your own repo; push the branch straight to it (maintainer path).
