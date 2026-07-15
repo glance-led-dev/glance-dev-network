@@ -72,7 +72,12 @@ def _new_setting_yaml(i, spec):
             f"    app_input_type: {w}",
             f"    label: {json.dumps(label)}"]   # json.dumps -> an always-valid YAML scalar
     if w in ("dropdown", "selection"):
-        rows += ["    choices: [Option 1, Option 2, Option 3]", "    default: Option 1"]
+        # Use the options the user typed in the wizard; fall back to placeholders if empty.
+        choices = [str(c).strip() for c in (spec.get("choices") or []) if str(c).strip()]
+        if not choices:
+            choices = ["Option 1", "Option 2", "Option 3"]
+        rows.append("    choices: [" + ", ".join(json.dumps(c) for c in choices) + "]")
+        rows.append("    default: " + json.dumps(choices[0]))
     elif w == "checkbox":
         rows.append("    default: false")
     elif w == "number":
@@ -688,9 +693,10 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .modal .mhint { font-size: 11.5px; color: var(--dim); margin: 0 0 8px; }
 .newsettings { display: flex; flex-direction: column; gap: 6px; margin: 0 0 8px; }
-.setrow { display: flex; gap: 6px; align-items: center; }
+.setrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .modal .setrow select { flex: 0 0 128px; width: auto; }
 .modal .setrow input { flex: 1 1 auto; width: auto; min-width: 0; }
+.modal .setrow input.setchoices { flex: 1 1 100%; }   /* choices wrap to their own line */
 .setrow .setremove { flex: 0 0 auto; padding: 4px 10px; }
 
 /* ---- Publish (Validate & Submit) modal ------------------------------ */
@@ -2079,27 +2085,35 @@ function insertSprite() {
    and an optional label each, so people pick WHAT kind of setting, not just how many. */
 const NEW_SETTING_TYPES = [
   ['free-text', 'Text box'], ['number', 'Number'], ['dropdown', 'Dropdown'],
-  ['checkbox', 'Checkbox'], ['date', 'Date'], ['color', 'Color'],
+  ['selection', 'Multi-select'], ['checkbox', 'Checkbox'], ['date', 'Date'], ['color', 'Color'],
 ];
-function newSettingRow(type, label) {
+const SET_HAS_CHOICES = t => t === 'dropdown' || t === 'selection';
+function newSettingRow(type, label, choices) {
   const opts = NEW_SETTING_TYPES.map(([v, t]) =>
     `<option value="${v}"${v === type ? ' selected' : ''}>${t}</option>`).join('');
+  // A dropdown / multi-select needs its options: show a comma-separated field for them.
   return `<div class="setrow">
     <select class="settype">${opts}</select>
     <input class="setlabel" placeholder="Label (optional)" maxlength="40" value="${esc(label || '')}">
     <button class="ghost small setremove" type="button" title="Remove this setting">&times;</button>
+    <input class="setchoices" placeholder="Choices, comma separated (e.g. Red, Green, Blue)"
+           value="${esc(choices || '')}"${SET_HAS_CHOICES(type) ? '' : ' hidden'}>
   </div>`;
 }
-function addSettingRow(type, label) {
+function addSettingRow(type, label, choices) {
   const box = $('newsettings');
   if (box.querySelectorAll('.setrow').length >= 8) return;   // manifest cap
-  box.insertAdjacentHTML('beforeend', newSettingRow(type || 'free-text', label || ''));
+  box.insertAdjacentHTML('beforeend', newSettingRow(type || 'free-text', label || '', choices || ''));
 }
 function collectNewSettings() {
-  return [...$('newsettings').querySelectorAll('.setrow')].map(r => ({
-    type: r.querySelector('.settype').value,
-    label: r.querySelector('.setlabel').value.trim(),
-  }));
+  return [...$('newsettings').querySelectorAll('.setrow')].map(r => {
+    const type = r.querySelector('.settype').value;
+    const s = { type: type, label: r.querySelector('.setlabel').value.trim() };
+    if (SET_HAS_CHOICES(type)) {
+      s.choices = r.querySelector('.setchoices').value.split(',').map(c => c.trim()).filter(Boolean);
+    }
+    return s;
+  });
 }
 function openNewModal() {
   $('newerr').textContent = '';
@@ -2599,6 +2613,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('newaddsetting').addEventListener('click', () => addSettingRow('free-text', ''));
   $('newsettings').addEventListener('click', e => {
     const rm = e.target.closest('.setremove'); if (rm) rm.closest('.setrow').remove();
+  });
+  $('newsettings').addEventListener('change', e => {
+    const sel = e.target.closest('.settype'); if (!sel) return;   // toggle the choices field
+    sel.closest('.setrow').querySelector('.setchoices').hidden = !SET_HAS_CHOICES(sel.value);
   });
 
   const asel = $('appsel');
