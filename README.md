@@ -52,6 +52,8 @@ gdn studio
 Or skip the terminal and double-click the launcher for your system: `studio.bat`
 (Windows), `studio.command` (macOS), or `studio.sh` (Linux).
 
+## Examples of Features in the GLACNE DEV STUDIO:
+
 <table>
   <tr>
     <td width="33%" valign="top"><img src="https://glance-led.dev/img/studio/autocomplete.png" alt="Autocomplete for the drawing API"><br><sub>Autocomplete for the drawing API</sub></td>
