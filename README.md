@@ -15,7 +15,7 @@ validation, all in one browser window.*
 **Copyright (c) Glance. All rights reserved.**
 
 Glance Dev Studio, the `gdn` toolkit, and everything in this repository are the
-property of Glance. The repository is shared for one purpose: so developers can
+property of Passive Income Consulting LLC (DBA GLANCE-LED). The repository is shared for one purpose: so developers can
 **build apps for Glance LED panels and submit them** through a pull request, and
 so the community can propose improvements to shared app code. That is what it is
 here for, and those contributions are genuinely welcome.
