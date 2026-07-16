@@ -16,7 +16,7 @@ submitting one is safe by design — it can only draw a picture, nothing else.
    ```bash
    gdn preview apps/my-cool-app      # or: gdn studio apps/my-cool-app
    ```
-   New to this? See the full guide and API reference at https://api.glance-led.com
+   New to this? See the full guide and API reference at https://glance-led.dev
 4. **Submit it** — validate and open the pull request in one step:
    ```bash
    gdn submit apps/my-cool-app
