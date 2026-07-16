@@ -1,6 +1,6 @@
 # Glance Developer Network
 
-Build tiny apps for Glance's LED panels. Write a few simple lines, preview
+Build apps for Glance's SCROLL and LED V2. Write a few simple lines, preview
 instantly in your browser, and submit your app with a pull request.
 
 **Full guide, tutorials & API reference: https://glance-led.dev**
