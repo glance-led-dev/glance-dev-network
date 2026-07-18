@@ -26,22 +26,94 @@ from __future__ import annotations
 
 import hashlib
 import json as _json
+import os
+import random
 import time
 from pathlib import Path
 
 import requests
 
-# Hard per-request timeout: an API slower than this is treated as down. Any
-# endpoint that can't answer in 5s is too slow for a live panel, so we fail fast
-# rather than tie up a render worker. Stays well below the sandbox wall-time in
-# run_star_app_sandboxed so a slow endpoint fails cleanly inside the app instead
-# of getting the whole render killed.
-REQUEST_TIMEOUT = 5.0
+# Hard per-attempt timeout: an API slower than this is treated as down. A live
+# panel can't wait, so we fail fast rather than tie up a render worker. One
+# logical http.get may retry across up to PROXY_ATTEMPTS proxies, so the worst-case
+# wall time is REQUEST_TIMEOUT * PROXY_ATTEMPTS; keep their product below the
+# sandbox wall-time in run_star_app_sandboxed so a slow endpoint fails cleanly
+# inside the app instead of getting the whole render killed.
+REQUEST_TIMEOUT = 4.0
 DEFAULT_TTL = 300
 MAX_BODY_BYTES = 1_000_000          # cap huge responses; body is truncated
 MAX_REQUESTS_PER_RUN = 8            # an app can't hammer an API in one render
 
 CACHE_DIR = Path.home() / ".gdn" / "httpcache"
+
+# ---- outbound proxy pool --------------------------------------------------
+# All app http.get traffic egresses through a rotating proxy pool, so the render
+# host itself never makes the outbound connection — a malicious app can't use
+# http.get to reach the host's own network or cloud metadata. The pool is
+# DOWNLOADED from the URL in the GDN_P environment variable (a provider
+# "download list" link, kept as a host secret, never in the repo). If GDN_P is
+# unset (e.g. local dev) the request goes out directly, unchanged.
+PROXY_SRC = os.environ.get("GDN_P", "")
+PROXY_TTL = 3600            # re-download the list at most hourly
+PROXY_ATTEMPTS = 3          # try this many different proxies before giving up
+_PROXY_CACHE = CACHE_DIR / "proxies.json"
+
+
+def _parse_proxy_lines(text: str) -> list:
+    """Turn a provider list into requests-style proxy URLs. Accepts the two common
+    formats: `host:port:user:pass` (authenticated) and `host:port`."""
+    out = []
+    for line in text.splitlines():
+        p = line.strip().split(":")
+        if len(p) == 4:
+            out.append(f"http://{p[2]}:{p[3]}@{p[0]}:{p[1]}")
+        elif len(p) == 2:
+            out.append(f"http://{p[0]}:{p[1]}")
+    return out
+
+
+def _load_proxies() -> list:
+    """Return the proxy pool (empty if GDN_P isn't set). Cached on disk for
+    PROXY_TTL because every render is a fresh subprocess — without the disk cache
+    we'd re-download the whole list from the provider on each render."""
+    if not PROXY_SRC:
+        return []
+    try:
+        entry = _json.loads(_PROXY_CACHE.read_text(encoding="utf-8"))
+        if time.time() - float(entry["ts"]) < PROXY_TTL and entry.get("proxies"):
+            return list(entry["proxies"])
+    except (OSError, ValueError, KeyError):
+        pass  # missing / stale / corrupt -> re-download
+    try:
+        text = requests.get(PROXY_SRC, timeout=10).text
+    except requests.RequestException:
+        return []
+    proxies = _parse_proxy_lines(text)
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        _PROXY_CACHE.write_text(_json.dumps({"ts": time.time(), "proxies": proxies}),
+                                encoding="utf-8")
+    except OSError:
+        pass
+    return proxies
+
+
+def _fetch(url, headers, params):
+    """One logical GET, routed through the proxy pool with rotation + retry.
+    Redirects are disabled so a public URL can't bounce the request to an internal
+    address; a 3xx is handed back to the app as-is. Raises requests.RequestException
+    only if every attempt fails (the caller turns that into status_code 0)."""
+    pool = _load_proxies()
+    chosen = random.sample(pool, min(PROXY_ATTEMPTS, len(pool))) if pool else [None]
+    last = None
+    for proxy in chosen:
+        try:
+            return requests.get(url, headers=headers, params=params,
+                                timeout=REQUEST_TIMEOUT, allow_redirects=False,
+                                proxies={"http": proxy, "https": proxy} if proxy else None)
+        except requests.RequestException as e:
+            last = e
+    raise last if last is not None else requests.RequestException("no proxy available")
 
 
 class HttpLimit(Exception):
@@ -124,10 +196,9 @@ class HttpHost:
             raise HttpLimit(f"http limit: at most {MAX_REQUESTS_PER_RUN} "
                             "uncached requests per render")
         try:
-            r = requests.get(url, headers=headers, params=params,
-                             timeout=REQUEST_TIMEOUT)
+            r = _fetch(url, headers, params)
         except requests.RequestException as e:
-            # timeout / DNS / refused — report, don't crash the render
+            # timeout / DNS / refused / all proxies failed — report, don't crash the render
             return _response(0, "", error=f"{type(e).__name__}: {e}"[:300])
         body = r.text[:MAX_BODY_BYTES]
         if 200 <= r.status_code < 300 and ttl > 0:
