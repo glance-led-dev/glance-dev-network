@@ -38,7 +38,7 @@ def _fmt(v):
 
 
 def _movies(ctx):
-    key = ctx.inputs.get("tmdb_key", "")
+    key = ctx.inputs.get("tmdbkey", "")
     if key == "":
         return SAMPLE
     resp = http.get(

@@ -67,7 +67,7 @@ def _new_setting_yaml(i, spec):
         w = "free-text"
     label = str(spec.get("label") or "").strip() or f"Setting {i}"
     dtype = "choice" if w in ("dropdown", "selection") else ("number" if w == "number" else "string")
-    rows = [f"  - key: setting_{i}",
+    rows = [f"  - key: setting{i}",
             f"    type: {dtype}",
             f"    app_input_type: {w}",
             f"    label: {json.dumps(label)}"]   # json.dumps -> an always-valid YAML scalar
@@ -309,7 +309,7 @@ def _scaffold_new_app(dest, slug, name, width, category, settings, refresh=300):
         f'    c.text_center("{title}", 2, font="6x8", color="green")',
     ]
     if settings:
-        lines += ['    msg = ctx.inputs.get("setting_1", "")',
+        lines += ['    msg = ctx.inputs.get("setting1", "")',
                   "    if msg:",
                   '        c.text_center(str(msg).upper(), 16, font="5x7", color="white")']
     else:
@@ -690,6 +690,7 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 .modal .slug { font: 11.5px 'JetBrains Mono', monospace; color: var(--green-soft);
          margin: 8px 0 0; min-height: 16px; }
 .modal .mErr { font-size: 12px; color: var(--red); margin: 6px 0 0; min-height: 16px; }
+.modal input.invalid { border-color: var(--red); background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='3'><path d='M0 2.5 Q1.5 0.5 3 2.5 T6 2.5' fill='none' stroke='%23ff9a9a' stroke-width='0.9'/></svg>"); background-repeat: repeat-x; background-position: left bottom; }
 .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .modal .mhint { font-size: 11.5px; color: var(--dim); margin: 0 0 8px; }
 .newsettings { display: flex; flex-direction: column; gap: 6px; margin: 0 0 8px; }
@@ -1058,10 +1059,19 @@ function openInputModal() {
   $('intype').value = 'free-text';
   $('inchoicewrap').hidden = true;
   $('inerr').textContent = '';
+  $('inkey').classList.remove('invalid');
   $('inputmodal').hidden = false;
   $('inkey').focus();
 }
 function closeInputModal() { $('inputmodal').hidden = true; const b = $('addinput'); if (b) b.focus(); }
+function liveKeyCheck() {
+  // Live red-invalid feedback for the setting name: '_' and '-' break the render
+  // descriptor, so they're rejected here the same way addInput() rejects them.
+  const key = $('inkey').value.trim();
+  const bad = key !== '' && !/^[a-zA-Z][a-zA-Z0-9]*$/.test(key);
+  $('inkey').classList.toggle('invalid', bad);
+  $('inerr').textContent = bad ? 'Letters and numbers only, start with a letter — no _ or - (they break app settings).' : '';
+}
 function yamlVal(v) {
   // Wrap anything YAML would misread, colons, '#', brackets, quotes, leading or
   // trailing spaces, and bool/null look-alikes (yes/no/on/off), in a safe
@@ -1078,8 +1088,8 @@ function addInput() {
   const w = $('intype').value;
   const def = $('indefault').value.trim();
   if (!key) { $('inerr').textContent = 'Give the setting a name first.'; return; }
-  if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)) {
-    $('inerr').textContent = 'Name must be letters, numbers, or _, and start with a letter.'; return; }
+  if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(key)) {
+    $('inerr').textContent = 'Name must be letters and numbers and start with a letter — no _ or - (they break app settings).'; return; }
   let m = files['manifest.yaml'] || '';
   // key is validated above, so it's safe to build a RegExp from it.
   if (new RegExp('^\\s*-\\s*key:\\s*' + key + '\\s*$', 'm').test(m)) {
@@ -2655,6 +2665,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('addinput').addEventListener('click', openInputModal);
   $('incancel').addEventListener('click', closeInputModal);
   $('inok').addEventListener('click', addInput);
+  $('inkey').addEventListener('input', liveKeyCheck);
   $('intype').addEventListener('change', () => {
     const w = $('intype').value;
     $('inchoicewrap').hidden = !(w === 'dropdown' || w === 'selection');
@@ -3036,6 +3047,7 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
       <option value="date">Date</option>
       <option value="date-past">Date (past only)</option>
       <option value="color">Color</option>
+      <option value="api-key">API key</option>
     </select>
     <div id="inchoicewrap" hidden>
       <label class="mlabel" for="inchoices">Choices (comma separated)</label>

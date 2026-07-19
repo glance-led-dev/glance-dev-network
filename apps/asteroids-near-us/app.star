@@ -99,7 +99,7 @@ def fit_font(c, text, options, maxw):
 # ---------- page ----------
 
 def neo(c, ctx):
-    key = ctx.inputs.get("api_key", "").strip() or "DEMO_KEY"
+    key = ctx.inputs.get("apikey", "").strip() or "DEMO_KEY"
 
     # http.get returns a DICT: {"status_code": ..., "body": ..., "json": ...}
     r = http.get(
