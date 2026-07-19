@@ -13,6 +13,6 @@ pages: [neo]
 inputs:
   - key: api_key
     type: string
-    app_input_type: free-text
+    app_input_type: api-key
     label: NASA API key (api.nasa.gov)
     default: "DEMO_KEY"
