@@ -84,6 +84,16 @@ def check_app(app_dir) -> tuple:
         # if it never does, the setting is dead and confuses people who fill it in.
         for i in (m.get("inputs") or []):
             k = str(i.get("key", "")).strip() if isinstance(i, dict) else ""
+            ait = str(i.get("app_input_type", "")).strip().lower() if isinstance(i, dict) else ""
+            # Input keys ride the render descriptor (key-value_key-value), so '_' and '-'
+            # are delimiters: a key containing them never routes to the app. Hard error for
+            # api-key inputs (their value MUST arrive); a warning for any other input.
+            if k and not re.match(r"^[a-zA-Z][a-zA-Z0-9]*$", k):
+                safe = re.sub(r"[^a-zA-Z0-9]", "", k) or "setting"
+                msg = (f"input key `{k}` must be letters and digits only, starting with a letter "
+                       f"(no '_' or '-'): those are render-descriptor delimiters, so a value under "
+                       f"this key never reaches the app. Rename it, e.g. `{safe}`.")
+                (errors if ait == "api-key" else warns).append(msg)
             if k and not re.search(r"""['"]""" + re.escape(k) + r"""['"]""", src):
                 errors.append(f"setting `{k}` is declared but never used in app.star "
                               f'(read it with ctx.inputs.get("{k}"), or remove it from the manifest)')

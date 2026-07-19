@@ -11,7 +11,7 @@ height: 32
 refresh: 3600
 pages: [neo]
 inputs:
-  - key: api_key
+  - key: apikey
     type: string
     app_input_type: api-key
     label: NASA API key (api.nasa.gov)
