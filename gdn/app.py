@@ -32,7 +32,7 @@ class Input:
     help: str = ""
     # UI widget the client shows for this input. Optional; when unset the form
     # falls back to `type` (choice->dropdown, number->number, else free-text).
-    # One of: free-text | dropdown | selection | checkbox | date | date-past | color
+    # One of: free-text | dropdown | selection | checkbox | date | date-past | color | api-key
     app_input_type: Optional[str] = None
 
     def coerce(self, raw):

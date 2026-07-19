@@ -56,7 +56,7 @@ REQUIRED = ("app.star", "manifest.yaml")
 # The setting types the Create New App wizard offers, and how each maps onto a
 # manifest input. Anything not in here falls back to a plain text box.
 _NEW_SETTING_TYPES = {"free-text", "number", "dropdown", "selection",
-                      "checkbox", "date", "date-past", "color"}
+                      "checkbox", "date", "date-past", "color", "api-key"}
 
 
 def _new_setting_yaml(i, spec):
@@ -84,7 +84,7 @@ def _new_setting_yaml(i, spec):
         rows.append("    default: 0")
     elif w == "color":
         rows.append('    default: "#00ff00"')
-    else:  # free-text, date, date-past
+    else:  # free-text, date, date-past, api-key
         rows.append('    default: ""')
     return rows
 
@@ -1396,6 +1396,7 @@ function inputField(i) {
     return `<input type="date" name="${key}" value="${esc(val)}"${cap}>`;
   }
   if (w === 'number') return `<input type="number" name="${key}" value="${esc(val)}">`;
+  if (w === 'api-key') return `<input type="password" name="${key}" value="${esc(val)}" autocomplete="off" spellcheck="false">`;
   return `<input type="text" name="${key}" value="${esc(val)}">`;
 }
 function buildInputs(schema) {
@@ -2086,6 +2087,7 @@ function insertSprite() {
 const NEW_SETTING_TYPES = [
   ['free-text', 'Text box'], ['number', 'Number'], ['dropdown', 'Dropdown'],
   ['selection', 'Multi-select'], ['checkbox', 'Checkbox'], ['date', 'Date'], ['color', 'Color'],
+  ['api-key', 'API key'],
 ];
 const SET_HAS_CHOICES = t => t === 'dropdown' || t === 'selection';
 function newSettingRow(type, label, choices) {
