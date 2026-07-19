@@ -296,6 +296,8 @@ def _input_field(i: dict) -> str:
         field = f'<input type="date" name="{key}" value="{default}"{cap}>'
     elif widget == "number":
         field = f'<input type="number" name="{key}" value="{default}">'
+    elif widget == "api-key":
+        field = f'<input type="password" name="{key}" value="{default}" autocomplete="off" spellcheck="false">'
     else:  # free-text and any unrecognized widget
         field = f'<input type="text" name="{key}" value="{default}">'
     return f'<label>{label}</label>{field}{hint}'
