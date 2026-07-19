@@ -27,7 +27,7 @@ assets:
 inputs:
   - key: tmdb_key
     type: string
-    app_input_type: free-text
+    app_input_type: api-key
     label: TMDB API key
     default: ""
     help: Your themoviedb.org API key. Stored encrypted on the server. Leave blank to show the bundled sample.
