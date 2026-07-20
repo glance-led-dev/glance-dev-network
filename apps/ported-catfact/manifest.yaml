@@ -1,15 +1,13 @@
 gdn: 1
 id: ported-catfact
-version: 0.1.0
+version: 0.2.0
 name: Cat Fact
-author: your-name
-description: The tidbyt/community "Catfact" app, ported to GDN — translated then hand-finished.
+author: tidbyt-community
+description: A random cat fact, fresh every few minutes, from catfact.ninja. No API key needed. Ported from the tidbyt/community "Catfact" app.
 category: Fun
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
 refresh: 300
-
 pages: [main]
