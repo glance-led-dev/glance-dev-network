@@ -1,22 +1,26 @@
 gdn: 1
 id: ported-timezone
-version: 0.1.0
+version: 0.2.0
 name: Timezone
-author: your-name
-description: The official tidbyt/pixlet Location example, ported to GDN — translated then hand-finished.
+author: tidbyt-community
+description: Live local time for any IANA timezone (Europe/London, Asia/Tokyo, America/Denver), daylight saving included. The official tidbyt/pixlet Location example, ported to GDN — translated then hand-finished.
 category: Time
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
-refresh: 300
-
+refresh: 60
 pages: [main]
-
 inputs:
   - key: tz
     type: string
     app_input_type: free-text
     label: Timezone
     default: America/New_York
+    help: An IANA timezone name, e.g. Europe/London, Asia/Tokyo, America/Denver.
+  - key: hour_format
+    type: choice
+    app_input_type: dropdown
+    label: Hour format
+    default: "12"
+    choices: ["12", "24"]
