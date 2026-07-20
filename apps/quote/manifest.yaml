@@ -1,9 +1,9 @@
 gdn: 1
 id: quote
-version: 0.1.0
+version: 0.2.0
 name: Daily Quote
-author: your-name
-description: A short motivational quote that changes each day.
+author: glance-led
+description: A short quote each day, with its author where there is one. Curated rather than pulled from an API, so the attributions are actually correct.
 category: Lifestyle
 entry: app.star
 width: 192
