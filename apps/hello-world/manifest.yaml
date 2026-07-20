@@ -1,8 +1,8 @@
 gdn: 1
 id: hello-world
 version: 0.1.0
-name: "hello-world"
-author: "your-name"
+name: Hello World
+author: glance-led
 description: A new Glance app.
 category: Fun
 entry: app.star
