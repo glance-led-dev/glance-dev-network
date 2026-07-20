@@ -1,9 +1,9 @@
 gdn: 1
 id: countdown
-version: 0.1.0
+version: 0.2.0
 name: Countdown
-author: your-name
-description: Days remaining until any event.
+author: glance-led
+description: Days remaining until any event, with the target date and a color that warms up as it gets close.
 category: Lifestyle
 entry: app.star
 width: 128
@@ -18,6 +18,6 @@ inputs:
     default: NEW YEAR
   - key: date
     type: string
-    app_input_type: free-text
-    label: Target date (YYYY-MM-DD)
+    app_input_type: date
+    label: Target date
     default: "2027-01-01"
