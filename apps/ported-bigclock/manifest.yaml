@@ -1,19 +1,16 @@
 gdn: 1
 id: ported-bigclock
-version: 0.1.0
+version: 0.2.0
 name: Big Clock
-author: your-name
-description: The tidbyt/community "Big Clock" app, ported to GDN — translated then hand-finished.
+author: tidbyt-community
+description: The tidbyt/community "Big Clock" app, ported to GDN — translated then hand-finished. Color fades through the day like the original's sunrise tint.
 category: Time
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
 refresh: 60
-
 pages: [main]
-
 inputs:
   # schema.Location -> a plain UTC-offset number (GDN's ctx.now is UTC).
   - key: tz_offset
