@@ -2,7 +2,7 @@ gdn: 1
 id: now-playing
 version: 0.1.0
 name: Now Playing
-author: your-name
+author: glance-led
 description: The top 5 movies in theaters now, from The Movie Database (TMDB).
 category: Entertainment
 entry: app.star
