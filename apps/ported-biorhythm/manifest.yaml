@@ -1,24 +1,26 @@
 gdn: 1
 id: ported-biorhythm
-version: 0.1.0
+version: 0.2.0
 name: Biorhythm
-author: your-name
-description: The tidbyt/community "Biorhythm" app, ported to GDN — translated then hand-finished.
-category: Science
+author: tidbyt-community
+description: >-
+  Your biorhythm chart for the next couple of weeks. Biorhythm theory holds that
+  three cycles start at birth and repeat forever - physical (23 days), emotional
+  (28) and intellectual (33). Above the centre line is meant to be a high day,
+  below it a low one, and a crossing is a "critical" day. Ported from the tidbyt/community
+  "Biorhythm" app - translated with `gdn translate`, then hand-finished.
+category: Novelty
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
 refresh: 300
-
 pages: [main]
-
 inputs:
-  # schema.DateTime "Birthdate" -> string (YYYY-MM-DD).
+  # schema.DateTime "Birthdate" -> GDN's date-past picker.
   - key: bday
     type: string
-    app_input_type: free-text
+    app_input_type: date-past
     label: Birthdate
     default: "1990-06-15"
-    help: Your birthdate, YYYY-MM-DD.
+    help: The cycles are counted from this day, so it's the only thing that changes the chart.
