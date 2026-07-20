@@ -1,19 +1,16 @@
 gdn: 1
 id: ported-weather
-version: 0.1.0
+version: 0.2.0
 name: Ported Weather
-author: your-name
-description: A Pixlet/tronbyt app ported to GDN — scaffolded by `gdn translate`, then hand-finished.
+author: tidbyt-community
+description: A Pixlet/tronbyt app ported to GDN — scaffolded by `gdn translate`, then hand-finished. Live temperature from Open-Meteo, no API key needed.
 category: Weather
 entry: app.star
-
 # tronbyt/Pixlet apps are natively 64x32. Our firmware handles that size fine.
 width: 64
 height: 32
-refresh: 300
-
+refresh: 900
 pages: [main]
-
 inputs:
   - key: city
     type: string
