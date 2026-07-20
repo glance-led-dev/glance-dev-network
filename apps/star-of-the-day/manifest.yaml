@@ -1,16 +1,14 @@
 gdn: 1
 id: star-of-the-day
-version: 0.1.0
+version: 0.2.0
 name: Star of the Day
 author: AJ
 description: A different real star each day — a shining star, a faint starfield, and a few facts.
 category: Science
 entry: app.star
-
 width: 128
 height: 32
 refresh: 3600
-
 # Single page. No settings: the app picks a new star automatically from today's
 # date, so there's nothing for anyone to fill in.
 pages: [main]
