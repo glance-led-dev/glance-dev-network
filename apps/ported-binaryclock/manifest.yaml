@@ -1,15 +1,33 @@
 gdn: 1
 id: ported-binaryclock
-version: 0.1.0
+version: 0.2.0
 name: Binary Clock
-author: your-name
+author: tidbyt-community
 description: The tidbyt/community "Binary Clock" app, ported to GDN — translated then hand-finished.
 category: Time
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
 refresh: 60
-
 pages: [main]
+inputs:
+  # schema.Location -> a plain UTC-offset number (GDN's ctx.now is UTC).
+  - key: tz_offset
+    type: number
+    app_input_type: free-text
+    label: UTC offset (hours)
+    default: -4
+    help: Does NOT follow daylight saving. US Eastern is -4 in summer and -5 in winter. Central -5/-6, Mountain -6/-7, Pacific -7/-8.
+  - key: on_color
+    type: string
+    app_input_type: color
+    label: Active bit color
+    default: "#FF0000"
+  - key: show_seconds
+    type: choice
+    app_input_type: dropdown
+    label: Seconds column
+    default: "no"
+    choices: ["no", "yes"]
+    help: The panel redraws once a minute, so the seconds column is a frozen snapshot. Off gives five wider columns.
