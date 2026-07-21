@@ -7,13 +7,33 @@
 #
 # `gdn translate` converted the schema field to a manifest input and flagged the
 # Marquee/Root/Text widgets + the load() imports. Hand-finished for GDN (static
-# 64x32): the marquee became a two-line static label, and the Location picker
-# became a plain timezone string input. See docs/PIXLET_COMPATIBILITY.md.
+# 64x32). See docs/PIXLET_COMPATIBILITY.md.
 #
-# The upstream example only ECHOED the timezone string back, since its job was
-# demonstrating the schema. Here it actually uses it: timeapi.io resolves an
-# IANA name to the real local time, which means daylight saving is handled by
-# the tz database instead of a hand-maintained offset table. No API key needed.
+# LAYOUT IS FIXED. Nothing is measured against the current time, so the render
+# only ever takes one of two forms, decided by the digit count of the hour.
+#
+#   CITY   y=0   5x7    x=32  center
+#   DATE   y=25  4x5    x=32  center
+#
+#   one-digit hour (1:21)      two-digit hour (11:30)
+#   TIME   y=8  10x16  right 47    TIME   y=8  10x16  right 53
+#   AM/PM  y=10 4x5    left 49     AM/PM  y=10 picopixel right 64
+#   DST    y=18 4x5    left 49     DST    y=18 picopixel right 64
+
+MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+          "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+
+# one-digit hour
+TIME_RIGHT_1 = 47
+LABEL_X_1 = 49
+LABEL_FONT_1 = "4x5"
+LABEL_ALIGN_1 = "left"
+
+# two-digit hour
+TIME_RIGHT_2 = 53
+LABEL_X_2 = 64
+LABEL_FONT_2 = "picopixel"
+LABEL_ALIGN_2 = "right"
 
 def _s(ctx, key, fallback):
     # An unset input can come back as None, so coerce before using it.
@@ -25,35 +45,24 @@ def _s(ctx, key, fallback):
 def pad2(n):
     return str(n) if n >= 10 else "0" + str(n)
 
-def fit_font(c, text, options, maxw):
-    for f in options:
-        if c.text_width(text, f) <= maxw:
-            return f
-    return options[len(options) - 1]
-
-MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-          "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-
 def _err(c, title, sub):
     c.fill("black")
-    c.rect(0, 0, c.width - 1, 8, fill = "orange")
-    c.text("TIMEZONE", c.width // 2, 1, font = "4x5", color = "black", align = "center")
-    c.text(title, c.width // 2, 12, font = "5x7", color = "orange", align = "center")
-    c.text(sub, c.width // 2, 22, font = "4x5", color = "gray", align = "center")
+    c.text("TIMEZONE", 32, 0, font = "5x7", color = "cyan", align = "center")
+    c.text(title, 32, 12, font = "5x7", color = "orange", align = "center")
+    c.text(sub, 32, 25, font = "4x5", color = "gray", align = "center")
 
 def main(c, ctx):
     tz = _s(ctx, "tz", "America/New_York")
     fmt = _s(ctx, "hour_format", "12")
 
     if not tz:
-        _err(c, "NO TIMEZONE", "SET ONE IN SETTINGS")
+        _err(c, "NO ZONE", "SET ONE IN SETTINGS")
         return
 
     # http.get returns a DICT: {"status_code":..., "body":..., "json":...}
     r = http.get(
         "https://timeapi.io/api/Time/current/zone",
         params = {"timeZone": tz},
-        # A minute of cache lines up with the refresh, so one call per render.
         ttl_seconds = 55,
     )
 
@@ -97,26 +106,28 @@ def main(c, ctx):
 
     time_s = str(h) + ":" + pad2(minute)
 
+    # The only thing that switches the layout is whether the hour is two digits.
+    if h >= 10:
+        time_right = TIME_RIGHT_2
+        label_x = LABEL_X_2
+        label_font = LABEL_FONT_2
+        label_align = LABEL_ALIGN_2
+    else:
+        time_right = TIME_RIGHT_1
+        label_x = LABEL_X_1
+        label_font = LABEL_FONT_1
+        label_align = LABEL_ALIGN_1
+
     c.fill("black")
 
-    # ----- city across the top -----
-    c.text(city, c.width // 2, 0, font = fit_font(c, city, ["5x7", "4x5"], c.width - 2), color = "cyan", align = "center")
+    c.text(city, 32, 0, font = "5x7", color = "cyan", align = "center")
 
-    # ----- the time, as big as it fits -----
-    tfont = fit_font(c, time_s, ["10x16", "7x12", "6x8"], c.width - 14)
-    tw = c.text_width(time_s, tfont)
-    tx = (c.width - tw) // 2
-    if ampm:
-        tx = (c.width - tw - 10) // 2      # leave room for the AM/PM tag
-
-    c.text(time_s, tx, 9, font = tfont, color = "white")
+    c.text(time_s, time_right, 8, font = "10x16", color = "white", align = "right")
 
     if ampm:
-        c.text(ampm, tx + tw + 2, 11, font = "4x5", color = "gray")
-        # DST tag sits under AM/PM, so you can see the zone is on summer time.
-        if dst:
-            c.text("DST", tx + tw + 2, 19, font = "4x5", color = "green")
+        c.text(ampm, label_x, 10, font = label_font, color = "gray", align = label_align)
 
-    # ----- date along the bottom -----
-    date_s = dow + " " + MONTHS[month - 1] + " " + str(day)
-    c.text(date_s, c.width // 2, 26, font = "4x5", color = "gray", align = "center")
+    if dst:
+        c.text("DST", label_x, 18, font = label_font, color = "green", align = label_align)
+
+    c.text(dow + " " + MONTHS[month - 1] + " " + str(day), 32, 25, font = "4x5", color = "gray", align = "center")
