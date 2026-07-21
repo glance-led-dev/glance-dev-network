@@ -1,15 +1,13 @@
 gdn: 1
 id: ported-bofhquotes
-version: 0.1.0
+version: 0.2.0
 name: BOFH Excuses
-author: your-name
-description: The tidbyt/community "BOFH Quotes" app, ported to GDN — translated then hand-finished.
+author: tidbyt-community
+description: A fresh excuse for why the system is down, from the classic Bastard Operator From Hell list — blame solar flares, fat electrons, or the intern. Ported from the tidbyt/community "BOFH Quotes" app.
 category: Fun
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
 refresh: 300
-
 pages: [main]
