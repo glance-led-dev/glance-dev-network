@@ -1,23 +1,19 @@
 gdn: 1
 id: world-clock
-version: 0.1.0
+version: 0.2.0
 name: World Clock
-author: your-name
-description: Local time, sunrise and sunset for any US zip code.
+author: glance-led
+description: Local time, sunrise and sunset for any US zip code. Daylight saving is resolved from the timezone database, not guessed.
 category: Time
 entry: app.star
-
 # Canvas: 32 tall, width up to 384. Set what your panel is.
 width: 192
 height: 32
-
 # Re-render every minute so the clock stays current.
 refresh: 60
-
 # Pages the panel rotates through. app.star defines one function per name.
 # You can instead give a count, e.g. `pages: 2`, and define page1, page2.
 pages: [clock, sun]
-
 # The one thing the client fills in.
 inputs:
   - key: zip
@@ -25,8 +21,7 @@ inputs:
     app_input_type: free-text
     label: Zip code
     default: "10001"
-    help: A US zip code. Try 90210, 60601, 98101, 96813, 99501.
-
+    help: Any US zip code.
 # Custom art you drop in this folder (or an assets/ subfolder), drawn with
 # c.image(). Every image you draw MUST be listed here. Make them in any editor
 # (Photoshop, etc.), keep them small PNGs with a transparent background.
