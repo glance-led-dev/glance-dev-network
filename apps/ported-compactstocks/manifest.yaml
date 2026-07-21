@@ -1,15 +1,25 @@
 gdn: 1
 id: ported-compactstocks
-version: 0.1.0
+version: 0.2.0
 name: Compact Stocks
 author: your-name
-description: The tidbyt/community "Compact Stocks" app, ported to GDN — translated then hand-finished.
+description: The tidbyt/community "Compact Stocks" app, ported to GDN — translated then hand-finished. Live quotes from Twelve Data.
 category: Finance
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
-refresh: 300
-
+refresh: 720
 pages: [main]
+inputs:
+  - key: apikey
+    app_input_type: api-key
+    type: string
+    label: Twelve Data API key
+    help: Free key from twelvedata.com — 800 calls a day.
+  - key: symbols
+    type: string
+    app_input_type: free-text
+    label: Symbols
+    default: "AAPL,MSFT,NVDA,TSLA,AMZN"
+    help: Up to 5 tickers, comma separated.
