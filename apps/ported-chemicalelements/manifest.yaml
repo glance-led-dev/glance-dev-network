@@ -2,7 +2,7 @@ gdn: 1
 id: ported-chemicalelements
 version: 0.1.0
 name: Chemical Elements
-author: your-name
+author: tidbyt-community
 description: The tidbyt/community "Chemical Elements" app, ported to GDN — translated then hand-finished.
 category: Science
 entry: app.star

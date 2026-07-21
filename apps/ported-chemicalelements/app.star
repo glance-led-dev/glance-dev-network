@@ -58,7 +58,7 @@ def main(c, ctx):
     # category accent bar along the top
     c.rect(0, 0, c.width - 1, 1, fill = accent)
     # big element symbol on the left
-    c.text(sym.upper(), 2, 3, font = "16x20", color = accent)
+    c.text(sym.upper(), 1, 3, font = "16x20", color = accent)
     # atomic number + mass stacked on the right
     c.text("NO", 40, 3, font = "4x5", color = "gray")
     c.text(str(num), c.width - 1, 3, font = "5x7", color = "white", align = "right")
