@@ -1,15 +1,13 @@
 gdn: 1
 id: ported-advice
-version: 0.1.0
+version: 0.2.0
 name: Advice
 author: your-name
-description: The tidbyt/community "Advice" app, ported to GDN — translated then hand-finished.
+description: A random piece of unsolicited advice, refreshed every few minutes, from the Advice Slip API. No API key needed. Ported from the tidbyt/community "Advice" app.
 category: Lifestyle
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
 refresh: 300
-
 pages: [main]
