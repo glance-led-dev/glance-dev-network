@@ -1,9 +1,9 @@
 gdn: 1
 id: ported-timezone
-version: 0.2.0
+version: 0.3.0
 name: Timezone
 author: tidbyt-community
-description: Live local time for any IANA timezone (Europe/London, Asia/Tokyo, America/Denver), daylight saving included. The official tidbyt/pixlet Location example, ported to GDN — translated then hand-finished.
+description: Live local time for any major world timezone, daylight saving included. The official tidbyt/pixlet Location example, ported to GDN — translated then hand-finished.
 category: Time
 entry: app.star
 # tronbyt/Pixlet native size.
@@ -13,11 +13,61 @@ refresh: 60
 pages: [main]
 inputs:
   - key: tz
-    type: string
-    app_input_type: free-text
+    type: choice
+    app_input_type: dropdown
     label: Timezone
-    default: America/New_York
-    help: An IANA timezone name, e.g. Europe/London, Asia/Tokyo, America/Denver.
+    default: "America/New_York"
+    help: Daylight saving is applied automatically for zones that observe it.
+    choices:
+      - "Pacific/Honolulu"
+      - "America/Anchorage"
+      - "America/Los_Angeles"
+      - "America/Phoenix"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/New_York"
+      - "America/Halifax"
+      - "America/Mexico_City"
+      - "America/Bogota"
+      - "America/Sao_Paulo"
+      - "America/Argentina/Buenos_Aires"
+      - "Atlantic/Reykjavik"
+      - "Europe/Lisbon"
+      - "Europe/Dublin"
+      - "Europe/London"
+      - "Europe/Madrid"
+      - "Europe/Paris"
+      - "Europe/Amsterdam"
+      - "Europe/Berlin"
+      - "Europe/Rome"
+      - "Europe/Stockholm"
+      - "Europe/Warsaw"
+      - "Europe/Athens"
+      - "Europe/Istanbul"
+      - "Europe/Kyiv"
+      - "Europe/Moscow"
+      - "Africa/Lagos"
+      - "Africa/Cairo"
+      - "Africa/Nairobi"
+      - "Africa/Johannesburg"
+      - "Asia/Jerusalem"
+      - "Asia/Dubai"
+      - "Asia/Karachi"
+      - "Asia/Kolkata"
+      - "Asia/Dhaka"
+      - "Asia/Bangkok"
+      - "Asia/Jakarta"
+      - "Asia/Singapore"
+      - "Asia/Manila"
+      - "Asia/Hong_Kong"
+      - "Asia/Shanghai"
+      - "Asia/Seoul"
+      - "Asia/Tokyo"
+      - "Australia/Perth"
+      - "Australia/Brisbane"
+      - "Australia/Sydney"
+      - "Pacific/Auckland"
+      - "UTC"
   - key: hour_format
     type: choice
     app_input_type: dropdown
