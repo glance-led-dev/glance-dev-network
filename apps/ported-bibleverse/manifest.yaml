@@ -1,23 +1,20 @@
 gdn: 1
 id: ported-bibleverse
-version: 0.1.0
+version: 0.2.0
 name: Bible Verse
-author: your-name
-description: The tidbyt/community "Bible Verse" app, ported to GDN — translated then hand-finished.
+author: tidbyt-community
+description: A short verse each day, King James Version. Ported from the tidbyt/community "Bible Verse" app.
 category: Lifestyle
 entry: app.star
-
 # tronbyt/Pixlet native size.
 width: 64
 height: 32
-refresh: 300
-
+refresh: 3600
 pages: [main]
-
 inputs:
-  # schema.Color -> string (hex); schema.Dropdown -> choice.
+  # schema.Color -> string (hex).
   - key: color
     type: string
-    app_input_type: free-text
+    app_input_type: color
     label: Reference color
     default: "#00FF00"
