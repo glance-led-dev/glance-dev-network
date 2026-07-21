@@ -1,18 +1,15 @@
 gdn: 1
 id: local-fires
-version: 0.1.0
+version: 0.2.0
 name: Local Fires
-author: your-name
-description: Wildfire risk and the nearest active fire for a US zip code.
+author: glance-led
+description: Live wildfire activity and the nearest active fire for a US zip code, from the NIFC interagency feed. No API key required.
 category: News
 entry: app.star
-
 width: 128
 height: 32
-refresh: 300
-
+refresh: 1800
 pages: [status, nearest]
-
 inputs:
   - key: zip
     type: string
@@ -24,8 +21,8 @@ inputs:
     type: string
     app_input_type: free-text
     label: City label
-    default: LOS ANGELES
-
+    default: ""
+    help: Leave blank to just show FIRE WATCH.
 # Icons you drop in this folder (or assets/) and draw with c.image().
 assets:
   - flame.png
