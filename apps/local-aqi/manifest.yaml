@@ -2,18 +2,20 @@ gdn: 1
 id: local-aqi
 version: 0.1.0
 name: Local AQI
-author: your-name
-description: US Air Quality Index and health guidance for a zip code.
+author: glance-led
+description: Live US Air Quality Index and health guidance for a zip code, from the EPA AirNow network.
 category: Weather
 entry: app.star
-
 width: 128
 height: 32
-refresh: 300
-
+refresh: 900
 pages: [now, health]
-
 inputs:
+  - key: apikey
+    app_input_type: api-key
+    type: string
+    label: AirNow API key
+    help: Free key from docs.airnowapi.org/account/request
   - key: zip
     type: string
     app_input_type: free-text
@@ -23,9 +25,9 @@ inputs:
   - key: city
     type: string
     app_input_type: free-text
-    label: City label
-    default: LOS ANGELES
-
+    label: City label (optional)
+    default: ""
+    help: Leave blank to use the reporting area AirNow returns.
 assets:
   - leaf.png
   - mask.png
