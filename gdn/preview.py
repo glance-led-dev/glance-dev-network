@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import html
+import re
 import webbrowser
 from pathlib import Path
 from typing import Dict, Optional
@@ -20,6 +21,22 @@ from . import rgb565
 
 def _data_uri(png_bytes: bytes) -> str:
     return "data:image/png;base64," + base64.b64encode(png_bytes).decode("ascii")
+
+
+def _used_keys(app_dir: Path, manifest) -> set:
+    """The setting keys the app's code actually reads.
+
+    A setting is wired up by one thing only: its key appearing as a quoted string in
+    the code (`ctx.inputs.get("zip")`). Same test `gdn check` uses to fail an app for a
+    declared-but-unused setting, so the Studio can flag it in the settings panel
+    instead of letting Validate be the first place anyone finds out.
+    """
+    try:
+        src = (app_dir / manifest.get("entry", "app.star")).read_text(encoding="utf-8")
+    except OSError:
+        return {str(i.get("key", "")) for i in (manifest.get("inputs") or [])}  # can't tell: assume fine
+    return {str(i.get("key", "")) for i in (manifest.get("inputs") or [])
+            if re.search(r"""['"]""" + re.escape(str(i.get("key", ""))) + r"""['"]""", src)}
 
 
 def render_frames(app_dir, inputs: Optional[Dict[str, object]], now=None) -> dict:
@@ -89,10 +106,11 @@ def _render_frames_star(app_dir: Path, inputs, now=None) -> dict:
         "refresh": int(manifest.get("refresh", 300)),
         "author": manifest.get("author", ""), "description": manifest.get("description", ""),
     }
+    used = _used_keys(app_dir, manifest)
     inputs_schema = [
         {"key": i["key"], "type": i.get("type", "string"), "label": i.get("label", i["key"]),
          "default": i.get("default"), "choices": i.get("choices"), "help": i.get("help", ""),
-         "app_input_type": i.get("app_input_type")}
+         "app_input_type": i.get("app_input_type"), "used": i["key"] in used}
         for i in (manifest.get("inputs") or [])
     ]
     try:
