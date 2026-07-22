@@ -52,6 +52,26 @@ EDITABLE = ("app.star", "app.py", "manifest.yaml")
 # Files a valid app must have; offered as one-click starters when missing.
 REQUIRED = ("app.star", "manifest.yaml")
 
+# The 128x32 panel shown on the welcome screen, beside the app.star that draws it.
+# It is a genuine render from this renderer, not an illustration, so the screen can
+# never advertise a result the product doesn't actually produce. Regenerate with:
+#     def main(c, ctx):
+#         c.clear()
+#         c.text("HELLO WORLD!", 10, 10, font="8x12", color="green")
+# rendered through gdn.preview._render_frames_star and copied from pages[0]["dataUri"].
+# Font choice is forced, not styling: the type is uppercase because the bitmap fonts
+# have no lowercase glyphs, and 8x12 is the largest font that both fits 128px AND has
+# an "!" glyph (10x16 is 131px wide; 10x14 fits but silently drops the "!").
+_HELLO_PANEL = (
+    "data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAIAAAAAgCAIAAABVQOdyAAABFElEQVR4nO2XYQ6DIAxG2bKjcBYP"
+    "vbNwmGVxWapABaqC23s/jLHyWSltwTkAAAAAAACAf+K2YQ/T++qfiSfzTYw0yYFyeNI0I2Vz70jC"
+    "9HlNuvp9mBOMnY9NivOKh/GMqdzdUITlH+ZifIRg27fMHj6M48tDXa0ZpsMFV6te5s2m2k4ejpQB"
+    "YZm89jCUC1qWkS0MIwVgnMJ1YvaXlaDy0nlERTqB02K2fw+4NKHbvFcGIN6GJk1d8KkNcZtXPf7l"
+    "J3qAE8uialHLGW+Y/Vw/r5EaKQB+uUupPNE0Ctr3lLa8MfcAPf2VelVuKkTZZeqC3yK2OgfkPNTV"
+    "rn0S9pnlWT5QV8gJNveM7i0QAAAAAAAAwF2KF5GQc964wEETAAAAAElFTkSuQmCC"
+)
+
 
 # The setting types the Create New App wizard offers, and how each maps onto a
 # manifest input. Anything not in here falls back to a plain text box.
@@ -788,40 +808,102 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 /* Sits in the flex flow where <main> would be (not a fixed overlay), so the header
    stays usable and every modal keeps its own stacking order. */
 .lander { flex: 1; min-height: 0; overflow-y: auto;
-          background: radial-gradient(1100px 520px at 50% -8%, rgba(0,255,0,.07), transparent 70%), var(--bg); }
+          background: radial-gradient(1200px 560px at 50% -10%, rgba(0,255,0,.06), transparent 70%), var(--bg); }
 header button:disabled, header input:disabled { opacity: .4; cursor: default; }
 header button:disabled:hover { border-color: var(--border2); color: #cfd7d2; }
-.landwrap { max-width: 720px; margin: 0 auto; padding: 12vh 24px 64px; }
-.landtitle { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -.7px; }
-.landsub { margin: 10px 0 0; color: var(--muted); font-size: 14px; max-width: 46ch; }
-.landactions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 28px 0 8px; }
-.landactions button.accent { padding: 11px 20px; font-size: 14px; }
-.landquick { color: var(--green-soft); font-size: 13px; font-weight: 600; text-decoration: none; }
+.landwrap { max-width: 980px; margin: 0 auto; padding: 26px 24px 40px;
+            display: flex; flex-direction: column; gap: 16px; }
+.landcard { background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 22px 24px; }
+
+/* hero */
+.landhero { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.15fr);
+            gap: 28px; align-items: center; padding: 30px 28px; }
+.landtitle { margin: 0; font-size: 31px; font-weight: 800; letter-spacing: -.9px; line-height: 1.15; }
+.landtitle .hgreen { color: var(--green-soft); }
+.landsub { margin: 12px 0 0; color: var(--muted); font-size: 13.5px; max-width: 40ch; line-height: 1.6; }
+.landactions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin: 22px 0 0; }
+.landactions button.accent { padding: 11px 20px; font-size: 14px; border-radius: 10px; }
+.landquick { color: var(--green-soft); font-size: 13px; font-weight: 700; text-decoration: none; }
 .landquick:hover { text-decoration: underline; }
-.landsec { margin-top: 34px; }
-.landhead { display: flex; align-items: baseline; gap: 8px; font-size: 11.5px; font-weight: 700;
-            letter-spacing: .6px; text-transform: uppercase; color: var(--dim);
-            padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-.landcount { font-weight: 500; letter-spacing: 0; text-transform: none; }
-.landapps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.landapp { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px;
-           background: var(--surface); border: 1px solid var(--border2); border-radius: 9px;
-           color: var(--text); font-size: 13px; font-weight: 600; }
-.landapp:hover { border-color: rgba(43,255,110,.55); color: var(--green-soft); }
-.landapp.last { border-color: rgba(43,255,110,.4); }
-.landapp-tag { font-size: 10px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
-               color: var(--green-soft); background: var(--green-dark); border-radius: 999px;
-               padding: 2px 7px; }
-.landnone { color: var(--dim); font-size: 13px; }
+
+/* hero visual: the editor window + the panel it draws */
+/* Code above, panel below: a 128x32 panel is 4:1, so it reads as a strip under the
+   code that draws it rather than a column beside it. */
+.herovis { display: flex; flex-direction: column; gap: 12px; }
+@media (max-width: 900px) { .landhero { grid-template-columns: 1fr; } }
+.codewin, .ledwin { background: #0c100e; border: 1px solid var(--border2); border-radius: 11px;
+                    overflow: hidden; display: flex; flex-direction: column; }
+.winbar { display: flex; align-items: center; gap: 6px; padding: 7px 10px;
+          background: #0f1412; border-bottom: 1px solid var(--border); }
+.tl { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.tl.r { background: #ff5f57; } .tl.y { background: #febc2e; } .tl.g { background: #28c840; }
+.wintab { margin-left: 6px; font: 11px 'JetBrains Mono', ui-monospace, monospace; color: var(--muted); }
+.winnote { margin-left: auto; font: 10px 'JetBrains Mono', ui-monospace, monospace; color: var(--dim); }
+.codebody { margin: 0; padding: 11px 12px; font: 10.5px/1.75 'JetBrains Mono', ui-monospace, monospace;
+            color: #d9e0dc; overflow-x: auto; }
+.codebody .ln { display: inline-block; width: 15px; color: #4a554e; user-select: none; }
+.codebody .kw { color: #c792ea; } .codebody .fn { color: #82aaff; }
+.codebody .st { color: var(--green-soft); } .codebody .nm { color: #f78c6c; }
+.codebody .pa { color: #a7b0ab; }
+.ledwin .leddot { width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+                  box-shadow: 0 0 9px rgba(0,255,0,.6); display: inline-block; }
+.ledstage { display: grid; place-items: center; padding: 13px 14px;
+            background: #000; border-top: 1px solid #10160f; }
+.ledimg { width: 100%; height: auto; display: block;
+          image-rendering: pixelated; border-radius: 2px;
+          filter: drop-shadow(0 0 16px rgba(0,255,0,.24)); }
+
+/* section heads */
+.landhead { display: flex; align-items: center; gap: 9px; }
+.lh-ico { color: var(--green-soft); display: inline-flex; }
+.lh-title { font-size: 11.5px; font-weight: 800; letter-spacing: .7px;
+            text-transform: uppercase; color: var(--text); }
+.landcount { font-size: 11.5px; color: var(--dim); }
+.landhead .spacer { flex: 1; }
+.sortlbl { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--dim); }
+.sortlbl select { padding: 5px 9px; font-size: 11.5px; border-radius: 8px; max-width: 150px; }
+.viewtog { display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px;
+           background: var(--surface2); border: 1px solid var(--border2); }
+.viewtog button { padding: 4px 8px; border-radius: 6px; background: transparent;
+                  border: 0; color: var(--dim); display: inline-flex; }
+.viewtog button:hover { color: var(--text); }
+.viewtog button.on { background: var(--green-dark); color: var(--green-soft); }
+
+/* app grid / list. Chips size to their name so nothing is ever truncated - app
+   folder names are how you tell them apart, and "ported-christmascount..." isn't. */
+.landapps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+.landapps.list { flex-direction: column; flex-wrap: nowrap; gap: 5px; }
+.landapp { display: inline-flex; align-items: center; gap: 9px; padding: 10px 13px; text-align: left;
+           background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px;
+           color: var(--text); font-size: 12.5px; font-weight: 600; }
+.landapp:hover { border-color: rgba(43,255,110,.55); color: var(--green-soft); background: #0e1410; }
+.landapp .aico { color: #55705f; flex: 0 0 auto; display: inline-flex; }
+.landapp:hover .aico { color: var(--green-soft); }
+.landapp-name { white-space: nowrap; }
+.landapps.list .landapp { width: 100%; }
+.landapp.last { border-color: rgba(43,255,110,.42); }
+.landapp-tag { margin-left: auto; flex: 0 0 auto; font-size: 9.5px; font-weight: 700;
+               letter-spacing: .3px; text-transform: uppercase; color: var(--green-soft);
+               background: var(--green-dark); border-radius: 999px; padding: 2px 7px; }
+.landnone { color: var(--dim); font-size: 13px; padding: 6px 0; }
 .landnone code { font-family: 'JetBrains Mono', ui-monospace, monospace; color: var(--muted); }
-.landlinks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-@media (max-width: 620px) { .landlinks { grid-template-columns: 1fr; } .landwrap { padding-top: 7vh; } }
-.landlinks a { display: block; padding: 12px 14px; border: 1px solid var(--border);
-               border-radius: 10px; background: var(--surface); text-decoration: none; }
-.landlinks a:hover { border-color: rgba(43,255,110,.45); }
-.landlinks b { display: block; font-size: 13px; color: var(--text); margin-bottom: 2px; }
-.landlinks span { font-size: 12px; color: var(--dim); }
-.landlinks code { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+/* new here? cards */
+.landlinks { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+             gap: 11px; margin-top: 15px; }
+.landlinks a { display: flex; align-items: flex-start; gap: 11px; padding: 14px;
+               border: 1px solid var(--border2); border-radius: 12px;
+               background: var(--surface2); text-decoration: none; }
+.landlinks a:hover { border-color: rgba(43,255,110,.5); background: #0e1410; }
+.ltile { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px;
+         display: grid; place-items: center; color: var(--green-soft);
+         background: var(--green-dark); border: 1px solid rgba(43,255,110,.22); }
+.ltxt { min-width: 0; }
+.ltxt b { display: block; font-size: 12.5px; color: var(--text); margin-bottom: 3px; }
+.ltxt span { display: block; font-size: 11.5px; color: var(--dim); line-height: 1.5; }
+.lchev { margin-left: auto; align-self: center; color: #4a554e; flex: 0 0 auto; }
+.landlinks a:hover .lchev { color: var(--green-soft); }
 
 [hidden] { display: none !important; }
 """
@@ -1076,8 +1158,41 @@ function setStatus(msg, cls) {
    asteroids app". Open on a welcome screen instead: create something, pick something,
    or go read the docs. */
 const LAST_APP = 'gdn.studio.lastApp';
-function rememberApp(n) { try { localStorage.setItem(LAST_APP, n); } catch (e) {} }
-function lastApp() { try { return localStorage.getItem(LAST_APP); } catch (e) { return null; } }
+const RECENT_APPS = 'gdn.studio.recentApps';   // most-recent-first, for the "Recently opened" sort
+const LAND_SORT = 'gdn.studio.landSort';
+const LAND_VIEW = 'gdn.studio.landView';
+const lsGet = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+function rememberApp(n) {
+  lsSet(LAST_APP, n);
+  const list = recentApps().filter(a => a !== n);
+  list.unshift(n);
+  lsSet(RECENT_APPS, JSON.stringify(list.slice(0, 30)));
+}
+function lastApp() { return lsGet(LAST_APP, null); }
+function recentApps() {
+  try { const v = JSON.parse(lsGet(RECENT_APPS, '[]')); return Array.isArray(v) ? v : []; }
+  catch (e) { return []; }
+}
+
+function sortedApps() {
+  const mode = lsGet(LAND_SORT, 'az');
+  const apps = appList.slice();
+  if (mode === 'za') return apps.sort((a, b) => b.localeCompare(a));
+  if (mode === 'recent') {
+    const seen = recentApps();
+    // Apps you've opened, most recent first; everything else keeps A-Z behind them.
+    return apps.sort((a, b) => {
+      const ia = seen.indexOf(a), ib = seen.indexOf(b);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }
+  return apps.sort((a, b) => a.localeCompare(b));
+}
 
 function setDocTitle(name) {
   // The tab name follows the app you're actually in. It used to be baked in at page
@@ -1085,14 +1200,26 @@ function setDocTitle(name) {
   document.title = name ? name + ', Glance Dev Studio' : 'Glance Dev Studio';
 }
 
-function showLander() {
+const APP_ICON = '<span class="aico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.8" y="3.4" width="12.4" height="9.2" rx="1.6"/><path d="M4.6 6.6h2.2v2.2H4.6z" fill="currentColor" stroke="none"/><path d="M9 7h3"/><path d="M9 9.6h2"/></svg></span>';
+
+function paintLanderApps() {
   const last = lastApp();
-  $('landapps').innerHTML = appList.length
-    ? appList.map(a => `<button class="landapp${a === last ? ' last' : ''}" data-app="${esc(a)}">
-         <span class="landapp-name">${esc(a)}</span>
+  const view = lsGet(LAND_VIEW, 'grid');
+  const box = $('landapps');
+  box.className = 'landapps' + (view === 'list' ? ' list' : '');
+  box.innerHTML = appList.length
+    ? sortedApps().map(a => `<button class="landapp${a === last ? ' last' : ''}" data-app="${esc(a)}">
+         ${APP_ICON}<span class="landapp-name">${esc(a)}</span>
          ${a === last ? '<span class="landapp-tag">last opened</span>' : ''}</button>`).join('')
     : '<div class="landnone">No apps in <code>apps/</code> yet. Create your first one above.</div>';
   $('landcount').textContent = appList.length === 1 ? '1 app' : appList.length + ' apps';
+  $('viewgrid').classList.toggle('on', view !== 'list');
+  $('viewlist').classList.toggle('on', view === 'list');
+  $('landsort').value = lsGet(LAND_SORT, 'az');
+}
+
+function showLander() {
+  paintLanderApps();
   $('lander').hidden = false;
   $('mainpane').hidden = true;
   landerControls(true);
@@ -2768,6 +2895,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     const b = e.target.closest('[data-app]');
     if (b) openApp(b.dataset.app);
   });
+  $('landsort').addEventListener('change', () => { lsSet(LAND_SORT, $('landsort').value); paintLanderApps(); });
+  $('viewgrid').addEventListener('click', () => { lsSet(LAND_VIEW, 'grid'); paintLanderApps(); });
+  $('viewlist').addEventListener('click', () => { lsSet(LAND_VIEW, 'list'); paintLanderApps(); });
   $('newok').addEventListener('click', createApp);
   $('newcancel').addEventListener('click', closeNewModal);
   $('delbtn').addEventListener('click', openDeleteModal);
@@ -3116,33 +3246,91 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
 <!-- Welcome screen: shown when Studio is launched without naming an app -->
 <section class="lander" id="lander" hidden>
   <div class="landwrap">
-    <h1 class="landtitle">Welcome to Glance Dev Studio</h1>
-    <p class="landsub">Write an app, watch it draw on a live LED panel, and publish it to Glance.</p>
 
-    <div class="landactions">
-      <button class="accent" id="landnew">+ Create a new app</button>
-      <a class="landquick" href="https://glance-led.dev/docs/getting-started/quickstart"
-         target="_blank" rel="noopener">Read the quickstart &rarr;</a>
+    <div class="landcard landhero">
+      <div class="herotext">
+        <h1 class="landtitle">Welcome to<br><span class="hgreen">Glance Dev Studio</span></h1>
+        <p class="landsub">Write an app, watch it draw on a live LED panel, and publish it to Glance.</p>
+        <div class="landactions">
+          <button class="accent" id="landnew">+ Create a new app</button>
+          <a class="landquick" href="https://glance-led.dev/docs/getting-started/quickstart"
+             target="_blank" rel="noopener">Read the quickstart &rarr;</a>
+        </div>
+      </div>
+
+      <div class="herovis">
+        <!-- Real app.star, and the panel beside it is the actual render of it. -->
+        <div class="codewin">
+          <div class="winbar">
+            <span class="tl r"></span><span class="tl y"></span><span class="tl g"></span>
+            <span class="wintab">app.star</span>
+          </div>
+<pre class="codebody"><span class="ln">1</span><span class="kw">def</span> <span class="fn">main</span>(c, ctx):
+<span class="ln">2</span>    c.<span class="fn">clear</span>()
+<span class="ln">3</span>    c.<span class="fn">text</span>(<span class="st">"HELLO WORLD!"</span>, <span class="nm">10</span>, <span class="nm">10</span>,
+<span class="ln">4</span>           <span class="pa">font=</span><span class="st">"8x12"</span>, <span class="pa">color=</span><span class="st">"green"</span>)</pre>
+        </div>
+
+        <div class="ledwin">
+          <div class="winbar">
+            <span class="leddot"></span>
+            <span class="wintab">panel</span>
+            <span class="winnote">128&times;32</span>
+          </div>
+          <div class="ledstage">
+            <img class="ledimg" id="ledhero" src="__HELLO_PANEL__"
+                 alt="An LED panel showing HELLO WORLD! in green pixel type">
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="landsec">
-      <div class="landhead">Open an app <span class="landcount" id="landcount"></span></div>
+    <div class="landcard">
+      <div class="landhead">
+        <span class="lh-ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.75 4.25V12.25a1 1 0 0 0 1 1h10.5a1 1 0 0 0 1-1V6.25a1 1 0 0 0-1-1H7.75l-1.5-2H2.75a1 1 0 0 0-1 1Z"/></svg></span>
+        <span class="lh-title">Open an app</span>
+        <span class="landcount" id="landcount"></span>
+        <span class="spacer"></span>
+        <label class="sortlbl">Sort by
+          <select id="landsort">
+            <option value="az">Name (A&ndash;Z)</option>
+            <option value="za">Name (Z&ndash;A)</option>
+            <option value="recent">Recently opened</option>
+          </select>
+        </label>
+        <span class="viewtog">
+          <button id="viewgrid" title="Grid view" aria-label="Grid view"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.2"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1.2"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1.2"/><rect x="9" y="9" width="5.5" height="5.5" rx="1.2"/></svg></button>
+          <button id="viewlist" title="List view" aria-label="List view"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1.5" y="2.5" width="13" height="2.2" rx="1.1"/><rect x="1.5" y="6.9" width="13" height="2.2" rx="1.1"/><rect x="1.5" y="11.3" width="13" height="2.2" rx="1.1"/></svg></button>
+        </span>
+      </div>
       <div class="landapps" id="landapps"></div>
     </div>
 
-    <div class="landsec">
-      <div class="landhead">New here?</div>
+    <div class="landcard">
+      <div class="landhead">
+        <span class="lh-ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 10 3 9.2l1.6-2.4a7.5 7.5 0 0 1 6.6-3.6l1.6.1.1 1.6a7.5 7.5 0 0 1-3.6 6.6L7.9 13 6 10Z"/><path d="M5.6 11.2 3.4 13.4"/></svg></span>
+        <span class="lh-title">New here?</span>
+      </div>
       <div class="landlinks">
         <a href="https://glance-led.dev/docs/getting-started/quickstart" target="_blank" rel="noopener">
-          <b>Quickstart</b><span>Install it, run it, get your first render.</span></a>
+          <span class="ltile"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 10 3 9.2l1.6-2.4a7.5 7.5 0 0 1 6.6-3.6l1.6.1.1 1.6a7.5 7.5 0 0 1-3.6 6.6L7.9 13 6 10Z"/><path d="M5.6 11.2 3.4 13.4"/></svg></span>
+          <span class="ltxt"><b>Quickstart</b><span>Install it, run it, get your first render.</span></span>
+          <span class="lchev"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 3.5 5 4.5-5 4.5"/></svg></span></a>
         <a href="https://glance-led.dev/docs/guides/your-first-app" target="_blank" rel="noopener">
-          <b>Your first app</b><span>Build a real app one step at a time.</span></a>
+          <span class="ltile"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m5.5 5.5-3 2.5 3 2.5M10.5 5.5l3 2.5-3 2.5"/></svg></span>
+          <span class="ltxt"><b>Your first app</b><span>Build a real app one step at a time.</span></span>
+          <span class="lchev"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 3.5 5 4.5-5 4.5"/></svg></span></a>
         <a href="https://glance-led.dev/docs/reference/drawing-api" target="_blank" rel="noopener">
-          <b>Drawing API</b><span>Every <code>c.*</code> call you draw with.</span></a>
+          <span class="ltile"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12.5 2.2a1.7 1.7 0 0 1 1.3 2.9l-5.4 5.4-2.4.7.7-2.4 5.4-5.4c.1-.1.3-.2.4-.2Z"/><path d="M6 12.2c0 1.2-1 2.1-2.2 2.1-.7 0-1.4-.2-1.8-.5.6-.2.9-.8.9-1.6 0-1.2 1-2.1 2.1-2.1"/></svg></span>
+          <span class="ltxt"><b>Drawing API</b><span>Every <code>c.*</code> call you draw with.</span></span>
+          <span class="lchev"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 3.5 5 4.5-5 4.5"/></svg></span></a>
         <a href="https://glance-led.dev/docs/guides" target="_blank" rel="noopener">
-          <b>All the guides</b><span>Images, pages, settings, time, publishing.</span></a>
+          <span class="ltile"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 4.2C6.9 3.3 5.5 2.9 3.5 2.9a1 1 0 0 0-1 1v7.6a1 1 0 0 0 1 1c2 0 3.4.4 4.5 1.3 1.1-.9 2.5-1.3 4.5-1.3a1 1 0 0 0 1-1V3.9a1 1 0 0 0-1-1c-2 0-3.4.4-4.5 1.3Zm0 0v9.6"/></svg></span>
+          <span class="ltxt"><b>All the guides</b><span>Images, pages, settings, time, publishing.</span></span>
+          <span class="lchev"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 3.5 5 4.5-5 4.5"/></svg></span></a>
       </div>
     </div>
+
   </div>
 </section>
 
@@ -3401,7 +3589,8 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
 
 def studio_html(app_dir: Path) -> str:
     """The single-page Studio UI (the app name only seeds the title)."""
-    page = _HTML.replace("__CSS__", _CSS).replace("__JS__", _JS)
+    page = (_HTML.replace("__CSS__", _CSS).replace("__JS__", _JS)
+                 .replace("__HELLO_PANEL__", _HELLO_PANEL))
     return page.replace("<title>Glance Dev Studio</title>",
                         f"<title>{html.escape(app_dir.name)}, Glance Dev Studio</title>")
 
