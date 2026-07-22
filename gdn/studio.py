@@ -774,6 +774,55 @@ button.accent .sp { border-color: rgba(0,0,0,.3); border-top-color: #0b0f14; }
 @media (prefers-reduced-motion: reduce) {
   .vpop.in, .vpop.ok.in, .vpop.out, .vicon svg.play .px {
     animation-duration: 1ms; animation-delay: 0ms; } }
+
+/* ---- a setting the code never reads --------------------------------- */
+.inputs .f.unused { border-left: 2px solid var(--red-border); padding-left: 10px; }
+.deadtag { margin-left: 7px; padding: 1px 7px; border-radius: 999px; font-size: 10px;
+           font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
+           color: var(--red); background: var(--red-bg); border: 1px solid var(--red-border); }
+.deadfix { display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+           max-width: 230px; margin-top: 2px; }
+.deadfix span { font-size: 11.5px; color: var(--dim); }
+
+/* ---- welcome screen -------------------------------------------------- */
+/* Sits in the flex flow where <main> would be (not a fixed overlay), so the header
+   stays usable and every modal keeps its own stacking order. */
+.lander { flex: 1; min-height: 0; overflow-y: auto;
+          background: radial-gradient(1100px 520px at 50% -8%, rgba(0,255,0,.07), transparent 70%), var(--bg); }
+header button:disabled, header input:disabled { opacity: .4; cursor: default; }
+header button:disabled:hover { border-color: var(--border2); color: #cfd7d2; }
+.landwrap { max-width: 720px; margin: 0 auto; padding: 12vh 24px 64px; }
+.landtitle { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -.7px; }
+.landsub { margin: 10px 0 0; color: var(--muted); font-size: 14px; max-width: 46ch; }
+.landactions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 28px 0 8px; }
+.landactions button.accent { padding: 11px 20px; font-size: 14px; }
+.landquick { color: var(--green-soft); font-size: 13px; font-weight: 600; text-decoration: none; }
+.landquick:hover { text-decoration: underline; }
+.landsec { margin-top: 34px; }
+.landhead { display: flex; align-items: baseline; gap: 8px; font-size: 11.5px; font-weight: 700;
+            letter-spacing: .6px; text-transform: uppercase; color: var(--dim);
+            padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.landcount { font-weight: 500; letter-spacing: 0; text-transform: none; }
+.landapps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.landapp { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px;
+           background: var(--surface); border: 1px solid var(--border2); border-radius: 9px;
+           color: var(--text); font-size: 13px; font-weight: 600; }
+.landapp:hover { border-color: rgba(43,255,110,.55); color: var(--green-soft); }
+.landapp.last { border-color: rgba(43,255,110,.4); }
+.landapp-tag { font-size: 10px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
+               color: var(--green-soft); background: var(--green-dark); border-radius: 999px;
+               padding: 2px 7px; }
+.landnone { color: var(--dim); font-size: 13px; }
+.landnone code { font-family: 'JetBrains Mono', ui-monospace, monospace; color: var(--muted); }
+.landlinks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+@media (max-width: 620px) { .landlinks { grid-template-columns: 1fr; } .landwrap { padding-top: 7vh; } }
+.landlinks a { display: block; padding: 12px 14px; border: 1px solid var(--border);
+               border-radius: 10px; background: var(--surface); text-decoration: none; }
+.landlinks a:hover { border-color: rgba(43,255,110,.45); }
+.landlinks b { display: block; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+.landlinks span { font-size: 12px; color: var(--dim); }
+.landlinks code { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
 [hidden] { display: none !important; }
 """
 
@@ -791,6 +840,7 @@ let pristine = {};     // last saved/loaded copy of `files`, for unsaved-change 
 let loadSeq = 0;       // drops out-of-order /files responses when switching apps fast
 let renderSeq = 0;     // drops out-of-order /frames.json responses (stale previews)
 let _inT;              // debounce timer for live edits to the settings form
+let inputSchema = [];  // the open app's settings, as the last render described them
 
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1020,17 +1070,78 @@ function setStatus(msg, cls) {
   el.className = 'status' + (cls ? ' ' + cls : '');
 }
 
+/* ---- the welcome screen ---------------------------------------------- */
+/* Studio launched with no app named (the double-click launchers do exactly that)
+   used to drop you into whichever app sorted first, which read as "Studio is the
+   asteroids app". Open on a welcome screen instead: create something, pick something,
+   or go read the docs. */
+const LAST_APP = 'gdn.studio.lastApp';
+function rememberApp(n) { try { localStorage.setItem(LAST_APP, n); } catch (e) {} }
+function lastApp() { try { return localStorage.getItem(LAST_APP); } catch (e) { return null; } }
+
+function setDocTitle(name) {
+  // The tab name follows the app you're actually in. It used to be baked in at page
+  // load and never updated, so it always named the app Studio started on.
+  document.title = name ? name + ', Glance Dev Studio' : 'Glance Dev Studio';
+}
+
+function showLander() {
+  const last = lastApp();
+  $('landapps').innerHTML = appList.length
+    ? appList.map(a => `<button class="landapp${a === last ? ' last' : ''}" data-app="${esc(a)}">
+         <span class="landapp-name">${esc(a)}</span>
+         ${a === last ? '<span class="landapp-tag">last opened</span>' : ''}</button>`).join('')
+    : '<div class="landnone">No apps in <code>apps/</code> yet. Create your first one above.</div>';
+  $('landcount').textContent = appList.length === 1 ? '1 app' : appList.length + ' apps';
+  $('lander').hidden = false;
+  $('mainpane').hidden = true;
+  landerControls(true);
+  setDocTitle(null);
+  setStatus('Pick an app, or create one');
+}
+function hideLander() {
+  $('lander').hidden = true;
+  $('mainpane').hidden = false;
+  landerControls(false);
+}
+function landerControls(off) {
+  // Nothing in the header acts on "the current app" until there is one. The app search
+  // stays live, though: with a folder full of apps it beats scanning the grid.
+  ['delbtn', 'validate', 'mergebtn'].forEach(id => {
+    const el = $(id); if (el) el.disabled = off;
+  });
+}
+
+async function openApp(name) {
+  if (!name || !appList.includes(name)) return;
+  currentApp = name;
+  $('appsel').value = name;
+  rememberApp(name);
+  setDocTitle(name);
+  hideLander();
+  rebuildInputs();
+  await loadFiles();
+}
+
 /* ---- the app picker -------------------------------------------------- */
+/* Returns true when an app is open, false when the welcome screen took over. */
 async function loadApps(selectName) {
   try {
     const d = await apiFetch('apps', {}, 'list apps');
+    appList = d.apps || [];
     // ?app=<name> in the address bar deep-links straight to that app
     const urlApp = new URLSearchParams(location.search).get('app');
-    if (!currentApp) currentApp = (urlApp && d.apps.includes(urlApp)) ? urlApp : d.current;
+    if (!currentApp) {
+      if (urlApp && appList.includes(urlApp)) currentApp = urlApp;
+      else if (!d.landing) currentApp = d.current;   // `gdn studio apps/foo` names an app
+    }
     if (selectName) currentApp = selectName;
-    appList = d.apps || [];
+    if (!currentApp) { showLander(); return false; }
     $('appsel').value = currentApp;
-  } catch (e) { /* single-app fallback: the picker just stays empty */ }
+    rememberApp(currentApp);
+    setDocTitle(currentApp);
+    return true;
+  } catch (e) { return true; /* single-app fallback: the picker just stays empty */ }
 }
 
 /* searchable app picker: a filter box plus a dropdown of every app in apps/ */
@@ -1049,7 +1160,10 @@ function pickApp(name) {
     if (isDirty() && !confirm('You have unsaved changes that will be lost. Switch app anyway?')) {
       $('appsel').value = currentApp; return;
     }
-    currentApp = name; $('appsel').value = name; rebuildInputs(); loadFiles();
+    currentApp = name; $('appsel').value = name;
+    rememberApp(name); setDocTitle(name);
+    hideLander();          // picked from the header while the welcome screen was up
+    rebuildInputs(); loadFiles();
   } else { $('appsel').value = currentApp; }
 }
 
@@ -1417,9 +1531,23 @@ function buildInputs(schema) {
   box.querySelectorAll('[name]').forEach(el => {
     prev[el.name] = el.type === 'checkbox' ? el.checked : el.value;
   });
-  box.innerHTML = (schema || []).map(i =>
-    `<div class="f"><label>${esc(i.label || i.key)}</label>${inputField(i)}
-     ${i.help ? `<span class="help">${esc(i.help)}</span>` : ''}</div>`).join('')
+  inputSchema = schema || [];
+  box.innerHTML = inputSchema.map(i => {
+    // A setting the code never reads still shows up here (it IS declared), but it does
+    // nothing and Validate fails on it. Say so where the user is looking, and offer the
+    // one line of code that fixes it, instead of leaving it to a failed check later.
+    const dead = i.used === false;
+    return `<div class="f${dead ? ' unused' : ''}">
+      <label>${esc(i.label || i.key)}${dead ? '<span class="deadtag">not used in code</span>' : ''}</label>
+      ${inputField(i)}
+      ${i.help ? `<span class="help">${esc(i.help)}</span>` : ''}
+      ${dead ? `<div class="deadfix">
+        <span>Your code never reads this setting, so it changes nothing and Validate will fail.</span>
+        <button class="ghost small" data-use="${esc(i.key)}"
+                title="Add a ctx.inputs.get(&quot;${esc(i.key)}&quot;) line to app.star">Use it in my code</button>
+      </div>` : ''}
+    </div>`;
+  }).join('')
     || '<div class="help">No settings yet. Use the "+ Add setting" button to make one.</div>';
   box.dataset.built = 'yes';
   $('inputscard').hidden = false;
@@ -1429,6 +1557,41 @@ function buildInputs(schema) {
     }
     el.addEventListener('input', debouncedRender);
   });
+  box.querySelectorAll('[data-use]').forEach(b =>
+    b.addEventListener('click', () => useSetting(b.dataset.use)));
+}
+
+/* ---- re-attach a setting the code stopped reading --------------------- */
+function starLiteral(i) {
+  // The setting's manifest default, written the way Starlark wants it.
+  const d = i.default;
+  const num = i.type === 'number' || widgetFor(i) === 'number';
+  if (d == null || String(d) === '') return num ? '0' : '""';
+  if (num && !isNaN(Number(d))) return String(Number(d));
+  return '"' + String(d).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+}
+async function useSetting(key) {
+  const i = inputSchema.find(s => s.key === key);
+  if (!i) return;
+  files[activeTab] = $('ed').value;      // stash on-screen edits before rewriting anything
+  const src0 = files['app.star'] || '';
+  // Drop the line at the top of the first page function, which is where a setting is
+  // read in practice. Matching `def <name>(c, ctx):` keeps us off helper functions.
+  const m = /^def[ \t]+\w+[ \t]*\([ \t]*c[ \t]*,[ \t]*ctx[ \t]*\)[ \t]*:[ \t]*\r?\n/m.exec(src0);
+  if (!m) {
+    setStatus('Add a page function first, like: def main(c, ctx):', 'bad');
+    return;
+  }
+  const name = /^[A-Za-z_]\w*$/.test(key) ? key : (key.replace(/\W/g, '') || 'setting');
+  const at = m.index + m[0].length;
+  const line = '    ' + name + ' = ctx.inputs.get("' + key + '", ' + starLiteral(i) + ')\n';
+  const src = src0.slice(0, at) + line + src0.slice(at);
+
+  if (activeTab !== 'app.star') switchTab('app.star');   // show the change being made
+  files['app.star'] = src;
+  $('ed').value = src;
+  await save();   // save() owns the status while it runs, so say our piece after it
+  setStatus('Added ' + name + ' to app.star. Now draw it somewhere.', 'ok');
 }
 function inputsQS() {
   const qs = new URLSearchParams();
@@ -2156,6 +2319,7 @@ async function createApp() {
     const d = await r.json();
     if (!d.ok) { $('newerr').textContent = d.error; return; }
     closeNewModal();
+    hideLander();                    // created from the welcome screen: go straight to it
     currentApp = d.app;
     await loadApps(d.app);           // the new app appears in the picker, selected
     setStatus('Created ' + d.app + '. Open the Toolbox to add text, charts, and shapes.', 'ok');
@@ -2599,6 +2763,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('importok').addEventListener('click', confirmImport);
   $('importmodal').addEventListener('click', e => { if (e.target === $('importmodal')) closeImport(); });
   $('newbtn').addEventListener('click', openNewModal);
+  $('landnew').addEventListener('click', openNewModal);
+  $('landapps').addEventListener('click', e => {
+    const b = e.target.closest('[data-app]');
+    if (b) openApp(b.dataset.app);
+  });
   $('newok').addEventListener('click', createApp);
   $('newcancel').addEventListener('click', closeNewModal);
   $('delbtn').addEventListener('click', openDeleteModal);
@@ -2800,8 +2969,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Now load the app, listeners are already live so a failure here can't brick the UI.
   try {
-    await loadApps();
-    await loadFiles();
+    if (await loadApps()) await loadFiles();   // false: the welcome screen is showing
   } catch (e) {
     setStatus('Couldn’t load your apps. Is Studio still running?', 'bad');
   }
@@ -2850,7 +3018,7 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
           title="Check your app, then open a pull request to submit it (the Glance team reviews and merges)">Validate &amp; Submit</button>
 </header>
 
-<main>
+<main id="mainpane">
   <!-- LEFT: your code -->
   <section class="left">
     <div class="pane-head">
@@ -2944,6 +3112,39 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
     </div>
   </section>
 </main>
+
+<!-- Welcome screen: shown when Studio is launched without naming an app -->
+<section class="lander" id="lander" hidden>
+  <div class="landwrap">
+    <h1 class="landtitle">Welcome to Glance Dev Studio</h1>
+    <p class="landsub">Write an app, watch it draw on a live LED panel, and publish it to Glance.</p>
+
+    <div class="landactions">
+      <button class="accent" id="landnew">+ Create a new app</button>
+      <a class="landquick" href="https://glance-led.dev/docs/getting-started/quickstart"
+         target="_blank" rel="noopener">Read the quickstart &rarr;</a>
+    </div>
+
+    <div class="landsec">
+      <div class="landhead">Open an app <span class="landcount" id="landcount"></span></div>
+      <div class="landapps" id="landapps"></div>
+    </div>
+
+    <div class="landsec">
+      <div class="landhead">New here?</div>
+      <div class="landlinks">
+        <a href="https://glance-led.dev/docs/getting-started/quickstart" target="_blank" rel="noopener">
+          <b>Quickstart</b><span>Install it, run it, get your first render.</span></a>
+        <a href="https://glance-led.dev/docs/guides/your-first-app" target="_blank" rel="noopener">
+          <b>Your first app</b><span>Build a real app one step at a time.</span></a>
+        <a href="https://glance-led.dev/docs/reference/drawing-api" target="_blank" rel="noopener">
+          <b>Drawing API</b><span>Every <code>c.*</code> call you draw with.</span></a>
+        <a href="https://glance-led.dev/docs/guides" target="_blank" rel="noopener">
+          <b>All the guides</b><span>Images, pages, settings, time, publishing.</span></a>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- Create-New-App dialog -->
 <div class="overlay" id="newmodal" hidden>
@@ -3233,11 +3434,17 @@ def create_server(app_dir: Path):
 
     base = _find_apps_root(app_dir)  # the apps/ folder, for the picker + Create New App
 
-    # A real app always lives directly inside apps/. If Studio was opened somewhere
-    # that isn't (the project root, or the gdn package folder, which has its own
-    # app.py), fall back to the first real app in apps/ so the editor has content and
-    # we never try to render the SDK itself as if it were an app.
-    if (app_dir.parent != base or not _looks_like_app(app_dir)) and base.is_dir():
+    # Did the user name an app, or just launch Studio in the project? A real app always
+    # lives directly inside apps/, so anything else (the project root, which is what the
+    # double-click launchers use, or the gdn package folder, which has its own app.py)
+    # means "no app chosen".
+    picked_an_app = app_dir.parent == base and _looks_like_app(app_dir)
+
+    # With no app chosen the front end opens on the welcome screen. The server still
+    # needs *some* app behind it, so requests that arrive without ?app= have something
+    # to read: fall back to the first real app in apps/, and never try to render the SDK
+    # itself as if it were an app.
+    if not picked_an_app and base.is_dir():
         here = sorted(p for p in base.iterdir() if p.is_dir() and _looks_like_app(p))
         if here:
             app_dir = here[0]
@@ -3295,12 +3502,17 @@ def create_server(app_dir: Path):
     # ---- the page -----------------------------------------------------
     @server.get("/")
     def index():
-        return studio_html(app_dir)
+        # _resolve() so a ?app= deep link gets that app's name in the tab, not the one
+        # Studio happened to start on. The front end keeps it in step after that.
+        return studio_html(_resolve())
 
     # ---- app browsing + files ------------------------------------------
     @server.get("/apps")
     def apps():
-        return jsonify({"apps": _list_apps(), "current": app_dir.name})
+        return jsonify({"apps": _list_apps(), "current": app_dir.name,
+                        # No app was named on the command line, so open on the welcome
+                        # screen rather than dropping the user into an arbitrary app.
+                        "landing": not picked_an_app})
 
     @server.get("/files")
     def get_files():
