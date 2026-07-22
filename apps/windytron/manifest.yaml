@@ -1,0 +1,18 @@
+gdn: 1
+id: windytron
+version: 0.1.0
+name: "windytron"
+author: "Tavis"
+description: A new Glance app.
+category: Weather
+entry: app.star
+width: 64
+height: 32
+refresh: 300
+pages: [main]
+inputs:
+  - key: station
+    type: choice
+    app_input_type: dropdown
+    label: Station
+    choices: [Kanaha, Hookipa]
