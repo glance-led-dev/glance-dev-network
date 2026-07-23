@@ -1,0 +1,50 @@
+id: three-city-weather
+name: Three City Weather
+author: drb
+description: A simple app to look at the current weather in 3 cities.
+width: 64
+height: 32
+refresh: 600
+
+pages:
+  - weather
+  - forecast
+
+inputs:
+  - key: city1
+    label: First City
+    app_input_type: free-text
+    default: "20002"
+
+  - key: nickname1
+    label: First Nickname - Max 5 Characters
+    app_input_type: free-text
+    default: HOME
+
+  - key: city2
+    label: Second City
+    app_input_type: free-text
+    default: London
+
+  - key: nickname2
+    label: Second Nickname - Max 5 Characters
+    app_input_type: free-text
+    default: LON
+
+  - key: city3
+    label: Third City
+    app_input_type: free-text
+    default: Barcelona, Spain
+
+  - key: nickname3
+    label: Third Nickname - Max 5 Characters
+    app_input_type: free-text
+    default: BCN
+
+  - key: units
+    label: Temperature Units
+    app_input_type: dropdown
+    options:
+      - Fahrenheit
+      - Celsius
+    default: Fahrenheit
