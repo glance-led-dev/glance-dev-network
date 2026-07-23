@@ -180,6 +180,16 @@ def _error_hint(text: str) -> str:
         return "you divided by zero; guard the denominator"
     if "has no field or method" in low or "no such method" in low:
         return "that name isn't on that object; check the exact spelling in the docs"
+    # A dict read like an object: resp.status_code instead of resp["status_code"].
+    # LLMs trained on Python's `requests` reach for this on http.get results
+    # constantly; ctx.inputs (also a dict) trips people the same way.
+    m = re.search(r"type `?dict`? has no attribute `?(\w+)`?", text, re.I)
+    if m:
+        a = m.group(1)
+        tip = 'a dict is read with ["%s"], not .%s' % (a, a)
+        if a in ("status_code", "json", "body", "error", "text", "content", "ok", "headers"):
+            tip += '; http.get returns a dict, so write resp["%s"]' % a
+        return tip
     return ""
 
 
