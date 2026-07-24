@@ -1,0 +1,64 @@
+gdn: 1
+id: nearby-aircraft
+version: 0.1.0
+name: Nearby Aircraft
+author: ceickholt
+description: Track the most relevant aircraft near a U.S. ZIP code with route, speed, altitude, distance, data age, and color-coded type hints.
+entry: app.star
+width: 64
+height: 32
+refresh: 240
+
+pages:
+  - aircraft1
+  - aircraft2
+  - aircraft3
+  - aircraft4
+
+inputs:
+  - key: zipcode
+    type: string
+    label: ZIP Code
+    help: Enter a five-digit U.S. ZIP code.
+    app_input_type: free-text
+  - key: radius
+    type: string
+    label: Search Radius
+    help: Search radius in nautical miles.
+    app_input_type: dropdown
+    choices:
+      - "10"
+      - "25"
+      - "50"
+      - "100"
+    default: "25"
+  - key: airborneonly
+    type: string
+    label: Airborne Only
+    help: Hide aircraft reporting on the ground.
+    app_input_type: checkbox
+    default: true
+  - key: sortmode
+    type: string
+    label: Sort Mode
+    help: Pick how the top aircraft are ranked.
+    app_input_type: dropdown
+    choices:
+      - "INTERESTING"
+      - "CLOSEST"
+      - "FASTEST"
+      - "HIGHEST"
+      - "FRESHEST"
+    default: "CLOSEST"
+  - key: favorites
+    type: string
+    label: Favorites
+    help: Comma-separated registrations, callsigns, or hex ids to prioritize.
+    app_input_type: free-text
+    default: ""
+  - key: accent
+    type: string
+    label: Accent Color
+    help: Default icon color when no special highlight applies.
+    app_input_type: color
+    default: "#29D682"
