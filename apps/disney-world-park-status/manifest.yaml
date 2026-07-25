@@ -1,0 +1,18 @@
+gdn: 1
+id: disney-world-parks
+version: 0.1.0
+name: "Disney World Parks"
+author: "drb116"
+description: An app that provides the status of the Disney World parks in Orlando, Florida. When open, the app provides an estimate for how busy the parks are. After hours, the app provides the next day hours.
+category: Lifestyle
+entry: app.star
+width: 64
+height: 32
+refresh: 300
+pages:
+  - magic_kingdom
+  - epcot
+  - hollywood_studios
+  - animal_kingdom
+
+inputs: []
