@@ -1,0 +1,37 @@
+gdn: 1
+id: pws-station
+version: 0.1.0
+name: PWS Dashboard
+author: reyos86
+description: Personal weather station board from Weather Underground, plus NWS alerts for the station location.
+category: Weather
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [station, alerts]
+inputs:
+  - key: apikey
+    app_input_type: api-key
+    type: string
+    label: Weather Underground API key
+    help: Free PWS contributor key from wunderground.com/member/api-keys
+  - key: station
+    type: string
+    app_input_type: free-text
+    label: Station ID
+    default: ""
+    help: Your PWS station ID (e.g. KTXDALLAS123). Find it on your WU station page.
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Station name
+    default: MY STATION
+    help: Header text on the board (UPPERCASE works best).
+  - key: units
+    type: string
+    app_input_type: dropdown
+    label: Units
+    default: e
+    choices: [e, m]
+    help: e = imperial (F, inHg). m = metric (C, mb).
