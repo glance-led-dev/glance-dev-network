@@ -1,0 +1,15 @@
+id: billboard-anniversaries
+description: #1 songs this week for the past 50 years
+author: chris
+name: Music Retro Rewind
+width: 128
+height: 32
+refresh: 7200
+pages:
+  - years_10
+  - years_20
+  - years_30
+  - years_40
+  - years_50
+inputs: []
+
