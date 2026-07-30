@@ -1,0 +1,49 @@
+gdn: 1
+id: any-number
+version: 0.1.0
+name: Any Number
+author: foted
+description: Point it at any public JSON API and show one value big on the panel. A generic escape hatch for data GLANCE does not ship an app for.
+category: Fun
+entry: app.star
+width: 64
+height: 32
+refresh: 300
+pages: [main]
+inputs:
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Label
+    default: "BTC"
+    help: Short caption shown above the number. Keep it under 10 characters.
+  - key: url
+    type: string
+    app_input_type: free-text
+    label: JSON URL
+    default: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+    help: A public https URL that returns JSON. No auth header is sent.
+  - key: path
+    type: string
+    app_input_type: free-text
+    label: JSON path
+    default: "bitcoin.usd"
+    help: Dot path to the value, e.g. bitcoin.usd or results.0.temp
+  - key: prefix
+    type: string
+    app_input_type: free-text
+    label: Prefix
+    default: "$"
+    help: Text glued to the front of the value, e.g. $
+  - key: suffix
+    type: string
+    app_input_type: free-text
+    label: Suffix
+    default: ""
+    help: Text glued to the end of the value, e.g. F or %
+  - key: tint
+    type: string
+    app_input_type: color
+    label: Number color
+    default: "green"
+    help: Color of the big number.
