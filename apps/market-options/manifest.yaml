@@ -1,0 +1,32 @@
+gdn: 1
+id: market-options
+version: 0.3.1
+name: Options Board
+author: reyos86
+description: ATM options board with expected move, chain call/put volume, session tag, and ATM±1 wings via Tradier live.
+category: Finance
+entry: app.star
+width: 128
+height: 32
+# 5 minutes — options chains are heavy; avoid hammering Tradier.
+refresh: 300
+pages: [board, wings]
+inputs:
+  - key: apikey
+    app_input_type: api-key
+    type: string
+    label: Tradier API token
+    help: Live brokerage token from web.tradier.com/user/api (Bearer token). Required.
+  - key: symbol
+    type: string
+    app_input_type: dropdown
+    label: Ticker
+    default: SPY
+    choices: [SPY, QQQ, IWM, AAPL, TSLA, NVDA, META, AMD, OTHER]
+    help: Pick a common underlier, or choose OTHER and type one below.
+  - key: custom
+    type: string
+    app_input_type: free-text
+    label: Custom ticker
+    default: ""
+    help: Type any US options ticker (e.g. MSFT). Only used when Ticker is OTHER.

@@ -1,0 +1,3 @@
+build/
+*.gdnapp
+secrets.dev.yaml
