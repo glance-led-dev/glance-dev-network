@@ -1,0 +1,107 @@
+gdn: 1
+id: nascar-companion
+version: 1.0.1
+name: NASCAR Companion
+author: reyos86
+description: Live NASCAR race companion — leaderboard, laps, stage, flag status, and race updates for Cup, Xfinity, and Trucks.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages: [upcoming, results, race, updates]
+assets:
+  - checkered.png
+  - flag-green.png
+  - flag-yellow.png
+  - flag-red.png
+  - flag-white.png
+  - flag-blue.png
+  - flag-checkered.png
+  - car-1.png
+  - car-10.png
+  - car-11.png
+  - car-12.png
+  - car-16.png
+  - car-17.png
+  - car-19.png
+  - car-2.png
+  - car-20.png
+  - car-21.png
+  - car-22.png
+  - car-23.png
+  - car-24.png
+  - car-3.png
+  - car-33.png
+  - car-34.png
+  - car-35.png
+  - car-38.png
+  - car-4.png
+  - car-41.png
+  - car-42.png
+  - car-43.png
+  - car-45.png
+  - car-47.png
+  - car-48.png
+  - car-5.png
+  - car-51.png
+  - car-54.png
+  - car-6.png
+  - car-60.png
+  - car-62.png
+  - car-67.png
+  - car-7.png
+  - car-71.png
+  - car-77.png
+  - car-78.png
+  - car-88.png
+  - car-9.png
+  - car-97.png
+  - car-1-sm.png
+  - car-10-sm.png
+  - car-11-sm.png
+  - car-12-sm.png
+  - car-16-sm.png
+  - car-17-sm.png
+  - car-19-sm.png
+  - car-2-sm.png
+  - car-20-sm.png
+  - car-21-sm.png
+  - car-22-sm.png
+  - car-23-sm.png
+  - car-24-sm.png
+  - car-3-sm.png
+  - car-33-sm.png
+  - car-34-sm.png
+  - car-35-sm.png
+  - car-38-sm.png
+  - car-4-sm.png
+  - car-41-sm.png
+  - car-42-sm.png
+  - car-43-sm.png
+  - car-45-sm.png
+  - car-47-sm.png
+  - car-48-sm.png
+  - car-5-sm.png
+  - car-51-sm.png
+  - car-54-sm.png
+  - car-6-sm.png
+  - car-60-sm.png
+  - car-62-sm.png
+  - car-67-sm.png
+  - car-7-sm.png
+  - car-71-sm.png
+  - car-77-sm.png
+  - car-78-sm.png
+  - car-88-sm.png
+  - car-9-sm.png
+  - car-97-sm.png
+
+inputs:
+  - key: series
+    type: choice
+    app_input_type: dropdown
+    label: Series
+    default: CUP
+    choices: [CUP, XFINITY, TRUCKS]
+    help: Which NASCAR national series to follow.
