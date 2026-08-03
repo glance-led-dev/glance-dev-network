@@ -1,0 +1,115 @@
+gdn: 1
+id: pixel-residents
+version: 0.1.0
+name: Pixel Residents
+author: John McRae
+description: An original pixel resident follows a tiny daily routine inside a wall-mounted apartment.
+category: Lifestyle
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages: [home]
+
+inputs:
+  - key: charactername
+    type: string
+    app_input_type: free-text
+    label: Character name
+    default: PIXEL
+
+  - key: personality
+    type: choice
+    app_input_type: dropdown
+    label: Personality
+    default: COZY
+    choices: [COZY, BUSY, LAZY, GAMER, BOOKWORM, RANDOM]
+
+  - key: shirtcolor
+    type: string
+    app_input_type: color
+    label: Shirt color
+    default: "#00DC46"
+
+  - key: haircolor
+    type: string
+    app_input_type: color
+    label: Hair color
+    default: "#8B5A2B"
+
+  - key: skintone
+    type: choice
+    app_input_type: dropdown
+    label: Skin tone
+    default: MEDIUM
+    choices: [LIGHT, MEDIUM, TAN, DARK]
+
+  - key: roomtheme
+    type: choice
+    app_input_type: dropdown
+    label: Room theme
+    default: COZY
+    choices: [COZY, MODERN, ARCADE, CABIN, NIGHT]
+
+  - key: petenabled
+    type: string
+    app_input_type: checkbox
+    label: Enable pet
+    default: "true"
+
+  - key: pettype
+    type: choice
+    app_input_type: dropdown
+    label: Pet type
+    default: CAT
+    choices: [CAT, DOG]
+
+  - key: showclock
+    type: string
+    app_input_type: checkbox
+    label: Display clock
+    default: "true"
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Timezone
+    help: Fixed offset from UTC. Adjust manually when daylight saving time changes.
+    default: UTC-05
+    choices: [UTC-12, UTC-11, UTC-10, UTC-09, UTC-08, UTC-07, UTC-06, UTC-05, UTC-04, UTC-03, UTC-02, UTC-01, UTC+00, UTC+01, UTC+02, UTC+03, UTC+04, UTC+05, UTC+06, UTC+07, UTC+08, UTC+09, UTC+10, UTC+11, UTC+12, UTC+13, UTC+14]
+
+  - key: lights
+    type: choice
+    app_input_type: dropdown
+    label: Room lights
+    default: AUTO
+    choices: [AUTO, "ON", "OFF"]
+
+  - key: pcpower
+    type: choice
+    app_input_type: dropdown
+    label: PC power
+    default: AUTO
+    choices: [AUTO, "ON", "OFF"]
+
+  - key: message
+    type: string
+    app_input_type: free-text
+    label: Message override
+    help: Optional custom message. Leave blank for the resident's activity messages.
+    default: ""
+
+  - key: schedule
+    type: choice
+    app_input_type: dropdown
+    label: Schedule
+    default: NORMAL
+    choices: [NORMAL, EARLY BIRD, NIGHT OWL]
+
+  - key: previewmode
+    type: choice
+    app_input_type: dropdown
+    label: Resident action
+    help: Choose AUTO ROUTINE to resume the normal local-time schedule.
+    default: AUTO ROUTINE
+    choices: ["AUTO ROUTINE", WAVE, DANCE, "MAKE COFFEE", "PLAY GAME", "READ BOOK", "WATER PLANT", "CALL PET", "FEED PET", "PLAY WITH PET", "PET NAP", "GO TO BED"]
