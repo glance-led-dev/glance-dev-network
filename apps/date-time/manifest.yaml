@@ -1,0 +1,88 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: date-time
+version: 0.1.0
+name: Date & Time
+author: jdhine02
+description: Local date, time, and current weather for a US zip code on one line. Pick a 12/24-hour clock, a US/international/written date format, a font size and weight, and a color for each section; rain, snow, and clear-night moon phase are called out by name and icon.
+category: Time
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+width: 384
+height: 32
+
+# Re-render every minute so the clock stays current.
+refresh: 60
+
+# Pages the panel rotates through, in order. app.star must define a function per name.
+pages: [main]
+
+# What the client fills in at install time.
+#   type            — the data type: string | number | choice
+#   app_input_type  — the UI widget the client sees. One of:
+#                     free-text | dropdown | selection | checkbox | date | date-past | color
+#                     (optional; if omitted the form infers it from `type`)
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "90210"
+    help: US zip code; used to look up local time and weather.
+
+  - key: dateformat
+    type: choice
+    app_input_type: dropdown
+    label: Date format
+    default: "MM/DD/YYYY"
+    help: Common American and international date formats.
+    choices:
+      - "MM/DD/YYYY"
+      - "MON DD, YYYY"
+      - "DD/MM/YYYY"
+      - "DD MON YYYY"
+      - "YYYY-MM-DD"
+      - "WEDNESDAY, AUGUST 5TH"
+
+  - key: timeformat
+    type: choice
+    app_input_type: dropdown
+    label: Time format
+    default: "12"
+    help: 12-hour with AM/PM, or 24-hour.
+    choices: ["12", "24"]
+
+  - key: datecolor
+    type: string
+    app_input_type: color
+    label: Date color
+    default: "#FFFFFF"
+
+  - key: timecolor
+    type: string
+    app_input_type: color
+    label: Time color
+    default: "#FFFFFF"
+
+  - key: weathercolor
+    type: string
+    app_input_type: color
+    label: Weather color
+    default: "#FFFFFF"
+
+  - key: fontsize
+    type: choice
+    app_input_type: dropdown
+    label: Font size
+    default: "medium"
+    help: The whole line still shrinks a size automatically if content is too long to fit.
+    choices: ["small", "medium", "large"]
+
+  - key: fontweight
+    type: choice
+    app_input_type: dropdown
+    label: Font weight
+    default: "normal"
+    choices: ["normal", "bold"]
