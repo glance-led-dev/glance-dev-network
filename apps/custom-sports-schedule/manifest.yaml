@@ -1,0 +1,33 @@
+gdn: 1
+id: custom-sports-schedule
+version: 0.1.0
+name: "Custom Sports Schedule"
+author: "gabetrainor"
+description: Prout's upcoming-game schedule (logo, teams, date/time, sport) in the style of the major-league game-card apps.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+width: 192
+height: 32
+
+refresh: 300
+
+# A title/splash page, then one page per game, in schedule order. 8 is the
+# hard limit (gdn/data/scene.schema.json caps every app at 8 pages), so
+# that's 1 title + 7 games.
+pages: [title, game1, game2, game3, game4, game5, game6, game7]
+
+# Hardcoded snapshot of the schedule spreadsheet's next 7 games, not a live
+# read -- see the note at the top of app.star.
+assets:
+  - chariho.png
+  - cranstonwest.png
+  - daviesct.png
+  - eghs.png
+  - foxborough.png
+  - juanita.png
+  - pilgrim.png
+  - prout.png
+  - soccer_ball.png
+  - volleyball.png

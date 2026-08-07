@@ -1,0 +1,30 @@
+gdn: 1
+id: custom-schedule-classic
+version: 0.1.0
+name: "Custom Schedule Classic"
+author: "gabetrainor"
+description: Prout's upcoming-game schedule (logos, team codes, date/time), sized for a single 64x32 panel.
+category: Sports
+entry: app.star
+
+width: 64
+height: 32
+
+refresh: 300
+
+# One page per game, in schedule order. 8 is the hard limit
+# (gdn/data/scene.schema.json caps every app at 8 pages).
+pages: [game1, game2, game3, game4, game5, game6, game7, game8]
+
+# Hardcoded snapshot of the schedule spreadsheet's first 8 rows, not a live
+# read -- see the note at the top of app.star.
+assets:
+  - chariho.png
+  - cranstonwest.png
+  - daviesct.png
+  - eghs.png
+  - foxborough.png
+  - juanita.png
+  - lincoln.png
+  - pilgrim.png
+  - prout.png
