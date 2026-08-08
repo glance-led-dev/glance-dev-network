@@ -1,0 +1,12 @@
+gdn: 1
+id: scotland-scores-classic
+version: 0.5.0
+name: Scotland Scores Classic
+author: David Jack
+description: Scottish football scores with global live-match takeover, goal alerts, Premiership/CUP fixtures, Scotland details and rotating full league table.
+category: Sports
+entry: app.star
+width: 64
+height: 32
+refresh: 60
+pages: [premiership, cup, scotland, table]
