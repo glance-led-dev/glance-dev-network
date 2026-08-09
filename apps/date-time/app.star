@@ -5,15 +5,6 @@
 # size/weight (user-selectable small/medium/large, normal/bold) and only
 # drops a size if the full line — with real content — would overflow, so
 # sizing stays consistent instead of each section picking its own.
-#
-# Four keyless lookups:
-#   1. zippopotam.us  - zip -> latitude, longitude
-#   2. timeapi.io     - lat/lon -> the true UTC offset right now (DST-aware)
-#   3. open-meteo.com - lat/lon -> current temp, WMO weather code, day/night
-#   4. moon phase (for the clear-night icon) computed locally, same synodic-
-#      month math as the moon-phase app
-# The clock itself is computed locally from ctx.now + the offset, so it stays
-# minute-accurate between refreshes without hammering any API.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -21,8 +12,6 @@ MONTHS_FULL = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
                "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
 WEEKDAYS_FULL = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY",
                   "SATURDAY", "SUNDAY"]
-
-DIVIDER = "#444444"
 
 # Compact weather glyphs, each <=9px tall so they sit on the one text line.
 SUN = [
@@ -421,6 +410,7 @@ def main(c, ctx):
     date_color = _s(ctx, "datecolor", "#FFFFFF")
     time_color = _s(ctx, "timecolor", "#FFFFFF")
     weather_color = _s(ctx, "weathercolor", "#FFFFFF")
+    divider_color = _s(ctx, "dividercolor", "#444444")
 
     geo = geocode(ctx)
     if not geo["ok"]:
@@ -490,12 +480,12 @@ def main(c, ctx):
 
     draw_text(c, date_text, x, vcenter(font_h), font, date_color, bold)
     x += date_w + GAP
-    c.line(x, 5, x, 27, DIVIDER)
+    c.line(x, 5, x, 27, divider_color)
     x += 1 + GAP
 
     draw_text(c, time_text, x, vcenter(font_h), font, time_color, bold)
     x += time_w + GAP
-    c.line(x, 5, x, 27, DIVIDER)
+    c.line(x, 5, x, 27, divider_color)
     x += 1 + GAP
 
     if not have_weather:

@@ -72,6 +72,12 @@ inputs:
     label: Weather color
     default: "#FFFFFF"
 
+  - key: dividercolor
+    type: string
+    app_input_type: color
+    label: Divider color
+    default: "#444444"
+
   - key: fontsize
     type: choice
     app_input_type: dropdown
