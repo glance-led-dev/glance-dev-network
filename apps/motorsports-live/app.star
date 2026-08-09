@@ -1299,6 +1299,12 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     text_h = 7 if font == "5x7" else 6
     cy = y0 + (box_h - text_h) // 2
 
+    # Gap gets one size step down from the name -- just enough to read as a
+    # secondary, less important number rather than competing with the name.
+    gap_font = "4x5" if font == "5x7" else "picopixel"
+    gap_text_h = 6 if gap_font == "4x5" else 5
+    gap_cy = y0 + (box_h - gap_text_h) // 2
+
     # Position gets its own fixed-width black badge -- always the same
     # color regardless of team, so running order reads at a glance instead
     # of blending into whatever livery color that row happens to be.
@@ -1336,7 +1342,7 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     who = (row["initial"] + "." + row["name"]) if row["initial"] else row["name"]
 
     gap = row["gap"]
-    gap_w = c.text_width(gap, font) if gap != "" else 0
+    gap_w = c.text_width(gap, gap_font) if gap != "" else 0
     reserve = (gap_w + 4) if gap_w > 0 else 0
     avail = (x1 - row_x0) - 6 - reserve
     who_max_w = avail - c.text_width(prefix, font) - c.text_width(suffix, font)
@@ -1345,7 +1351,7 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
 
     c.text(main, row_x0 + 3, cy, font = font, color = txt_color)
     if gap != "":
-        c.text(gap, x1 - 3, cy, font = font, color = txt_color, align = "right")
+        c.text(gap, x1 - 3, gap_cy, font = gap_font, color = txt_color, align = "right")
 
 def driver_grid_dims(avail_w, avail_h, target_col_w = 110, rows_per_col = 3):
     # Auto-fit as many "groups of three" (stacked columns) side by side as
