@@ -272,7 +272,21 @@ def clean_last(raw):
     name = cleaned.strip()
     if len(name) > 0 and name[len(name) - 1] == "#":
         name = name[:len(name) - 1].strip()
-    return name.upper()
+    return name.upper()[:6]
+
+def mark_duplicate_names(rows):
+    # Last name alone reads cleanest and leaves the most room before the gap
+    # column -- the first-initial prefix ("W.BYRON") is only worth the space
+    # it costs when two drivers in the current field actually share a last
+    # name (e.g. Austin/Ty Dillon), so only those rows keep their initial.
+    counts = {}
+    for row in rows:
+        n = row["name"]
+        counts[n] = counts.get(n, 0) + 1
+    for row in rows:
+        if counts.get(row["name"], 0) <= 1:
+            row["initial"] = ""
+    return rows
 
 def short_track(name):
     text = str(name).upper()
@@ -756,6 +770,7 @@ def vehicle_rows(feed, series, live_race):
             "mfg": str(car.get("vehicle_manufacturer", "")),
             "chase": bool(driver.get("is_in_chase", False)),
         })
+    mark_duplicate_names(rows)
     n = len(rows)
     for i in range(n):
         for j in range(n - 1 - i):
@@ -980,7 +995,7 @@ def fetch_f1_live(ctx):
         if gap_raw != None:
             gap_str = gap_raw if type(gap_raw) == "string" else format_gap_time(gap_raw)
 
-        last_name = str(driver.get("last_name", "")).upper()
+        last_name = str(driver.get("last_name", "")).upper()[:6]
         first_name = str(driver.get("first_name", ""))
         team_colour = str(driver.get("team_colour", ""))
         bg = ("#" + team_colour) if team_colour != "" else COLORS["panel"]
@@ -996,6 +1011,7 @@ def fetch_f1_live(ctx):
             "txt_color": best_text_color(bg),
         })
 
+    mark_duplicate_names(rows)
     n = len(rows)
     for i in range(n):
         for j in range(n - 1 - i):
@@ -1373,7 +1389,7 @@ def draw_driver_group(c, rows, start, col_x0, y0, y1):
 # once live rendering has been checked against an actual in-progress race.
 
 def _mock_row(pos, num, initial, name, delta, status, on_track, laps, mfg, chase):
-    return {"pos": pos, "num": num, "initial": initial, "name": name, "delta": delta,
+    return {"pos": pos, "num": num, "initial": initial, "name": name[:6], "delta": delta,
             "status": status, "on_track": on_track, "laps": laps, "mfg": mfg, "chase": chase}
 
 def _mock_state():
@@ -1388,6 +1404,7 @@ def _mock_state():
         _mock_row(8, "45", "T", "REDDICK", 0, 1, True, 158, "Tyt", False),
         _mock_row(9, "6", "B", "KESELOWSKI", 0, 1, False, 155, "Frd", False),
     ]
+    mark_duplicate_names(rows)
     leader_laps = rows[0]["laps"]
     for row in rows:
         gap, _ = gap_text(row, leader_laps, True)
