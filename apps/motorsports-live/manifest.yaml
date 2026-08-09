@@ -1,0 +1,166 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: motorsports-live
+version: 0.1.0
+name: Motorsports Live
+author: jdhine02
+description: Broadcast-style live leaderboard for NASCAR Cup, O'Reilly, Trucks, and Formula 1 — series logo, event info, flag state, lap and stage progress, and a rotating full-field board with car numbers, gaps to the leader, and playoff/chase status (NASCAR only). Between sessions, shows the next scheduled race — track, date, and time — in your local time zone.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+width: 384
+height: 32
+
+# One fixed interval for the whole app (no live-vs-not-live conditional
+# refresh available) -- 2 minutes matches what's wanted while live; the
+# next-race card just also checks every 2 minutes instead of 1 off-session.
+refresh: 120
+
+# Pages the panel rotates through, in order. app.star must define a function per name.
+pages: [live]
+
+assets:
+  - checkered.png
+  - car-1-sm.png
+  - car-10-sm.png
+  - car-11-sm.png
+  - car-12-sm.png
+  - car-16-sm.png
+  - car-17-sm.png
+  - car-19-sm.png
+  - car-2-sm.png
+  - car-20-sm.png
+  - car-21-sm.png
+  - car-22-sm.png
+  - car-23-sm.png
+  - car-24-sm.png
+  - car-3-sm.png
+  - car-33-sm.png
+  - car-34-sm.png
+  - car-35-sm.png
+  - car-38-sm.png
+  - car-4-sm.png
+  - car-41-sm.png
+  - car-42-sm.png
+  - car-43-sm.png
+  - car-45-sm.png
+  - car-47-sm.png
+  - car-48-sm.png
+  - car-5-sm.png
+  - car-51-sm.png
+  - car-54-sm.png
+  - car-6-sm.png
+  - car-60-sm.png
+  - car-62-sm.png
+  - car-67-sm.png
+  - car-7-sm.png
+  - car-71-sm.png
+  - car-77-sm.png
+  - car-78-sm.png
+  - car-88-sm.png
+  - car-9-sm.png
+  - car-97-sm.png
+  - f1-logo.png
+  - nascar-logo.png
+  - oreilly-logo.png
+  - trucks-logo.png
+  - track-albert-park.png
+  - track-americas.png
+  - track-bahrain.png
+  - track-baku.png
+  - track-catalunya.png
+  - track-hungaroring.png
+  - track-imola.png
+  - track-interlagos.png
+  - track-istanbul.png
+  - track-jeddah.png
+  - track-losail.png
+  - track-marina-bay.png
+  - track-miami.png
+  - track-monaco.png
+  - track-monza.png
+  - track-nurburgring.png
+  - track-red-bull-ring.png
+  - track-ricard.png
+  - track-rodriguez.png
+  - track-silverstone.png
+  - track-villeneuve.png
+  - track-zandvoort.png
+  - track-daytona.png
+  - track-talladega.png
+  - track-atlanta.png
+  - track-homestead-miami.png
+  - track-pocono.png
+  - track-indianapolis-oval.png
+  - track-martinsville.png
+  - track-bristol.png
+  - track-richmond.png
+  - track-north-wilkesboro.png
+  - track-sonoma.png
+  - track-watkins-glen.png
+  - track-lime-rock.png
+  - track-lucas-oil-irp.png
+  - track-coronado.png
+  - track-dover.png
+  - track-rockingham.png
+  - track-iowa-oval.png
+  - track-texas.png
+  - track-kansas.png
+  - track-michigan.png
+  - track-nashville.png
+  - track-las-vegas.png
+  - track-darlington.png
+  - track-wwt-raceway.png
+  - track-new-hampshire.png
+  - track-charlotte.png
+  - track-chicagoland.png
+
+# What the client fills in at install time.
+#   type            — the data type: string | number | choice
+#   app_input_type  — the UI widget the client sees. One of:
+#                     free-text | dropdown | selection | checkbox | date | date-past | color
+#                     (optional; if omitted the form infers it from `type`)
+inputs:
+  - key: series
+    type: choice
+    app_input_type: dropdown
+    label: Series
+    default: NASCAR
+    choices: ["NASCAR", "NASCAR - O'Reilly", "NASCAR - Trucks", "Formula 1"]
+    help: NASCAR Cup, the O'Reilly Auto Parts Series, the Craftsman Truck Series, or Formula 1.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/New_York"
+    choices:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "America/Anchorage"
+      - "Pacific/Honolulu"
+      - "America/Sao_Paulo"
+      - "America/Mexico_City"
+      - "Europe/London"
+      - "Europe/Paris"
+      - "Europe/Moscow"
+      - "Africa/Johannesburg"
+      - "Asia/Dubai"
+      - "Asia/Kolkata"
+      - "Asia/Shanghai"
+      - "Asia/Tokyo"
+      - "Asia/Singapore"
+      - "Australia/Sydney"
+      - "Pacific/Auckland"
+    help: Used to show race dates and times in your local time -- F1's calendar spans every region, not just the US.
+
+  - key: datecolor
+    type: string
+    app_input_type: color
+    label: Next-race date/time color
+    default: "#FFD166"
