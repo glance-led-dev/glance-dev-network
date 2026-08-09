@@ -777,21 +777,31 @@ def vehicle_rows(feed, series, live_race):
     return rows
 
 def format_gap_time(delta):
+    # Always millisecond precision ("+X.XXX") -- qualifying gaps are decided
+    # by thousandths, so the old tenths/hundredths rounding was throwing away
+    # the digits that actually separate two drivers. Past a minute (rare, but
+    # possible for a practice/quali lap run under caution), switch to
+    # "+M:SS.XXX" instead of letting the seconds count run unbounded.
     if delta == None:
         return ""
     value = float(delta)
     if value < 0:
         value = -value
-    if value >= 100:
-        return "+" + str(int(value + 0.5))
-    if value >= 10:
-        tenths = int(value * 10 + 0.5)
-        return "+" + str(tenths // 10) + "." + str(tenths % 10)
-    hundredths = int(value * 100 + 0.5)
-    whole = hundredths // 100
-    frac = hundredths % 100
-    frac_s = str(frac) if frac >= 10 else "0" + str(frac)
-    return "+" + str(whole) + "." + frac_s
+    millis = int(value * 1000 + 0.5)
+    secs_total = millis // 1000
+    ms = millis % 1000
+    if ms >= 100:
+        ms_s = str(ms)
+    elif ms >= 10:
+        ms_s = "0" + str(ms)
+    else:
+        ms_s = "00" + str(ms)
+    if secs_total >= 60:
+        mins = secs_total // 60
+        secs = secs_total % 60
+        secs_s = str(secs) if secs >= 10 else "0" + str(secs)
+        return "+" + str(mins) + ":" + secs_s + "." + ms_s
+    return "+" + str(secs_total) + "." + ms_s
 
 def gap_text(row, leader_laps, live_race):
     if row["pos"] == 1:
@@ -808,11 +818,16 @@ def gap_text(row, leader_laps, live_race):
             return "PIT", COLORS["accent2"]
         if row["status"] == 1 and not row["on_track"]:
             return "OFF", COLORS["error"]
-    laps_down = leader_laps - row["laps"]
-    if laps_down >= 2:
-        return "-" + str(laps_down) + " LAPS", COLORS["muted"]
-    if laps_down == 1:
-        return "-1 LAP", COLORS["muted"]
+        # "Laps down" is a race-only concept -- outside a live race,
+        # laps_completed just reflects how many out/in/timed laps each car
+        # happened to run (qualifying, practice, or a session that's already
+        # over), so a lower count there doesn't mean anything and must not
+        # be read as being lapped.
+        laps_down = leader_laps - row["laps"]
+        if laps_down >= 2:
+            return "-" + str(laps_down) + " LAPS", COLORS["muted"]
+        if laps_down == 1:
+            return "-1 LAP", COLORS["muted"]
     return format_gap_time(row["delta"]), COLORS["text"]
 
 def series_key(name):
@@ -1210,7 +1225,7 @@ def draw_live_intro(c, state, ctx):
     session = state.get("session", "RACE")
     is_race = session == "RACE"
 
-    _, logo_w, logo_h = series_logo_dims(state["series"], 70, 26)
+    _, logo_w, logo_h = series_logo_dims(state["series"], 100, 26)
     if is_f1:
         track_asset, track_w, track_h = track_asset_dims(state["track_key"])
     else:
