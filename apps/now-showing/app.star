@@ -24,6 +24,15 @@ def _clean(v, fallback):
         return fallback
     return v
 
+# OMDb's "Year" field for shows is a range like "2008–2013" (or "2016–" if
+# still running) using a Unicode en-dash — a glyph the bitmap fonts don't
+# have, so it silently drops instead of erroring. Swap it for a plain hyphen.
+def _clean_year(v):
+    y = _clean(v, "")
+    if not y:
+        return ""
+    return y.replace("–", "-").replace("—", "-").rstrip("-")
+
 # ---------- OMDb ----------
 
 def omdb_get(params):
@@ -67,6 +76,7 @@ def fetch_info(ctx):
         return {
             "ok": True,
             "name": str(j.get("Title", title)).upper(),
+            "year": _clean_year(j.get("Year")),
             "headline": "",
             "runtime": _clean(j.get("Runtime"), "N/A").upper(),
             "genre": _clean(j.get("Genre"), "N/A").upper(),
@@ -84,6 +94,9 @@ def fetch_info(ctx):
         return {"ok": False, "title": "TITLE NOT FOUND", "sub": serr}
 
     name = str(sj.get("Title", title)).upper()
+    # Default to the series' full run; a specific episode below narrows this
+    # down to just that episode's air year.
+    display_year = _clean_year(sj.get("Year"))
     genre = _clean(sj.get("Genre"), "N/A").upper()
     runtime = _clean(sj.get("Runtime"), "N/A").upper()
     imdb = _clean(sj.get("imdbRating"), "N/A")
@@ -105,10 +118,21 @@ def fetch_info(ctx):
             ep_imdb = _clean(ej.get("imdbRating"), None)
             if ep_imdb:
                 imdb = ep_imdb
+            # "Year" on an episode lookup is just that episode's air year;
+            # fall back to the "Released" date's first 4 chars if OMDb
+            # omits it for this title.
+            ep_year = _clean_year(ej.get("Year"))
+            if not ep_year:
+                released = _clean(ej.get("Released"), "")
+                if len(released) >= 4:
+                    ep_year = released[:4]
+            if ep_year:
+                display_year = ep_year
 
     return {
         "ok": True,
         "name": name,
+        "year": display_year,
         "headline": headline,
         "runtime": runtime,
         "genre": genre,
@@ -184,10 +208,12 @@ def main(c, ctx):
     maxw = right_divider_x - RIGHT_DIVIDER_GAP - CONTENT_X
 
     line1 = info["name"]
+    if info["year"]:
+        line1 += " (" + info["year"] + ")"
     if info["headline"]:
         line1 += " " + info["headline"]
     if info["runtime"] != "N/A":
-        line1 += " (" + info["runtime"] + ")"
+        line1 += " - " + info["runtime"]
 
     have_imdb = info["imdb"] != "N/A"
     have_rt = info["rt"] != "N/A"
