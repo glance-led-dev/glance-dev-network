@@ -1,0 +1,35 @@
+gdn: 1
+id: halloween-countdown
+version: 0.1.0
+name: Halloween Countdown
+author: glance-led-dev
+description: Nights until Halloween on a moonlit panel, with a jack-o'-lantern, ghost, or witch of your choosing.
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [main]
+
+inputs:
+  - key: character
+    type: choice
+    app_input_type: dropdown
+    label: Character
+    default: PUMPKIN
+    help: Who keeps watch on the left of the panel.
+    choices: [PUMPKIN, GHOST, WITCH]
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#FF7A18"
+    help: Colors the HALLOWEEN header and the DAYS label.
+
+assets:
+  - JACKO.png
+  - GHOST.png
+  - WITCH.png
+  - MOON.png
