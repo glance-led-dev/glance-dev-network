@@ -1,0 +1,45 @@
+gdn: 1
+id: trash-day
+version: 0.1.0
+name: Trash Day
+author: glance-led-dev
+description: "Which bins go out tonight, drawn so you can read it from the hallway."
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [bins]
+
+assets:
+  - BINTRASH.png
+  - BINRECYCLE.png
+  - BINYARD.png
+
+inputs:
+  - key: day
+    type: choice
+    app_input_type: dropdown
+    label: Collection day
+    default: "MONDAY"
+    choices: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+  - key: recycling
+    type: choice
+    app_input_type: dropdown
+    label: Recycling
+    default: "ALTERNATE WEEKS"
+    choices: ["EVERY WEEK", "ALTERNATE WEEKS", "NEVER"]
+  - key: yard
+    type: choice
+    app_input_type: dropdown
+    label: Yard waste
+    default: "EVERY WEEK"
+    choices: ["EVERY WEEK", "ALTERNATE WEEKS", "NEVER"]
+  - key: utcoffset
+    type: number
+    app_input_type: free-text
+    label: UTC offset (hours)
+    default: -4
+    help: Your offset from UTC.

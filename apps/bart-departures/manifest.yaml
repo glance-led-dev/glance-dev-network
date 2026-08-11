@@ -1,0 +1,31 @@
+gdn: 1
+id: bart-departures
+version: 0.1.0
+name: BART Departures
+author: glance-led-dev
+description: "Real-time BART trains leaving your station, by line and minutes."
+category: Other
+entry: app.star
+
+width: 64
+height: 32
+refresh: 120
+
+pages: [departures]
+
+assets:
+  - TRAIN.png
+
+inputs:
+  - key: station
+    type: string
+    app_input_type: free-text
+    label: Station code
+    default: "EMBR"
+    help: "Four-letter BART code, e.g. EMBR, MONT, DBRK. See bart.gov."
+  - key: apikey
+    type: string
+    app_input_type: free-text
+    label: BART API key
+    default: "MW9S-E7SL-26DU-VV8V"
+    help: "BART's public demo key works; get your own at bart.gov if you prefer."
