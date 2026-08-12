@@ -1,0 +1,23 @@
+gdn: 1
+id: i-love-you
+version: 0.1.0
+name: "I Love You"
+author: "Brian Kaufman"
+description: Give your significant other a little love with this app. It will display a message from an api you build.
+category: Fun
+entry: app.star
+width: 64
+height: 32
+refresh: 86400
+pages: [main]
+inputs:
+  - key: apiurl
+    type: string
+    app_input_type: free-text
+    label: API URL
+    default: ""
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: "API Key"
+    default: ""

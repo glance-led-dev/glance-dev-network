@@ -1,0 +1,120 @@
+gdn: 1
+
+id: jeep-weather
+version: 0.3.0
+
+name: "Jeep Weather"
+author: "Six2Four2Three"
+description: Personalized top-on or top-off weather for Jeep Wrangler drivers.
+category: Weather
+
+entry: app.star
+
+width: 128
+height: 32
+
+refresh: 1800
+
+pages:
+  - main
+  - week
+
+inputs:
+
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: "ZIP Code"
+    default: "43537"
+    help: "US ZIP code used for your local weather forecast."
+
+  - key: jeepcolor
+    type: string
+    app_input_type: color
+    label: "Jeep / App Color"
+    default: "#FFCC00"
+    help: "Choose the accent color that matches your Jeep."
+
+  - key: tempunit
+    type: choice
+    app_input_type: dropdown
+    label: "Temperature Units"
+    default: "F"
+    choices:
+      - "F"
+      - "C"
+    help: "Select Fahrenheit or Celsius. Set the temperature limits below using the same unit."
+
+  - key: starttime
+    type: choice
+    app_input_type: dropdown
+    label: "Top-Off Start Time"
+    default: "8 AM"
+    choices:
+      - "5 AM"
+      - "6 AM"
+      - "7 AM"
+      - "8 AM"
+      - "9 AM"
+      - "10 AM"
+      - "11 AM"
+      - "12 PM"
+      - "1 PM"
+      - "2 PM"
+      - "3 PM"
+      - "4 PM"
+      - "5 PM"
+      - "6 PM"
+      - "7 PM"
+      - "8 PM"
+    help: "Start of the time period you want evaluated."
+
+  - key: endtime
+    type: choice
+    app_input_type: dropdown
+    label: "Top-Off End Time"
+    default: "8 PM"
+    choices:
+      - "6 AM"
+      - "7 AM"
+      - "8 AM"
+      - "9 AM"
+      - "10 AM"
+      - "11 AM"
+      - "12 PM"
+      - "1 PM"
+      - "2 PM"
+      - "3 PM"
+      - "4 PM"
+      - "5 PM"
+      - "6 PM"
+      - "7 PM"
+      - "8 PM"
+      - "9 PM"
+      - "10 PM"
+      - "11 PM"
+    help: "End of the time period you want evaluated."
+
+  - key: mintemp
+    type: number
+    label: "Minimum Top-Off Temperature"
+    default: 65
+    help: "Minimum acceptable maximum temperature. Use F or C to match your Temperature Units setting."
+
+  - key: maxtemp
+    type: number
+    label: "Maximum Top-Off Temperature"
+    default: 90
+    help: "Maximum acceptable temperature. Use F or C to match your Temperature Units setting."
+
+  - key: maxrain
+    type: number
+    label: "Maximum Rain Chance"
+    default: 20
+    help: "Maximum acceptable chance of rain during your selected time period, as a percent."
+
+  - key: maxwind
+    type: number
+    label: "Maximum Wind Speed"
+    default: 15
+    help: "Maximum acceptable wind speed during your selected time period, in mph."

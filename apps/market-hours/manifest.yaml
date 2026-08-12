@@ -1,0 +1,25 @@
+gdn: 1
+id: market-hours
+version: 0.1.0
+name: Market Hours
+author: glance-led-dev
+description: "Whether the US market is open, and how long until the bell."
+category: Finance
+entry: app.star
+
+width: 64
+height: 32
+refresh: 300
+
+pages: [bell]
+
+assets:
+  - BELL.png
+
+inputs:
+  - key: utcoffset
+    type: number
+    app_input_type: free-text
+    label: Eastern offset
+    default: -4
+    help: "-4 during daylight saving, -5 in winter."

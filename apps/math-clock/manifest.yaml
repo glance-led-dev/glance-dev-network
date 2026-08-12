@@ -1,0 +1,22 @@
+gdn: 1
+id: math-clock
+version: 0.1.0
+name: Math Clock
+author: glance-led-dev
+description: Read the time by solving it — each unit shown as a small arithmetic problem.
+category: Fun
+entry: app.star
+
+width: 64
+height: 32
+refresh: 60
+
+pages: [solve]
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code. Sets your timezone, daylight saving included.

@@ -1,0 +1,17 @@
+gdn: 1
+id: space-weather
+version: 0.1.0
+name: Solar Flares
+author: glance-led-dev
+description: The current GOES X-ray flux and flare class, and what it means for radio.
+category: Science
+entry: app.star
+
+width: 64
+height: 32
+refresh: 900
+
+pages: [flux]
+
+assets:
+  - FLARE.png

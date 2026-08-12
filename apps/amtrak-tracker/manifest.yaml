@@ -1,0 +1,25 @@
+gdn: 1
+id: amtrak-tracker
+version: 0.1.0
+name: Amtrak Tracker
+author: glance-led-dev
+description: "Where your Amtrak train actually is, how late it is, and its next stop."
+category: Other
+entry: app.star
+
+width: 64
+height: 32
+refresh: 300
+
+pages: [train]
+
+assets:
+  - LOCO.png
+
+inputs:
+  - key: number
+    type: string
+    app_input_type: free-text
+    label: Train number
+    default: "173"
+    help: "Amtrak train number, e.g. 173 for a Northeast Regional."

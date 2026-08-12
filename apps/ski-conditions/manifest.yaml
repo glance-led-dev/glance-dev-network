@@ -1,0 +1,31 @@
+gdn: 1
+id: ski-conditions
+version: 0.1.0
+name: Ski Conditions
+author: glance-led-dev
+description: New snow, what is coming, and whether it is cold enough to hold.
+category: Weather
+entry: app.star
+
+width: 64
+height: 32
+refresh: 1800
+
+pages: [snow]
+
+assets:
+  - MOUNTAIN.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "81657"
+    help: US zip at or near the resort.
+  - key: units
+    type: choice
+    app_input_type: dropdown
+    label: Units
+    default: "IMPERIAL"
+    choices: ["IMPERIAL", "METRIC"]

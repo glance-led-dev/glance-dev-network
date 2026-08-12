@@ -1,0 +1,25 @@
+gdn: 1
+id: pollen-count
+version: 0.1.0
+name: Pollen Count
+author: glance-led-dev
+description: Today's pollen index for your zip, tomorrow's, and exactly which plants are to blame.
+category: Weather
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [today]
+
+assets:
+  - POLLEN.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code.

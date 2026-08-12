@@ -1,0 +1,25 @@
+gdn: 1
+id: garden-water
+version: 0.1.0
+name: Garden Water
+author: glance-led-dev
+description: Whether the garden needs watering, from what the soil lost against what fell.
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [water]
+
+assets:
+  - WATERCAN.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code. Sets the location.

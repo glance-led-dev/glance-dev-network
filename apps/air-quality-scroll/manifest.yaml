@@ -1,0 +1,25 @@
+gdn: 1
+id: air-quality-scroll
+version: 0.1.0
+name: Air Quality (Scroll)
+author: glance-led-dev
+description: US AQI and fine particulates, with a skyline that hazes over as the air gets worse.
+category: Weather
+entry: app.star
+
+width: 192
+height: 32
+refresh: 1800
+
+pages: [aqi]
+
+assets:
+  - SKYLINE.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code. Sets the location.

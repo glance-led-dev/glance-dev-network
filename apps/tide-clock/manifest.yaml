@@ -1,0 +1,25 @@
+gdn: 1
+id: tide-clock
+version: 0.1.0
+name: Tide Clock
+author: glance-led-dev
+description: The next high and low tide for any NOAA station, and which way the water is moving.
+category: Weather
+entry: app.star
+
+width: 64
+height: 32
+refresh: 1800
+
+pages: [tides]
+
+assets:
+  - TIDE.png
+
+inputs:
+  - key: station
+    type: string
+    app_input_type: free-text
+    label: NOAA station id
+    default: "9410660"
+    help: Find yours at tidesandcurrents.noaa.gov. 9410660 is Los Angeles.

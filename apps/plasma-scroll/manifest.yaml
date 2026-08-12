@@ -1,0 +1,22 @@
+gdn: 1
+id: plasma-scroll
+version: 0.1.0
+name: Plasma Field (Scroll)
+author: glance-led-dev
+description: Three demoscene plasma fields — waves, rings and weave — rotating in the palette you pick.
+category: Fun
+entry: app.star
+
+width: 192
+height: 32
+refresh: 300
+
+pages: [waves, rings, weave]
+
+inputs:
+  - key: palette
+    type: choice
+    app_input_type: dropdown
+    label: Palette
+    default: "SUNSET"
+    choices: ["SUNSET", "OCEAN", "TOXIC", "CANDY", "MONO"]

@@ -1,0 +1,17 @@
+gdn: 1
+id: power-price-scroll
+version: 0.1.0
+name: Power Price (Scroll)
+author: glance-led-dev
+description: "The real-time price of electricity right now, for ComEd hourly customers."
+category: Other
+entry: app.star
+
+width: 192
+height: 32
+refresh: 600
+
+pages: [price]
+
+assets:
+  - PLUG.png

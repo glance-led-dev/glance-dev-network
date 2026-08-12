@@ -1,0 +1,31 @@
+gdn: 1
+id: comfort-index-scroll
+version: 0.1.0
+name: Feels Like (Scroll)
+author: glance-led-dev
+description: What the air actually feels like, and why — humidity, dew point and the real temperature.
+category: Weather
+entry: app.star
+
+width: 192
+height: 32
+refresh: 900
+
+pages: [feels]
+
+assets:
+  - THERMO.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code. Sets the location.
+  - key: units
+    type: choice
+    app_input_type: dropdown
+    label: Units
+    default: "IMPERIAL"
+    choices: ["IMPERIAL", "METRIC"]

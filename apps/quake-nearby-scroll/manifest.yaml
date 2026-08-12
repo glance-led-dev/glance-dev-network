@@ -1,0 +1,25 @@
+gdn: 1
+id: quake-nearby-scroll
+version: 0.1.0
+name: Quakes Near Me (Scroll)
+author: glance-led-dev
+description: The closest recent earthquake to you, and how far away it actually was.
+category: Science
+entry: app.star
+
+width: 192
+height: 32
+refresh: 900
+
+pages: [nearest]
+
+assets:
+  - CRACKED.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "94103"
+    help: US zip. California is livelier.

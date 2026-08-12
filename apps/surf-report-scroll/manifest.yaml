@@ -1,0 +1,31 @@
+gdn: 1
+id: surf-report-scroll
+version: 0.1.0
+name: Surf Report (Scroll)
+author: glance-led-dev
+description: Wave height, period and swell direction for your local break.
+category: Weather
+entry: app.star
+
+width: 192
+height: 32
+refresh: 1800
+
+pages: [surf]
+
+assets:
+  - WAVE.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "90265"
+    help: US zip near the coast.
+  - key: units
+    type: choice
+    app_input_type: dropdown
+    label: Units
+    default: "IMPERIAL"
+    choices: ["IMPERIAL", "METRIC"]

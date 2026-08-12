@@ -1,0 +1,22 @@
+gdn: 1
+id: uv-index-scroll
+version: 0.1.0
+name: UV Index (Scroll)
+author: glance-led-dev
+description: Today's UV index, when it peaks, and how long unprotected skin has.
+category: Weather
+entry: app.star
+
+width: 192
+height: 32
+refresh: 1800
+
+pages: [now]
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code. Sets your timezone, daylight saving included.

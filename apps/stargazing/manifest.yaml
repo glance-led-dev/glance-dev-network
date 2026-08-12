@@ -1,0 +1,26 @@
+gdn: 1
+id: stargazing
+version: 0.1.0
+name: Stargazing
+author: glance-led-dev
+description: Whether tonight is worth setting up the telescope — cloud, moon and darkness in one verdict.
+category: Science
+entry: app.star
+
+width: 64
+height: 32
+refresh: 1800
+
+pages: [tonight]
+
+assets:
+  - MOON.png
+  - CLOUD.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code. Sets your timezone, daylight saving included.

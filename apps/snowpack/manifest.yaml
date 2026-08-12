@@ -1,0 +1,25 @@
+gdn: 1
+id: snowpack
+version: 0.1.0
+name: Snowpack
+author: glance-led-dev
+description: How deep the base is, and whether it has been building or melting.
+category: Weather
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [depth]
+
+assets:
+  - SLIDE.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "81657"
+    help: US zip at or near the mountain.

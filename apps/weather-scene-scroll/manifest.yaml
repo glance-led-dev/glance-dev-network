@@ -1,0 +1,31 @@
+gdn: 1
+id: weather-scene-scroll
+version: 0.1.0
+name: Weather (Scroll)
+author: glance-led-dev
+description: Now and the next three days, told by drawn weather art rather than words.
+category: Weather
+entry: app.star
+
+width: 192
+height: 32
+refresh: 900
+
+pages: [now, forecast]
+
+assets:
+  - SUN.png
+  - CLOUD.png
+  - PARTLY.png
+  - RAIN.png
+  - SNOW.png
+  - STORM.png
+  - FOG.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code. Sets your timezone, daylight saving included.
