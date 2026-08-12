@@ -405,6 +405,12 @@ def get_forecast(ctx):
         ttl_seconds=86400
     )
 
+    if geo_response["status_code"] != 200:
+        return None
+
+    if geo_response["json"] == None:
+        return None
+
     geo_data = geo_response[
         "json"
     ]
@@ -459,6 +465,12 @@ def get_forecast(ctx):
         weather_url,
         ttl_seconds=1800
     )
+
+    if weather_response["status_code"] != 200:
+        return None
+
+    if weather_response["json"] == None:
+        return None
 
     weather_data = weather_response[
         "json"

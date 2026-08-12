@@ -109,12 +109,16 @@ inputs:
 
   - key: maxrain
     type: number
-    label: "Maximum Rain Chance"
+    label: "Maximum Rain Chance (%)"
     default: 20
-    help: "Maximum acceptable chance of rain during your selected time period, as a percent."
+    help: "Rainier than this and the app tells you to keep the top on. A percent chance, so 20 means don't bother once it's over a 1-in-5 chance."
 
   - key: maxwind
     type: number
-    label: "Maximum Wind Speed"
+    label: "Maximum Top-Off Wind (MPH)"
     default: 15
-    help: "Maximum acceptable wind speed during your selected time period, in mph."
+    help: >-
+      Windier than this and the app tells you to keep the top on. Always MPH,
+      even if you set Temperature Units to Celsius. 15 is a good starting point
+      -- past about 20 an open cab gets buffety and loose papers start leaving.
+      Raise it if wind doesn't bother you, lower it if it does.

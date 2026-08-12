@@ -2,6 +2,7 @@ id: mlb-pitching-leaders
 name: MLB Pitching Leaders
 author: cfdmb
 description: Top 4 pitching leaders by category, for MLB, AL, or NL.
+category: Sports
 width: 128
 height: 32
 refresh: 600
@@ -19,5 +20,5 @@ inputs:
     type: string
     app_input_type: dropdown
     label: League
-    choices: [MLB, AL, NL]
+    options: [MLB, AL, NL]
     default: MLB
