@@ -72,74 +72,124 @@ MFG_COLOR = {
     "CHEVROLET": "#D4A017",
 }
 
-# Cup Series primary sponsor-livery colors, keyed by car number (see
-# motorsports-color-reference.md). O'Reilly/Trucks share car numbers with
-# different teams, so this table -- Cup only -- isn't safe to reuse there;
-# those series keep falling back to mfg_color(). A few Cup cars (33, 51, 71)
-# have no published livery color and also fall back.
-# (primary, secondary) -- primary is the row background, secondary (when the
-# reference doc lists one) is the row TEXT color, so text reads as the
-# team's own second brand color rather than a generic computed white/black.
-# None means the sponsor only has one published color; best_text_color()
-# fills in for those.
+# Livery bg/text hex per car NUMBER (not driver) -- sourced from
+# Motorsport-driver-hex-list.xlsx -- since the same number gets reassigned to
+# a different driver between seasons/races far more often than it changes
+# team livery. O'Reilly/Trucks reuse Cup's numbers for entirely different
+# teams, so each series keeps its own table; never share one across series.
+#
+# Both hexes come straight from the reference doc rather than a computed
+# contrast color, so text reads as the team's real second brand color. Car
+# 48 (O'Reilly) and 52 (Trucks) were logged in the doc with an identical
+# bg/text hex (invisible text); both got a corrected pair straight from the
+# user rather than the black/white fallback used for any car number missing
+# from the table entirely.
 NASCAR_DRIVER_COLOR = {
-    "1": ("#204C85", "#00A4DA"),
-    "2": ("#008938", None),
-    "3": ("#FBD005", "#C4161B"),
-    "4": ("#ECB11F", "#494B4B"),
-    "5": ("#015998", None),
-    "6": ("#009530", "#ED1C24"),
-    "7": ("#0047BB", None),
-    "9": ("#001489", "#FBB726"),
-    "10": ("#1B5E20", None),
-    "11": ("#0072BC", None),
-    "12": ("#008938", None),
-    "16": ("#FF9933", None),  # Celsius' orange+red are both warm/similar brightness -- computed contrast reads better than the pair
-    "17": ("#1364B8", None),
-    "19": ("#FBD005", "#C4161B"),
-    "20": ("#E4002B", None),
-    "21": ("#EC1C24", None),
-    "22": ("#FBCE07", "#DD1D21"),
-    "23": ("#6138F5", None),
-    "24": ("#D91C2B", None),
-    "34": ("#ED2024", "#FFE200"),
-    "35": ("#95D600", None),
-    "38": ("#00549F", None),
-    "41": ("#CC162E", None),
-    "42": ("#00953A", None),
-    "43": ("#6E2B62", "#006298"),
-    "45": ("#6138F5", None),
-    "47": ("#F7941E", None),
-    "48": ("#50104A", None),
-    "54": ("#95D600", None),
-    "60": ("#084999", None),
-    "77": ("#0099D8", None),
-    "88": ("#FF0C49", "#FFC800"),
-    "97": ("#FF0C49", "#FFC800"),
+    "1": ("#00A4DA", "#204C85"),
+    "2": ("#FFF200", "#006400"),
+    "3": ("#C0C0C0", "#000000"),
+    "4": ("#ECB11F", "#000000"),
+    "5": ("#015998", "#FFFFFF"),
+    "6": ("#009343", "#FFFFFF"),
+    "7": ("#2475D1", "#72D669"),
+    "9": ("#0A0094", "#FFC836"),
+    "10": ("#FF4500", "#000000"),
+    "11": ("#2D95E5", "#FFFFFF"),
+    "12": ("#FFF200", "#000000"),
+    "16": ("#000000", "#FDFF45"),
+    "17": ("#FF6700", "#000000"),
+    "19": ("#000000", "#FF5F1F"),
+    "20": ("#EA0021", "#FFFFFF"),
+    "21": ("#FFFFFF", "#D40000"),
+    "22": ("#FFCF1D", "#ED1C24"),
+    "23": ("#6138F5", "#04C785"),
+    "24": ("#D91C2B", "#005596"),
+    "33": ("#0A192F", "#CE714C"),
+    "34": ("#FFE100", "#000000"),
+    "35": ("#95D600", "#000000"),
+    "38": ("#3472BD", "#32CD32"),
+    "41": ("#505359", "#000000"),
+    "42": ("#FFFFFF", "#235DAB"),
+    "43": ("#6FBE4A", "#D3AF37"),
+    "45": ("#D3D3D3", "#CF1A2B"),
+    "47": ("#005A9C", "#FF5F1F"),
+    "48": ("#650360", "#FFFFFF"),
+    "51": ("#D3AF37", "#000000"),
+    "54": ("#000000", "#95D600"),
+    "60": ("#000000", "#50AD9A"),
+    "71": ("#0058AA", "#81D9AC"),
+    "77": ("#000080", "#EE2E24"),
+    "88": ("#1E5BC6", "#F7C300"),
+    "97": ("#1E5BC6", "#DC052D"),
 }
 
-# O'Reilly/Truck verified entries only (motorsports-color-reference.md notes
-# the rest rotate sponsors weekly with no fixed hex) -- separate tables from
-# Cup's since these series reuse car numbers for entirely different teams.
 ORS_DRIVER_COLOR = {
-    "1": ("#FBD005", "#C4161B"),
-    "2": ("#E62629", None),
-    "8": ("#DC1630", None),
-    "17": ("#015998", None),
-    "20": ("#008938", None),
-    "27": ("#D81F2A", "#FEC85A"),
-    "96": ("#43C7FF", "#121212"),
+    "00": ("#FFCF1D", "#ED1C24"),
+    "0": ("#0088D8", "#4BB92C"),
+    "1": ("#FF5F1F", "#000000"),
+    "02": ("#000096", "#4D9DFF"),
+    "2": ("#FFFFFF", "#FF0000"),
+    "07": ("#FE5000", "#000080"),
+    "7": ("#ED1B24", "#FFFFFF"),
+    "8": ("#EF4138", "#000000"),
+    "17": ("#015998", "#FFFFFF"),
+    "18": ("#666666", "#003E6F"),
+    "19": ("#0047BA", "#D42E12"),
+    "20": ("#FFF200", "#006400"),
+    "21": ("#FFFFFF", "#015998"),
+    "24": ("#FFFFFF", "#ED1B2E"),
+    "26": ("#000000", "#52D1FF"),
+    "27": ("#FEC85A", "#B82C0F"),
+    "28": ("#4169E1", "#000000"),
+    "31": ("#174A7C", "#FDB913"),
+    "39": ("#FFFFFF", "#FF3131"),
+    "41": ("#44C744", "#000000"),
+    "44": ("#0205C7", "#CCFF00"),
+    "45": ("#155289", "#FFE600"),
+    "48": ("#006499", "#D62D2D"),
+    "51": ("#D3AF37", "#000000"),
+    "54": ("#FFDD42", "#FFFFFF"),
+    "87": ("#FFFF73", "#FF0000"),
+    "88": ("#FFFFFF", "#015998"),
+    "92": ("#C9AC34", "#000000"),
+    "96": ("#0055FF", "#000000"),
+    "99": ("#00DE78", "#0004C7"),
 }
 
 TRUCK_DRIVER_COLOR = {
-    "12": ("#DA291C", None),
-    "16": ("#FF9933", None),  # Celsius' orange+red are both warm/similar brightness -- computed contrast reads better than the pair
-    "19": ("#001489", "#FBB726"),
-    "34": ("#ED2024", "#FFE200"),
-    "81": ("#003876", "#A80532"),
-    "88": ("#008938", None),
-    "91": ("#001489", "#FBB726"),
-    "98": ("#FDBF57", "#ED1B2D"),
+    "1": ("#0047BA", "#FFFFFF"),
+    "2": ("#E41D38", "#160BE6"),
+    "5": ("#FFFFFF", "#0047BA"),
+    "7": ("#808080", "#FF5B00"),
+    "9": ("#8B3A3A", "#000000"),
+    "10": ("#0066CC", "#FFFFFF"),
+    "11": ("#DB0020", "#FFFFFF"),
+    "12": ("#EE2E24", "#000000"),
+    "13": ("#000000", "#FF0000"),
+    "14": ("#F6DE0F", "#000000"),
+    "15": ("#89CFF0", "#FFFFFF"),
+    "16": ("#FFFFFF", "#FF8D2E"),
+    "17": ("#FF6600", "#000000"),
+    "18": ("#003F72", "#F8981C"),
+    "19": ("#0A0094", "#FFC836"),
+    "22": ("#FFFFFF", "#000000"),
+    "25": ("#000000", "#F6DE0F"),
+    "26": ("#5D8AAA", "#A9A9A9"),
+    "33": ("#FFF836", "#000000"),
+    "34": ("#FFE100", "#000000"),
+    "38": ("#8ACF00", "#000000"),
+    "42": ("#FFFFFF", "#0000B8"),
+    "44": ("#0000B8", "#32CD32"),
+    "45": ("#C70000", "#0000B8"),
+    "52": ("#006499", "#D62D2D"),
+    "62": ("#FFFFFF", "#E30614"),
+    "76": ("#8C8B88", "#FFBF00"),
+    "77": ("#0058AA", "#81D9AC"),
+    "81": ("#00396F", "#B5160B"),
+    "88": ("#FFF200", "#000000"),
+    "91": ("#FFC836", "#0A0094"),
+    "98": ("#8C8B88", "#F0941C"),
+    "99": ("#C71121", "#FFFFFF"),
 }
 
 # 2026 F1 team colors -- stored for the live F1 leaderboard once that has a
@@ -367,12 +417,9 @@ def best_text_color(hex_color):
 def driver_colors(num, mfg, series):
     # Each series reuses car numbers for entirely different teams, so each
     # gets its own table (see their definitions) -- never share one across
-    # series, or a same-numbered car picks up the wrong livery color.
-    #
-    # Text color comes from that same driver's own secondary hex when the
-    # reference doc has one (a real second brand color, not a generic
-    # computed white/black) -- best_text_color() only fills in when a
-    # sponsor has just the one published color.
+    # series, or a same-numbered car picks up the wrong livery color. Keyed
+    # by car number rather than driver since drivers swap cars far more
+    # often than a car's own livery changes.
     table = NASCAR_DRIVER_COLOR
     if series == "NASCAR - O'Reilly":
         table = ORS_DRIVER_COLOR
@@ -384,24 +431,8 @@ def driver_colors(num, mfg, series):
 
     entry = table.get(str(num))
     if entry == None:
-        bg = mfg_color(mfg)
-        return bg, best_text_color(bg)
-    bg, secondary = entry
-    if secondary == None:
-        return bg, best_text_color(bg)
-
-    # A sponsor's own secondary color can still read poorly against its own
-    # primary -- e.g. two colors that are both dark (a brightness gap this
-    # catches) or, less common, two "loud" colors from the same warm/cool
-    # family that are close enough in luminance to vibrate against each
-    # other rather than read as text. Below a real brightness gap, a
-    # computed black/white is the safer bet than trusting the pair blindly.
-    gap = yiq_of(secondary) - yiq_of(bg)
-    if gap < 0:
-        gap = -gap
-    if gap < 40:
-        return bg, best_text_color(bg)
-    return bg, secondary
+        return "#000000", "#FFFFFF"
+    return entry
 
 def mfg_color(code):
     # COLORS["accent"] (orange) used to be the catch-all here, but at panel
