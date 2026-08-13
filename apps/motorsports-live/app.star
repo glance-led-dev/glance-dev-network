@@ -142,6 +142,21 @@ TRUCK_DRIVER_COLOR = {
     "98": ("#FDBF57", "#ED1B2D"),
 }
 
+# Playoff (chase) drivers get their position badge recolored per series
+# instead of a " C" suffix crammed onto an already-tight name column --
+# reads at a glance without costing any width. Default (non-chase, or a
+# series with no playoff concept like F1) is the plain black/white badge.
+CHASE_BADGE = {
+    "NASCAR": ("#FACC15", "#000000"),
+    "NASCAR - O'Reilly": ("#EF4444", "#FFFFFF"),
+    "NASCAR - Trucks": ("#7DF9FF", "#FFFFFF"),
+}
+
+def pos_badge_colors(series, chase):
+    if not chase:
+        return "#000000", "#FFFFFF"
+    return CHASE_BADGE.get(series, ("#000000", "#FFFFFF"))
+
 # 2026 F1 team colors -- stored for the live F1 leaderboard once that has a
 # timing data source wired up (next-race card only for now).
 F1_TEAM_COLOR = {
@@ -774,6 +789,9 @@ def vehicle_rows(feed, series, live_race):
         bg, txt_color = driver_colors(row["num"], row["mfg"], series)
         row["bg"] = bg
         row["txt_color"] = txt_color
+        pos_bg, pos_txt = pos_badge_colors(series, row["chase"])
+        row["pos_bg"] = pos_bg
+        row["pos_txt"] = pos_txt
     return rows
 
 def format_gap_time(delta):
@@ -994,6 +1012,8 @@ def fetch_f1_live(ctx):
             "gap": gap_str,
             "bg": bg,
             "txt_color": best_text_color(bg),
+            "pos_bg": "#000000",
+            "pos_txt": "#FFFFFF",
         })
 
     n = len(rows)
@@ -1283,13 +1303,15 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     text_h = 7 if font == "5x7" else 6
     cy = y0 + (box_h - text_h) // 2
 
-    # Position gets its own fixed-width black badge -- always the same
-    # color regardless of team, so running order reads at a glance instead
-    # of blending into whatever livery color that row happens to be.
+    # Position gets its own fixed-width badge, independent of the row's
+    # livery color so running order always reads at a glance -- black/white
+    # normally, recolored per series (see CHASE_BADGE) when the driver is in
+    # the playoffs, instead of a " C" suffix competing with the name for
+    # width.
     pos_str = str(row["pos"]) + ")"
     pos_badge_w = c.text_width("40)", font) + 4
-    c.rect(x0, y0, x0 + pos_badge_w - 1, y1, fill = "#000000")
-    c.text(pos_str, x0 + 2, cy, font = font, color = "#FFFFFF")
+    c.rect(x0, y0, x0 + pos_badge_w - 1, y1, fill = row["pos_bg"])
+    c.text(pos_str, x0 + 2, cy, font = font, color = row["pos_txt"])
 
     # Real sponsor/team color as the rest of the row's background (see
     # motorsports-color-reference.md) with a computed contrast text color,
@@ -1301,31 +1323,31 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     if bg.upper() in ("#000000", "#111111", "#111318"):
         c.rect(row_x0, y0, x1, y1, outline = "#555555")
 
-    # "24 W.BYRON C   +0.29" -- car# initial.LASTNAME, chase marker if
-    # applicable, then the gap. No "#" before the car number: that glyph is
-    # silently missing from 5x7 (confirmed with measure_text).
+    # "24 W.BYRON   +0.29" -- car# initial.LASTNAME, then the gap. Playoff
+    # status shows on the position badge above instead of a name suffix. No
+    # "#" before the car number: that glyph is silently missing from 5x7
+    # (confirmed with measure_text).
     #
-    # The name is fit_text'd on its OWN, separate from the "num " prefix and
-    # " C" suffix: fit_text only ever cuts whole words at a space, and
-    # "W.BYRON" has none, so if it were folded into one long string that
-    # didn't quite fit, the entire name -- not just the tail of it -- would
-    # vanish (a real bug, caught by an actual driver's name disappearing at
-    # panel-realistic widths). Fitting the name alone still shrinks it letter
-    # by letter once nothing else is left to cut.
+    # The name is fit_text'd on its OWN, separate from the "num " prefix:
+    # fit_text only ever cuts whole words at a space, and "W.BYRON" has none,
+    # so if it were folded into one long string that didn't quite fit, the
+    # entire name -- not just the tail of it -- would vanish (a real bug,
+    # caught by an actual driver's name disappearing at panel-realistic
+    # widths). Fitting the name alone still shrinks it letter by letter once
+    # nothing else is left to cut.
     num_str = str(row["num"])
     if len(num_str) < 2:
         num_str = " " * (2 - len(num_str)) + num_str
     prefix = num_str + " "
-    suffix = " C" if row["chase"] else ""
     who = (row["initial"] + "." + row["name"]) if row["initial"] else row["name"]
 
     gap = row["gap"]
     gap_w = c.text_width(gap, font) if gap != "" else 0
     reserve = (gap_w + 4) if gap_w > 0 else 0
     avail = (x1 - row_x0) - 6 - reserve
-    who_max_w = avail - c.text_width(prefix, font) - c.text_width(suffix, font)
+    who_max_w = avail - c.text_width(prefix, font)
     who = fit_text(c, who, font, who_max_w) if who_max_w > 0 else ""
-    main = prefix + who + suffix
+    main = prefix + who
 
     c.text(main, row_x0 + 3, cy, font = font, color = txt_color)
     if gap != "":
@@ -1395,6 +1417,9 @@ def _mock_state():
         bg, txt_color = driver_colors(row["num"], row["mfg"], "NASCAR")
         row["bg"] = bg
         row["txt_color"] = txt_color
+        pos_bg, pos_txt = pos_badge_colors("NASCAR", row["chase"])
+        row["pos_bg"] = pos_bg
+        row["pos_txt"] = pos_txt
     return {
         "ok": True, "live": True, "series": "NASCAR",
         "race_name": "BRICKYARD 400", "session": "RACE", "track_name": "INDIANAPOLIS",
