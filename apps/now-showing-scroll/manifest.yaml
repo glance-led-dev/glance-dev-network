@@ -1,0 +1,73 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: now-showing-scroll
+version: 0.1.0
+name: Now Showing (Scroll)
+author: jdhine02
+description: One title, always on the panel. Set a movie or a show (with an optional season/episode), and it shows runtime, genre, and IMDb + Rotten Tomatoes ratings.
+category: Entertainment
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+width: 192
+height: 32
+
+# Re-render hourly — ratings/streaming availability don't change minute to minute.
+refresh: 3600
+
+# Pages the panel rotates through, in order. app.star must define a function per name.
+pages: [main]
+
+# What the client fills in at install time.
+#   type            — the data type: string | number | choice
+#   app_input_type  — the UI widget the client sees. One of:
+#                     free-text | dropdown | selection | checkbox | date | date-past | color
+#                     (optional; if omitted the form infers it from `type`)
+inputs:
+  - key: mediatype
+    type: choice
+    app_input_type: dropdown
+    label: Movie or show
+    default: "Movie"
+    choices: ["Movie", "Show"]
+
+  - key: title
+    type: string
+    app_input_type: free-text
+    label: Title
+    default: ""
+    help: Exact title of the movie or show.
+
+  - key: year
+    type: string
+    app_input_type: free-text
+    label: Release year (optional)
+    default: ""
+    help: Narrows down remakes/reboots that share the same title.
+
+  - key: season
+    type: string
+    app_input_type: free-text
+    label: Season # (shows only, optional)
+    default: ""
+
+  - key: episode
+    type: string
+    app_input_type: free-text
+    label: Episode # (shows only, optional)
+    default: ""
+    help: Leave season and episode both blank to show overall series info instead of one episode.
+
+  - key: omdbkey
+    type: string
+    app_input_type: api-key
+    label: OMDb API key
+    default: ""
+    help: Powers the title lookup, runtime, genre, and both ratings. To get an API key, go to omdbapi.com/apikey.aspx — it's free.
+
+  - key: labelcolor
+    type: string
+    app_input_type: color
+    label: "\"Now Showing\" label color"
+    default: "#FFBF00"
