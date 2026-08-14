@@ -87,22 +87,22 @@ MFG_COLOR = {
     "RAM": "#A6192E",
 }
 
-# Manufacturer mark shown between the driver name and the gap -- a small
-# black chip (see the asset files) with a white silhouette, thresholded from
-# the real logos down to something that survives an ~8px-tall row instead of
-# dissolving into noise. (asset, native width, native height) -- native
-# height is 8px for all four; width varies with each mark's own aspect ratio.
-MFG_LOGO = {
-    "TYT": ("mfg-toyota.png", 12, 8),
-    "TOYOTA": ("mfg-toyota.png", 12, 8),
-    "FRD": ("mfg-ford.png", 17, 8),
-    "FORD": ("mfg-ford.png", 17, 8),
-    "CHV": ("mfg-chevy.png", 18, 8),
-    "CHEVY": ("mfg-chevy.png", 18, 8),
-    "CHEVROLET": ("mfg-chevy.png", 18, 8),
-    "DOD": ("mfg-ram.png", 48, 8),
-    "DODGE": ("mfg-ram.png", 48, 8),
-    "RAM": ("mfg-ram.png", 48, 8),
+# Manufacturer name shown between the driver name and the gap. Tried as a
+# small logo mark first -- at an ~8-10px row height, real logos (even
+# thresholded/dilated to a clean silhouette) read as abstract blobs, not
+# recognizable brands. Plain text, colored for contrast against the row's
+# own livery color (best_text_color), reads reliably at any size instead.
+MFG_LABEL = {
+    "TYT": "TOYOTA",
+    "TOYOTA": "TOYOTA",
+    "FRD": "FORD",
+    "FORD": "FORD",
+    "CHV": "CHEVY",
+    "CHEVY": "CHEVY",
+    "CHEVROLET": "CHEVY",
+    "DOD": "RAM",
+    "DODGE": "RAM",
+    "RAM": "RAM",
 }
 
 # Livery bg/text hex per car NUMBER (not driver) -- sourced from
@@ -1163,10 +1163,11 @@ def draw_next_race_text(c, ctx, text_x0, text_w, race_name, sub_name, date_text)
     c.text(fit_text(c, sub_name, "4x5", text_w), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
     c.text(fit_text(c, date_text, "5x7", text_w), cx, 21, font = "5x7", color = date_color, align = "center")
 
-# Live-intro track icon: kept small since it's sharing the row with the
-# flag/lap/stage status column, which matters more mid-race.
-TRACK_ICON_MAX_W = 24
-TRACK_ICON_MAX_H = 20
+# Live-intro track icon: bigger than the old 24x20 -- text (race name/
+# track/session) gives up the room instead, per feedback that the logo and
+# track were too compressed relative to the text.
+TRACK_ICON_MAX_W = 34
+TRACK_ICON_MAX_H = 24
 
 # Off-session "next race" card track icon: this card has no status column
 # competing for room, so the track shape gets a real size instead -- most
@@ -1402,16 +1403,15 @@ def draw_live_intro(c, state, ctx):
     track_w, track_h = cap_track_dims(native_w, native_h, TRACK_ICON_MAX_W, TRACK_ICON_MAX_H)
 
     if is_race:
-        # Status (live flag/lap/stage) gets a bigger relative share than the
-        # 384px budget's [100, 100, 90] -- at this width that ratio squeezed
-        # it down to where "LAP 100/160" was losing the number entirely
-        # (fit_text has nothing left to cut but the number itself). The
-        # logo gives up the difference; it's decorative, the lap count isn't.
-        logo_max_w, text_w, status_w = fit_row_budget(c, track_w, gap, [50.0, 120.0, 115.0])
+        # Logo and (now-bigger) track shape both get more room than text --
+        # per feedback the header read as too text-heavy and the logo/track
+        # too compressed. Status keeps its share since the lap count still
+        # can't lose its number; text is what shrinks to pay for the rest.
+        logo_max_w, text_w, status_w = fit_row_budget(c, track_w, gap, [85.0, 70.0, 115.0])
     else:
-        logo_max_w, text_w = fit_row_budget(c, track_w, gap, [60.0, 140.0])
+        logo_max_w, text_w = fit_row_budget(c, track_w, gap, [100.0, 90.0])
         status_w = 0
-    _, logo_w, logo_h = series_logo_dims(state["series"], logo_max_w, 26)
+    _, logo_w, logo_h = series_logo_dims(state["series"], logo_max_w, 28)
 
     total = logo_w + gap + text_w + gap + track_w + (gap + status_w if is_race else 0)
     margin = (c.width - total) // 2
@@ -1491,22 +1491,24 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     # the current tire compound letter (F1) -- whichever the row carries.
     # Reserved as its own slot, same pattern as the gap reserve below, so
     # the name shrinks to make room instead of the badge overlapping it.
-    badge_h = min(8, box_h - 2)
     badge_w = 0
     badge_kind = None
-    badge_asset = None
     badge_letter = None
     badge_color = None
-    mfg_entry = MFG_LOGO.get(str(row.get("mfg", "")).upper())
+    mfg_label = MFG_LABEL.get(str(row.get("mfg", "")).upper())
     compound_entry = TIRE_BADGE.get(str(row.get("compound", "")).upper())
     if compound_entry != None:
         badge_kind = "tire"
         badge_letter, badge_color = compound_entry
         badge_w = c.text_width(badge_letter, "4x5") + 4
-    elif mfg_entry != None:
+    elif mfg_label != None:
         badge_kind = "mfg"
-        badge_asset, native_w, native_h = mfg_entry
-        badge_w = max(1, int(badge_h * native_w / native_h + 0.5))
+        badge_letter = mfg_label
+        # Fixed to "TOYOTA"'s width (the longest label) rather than each
+        # label's own width, so the gap column lines up in the same spot
+        # on every row regardless of which manufacturer it is -- the name
+        # is what gives up room to make this consistent, not the alignment.
+        badge_w = c.text_width("TOYOTA", gap_font)
     badge_reserve = (badge_w + 6) if badge_kind != None else 0
 
     # "24 W.BYRON   +0.29" -- car# initial.LASTNAME, then the gap. Playoff
@@ -1538,14 +1540,16 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     c.text(main, row_x0 + 3, cy, font = font, color = txt_color)
 
     if badge_kind == "tire":
+        # Tire compound keeps its own black chip -- it needs to read as a
+        # distinct status marker regardless of livery color, not blend into
+        # the row like the manufacturer name does.
         badge_x0 = x1 - 3 - reserve - badge_w
-        badge_y0 = y0 + (box_h - badge_h) // 2
-        c.rect(badge_x0, badge_y0, badge_x0 + badge_w - 1, badge_y0 + badge_h - 1, fill = "#000000")
-        c.text(badge_letter, badge_x0 + badge_w // 2, badge_y0, font = "4x5", color = badge_color, align = "center")
+        c.rect(badge_x0, y0, badge_x0 + badge_w - 1, y1, fill = "#000000")
+        letter_h = 6
+        c.text(badge_letter, badge_x0 + badge_w // 2, y0 + (box_h - letter_h) // 2, font = "4x5", color = badge_color, align = "center")
     elif badge_kind == "mfg":
         badge_x0 = x1 - 3 - reserve - badge_w
-        badge_y0 = y0 + (box_h - badge_h) // 2
-        c.image(badge_asset, badge_x0, badge_y0, w = badge_w, h = badge_h)
+        c.text(badge_letter, badge_x0, gap_cy, font = gap_font, color = best_text_color(bg))
 
     if gap != "":
         c.text(gap, x1 - 3, gap_cy, font = gap_font, color = txt_color, align = "right")
