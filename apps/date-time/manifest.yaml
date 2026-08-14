@@ -2,10 +2,10 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: date-time
-version: 0.1.0
+version: 0.2.0
 name: Date & Time
 author: jdhine02
-description: Local date, time, and current weather for a US zip code on one line. Pick a 12/24-hour clock, a US/international/written date format, a font size and weight, and a color for each section; rain, snow, and clear-night moon phase are called out by name and icon.
+description: Local date, time, and current weather for a US zip code on one line. Pick a 12/24-hour clock, a US/international/written date format, a font, and a color for each section; the temperature can match the weather color or follow a hot/cold scale, and rain, snow, and clear-night moon phase are called out by name and icon.
 category: Time
 entry: app.star
 
@@ -72,17 +72,24 @@ inputs:
     label: Weather color
     default: "#FFFFFF"
 
-  - key: fontsize
+  - key: tempcolormode
     type: choice
     app_input_type: dropdown
-    label: Font size
-    default: "medium"
-    help: The whole line still shrinks a size automatically if content is too long to fit.
-    choices: ["small", "medium", "large"]
+    label: Temperature color
+    default: "Weather color"
+    help: Match the weather color, or color the temperature reading by a hot/cold scale (icy blue when cold, ramping to red when hot).
+    choices: ["Weather color", "Temperature scale"]
 
-  - key: fontweight
+  - key: dividercolor
+    type: string
+    app_input_type: color
+    label: Divider color
+    default: "#444444"
+
+  - key: font
     type: choice
     app_input_type: dropdown
-    label: Font weight
-    default: "normal"
-    choices: ["normal", "bold"]
+    label: Font
+    default: "6x8"
+    help: The whole line still shrinks to a smaller font automatically if content is too long to fit (the largest font is a hard choice and may clip instead).
+    choices: ["4x5", "6x8", "8x12", "10x16", "16x24"]

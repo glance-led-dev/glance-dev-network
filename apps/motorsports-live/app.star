@@ -72,75 +72,140 @@ MFG_COLOR = {
     "CHEVROLET": "#D4A017",
 }
 
-# Cup Series primary sponsor-livery colors, keyed by car number (see
-# motorsports-color-reference.md). O'Reilly/Trucks share car numbers with
-# different teams, so this table -- Cup only -- isn't safe to reuse there;
-# those series keep falling back to mfg_color(). A few Cup cars (33, 51, 71)
-# have no published livery color and also fall back.
-# (primary, secondary) -- primary is the row background, secondary (when the
-# reference doc lists one) is the row TEXT color, so text reads as the
-# team's own second brand color rather than a generic computed white/black.
-# None means the sponsor only has one published color; best_text_color()
-# fills in for those.
+# Livery bg/text hex per car NUMBER (not driver) -- sourced from
+# Motorsport-driver-hex-list.xlsx -- since the same number gets reassigned to
+# a different driver between seasons/races far more often than it changes
+# team livery. O'Reilly/Trucks reuse Cup's numbers for entirely different
+# teams, so each series keeps its own table; never share one across series.
+#
+# Both hexes come straight from the reference doc rather than a computed
+# contrast color, so text reads as the team's real second brand color. Car
+# 48 (O'Reilly) and 52 (Trucks) were logged in the doc with an identical
+# bg/text hex (invisible text); both got a corrected pair straight from the
+# user rather than the black/white fallback used for any car number missing
+# from the table entirely.
 NASCAR_DRIVER_COLOR = {
-    "1": ("#204C85", "#00A4DA"),
-    "2": ("#008938", None),
-    "3": ("#FBD005", "#C4161B"),
-    "4": ("#ECB11F", "#494B4B"),
-    "5": ("#015998", None),
-    "6": ("#009530", "#ED1C24"),
-    "7": ("#0047BB", None),
-    "9": ("#001489", "#FBB726"),
-    "10": ("#1B5E20", None),
-    "11": ("#0072BC", None),
-    "12": ("#008938", None),
-    "16": ("#FF9933", None),  # Celsius' orange+red are both warm/similar brightness -- computed contrast reads better than the pair
-    "17": ("#1364B8", None),
-    "19": ("#FBD005", "#C4161B"),
-    "20": ("#E4002B", None),
-    "21": ("#EC1C24", None),
-    "22": ("#FBCE07", "#DD1D21"),
-    "23": ("#6138F5", None),
-    "24": ("#D91C2B", None),
-    "34": ("#ED2024", "#FFE200"),
-    "35": ("#95D600", None),
-    "38": ("#00549F", None),
-    "41": ("#CC162E", None),
-    "42": ("#00953A", None),
-    "43": ("#6E2B62", "#006298"),
-    "45": ("#6138F5", None),
-    "47": ("#F7941E", None),
-    "48": ("#50104A", None),
-    "54": ("#95D600", None),
-    "60": ("#084999", None),
-    "77": ("#0099D8", None),
-    "88": ("#FF0C49", "#FFC800"),
-    "97": ("#FF0C49", "#FFC800"),
+    "1": ("#00A4DA", "#204C85"),
+    "2": ("#FFF200", "#006400"),
+    "3": ("#C0C0C0", "#000000"),
+    "4": ("#ECB11F", "#000000"),
+    "5": ("#015998", "#FFFFFF"),
+    "6": ("#009343", "#FFFFFF"),
+    "7": ("#2475D1", "#72D669"),
+    "9": ("#0A0094", "#FFC836"),
+    "10": ("#FF4500", "#000000"),
+    "11": ("#2D95E5", "#FFFFFF"),
+    "12": ("#FFF200", "#000000"),
+    "16": ("#000000", "#FDFF45"),
+    "17": ("#FF6700", "#000000"),
+    "19": ("#000000", "#FF5F1F"),
+    "20": ("#EA0021", "#FFFFFF"),
+    "21": ("#FFFFFF", "#D40000"),
+    "22": ("#FFCF1D", "#ED1C24"),
+    "23": ("#6138F5", "#04C785"),
+    "24": ("#D91C2B", "#005596"),
+    "33": ("#0A192F", "#CE714C"),
+    "34": ("#FFE100", "#000000"),
+    "35": ("#95D600", "#000000"),
+    "38": ("#3472BD", "#32CD32"),
+    "41": ("#505359", "#000000"),
+    "42": ("#FFFFFF", "#235DAB"),
+    "43": ("#6FBE4A", "#D3AF37"),
+    "45": ("#D3D3D3", "#CF1A2B"),
+    "47": ("#005A9C", "#FF5F1F"),
+    "48": ("#650360", "#FFFFFF"),
+    "51": ("#D3AF37", "#000000"),
+    "54": ("#000000", "#95D600"),
+    "60": ("#000000", "#50AD9A"),
+    "71": ("#0058AA", "#81D9AC"),
+    "77": ("#000080", "#EE2E24"),
+    "88": ("#1E5BC6", "#F7C300"),
+    "97": ("#1E5BC6", "#DC052D"),
 }
 
-# O'Reilly/Truck verified entries only (motorsports-color-reference.md notes
-# the rest rotate sponsors weekly with no fixed hex) -- separate tables from
-# Cup's since these series reuse car numbers for entirely different teams.
 ORS_DRIVER_COLOR = {
-    "1": ("#FBD005", "#C4161B"),
-    "2": ("#E62629", None),
-    "8": ("#DC1630", None),
-    "17": ("#015998", None),
-    "20": ("#008938", None),
-    "27": ("#D81F2A", "#FEC85A"),
-    "96": ("#43C7FF", "#121212"),
+    "00": ("#FFCF1D", "#ED1C24"),
+    "0": ("#0088D8", "#4BB92C"),
+    "1": ("#FF5F1F", "#000000"),
+    "02": ("#000096", "#4D9DFF"),
+    "2": ("#FFFFFF", "#FF0000"),
+    "07": ("#FE5000", "#000080"),
+    "7": ("#ED1B24", "#FFFFFF"),
+    "8": ("#EF4138", "#000000"),
+    "17": ("#015998", "#FFFFFF"),
+    "18": ("#666666", "#003E6F"),
+    "19": ("#0047BA", "#D42E12"),
+    "20": ("#FFF200", "#006400"),
+    "21": ("#FFFFFF", "#015998"),
+    "24": ("#FFFFFF", "#ED1B2E"),
+    "26": ("#000000", "#52D1FF"),
+    "27": ("#FEC85A", "#B82C0F"),
+    "28": ("#4169E1", "#000000"),
+    "31": ("#174A7C", "#FDB913"),
+    "39": ("#FFFFFF", "#FF3131"),
+    "41": ("#44C744", "#000000"),
+    "44": ("#0205C7", "#CCFF00"),
+    "45": ("#155289", "#FFE600"),
+    "48": ("#006499", "#D62D2D"),
+    "51": ("#D3AF37", "#000000"),
+    "54": ("#FFDD42", "#FFFFFF"),
+    "87": ("#FFFF73", "#FF0000"),
+    "88": ("#FFFFFF", "#015998"),
+    "92": ("#C9AC34", "#000000"),
+    "96": ("#0055FF", "#000000"),
+    "99": ("#00DE78", "#0004C7"),
 }
 
 TRUCK_DRIVER_COLOR = {
-    "12": ("#DA291C", None),
-    "16": ("#FF9933", None),  # Celsius' orange+red are both warm/similar brightness -- computed contrast reads better than the pair
-    "19": ("#001489", "#FBB726"),
-    "34": ("#ED2024", "#FFE200"),
-    "81": ("#003876", "#A80532"),
-    "88": ("#008938", None),
-    "91": ("#001489", "#FBB726"),
-    "98": ("#FDBF57", "#ED1B2D"),
+    "1": ("#0047BA", "#FFFFFF"),
+    "2": ("#E41D38", "#160BE6"),
+    "5": ("#FFFFFF", "#0047BA"),
+    "7": ("#808080", "#FF5B00"),
+    "9": ("#8B3A3A", "#000000"),
+    "10": ("#0066CC", "#FFFFFF"),
+    "11": ("#DB0020", "#FFFFFF"),
+    "12": ("#EE2E24", "#000000"),
+    "13": ("#000000", "#FF0000"),
+    "14": ("#F6DE0F", "#000000"),
+    "15": ("#89CFF0", "#FFFFFF"),
+    "16": ("#FFFFFF", "#FF8D2E"),
+    "17": ("#FF6600", "#000000"),
+    "18": ("#003F72", "#F8981C"),
+    "19": ("#0A0094", "#FFC836"),
+    "22": ("#FFFFFF", "#000000"),
+    "25": ("#000000", "#F6DE0F"),
+    "26": ("#5D8AAA", "#A9A9A9"),
+    "33": ("#FFF836", "#000000"),
+    "34": ("#FFE100", "#000000"),
+    "38": ("#8ACF00", "#000000"),
+    "42": ("#FFFFFF", "#0000B8"),
+    "44": ("#0000B8", "#32CD32"),
+    "45": ("#C70000", "#0000B8"),
+    "52": ("#006499", "#D62D2D"),
+    "62": ("#FFFFFF", "#E30614"),
+    "76": ("#8C8B88", "#FFBF00"),
+    "77": ("#0058AA", "#81D9AC"),
+    "81": ("#00396F", "#B5160B"),
+    "88": ("#FFF200", "#000000"),
+    "91": ("#FFC836", "#0A0094"),
+    "98": ("#8C8B88", "#F0941C"),
+    "99": ("#C71121", "#FFFFFF"),
 }
+
+# Playoff (chase) drivers get their position badge recolored per series
+# instead of a " C" suffix crammed onto an already-tight name column --
+# reads at a glance without costing any width. Default (non-chase, or a
+# series with no playoff concept like F1) is the plain black/white badge.
+CHASE_BADGE = {
+    "NASCAR": ("#FACC15", "#000000"),
+    "NASCAR - O'Reilly": ("#EF4444", "#FFFFFF"),
+    "NASCAR - Trucks": ("#7DF9FF", "#FFFFFF"),
+}
+
+def pos_badge_colors(series, chase):
+    if not chase:
+        return "#000000", "#FFFFFF"
+    return CHASE_BADGE.get(series, ("#000000", "#FFFFFF"))
 
 # 2026 F1 team colors -- stored for the live F1 leaderboard once that has a
 # timing data source wired up (next-race card only for now).
@@ -272,7 +337,21 @@ def clean_last(raw):
     name = cleaned.strip()
     if len(name) > 0 and name[len(name) - 1] == "#":
         name = name[:len(name) - 1].strip()
-    return name.upper()
+    return name.upper()[:6]
+
+def mark_duplicate_names(rows):
+    # Last name alone reads cleanest and leaves the most room before the gap
+    # column -- the first-initial prefix ("W.BYRON") is only worth the space
+    # it costs when two drivers in the current field actually share a last
+    # name (e.g. Austin/Ty Dillon), so only those rows keep their initial.
+    counts = {}
+    for row in rows:
+        n = row["name"]
+        counts[n] = counts.get(n, 0) + 1
+    for row in rows:
+        if counts.get(row["name"], 0) <= 1:
+            row["initial"] = ""
+    return rows
 
 def short_track(name):
     text = str(name).upper()
@@ -367,12 +446,9 @@ def best_text_color(hex_color):
 def driver_colors(num, mfg, series):
     # Each series reuses car numbers for entirely different teams, so each
     # gets its own table (see their definitions) -- never share one across
-    # series, or a same-numbered car picks up the wrong livery color.
-    #
-    # Text color comes from that same driver's own secondary hex when the
-    # reference doc has one (a real second brand color, not a generic
-    # computed white/black) -- best_text_color() only fills in when a
-    # sponsor has just the one published color.
+    # series, or a same-numbered car picks up the wrong livery color. Keyed
+    # by car number rather than driver since drivers swap cars far more
+    # often than a car's own livery changes.
     table = NASCAR_DRIVER_COLOR
     if series == "NASCAR - O'Reilly":
         table = ORS_DRIVER_COLOR
@@ -384,24 +460,8 @@ def driver_colors(num, mfg, series):
 
     entry = table.get(str(num))
     if entry == None:
-        bg = mfg_color(mfg)
-        return bg, best_text_color(bg)
-    bg, secondary = entry
-    if secondary == None:
-        return bg, best_text_color(bg)
-
-    # A sponsor's own secondary color can still read poorly against its own
-    # primary -- e.g. two colors that are both dark (a brightness gap this
-    # catches) or, less common, two "loud" colors from the same warm/cool
-    # family that are close enough in luminance to vibrate against each
-    # other rather than read as text. Below a real brightness gap, a
-    # computed black/white is the safer bet than trusting the pair blindly.
-    gap = yiq_of(secondary) - yiq_of(bg)
-    if gap < 0:
-        gap = -gap
-    if gap < 40:
-        return bg, best_text_color(bg)
-    return bg, secondary
+        return "#000000", "#FFFFFF"
+    return entry
 
 def mfg_color(code):
     # COLORS["accent"] (orange) used to be the catch-all here, but at panel
@@ -756,6 +816,7 @@ def vehicle_rows(feed, series, live_race):
             "mfg": str(car.get("vehicle_manufacturer", "")),
             "chase": bool(driver.get("is_in_chase", False)),
         })
+    mark_duplicate_names(rows)
     n = len(rows)
     for i in range(n):
         for j in range(n - 1 - i):
@@ -774,6 +835,9 @@ def vehicle_rows(feed, series, live_race):
         bg, txt_color = driver_colors(row["num"], row["mfg"], series)
         row["bg"] = bg
         row["txt_color"] = txt_color
+        pos_bg, pos_txt = pos_badge_colors(series, row["chase"])
+        row["pos_bg"] = pos_bg
+        row["pos_txt"] = pos_txt
     return rows
 
 def format_gap_time(delta):
@@ -980,7 +1044,7 @@ def fetch_f1_live(ctx):
         if gap_raw != None:
             gap_str = gap_raw if type(gap_raw) == "string" else format_gap_time(gap_raw)
 
-        last_name = str(driver.get("last_name", "")).upper()
+        last_name = str(driver.get("last_name", "")).upper()[:6]
         first_name = str(driver.get("first_name", ""))
         team_colour = str(driver.get("team_colour", ""))
         bg = ("#" + team_colour) if team_colour != "" else COLORS["panel"]
@@ -994,8 +1058,11 @@ def fetch_f1_live(ctx):
             "gap": gap_str,
             "bg": bg,
             "txt_color": best_text_color(bg),
+            "pos_bg": "#000000",
+            "pos_txt": "#FFFFFF",
         })
 
+    mark_duplicate_names(rows)
     n = len(rows)
     for i in range(n):
         for j in range(n - 1 - i):
@@ -1283,13 +1350,21 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     text_h = 7 if font == "5x7" else 6
     cy = y0 + (box_h - text_h) // 2
 
-    # Position gets its own fixed-width black badge -- always the same
-    # color regardless of team, so running order reads at a glance instead
-    # of blending into whatever livery color that row happens to be.
+    # Gap gets one size step down from the name -- just enough to read as a
+    # secondary, less important number rather than competing with the name.
+    gap_font = "4x5" if font == "5x7" else "picopixel"
+    gap_text_h = 6 if gap_font == "4x5" else 5
+    gap_cy = y0 + (box_h - gap_text_h) // 2
+
+    # Position gets its own fixed-width badge, independent of the row's
+    # livery color so running order always reads at a glance -- black/white
+    # normally, recolored per series (see CHASE_BADGE) when the driver is in
+    # the playoffs, instead of a " C" suffix competing with the name for
+    # width.
     pos_str = str(row["pos"]) + ")"
     pos_badge_w = c.text_width("40)", font) + 4
-    c.rect(x0, y0, x0 + pos_badge_w - 1, y1, fill = "#000000")
-    c.text(pos_str, x0 + 2, cy, font = font, color = "#FFFFFF")
+    c.rect(x0, y0, x0 + pos_badge_w - 1, y1, fill = row["pos_bg"])
+    c.text(pos_str, x0 + 2, cy, font = font, color = row["pos_txt"])
 
     # Real sponsor/team color as the rest of the row's background (see
     # motorsports-color-reference.md) with a computed contrast text color,
@@ -1301,35 +1376,35 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     if bg.upper() in ("#000000", "#111111", "#111318"):
         c.rect(row_x0, y0, x1, y1, outline = "#555555")
 
-    # "24 W.BYRON C   +0.29" -- car# initial.LASTNAME, chase marker if
-    # applicable, then the gap. No "#" before the car number: that glyph is
-    # silently missing from 5x7 (confirmed with measure_text).
+    # "24 W.BYRON   +0.29" -- car# initial.LASTNAME, then the gap. Playoff
+    # status shows on the position badge above instead of a name suffix. No
+    # "#" before the car number: that glyph is silently missing from 5x7
+    # (confirmed with measure_text).
     #
-    # The name is fit_text'd on its OWN, separate from the "num " prefix and
-    # " C" suffix: fit_text only ever cuts whole words at a space, and
-    # "W.BYRON" has none, so if it were folded into one long string that
-    # didn't quite fit, the entire name -- not just the tail of it -- would
-    # vanish (a real bug, caught by an actual driver's name disappearing at
-    # panel-realistic widths). Fitting the name alone still shrinks it letter
-    # by letter once nothing else is left to cut.
+    # The name is fit_text'd on its OWN, separate from the "num " prefix:
+    # fit_text only ever cuts whole words at a space, and "W.BYRON" has none,
+    # so if it were folded into one long string that didn't quite fit, the
+    # entire name -- not just the tail of it -- would vanish (a real bug,
+    # caught by an actual driver's name disappearing at panel-realistic
+    # widths). Fitting the name alone still shrinks it letter by letter once
+    # nothing else is left to cut.
     num_str = str(row["num"])
     if len(num_str) < 2:
         num_str = " " * (2 - len(num_str)) + num_str
     prefix = num_str + " "
-    suffix = " C" if row["chase"] else ""
     who = (row["initial"] + "." + row["name"]) if row["initial"] else row["name"]
 
     gap = row["gap"]
-    gap_w = c.text_width(gap, font) if gap != "" else 0
+    gap_w = c.text_width(gap, gap_font) if gap != "" else 0
     reserve = (gap_w + 4) if gap_w > 0 else 0
     avail = (x1 - row_x0) - 6 - reserve
-    who_max_w = avail - c.text_width(prefix, font) - c.text_width(suffix, font)
+    who_max_w = avail - c.text_width(prefix, font)
     who = fit_text(c, who, font, who_max_w) if who_max_w > 0 else ""
-    main = prefix + who + suffix
+    main = prefix + who
 
     c.text(main, row_x0 + 3, cy, font = font, color = txt_color)
     if gap != "":
-        c.text(gap, x1 - 3, cy, font = font, color = txt_color, align = "right")
+        c.text(gap, x1 - 3, gap_cy, font = gap_font, color = txt_color, align = "right")
 
 def driver_grid_dims(avail_w, avail_h, target_col_w = 110, rows_per_col = 3):
     # Auto-fit as many "groups of three" (stacked columns) side by side as
@@ -1368,33 +1443,71 @@ def draw_driver_group(c, rows, start, col_x0, y0, y1):
             draw_driver_row_block(c, cx0, cx1, ry0, ry1, row)
 
 # ---------- temporary preview harness (mock live data; see PR notes) ----------
-# Lets `render_app` show live-session layouts without a real race in progress.
-# Not a real input -- no manifest entry, so it's inert once shipped. Remove
+# Lets `render_app` show live-session layouts (race, qualifying, next-race
+# card) without a real session in progress, via _debugsession ("race" default,
+# "quali", or "upcoming") plus _debuggroup to pick the frame. Neither is a
+# real input -- no manifest entry, so both are inert once shipped. Remove
 # once live rendering has been checked against an actual in-progress race.
 
 def _mock_row(pos, num, initial, name, delta, status, on_track, laps, mfg, chase):
-    return {"pos": pos, "num": num, "initial": initial, "name": name, "delta": delta,
+    return {"pos": pos, "num": num, "initial": initial, "name": name[:6], "delta": delta,
             "status": status, "on_track": on_track, "laps": laps, "mfg": mfg, "chase": chase}
 
-def _mock_state():
-    rows = [
-        _mock_row(1, "24", "W", "BYRON", 0, 1, True, 160, "Chv", False),
-        _mock_row(2, "5", "K", "LARSON", 0.287, 1, True, 160, "Chv", False),
-        _mock_row(3, "9", "C", "ELLIOTT", 5.72, 1, True, 160, "Chv", True),
-        _mock_row(4, "11", "D", "HAMLIN", 0, 2, True, 160, "Tyt", False),
-        _mock_row(5, "19", "C", "BRISCOE", 9.8, 1, True, 160, "Tyt", False),
-        _mock_row(6, "22", "J", "LOGANO", 12.4, 1, True, 160, "Frd", True),
-        _mock_row(7, "1", "R", "CHASTAIN", 0, 3, False, 140, "Chv", False),
-        _mock_row(8, "45", "T", "REDDICK", 0, 1, True, 158, "Tyt", False),
-        _mock_row(9, "6", "B", "KESELOWSKI", 0, 1, False, 155, "Frd", False),
+def _mock_rows(deltas, statuses, on_tracks, laps, live_race):
+    specs = [
+        (1, "24", "W", "BYRON", "Chv", False),
+        (2, "5", "K", "LARSON", "Chv", False),
+        (3, "9", "C", "ELLIOTT", "Chv", True),
+        (4, "11", "D", "HAMLIN", "Tyt", False),
+        (5, "19", "C", "BRISCOE", "Tyt", False),
+        (6, "22", "J", "LOGANO", "Frd", True),
+        (7, "1", "R", "CHASTAIN", "Chv", False),
+        (8, "45", "T", "REDDICK", "Tyt", False),
+        (9, "6", "B", "KESELOWSKI", "Frd", False),
     ]
+    rows = [
+        _mock_row(pos, num, initial, name, deltas[i], statuses[i], on_tracks[i], laps[i], mfg, chase)
+        for i, (pos, num, initial, name, mfg, chase) in enumerate(specs)
+    ]
+    mark_duplicate_names(rows)
     leader_laps = rows[0]["laps"]
     for row in rows:
-        gap, _ = gap_text(row, leader_laps, True)
+        gap, _ = gap_text(row, leader_laps, live_race)
         row["gap"] = gap
         bg, txt_color = driver_colors(row["num"], row["mfg"], "NASCAR")
         row["bg"] = bg
         row["txt_color"] = txt_color
+        pos_bg, pos_txt = pos_badge_colors("NASCAR", row["chase"])
+        row["pos_bg"] = pos_bg
+        row["pos_txt"] = pos_txt
+    return rows
+
+def _mock_state(session_mode = "race"):
+    if session_mode == "upcoming":
+        return {
+            "ok": True, "live": False, "series": "NASCAR",
+            "race_name": "COCA-COLA 600", "track_name": "CHARLOTTE",
+            "track_key": "CHARLOTTE MOTOR SPEEDWAY", "race_date": "2026-08-16T19:00:00",
+        }
+
+    if session_mode == "quali":
+        deltas = [0, 0.052, 0.184, 0.201, 0.310, 0.412, 0.498, 0.687, 0.734]
+        statuses = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+        on_tracks = [True] * 9
+        laps = [1] * 9
+        rows = _mock_rows(deltas, statuses, on_tracks, laps, False)
+        return {
+            "ok": True, "live": True, "series": "NASCAR",
+            "race_name": "BRICKYARD 400", "session": "QUALIFYING", "track_name": "INDIANAPOLIS",
+            "track_key": "INDIANAPOLIS MOTOR SPEEDWAY",
+            "flag": 9, "lap": 0, "laps_total": 0, "stage_num": 0, "rows": rows,
+        }
+
+    deltas = [0, 0.287, 5.72, 0, 9.8, 12.4, 0, 0, 0]
+    statuses = [1, 1, 1, 2, 1, 1, 3, 1, 1]
+    on_tracks = [True, True, True, True, True, True, False, True, False]
+    laps = [160, 160, 160, 160, 160, 160, 140, 158, 155]
+    rows = _mock_rows(deltas, statuses, on_tracks, laps, True)
     return {
         "ok": True, "live": True, "series": "NASCAR",
         "race_name": "BRICKYARD 400", "session": "RACE", "track_name": "INDIANAPOLIS",
@@ -1405,6 +1518,7 @@ def _mock_state():
 def live(c, ctx):
     series = safe_input(ctx, "series", "NASCAR")
     debug_group = safe_input(ctx, "_debuggroup", "")
+    debug_session = safe_input(ctx, "_debugsession", "race")
     group_idx = int(debug_group) if debug_group != "" else None
 
     if series == "Formula 1":
@@ -1419,7 +1533,7 @@ def live(c, ctx):
             draw_offseason_f1(c, next_state, ctx)
             return
     else:
-        state = _mock_state() if debug_group != "" else fetch_state(ctx)
+        state = _mock_state(debug_session) if debug_group != "" else fetch_state(ctx)
         if not state["ok"]:
             draw_error(c, state["title"], state["sub"])
             return
