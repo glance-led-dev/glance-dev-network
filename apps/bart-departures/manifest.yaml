@@ -4,7 +4,7 @@ version: 0.1.0
 name: BART Departures
 author: glance-led-dev
 description: "Real-time BART trains leaving your station, by line and minutes."
-category: Other
+category: Transportation
 entry: app.star
 
 width: 64

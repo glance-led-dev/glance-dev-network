@@ -45,6 +45,84 @@ def _s(ctx, key, fallback):
 def pad2(n):
     return str(n) if n >= 10 else "0" + str(n)
 
+ZONES = {
+    "HONOLULU": "Pacific/Honolulu",
+    "ANCHORAGE": "America/Anchorage",
+    "LOS ANGELES": "America/Los_Angeles",
+    "PHOENIX": "America/Phoenix",
+    "DENVER": "America/Denver",
+    "CHICAGO": "America/Chicago",
+    "NEW YORK": "America/New_York",
+    "HALIFAX": "America/Halifax",
+    "MEXICO CITY": "America/Mexico_City",
+    "BOGOTA": "America/Bogota",
+    "SAO PAULO": "America/Sao_Paulo",
+    "BUENOS AIRES": "America/Argentina/Buenos_Aires",
+    "REYKJAVIK": "Atlantic/Reykjavik",
+    "LISBON": "Europe/Lisbon",
+    "DUBLIN": "Europe/Dublin",
+    "LONDON": "Europe/London",
+    "MADRID": "Europe/Madrid",
+    "PARIS": "Europe/Paris",
+    "AMSTERDAM": "Europe/Amsterdam",
+    "BERLIN": "Europe/Berlin",
+    "ROME": "Europe/Rome",
+    "STOCKHOLM": "Europe/Stockholm",
+    "WARSAW": "Europe/Warsaw",
+    "ATHENS": "Europe/Athens",
+    "ISTANBUL": "Europe/Istanbul",
+    "KYIV": "Europe/Kyiv",
+    "MOSCOW": "Europe/Moscow",
+    "LAGOS": "Africa/Lagos",
+    "CAIRO": "Africa/Cairo",
+    "NAIROBI": "Africa/Nairobi",
+    "JOHANNESBURG": "Africa/Johannesburg",
+    "JERUSALEM": "Asia/Jerusalem",
+    "DUBAI": "Asia/Dubai",
+    "KARACHI": "Asia/Karachi",
+    "KOLKATA": "Asia/Kolkata",
+    "DHAKA": "Asia/Dhaka",
+    "BANGKOK": "Asia/Bangkok",
+    "JAKARTA": "Asia/Jakarta",
+    "SINGAPORE": "Asia/Singapore",
+    "MANILA": "Asia/Manila",
+    "HONG KONG": "Asia/Hong_Kong",
+    "SHANGHAI": "Asia/Shanghai",
+    "SEOUL": "Asia/Seoul",
+    "TOKYO": "Asia/Tokyo",
+    "PERTH": "Australia/Perth",
+    "BRISBANE": "Australia/Brisbane",
+    "SYDNEY": "Australia/Sydney",
+    "AUCKLAND": "Pacific/Auckland",
+    "UTC": "UTC",
+}
+
+
+def resolve_zone(ctx):
+    """IANA zone for the picked city.
+
+    The setting used to carry the IANA name itself, and six of the forty-nine
+    contain an underscore -- America/New_York, America/Los_Angeles,
+    America/Mexico_City, America/Sao_Paulo, America/Argentina/Buenos_Aires,
+    Asia/Hong_Kong. Underscore separates one input from the next in the render
+    descriptor (key-value_key-value), so those six were cut in half in transit:
+    the app received "America/New" and timeapi.io answered 400, which the
+    panel drew as BAD ZONE. The other forty-three worked, which is why this
+    looked like an intermittent fault rather than a delimiter.
+
+    The dropdown carries city names with no underscore in them, so nothing is
+    cut, and this maps them back. An IANA name saved under the old list still
+    resolves if it happens to survive.
+    """
+    v = _s(ctx, "tz", "NEW YORK")
+    if v in ZONES:
+        return ZONES[v]
+    up = v.upper()
+    if up in ZONES:
+        return ZONES[up]
+    return v
+
+
 def _err(c, title, sub):
     c.fill("black")
     c.text("TIMEZONE", 32, 0, font = "5x7", color = "cyan", align = "center")
@@ -52,8 +130,8 @@ def _err(c, title, sub):
     c.text(sub, 32, 25, font = "4x5", color = "gray", align = "center")
 
 def main(c, ctx):
-    tz = _s(ctx, "tz", "America/New_York")
-    fmt = _s(ctx, "hour_format", "12")
+    tz = resolve_zone(ctx)
+    fmt = _s(ctx, "hourformat", "12")
 
     if not tz:
         _err(c, "NO ZONE", "SET ONE IN SETTINGS")

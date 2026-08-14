@@ -41,7 +41,12 @@ import requests
 # inside the app instead of getting the whole render killed.
 REQUEST_TIMEOUT = 4.0
 DEFAULT_TTL = 300
-MAX_BODY_BYTES = 1_000_000          # cap huge responses; body is truncated
+# Cap huge responses; the body is truncated, which for a JSON feed means it
+# stops parsing and the app sees nothing. 1 MB was under the size of feeds apps
+# legitimately need: Citi Bike's GBFS station_status is ~0.96 MB today and
+# station_information ~1.36 MB, so the first was one growth spurt from breaking
+# and the second already did.
+MAX_BODY_BYTES = 2_000_000
 MAX_REQUESTS_PER_RUN = 8            # an app can't hammer an API in one render
 
 CACHE_DIR = Path.home() / ".gdn" / "httpcache"

@@ -2,6 +2,7 @@ id: weather
 name: Weather
 author: cfdmb
 description: another weather app
+category: Weather
 width: 128
 height: 32
 refresh: 300

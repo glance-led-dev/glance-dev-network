@@ -2,6 +2,7 @@ id: tempest-weather
 name: Tempest Weather
 author: cfdmb
 description: Live conditions from your own WeatherFlow Tempest station.
+category: Weather
 width: 128
 height: 32
 refresh: 60

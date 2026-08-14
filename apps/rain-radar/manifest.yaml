@@ -6,6 +6,7 @@ version: 0.1.0
 name: Rain Radar
 author: AJ
 description: Average daily rainfall across a ~100-mile radius of your ZIP over the past 60 days, drawn as a sparkline.
+category: Weather
 entry: app.star
 
 width: 128

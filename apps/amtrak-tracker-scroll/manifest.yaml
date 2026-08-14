@@ -4,7 +4,7 @@ version: 0.1.0
 name: Amtrak Tracker (Scroll)
 author: glance-led-dev
 description: "Where your Amtrak train actually is, how late it is, and its next stop."
-category: Other
+category: Transportation
 entry: app.star
 
 width: 192

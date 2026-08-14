@@ -1,0 +1,80 @@
+gdn: 1
+id: citi-bike-scroll
+version: 0.1.0
+name: Citi Bike (Scroll)
+author: AJ
+description: Bikes and docks free right now at a Citi Bike station, from NYC's public GBFS feed.
+category: Transportation
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [bikes]
+inputs:
+  - key: station
+    type: choice
+    app_input_type: dropdown
+    label: Station
+    default: "BROADWAY AT E 14 ST"
+    choices:
+      - "1 AVE AT E 44 ST"
+      - "1 AVE AT E 6 ST"
+      - "10 AVE AT W 14 ST"
+      - "2 AVE AT E 31 ST"
+      - "3 ST AT 3 AVE"
+      - "7 AVE AT CENTRAL PARK SOUTH"
+      - "7 AVE S AT BLEECKER ST"
+      - "8 AVE AT W 31 ST"
+      - "8 AVE AT W 33 ST"
+      - "9 AVE AT W 18 ST"
+      - "9 AVE AT W 22 ST"
+      - "9 AVE AT W 33 ST"
+      - "ALLEN ST AT HESTER ST"
+      - "BROADWAY AT E 14 ST"
+      - "BROADWAY AT E 19 ST"
+      - "BROADWAY AT W 25 ST"
+      - "BROADWAY AT W 29 ST"
+      - "BROADWAY AT W 48 ST"
+      - "BROADWAY AT W 53 ST"
+      - "CENTRAL PARK S AT GRAND ARMY PLAZA"
+      - "CENTRE ST AT WORTH ST"
+      - "COOPER SQUARE AT ASTOR PL"
+      - "E 10 ST AT AVE A"
+      - "E 11 ST AT 3 AVE"
+      - "E 11 ST AT BROADWAY"
+      - "E 13 ST AT AVE A"
+      - "E 2 ST AT AVE B"
+      - "E 2 ST AT AVE C"
+      - "E 20 ST AT 2 AVE"
+      - "E 24 ST AT PARK AVE S"
+      - "E 27 ST AT 1 AVE"
+      - "E 33 ST AT 1 AVE"
+      - "E 40 ST AT 5 AVE"
+      - "E 40 ST AT PARK AVE"
+      - "E 47 ST AT 2 AVE"
+      - "E 47 ST AT PARK AVE"
+      - "E 6 ST AT AVE B"
+      - "FDR DRIVE AT E 35 ST"
+      - "GANSEVOORT ST AT HUDSON ST"
+      - "GRAND ST AT SAMUEL DICKSTEIN PLAZA"
+      - "GREENWICH ST AT W HOUSTON ST"
+      - "LAFAYETTE ST AT ASTOR PL"
+      - "LAIGHT ST AT HUDSON ST"
+      - "LEXINGTON AVE AT E 24 ST"
+      - "LEXINGTON AVE AT E 26 ST"
+      - "OLD SLIP AT SOUTH ST"
+      - "PARK AVE AT E 41 ST"
+      - "PARK AVE AT E 42 ST"
+      - "RIVERSIDE BLVD AT W 67 ST"
+      - "RIVERSIDE DR AT W 78 ST"
+      - "VESEY ST AT GREENWICH ST"
+      - "W 20 ST AT 8 AVE"
+      - "W 31 ST AT 7 AVE"
+      - "W 34 ST AT 11 AVE"
+      - "W 37 ST AT BROADWAY"
+      - "W 41 ST AT 8 AVE"
+      - "W 43 ST AT 10 AVE"
+      - "W 51 ST AT 6 AVE"
+      - "W 59 ST AT 10 AVE"
+      - "W BROADWAY AT SPRING ST"
+    help: "Every Citi Bike station. Counts come straight from the live GBFS feed."

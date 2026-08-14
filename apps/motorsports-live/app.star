@@ -1182,7 +1182,7 @@ def draw_error(c, title, sub):
 SERIES_LOGO = {
     "NASCAR": ("nascar-logo.png", 128.0 / 22.0),
     "NASCAR - O'Reilly": ("oreilly-logo.png", 57.0 / 24.0),
-    "NASCAR - Trucks": ("trucks-logo.png", 53.0 / 26.0),
+    "NASCAR - Trucks": ("trucks-logo.png", 99.0 / 22.0),
     "Formula 1": ("f1-logo.png", 90.0 / 24.0),
 }
 

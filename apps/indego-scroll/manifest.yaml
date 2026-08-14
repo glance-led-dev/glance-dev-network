@@ -1,0 +1,80 @@
+gdn: 1
+id: indego-scroll
+version: 0.1.0
+name: Indego (Scroll)
+author: AJ
+description: Bikes and docks free right now at a Philadelphia Indego station, from the public GBFS feed.
+category: Transportation
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [bikes]
+inputs:
+  - key: station
+    type: choice
+    app_input_type: dropdown
+    label: Station
+    default: "MUNICIPAL SERVICES BUILDING PLAZA"
+    choices:
+      - "10TH AT OXFORD"
+      - "10TH AT PACKER"
+      - "10TH AT PHILLIES"
+      - "17TH AT GREEN"
+      - "17TH AT JFK"
+      - "17TH AT LOCUST"
+      - "17TH AT PINE"
+      - "17TH AT SPRING GARDEN"
+      - "18TH AT JFK"
+      - "18TH AT JFK CURBSIDE"
+      - "18TH AT WASHINGTON CHEW PLAYGROUND"
+      - "19TH AT LOMBARD"
+      - "20TH AT MARKET"
+      - "20TH AT SANSOM"
+      - "21ST AT CATHARINE"
+      - "21ST AT WINTER FRANKLIN INSTITUTE"
+      - "23RD AT CHESTNUT"
+      - "23RD AT FAIRMOUNT"
+      - "23RD AT MARKET"
+      - "23RD AT SOUTH"
+      - "24TH AT CHRISTIAN"
+      - "24TH AT RACE SRT"
+      - "25TH AT LOCUST"
+      - "27TH AT SOUTH"
+      - "2ND AT MARKET"
+      - "30TH STREET STATION EAST"
+      - "34TH AT ARCH"
+      - "34TH AT SPRUCE"
+      - "38TH AT MARKET"
+      - "38TH AT SPRUCE"
+      - "3RD AT GIRARD"
+      - "4TH AT CHRISTIAN"
+      - "54TH AT CEDAR"
+      - "56TH AT CHESTNUT"
+      - "6TH AT BROWN"
+      - "8TH AT SPRUCE"
+      - "9TH AT LOCUST"
+      - "BARNES FOUNDATION"
+      - "BROAD AT CARPENTER"
+      - "BROAD AT CHRISTIAN"
+      - "BROAD AT ONTARIO TEMPLE HOSPITAL"
+      - "BROAD AT OREGON"
+      - "BROAD AT PATTISON BSL"
+      - "BROAD AT REED"
+      - "BROAD AT RITNER"
+      - "CORINTHIAN AT POPLAR"
+      - "CRESCENT PARK"
+      - "FOGLIETTA PLAZA"
+      - "FRONT AT CARPENTER"
+      - "GIRARD STATION MFL"
+      - "KELLY DRIVE GRANDSTAND"
+      - "MOYAMENSING AT TASKER"
+      - "MUNICIPAL SERVICES BUILDING PLAZA"
+      - "PHILADELPHIA MUSEUM OF ART"
+      - "RODIN MUSEUM"
+      - "SCHUYLKILL BANKS PERGOLA"
+      - "SPRING GARDEN STATION BSL"
+      - "UNIVERSITY CITY STATION"
+      - "WATER AT MIFFLIN"
+      - "YORK AT ARAMINGO"
+    help: "Every Indego station. Counts come straight from the live GBFS feed."

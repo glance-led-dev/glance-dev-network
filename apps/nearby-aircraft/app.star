@@ -1,4 +1,10 @@
-AIRCRAFT_API = "https://api.airplanes.live/v2/point/"
+# airplanes.live closed its API: every request now answers 403 with "Please
+# contact us at contact@airplanes.live ...", so this app fetched nothing for
+# anyone, whatever their settings. adsb.lol serves the same readsb shape on
+# the same /v2/point/{lat}/{lon}/{radius} path and needs no key, so the fix
+# is the URL. Every field read below is present there except "desc", which
+# was only a secondary helicopter check behind the type code.
+AIRCRAFT_API = "https://api.adsb.lol/v2/point/"
 ZIP_API = "https://api.zippopotam.us/us/"
 ROUTE_API = "https://api.adsbdb.com/v0/callsign/"
 
@@ -287,23 +293,6 @@ def _lookup_zip(ctx):
     }
 
 
-def _parse_favorites(text):
-    values = []
-
-    if text == None:
-        return values
-
-    raw_items = str(text).split(",")
-
-    for raw_item in raw_items:
-        item = str(raw_item).strip().upper()
-
-        if item != "":
-            values.append(item)
-
-    return values
-
-
 def _callsign(aircraft):
     flight = aircraft.get("flight", None)
 
@@ -330,20 +319,23 @@ def _registration(aircraft):
     return _upper(aircraft.get("hex", "UNKNOWN"), "UNKNOWN")
 
 
-def _is_favorite(aircraft, favorites):
-    registration = _registration(aircraft)
-    callsign = _callsign(aircraft)
-    hex_code = _upper(aircraft.get("hex", ""), "")
+def _is_watched(aircraft, watch):
+    """Whether this aircraft is the kind the viewer asked to see first.
 
-    for favorite in favorites:
-        if favorite == registration:
-            return True
+    This replaced a "Favourites" box that took comma-separated registrations,
+    callsigns or hex ids. Nothing on the panel said what those were or where to
+    find one, and they cannot be offered as a list -- the aircraft overhead
+    change every few minutes. A category can be offered as a list, and the app
+    already works these out for its own sorting.
 
-        if favorite == callsign:
-            return True
+    _is_military and _is_helicopter are defined further down; Starlark resolves
+    globals when the call runs, not when the body is read, so the order is fine.
+    """
+    if watch == "MILITARY":
+        return _is_military(aircraft)
 
-        if favorite == hex_code:
-            return True
+    if watch == "HELICOPTERS":
+        return _is_helicopter(aircraft)
 
     return False
 
@@ -561,7 +553,7 @@ def _compare_values_asc(left, right):
     return 0
 
 
-def _compare_aircraft(left, right, sortmode, favorites):
+def _compare_aircraft(left, right, sortmode, watch):
     left_emergency = _is_emergency(left)
     right_emergency = _is_emergency(right)
 
@@ -571,11 +563,11 @@ def _compare_aircraft(left, right, sortmode, favorites):
 
         return 1
 
-    left_favorite = _is_favorite(left, favorites)
-    right_favorite = _is_favorite(right, favorites)
+    left_watched = _is_watched(left, watch)
+    right_watched = _is_watched(right, watch)
 
-    if left_favorite != right_favorite:
-        if left_favorite:
+    if left_watched != right_watched:
+        if left_watched:
             return -1
 
         return 1
@@ -688,7 +680,7 @@ def _age_for_sort(aircraft):
     return age
 
 
-def _sort_aircraft(aircraft_list, sortmode, favorites):
+def _sort_aircraft(aircraft_list, sortmode, watch):
     sorted_list = []
 
     for aircraft in aircraft_list:
@@ -698,7 +690,7 @@ def _sort_aircraft(aircraft_list, sortmode, favorites):
                 aircraft,
                 sorted_list[index],
                 sortmode,
-                favorites,
+                watch,
             ) < 0:
                 sorted_list.insert(index, aircraft)
                 inserted = True
@@ -724,7 +716,7 @@ def _fetch_aircraft(ctx):
     radius = str(ctx.inputs.get("radius", "25")).strip()
     airborne_only = _bool_input(ctx.inputs.get("airborneonly", True), True)
     sortmode = _upper(ctx.inputs.get("sortmode", "INTERESTING"), "INTERESTING")
-    favorites = _parse_favorites(ctx.inputs.get("favorites", ""))
+    watch = _upper(ctx.inputs.get("watch", "NONE"), "NONE")
 
     url = (
         AIRCRAFT_API +
@@ -770,9 +762,9 @@ def _fetch_aircraft(ctx):
         "ok": True,
         "error": "",
         "location": location,
-        "favorites": favorites,
+        "watch": watch,
         "sortmode": sortmode,
-        "aircraft": _sort_aircraft(filtered, sortmode, favorites),
+        "aircraft": _sort_aircraft(filtered, sortmode, watch),
     }
 
 
@@ -1169,11 +1161,11 @@ def _is_emergency(aircraft):
     return _emergency_text(aircraft) != ""
 
 
-def _border_color(aircraft, favorites):
+def _border_color(aircraft, watch):
     if _is_emergency(aircraft):
         return COLOR_RED
 
-    if _is_favorite(aircraft, favorites):
+    if _is_watched(aircraft, watch):
         return COLOR_AMBER
 
     if _is_interesting(aircraft):
@@ -1182,11 +1174,11 @@ def _border_color(aircraft, favorites):
     return COLOR_BORDER
 
 
-def _icon_color(aircraft, favorites, accent):
+def _icon_color(aircraft, watch, accent):
     if _is_emergency(aircraft):
         return COLOR_RED
 
-    if _is_favorite(aircraft, favorites):
+    if _is_watched(aircraft, watch):
         return COLOR_AMBER
 
     if _is_interesting(aircraft):
@@ -1195,11 +1187,11 @@ def _icon_color(aircraft, favorites, accent):
     return accent
 
 
-def _status_color(aircraft, favorites):
+def _status_color(aircraft, watch):
     if _is_emergency(aircraft):
         return COLOR_RED
 
-    if _is_favorite(aircraft, favorites):
+    if _is_watched(aircraft, watch):
         return COLOR_AMBER
 
     if _is_interesting(aircraft):
@@ -1241,7 +1233,7 @@ def _draw_page(c, ctx, aircraft_index):
         return
 
     aircraft_list = result["aircraft"]
-    favorites = result["favorites"]
+    watch = result["watch"]
     location = result["location"]
 
     if aircraft_index >= len(aircraft_list):
@@ -1264,9 +1256,9 @@ def _draw_page(c, ctx, aircraft_index):
     top = _summary_top(registration)
     status_text = _compact_status_text(route, aircraft, class_letter)
     status_text_color = COLOR_WHITE
-    border_color = _border_color(aircraft, favorites)
-    icon_color = _icon_color(aircraft, favorites, accent)
-    status_color = _status_color(aircraft, favorites)
+    border_color = _border_color(aircraft, watch)
+    icon_color = _icon_color(aircraft, watch, accent)
+    status_color = _status_color(aircraft, watch)
     speed_text = _speed_short(aircraft)
     altitude_panel_text = _altitude_panel_text(aircraft)
     type_text = aircraft_type[:4].upper()

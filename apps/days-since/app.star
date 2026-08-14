@@ -66,14 +66,51 @@ def parse_date(s):
 
 
 def streak(ctx):
+    """[days, start]. Days is negative when the start date has not happened.
+
+    The picker is declared date-past, but the catalog publishes date-past as
+    plain "date", so the constraint is lost before the phone sees it and a
+    future day can be chosen. Counting days SINCE something that has not
+    happened has no answer, and clamping it to 0 made a mis-set date look
+    like a date set today. The caller says so instead.
+    """
     start = parse_date(ctx.inputs.get("since", "2026-01-01"))
     today = days_from_civil(ctx.now.year, ctx.now.month, ctx.now.day)
-    n = today - days_from_civil(start[0], start[1], start[2])
-    return [n if n > 0 else 0, start]
+    return [today - days_from_civil(start[0], start[1], start[2]), start]
+
+
+def _future(c, ctx, days):
+    """The chosen day has not arrived yet.
+
+    Says which way round it is rather than drawing 0. A count of 0 is a real
+    state -- something that happened today -- so using it for "you picked
+    tomorrow" hides a mis-set date behind a plausible one.
+    """
+    label = ctx.inputs.get("label", "DAYS SINCE").upper()
+    accent = ctx.inputs.get("accent", "#39D98A")
+    c.fill("#08090D")
+    numstr = fmt.commas(days)
+    if c.width >= 128:
+        c.text_fit(label, 6, 1, ["6x8", "5x7", "4x5"], color = accent,
+                   maxw = c.width - 12)
+        c.text_fit(numstr, 6, 11, ["16x20", "10x16", "7x12"],
+                   color = "#8A8AA8", maxw = c.width - 70)
+        c.text("DAYS AWAY", c.width - 6, 14, font = "6x8",
+               color = "#E8B04A", align = "right")
+    else:
+        c.text_fit(label, c.width // 2, 0, ["4x5", "3x4"], color = accent,
+                   align = "center", maxw = c.width - 2)
+        c.text_fit(numstr, c.width // 2, 5, ["16x20", "10x16", "7x12"],
+                   color = "#8A8AA8", align = "center", maxw = c.width - 4)
+        c.text("AWAY", c.width // 2, 26, font = "4x5",
+               color = "#E8B04A", align = "center")
 
 
 def count(c, ctx):
     n = streak(ctx)[0]
+    if n < 0:
+        _future(c, ctx, -n)
+        return
     label = ctx.inputs.get("label", "DAYS SINCE").upper()
     accent = ctx.inputs.get("accent", "#39D98A")
 

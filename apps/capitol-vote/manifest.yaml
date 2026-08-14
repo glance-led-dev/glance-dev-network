@@ -1,0 +1,21 @@
+gdn: 1
+id: capitol-vote
+version: 0.1.0
+name: Capitol Vote
+author: John McRae
+description: Latest U.S. House and Senate roll-call votes from official Clerk and Senate LIS feeds. No API key required.
+category: News
+entry: app.star
+width: 192
+height: 32
+# Votes are not live-tick data; a few times an hour is enough.
+refresh: 600
+pages: [score, tally, title, extra]
+inputs:
+  - key: chamber
+    type: string
+    app_input_type: dropdown
+    label: Chamber
+    choices: [Both, House, Senate]
+    default: Both
+    help: Both shows the latest House vote, then the latest Senate vote. House or Senate focuses on that chamber.

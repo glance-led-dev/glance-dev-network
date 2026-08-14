@@ -1,0 +1,17 @@
+id: boxoffice-anniversaries
+description: Top 3 box office movies this week for the past decades
+author: cfdmb
+name: Box Office Rewind
+width: 128
+height: 32
+refresh: 7200
+pages:
+  - intro
+  - years_5
+  - years_10
+  - years_15
+  - years_20
+  - years_25
+  - years_30
+  - years_35
+inputs: []
