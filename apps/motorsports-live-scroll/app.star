@@ -337,7 +337,13 @@ def clean_last(raw):
     name = cleaned.strip()
     if len(name) > 0 and name[len(name) - 1] == "#":
         name = name[:len(name) - 1].strip()
-    return name.upper()[:6]
+    # No fixed 6-char cap here (unlike the 384px build): the driver grid at
+    # this width is always a single column (see driver_grid_dims -- 192px
+    # avail_w never clears the 110px second-column threshold), so a row has
+    # the full row width to itself instead of sharing it with neighboring
+    # columns. fit_text below still shrinks/truncates if a name is long
+    # enough to need it.
+    return name.upper()
 
 def mark_duplicate_names(rows):
     # Last name alone reads cleanest and leaves the most room before the gap
@@ -1044,7 +1050,7 @@ def fetch_f1_live(ctx):
         if gap_raw != None:
             gap_str = gap_raw if type(gap_raw) == "string" else format_gap_time(gap_raw)
 
-        last_name = str(driver.get("last_name", "")).upper()[:6]
+        last_name = str(driver.get("last_name", "")).upper()
         first_name = str(driver.get("first_name", ""))
         team_colour = str(driver.get("team_colour", ""))
         bg = ("#" + team_colour) if team_colour != "" else COLORS["panel"]
@@ -1116,17 +1122,25 @@ def draw_next_race_text(c, ctx, text_x0, text_w, race_name, sub_name, date_text)
     c.text(fit_text(c, sub_name, "4x5", text_w), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
     c.text(fit_text(c, date_text, "5x7", text_w), cx, 21, font = "5x7", color = date_color, align = "center")
 
+# Live-intro track icon: kept small since it's sharing the row with the
+# flag/lap/stage status column, which matters more mid-race.
 TRACK_ICON_MAX_W = 24
 TRACK_ICON_MAX_H = 20
+
+# Off-session "next race" card track icon: this card has no status column
+# competing for room, so the track shape gets a real size instead -- most
+# venues render at (or near) native size; text below shrinks to make room
+# on the few wide ones (Ricard, Watkins Glen) instead of the icon staying tiny.
+OFFSEASON_TRACK_MAX_W = 44
+OFFSEASON_TRACK_MAX_H = 26
 
 def draw_offseason_f1(c, state, ctx):
     c.fill(COLORS["bg"])
 
-    # The track shape is shrunk to a small fixed-size icon at this width
-    # (see cap_track_dims) instead of dropped, so it stays present without
-    # crowding out the race name/date text.
+    # See OFFSEASON_TRACK_MAX_W/H -- the next-race card gives the track
+    # shape real size since nothing else needs this row's width.
     track_asset, native_w, native_h = track_asset_dims(state["circuit_id"])
-    track_w, track_h = cap_track_dims(native_w, native_h, TRACK_ICON_MAX_W, TRACK_ICON_MAX_H)
+    track_w, track_h = cap_track_dims(native_w, native_h, OFFSEASON_TRACK_MAX_W, OFFSEASON_TRACK_MAX_H)
     logo_w, text_w = fit_row_budget(c, track_w, 8, [90.0, 120.0])
     logo_h = min(24, max(1, int(logo_w * 24.0 / 90.0 + 0.5)))
     logo_x, logo_y, text_x0, text_x1, track_x, track_y = next_race_layout(
@@ -1302,10 +1316,10 @@ def fit_row_budget(c, fixed_w, gap, shares, floor = 18):
 def draw_offseason(c, state, ctx):
     c.fill(COLORS["bg"])
 
-    # The track shape is shrunk to a small fixed-size icon at this width --
-    # see cap_track_dims and TRACK_ICON_MAX_W/H above draw_offseason_f1.
+    # See OFFSEASON_TRACK_MAX_W/H -- the next-race card gives the track
+    # shape real size since nothing else needs this row's width.
     track_asset, native_w, native_h = nascar_track_dims(state["track_key"])
-    track_w, track_h = cap_track_dims(native_w, native_h, TRACK_ICON_MAX_W, TRACK_ICON_MAX_H)
+    track_w, track_h = cap_track_dims(native_w, native_h, OFFSEASON_TRACK_MAX_W, OFFSEASON_TRACK_MAX_H)
     logo_max_w, text_w = fit_row_budget(c, track_w, 8, [140.0, 120.0])
     _, logo_w, logo_h = series_logo_dims(state["series"], logo_max_w, 28)
     logo_x, logo_y, text_x0, text_x1, track_x, track_y = next_race_layout(
@@ -1508,7 +1522,7 @@ def draw_driver_group(c, rows, start, col_x0, y0, y1):
 # once live rendering has been checked against an actual in-progress race.
 
 def _mock_row(pos, num, initial, name, delta, status, on_track, laps, mfg, chase):
-    return {"pos": pos, "num": num, "initial": initial, "name": name[:6], "delta": delta,
+    return {"pos": pos, "num": num, "initial": initial, "name": name, "delta": delta,
             "status": status, "on_track": on_track, "laps": laps, "mfg": mfg, "chase": chase}
 
 def _mock_rows(deltas, statuses, on_tracks, laps, live_race):
