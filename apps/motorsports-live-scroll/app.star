@@ -62,6 +62,18 @@ F1_FLAG_COLOR = {
     "CLEAR": "#22C55E",
 }
 
+# Current tire compound between name and gap on F1 rows: a small black chip
+# (same visual language as the manufacturer marks) with the compound letter
+# in its real broadcast color -- black bg keeps it legible regardless of the
+# row's own livery color. OpenF1's stints endpoint gives the compound name.
+TIRE_BADGE = {
+    "SOFT": ("S", "#E32227"),
+    "MEDIUM": ("M", "#FFD700"),
+    "HARD": ("H", "#FFFFFF"),
+    "INTERMEDIATE": ("I", "#22C55E"),
+    "WET": ("W", "#2563EB"),
+}
+
 MFG_COLOR = {
     "TYT": "#E10600",
     "TOYOTA": "#E10600",
@@ -70,6 +82,27 @@ MFG_COLOR = {
     "CHV": "#D4A017",
     "CHEVY": "#D4A017",
     "CHEVROLET": "#D4A017",
+    "DOD": "#A6192E",
+    "DODGE": "#A6192E",
+    "RAM": "#A6192E",
+}
+
+# Manufacturer mark shown between the driver name and the gap -- a small
+# black chip (see the asset files) with a white silhouette, thresholded from
+# the real logos down to something that survives an ~8px-tall row instead of
+# dissolving into noise. (asset, native width, native height) -- native
+# height is 8px for all four; width varies with each mark's own aspect ratio.
+MFG_LOGO = {
+    "TYT": ("mfg-toyota.png", 12, 8),
+    "TOYOTA": ("mfg-toyota.png", 12, 8),
+    "FRD": ("mfg-ford.png", 17, 8),
+    "FORD": ("mfg-ford.png", 17, 8),
+    "CHV": ("mfg-chevy.png", 18, 8),
+    "CHEVY": ("mfg-chevy.png", 18, 8),
+    "CHEVROLET": ("mfg-chevy.png", 18, 8),
+    "DOD": ("mfg-ram.png", 48, 8),
+    "DODGE": ("mfg-ram.png", 48, 8),
+    "RAM": ("mfg-ram.png", 48, 8),
 }
 
 # Livery bg/text hex per car NUMBER (not driver) -- sourced from
@@ -110,7 +143,7 @@ NASCAR_DRIVER_COLOR = {
     "38": ("#3472BD", "#32CD32"),
     "41": ("#505359", "#000000"),
     "42": ("#FFFFFF", "#235DAB"),
-    "43": ("#6FBE4A", "#D3AF37"),
+    "43": ("#D3AF37", "#6FBE4A"),
     "45": ("#D3D3D3", "#CF1A2B"),
     "47": ("#005A9C", "#FF5F1F"),
     "48": ("#650360", "#FFFFFF"),
@@ -118,7 +151,7 @@ NASCAR_DRIVER_COLOR = {
     "54": ("#000000", "#95D600"),
     "60": ("#000000", "#50AD9A"),
     "71": ("#0058AA", "#81D9AC"),
-    "77": ("#000080", "#EE2E24"),
+    "77": ("#000080", "#E32227"),
     "88": ("#1E5BC6", "#F7C300"),
     "97": ("#1E5BC6", "#DC052D"),
 }
@@ -472,9 +505,9 @@ def driver_colors(num, mfg, series):
 def mfg_color(code):
     # COLORS["accent"] (orange) used to be the catch-all here, but at panel
     # scale it reads close enough to the caution-flag yellow that unmapped
-    # cars looked like they were flashing the flag color. Neutral panel-dark
-    # instead, so "no known livery color" doesn't look like flag state.
-    return MFG_COLOR.get(str(code).upper(), COLORS["panel"])
+    # cars looked like they were flashing the flag color. Plain black
+    # instead, so "no known livery color" reads as no color, not a gray bar.
+    return MFG_COLOR.get(str(code).upper(), "#000000")
 
 def http_json(url, ttl, params = None):
     if params:
@@ -1026,6 +1059,12 @@ def fetch_f1_live(ctx):
     iresp = http_json("https://api.openf1.org/v1/intervals?session_key=" + str(session_key) + "&date%3E" + cutoff, 15)
     intervals = latest_by_driver(iresp["data"]) if iresp["ok"] else {}
 
+    # Stints are keyed by stint_number, not a timestamp, but the API returns
+    # them in stint order -- the last one seen per driver is their current
+    # tire (latest_by_driver just keeps overwriting as it walks the array).
+    tresp = http_json("https://api.openf1.org/v1/stints?session_key=" + str(session_key), 60)
+    stints = latest_by_driver(tresp["data"]) if tresp["ok"] else {}
+
     # race_control doubles as the flag-state source (most recent Track-scope
     # Flag message) and a rough current-lap indicator (its own lap_number) --
     # OpenF1 has no direct "total race laps" field, so lap shows without a
@@ -1053,7 +1092,8 @@ def fetch_f1_live(ctx):
         last_name = str(driver.get("last_name", "")).upper()
         first_name = str(driver.get("first_name", ""))
         team_colour = str(driver.get("team_colour", ""))
-        bg = ("#" + team_colour) if team_colour != "" else COLORS["panel"]
+        bg = ("#" + team_colour) if team_colour != "" else "#000000"
+        compound = str(stints.get(dn, {}).get("compound", "")).upper()
 
         rows.append({
             "pos": int(pos_entry.get("position", 0)),
@@ -1066,6 +1106,7 @@ def fetch_f1_live(ctx):
             "txt_color": best_text_color(bg),
             "pos_bg": "#000000",
             "pos_txt": "#FFFFFF",
+            "compound": compound,
         })
 
     mark_duplicate_names(rows)
@@ -1141,7 +1182,7 @@ def draw_offseason_f1(c, state, ctx):
     # shape real size since nothing else needs this row's width.
     track_asset, native_w, native_h = track_asset_dims(state["circuit_id"])
     track_w, track_h = cap_track_dims(native_w, native_h, OFFSEASON_TRACK_MAX_W, OFFSEASON_TRACK_MAX_H)
-    logo_w, text_w = fit_row_budget(c, track_w, 8, [90.0, 120.0])
+    logo_w, text_w = fit_row_budget(c, track_w, 8, [55.0, 150.0])
     logo_h = min(24, max(1, int(logo_w * 24.0 / 90.0 + 0.5)))
     logo_x, logo_y, text_x0, text_x1, track_x, track_y = next_race_layout(
         c, logo_w, logo_h, text_w, track_w, track_h, gap = 8,
@@ -1320,7 +1361,7 @@ def draw_offseason(c, state, ctx):
     # shape real size since nothing else needs this row's width.
     track_asset, native_w, native_h = nascar_track_dims(state["track_key"])
     track_w, track_h = cap_track_dims(native_w, native_h, OFFSEASON_TRACK_MAX_W, OFFSEASON_TRACK_MAX_H)
-    logo_max_w, text_w = fit_row_budget(c, track_w, 8, [140.0, 120.0])
+    logo_max_w, text_w = fit_row_budget(c, track_w, 8, [80.0, 180.0])
     _, logo_w, logo_h = series_logo_dims(state["series"], logo_max_w, 28)
     logo_x, logo_y, text_x0, text_x1, track_x, track_y = next_race_layout(
         c, logo_w, logo_h, text_w, track_w, track_h, gap = 8,
@@ -1366,9 +1407,9 @@ def draw_live_intro(c, state, ctx):
         # it down to where "LAP 100/160" was losing the number entirely
         # (fit_text has nothing left to cut but the number itself). The
         # logo gives up the difference; it's decorative, the lap count isn't.
-        logo_max_w, text_w, status_w = fit_row_budget(c, track_w, gap, [80.0, 90.0, 115.0])
+        logo_max_w, text_w, status_w = fit_row_budget(c, track_w, gap, [50.0, 120.0, 115.0])
     else:
-        logo_max_w, text_w = fit_row_budget(c, track_w, gap, [100.0, 100.0])
+        logo_max_w, text_w = fit_row_budget(c, track_w, gap, [60.0, 140.0])
         status_w = 0
     _, logo_w, logo_h = series_logo_dims(state["series"], logo_max_w, 26)
 
@@ -1445,8 +1486,28 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     bg = row["bg"]
     txt_color = row["txt_color"]
     c.rect(row_x0, y0, x1, y1, fill = bg)
-    if bg.upper() in ("#000000", "#111111", "#111318"):
-        c.rect(row_x0, y0, x1, y1, outline = "#555555")
+
+    # A small badge between name and gap: the manufacturer mark (NASCAR) or
+    # the current tire compound letter (F1) -- whichever the row carries.
+    # Reserved as its own slot, same pattern as the gap reserve below, so
+    # the name shrinks to make room instead of the badge overlapping it.
+    badge_h = min(8, box_h - 2)
+    badge_w = 0
+    badge_kind = None
+    badge_asset = None
+    badge_letter = None
+    badge_color = None
+    mfg_entry = MFG_LOGO.get(str(row.get("mfg", "")).upper())
+    compound_entry = TIRE_BADGE.get(str(row.get("compound", "")).upper())
+    if compound_entry != None:
+        badge_kind = "tire"
+        badge_letter, badge_color = compound_entry
+        badge_w = c.text_width(badge_letter, "4x5") + 4
+    elif mfg_entry != None:
+        badge_kind = "mfg"
+        badge_asset, native_w, native_h = mfg_entry
+        badge_w = max(1, int(badge_h * native_w / native_h + 0.5))
+    badge_reserve = (badge_w + 6) if badge_kind != None else 0
 
     # "24 W.BYRON   +0.29" -- car# initial.LASTNAME, then the gap. Playoff
     # status shows on the position badge above instead of a name suffix. No
@@ -1469,12 +1530,23 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     gap = row["gap"]
     gap_w = c.text_width(gap, gap_font) if gap != "" else 0
     reserve = (gap_w + 4) if gap_w > 0 else 0
-    avail = (x1 - row_x0) - 6 - reserve
+    avail = (x1 - row_x0) - 6 - reserve - badge_reserve
     who_max_w = avail - c.text_width(prefix, font)
     who = fit_text(c, who, font, who_max_w) if who_max_w > 0 else ""
     main = prefix + who
 
     c.text(main, row_x0 + 3, cy, font = font, color = txt_color)
+
+    if badge_kind == "tire":
+        badge_x0 = x1 - 3 - reserve - badge_w
+        badge_y0 = y0 + (box_h - badge_h) // 2
+        c.rect(badge_x0, badge_y0, badge_x0 + badge_w - 1, badge_y0 + badge_h - 1, fill = "#000000")
+        c.text(badge_letter, badge_x0 + badge_w // 2, badge_y0, font = "4x5", color = badge_color, align = "center")
+    elif badge_kind == "mfg":
+        badge_x0 = x1 - 3 - reserve - badge_w
+        badge_y0 = y0 + (box_h - badge_h) // 2
+        c.image(badge_asset, badge_x0, badge_y0, w = badge_w, h = badge_h)
+
     if gap != "":
         c.text(gap, x1 - 3, gap_cy, font = gap_font, color = txt_color, align = "right")
 
