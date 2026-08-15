@@ -1116,21 +1116,25 @@ def draw_next_race_text(c, ctx, text_x0, text_w, race_name, sub_name, date_text)
     c.text(fit_text(c, sub_name, "4x5", text_w), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
     c.text(fit_text(c, date_text, "5x7", text_w), cx, 21, font = "5x7", color = date_color, align = "center")
 
-def draw_offseason_f1(c, state, ctx):
+def draw_offseason_f1_event(c, state, ctx):
+    # Second of two off-season "next race" frames (F1): race name/track/
+    # date plus the track shape, no logo -- see draw_series_logo_frame for
+    # that, and live() for how the two are cycled.
     c.fill(COLORS["bg"])
 
-    logo_w, logo_h = 90, 24
     track_asset, track_w, track_h = track_asset_dims(state["circuit_id"])
-    text_w = 120
-    logo_x, logo_y, text_x0, text_x1, track_x, track_y = next_race_layout(
-        c, logo_w, logo_h, text_w, track_w, track_h,
-    )
+    gap = 10
+    text_w = c.width - track_w - gap - 12
+    total = text_w + gap + track_w
+    margin = (c.width - total) // 2
+    text_x0 = margin
+    track_x = text_x0 + text_w + gap
+    track_y = (32 - track_h) // 2
 
-    c.image("f1-logo.png", logo_x, logo_y, w = logo_w, h = logo_h)
     draw_f1_track(c, track_asset, state["circuit_id"], track_x, track_y, track_w, track_h)
 
     when = local_race_datetime(ctx, state["race_date"], state["race_time"])
-    draw_next_race_text(c, ctx, text_x0, text_x1 - text_x0, state["race_name"], state["track_name"], when)
+    draw_next_race_text(c, ctx, text_x0, text_w, state["race_name"], state["track_name"], when)
 
 def fetch_schedule(ctx):
     series = safe_input(ctx, "series", "NASCAR")
@@ -1259,63 +1263,64 @@ def draw_series_logo_box(c, series, x, y, w, h):
     text_y = y + (h - 7) // 2
     c.text(SERIES_SHORT.get(series, "CUP"), x + 13, text_y, font = "5x7", color = COLORS["accent"])
 
-def draw_offseason(c, state, ctx):
+def draw_series_logo_frame(c, series):
+    # The logo-only frame shared by both the off-season "next race" card and
+    # the live-session header (see draw_offseason_event/draw_offseason_f1_event
+    # and draw_live_details, plus live() for how all of these are cycled).
+    # Nothing else competes for width here, so it's as big as the panel
+    # allows.
+    c.fill(COLORS["bg"])
+    _, logo_w, logo_h = series_logo_dims(series, c.width - 40, 30)
+    logo_x = (c.width - logo_w) // 2
+    logo_y = (32 - logo_h) // 2
+    draw_series_logo(c, series, logo_x, logo_y, logo_w, logo_h)
+
+def draw_offseason_event(c, state, ctx):
+    # Second of two off-season "next race" frames: race name/track/date
+    # plus the track shape, no logo -- see draw_series_logo_frame for that,
+    # and live() for how the two are cycled.
     c.fill(COLORS["bg"])
 
-    _, logo_w, logo_h = series_logo_dims(state["series"], 140, 28)
     track_asset, track_w, track_h = nascar_track_dims(state["track_key"])
-    text_w = 120
-    logo_x, logo_y, text_x0, text_x1, track_x, track_y = next_race_layout(
-        c, logo_w, logo_h, text_w, track_w, track_h,
-    )
+    gap = 10
+    text_w = c.width - track_w - gap - 12
+    total = text_w + gap + track_w
+    margin = (c.width - total) // 2
+    text_x0 = margin
+    track_x = text_x0 + text_w + gap
+    track_y = (32 - track_h) // 2
 
-    draw_series_logo(c, state["series"], logo_x, logo_y, logo_w, logo_h)
     draw_nascar_track(c, state["track_key"], track_asset, track_x, track_y, track_w, track_h)
 
     date_text = local_race_date(ctx, state["race_date"])
-    draw_next_race_text(c, ctx, text_x0, text_x1 - text_x0, state["race_name"], state["track_name"], date_text)
+    draw_next_race_text(c, ctx, text_x0, text_w, state["race_name"], state["track_name"], date_text)
 
-def draw_live_intro(c, state, ctx):
-    # The session-identity frame: same left-to-right shape as the not-live
-    # next-race card (logo, 3-line text block, track shape), plus a 4th
-    # section carrying what that card doesn't need -- flag/lap/stage, since
-    # a session is actually in progress. Driver rows get their own frames
-    # (see live()) instead of squeezing in here alongside everything else.
+def draw_live_details(c, state, ctx):
+    # Second of two live-session frames: race name, track/circuit, session
+    # type, the track shape, and (on a race) flag/lap/stage-or-weather --
+    # no logo, that's its own frame (see draw_series_logo_frame). Driver
+    # rows get their own frames after this one (see live()).
     c.fill(COLORS["bg"])
 
-    # Flag/lap/(stage or weather) only mean anything once the race itself is
-    # underway -- practice and qualifying don't have any of the three, so
-    # that section (and the width it would've used) drops out entirely
-    # rather than showing empty/zeroed fields, and the rest recenters into
-    # the space.
     is_f1 = state["series"] == "Formula 1"
     session = state.get("session", "RACE")
     is_race = session == "RACE"
 
-    _, logo_w, logo_h = series_logo_dims(state["series"], 100, 26)
     if is_f1:
         track_asset, track_w, track_h = track_asset_dims(state["track_key"])
     else:
         track_asset, track_w, track_h = nascar_track_dims(state["track_key"])
-    text_w = 100
-    status_w = 90 if is_race else 0
-    gap = 8
+    text_w = 150
+    status_w = 140 if is_race else 0
+    gap = 10
 
-    total = logo_w + gap + text_w + gap + track_w + (gap + status_w if is_race else 0)
+    total = text_w + gap + track_w + (gap + status_w if is_race else 0)
     margin = (c.width - total) // 2
-    logo_x = margin
-    logo_y = (32 - logo_h) // 2
-    text_x0 = logo_x + logo_w + gap
+    text_x0 = margin
     text_cx = text_x0 + text_w // 2
     track_x = text_x0 + text_w + gap
     track_y = (32 - track_h) // 2
     status_x0 = track_x + track_w + gap
-
-    draw_series_logo(c, state["series"], logo_x, logo_y, logo_w, logo_h)
-    if is_f1:
-        draw_f1_track(c, track_asset, state["track_key"], track_x, track_y, track_w, track_h)
-    else:
-        draw_nascar_track(c, state["track_key"], track_asset, track_x, track_y, track_w, track_h)
 
     race_name = fit_text(c, state["race_name"], "5x7", text_w)
     c.text(race_name, text_cx, 2, font = "5x7", color = COLORS["text"], align = "center")
@@ -1323,6 +1328,11 @@ def draw_live_intro(c, state, ctx):
     c.text(track_name, text_cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
     session_txt = fit_text(c, session, "5x7", text_w)
     c.text(session_txt, text_cx, 21, font = "5x7", color = COLORS["accent2"], align = "center")
+
+    if is_f1:
+        draw_f1_track(c, track_asset, state["track_key"], track_x, track_y, track_w, track_h)
+    else:
+        draw_nascar_track(c, state["track_key"], track_asset, track_x, track_y, track_w, track_h)
 
     if is_race:
         sx = status_x0 + 2
@@ -1522,15 +1532,21 @@ def live(c, ctx):
     group_idx = int(debug_group) if debug_group != "" else None
 
     if series == "Formula 1":
-        # No mock harness for F1 (debug_group is ignored here) -- OpenF1 was
-        # exercised directly against real live/recent session data instead.
+        # No mock harness for F1 (debug_group is ignored here for fetching --
+        # OpenF1 was exercised directly against real live/recent session
+        # data instead -- but it still picks which of the 2 off-season
+        # frames shows, same as the live path below).
         state = fetch_f1_live(ctx)
         if state == None:
             next_state = fetch_f1_next(ctx)
             if not next_state["ok"]:
                 draw_error(c, next_state["title"], next_state["sub"])
                 return
-            draw_offseason_f1(c, next_state, ctx)
+            off_idx = group_idx if group_idx != None else (ctx.now.unix // 60) % 2
+            if off_idx == 0:
+                draw_series_logo_frame(c, "Formula 1")
+            else:
+                draw_offseason_f1_event(c, next_state, ctx)
             return
     else:
         state = _mock_state(debug_session) if debug_group != "" else fetch_state(ctx)
@@ -1538,32 +1554,38 @@ def live(c, ctx):
             draw_error(c, state["title"], state["sub"])
             return
         if not state["live"]:
-            draw_offseason(c, state, ctx)
+            off_idx = group_idx if group_idx != None else (ctx.now.unix // 60) % 2
+            if off_idx == 0:
+                draw_series_logo_frame(c, state["series"])
+            else:
+                draw_offseason_event(c, state, ctx)
             return
 
-    # From here on, NASCAR and F1 share the same layout: draw_live_intro
-    # (session identity: logo, name/track/session, track shape, flag/lap/
-    # stage-or-weather) for frame 0, then full-width auto-fit driver columns
-    # for every frame after, cycling the whole field in as few frames as
-    # fit allows.
+    # From here on, NASCAR and F1 share the same layout: logo alone for
+    # frame 0 (draw_series_logo_frame), race details (name/track/session,
+    # track shape, flag/lap/stage-or-weather) for frame 1 (draw_live_details),
+    # then full-width auto-fit driver columns for every frame after, cycling
+    # the whole field in as few frames as fit allows.
     rows = state["rows"]
     if len(rows) == 0:
-        draw_live_intro(c, state, ctx)
+        draw_live_details(c, state, ctx)
         return
 
     cap1 = driver_group_capacity(c, 0, 3, 31)
-    total_frames = 1
+    total_frames = 2
     if cap1 > 0:
-        total_frames = 1 + (len(rows) + cap1 - 1) // cap1
+        total_frames = 2 + (len(rows) + cap1 - 1) // cap1
 
     if group_idx == None:
         group_idx = (ctx.now.unix // 60) % total_frames
 
     if group_idx == 0:
-        draw_live_intro(c, state, ctx)
+        draw_series_logo_frame(c, state["series"])
+    elif group_idx == 1:
+        draw_live_details(c, state, ctx)
     else:
         c.fill(COLORS["bg"])
         draw_flag_bar(c, state["flag"])
-        start = (group_idx - 1) * cap1
+        start = (group_idx - 2) * cap1
         draw_driver_group(c, rows, start, 0, 3, 31)
 
