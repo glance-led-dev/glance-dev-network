@@ -1,11 +1,13 @@
-# Date & Time — local date, time, and current weather for a US zip code. (384x32, 1 page)
+# Date & Time (Scroll) — local date, time, and current weather for a US zip
+# code. (192x32, 1 page)
 #
-# One line, left to right: DATE | TIME | weather ICON + TEMP + CONDITION.
-# Each section has its own configurable color. The whole line shares one
-# user-selectable font and only drops to a smaller one if the full line —
-# with real content — would overflow, so sizing stays consistent instead of
-# each section picking its own. The temperature reading can also be colored
-# by a hot/cold scale instead of the weather color.
+# Three frames, one per minute: DATE, then TIME, then weather ICON + TEMP +
+# CONDITION. Each has its own configurable color and picks the biggest font
+# (within the user's chosen ceiling) that fits on its own -- unlike the
+# 384px build's single shared line, a whole frame to itself means the font
+# choice actually matters instead of always bottoming out at the smallest
+# size. The temperature reading can also be colored by a hot/cold scale
+# instead of the weather color.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -391,7 +393,6 @@ FONT_ORDER = ["4x5", "6x8", "8x12", "10x16", "16x24"]  # smallest to largest
 FONT_H = {"4x5": 6, "6x8": 8, "8x12": 12, "10x16": 16, "16x24": 24}
 ICON_SCALE = {"4x5": 1, "6x8": 2, "8x12": 2, "10x16": 3, "16x24": 4}
 
-GAP = 10        # empty space on each side of a divider
 MARGIN = 8      # minimum breathing room left over on the panel
 
 def font_fallback_chain(pref):
@@ -416,17 +417,85 @@ def tw(c, text, font):
 def draw_text(c, text, x, y, font, color):
     c.text(text, x, y, font = font, color = color)
 
-def line_width(c, font, date_text, time_text, have_weather, temp_str, cond_text, show_cond = True):
+def pick_font(c, chain, text, max_w):
+    font = chain[len(chain) - 1]
+    for f in chain:
+        if tw(c, text, f) <= max_w:
+            font = f
+            break
+    return font
+
+def draw_date_frame(c, chain, date_text, color):
+    font = pick_font(c, chain, date_text, c.width - MARGIN)
+    font_h = FONT_H[font]
+    c.text(date_text, c.width // 2, vcenter(font_h), font = font, color = color, align = "center")
+
+def draw_time_frame(c, chain, time_text, color):
+    font = pick_font(c, chain, time_text, c.width - MARGIN)
+    font_h = FONT_H[font]
+    c.text(time_text, c.width // 2, vcenter(font_h), font = font, color = color, align = "center")
+
+def weather_width(c, font, temp_str, cond_text, show_cond):
     icon_w = 9 * ICON_SCALE[font]
-    if have_weather:
-        temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
-        weather_w = icon_w + 6 + temp_w
-        if show_cond:
-            weather_w += 10 + tw(c, cond_text, font)
-    else:
-        weather_w = tw(c, "WEATHER N/A", font)
-    return (tw(c, date_text, font) + GAP + 1 + GAP +
-            tw(c, time_text, font) + GAP + 1 + GAP + weather_w)
+    temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
+    w = icon_w + 6 + temp_w
+    if show_cond:
+        w += 10 + tw(c, cond_text, font)
+    return w
+
+def draw_weather_frame(c, chain, have_weather, code, is_day, phase, temp_str, cond_text, temp_color, weather_color):
+    if not have_weather:
+        font = pick_font(c, chain, "WEATHER N/A", c.width - MARGIN)
+        font_h = FONT_H[font]
+        c.text("WEATHER N/A", c.width // 2, vcenter(font_h), font = font, color = weather_color, align = "center")
+        return
+
+    # Try every font with the condition word first, then fall back to
+    # dropping it (icon + temp still show) before finally shrinking to the
+    # smallest font with it dropped too -- a whole frame to itself means
+    # this rarely has to shrink at all, but it's the same safety net as
+    # the date/time frames' hard-ceiling font.
+    font = chain[len(chain) - 1]
+    show_cond = True
+    fits = False
+    for f in chain:
+        if weather_width(c, f, temp_str, cond_text, True) <= c.width - MARGIN:
+            font = f
+            fits = True
+            break
+    if not fits:
+        for f in chain:
+            if weather_width(c, f, temp_str, cond_text, False) <= c.width - MARGIN:
+                font = f
+                show_cond = False
+                fits = True
+                break
+    if not fits:
+        font = chain[len(chain) - 1]
+        show_cond = False
+
+    font_h = FONT_H[font]
+    icon_scale = ICON_SCALE[font]
+    icon_w = 9 * icon_scale
+    temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
+    cond_w = tw(c, cond_text, font) if show_cond else 0
+    total = icon_w + 6 + temp_w + (10 + cond_w if show_cond else 0)
+    x = (c.width - total) // 2
+    if x < 2:
+        x = 2
+
+    draw_condition(c, code, is_day, phase, x, vcenter(icon_w), icon_scale)
+    x += icon_w + 6
+
+    ty = vcenter(font_h)
+    draw_text(c, temp_str, x, ty, font, temp_color)
+    deg_x = x + tw(c, temp_str, font) + 3
+    c.fill_circle(deg_x, ty + 1, 1, temp_color)
+    draw_text(c, "F", deg_x + 4, ty, font, temp_color)
+
+    if show_cond:
+        x += temp_w + 10
+        draw_text(c, cond_text, x, vcenter(font_h), font, weather_color)
 
 def main(c, ctx):
     c.fill("black")
@@ -434,7 +503,6 @@ def main(c, ctx):
     date_color = _s(ctx, "datecolor", "#FFFFFF")
     time_color = _s(ctx, "timecolor", "#FFFFFF")
     weather_color = _s(ctx, "weathercolor", "#FFFFFF")
-    divider_color = _s(ctx, "dividercolor", "#444444")
     temp_color_mode = _s(ctx, "tempcolormode", "Weather color")
 
     geo = geocode(ctx)
@@ -461,6 +529,8 @@ def main(c, ctx):
 
     phase = _moon_phase(ctx)
 
+    code = 3
+    is_day = True
     if have_weather:
         code = int(wx.get("weather_code", 3))
         is_day = int(wx.get("is_day", 1)) == 1
@@ -475,73 +545,18 @@ def main(c, ctx):
 
     chain = font_fallback_chain(_s(ctx, "font", "6x8"))
 
-    # Pick the biggest font (within the user's chosen ceiling) that still
-    # lets the whole line fit. Try every font with the condition word first,
-    # then fall back to dropping the condition word (icon + temp still show)
-    # before finally shrinking to the smallest font with it dropped too --
-    # on a narrower panel the condition word is the first thing to go.
-    font = chain[len(chain) - 1]
-    show_cond = True
-    fits = False
-    for f in chain:
-        if line_width(c, f, date_text, time_text, have_weather, temp_str, cond_text) <= c.width - MARGIN:
-            font = f
-            fits = True
-            break
-    if not fits:
-        for f in chain:
-            if line_width(c, f, date_text, time_text, have_weather, temp_str, cond_text, show_cond = False) <= c.width - MARGIN:
-                font = f
-                show_cond = False
-                fits = True
-                break
-    if not fits:
-        font = chain[len(chain) - 1]
-        show_cond = False
+    # Date, time, and weather each get their own frame instead of sharing
+    # one line -- at 192px, all three sharing a line meant the font choice
+    # never mattered (the auto-shrink always landed on the smallest size
+    # no matter the user's ceiling, since only the smallest font let all
+    # three fit at once). One piece per frame lets each use the font size
+    # the user actually picked.
+    debug_frame = _s(ctx, "_debugframe", "")
+    frame = int(debug_frame) if debug_frame != "" else (ctx.now.unix // 60) % 3
 
-    font_h = FONT_H[font]
-    icon_scale = ICON_SCALE[font]
-    icon_w = 9 * icon_scale
-
-    date_w = tw(c, date_text, font)
-    time_w = tw(c, time_text, font)
-    if have_weather:
-        temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
-        cond_w = tw(c, cond_text, font) if show_cond else 0
-        weather_w = icon_w + 6 + temp_w + (10 + cond_w if show_cond else 0)
+    if frame == 0:
+        draw_date_frame(c, chain, date_text, date_color)
+    elif frame == 1:
+        draw_time_frame(c, chain, time_text, time_color)
     else:
-        weather_w = tw(c, "WEATHER N/A", font)
-
-    total = date_w + GAP + 1 + GAP + time_w + GAP + 1 + GAP + weather_w
-    x = (c.width - total) // 2
-    if x < 2:
-        x = 2
-
-    # ---- draw, left to right ----
-
-    draw_text(c, date_text, x, vcenter(font_h), font, date_color)
-    x += date_w + GAP
-    c.line(x, 5, x, 27, divider_color)
-    x += 1 + GAP
-
-    draw_text(c, time_text, x, vcenter(font_h), font, time_color)
-    x += time_w + GAP
-    c.line(x, 5, x, 27, divider_color)
-    x += 1 + GAP
-
-    if not have_weather:
-        draw_text(c, "WEATHER N/A", x, vcenter(font_h), font, weather_color)
-        return
-
-    draw_condition(c, code, is_day, phase, x, vcenter(icon_w), icon_scale)
-    x += icon_w + 6
-
-    ty = vcenter(font_h)
-    draw_text(c, temp_str, x, ty, font, temp_color)
-    deg_x = x + tw(c, temp_str, font) + 3
-    c.fill_circle(deg_x, ty + 1, 1, temp_color)
-    draw_text(c, "F", deg_x + 4, ty, font, temp_color)
-
-    if show_cond:
-        x += temp_w + 10
-        draw_text(c, cond_text, x, vcenter(font_h), font, weather_color)
+        draw_weather_frame(c, chain, have_weather, code, is_day, phase, temp_str, cond_text, temp_color, weather_color)
