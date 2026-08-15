@@ -2,7 +2,6 @@ id: tempest-weather
 name: Tempest Weather
 author: cfdmb
 description: Live conditions from your own WeatherFlow Tempest station.
-category: Weather
 width: 128
 height: 32
 refresh: 60
@@ -20,3 +19,9 @@ inputs:
     type: string
     app_input_type: api-key
     label: Tempest API token (tempestwx.com > Settings > Data Authorizations)
+  - key: elevation_ft
+    type: number
+    app_input_type: free-text
+    label: Sensor elevation above sea level (ft)
+    default: 0
+    help: Ground elevation plus mounting height (e.g. 14.4 ft ground + 20 ft pole = 34.4). Leave 0 to show raw station pressure instead of a sea-level-corrected value.
