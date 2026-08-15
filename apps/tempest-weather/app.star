@@ -4,14 +4,17 @@
 # WeatherFlow's free-for-owners REST API (swd.weatherflow.com). Requires a
 # personal access token from tempestwx.com > Settings > Data Authorizations.
 #
-# VERIFICATION NOTE: swd.weatherflow.com's endpoints and auth behavior (401
-# without a token) were confirmed live. The success-response field names below
-# (obs.*, current_conditions.*, forecast.daily[].*, timezone_offset_minutes)
-# are based on WeatherFlow's published API docs, NOT verified against a live
-# token/station - I didn't have one to test with. If a page shows "N/A" or
-# blank values that a working station should have, the most likely cause is a
-# field name mismatch here; check the actual JSON from a real request and
-# adjust the .get(...) calls below.
+# VERIFICATION NOTE: extensively live-tested against a real station and
+# fixed up based on that. Confirmed bugs, now fixed: /observations/station's
+# station_pressure, wind_gust, and lightning_strike_last_distance all ignore
+# their units_* query params and return native hPa/m-s/km regardless (see
+# hpa_to_inhg/mps_to_mph/km_to_mi call sites); precip_accum_local_yesterday
+# can be a stale pre-revision total (see precip_accum_local_yesterday_final
+# handling in rainfall()). Still not independently cross-verified: the
+# /observations/device array layout beyond index 6 (station_pressure) - used
+# for the 3hr pressure-change feature, see fetch_device_observations() - and
+# the NWS shortForecast/name text-matching in nws_to_cond()/near_term_label().
+# If a page shows "N/A" or an implausible value, check those first.
 
 CARDINAL_NAMES = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
 WEEKDAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
@@ -76,6 +79,12 @@ def _s(ctx, key, fallback):
         return fallback
     return v
 
+def _n(ctx, key, fallback):
+    v = ctx.inputs.get(key, fallback)
+    if v == None:
+        return fallback
+    return float(v)
+
 # ---------- pure-math / formatting helpers (no round(), no while) ----------
 
 def compass_index(deg):
@@ -111,16 +120,29 @@ def format1(value):
     return s
 
 def format2(value):
-    cents = round_int(value * 100)
+    # Strip the sign first, like format1/format4 - floor-division of a
+    # negative int splits (whole, frac) wrong (e.g. -136 // 1000 == -1, not
+    # 0), which silently corrupted every negative reading this formatted.
+    neg = value < 0
+    v = -value if neg else value
+    cents = round_int(v * 100)
     whole = cents // 100
     frac = cents % 100
-    return str(whole) + "." + pad_int(frac, 2)
+    s = str(whole) + "." + pad_int(frac, 2)
+    if neg and (whole != 0 or frac != 0):
+        s = "-" + s
+    return s
 
 def format3(value):
-    thousandths = round_int(value * 1000)
+    neg = value < 0
+    v = -value if neg else value
+    thousandths = round_int(v * 1000)
     whole = thousandths // 1000
     frac = thousandths % 1000
-    return str(whole) + "." + pad_int(frac, 3)
+    s = str(whole) + "." + pad_int(frac, 3)
+    if neg and (whole != 0 or frac != 0):
+        s = "-" + s
+    return s
 
 def format4(value):
     # Used for signed lat/lon - unlike format2/format3, must not rely on
@@ -142,6 +164,25 @@ def c_to_f(celsius):
 def mm_to_in(mm):
     return mm / 25.4
 
+def hpa_to_inhg(hpa):
+    return hpa * 0.0295299830714
+
+def km_to_mi(km):
+    return km * 0.621371
+
+def mps_to_mph(mps):
+    return mps * 2.23693629
+
+# Reduces a raw station-pressure reading to sea level using the station's
+# elevation and current temperature (NWS/hypsometric approximation - the
+# same method WeatherFlow's own sea_level_pressure field is believed to use,
+# but computed here from a user-supplied elevation instead of WeatherFlow's
+# on-file value, in case that's wrong).
+def sea_level_pressure(station_inhg, elevation_ft, temp_c):
+    elevation_m = elevation_ft * 0.3048
+    ratio = 1.0 - (0.0065 * elevation_m) / (temp_c + 0.0065 * elevation_m + 273.15)
+    return station_inhg / math.pow(ratio, 5.257)
+
 def date_from_iso(iso_time):
     return (int(iso_time[0:4]), int(iso_time[5:7]), int(iso_time[8:10]))
 
@@ -154,6 +195,62 @@ def days_from_civil(y, m, d):
     doy = (153 * mm + 2) // 5 + d - 1
     doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
     return era * 146097 + doe - 719468
+
+def clamp(v, lo, hi):
+    if v < lo:
+        return lo
+    if v > hi:
+        return hi
+    return v
+
+def civil_from_days(z):
+    # Howard Hinnant's days-since-epoch -> civil-date, the inverse of
+    # days_from_civil() above.
+    z = z + 719468
+    era = (z if z >= 0 else z - 146096) // 146097
+    doe = z - era * 146097
+    yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    y = yoe + era * 400
+    doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp = (5 * doy + 2) // 153
+    d = doy - (153 * mp + 2) // 5 + 1
+    m = (mp + 3) if mp < 10 else (mp - 9)
+    if m <= 2:
+        y = y + 1
+    return y, m, d
+
+def day_of_year(y, m, d):
+    return days_from_civil(y, m, d) - days_from_civil(y, 1, 1) + 1
+
+def sun_arc_brightness(lat, lon, yday, off_hours, local_hour):
+    # Sunrise-equation solar elevation approximation (same formula
+    # apps/world-clock uses for its own sunrise/sunset display) - returns
+    # 0 outside daylight hours, ramping smoothly up to 1 at solar noon via
+    # a half-sine arc across the daylight span.
+    decl = 23.45 * math.sin(math.radians(360.0 / 365.0 * (yday - 81)))
+    cosw = clamp(-math.tan(math.radians(lat)) * math.tan(math.radians(decl)), -1.0, 1.0)
+    w = math.degrees(math.acos(cosw)) / 15.0
+    noon = 12.0 - lon / 15.0 + off_hours
+    sunrise = noon - w
+    sunset = noon + w
+    if local_hour < sunrise or local_hour > sunset or sunset <= sunrise:
+        return 0.0
+    t = (local_hour - sunrise) / (sunset - sunrise)
+    return clamp(math.sin(math.pi * t), 0.0, 1.0)
+
+def header_colors(station, epoch):
+    tz_offset_min = station["tz_offset_min"]
+    local_epoch = epoch + tz_offset_min * 60
+    secs_of_day = local_epoch % 86400
+    days = (local_epoch - secs_of_day) // 86400
+    local_hour = secs_of_day / 3600.0
+    y, m, d = civil_from_days(days)
+    yday = day_of_year(y, m, d)
+    brightness = sun_arc_brightness(station["lat"], station["lon"], yday, tz_offset_min / 60.0, local_hour)
+    level = round_int(brightness * 255)
+    bg_color = rgb_to_hex(level, level, 0)
+    text_color = "black" if brightness > 0.5 else "white"
+    return bg_color, text_color
 
 def fit_font(c, text, options, maxw):
     # Picks the largest font that fits, so a wide value (e.g. a negative or
@@ -225,6 +322,24 @@ def nws_to_cond(short_forecast):
     else:
         return "Clouds"
 
+# Compact forms of NWS's own period names for today's period(s) - "This
+# Afternoon"/"Rest Of Today" etc measure 44-67px at the label font, well
+# over the ~40px a forecast column can hold, so these are abbreviated
+# instead of shown verbatim. Returns None for anything unrecognized so the
+# caller can fall back to a generic label.
+def near_term_label(name):
+    n = name.lower()
+    if "afternoon" in n:
+        return "THIS PM"
+    elif "tonight" in n:
+        return "TONIGHT"
+    elif "overnight" in n:
+        return "OVERNITE"
+    elif "today" in n:
+        return "TODAY"
+    else:
+        return None
+
 # ---------- network ----------
 
 def fetch_stations(token):
@@ -251,6 +366,26 @@ def fetch_observation(token, station_id):
             "units_distance": "mi",
         },
         ttl_seconds = 120,
+    )
+
+def fetch_device_observations(token, device_id, time_start, time_end):
+    # VERIFICATION NOTE: unlike the station-level endpoints above, this
+    # device-level endpoint returns "obs" as an array of positional-value
+    # arrays, not named-field dicts - per WeatherFlow's published Swagger
+    # docs the station_pressure value sits at index 6:
+    # [epoch, wind_lull, wind_avg, wind_gust, wind_direction,
+    #  wind_sample_interval, station_pressure, air_temperature, ...].
+    # Not verified live. Also likely subject to the same ignore-units-params
+    # behavior already confirmed on the station obs endpoint - not passing
+    # units_pressure here at all, converting from hPa unconditionally.
+    return http.get(
+        "https://swd.weatherflow.com/swd/rest/observations/device/" + str(device_id),
+        params = {
+            "token": token,
+            "time_start": str(time_start),
+            "time_end": str(time_end),
+        },
+        ttl_seconds = 300,
     )
 
 def fetch_better_forecast(token, station_id):
@@ -298,9 +433,22 @@ def resolve_station(ctx):
 
     chosen = stations[0]
 
+    # Tempest sensor's device_id (device_type "ST") is needed for the
+    # historical-observation lookup pressure-change uses, since the
+    # station-level obs/forecast endpoints only carry current readings.
+    devices = chosen.get("devices", [])
+    device_id = None
+    for d in devices:
+        if d.get("device_type", None) == "ST":
+            device_id = d.get("device_id", None)
+            break
+    if device_id == None and len(devices) > 0:
+        device_id = devices[0].get("device_id", None)
+
     return {
         "token": token,
         "station_id": chosen.get("station_id"),
+        "device_id": device_id,
         "name": chosen.get("public_name", None) or chosen.get("name", "STATION"),
         "lat": chosen.get("latitude", 0),
         "lon": chosen.get("longitude", 0),
@@ -309,9 +457,11 @@ def resolve_station(ctx):
 
 # ---------- drawing helpers ----------
 
-def draw_header(c, name, time_str):
-    c.text(name.upper(), 2, 1, font = "4x5", color = "white", align = "left")
-    c.text(time_str.upper(), 126, 1, font = "4x5", color = "white", align = "right")
+def draw_header(c, name, time_str, station, epoch):
+    bg_color, text_color = header_colors(station, epoch)
+    c.rect(0, 0, 127, 6, fill = bg_color)
+    c.text(name.upper(), 2, 1, font = "4x5", color = text_color, align = "left")
+    c.text(time_str.upper(), 126, 1, font = "4x5", color = text_color, align = "right")
     c.line(0, 7, 127, 7, "#333333")
 
 def draw_sun(c, x, y):
@@ -524,16 +674,19 @@ def rgb_to_hex(r, g, b):
     b = 0 if b < 0 else (255 if b > 255 else b)
     return "#" + digits[r // 16] + digits[r % 16] + digits[g // 16] + digits[g % 16] + digits[b // 16] + digits[b % 16]
 
-def lerp_color(v, vmax, low, high):
-    t = (float(v) / float(vmax)) if vmax > 0 else 0.0
-    if t < 0.0:
-        t = 0.0
-    if t > 1.0:
-        t = 1.0
-    r = round_int(low[0] + (high[0] - low[0]) * t)
-    g = round_int(low[1] + (high[1] - low[1]) * t)
-    b = round_int(low[2] + (high[2] - low[2]) * t)
-    return rgb_to_hex(r, g, b)
+def strike_distance_color(mi):
+    if mi <= 4:
+        return "#FF0000"
+    elif mi <= 8:
+        return "#FF4400"
+    elif mi <= 12:
+        return "#FF8800"
+    elif mi <= 16:
+        return "amber"
+    elif mi <= 20:
+        return "#CCCC33"
+    else:
+        return "yellow"
 
 # Fixed 5-tier band scales for the segmented meter (see draw_segment_gauge
 # below). Each metric's colors are hand-picked rather than sampled off a
@@ -592,6 +745,51 @@ def draw_error(c, msg):
     c.fill("#000000")
     c.text(msg.upper(), 4, 12, font = "5x7", color = "red", align = "left")
 
+def pressure_color(inhg):
+    if inhg < 29.000:
+        return "#FF0000"
+    elif inhg <= 29.800:
+        return "#FF8800"
+    elif inhg <= 30.200:
+        return "amber"
+    elif inhg <= 30.500:
+        return "#33CC66"
+    else:
+        return "#0066FF"
+
+def wind_color(mph):
+    if mph < 6:
+        return "#0033FF"
+    elif mph < 11:
+        return "#0066FF"
+    elif mph < 18:
+        return "#00AAFF"
+    elif mph < 27:
+        return "#00CCCC"
+    elif mph < 35:
+        return "#33CC66"
+    elif mph < 45:
+        return "amber"
+    elif mph < 55:
+        return "#FF8800"
+    elif mph < 66:
+        return "#FF4400"
+    else:
+        return "#FF0000"
+
+def pressure_change_color(change):
+    a = change if change >= 0 else -change
+    if a <= 0.003:
+        return "#33CC66"
+    elif a <= 0.040:
+        return "#AACC33"
+    elif a <= 0.090:
+        return "amber"
+    elif a <= 0.180:
+        return "#FF8800"
+    else:
+        return "#FF0000"
+
 def temp_color(f):
     if f < 20:
         return "#0033FF"
@@ -609,6 +807,99 @@ def temp_color(f):
         return "#FF8800"
     elif f < 95:
         return "#FF4400"
+    else:
+        return "#FF0000"
+
+def dew_point_color(temp, dew_point):
+    # Colors by dew point depression (temp - dew point), not an absolute
+    # dew point value - a small spread means the air is nearly saturated
+    # (feels muggy) regardless of the actual temperature, so e.g. 90/88F
+    # and 70/68F both read as "red" even though one is much hotter.
+    spread = temp - dew_point
+    if spread < 0:
+        spread = 0
+    if spread >= 20:
+        return "#33CC66"
+    elif spread >= 12:
+        return "#AACC33"
+    elif spread >= 6:
+        return "amber"
+    elif spread >= 3:
+        return "#FF8800"
+    else:
+        return "#FF0000"
+
+def last_strike_color(minutes_ago):
+    if minutes_ago < 1:
+        return "#FF0000"
+    elif minutes_ago <= 14:
+        return "#FF4400"
+    elif minutes_ago <= 59:
+        return "#FF8800"
+    elif minutes_ago <= 299:
+        return "amber"
+    elif minutes_ago <= 2879:
+        return "#33CC66"
+    else:
+        return "#0066FF"
+
+def strikes_last_hour_color(count):
+    if count <= 60:
+        return "yellow"
+    elif count <= 120:
+        return "amber"
+    elif count <= 180:
+        return "#FF8800"
+    elif count <= 300:
+        return "#FF4400"
+    else:
+        return "#FF0000"
+
+def strikes_last_3hr_color(count):
+    if count <= 180:
+        return "yellow"
+    elif count <= 360:
+        return "amber"
+    elif count <= 540:
+        return "#FF8800"
+    elif count <= 900:
+        return "#FF4400"
+    else:
+        return "#FF0000"
+
+def rain_duration_color(minutes):
+    if minutes <= 59:
+        return "#99CCFF"
+    elif minutes <= 179:
+        return "#3399FF"
+    elif minutes <= 359:
+        return "#0066FF"
+    elif minutes <= 719:
+        return "#0033CC"
+    else:
+        return "#0022AA"
+
+def rain_last_hour_color(inches):
+    if inches <= 0.109:
+        return "#0066FF"
+    elif inches <= 0.309:
+        return "#00CCCC"
+    elif inches <= 1.009:
+        return "amber"
+    elif inches <= 2.099:
+        return "#FF8800"
+    else:
+        return "#FF0000"
+
+def rain_daily_color(inches):
+    if inches <= 0.500:
+        return "#0066FF"
+    elif inches <= 1.000:
+        return "#00CCCC"
+    elif inches <= 2.000:
+        return "amber"
+    elif inches <= 3.000:
+        return "#FF8800"
     else:
         return "#FF0000"
 
@@ -664,14 +955,22 @@ def current(c, ctx):
     cur = fc_resp["json"].get("current_conditions", {})
     obs_resp = fetch_observation(station["token"], station["station_id"])
     obs_list = obs_resp["json"].get("obs", []) if obs_resp["status_code"] == 200 else []
-    ts = obs_list[0].get("timestamp", 0) if len(obs_list) > 0 else 0
+    obs0 = obs_list[0] if len(obs_list) > 0 else {}
+    ts = obs0.get("timestamp", 0)
 
-    temp = c_to_f(cur.get("air_temperature", 0.0))
+    # Prefer the live observation's temp/feels_like over better_forecast's
+    # current_conditions, which is forecast-pipeline-smoothed and can lag
+    # well behind the station's actual live reading (same reasoning as the
+    # station_pressure/uv/solar/brightness preference elsewhere in this file).
+    temp_raw = obs0.get("air_temperature", None)
+    if temp_raw == None:
+        temp_raw = cur.get("air_temperature", 0.0)
+    temp = c_to_f(temp_raw)
     temp_col = temp_color(temp)
 
     c.fill("#000000")
     time_str = epoch_to_local_hhmm(ts, station["tz_offset_min"])
-    draw_header(c, station["name"], time_str)
+    draw_header(c, station["name"], time_str, station, ts)
     c.line(0, 8, 127, 8, temp_col)
 
     cond = tempest_icon_to_cond(cur.get("icon", None))
@@ -679,20 +978,34 @@ def current(c, ctx):
     draw_icon(c, cond, 4, icon_y)
 
     temp_str = format1(temp)
-    temp_font = fit_font(c, temp_str, ["16x24", "10x16", "7x12"], 58)
+    temp_font = fit_font(c, temp_str, ["16x24", "10x16", "7x12"], 48)
     font_height = {"16x24": 24, "10x16": 16, "7x12": 12}[temp_font]
     temp_y = 9 + (24 - font_height) // 2
-    c.text(temp_str, 38, temp_y, font = temp_font, color = temp_col, align = "left")
+    c.text(temp_str, 34, temp_y, font = temp_font, color = temp_col, align = "left")
 
-    unit_x = 38 + c.text_width(temp_str, temp_font) + 2
+    unit_x = 34 + c.text_width(temp_str, temp_font) + 2
     c.text("F".upper(), unit_x, temp_y + 1, font = "5x7", color = temp_col, align = "left")
 
-    feels_raw = cur.get("feels_like", None)
+    # HUMIDITY is the widest label in this column, so it defines the shared
+    # center that FEELS and both values line up under.
+    humidity_label = "HUMIDITY".upper()
+    column_center = 126 - c.text_width(humidity_label, "4x5") // 2
+
+    feels_raw = obs0.get("feels_like", None)
+    if feels_raw == None:
+        feels_raw = cur.get("feels_like", None)
     feels = c_to_f(feels_raw) if feels_raw != None else temp
     feels_str = format1(feels) + "F"
-    c.text("FEELS".upper(), 126, 9, font = "4x5", color = "#888888", align = "right")
-    c.text("LIKE".upper(), 126, 15, font = "4x5", color = "#888888", align = "right")
-    c.text(feels_str.upper(), 126, 22, font = "5x7", color = temp_color(feels), align = "right")
+    feels_label = "FEELS".upper()
+    c.text(feels_label, column_center, 9, font = "4x5", color = "white", align = "center")
+    c.text(feels_str.upper(), column_center, 15, font = "4x5", color = temp_color(feels), align = "center")
+
+    humidity = obs0.get("relative_humidity", None)
+    if humidity == None:
+        humidity = cur.get("relative_humidity", 0)
+    humidity_str = (str(round_int(humidity)) + "%").upper()
+    c.text(humidity_label, column_center, 21, font = "4x5", color = "white", align = "center")
+    c.text(humidity_str, column_center, 27, font = "4x5", color = humidity_color(humidity), align = "center")
 
 def conditions(c, ctx):
     station = load_station(c, ctx)
@@ -707,33 +1020,91 @@ def conditions(c, ctx):
     cur = fc_resp["json"].get("current_conditions", {})
     obs_resp = fetch_observation(station["token"], station["station_id"])
     obs_list = obs_resp["json"].get("obs", []) if obs_resp["status_code"] == 200 else []
-    ts = obs_list[0].get("timestamp", 0) if len(obs_list) > 0 else 0
+    obs0 = obs_list[0] if len(obs_list) > 0 else {}
+    ts = obs0.get("timestamp", 0)
 
     c.fill("#000000")
     time_str = epoch_to_local_hhmm(ts, station["tz_offset_min"])
-    draw_header(c, station["name"], time_str)
+    draw_header(c, station["name"], time_str, station, ts)
 
-    humidity = cur.get("relative_humidity", 0)
-    pressure = cur.get("station_pressure", 0.0)
+    # station_pressure/pressure_trend come from the raw station observation
+    # feed (2-min cache), not better_forecast's current_conditions (5-min
+    # cache, forecast-pipeline-smoothed) - the observation feed tracks the
+    # Tempest app's own live reading much more closely. This endpoint ignores
+    # units_pressure=inhg and always returns hPa regardless (confirmed live:
+    # a raw reading of 1022.00 showed up where ~30.19 inHg was expected) -
+    # same units-param-ignoring behavior already confirmed for units_precip
+    # on this endpoint, see rainfall() below. Converting manually.
+    station_pressure_hpa = obs0.get("station_pressure", None)
+    if station_pressure_hpa != None:
+        station_pressure = hpa_to_inhg(station_pressure_hpa)
+    else:
+        station_pressure = cur.get("station_pressure", 0.0)
+    elevation_ft = _n(ctx, "elevation_ft", 0.0)
+    if elevation_ft > 0:
+        pressure = sea_level_pressure(station_pressure, elevation_ft, obs0.get("air_temperature", cur.get("air_temperature", 0.0)))
+    else:
+        pressure = station_pressure
     dew_point = c_to_f(cur.get("dew_point", 0.0))
+    temp = c_to_f(cur.get("air_temperature", 0.0))
 
-    c.text("HUMIDITY".upper(), 2, 11, font = "4x5", color = "white", align = "left")
-    c.text((str(round_int(humidity)) + "%").upper(), 126, 11, font = "4x5", color = humidity_color(humidity), align = "right")
+    pressure_str = (format3(pressure) + " IN").upper()
+    c.text("PRESSURE".upper(), 2, 11, font = "4x5", color = "white", align = "left")
+    c.text(pressure_str, 119, 11, font = "4x5", color = pressure_color(pressure), align = "right")
 
-    pressure_str = (format2(pressure) + " IN").upper()
-    c.text("PRESSURE".upper(), 2, 17, font = "4x5", color = "white", align = "left")
-    c.text(pressure_str, 119, 17, font = "4x5", color = "white", align = "right")
-
-    trend = cur.get("pressure_trend", None)
+    trend = obs0.get("pressure_trend", cur.get("pressure_trend", None))
     if trend == "rising":
-        draw_arrow_up(c, 122, 17, "white")
+        draw_arrow_up(c, 122, 11, "white")
     elif trend == "falling":
-        draw_arrow_down(c, 122, 17, "white")
+        draw_arrow_down(c, 122, 11, "white")
     elif trend == "steady":
-        draw_arrow_flat(c, 122, 17, "white")
+        draw_arrow_flat(c, 122, 11, "white")
+
+    # 3hr-ago comparison point for the pressure-change row below. Neither
+    # obs endpoint exposes a ready-made delta, so this pulls historical
+    # samples from the device-level endpoint (see fetch_device_observations)
+    # and diffs the one closest to the 3hr mark against the current
+    # station_pressure computed above. index 6 (station_pressure, hPa)
+    # confirmed live via a raw-array debug dump: a full +/- 5 min window of
+    # samples traced a smooth, physically sane pressure curve at that index.
+    # +/- 5 min window around the 3hr-ago mark so multiple samples land in
+    # it (station reports roughly once a minute) - picking the CLOSEST one
+    # rather than always the window's first sample matters when the window
+    # is sparse or lopsided (e.g. a data gap), which earlier picked a sample
+    # far enough from the true 3hr mark to produce a wildly-wrong reading.
+    # If even the closest sample is >10 min from the target, treat the
+    # reading as unavailable rather than diff against a stale/unrelated one.
+    change_str = "N/A"
+    change_color = "#888888"
+    if station["device_id"] != None and ts > 0:
+        target = ts - 3 * 3600
+        dev_resp = fetch_device_observations(station["token"], station["device_id"], target - 300, target + 300)
+        if dev_resp["status_code"] == 200:
+            dev_obs = dev_resp["json"].get("obs", [])
+
+            best_row = None
+            best_offset = 0
+            for row in dev_obs:
+                if len(row) <= 6:
+                    continue
+                offset = row[0] - target
+                abs_offset = offset if offset >= 0 else -offset
+                if best_row == None or abs_offset < best_offset:
+                    best_row = row
+                    best_offset = abs_offset
+
+            if best_row != None and best_offset < 600:
+                past_pressure = hpa_to_inhg(best_row[6])
+                change = station_pressure - past_pressure
+                sign = "+" if change >= 0 else ""
+                change_str = (sign + format3(change) + " IN").upper()
+                change_color = pressure_change_color(change)
+
+    c.text("PRESS CHG 3HR".upper(), 2, 17, font = "4x5", color = "white", align = "left")
+    c.text(change_str, 126, 17, font = "4x5", color = change_color, align = "right")
 
     c.text("DEW POINT".upper(), 2, 23, font = "4x5", color = "white", align = "left")
-    c.text((format1(dew_point) + "F").upper(), 126, 23, font = "4x5", color = temp_color(dew_point), align = "right")
+    c.text((format1(dew_point) + "F").upper(), 126, 23, font = "4x5", color = dew_point_color(temp, dew_point), align = "right")
 
 def wind(c, ctx):
     station = load_station(c, ctx)
@@ -753,7 +1124,7 @@ def wind(c, ctx):
 
     c.fill("#000000")
     time_str = epoch_to_local_hhmm(ts, station["tz_offset_min"])
-    draw_header(c, station["name"], time_str)
+    draw_header(c, station["name"], time_str, station, ts)
 
     speed = cur.get("wind_avg", 0.0)
     deg = cur.get("wind_direction", 0)
@@ -761,23 +1132,33 @@ def wind(c, ctx):
     idx = compass_index(deg)
 
     wind_val = CARDINAL_NAMES[idx] + " @ " + str(round_int(speed)) + " MPH"
+    wind_color_val = "white" if speed == 0 else wind_color(speed)
     c.text("CURRENT WIND".upper(), 2, 11, font = "4x5", color = "white", align = "left")
-    c.text(wind_val.upper(), 126, 11, font = "4x5", color = "white", align = "right")
+    c.text(wind_val.upper(), 126, 11, font = "4x5", color = wind_color_val, align = "right")
 
     if gust != None:
         gust_val = str(round_int(gust)) + " MPH"
+        gust_color = "white" if gust == 0 else wind_color(gust)
     else:
         gust_val = "N/A"
+        gust_color = "#888888"
     c.text("GUSTING UP TO".upper(), 2, 17, font = "4x5", color = "white", align = "left")
-    c.text(gust_val.upper(), 126, 17, font = "4x5", color = "white", align = "right")
+    c.text(gust_val.upper(), 126, 17, font = "4x5", color = gust_color, align = "right")
 
-    daily_high_gust = obs.get("wind_gust", None)
-    if daily_high_gust != None:
-        high_gust_val = str(round_int(daily_high_gust)) + " MPH"
+    # Same units-param-ignoring behavior as station_pressure/precip on this
+    # endpoint (see conditions()/rainfall()) - confirmed live: a true ~5 MPH
+    # gust showed up here as "2 MPH", matching 5 mph converted to m/s (2.24).
+    # Raw value is native m/s regardless of units_wind=mph; converting here.
+    daily_high_gust_mps = obs.get("wind_gust", None)
+    if daily_high_gust_mps != None:
+        high_gust_mph = mps_to_mph(daily_high_gust_mps)
+        high_gust_val = str(round_int(high_gust_mph)) + " MPH"
+        high_gust_color = "white" if high_gust_mph == 0 else wind_color(high_gust_mph)
     else:
         high_gust_val = "N/A"
+        high_gust_color = "#888888"
     c.text("LATEST OBS GUST".upper(), 2, 23, font = "4x5", color = "white", align = "left")
-    c.text(high_gust_val.upper(), 126, 23, font = "4x5", color = "#888888", align = "right")
+    c.text(high_gust_val.upper(), 126, 23, font = "4x5", color = high_gust_color, align = "right")
 
 def rainfall(c, ctx):
     station = load_station(c, ctx)
@@ -797,7 +1178,7 @@ def rainfall(c, ctx):
 
     c.fill("#000000")
     time_str = epoch_to_local_hhmm(obs.get("timestamp", 0), station["tz_offset_min"])
-    draw_header(c, station["name"], time_str)
+    draw_header(c, station["name"], time_str, station, obs.get("timestamp", 0))
 
     # Every precip_accum_* field on this endpoint ignores units_precip=in and
     # comes back in native mm regardless - confirmed live for both today
@@ -805,18 +1186,42 @@ def rainfall(c, ctx):
     # 0.08in, matching 2.26mm). Converting all three ourselves.
     today_total = mm_to_in(obs.get("precip_accum_local_day", 0.0))
     last_hour_raw = obs.get("precip_accum_last_1hr", None)
-    yesterday_total = obs.get("precip_accum_local_yesterday", None)
 
+    # WeatherFlow revises the previous day's rain total after the fact (rain
+    # vs. other precip-type reclassification) - precip_accum_local_yesterday
+    # can be a stale pre-revision estimate (confirmed live: showed 0.081in
+    # when tempestwx.com had already revised 8/12 to 0.17in). Prefer the
+    # _final field once it's available; fall back to the non-final one for
+    # days it hasn't been computed yet.
+    yesterday_total = obs.get("precip_accum_local_yesterday_final", None)
+    if yesterday_total == None:
+        yesterday_total = obs.get("precip_accum_local_yesterday", None)
+
+    today_color = "white" if today_total == 0 else rain_daily_color(today_total)
     c.text("RAIN TODAY".upper(), 2, 11, font = "4x5", color = "white", align = "left")
-    c.text((format3(today_total) + " IN").upper(), 126, 11, font = "4x5", color = "white", align = "right")
+    c.text((format3(today_total) + " IN").upper(), 126, 11, font = "4x5", color = today_color, align = "right")
 
-    last_hour_str = (format3(mm_to_in(last_hour_raw)) + " IN") if last_hour_raw != None else "N/A"
+    last_hour_in = mm_to_in(last_hour_raw) if last_hour_raw != None else None
+    last_hour_str = (format3(last_hour_in) + " IN") if last_hour_in != None else "N/A"
+    if last_hour_in == None:
+        last_hour_color = "#888888"
+    elif last_hour_in == 0:
+        last_hour_color = "white"
+    else:
+        last_hour_color = rain_last_hour_color(last_hour_in)
     c.text("RAIN LAST HOUR".upper(), 2, 17, font = "4x5", color = "white", align = "left")
-    c.text(last_hour_str.upper(), 126, 17, font = "4x5", color = "white", align = "right")
+    c.text(last_hour_str.upper(), 126, 17, font = "4x5", color = last_hour_color, align = "right")
 
-    yesterday_str = (format3(mm_to_in(yesterday_total)) + " IN") if yesterday_total != None else "N/A"
+    yesterday_in = mm_to_in(yesterday_total) if yesterday_total != None else None
+    yesterday_str = (format3(yesterday_in) + " IN") if yesterday_in != None else "N/A"
+    if yesterday_in == None:
+        yesterday_color = "#888888"
+    elif yesterday_in == 0:
+        yesterday_color = "white"
+    else:
+        yesterday_color = rain_daily_color(yesterday_in)
     c.text("RAIN YESTERDAY".upper(), 2, 23, font = "4x5", color = "white", align = "left")
-    c.text(yesterday_str.upper(), 126, 23, font = "4x5", color = "white", align = "right")
+    c.text(yesterday_str.upper(), 126, 23, font = "4x5", color = yesterday_color, align = "right")
 
 def uv(c, ctx):
     station = load_station(c, ctx)
@@ -836,7 +1241,7 @@ def uv(c, ctx):
 
     c.fill("#000000")
     time_str = epoch_to_local_hhmm(ts, station["tz_offset_min"])
-    draw_header(c, station["name"], time_str)
+    draw_header(c, station["name"], time_str, station, ts)
 
     # Prefer the raw observation's live sensor values over better_forecast's
     # current_conditions, which can lag/differ (confirmed for uv earlier).
@@ -877,7 +1282,7 @@ def forecast(c, ctx):
 
     c.fill("#000000")
     time_str = epoch_to_local_hhmm(ts, station["tz_offset_min"])
-    draw_header(c, station["name"], time_str)
+    draw_header(c, station["name"], time_str, station, ts)
 
     # The forecast itself comes from the NWS (api.weather.gov), not
     # WeatherFlow - a station's own better_forecast is model-derived, while
@@ -908,45 +1313,36 @@ def forecast(c, ctx):
     today_y, today_m, today_d = date_from_iso(periods[0]["startTime"])
     today_days = days_from_civil(today_y, today_m, today_d)
 
-    # NWS periods alternate day/night (e.g. "Wednesday" then "Wednesday
-    # Night"), each covering one civil date - group by date so a day's high
-    # (isDaytime) and low (the following night) land in the same entry.
-    days_by_key = {}
-    order = []
-    for p in periods:
-        y, m, d = date_from_iso(p["startTime"])
-        key = days_from_civil(y, m, d)
-        if key not in days_by_key:
-            days_by_key[key] = {}
-            order.append(key)
-        if p.get("isDaytime", False):
-            days_by_key[key]["hi"] = p.get("temperature", None)
-            days_by_key[key]["short"] = p.get("shortForecast", "")
-        else:
-            days_by_key[key]["lo"] = p.get("temperature", None)
-            if "short" not in days_by_key[key]:
-                days_by_key[key]["short"] = p.get("shortForecast", "")
-
+    # NWS periods are ~12hr day/night blocks (shorter for the first one if
+    # we're partway through it) - showing the raw next 3 periods (not
+    # grouped into day/lo-hi pairs) covers roughly the next 36 hours instead
+    # of the next 3 calendar days.
     col_w = 128 // 3
     count = 0
-    for key in order:
-        if key <= today_days:
-            continue
+    for p in periods:
         if count >= 3:
             break
-        day = days_by_key[key]
         cx = count * col_w + col_w // 2
         count += 1
 
-        weekday = (key + 4) % 7
-        c.text(WEEKDAY_NAMES[weekday].upper(), cx, 8, font = "4x5", color = "white", align = "center")
+        y, m, d = date_from_iso(p["startTime"])
+        key = days_from_civil(y, m, d)
+        is_day = p.get("isDaytime", True)
+        if key == today_days:
+            label = near_term_label(p.get("name", ""))
+            if label == None:
+                label = "TODAY" if is_day else "TONIGHT"
+        else:
+            weekday = (key + 4) % 7
+            label = WEEKDAY_NAMES[weekday] + (" NITE" if not is_day else "")
+        c.text(label.upper(), cx, 8, font = "4x5", color = "white", align = "center")
 
-        cond = nws_to_cond(day.get("short", ""))
+        cond = nws_to_cond(p.get("shortForecast", ""))
         draw_mini_icon(c, cond, cx - 6, 14)
 
-        hi = str(day["hi"]) if day.get("hi", None) != None else "--"
-        lo = str(day["lo"]) if day.get("lo", None) != None else "--"
-        c.text((hi + "/" + lo).upper(), cx, 24, font = "5x7", color = "white", align = "center")
+        temp = p.get("temperature", None)
+        temp_str = str(temp) if temp != None else "--"
+        c.text(temp_str.upper(), cx, 24, font = "5x7", color = "white", align = "center")
 
 def lightning2(c, ctx):
     station = load_station(c, ctx)
@@ -966,7 +1362,7 @@ def lightning2(c, ctx):
 
     c.fill("#000000")
     time_str = epoch_to_local_hhmm(obs.get("timestamp", 0), station["tz_offset_min"])
-    draw_header(c, station["name"], time_str)
+    draw_header(c, station["name"], time_str, station, obs.get("timestamp", 0))
 
     last_epoch = obs.get("lightning_strike_last_epoch", None)
     if last_epoch != None:
@@ -975,19 +1371,26 @@ def lightning2(c, ctx):
             last_str = "JUST NOW"
         elif minutes_ago < 60:
             last_str = str(minutes_ago) + " MIN AGO"
-        else:
+        elif minutes_ago < 2880:
             last_str = str(minutes_ago // 60) + " HR AGO"
+        else:
+            last_str = str(minutes_ago // 1440) + "+ DAYS AGO"
+        last_color = last_strike_color(minutes_ago)
     else:
         last_str = "NONE RECENT"
-    last_color = "red" if last_str == "JUST NOW" else "#888888"
+        last_color = "#888888"
     c.text("LAST STRIKE".upper(), 2, 11, font = "4x5", color = "white", align = "left")
     c.text(last_str.upper(), 126, 11, font = "4x5", color = last_color, align = "right")
 
-    distance = obs.get("lightning_strike_last_distance", None)
-    if distance != None:
-        # Tempest's lightning sensor's advertised max detection range is ~25mi.
-        dist_color = lerp_color(distance, 25.0, (220, 0, 0), (255, 180, 0))
-        dist_str = str(round_int(distance)) + " MI"
+    # Same units-param-ignoring behavior as station_pressure/precip/wind_gust
+    # on this endpoint - confirmed live: a true 22-25mi strike showed up here
+    # as "39 MI" (39 * 0.621371 = 24.2mi). Raw value is native km regardless
+    # of units_distance=mi; converting here.
+    distance_km = obs.get("lightning_strike_last_distance", None)
+    if distance_km != None:
+        distance = km_to_mi(distance_km)
+        dist_color = strike_distance_color(distance)
+        dist_str = format1(distance) + " MI"
     else:
         dist_color = "#888888"
         dist_str = "N/A"
@@ -1012,7 +1415,7 @@ def lightning(c, ctx):
 
     c.fill("#000000")
     time_str = epoch_to_local_hhmm(obs.get("timestamp", 0), station["tz_offset_min"])
-    draw_header(c, station["name"], time_str)
+    draw_header(c, station["name"], time_str, station, obs.get("timestamp", 0))
 
     rain_minutes = obs.get("precip_minutes_local_day", None)
     strikes_1hr = obs.get("lightning_strike_count_last_1hr", None)
@@ -1020,17 +1423,39 @@ def lightning(c, ctx):
 
     if rain_minutes == None:
         rain_minutes_str = "N/A"
+        rain_minutes_color = "#888888"
+    elif rain_minutes == 0:
+        rain_minutes_str = "0 M"
+        rain_minutes_color = "white"
     elif rain_minutes > 59:
         rain_minutes_str = str(rain_minutes // 60) + " H " + str(rain_minutes % 60) + " M"
+        rain_minutes_color = rain_duration_color(rain_minutes)
     else:
         rain_minutes_str = str(rain_minutes) + " M"
+        rain_minutes_color = rain_duration_color(rain_minutes)
     c.text("RAIN DURATION TODAY".upper(), 2, 11, font = "4x5", color = "white", align = "left")
-    c.text(rain_minutes_str.upper(), 126, 11, font = "4x5", color = "#3399FF", align = "right")
+    c.text(rain_minutes_str.upper(), 126, 11, font = "4x5", color = rain_minutes_color, align = "right")
 
-    strikes_1hr_str = str(strikes_1hr) if strikes_1hr != None else "N/A"
+    if strikes_1hr == None:
+        strikes_1hr_str = "N/A"
+        strikes_1hr_color = "#888888"
+    elif strikes_1hr == 0:
+        strikes_1hr_str = "NONE"
+        strikes_1hr_color = "white"
+    else:
+        strikes_1hr_str = str(strikes_1hr)
+        strikes_1hr_color = strikes_last_hour_color(strikes_1hr)
     c.text("STRIKES - LAST HOUR".upper(), 2, 17, font = "4x5", color = "white", align = "left")
-    c.text(strikes_1hr_str.upper(), 126, 17, font = "4x5", color = "amber", align = "right")
+    c.text(strikes_1hr_str.upper(), 126, 17, font = "4x5", color = strikes_1hr_color, align = "right")
 
-    strikes_3hr_str = str(strikes_3hr) if strikes_3hr != None else "N/A"
+    if strikes_3hr == None:
+        strikes_3hr_str = "N/A"
+        strikes_3hr_color = "#888888"
+    elif strikes_3hr == 0:
+        strikes_3hr_str = "NONE"
+        strikes_3hr_color = "white"
+    else:
+        strikes_3hr_str = str(strikes_3hr)
+        strikes_3hr_color = strikes_last_3hr_color(strikes_3hr)
     c.text("STRIKES - LAST 3 HRS".upper(), 2, 23, font = "4x5", color = "white", align = "left")
-    c.text(strikes_3hr_str.upper(), 126, 23, font = "4x5", color = "amber", align = "right")
+    c.text(strikes_3hr_str.upper(), 126, 23, font = "4x5", color = strikes_3hr_color, align = "right")
