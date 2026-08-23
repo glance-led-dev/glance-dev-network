@@ -1,0 +1,74 @@
+gdn: 1
+id: codetrack
+version: 1.4.0
+name: CodeTrack
+author: hcullen1
+description: Building code, fire code, life safety, proposal, inspection, and compliance alerts for facilities, advocates, and the public.
+category: News
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [bulletin, adoption, standards, compliance, inspection, actions, device]
+
+inputs:
+  - key: feedurl
+    type: string
+    app_input_type: free-text
+    label: Feed URL
+    default: ""
+    help: Paste the CodeTrack adapter address ending in /feed. Leave blank to preview the built-in sample screens.
+
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: Feed token
+    default: ""
+    help: Enter the CodeTrack feed token if your adapter is protected. Do not enter the OpenStates key.
+
+  - key: states
+    type: choice
+    app_input_type: selection
+    label: States to show
+    choices: [Alabama, Alaska, Arizona, Arkansas, California, Colorado, Connecticut, Delaware, Florida, Georgia, Hawaii, Idaho, Illinois, Indiana, Iowa, Kansas, Kentucky, Louisiana, Maine, Maryland, Massachusetts, Michigan, Minnesota, Mississippi, Missouri, Montana, Nebraska, Nevada, New Hampshire, New Jersey, New Mexico, New York, North Carolina, North Dakota, Ohio, Oklahoma, Oregon, Pennsylvania, Rhode Island, South Carolina, South Dakota, Tennessee, Texas, Utah, Vermont, Virginia, Washington, West Virginia, Wisconsin, Wyoming]
+    default: "Indiana"
+    help: Select up to five states already enabled in the adapter.
+
+  - key: showtimestamp
+    type: bool
+    app_input_type: checkbox
+    label: Show time
+    default: true
+    help: Show either the feed update time or the optional local clock.
+
+  - key: localclock
+    type: bool
+    app_input_type: checkbox
+    label: Use local clock
+    default: false
+    help: Replace the feed update time with the current time in the selected time zone.
+
+  - key: clocktimezone
+    type: choice
+    app_input_type: dropdown
+    label: Clock time zone
+    default: "America/Indiana/Indianapolis"
+    choices:
+      - "America/New_York"
+      - "America/Detroit"
+      - "America/Kentucky/Louisville"
+      - "America/Indiana/Indianapolis"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "America/Anchorage"
+      - "Pacific/Honolulu"
+    help: Used only when local clock is enabled. Daylight saving changes are handled automatically.
+
+  - key: timestamputc
+    type: bool
+    app_input_type: checkbox
+    label: Show Z on update time
+    default: true
+    help: Uncheck to hide the UTC marker on feed update times. Local clock mode never shows Z.
