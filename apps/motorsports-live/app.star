@@ -62,6 +62,15 @@ F1_FLAG_COLOR = {
     "CLEAR": "#22C55E",
 }
 
+# OpenF1's weather feed only exposes a binary rainfall flag (0/1) -- no cloud
+# cover or rain-intensity field -- so DRY/RAIN are the only two conditions
+# that can be derived, colored accordingly rather than inventing a "cloudy"
+# or "heavy rain" state the API can't actually back up.
+WEATHER_COLOR = {
+    "DRY": "#FACC15",
+    "RAIN": "#38BDF8",
+}
+
 MFG_COLOR = {
     "TYT": "#E10600",
     "TOYOTA": "#E10600",
@@ -995,14 +1004,19 @@ def fetch_f1_live(ctx):
         race_name = str(mresp["data"][0].get("meeting_name", "RACE")).upper()
 
     weather_txt = ""
+    weather_cond = "DRY"
     wresp = http_json("https://api.openf1.org/v1/weather", 60, params = {"session_key": str(session_key)})
     if wresp["ok"] and len(wresp["data"]) > 0:
         w = wresp["data"][len(wresp["data"]) - 1]
         track_temp = w.get("track_temperature")
         if track_temp != None:
             rain = w.get("rainfall", 0)
-            cond = "RAIN" if rain and rain > 0 else "DRY"
-            weather_txt = str(int(track_temp)) + "C " + cond
+            weather_cond = "RAIN" if rain and rain > 0 else "DRY"
+            unit = safe_input(ctx, "tempunit", "C")
+            temp_val = float(track_temp)
+            if unit == "F":
+                temp_val = temp_val * 9.0 / 5.0 + 32.0
+            weather_txt = str(int(temp_val)) + unit + " " + weather_cond
 
     drivers = {}
     dresp = http_json("https://api.openf1.org/v1/drivers", 300, params = {"session_key": str(session_key)})
@@ -1082,6 +1096,7 @@ def fetch_f1_live(ctx):
         "flag": flag_str,
         "lap": lap_num,
         "weather": weather_txt,
+        "weather_cond": weather_cond,
         "rows": rows,
     }
 
@@ -1332,7 +1347,8 @@ def draw_live_intro(c, state, ctx):
             c.text("LAP " + str(state["lap"]), sx, 12, font = "4x5", color = COLORS["text"])
             weather_txt = state.get("weather", "")
             if weather_txt != "":
-                c.text(weather_txt, sx, 21, font = "4x5", color = COLORS["accent2"])
+                weather_color = WEATHER_COLOR.get(state.get("weather_cond", ""), COLORS["accent2"])
+                c.text(weather_txt, sx, 21, font = "4x5", color = weather_color)
         else:
             c.text(FLAG_LABEL.get(state["flag"], "FLAG"), sx, 2, font = "5x7", color = flag_color(state["flag"]))
             c.text("LAP " + str(state["lap"]) + "/" + str(state["laps_total"]), sx, 12, font = "4x5", color = COLORS["text"])
