@@ -1,0 +1,11 @@
+gdn: 1
+id: watson-love
+name: Watson Love Best Tuddys
+description: Christian Watson and Jordan Love Best Tuddys display.
+category: Sports
+width: 64
+height: 32
+refresh: 3600
+pages: [main]
+assets:
+  - watson_love_best_tuddys_led.png
