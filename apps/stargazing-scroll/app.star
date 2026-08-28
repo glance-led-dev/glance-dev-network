@@ -142,7 +142,7 @@ def tonight(c, ctx):
                  params = {"latitude": str(g[0]), "longitude": str(g[1]),
                            "daily": "cloud_cover_mean", "timezone": "auto",
                            "forecast_days": "1"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     cloud = None
     if r["status_code"] == 200 and r["json"]:
         vals = r["json"].get("daily", {}).get("cloud_cover_mean", [])
@@ -187,15 +187,27 @@ def tonight(c, ctx):
                 w = n, h = n)
 
     if c.width >= 128:
-        # Right column first, then the verdict fitted to what is left.
-        c.text(phase_name(p), c.width - 6, 4, font = "5x7", color = "#A8B4DC",
-               align = "right")
-        c.text_fit(verdict, 36, 5, ["16x20", "10x16", "6x8"], color = col,
-                   maxw = c.width - 130)
-        c.text(str(int(lit * 100)) + "% LIT", c.width - 6, 14, font = "5x7",
-               color = "#7C88B4", align = "right")
-        c.text(note, c.width - 6, 23, font = "5x7", color = "#7C88B4",
-               align = "right")
+        # Moon type up top, the verdict right below it in the biggest font
+        # that fits, and the numbers along the bottom row.
+        # Moon type centred across the top in the moon's own cream; the
+        # verdict sits big beside the art with the two data points stacked
+        # to its right, wherever the verdict happens to end.
+        c.text_stroke(phase_name(p), c.width // 2, 0, font = "5x7",
+                      color = "#EEECD0", align = "center")
+        vfont = "10x16"
+        if c.text_width(verdict, vfont) > c.width - 100:
+            vfont = "6x8"
+        # Verdict + stacked stats measured as one group and centred under
+        # the moon type, so the whole block breathes with the verdict.
+        s1 = str(int(lit * 100)) + "% LIT"
+        vw = c.text_width(verdict, vfont)
+        sw = max(c.text_width(s1, "5x7"), c.text_width(note, "5x7"))
+        gx = (c.width - (vw + 8 + sw)) // 2
+        if gx < 30:
+            gx = 30
+        c.text_stroke(verdict, gx, 11, font = vfont, color = col)
+        c.text_stroke(s1, gx + vw + 8, 12, font = "5x7", color = "#A8B4DC")
+        c.text_stroke(note, gx + vw + 8, 21, font = "5x7", color = "#7C88B4")
     else:
         c.text_fit(verdict, c.width - 2, 4, ["10x16", "6x8", "5x7"],
                    color = col, align = "right", maxw = c.width - n - 8)

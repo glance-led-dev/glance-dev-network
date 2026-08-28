@@ -1,7 +1,7 @@
 gdn: 1
 id: frost-watch-scroll
 version: 0.1.0
-name: Frost Watch (Scroll)
+name: Frost Watch
 author: glance-led-dev
 description: Tonight's low, and whether the garden needs covering before dark.
 category: Weather
@@ -13,8 +13,8 @@ refresh: 3600
 
 pages: [tonight]
 
-assets:
-  - FROST.png
+# No assets: the identity art is baked into app.star as c.sprite string
+# art, which recolours per frost band instead of shipping one flat PNG.
 
 inputs:
   - key: zip

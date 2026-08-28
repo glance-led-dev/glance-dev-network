@@ -8,7 +8,7 @@ category: Transportation
 entry: app.star
 width: 64
 height: 32
-refresh: 300
+refresh: 600
 pages: [bikes]
 inputs:
   - key: station

@@ -122,7 +122,7 @@ def nearest(c, ctx):
         nodata(c, "NO LOCATION", "SET A ZIP")
         return
     r = http.get("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson",
-                 ttl_seconds = 900)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO QUAKE DATA", "NO CONNECTION")
         return

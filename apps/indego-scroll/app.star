@@ -163,6 +163,19 @@ STATIONS = {
 
 NODATA_FONTS = ["10x16", "6x8", "5x7", "4x5"]
 
+# The count face on the 192px layout, biggest first. 10x16 is the face the
+# counts are meant to wear; the smaller rungs only come out if a freak count
+# (four digits, say) would otherwise push a badge past the safe zone.
+NUM_FONTS = ["10x16", "7x14", "5x7"]
+LABELF = "4x5"
+
+# Layout of the three labelled figures. Each group is a label with its number
+# centred underneath; where one group ends the next one starts GAP later.
+GAP = 25
+FIRST_X = 38
+NUM_Y = 14
+SAFE_R = 182
+
 
 def _fit_clip(c, text, fonts, maxw):
     """[font, text] for the largest font that fits, clipping if none do."""
@@ -178,6 +191,50 @@ def _fit_clip(c, text, fonts, maxw):
                 t = t[:k]
                 break
     return [pick, t]
+
+
+def cols_layout(c, labels, nums, numf):
+    """[label_x, num_x, right] per group, with a constant gap between groups.
+
+    The number is centred on its label. When a number is wider than its label
+    the number sets the group's left edge and the label rides along, so the
+    constant gap is measured between the outer edges of whole groups rather
+    than between labels.
+    """
+    out = []
+    x = FIRST_X
+    for i in range(len(labels)):
+        lw = c.text_width(labels[i], LABELF)
+        nw = c.text_width(nums[i], numf)
+        lx = x
+        nx = x + (lw - nw) // 2
+        if nx < lx:
+            lx = lx + (lx - nx)
+            nx = x
+        r = lx + lw - 1
+        if nx + nw - 1 > r:
+            r = nx + nw - 1
+        out.append([lx, nx, r])
+        x = r + GAP
+    return out
+
+
+def cols_extent(c, cols, nums, numf, ebikes, renting, returning):
+    """Rightmost pixel the row would touch, badges and bolt included."""
+    r = cols[2][2]
+    if ebikes > 0:
+        b = cols[1][1] + c.text_width(nums[1], numf) + 3 + 3
+        if b > r:
+            r = b
+    if not renting:
+        b = cols[0][1] + c.text_width(nums[0], numf) + 3 + 8
+        if b > r:
+            r = b
+    if not returning:
+        b = cols[2][1] + c.text_width(nums[2], numf) + 3 + 8
+        if b > r:
+            r = b
+    return r
 
 
 def nodata(c, title, sub):
@@ -241,9 +298,9 @@ def meter(c, x0, x1, total, ebikes, docks):
         x = x0
         for i in range(slots_total):
             if i < ebikes:
-                c.rect(x, 29, x + 2, 31, fill = YELLOW)
+                c.rect(x, 30, x + 2, 31, fill = YELLOW)
             elif i < total:
-                c.rect(x, 29, x + 2, 31, fill = BLUE)
+                c.rect(x, 30, x + 2, 31, fill = BLUE)
             else:
                 c.rect(x, 31, x + 2, 31, fill = GHOST)
             x = x + pitch
@@ -254,10 +311,10 @@ def meter(c, x0, x1, total, ebikes, docks):
         c.rect(x0, 31, x1, 31, fill = GHOST)
         fill = (w * total) // slots_total
         if fill > 0:
-            c.rect(x0, 29, x0 + fill, 31, fill = BLUE)
+            c.rect(x0, 30, x0 + fill, 31, fill = BLUE)
             e = (w * ebikes) // slots_total
             if e > 0:
-                c.rect(x0 + fill - e, 29, x0 + fill, 31, fill = YELLOW)
+                c.rect(x0 + fill - e, 30, x0 + fill, 31, fill = YELLOW)
 
 
 def bikes(c, ctx):
@@ -305,29 +362,39 @@ def bikes(c, ctx):
         c.text(nf[1], 2, 0, font = nf[0], color = CHROME)
         # One hairline is the whole grid: it separates header from data for the
         # cost of a single row.
-        c.hline(0, 7, c.width, "#0C2233")
+        c.hline(0, 6, c.width, "#0C2233")
 
         # Three labelled figures. The original layout leaned on the glyphs
         # alone -- a bike, a bolt, a dim bike -- on the theory that neither
         # number needed a word next to it. In front of somebody who has not
         # seen the app before, "4  2  103" is a puzzle, so each figure now says
         # what it is. The bike keeps its place on the left as the app's mark.
-        c.sprite(BIKE, 3, 11, legend = BIKE_LEGEND)
+        c.sprite(BIKE, 5, 11, legend = BIKE_LEGEND)
 
-        cols = [
-            [36, "BIKES", tstr, SLATE if not renting else count_color(total)],
-            [92, "E-BIKES", str(ebikes), WHITE if ebikes > 0 else "#33404A"],
-            [146, "DOCKS", dstr, SLATE if not returning else count_color(docks)],
+        labels = ["BIKES", "E-BIKES", "DOCKS"]
+        nums = [tstr, str(ebikes), dstr]
+        colors = [
+            SLATE if not renting else count_color(total),
+            WHITE if ebikes > 0 else "#33404A",
+            SLATE if not returning else count_color(docks),
         ]
-        for col in cols:
-            x = col[0]
-            c.text(col[1], x, 8, font = "4x5", color = "#5A6C7A")
-            # 10x16 rather than the old 16x20 hero: three digits of dock count
-            # at 16x20 is 51px, which left no room for a label above it and was
-            # what forced the numbers hard against the right edge.
-            c.text(col[2], x, 13, font = "10x16", color = col[3])
+
+        numf = NUM_FONTS[len(NUM_FONTS) - 1]
+        cols = cols_layout(c, labels, nums, numf)
+        for f in NUM_FONTS:
+            cc = cols_layout(c, labels, nums, f)
+            if cols_extent(c, cc, nums, f, ebikes, renting,
+                           returning) <= SAFE_R:
+                numf = f
+                cols = cc
+                break
+
+        for i in range(3):
+            c.text(labels[i], cols[i][0], 8, font = LABELF, color = "#5A6C7A")
+            c.text(nums[i], cols[i][1], NUM_Y, font = numf, color = colors[i])
         if ebikes > 0:
-            c.sprite(BOLT, 92 + c.text_width(str(ebikes), "10x16") + 3, 15,
+            c.sprite(BOLT,
+                     cols[1][1] + c.text_width(nums[1], numf) + 3, 18,
                      legend = {"Y": YELLOW})
 
         meter(c, 2, c.width - 9, total, ebikes, docks)
@@ -335,11 +402,13 @@ def bikes(c, ctx):
         # A station can report ordinary counts and still refuse the trip, so
         # the badge carries the alarm and the dimmed number says it is moot.
         if not renting:
-            c.sprite(NO_ENTRY, 36 + c.text_width(tstr, "10x16") + 3, 15,
+            c.sprite(NO_ENTRY,
+                     cols[0][1] + c.text_width(tstr, numf) + 3, 16,
                      legend = {"R": "#E01A1A", "W": WHITE})
         if not returning:
             # Sits over the DOCKS column, which is where the refusal applies.
-            c.sprite(NO_ENTRY, 146 + c.text_width(dstr, "10x16") + 3, 15,
+            c.sprite(NO_ENTRY,
+                     cols[2][1] + c.text_width(dstr, numf) + 3, 16,
                      legend = {"R": "#E01A1A", "W": WHITE})
     else:
         # 64px has room for one bike, so the blue one goes to the bikes count

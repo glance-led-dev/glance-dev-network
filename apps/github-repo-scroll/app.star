@@ -151,18 +151,20 @@ def stats(c, ctx):
             rcol = c.text_width(iss_s, "6x8")
 
         c.text_fit(name, 6, 2, ["6x8", "5x7", "4x5"], color = "#C8CCE0",
-                   maxw = c.width - rcol - 20)
+                   maxw = c.width - rcol - 24)
 
+        # star block +6 right, forks/issues column 4 further in, per the
+        # audit rulings
         lbl_w = c.text_width("STARS", "4x5")
         nf = _fit_clip(c, short(stars), ["16x20", "10x16", "6x8"],
-                       c.width - rcol - 26 - lbl_w)
-        c.text(nf[1], 6, 12, font = nf[0], color = "#F5C242")
-        c.text("STARS", 6 + c.text_width(nf[1], nf[0]) + 4, 24,
+                       c.width - rcol - 36 - lbl_w)
+        c.text(nf[1], 12, 12, font = nf[0], color = "#F5C242")
+        c.text("STARS", 12 + c.text_width(nf[1], nf[0]) + 4, 24,
                font = "4x5", color = "#7A6A48")
 
-        c.text(fork_s, c.width - 6, 6, font = "6x8",
+        c.text(fork_s, c.width - 10, 6, font = "6x8",
                color = "#8FD4FF", align = "right")
-        c.text(iss_s, c.width - 6, 18, font = "6x8",
+        c.text(iss_s, c.width - 10, 18, font = "6x8",
                color = "#FF9A5B", align = "right")
     else:
         # Clipped, not shrunk to 3x4: that font has no hyphen, which turned

@@ -80,7 +80,7 @@ def band(kp):
 
 def kp(c, ctx):
     r = http.get("https://services.swpc.noaa.gov/json/planetary_k_index_1m.json",
-                 ttl_seconds = 900)
+                 ttl_seconds = 1800)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO SPACE WX", "SWPC UNREACHABLE")
         return

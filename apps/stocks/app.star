@@ -60,7 +60,7 @@ def fetch(ctx):
     r = http.get(
         "https://api.twelvedata.com/quote",
         params = {"symbol": sym, "apikey": key},
-        ttl_seconds = 300,
+        ttl_seconds = 1800,
     )
 
     # ALWAYS check status_code before touching the json

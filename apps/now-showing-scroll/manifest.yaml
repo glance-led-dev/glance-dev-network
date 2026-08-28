@@ -3,7 +3,7 @@
 gdn: 1
 id: now-showing-scroll
 version: 0.1.0
-name: Now Showing (Scroll)
+name: Now Showing
 author: jdhine02
 description: One title, always on the panel. Set a movie or a show (with an optional season/episode), and it shows runtime, genre, and IMDb + Rotten Tomatoes ratings.
 category: Entertainment
@@ -14,7 +14,7 @@ width: 192
 height: 32
 
 # Re-render hourly — ratings/streaming availability don't change minute to minute.
-refresh: 3600
+refresh: 86400
 
 # Pages the panel rotates through, in order. app.star must define a function per name.
 pages: [main]

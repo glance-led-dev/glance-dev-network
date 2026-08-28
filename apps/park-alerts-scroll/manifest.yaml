@@ -1,7 +1,7 @@
 gdn: 1
 id: park-alerts-scroll
 version: 0.1.0
-name: Park Alerts (Scroll)
+name: Park Alerts
 author: glance-led-dev
 description: "Closures, warnings and conditions for any US National Park."
 category: Other

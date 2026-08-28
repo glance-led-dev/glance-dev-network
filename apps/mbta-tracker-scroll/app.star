@@ -2,6 +2,19 @@
 # or commuter rail, picked in Settings). Queries the public MBTA V3 API
 # (api-v3.mbta.com) directly each render; no companion server needed.
 #
+# DESIGN. A station platform sign, squeezed into the scroll safe zone. The far
+# left of the safe zone carries the app's name-tag: the word MBTA set
+# vertically in 4x5, flanked by two 2px bars segmented into the four rapid
+# transit line colors (red / orange / green / blue). That block is the whole
+# context switch -- a viewer catching the panel mid-rotation reads "Boston
+# transit" off the colors before reading a word. Everything else lives in one
+# content column to the right of it: station name + wall clock on the header
+# line, a dim line-colored rule under them, then two departure rows (a
+# line-colored chevron, the destination, and the countdown right-aligned).
+# Every text field is measured against the column it sits in and clipped, so a
+# 23-character commuter-rail headsign truncates instead of running into the
+# countdown or off the panel.
+#
 # Stations with both subway and Commuter Rail service (Back Bay, Braintree,
 # Forest Hills, JFK/UMass, Malden Center, North Station, Oak Grove, Porter,
 # Quincy Center, Ruggles, South Station) appear twice in the picker, once per
@@ -352,6 +365,90 @@ def _clock_str(now):
     ampm = "AM" if hh < 12 else "PM"
     return str(h12) + ":" + _pad2(mm) + " " + ampm
 
+# ---------- layout ----------
+# On a 192-wide scroll panel this app plays shoulder-to-shoulder with whatever
+# app runs before and after it, so nothing may sit in the outer PAD columns:
+# content is confined to x 10..181. Every x below is derived from PAD and from
+# a *measured* width -- there is no hand-picked coordinate in the page.
+
+PAD = 10                 # safe-zone inset, both ends
+GAP = 2                  # minimum clear columns between two drawn things
+# The countdown gets a wider gutter than GAP: a clipped headsign ends in "..",
+# and two dots two pixels from "180 MIN" read as one string. Four columns is
+# the smallest gutter where "MIDDLEBOROUGH/LAKE.." and the number stay two
+# separate things at 20 feet. The header uses it for the same reason.
+STATUS_GAP = 4
+
+HEAD_Y = 1               # header baseline row (station name + clock)
+RULE_Y = 10              # 1px rule, one clear row under the 6x8 header ink
+ROW_Y = 12               # first departure row
+ROW_H = 8                # a row is one 6x8 cell tall
+ROW_GAP = 2              # rows land on 12..19 and 22..29, 2 spare at the foot
+
+META_FONT = "5x7"        # wall clock
+STATUS_FONT = "6x8"      # countdown -- fixed font so both rows line up
+TEXT_FONTS = ["6x8", "5x7", "4x5"]   # ladder for station name / destinations
+FONTH = {"6x8": 8, "5x7": 7, "4x5": 6}   # Starlark has no font-metrics call
+
+# ---------- MBTA identity rail ----------
+# The vertical wordmark: M B T A stacked in 4x5 with 1px between letters,
+# flanked by two 2px bars split into the four rapid-transit line colors.
+# 4 letters * 5 lit rows + 3 gaps = 23px tall, and the bars are cut to exactly
+# that height (23 // 4 = segments of 5,6,6,6) so they start and end on the same
+# rows as the M and the A -- the block reads as one 23px name-tag centered in
+# the 32px panel. Total width is 2 bars + 2 gaps + one 4x5 glyph = 10px, which
+# is why the whole thing fits inside the left half of the safe-zone padding.
+
+RAIL_FONT = "4x5"
+RAIL_LETTERS = ["M", "B", "T", "A"]
+RAIL_INK = 5             # lit rows of a 4x5 uppercase glyph (the 6th is blank)
+RAIL_LETTER_GAP = 1
+RAIL_BAR_W = 2
+RAIL_BAR_GAP = 1         # clear columns between a bar and the letter column
+RAIL_TEXT_GAP = 3        # clear columns between the rail and the content column
+LINE_COLORS = ["#DA291C", "#ED8B00", "#00843D", "#003DA5"]  # red/orange/green/blue
+RAIL_H = len(RAIL_LETTERS) * RAIL_INK + (len(RAIL_LETTERS) - 1) * RAIL_LETTER_GAP
+
+def _draw_rail(c, x):
+    # Draws the wordmark with its left edge at x; returns the first free column
+    # to its right, so the content column is positioned by measurement rather
+    # than by a guessed offset.
+    lw = c.text_width("M", RAIL_FONT)
+    lx = x + RAIL_BAR_W + RAIL_BAR_GAP
+    rx = lx + lw + RAIL_BAR_GAP
+    top = (c.height - RAIL_H) // 2
+
+    n = len(LINE_COLORS)
+    for i in range(n):
+        y0 = top + i * RAIL_H // n
+        h = (top + (i + 1) * RAIL_H // n) - y0
+        for b in range(RAIL_BAR_W):
+            c.vline(x + b, y0, h, LINE_COLORS[i])
+            c.vline(rx + b, y0, h, LINE_COLORS[i])
+
+    for i in range(len(RAIL_LETTERS)):
+        ch = RAIL_LETTERS[i]
+        c.text(
+            ch,
+            lx + (lw - c.text_width(ch, RAIL_FONT)) // 2,
+            top + i * (RAIL_INK + RAIL_LETTER_GAP),
+            font = RAIL_FONT,
+            color = "white",
+        )
+    return rx + RAIL_BAR_W
+
+# A 3x5 chevron replaces the old bullet dot: it points at the destination, so
+# the row reads "-> ALEWIFE" without spending pixels on the word "TO".
+CHEVRON = """
+X..
+XX.
+XXX
+XX.
+X..
+"""
+CHEVRON_W = 3
+CHEVRON_H = 5
+
 # ---------- small draw helper ----------
 # Picks the biggest font from `fonts` that fits `maxw`; if even the smallest
 # still overflows, truncates with a trailing ".." so nothing ever runs off
@@ -527,36 +624,66 @@ def main(c, ctx):
     c.fill("black")
 
     d = fetch(ctx, station)
-    badge_color = d.get("color", "#666666")
+    line_color = d.get("color", "#666666")
 
-    c.fill_circle(6, 6, 5, badge_color)
-    c.text("T", 6, 3, font = "5x7b", color = "white", align = "center")
+    # The rail sits at the left edge of the safe zone and reports where it
+    # ends; the content column runs from there to the right safe-zone edge.
+    left = _draw_rail(c, PAD) + RAIL_TEXT_GAP
+    right = c.width - 1 - PAD
+    mid = (left + right) // 2
 
+    # Header: station name on the left of the column, wall clock right-aligned
+    # against the safe-zone edge. The clock is measured first and the name is
+    # fitted into what's left. Worst case is a two-digit hour ("12:34 PM" is
+    # 47px at 5x7) next to the three longest names in the picker --
+    # "MELROSE/CEDAR PARK" / "ROSLINDALE VILLAGE" / "NANTASKET JUNCTION", all
+    # 125px at 6x8 -- which leaves 108px, so they step down to 5x7 (107px)
+    # instead of drawing through the clock. Anything longer still clips.
     clock_txt = _clock_str(ctx.now)
-    clock_w = c.text_width(clock_txt, "5x7")
-    icon_w = 10  # 8px "wifi"/live-data icon + 2px gap before the clock text
-    name_maxw = c.width - 14 - icon_w - clock_w - 4
-    name_txt, name_font = _fit_text(c, _base_name(station).upper(), ["6x8", "5x7", "4x5"], name_maxw)
-    c.text(name_txt, 13, 1, font = name_font, color = badge_color)
-    c.icon("wifi", c.width - 1 - clock_w - icon_w, 1, color = "gray")
-    c.text(clock_txt, c.width - 1, 1, font = "5x7", color = "gray", align = "right")
+    clock_w = c.text_width(clock_txt, META_FONT)
+    c.text(clock_txt, right, HEAD_Y, font = META_FONT, color = "gray", align = "right")
+
+    name_maxw = right - clock_w - STATUS_GAP - left + 1
+    name_txt, name_font = _fit_text(c, _base_name(station).upper(), TEXT_FONTS, name_maxw)
+    c.text(name_txt, left, HEAD_Y, font = name_font, color = line_color)
+
+    # Dim line-colored rule: separates header from board and carries the line
+    # color across the column without competing with the live text.
+    c.hline(left, RULE_Y, right - left + 1, color.dim(line_color, 40))
 
     if not d["ok"]:
-        c.text_center(d["title"], 16, font = "6x8", color = "orange")
-        c.text_center(d["sub"], 25, font = "5x7", color = "gray")
+        t_txt, t_font = _fit_text(c, d["title"], TEXT_FONTS, right - left + 1)
+        c.text(t_txt, mid, ROW_Y, font = t_font, color = "orange", align = "center")
+        s_txt, s_font = _fit_text(c, d["sub"], ["5x7", "4x5"], right - left + 1)
+        c.text(s_txt, mid, ROW_Y + ROW_H + ROW_GAP + 1, font = s_font,
+               color = "gray", align = "center")
         return
 
     rows = d["rows"]
     if len(rows) == 0:
-        c.text_center("NO UPCOMING TRAINS", 20, font = "5x7", color = "gray")
+        # Empty is an answer, not an error: no amber card, no blank panel.
+        e_txt, e_font = _fit_text(c, "NO TRAINS DUE", TEXT_FONTS, right - left + 1)
+        band = 2 * ROW_H + ROW_GAP
+        c.text(e_txt, mid, ROW_Y + (band - FONTH[e_font]) // 2, font = e_font,
+               color = "green", align = "center")
         return
 
-    y = 13
+    y = ROW_Y
     for r in rows:
-        c.fill_circle(4, y + 4, 3, badge_color)
-        status_w = c.text_width(r["status"], "6x8")
-        dest_maxw = c.width - 10 - status_w - 4
-        dest_txt, dest_font = _fit_text(c, r["dest"], ["6x8", "5x7", "4x5"], dest_maxw)
-        c.text(dest_txt, 10, y, font = dest_font, color = "white")
-        c.text(r["status"], c.width - 1, y, font = "6x8", color = r["scolor"], align = "right")
-        y += 10
+        # Right side first: the countdown is measured, drawn against the
+        # safe-zone edge, and only then is the leftover width handed to the
+        # headsign. The longest CR headsign, "MIDDLEBOROUGH/LAKEVILLE", is
+        # 114px even at 4x5, and "180 MIN" leaves it 102px, so it clips to
+        # "MIDDLEBOROUGH/LAKE.." (99px) rather than running into the number.
+        c.text(r["status"], right, y, font = STATUS_FONT, color = r["scolor"],
+               align = "right")
+        status_w = c.text_width(r["status"], STATUS_FONT)
+
+        c.sprite(CHEVRON, left, y + (ROW_H - CHEVRON_H) // 2, color = line_color)
+
+        dest_x = left + CHEVRON_W + GAP
+        dest_maxw = right - status_w - STATUS_GAP - dest_x + 1
+        dest_txt, dest_font = _fit_text(c, r["dest"], TEXT_FONTS, dest_maxw)
+        c.text(dest_txt, dest_x, y + (ROW_H - FONTH[dest_font]) // 2,
+               font = dest_font, color = "white")
+        y += ROW_H + ROW_GAP

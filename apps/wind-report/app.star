@@ -103,7 +103,7 @@ def wind(c, ctx):
                            "current": "wind_speed_10m,wind_gusts_10m,wind_direction_10m",
                            "wind_speed_unit": "kmh" if metric else "mph",
                            "timezone": "auto"},
-                 ttl_seconds = 900)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO WIND DATA", "NO CONNECTION")
         return

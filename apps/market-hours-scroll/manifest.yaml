@@ -1,7 +1,7 @@
 gdn: 1
 id: market-hours-scroll
 version: 0.1.0
-name: Market Hours (Scroll)
+name: Market Hours
 author: glance-led-dev
 description: "Whether the US market is open, and how long until the bell."
 category: Finance

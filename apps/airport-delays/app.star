@@ -57,11 +57,13 @@ def fit(c, text, fonts, maxw):
     return [pick, clip(c, text, pick, maxw)]
 
 def tab(c, word, accent, x = 4):
-    """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    """The page chip. Same object, same place, on every page of every app.
+
+    c.badge() sizes the pill around the text's INK -- exactly 1px of pill
+    above and below the lit rows -- instead of around the font's row count,
+    which left the glyphs riding high inside a hand-drawn round_rect."""
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -410,6 +412,46 @@ def kind_of(r):
 
 # ---- pages ----------------------------------------------------------------
 
+# Right-aligned anchor for the whole right-hand column: the page-status word,
+# the airport count, and the stacked qualifier lines all end here. Back at the
+# original 188, four pixels in from the panel edge.
+RIGHT = 188
+
+# Bottom lit row of each font's uppercase/digit glyphs, for bottom-aligning
+# text whose font rung is chosen at runtime.
+INK_BOT = {"16x20": 19, "10x16": 14, "8x12": 11, "4x5": 4}
+
+def bottom_y(font, base):
+    """y that lands `font`'s last lit row on `base`."""
+    return base - INK_BOT.get(font, 0)
+
+def two_lines(c, text, font, maxw):
+    """[line1, line2] -- label and value on top, the trailing qualifiers
+    ("AM EDT", "UTC") stacked underneath. Line one takes at most two words and
+    only what actually fits; whatever is left drops to line two and is clipped
+    there, so a long tail wraps instead of running past the panel edge."""
+    words = []
+    for w in str(text).split(" "):
+        if w != "":
+            words.append(w)
+    if maxw < 4 or len(words) == 0:
+        return ["", ""]
+    l1, used = "", 0
+    for i in range(len(words)):
+        if i >= 2:
+            break
+        cand = words[i] if l1 == "" else l1 + " " + words[i]
+        if c.text_width(cand, font) > maxw and l1 != "":
+            break
+        l1 = cand
+        used = i + 1
+    if used == 0:
+        return [clip(c, words[0], font, maxw), ""]
+    l2 = ""
+    for w in words[used:]:
+        l2 = w if l2 == "" else l2 + " " + w
+    return [clip(c, l1, font, maxw), clip(c, l2, font, maxw)]
+
 def fail(c, st, word):
     if st["state"] == "offline":
         rail(c, OFFLINE)
@@ -436,7 +478,7 @@ def faa(c, ctx):
     rail(c, top[1])
     tab(c, "FAA", top[1])
     n = len(st["rows"])
-    c.text(str(n) + (" AIRPORT" if n == 1 else " AIRPORTS"), 188, 2,
+    c.text(str(n) + (" AIRPORT" if n == 1 else " AIRPORTS"), RIGHT, 2,
            font = "4x5", color = top[1], align = "right")
 
     # Four rows on a six-pixel pitch from y=9. Everything is packed to the
@@ -450,7 +492,12 @@ def faa(c, ctx):
         k = kind_of(r)
         y = 9 + i * 6
         c.rect(4, y, 6, y + 4, fill = k[1])
-        c.text(r[1], 10, y, font = "4x5", color = INK)
+
+        # Four letters of code clear the duration column; with no duration the
+        # code may run on to where the reason starts. Codes are not promised to
+        # be three characters, and an uncut one walked into the "12H45".
+        c.text(clip(c, r[1], "4x5", 19 if r[2] != "" else 44), 10, y,
+               font = "4x5", color = INK)
         if r[2] != "":
             c.text(r[2], 54, y, font = "4x5", color = k[1], align = "right")
         c.text(trim_tail(clip_words(c, r[3], "4x5", 128)), 60, y, font = "4x5",
@@ -468,22 +515,32 @@ def worst(c, ctx):
     k = kind_of(r)
     rail(c, k[1])
     tab(c, "WORST", k[1])
-    c.text(k[0], 188, 2, font = "4x5", color = k[1], align = "right")
+    c.text(k[0], RIGHT, 2, font = "4x5", color = k[1], align = "right")
 
-    # 16x20 is twenty rows tall, so the code alone occupies y=9..28 and there
-    # is no bottom row left under it. The detail goes BESIDE the code rather
-    # than below: putting a line at y=26 drew it straight through the letters.
-    c.text(r[1], 4, 9, font = "16x20", color = INK)
-    bx = 4 + c.text_width(r[1], "16x20") + 8
+    # The code and the cause both sit ON the bottom line -- last lit row at
+    # y=29, two clear pixels under it -- so the top half of the right column is
+    # free for the time to wrap onto two rows. Codes are usually three letters
+    # but nothing in the feed promises that, so the hero drops a font rung
+    # rather than growing into the column beside it.
+    idf, idt = fit(c, r[1], ["16x20", "10x16", "8x12"], 68)
+    c.text(idt, 4, bottom_y(idf, 29), font = idf, color = INK)
+    bx = 4 + c.text_width(idt, idf) + 5
 
     extra = r[4].strip()
     if extra in ["MAX", "UNTIL", "REOPENS"]:
         extra = ""
+    dw = 0
     if r[2] != "":
         c.text(r[2], bx, 9, font = "8x12", color = k[1])
+        dw = c.text_width(r[2], "8x12") + 3
     if extra != "":
-        c.text(clip(c, extra, "4x5", 84), 188, 11, font = "4x5", color = DIM,
-               align = "right")
+        # Measured off whatever the duration actually took, so the two lines
+        # can never reach back into it however long the code or the wait is.
+        lines = two_lines(c, extra, "4x5", RIGHT - (bx + dw) - 3)
+        c.text(lines[0], RIGHT, 11, font = "4x5", color = DIM, align = "right")
+        if lines[1] != "":
+            c.text(lines[1], RIGHT, 17, font = "4x5", color = DIM,
+                   align = "right")
     if r[3] != "":
-        c.text(trim_tail(clip_words(c, r[3], "4x5", 188 - bx)), bx, 23,
-               font = "4x5", color = INK)
+        c.text(trim_tail(clip_words(c, r[3], "4x5", 188 - bx)), bx,
+               bottom_y("4x5", 29), font = "4x5", color = INK)

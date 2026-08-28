@@ -12,7 +12,7 @@ height: 32
 
 # One meal a day. Dinner should not change every time the panel cycles, so the
 # fetch is cached for twelve hours.
-refresh: 900
+refresh: 1800
 
 pages: [tonight, basket]
 

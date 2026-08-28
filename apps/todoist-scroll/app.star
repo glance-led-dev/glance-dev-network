@@ -58,10 +58,8 @@ def fit(c, text, fonts, maxw):
 
 def tab(c, word, accent, x = 4):
     """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -339,7 +337,7 @@ def read_tasks(ctx):
         return sort_tasks(base)
 
     r = http.get(API, headers = {"Authorization": "Bearer " + token},
-                 params = {"filter": "overdue | today"}, ttl_seconds = 300)
+                 params = {"filter": "overdue | today"}, ttl_seconds = 900)
     code = r["status_code"]
     if code == 401 or code == 403:
         base["state"] = "denied"
@@ -417,7 +415,7 @@ def today(c, ctx):
     tab(c, "TODAY", BRAND)
     if fail_screen(c, st):
         return
-    c.text(date_str(st["today"]), 190, 2, font = "4x5", color = "gray",
+    c.text(date_str(st["today"]), 182, 2, font = "4x5", color = "gray",
            align = "right")
     if st["state"] == "clear":
         all_clear(c, st)
@@ -443,7 +441,7 @@ def today(c, ctx):
     c.text("NEXT", 82, 9, font = "4x5", color = "gray")
     t = st["tasks"][0]
     lab = late_label(t, st["today"])
-    c.text(lab[0], 190, 9, font = "4x5", color = lab[1], align = "right")
+    c.text(lab[0], 182, 9, font = "4x5", color = lab[1], align = "right")
     if t["late"] > 0:
         c.sprite(CB_LATE, 82, 17, legend = {"#": ALARM, "!": "black"})
     else:
@@ -478,10 +476,10 @@ def tasks(c, ctx):
 
     if len(hidden) > 0:
         n = len(hidden)
-        c.text("+" + str(n if n < 99 else 99) + " MORE", 190, 2, font = "4x5",
+        c.text("+" + str(n if n < 99 else 99) + " MORE", 182, 2, font = "4x5",
                color = ALARM if hidden_late > 0 else "gray", align = "right")
     else:
-        c.text("ALL SHOWN", 190, 2, font = "4x5", color = "midgray", align = "right")
+        c.text("ALL SHOWN", 182, 2, font = "4x5", color = "midgray", align = "right")
 
     for i in range(len(shown)):
         t = shown[i]
@@ -496,7 +494,7 @@ def tasks(c, ctx):
             c.sprite(FLAG, 14, y, legend = {"#": pc, "p": "#B0B0B0"})
         lab = late_label(t, st["today"])
         lw = c.text_width(lab[0], "4x7")
-        c.text(lab[0], 190, y, font = "4x7", color = lab[1], align = "right")
+        c.text(lab[0], 182, y, font = "4x7", color = lab[1], align = "right")
         c.text(clip_words(c, t["title"], "4x7", 190 - lw - 4 - 21), 21, y,
                font = "4x7", color = "white")
 

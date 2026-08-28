@@ -541,9 +541,18 @@ def tab(c, word, x = 4):
     edge. That is not a detail: the row it saves is what lets the two agenda
     cards fit under it without the second title running off the bottom."""
     wide = c.width >= 128
+    if wide:
+        # Standard pill: c.badge sizes the chip to the text's ink, so the
+        # glyphs get exactly 1px of pill above and below instead of the
+        # 2-over-1 the hand-drawn rect produced.
+        return x + c.badge(word, x, 0, color = "white", bg = BLUE,
+                           font = "4x5") + 1
+    # 64px keeps its hand-drawn chip: it is deliberately two rows shorter so
+    # the two agenda cards fit beneath it, and c.badge cannot go under 7 rows
+    # with a 5-row font. The 64 build ships from apps/google-calendar.
     w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7 if wide else 5, 2, fill = BLUE)
-    c.text(word, x + 2, 2 if wide else 1, font = "4x5", color = "white")
+    c.round_rect(x, 0, x + w + 3, 5, 2, fill = BLUE)
+    c.text(word, x + 2, 1, font = "4x5", color = "white")
     return x + w + 4
 
 def message(c, head, sub, head_color = "amber"):
@@ -701,6 +710,102 @@ def hero_mode(ev, now):
     return "later"
 
 # ------------------------------------------------------------- page 1: next
+# ---- splash ---------------------------------------------------------------
+# A calendar drawn as a calendar: a torn-off page with two binder rings, a
+# coloured header band and the date on it, in Google's four brand colours.
+# It is a generic calendar glyph rather than a copy of the Google mark -- the
+# app reads a Google Calendar feed, it is not published by Google, so it says
+# what it is without wearing somebody else's logo.
+G_BLUE = "#4285F4"
+G_RED = "#EA4335"
+G_YELLOW = "#FBBC05"
+G_GREEN = "#34A853"
+
+
+# The Google wordmark's own colour sequence: G blue, o red, o yellow,
+# g blue, l green, e red. Drawn a letter at a time at the 6x8 advance
+# (6px glyph + 1px letter space) so it lands exactly where c.text would
+# have put the whole string.
+GOOGLE_LETTER_COLORS = [G_BLUE, G_RED, G_YELLOW, G_BLUE, G_GREEN, G_RED]
+
+def google_wordmark(c, x, y):
+    word = "GOOGLE"
+    for i in range(len(word)):
+        c.text(word[i], x + i * 7, y, font = "6x8",
+               color = GOOGLE_LETTER_COLORS[i])
+
+def calendar_icon(c, x, y, accent):
+    """A 22x22 calendar page, top-left at (x, y)."""
+    c.rect(x + 2, y + 1, x + 3, y + 4, fill = "#9AA0A6")
+    c.rect(x + 18, y + 1, x + 19, y + 4, fill = "#9AA0A6")
+    c.round_rect(x, y + 3, x + 21, y + 21, 2, fill = "#F1F3F4")
+    c.rect(x + 1, y + 4, x + 20, y + 9, fill = accent)
+    for i in range(4):
+        c.rect(x + 3 + i * 5, y + 12, x + 5 + i * 5, y + 13,
+               fill = "#BDC1C6")
+        c.rect(x + 3 + i * 5, y + 16, x + 5 + i * 5, y + 17,
+               fill = "#BDC1C6")
+
+def splash(c, ctx):
+    c.fill("black")
+    st = read_calendar(ctx)
+    wide = c.width >= 128
+
+    # The header band picks up how the day looks: green for a clear one, blue
+    # for an ordinary one, yellow when it is filling up, red when it is packed.
+    n = 0
+    if st["state"] not in ["setup", "offline", "badfeed"]:
+        for ev in st["events"]:
+            if ev["start"] // 1440 == st["today"] or ev["start"] <= st["now"]:
+                n += 1
+    accent = G_GREEN
+    if n >= 6:
+        accent = G_RED
+    elif n >= 3:
+        accent = G_YELLOW
+    elif n > 0:
+        accent = G_BLUE
+
+    if wide:
+        calendar_icon(c, 6, 5, accent)
+        # Date centred in the tile's white field: the body spans x 6..27 and
+        # the field below the header band is rows 15..26, so both axes are
+        # measured rather than eyeballed, and it holds for 1 or 31.
+        day = day_of_month(st["today"])
+        dw = c.text_width(day, "5x7")
+        c.text(day, 6 + (22 - dw) // 2, 17, font = "5x7", color = "black")
+        google_wordmark(c, 38, 4)
+        # CALENDAR is white: it is the app's name, not a status, so it stays
+        # constant while the tile's band and the event count carry the day-load
+        # signal (green clear, blue ordinary, yellow filling, red packed).
+        c.text("CALENDAR", 38, 14, font = "6x8", color = "white")
+        c.text(date_label(st["today"]), 38, 25, font = "4x5", color = "gray")
+        if st["state"] in ["setup", "offline", "badfeed"]:
+            c.text("NOT SET UP", 188, 25, font = "4x5", color = "midgray",
+                   align = "right")
+        elif n == 0:
+            c.text("NOTHING TODAY", 188, 25, font = "4x5", color = G_GREEN,
+                   align = "right")
+        else:
+            word = " EVENT" if n == 1 else " EVENTS"
+            c.text(str(n) + word, 188, 25, font = "4x5", color = accent,
+                   align = "right")
+    else:
+        calendar_icon(c, 4, 5, accent)
+        c.text(day_of_month(st["today"]), 15, 14, font = "5x7",
+               color = "#3C4043", align = "center")
+        c.text("GCAL", 30, 6, font = "5x7", color = "white")
+        if st["state"] in ["setup", "offline", "badfeed"]:
+            c.text("SET UP", 30, 18, font = "4x5", color = "midgray")
+        elif n == 0:
+            c.text("CLEAR", 30, 18, font = "4x5", color = G_GREEN)
+        else:
+            c.text(str(n) + ("EV" if n != 1 else "EV"), 30, 18, font = "4x5",
+                   color = accent)
+
+def day_of_month(z):
+    return str(civil_from_days(z)[2])
+
 def next(c, ctx):
     c.fill("black")
     st = read_calendar(ctx)
@@ -906,8 +1011,66 @@ def today(c, ctx):
 #
 # This is the one view that gets BETTER as the panel narrows: strips lose
 # width, not meaning, because their information lives on the y axis.
-DAY_LO = 8 * 60           # 8am
-DAY_HI = 23 * 60          # 11pm
+# The strip used to run a fixed 8am to 11pm every day, so somebody whose
+# meetings are all before lunch got their whole calendar squashed into the top
+# third with nine empty hours under it. The window is a setting now, and its
+# default fits itself to whatever is actually in the week.
+DAY_LO = 8 * 60           # the fallback window, still 8am
+DAY_HI = 23 * 60          # to 11pm
+
+HOUR_WINDOWS = {
+    "Work hours (9am to 5pm)": [9 * 60, 17 * 60],
+    "Work hours (8am to 6pm)": [8 * 60, 18 * 60],
+    "Waking hours (7am to 11pm)": [7 * 60, 23 * 60],
+    "Whole day (midnight to midnight)": [0, 24 * 60],
+}
+
+def day_window(ctx, events):
+    """The hours the strip covers.
+
+    Auto looks at what is actually there and pads by half an hour each side, so
+    a morning of meetings fills the strip instead of hiding in the top third.
+    It never collapses below four hours -- a single 30-minute event stretched
+    across the full height would read as an all-day commitment."""
+    choice = str(ctx.inputs.get("hours", "")).strip()
+    if choice in HOUR_WINDOWS:
+        w = HOUR_WINDOWS[choice]
+        return [w[0], w[1]]
+    lo, hi = -1, -1
+    for ev in events:
+        if ev["allday"]:
+            continue
+        s0 = ev["start"] % 1440
+        e0 = s0 + (ev["end"] - ev["start"])
+        if e0 > 1440:
+            e0 = 1440
+        if lo < 0 or s0 < lo:
+            lo = s0
+        if hi < 0 or e0 > hi:
+            hi = e0
+    if lo < 0:
+        return [DAY_LO, DAY_HI]
+    lo = lo - 30
+    hi = hi + 30
+    if lo < 0:
+        lo = 0
+    if hi > 1440:
+        hi = 1440
+    if hi - lo < 240:
+        hi = lo + 240
+        if hi > 1440:
+            hi = 1440
+            lo = hi - 240
+    return [lo, hi]
+
+def hour_label(m):
+    """A window edge as a short clock: 9AM, 12PM, 5PM."""
+    h = (m // 60) % 24
+    ap = "AM" if h < 12 else "PM"
+    h12 = h % 12
+    if h12 == 0:
+        h12 = 12
+    return str(h12) + ap
 RULE = "#242424"
 
 def week(c, ctx):
@@ -932,6 +1095,11 @@ def week(c, ctx):
         else:
             blocks[i].append(ev)
 
+    win = day_window(ctx, st["events"])
+    d_lo, d_hi = win[0], win[1]
+    if d_hi <= d_lo:
+        d_lo, d_hi = DAY_LO, DAY_HI
+
     if c.width >= 128:
         c.text(str(total if total < 100 else 99), 5, 10, font = "10x16",
                color = "white")
@@ -940,9 +1108,16 @@ def week(c, ctx):
         # A scale for the y axis: with the noon and 6pm rules in place, "Tuesday
         # morning is blocked but the evening is free" is read exactly rather
         # than approximately.
-        c.text("AM", 40, 13, font = "4x5", color = "midgray")
-        c.text("PM", 40, 19, font = "4x5", color = "midgray")
-        c.text("EVE", 40, 25, font = "4x5", color = "midgray")
+        # The axis is labelled with the window's real edges rather than a
+        # fixed AM / PM / EVE, because the window moves now.
+        # Right-aligned to the gutter: "11PM" is 19px and ran into the Monday
+        # column when it was set from x=40.
+        c.text(hour_label(d_lo), 55, 13, font = "4x5", color = "midgray",
+               align = "right")
+        c.text(hour_label((d_lo + d_hi) // 2), 55, 19, font = "4x5",
+               color = "midgray", align = "right")
+        c.text(hour_label(d_hi), 55, 25, font = "4x5", color = "midgray",
+               align = "right")
         for ry in [18, 25]:
             for rx in range(56, 191, 3):
                 c.pixel(rx, ry, RULE)
@@ -976,13 +1151,13 @@ def week(c, ctx):
             c.rect(x + inset, band, x + colw - 3, band + 1, fill = allday[i])
         for ev in blocks[i]:
             t = ev["start"] % 1440
-            if t < DAY_LO:
-                t = DAY_LO
-            if t > DAY_HI:
-                t = DAY_HI
+            if t < d_lo:
+                t = d_lo
+            if t > d_hi:
+                t = d_hi
             rows = hi - lo + 1
-            y = lo + (t - DAY_LO) * rows // (DAY_HI - DAY_LO)
-            h = (ev["end"] - ev["start"]) * rows // (DAY_HI - DAY_LO)
+            y = lo + (t - d_lo) * rows // (d_hi - d_lo)
+            h = (ev["end"] - ev["start"]) * rows // (d_hi - d_lo)
             if h < 2:
                 h = 2
             if y + h - 1 > hi:

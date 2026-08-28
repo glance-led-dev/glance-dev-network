@@ -283,7 +283,16 @@ def main(c, ctx):
         if idx > 0:
             sta = sta[:idx]
         head_color = GRAY
-    c.text_center(sta.upper(), 0, font=FONT, color=head_color)
+    c.text("CTA", 6, 0, font="4x5", color="red")
+    # header truncated so a long station name never runs into the CTA chip
+    hd = sta.upper()
+    hmax = ctx.width - 44
+    if c.text_width(hd, font=FONT) > hmax:
+        for n in range(len(hd), 0, -1):
+            if c.text_width(hd[:n], font=FONT) <= hmax:
+                hd = hd[:n]
+                break
+    c.text_center(hd, 0, font=FONT, color=head_color)
 
     if len(rows) == 0:
         c.text_center("NO TRAINS", 18, font=FONT, color=GRAY)
@@ -309,15 +318,15 @@ def main(c, ctx):
             when = str(int(mins)) + "M"
 
         # line badge (left)
-        c.text(label, 1, y, font=ROW_FONT, color=color)
+        c.text(label, 6, y, font=ROW_FONT, color=color)
 
         # minutes (right-aligned)
         w = c.text_width(when, font=ROW_FONT)
-        c.text(when, ctx.width - w, y, font=ROW_FONT, color=color)
+        c.text(when, ctx.width - 5 - w, y, font=ROW_FONT, color=color)
 
         # destination (middle, trimmed to remaining space)
-        dest = _fit(c, e.get("destNm", "").upper(), ctx.width - w - 21)
-        c.text(dest, 18, y, font=ROW_FONT, color="white")
+        dest = _fit(c, e.get("destNm", "").upper(), ctx.width - w - 31)
+        c.text(dest, 23, y, font=ROW_FONT, color="white")
 
         y += 6
         shown += 1

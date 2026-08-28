@@ -4,7 +4,7 @@ author: cfdmb
 description: When and where to look up for the next naked-eye-visible pass of the International Space Station over your zip code.
 width: 128
 height: 32
-refresh: 660
+refresh: 3600
 pages:
   - intro
   - sighting

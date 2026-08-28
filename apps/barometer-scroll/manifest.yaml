@@ -1,7 +1,7 @@
 gdn: 1
 id: barometer-scroll
 version: 0.1.0
-name: Barometer (Scroll)
+name: Barometer
 author: glance-led-dev
 description: Air pressure and which way it is going — the oldest forecast there is.
 category: Weather

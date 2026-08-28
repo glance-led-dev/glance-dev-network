@@ -98,7 +98,7 @@ def now(c, ctx):
                  params = {"latitude": str(g[0]), "longitude": str(g[1]),
                            "hourly": "uv_index", "daily": "uv_index_max",
                            "timezone": "auto", "forecast_days": "1"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO UV DATA", "FEED UNREACHABLE")
         return

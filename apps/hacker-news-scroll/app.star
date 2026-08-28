@@ -114,14 +114,14 @@ def block(c, text, x, y, maxw, maxh, fonts, color, gap):
 def story(n):
     """The nth top story, or None."""
     r = http.get("https://hacker-news.firebaseio.com/v0/topstories.json",
-                 ttl_seconds = 900)
+                 ttl_seconds = 1800)
     if r["status_code"] != 200 or not r["json"]:
         return None
     ids = r["json"]
     if len(ids) <= n:
         return None
     s = http.get("https://hacker-news.firebaseio.com/v0/item/" + str(ids[n]) + ".json",
-                 ttl_seconds = 900)
+                 ttl_seconds = 1800)
     if s["status_code"] != 200 or not s["json"]:
         return None
     return s["json"]
@@ -139,12 +139,12 @@ def draw(c, ctx, n):
 
     c.fill("#0E0A06")
     c.rect(0, 0, c.width - 1, 6, fill = "#FF6600")
-    c.text("HN " + str(n + 1), 3, 1, font = "4x5", color = "#1A0E04")
+    c.text("HN " + str(n + 1), 8, 1, font = "4x5", color = "#1A0E04")
     # The 64 panel has no room for the full meta line beside the rank.
     meta = str(score) + " PTS   " + str(comments) + " COMMENTS"         if c.width >= 128 else str(score) + "P"
-    c.text(meta, c.width - 3, 1, font = "4x5", color = "#1A0E04",
+    c.text(meta, c.width - 7, 1, font = "4x5", color = "#1A0E04",
            align = "right")
-    block(c, title, 3, 9, c.width - 6, 21, ["10x16", "6x8", "5x7", "4x5"],
+    block(c, title, 3, 9, c.width - 6, 23, ["10x16", "6x8", "5x7", "4x5"],
           "#F0E6DC", 1)
 
 

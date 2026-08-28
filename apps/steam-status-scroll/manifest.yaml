@@ -1,7 +1,7 @@
 gdn: 1
 id: steam-status-scroll
 version: 0.1.0
-name: Steam Friends (Scroll)
+name: Steam Friends
 author: glance-led-dev
 description: Which of your friends are online and what they are playing.
 category: Entertainment

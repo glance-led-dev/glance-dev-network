@@ -90,7 +90,7 @@ def verdict(c, ctx):
                            # -- 16 on the panel meant 10.
                            "wind_speed_unit": "mph",
                            "timezone": "auto", "forecast_days": "1"},
-                 ttl_seconds = 3600)
+                 ttl_seconds = 7200)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO FORECAST", "NO CONNECTION")
         return

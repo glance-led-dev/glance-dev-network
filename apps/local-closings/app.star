@@ -2056,10 +2056,10 @@ def draw_empty(c, st):
     else:
         c.badge("CLEAR", c.width - 32, 2, color = INK, bg = GREEN, font = "4x5", pad = 1)
     c.text("NO REPORTED", 6, 10, font = "10x14", color = GREEN)
-    c.text("CLOSINGS", 6, 26, font = "4x5", color = color.dim(GREEN, 70))
+    c.text("CLOSINGS", 6, 25, font = "4x5", color = color.dim(GREEN, 70))
     i = 0
     for _ in range(5):
-        c.status_dot(c.width - 8 - (4 - i) * 7, 28, color.dim(GREEN, 28))
+        c.status_dot(c.width - 8 - (4 - i) * 7, 27, color.dim(GREEN, 28))
         i = i + 1
 
 
@@ -2072,8 +2072,8 @@ def draw_empty_item(c, st, idx):
     host = host_label(st.get("url", ""))
     if host == "":
         host = "CONFIGURED SOURCE"
-    c.text_fit(host, 6, 13, ["6x8", "5x7", "4x5"], color = MUTED, maxw = 176)
-    c.text("NO REPORTED CLOSINGS", 6, 24, font = "5x7", color = GREEN)
+    c.text_fit(host, 6, 12, ["6x8", "5x7", "4x5"], color = MUTED, maxw = 176)
+    c.text("NO REPORTED CLOSINGS", 6, 23, font = "5x7", color = GREEN)
 
 
 def draw_missing(c, st):

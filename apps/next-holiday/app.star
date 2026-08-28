@@ -57,11 +57,10 @@ def fit(c, text, fonts, maxw):
     return [pick, clip(c, text, pick, maxw)]
 
 def tab(c, word, accent, x = 4):
-    """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    """The page chip - drawn with c.badge so the text sits ink-centered in
+    the pill (1px above and below, >=2px sides) per the design guidelines."""
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -395,7 +394,7 @@ def holiday(c, ctx):
     col = heat(h["in"])
     rail(c, col)
     x = tab(c, "HOLIDAY", col)
-    c.text(when_words(h["in"]), 188, 2, font = "4x5", color = col,
+    c.text(when_words(h["in"]), 182, 2, font = "4x5", color = col,
            align = "right")
 
     hf = fit(c, h["name"], ["8x12", "6x8", "5x7"], 184)
@@ -417,7 +416,7 @@ def ahead(c, ctx):
     col = heat(st["list"][0]["in"])
     rail(c, col)
     tab(c, "AHEAD", col)
-    c.text(st["cc"], 188, 2, font = "4x5", color = DIM, align = "right")
+    c.text(st["cc"], 182, 2, font = "4x5", color = DIM, align = "right")
 
     # Four rows fill the panel exactly: 4x5 is five tall on a six-row pitch
     # from y=9, which lands the last one on 27..31 with nothing to spare.
@@ -430,5 +429,5 @@ def ahead(c, ctx):
         c.text(short_date(h), 4, y, font = "4x5", color = hc)
         c.text(clip(c, h["name"], "4x5", 108), 40, y, font = "4x5",
                color = INK if i == 0 else DIM)
-        c.text(str(h["in"]) + "D", 188, y, font = "4x5", color = hc,
+        c.text(str(h["in"]) + "D", 182, y, font = "4x5", color = hc,
                align = "right")

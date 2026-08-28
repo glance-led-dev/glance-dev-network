@@ -1,7 +1,7 @@
 gdn: 1
 id: plasma-scroll
 version: 0.1.0
-name: Plasma Field (Scroll)
+name: Plasma Field
 author: glance-led-dev
 description: Three demoscene plasma fields — waves, rings and weave — rotating in the palette you pick.
 category: Fun

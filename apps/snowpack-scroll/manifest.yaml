@@ -1,7 +1,7 @@
 gdn: 1
 id: snowpack-scroll
 version: 0.1.0
-name: Snowpack (Scroll)
+name: Snowpack
 author: glance-led-dev
 description: How deep the base is, and whether it has been building or melting.
 category: Weather
@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 3600
+refresh: 7200
 
 pages: [depth]
 

@@ -142,7 +142,7 @@ def tonight(c, ctx):
                  params = {"latitude": str(g[0]), "longitude": str(g[1]),
                            "daily": "cloud_cover_mean", "timezone": "auto",
                            "forecast_days": "1"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     cloud = None
     if r["status_code"] == 200 and r["json"]:
         vals = r["json"].get("daily", {}).get("cloud_cover_mean", [])

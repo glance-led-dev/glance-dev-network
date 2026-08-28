@@ -58,10 +58,8 @@ def fit(c, text, fonts, maxw):
 
 def tab(c, word, accent, x = 4):
     """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    w = c.badge(word, x, 1, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -749,21 +747,24 @@ def wifi(c, ctx):
     # so an open network hands a couple of pixels back to the name and nothing
     # else in the layout shifts.
     if n == 29:
-        fx, ox, oy = 161, 162, 1
+        fx, ox, oy = 157, 158, 1
     else:
-        fx, ox, oy = 163, 165, 3
-    c.rect(fx, 0, 191, 31, fill = "white")
+        fx, ox, oy = 159, 161, 3
+    c.rect(fx, 0, 187, 31, fill = "white")
     for r in range(n):
         for cc in range(n):
             if m[r][cc]:
                 c.pixel(ox + cc, oy + r, "black")
 
-    c.text(clip(c, st["label"], "4x5", fx - 36), 31, 2, font = "4x5", color = "gray")
+    # The phone + SCAN group keeps a 4px gap off the code; text on the
+    # left keeps a 4px buffer before the group and truncates to fit it.
+    gl = fx - 4 - 19
+    c.text(clip(c, st["label"], "4x5", gl - 4 - 31), 31, 2, font = "4x5", color = "gray")
     c.sprite(WIFI_FAN, 4, 11, color = SKY)
-    c.sprite(PHONE, fx - 18, 6, legend = PHONE_LEGEND)
-    c.text("SCAN", fx - 12, 21, font = "4x5", color = SKY, align = "center")
+    c.sprite(PHONE, fx - 4 - 13, 6, legend = PHONE_LEGEND)
+    c.text("SCAN", fx - 4 - 9, 21, font = "4x5", color = SKY, align = "center")
 
-    f = fit(c, st["ssid"].upper(), ["8x12", "6x8", "4x7"], fx - 45)
+    f = fit(c, st["ssid"].upper(), ["8x12", "6x8", "4x7"], gl - 4 - 21)
     c.text(f[1], 21, 10, font = f[0], color = "white")
 
     # A password is shown whole and exact, or not at all.
@@ -771,11 +772,11 @@ def wifi(c, ctx):
         c.text("OPEN NETWORK - NO PASSWORD", 4, 25, font = "4x5", color = "gray")
     elif not st["show"] or not typeable(st["pw"]):
         c.text("SCAN THE CODE TO JOIN", 4, 25, font = "4x5", color = "gray")
-    elif c.text_width(st["pw"], "5x5") <= 90:
+    elif c.text_width(st["pw"], "5x5") <= gl - 4 - 47:
         c.text("PASSWORD", 4, 25, font = "4x5", color = "gray")
-        c.text(st["pw"], 47, 24, font = "5x5", color = "white")
-    elif c.text_width(st["pw"], "5x5") <= 110:
+        c.text(st["pw"], 47, 25, font = "5x5", color = "white")
+    elif c.text_width(st["pw"], "5x5") <= gl - 4 - 27:
         c.text("PASS", 4, 25, font = "4x5", color = "gray")
-        c.text(st["pw"], 27, 24, font = "5x5", color = "white")
+        c.text(st["pw"], 27, 25, font = "5x5", color = "white")
     else:
         c.text("SCAN THE CODE TO JOIN", 4, 25, font = "4x5", color = "gray")

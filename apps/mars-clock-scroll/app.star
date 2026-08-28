@@ -47,13 +47,14 @@ def mtc(c, ctx):
     # On the Scroll the Earth clock owns a right-hand column and the Mars
     # figure is fitted to what remains; centring it ran the two together.
     if c.width >= 128:
-        c.text("EARTH UTC", c.width - 6, 8, font = "4x5", color = "#8A5A48",
+        # squeezed 4px toward the center per the audit rulings
+        c.text("EARTH UTC", c.width - 10, 8, font = "4x5", color = "#8A5A48",
                align = "right")
         c.text(fmt.pad(ctx.now.hour) + ":" + fmt.pad(ctx.now.minute),
-               c.width - 6, 15, font = "10x16", color = "#B07A60",
+               c.width - 10, 15, font = "10x16", color = "#B07A60",
                align = "right")
-        c.text_fit(fmt.pad(h) + ":" + fmt.pad(m), 8, 9, ["16x20", "10x16"],
-                   color = "#FF8A4A", maxw = c.width - 96)
+        c.text_fit(fmt.pad(h) + ":" + fmt.pad(m), 12, 9, ["16x20", "10x16"],
+                   color = "#FF8A4A", maxw = c.width - 104)
     else:
         c.text_fit(fmt.pad(h) + ":" + fmt.pad(m), c.width // 2, 9,
                    ["16x20", "10x16", "6x8"], color = "#FF8A4A",
@@ -64,13 +65,14 @@ def sol(c, ctx):
     d = msd(ctx.now.unix)
     c.fill("#160805")
     if c.width >= 128:
-        c.text("MARS SOL DATE", 6, 2, font = "5x7", color = "#C4643A")
-        c.text("SOL LENGTH", c.width - 6, 4, font = "4x5", color = "#8A5A48",
+        # squeezed 4px toward the center per the audit rulings
+        c.text("MARS SOL DATE", 10, 2, font = "5x7", color = "#C4643A")
+        c.text("SOL LENGTH", c.width - 10, 4, font = "4x5", color = "#8A5A48",
                align = "right")
-        c.text("24H 39M 35S", c.width - 6, 12, font = "6x8", color = "#E8C0A8",
+        c.text("24H 39M 35S", c.width - 10, 12, font = "6x8", color = "#E8C0A8",
                align = "right")
-        c.text_fit(fmt.commas(int(d)), 6, 11, ["16x20", "10x16"],
-                   color = "#FF8A4A", maxw = c.width - 96)
+        c.text_fit(fmt.commas(int(d)), 10, 11, ["16x20", "10x16"],
+                   color = "#FF8A4A", maxw = c.width - 104)
     else:
         c.text("SOL", c.width // 2, 1, font = "4x5", color = "#C4643A",
                align = "center")

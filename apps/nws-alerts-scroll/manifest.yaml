@@ -1,7 +1,7 @@
 gdn: 1
 id: nws-alerts-scroll
 version: 0.1.0
-name: Weather Alerts (Scroll)
+name: Weather Alerts
 author: glance-led-dev
 description: "Active National Weather Service warnings, watches and advisories for your zip."
 category: Weather
@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 600
+refresh: 1800
 
 pages: [alert]
 

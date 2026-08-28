@@ -302,27 +302,29 @@ def train(c, ctx):
         # The old layout had two rows and a big sprite, which left the middle
         # of a 192px panel empty; origin/destination, the arrival time and the
         # speed were all sitting unused in the same response.
-        c.text(fitwords(c, route, "6x8", c.width - 70), 4, 0, font = "6x8",
+        # 10px margins both sides (was 4 left / 6 right): the scroll safe
+        # zone, and matching margins so the block reads centered.
+        c.text(fitwords(c, route, "6x8", c.width - 78), 10, 0, font = "6x8",
                color = "#8FA8D8")
-        c.text("#" + num, c.width - 6, 0, font = "6x8", color = "#C8D4EC",
+        c.text("#" + num, c.width - 10, 0, font = "6x8", color = "#C8D4EC",
                align = "right")
 
         if orig != "" and dest != "":
             # "-" not ">": the bitmap fonts have no '>' glyph, so it measured 0px
             # and drew nothing, leaving "CHI  EMY" with a hole in the middle.
-            c.text(orig + "-" + dest, 4, 9, font = "5x7", color = "#C8D4EC")
+            c.text(orig + "-" + dest, 10, 9, font = "5x7", color = "#C8D4EC")
         nx = "NEXT " + nxt
         if eta != "":
             nx = nx + " " + eta
-        c.text(nx, c.width - 6, 9, font = "5x7", color = "#DCE4F4",
+        c.text(nx, c.width - 10, 9, font = "5x7", color = "#DCE4F4",
                align = "right")
 
-        c.text(fitwords(c, timely, "5x7", 90), 4, 17, font = "5x7", color = col)
+        c.text(fitwords(c, timely, "5x7", 90), 10, 17, font = "5x7", color = col)
         if speed > 0:
-            c.text(str(speed) + " MPH", c.width - 6, 17, font = "5x7",
+            c.text(str(speed) + " MPH", c.width - 10, 17, font = "5x7",
                    color = "#7F8CA8", align = "right")
         else:
-            c.text("STOPPED", c.width - 6, 17, font = "5x7", color = "#7F8CA8",
+            c.text("STOPPED", c.width - 10, 17, font = "5x7", color = "#7F8CA8",
                    align = "right")
     else:
         c.text("#" + num, 2, 0, font = "5x7", color = "#C8D4EC")

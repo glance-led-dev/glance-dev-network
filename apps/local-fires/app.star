@@ -167,7 +167,7 @@ def fetch(ctx):
             "resultRecordCount": "200",
         },
         # The interagency feed updates on the order of hours.
-        ttl_seconds = 1800,
+        ttl_seconds = 3600,
     )
 
     # ALWAYS check status_code before touching the json

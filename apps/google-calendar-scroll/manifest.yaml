@@ -1,7 +1,7 @@
 gdn: 1
 id: google-calendar-scroll
 version: 0.1.0
-name: Google Calendar (Scroll)
+name: Google Calendar
 author: glance-led-dev
 description: Your next meeting, today's agenda, and the week ahead, read straight from a Google Calendar secret iCal address. No OAuth and no API key.
 category: Productivity
@@ -14,7 +14,7 @@ height: 32
 # asking for it faster than a person edits a calendar.
 refresh: 300
 
-pages: [next, today, week]
+pages: [splash, next, today, week]
 
 inputs:
   - key: calid
@@ -102,6 +102,18 @@ inputs:
       - "Africa/Cairo"
       - "Asia/Jerusalem"
       - "Asia/Manila"
+  - key: hours
+    type: choice
+    app_input_type: dropdown
+    label: Hours shown on the week strip
+    default: "Auto - fit my events"
+    help: Auto sizes the strip to whatever is actually in your week, so a morning of meetings fills it instead of hiding in the top third. The fixed windows are there if you would rather the shape stayed the same every day.
+    choices:
+      - "Auto - fit my events"
+      - "Work hours (9am to 5pm)"
+      - "Work hours (8am to 6pm)"
+      - "Waking hours (7am to 11pm)"
+      - "Whole day (midnight to midnight)"
   - key: hidealldays
     type: choice
     app_input_type: dropdown

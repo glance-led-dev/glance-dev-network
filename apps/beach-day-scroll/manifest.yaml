@@ -1,7 +1,7 @@
 gdn: 1
 id: beach-day-scroll
 version: 0.1.0
-name: Beach Day (Scroll)
+name: Beach Day
 author: glance-led-dev
 description: One score for whether today is a beach day — warmth, sun, wind and rain together.
 category: Weather
@@ -12,9 +12,6 @@ height: 32
 refresh: 3600
 
 pages: [score]
-
-assets:
-  - UMBRELLA.png
 
 inputs:
   - key: zip

@@ -3,7 +3,7 @@
 gdn: 1
 id: date-time-scroll
 version: 0.2.0
-name: Date & Time (Scroll)
+name: Date & Time
 author: jdhine02
 description: Local date, time, and current weather for a US zip code, cycling one per frame every minute. Pick a 12/24-hour clock, a US/international/written date format, a font, and a color for each section; the temperature can match the weather color or follow a hot/cold scale, and rain, snow, and clear-night moon phase are called out by name and icon.
 category: Time

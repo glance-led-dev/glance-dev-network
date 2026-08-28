@@ -170,13 +170,13 @@ def friends(c, ctx):
         if int(p.get("personastate", 0) or 0) > 0:
             online.append(p)
 
-    c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#06080E", "#161C2C",
-                    horizontal = False)
+    c.fill("#06080E")
     sz = 24 if c.width >= 128 else 16
-    c.image("PAD.png", 1, (c.height - sz) // 2, w = sz, h = sz)
+    c.image("PAD.png", 11 if c.width >= 128 else 1, (c.height - sz) // 2,
+            w = sz, h = sz)
 
     if len(online) == 0:
-        c.text("NOBODY ONLINE", c.width - 6, 12,
+        c.text("NOBODY ONLINE", c.width - 16, 12,
                font = "6x8" if c.width >= 128 else "4x5", color = "#5E6A88",
                align = "right")
         if demo:
@@ -186,7 +186,7 @@ def friends(c, ctx):
     show = 3 if c.width >= 128 else 2
     if show > len(online):
         show = len(online)
-    x0 = 28 if c.width >= 128 else 19
+    x0 = 38 if c.width >= 128 else 19
     lh = c.height // show
 
     for i in range(show):
@@ -201,10 +201,16 @@ def friends(c, ctx):
             tag = STATES.get(int(p.get("personastate", 1) or 1), "ONLINE")
             col = "#6E7A98"
         if c.width >= 128:
-            tw = c.text_width(clip(c, tag, "4x5", 76), "4x5") + 4
-            c.text(clip(c, tag, "4x5", 76), c.width - 3, y + 1, font = "4x5",
-                   color = col, align = "right")
-            c.text(clip(c, nm, "5x7", c.width - x0 - tw - 4), x0, y,
+            # Game names stay 4x5; a bare status (AWAY, ONLINE) gets 6x8 so
+            # the state reads at a glance. Both right-aligned 13px off the
+            # edge, with the name yielding the space.
+            tfont = "4x5" if game != "" else "6x8"
+            ty = y + 1 if game != "" else y - 1
+            tag_t = clip(c, tag, tfont, 76)
+            tw = c.text_width(tag_t, tfont) + 4
+            c.text(tag_t, c.width - 13, ty, font = tfont, color = col,
+                   align = "right")
+            c.text(clip(c, nm, "5x7", c.width - 13 - x0 - tw), x0, y,
                    font = "5x7", color = "#DCE4F4")
         else:
             # Showing only names left the app without its own data. The tag

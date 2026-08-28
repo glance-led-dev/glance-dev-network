@@ -1,7 +1,7 @@
 gdn: 1
 id: pollen-count-scroll
 version: 0.1.0
-name: Pollen Count (Scroll)
+name: Pollen Count
 author: glance-led-dev
 description: Today's pollen index for your zip, tomorrow's, and exactly which plants are to blame.
 category: Weather

@@ -15,7 +15,7 @@ def get_obs(ctx, api_units="e"):
         "apiKey": apikey
     }
     
-    resp = http.get(url, params=params, ttl_seconds=120)
+    resp = http.get(url, params=params, ttl_seconds=1800)
     
     if resp["status_code"] != 200:
         return None
@@ -602,7 +602,7 @@ def rain(c, ctx):
         "units": api_units,
         "apiKey": apikey
     }
-    resp = http.get(url, params=params, ttl_seconds=120)
+    resp = http.get(url, params=params, ttl_seconds=1800)
     
     today = 0.0
     rate  = 0.0

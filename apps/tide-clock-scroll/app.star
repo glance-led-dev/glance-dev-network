@@ -191,7 +191,7 @@ def tides(c, ctx):
                            "time_zone": "lst_ldt", "units": "english",
                            "interval": "hilo", "format": "json",
                            "date": "today"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO TIDE DATA", "NO CONNECTION")
         return
@@ -219,16 +219,23 @@ def tides(c, ctx):
     when = str(nxt.get("t", ""))[11:16]
     ft = float(nxt.get("v", 0) or 0)
 
-    c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#04101C", "#0B2A44",
-                    horizontal = False)
+    c.fill("#04101C")
     n = 24 if c.width >= 128 else 16
     c.image("TIDE.png", 2, c.height - n + 4, w = n, h = n)
 
     if c.width >= 128:
+        # TIDE tag at the top, centred over the pixel art below it.
+        bw = c.text_width("TIDE", "4x5") + 4
+        c.badge("TIDE", 2 + (n + 2 - bw) // 2, 1, color = "black",
+                bg = "#4EA8FF", font = "4x5")
         c.text("NEXT " + label, 30, 2, font = "4x5", color = "#5E82A0")
         c.text(when, 30, 8, font = "16x20", color = col)
-        c.text(arrow, c.width - 6, 4, font = "10x16", color = col,
-               align = "right")
+        # FALLING is 12px wider than RISING and the time is a fixed 84px from
+        # x=30, so the word has to be fitted to whatever is actually left --
+        # at 10x16 a falling tide printed straight through the clock.
+        awmax = (c.width - 6) - (30 + c.text_width(when, "16x20")) - 4
+        c.text_fit(arrow, c.width - 6, 4, ["10x16", "8x12", "6x8"],
+                   color = col, align = "right", maxw = awmax)
         c.text(str(int(ft * 10) / 10.0) + " FT", c.width - 6, 23, font = "6x8",
                color = "#8FC4E8", align = "right")
     else:

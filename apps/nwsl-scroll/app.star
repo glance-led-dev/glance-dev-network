@@ -57,11 +57,10 @@ def fit(c, text, fonts, maxw):
     return [pick, clip(c, text, pick, maxw)]
 
 def tab(c, word, accent, x = 4):
-    """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    """The page chip - drawn with c.badge so the text sits ink-centered in
+    the pill (1px above and below, >=2px sides) per the design guidelines."""
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -599,9 +598,9 @@ def club(c, ctx):
         return
     tc = team_colors(fav)
     rail(c, tc[0])
-    w = c.text_width(fav, "4x5")
-    c.round_rect(4, 0, 4 + w + 3, 7, 2, fill = tc[0])
-    c.text(fav, 6, 2, font = "4x5", color = "black")
+    # standard pill for the team chip (ink-centered, encapsulated)
+    bw = c.badge(fav, 4, 1, color = "black", bg = tc[0], font = "4x5")
+    w = bw - 4   # keep the downstream x math (4 + w + 8) unchanged
 
     rows = read_table(ctx)
     me, rank = None, 0

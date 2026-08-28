@@ -1,7 +1,7 @@
 gdn: 1
 id: sun-arc-scroll
 version: 0.1.0
-name: Sun Arc (Scroll)
+name: Sun Arc
 author: glance-led-dev
 description: The sun on its real arc over a sky that tracks its altitude, plus rise, set and today's change in daylight.
 category: Science
@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 600
+refresh: 1800
 
 pages: [arc, times]
 

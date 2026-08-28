@@ -7,6 +7,22 @@
 # The value here over a raw model feed is the wording: NWS writes
 # 'showers likely after 2pm', which is more useful on a wall than a
 # WMO code and a probability.
+#
+# DESIGN. A weather sprite on the left, the NWS sentence in the middle at the
+# biggest face that will hold it, and the reading itself parked top-right in
+# 16x20 with a degree ring after it. Three things only, each in its own
+# column, on a near-black vertical gradient rather than a black ground so the
+# panel reads as sky. Two rules drive every number below:
+#
+#   1. Every glyph on the gradient is drawn with c.text_stroke. A gradient is
+#      a colored background, and #7C90B0 label text on #1E3350 is a soft edge
+#      at ten feet; the black halo restores the black-ground contrast around
+#      each letter. The degree ring gets the same halo (art_stroke) so it
+#      reads as part of the number rather than as a separate object.
+#   2. The right column is measured before the middle one is drawn. The
+#      temperature group is the widest thing on the panel that changes size --
+#      "84" is 33px at 16x20 and "-40" is 50px -- so the sentence gets
+#      whatever is left, never a hand-picked width.
 
 
 
@@ -56,7 +72,9 @@ def nodata(c, title, sub):
     sensible rather than going blank.
 
     The two lines get explicit, non-overlapping bands — a 16px title centred
-    on the panel ran straight through the line beneath it.
+    on the panel ran straight through the line beneath it. Both are stroked
+    like every other string in this app, which on the #0B0C12 ground reads as
+    a faint shadow and keeps one text routine for the whole file.
     Wide:   4-19 title | 22-28 detail
     Narrow: 5-12 title | 18-22 detail
     """
@@ -64,21 +82,27 @@ def nodata(c, title, sub):
     maxw = c.width - 6
     if c.width >= 128:
         t = _fit_clip(c, title, NODATA_FONTS, maxw)
-        c.text(t[1], c.width // 2, 4, font = t[0], color = "#E8B04A",
-               align = "center")
+        c.text_stroke(t[1], c.width // 2, 4, font = t[0], color = "#E8B04A",
+                      align = "center")
         d = _fit_clip(c, sub, ["5x7", "4x5"], maxw)
-        c.text(d[1], c.width // 2, 22, font = d[0], color = "#6A7090",
-               align = "center")
+        c.text_stroke(d[1], c.width // 2, 22, font = d[0], color = "#6A7090",
+                      align = "center")
     else:
         t = _fit_clip(c, title, ["6x8", "5x7", "4x5"], maxw)
-        c.text(t[1], c.width // 2, 5, font = t[0], color = "#E8B04A",
-               align = "center")
+        c.text_stroke(t[1], c.width // 2, 5, font = t[0], color = "#E8B04A",
+                      align = "center")
         d = _fit_clip(c, sub, ["4x5"], maxw)
-        c.text(d[1], c.width // 2, 18, font = d[0], color = "#6A7090",
-               align = "center")
+        c.text_stroke(d[1], c.width // 2, 18, font = d[0], color = "#6A7090",
+                      align = "center")
 
 
 FONTH = {"16x20": 20, "10x16": 16, "6x8": 8, "5x7": 7, "4x5": 5}
+
+# Stacked stroked rows need one more row of air than bare ones: the halo adds
+# a pixel under line N and above line N+1, so a gap of 1 put two halos in the
+# same row. 2 leaves the ink two clear rows apart and the halos merely
+# touching.
+ROWGAP = 2
 
 
 def wrap(c, words, font, maxw):
@@ -99,14 +123,14 @@ def wrap(c, words, font, maxw):
 
 
 def block(c, text, x, y, maxw, maxh, fonts, color, gap):
-    """Draw text at the largest font whose wrapped lines fit maxh."""
+    """Draw stroked text at the largest font whose wrapped lines fit maxh."""
     words = str(text).upper().split(" ")
     for f in fonts:
         lines = wrap(c, words, f, maxw)
         if len(lines) * (FONTH[f] + gap) - gap <= maxh:
             for i in range(len(lines)):
-                c.text(lines[i], x, y + i * (FONTH[f] + gap), font = f,
-                       color = color)
+                c.text_stroke(lines[i], x, y + i * (FONTH[f] + gap), font = f,
+                              color = color)
             return len(lines)
     # Nothing fits: use the smallest face, draw what we can, and mark the
     # cut so a dropped tail reads as deliberate rather than as a bug.
@@ -125,7 +149,8 @@ def block(c, text, x, y, maxw, maxh, fonts, color, gap):
                     line = line[:k]
                     break
             line = line + ".."
-        c.text(line, x, y + i * (FONTH[f] + gap), font = f, color = color)
+        c.text_stroke(line, x, y + i * (FONTH[f] + gap), font = f,
+                      color = color)
     return n
 
 
@@ -169,6 +194,74 @@ def fitwords(c, text, font, maxw):
     return ""
 
 
+# --- the degree glyph the fonts do not have --------------------------------
+#
+# fonts.json is uppercase, digits and a handful of punctuation: there is no
+# U+00B0 in 16x20 or in 10x16, so `str(temp) + "°"` silently dropped the
+# character and the panel showed a bare 84 — a magic number, by the
+# guidelines, on an app whose whole job is a temperature. These two rings are
+# the missing glyph as pixel art, cut to the face each one sits beside:
+# 16x20's strokes are 4px and its counters round, so the hero ring is 8x8 with
+# 2px walls and clipped corners; 10x16's are 3px, so the small ring is 6x6.
+DEG_HERO = """
+..####..
+.######.
+##....##
+##....##
+##....##
+##....##
+.######.
+..####..
+"""
+DEG_HERO_W = 8
+
+DEG_SMALL = """
+..##..
+.####.
+##..##
+##..##
+.####.
+..##..
+"""
+DEG_SMALL_W = 6
+
+# Columns between the last digit and the ring. The faces advance 1px between
+# glyphs; 2 sets the ring just off the number the way a real degree sign sits,
+# and the two black halos meet in the column between.
+DEG_GAP = 2
+
+
+def art_stroke(c, art, x, y, color, stroke = "black"):
+    """c.text_stroke, for pixel art: the same 1px halo in the same order.
+
+    Without it the ring is the one mark on the gradient with no outline, and
+    at 8px against #1E3350 it reads as dirt on the panel instead of as the
+    tail of the number."""
+    for dx in [-1, 0, 1]:
+        for dy in [-1, 0, 1]:
+            if dx != 0 or dy != 0:
+                c.sprite(art, x + dx, y + dy, color = stroke)
+    c.sprite(art, x, y, color = color)
+
+
+def temp_group_w(c, s, font, degw):
+    """Width of the number plus its degree ring, halos excluded."""
+    return c.text_width(s, font) + DEG_GAP + degw
+
+
+def draw_temp(c, s, right, y, font, art, degw, color):
+    """Draw `s` + the ring as one group ending at `right`; return its left x.
+
+    Right-aligning the GROUP rather than the digits is what keeps the ring on
+    the panel: hang a fixed-x ring off a right-aligned number and the first
+    three-character reading of the year ("-40", or 100+ in the desert) pushes
+    it into the border, where the renderer clips it without a word."""
+    x = right - temp_group_w(c, s, font, degw)
+    c.text_stroke(s, x, y, font = font, color = color)
+    art_stroke(c, art, x + c.text_width(s, font) + DEG_GAP, y, color)
+    return x
+
+
 def icon_for(text):
     """[sprite, short label].
 
@@ -192,7 +285,27 @@ def icon_for(text):
     return ["SUN", "SUNNY"]
 
 
+# The art is the one thing on the panel with no outline, and on a lit
+# gradient a pale cloud against #1E3350 has the same soft edge the label text
+# had before it was stroked. So every PNG now carries a 1px black keyline,
+# baked from its own alpha: every transparent pixel 8-neighbour adjacent to an
+# opaque one is black. Deriving the edge from the silhouette rather than
+# hand-drawing it means a future art edit only has to be re-baked, and thin
+# marks -- the raindrops, the bolt, the snowflakes -- get the same edge as the
+# cloud body.
+#
+# The keyline is grown OUTWARD, not carved out of the art: the files are
+# 26x26 with the 24x24 drawing still at 1:1 in the middle. KEYLINE below is
+# what that padding costs, so sprite_at can take the same 24px art box every
+# call site already passes and place the padded file one pixel back — the art
+# lands on exactly the pixel it landed on before the keyline existed.
+KEYLINE = 1
+
+
 def sprite_at(c, name, x, y, n):
+    x = x - KEYLINE
+    y = y - KEYLINE
+    n = n + 2 * KEYLINE
     if name == "SUN":
         c.image("SUN.png", x, y, w = n, h = n)
     elif name == "PARTLY":
@@ -222,10 +335,28 @@ def periods(ctx):
     if url == None:
         return None
     f = http.get(url, headers = {"User-Agent": "glance-dev-network (glance-led.com)"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if f["status_code"] != 200 or not f["json"]:
         return None
     return f["json"].get("properties", {}).get("periods", [])
+
+
+# 192 is a SCROLL panel: an unknown app plays on either side of this one, so
+# the composition sits EDGE px in from both borders instead of running to the
+# glass. 64 is a whole panel to itself and maximizes the space instead.
+EDGE = 9
+EDGE_N = 2
+
+# Clear columns kept between one element's ink and the next one's. 3 leaves a
+# clear column either side of the two 1px halos that meet in between.
+GAPX = 3
+
+NAME_Y = 1      # eyebrow ink 1-5, halo 0-6
+BODY_Y = 10     # sentence band 10-30, halo to 31 — one clear row under the eyebrow
+BODY_H = 21
+TEMP_Y = 1      # 16x20 ink 1-20, halo 0-21
+RAIN_Y = 24     # 5x7 ink 24-30, halo 23-31 — row 22 stays clear of the hero
+LABEL_Y = 20    # 64 only: 6x8 ink 20-27 under a 10x16 hero ending at row 15
 
 
 def show(c, ctx, idx):
@@ -247,28 +378,51 @@ def show(c, ctx, idx):
 
     c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#0A1220", "#1E3350",
                     horizontal = False)
-    sz = 24 if c.width >= 128 else 16
-    sprite_at(c, icon, 1, (c.height - sz) // 2, sz)
+    wide = c.width >= 128
+    sz = 24 if wide else 16
+    icon_x = EDGE if wide else 1
+    sprite_at(c, icon, icon_x, (c.height - sz) // 2, sz)
+    # Where the middle column may start: past the art, past its own halo.
+    tx = icon_x + sz + GAPX + 1
 
-    if c.width >= 128:
-        c.text(fitwords(c, name, "4x5", 70), 28, 1, font = "4x5", color = "#7C90B0")
+    if wide:
+        right = c.width - EDGE          # 183: ink ends at 182, halo at 183
+
+        # Right column first, both rows of it, because both can grow: "-40" is
+        # 50px against 33 for "84", and "100% RAIN" is 53px against 34 for
+        # "5% RAIN". The sentence then gets the gap that is actually left.
+        limit = c.width
         if temp != None:
-            c.text(str(int(temp)) + "\u00B0", c.width - 5, 2, font = "16x20",
-                   color = "#FFFFFF", align = "right")
-        block(c, short, 28, 9, c.width - 84, 21,
-              ["10x16", "6x8", "5x7", "4x5"], "#DCE6F8", 1)
+            limit = draw_temp(c, str(int(temp)), right, TEMP_Y, "16x20",
+                              DEG_HERO, DEG_HERO_W, "#FFFFFF")
+
         pop = p.get("probabilityOfPrecipitation", {})
         chance = pop.get("value", None) if pop != None else None
         if chance != None and int(chance) > 0:
-            c.text(str(int(chance)) + "% RAIN", c.width - 5, 24, font = "5x7",
-                   color = "#7FB6E8", align = "right")
+            rain = str(int(chance)) + "% RAIN"
+            rain_x = right - c.text_width(rain, "5x7")
+            if rain_x < limit:
+                limit = rain_x
+            c.text_stroke(rain, right, RAIN_Y, font = "5x7",
+                          color = "#7FB6E8", align = "right")
+
+        maxw = limit - GAPX - tx
+        if maxw > 0:
+            c.text_stroke(fitwords(c, name, "4x5", maxw), tx, NAME_Y,
+                          font = "4x5", color = "#7C90B0")
+            block(c, short, tx, BODY_Y, maxw, BODY_H,
+                  ["10x16", "6x8", "5x7", "4x5"], "#DCE6F8", ROWGAP)
     else:
+        right = c.width - EDGE_N
         if temp != None:
-            c.text(str(int(temp)) + "\u00B0", c.width - 2, 1, font = "10x16",
-                   color = "#FFFFFF", align = "right")
-        # The canonical label, so caption and sprite can never disagree.
-        c.text_fit(label, c.width - 2, 20, ["6x8", "5x7", "4x5"],
-                   color = "#DCE6F8", align = "right", maxw = c.width - 20)
+            draw_temp(c, str(int(temp)), right, TEMP_Y, "10x16",
+                      DEG_SMALL, DEG_SMALL_W, "#FFFFFF")
+        # The canonical label, so caption and sprite can never disagree. Its
+        # width comes off the sprite beside it rather than a constant, because
+        # the sprite is 16px here and 24 on the wide build.
+        lab = _fit_clip(c, label, ["6x8", "5x7", "4x5"], right - tx)
+        c.text_stroke(lab[1], right, LABEL_Y, font = lab[0],
+                      color = "#DCE6F8", align = "right")
 
 
 def now(c, ctx):

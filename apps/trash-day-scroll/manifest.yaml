@@ -1,7 +1,7 @@
 gdn: 1
 id: trash-day-scroll
 version: 0.1.0
-name: Trash Day (Scroll)
+name: Trash Day
 author: glance-led-dev
 description: "Which bins go out tonight, drawn so you can read it from the hallway."
 category: Lifestyle
@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 3600
+refresh: 7200
 
 pages: [bins]
 

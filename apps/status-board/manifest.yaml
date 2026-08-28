@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 300
+refresh: 900
 
 pages: [status, issues]
 

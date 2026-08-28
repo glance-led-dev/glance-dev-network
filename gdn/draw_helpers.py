@@ -23,7 +23,8 @@ import math as _math
 import os as _os
 
 from .colors import dim as _dim, to_rgb as _to_rgb  # noqa: F401  (re-exported for convenience)
-from .fonts import font_height as _font_height, text_width as _font_text_width
+from .fonts import (font_height as _font_height, get_glyphs as _get_glyphs,
+                    text_width as _font_text_width)
 
 _ICONS = None
 
@@ -327,15 +328,34 @@ class DrawHelpers:
 
     def badge(self, text, x, y, color="black", bg="green", font="5x7", pad=2):
         """A filled pill with `text` inside, top-left at (x, y).
-        Returns the badge's total width in pixels (for stacking)."""
+        Returns the badge's total width in pixels (for stacking).
+
+        The pill is sized around the text's INK, not the font's row count:
+        fonts reserve a bottom descender row that uppercase text never uses,
+        which used to leave the glyphs riding high (2px of pill on one side,
+        1px on the other). Now the lit pixels get exactly 1px of pill above
+        and below, and at least 2px left and right, so the rounded corner
+        never sits next to a glyph column and reads as part of the font."""
         text = str(text)
+        pad = max(2, int(pad))
         tw = self.text_width(text, font)
-        th = _font_height(font)
-        w = tw + 2 * int(pad)
-        h = th + 2
+        # ink bounds: first and last lit row across the string's glyphs
+        glyphs = _get_glyphs(font)
+        top, bot = None, None
+        for ch in text:
+            for i, row in enumerate(glyphs.get(ch) or []):
+                if any(row):
+                    top = i if top is None else min(top, i)
+                    bot = i if bot is None else max(bot, i)
+        if top is None:  # all-blank text: fall back to the row count
+            top, bot = 0, max(0, _font_height(font) - 1)
+        ink = bot - top + 1
+        w = tw + 2 * pad
+        h = ink + 2                       # 1px of pill above and below the ink
         r = min(2, (h - 1) // 2)
         self.round_rect(x, y, int(x) + w - 1, int(y) + h - 1, r, fill=bg)
-        self.text(text, int(x) + int(pad), int(y) + 1, font=font, color=color)
+        # place the text so its topmost lit row lands at y + 1
+        self.text(text, int(x) + pad, int(y) + 1 - top, font=font, color=color)
         return w
 
     def trend_arrow(self, x, y, direction, color=None):

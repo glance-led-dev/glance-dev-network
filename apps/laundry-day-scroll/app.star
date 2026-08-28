@@ -90,7 +90,7 @@ def verdict(c, ctx):
                            # -- 16 on the panel meant 10.
                            "wind_speed_unit": "mph",
                            "timezone": "auto", "forecast_days": "1"},
-                 ttl_seconds = 3600)
+                 ttl_seconds = 7200)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO FORECAST", "NO CONNECTION")
         return
@@ -121,10 +121,9 @@ def verdict(c, ctx):
         col = "#FF9A4A"
         note = "TOO DAMP"
 
-    c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#0E1220", "#26304A",
-                    horizontal = False)
+    c.fill("black")
     n = 24 if c.width >= 128 else 16
-    c.image("LAUNDRY.png", 2, 2, w = n, h = n)
+    c.image("LAUNDRY.png", 4, 2, w = n, h = n)
 
     if c.width >= 128:
         # Three stacked rows to the right of the icon: 0-15 verdict, 17-23
@@ -137,14 +136,18 @@ def verdict(c, ctx):
         # (starting at x=95 for "SLOW BUT FINE"), so the two drew straight
         # through each other. Every row is left-aligned at x=30 now, which
         # also means no pair can collide as the strings change.
-        c.text(line, 30, 0, font = "10x16", color = col)
-        c.text(note, 30, 17, font = "5x7", color = "#B0BCD4")
+        # LAUNDRY pill rides 4px off the end of the verdict, wherever the
+        # verdict happens to end.
+        c.text(line, 32, 0, font = "10x16", color = col)
+        c.badge("LAUNDRY", 32 + c.text_width(line, "10x16") + 4, 0,
+                color = "black", bg = "#7FB6E8", font = "4x5")
+        c.text(note, 32, 17, font = "5x7", color = "#B0BCD4")
         # Two spaces, and MPH tight against the number: at three spaces the
         # worst realistic reading ("DRYING 12.5MM   WIND 100 MPH") is 167px
         # against the 156px this row has, so it would have overflowed exactly
         # the way the bugs this batch has been fixing do.
         c.text("DRYING " + str(int(et * 10) / 10.0) + "MM  WIND "
-               + str(int(wind)) + "MPH", 30, 25, font = "5x7",
+               + str(int(wind)) + "MPH", 32, 25, font = "5x7",
                color = "#78849C")
     else:
         c.text_fit(line, c.width - 2, 8, ["10x16", "6x8", "5x7"], color = col,

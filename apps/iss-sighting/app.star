@@ -688,9 +688,10 @@ def draw_look_row(c, y, icon, icon_color, label, az, az_deg, el):
 def intro(c, ctx):
     c.clear()
     c.text("ISS", 3, 4, font = "7x12", color = "white", align = "left")
-    c.text("NEXT", 102, 2, font = "4x5", color = "gray", align = "center")
-    c.text("3", 102, 8, font = "4x5", color = "gray", align = "center")
-    c.text("SIGHTINGS", 102, 14, font = "4x5", color = "gray", align = "center")
+    # one row down so the stack doesn't merge with the top edge
+    c.text("NEXT", 102, 3, font = "4x5", color = "gray", align = "center")
+    c.text("3", 102, 9, font = "4x5", color = "gray", align = "center")
+    c.text("SIGHTINGS", 102, 15, font = "4x5", color = "gray", align = "center")
     c.bitmap(ISS_ICON, 51, 8, "cyan")
     # A handful of stars in the empty space around the text/icon (never
     # below y21 - the curve's own black background already reads as space
@@ -807,7 +808,7 @@ def crew(c, ctx):
     draw_header(c, "CREW", str(len(names)) + " ABOARD", "green", tag_color = "black")
 
     lines = wrap(c, names, "picopixel", 122)[:3]
-    y = 9
+    y = 10   # one row clear of the green header bar
     for line in lines:
         c.text(line, c.width // 2, y, font = "picopixel", color = "gray", align = "center")
         y += 6

@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 120
+refresh: 600
 
 pages: [mc, players]
 

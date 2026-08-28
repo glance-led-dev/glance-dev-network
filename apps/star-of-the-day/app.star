@@ -97,9 +97,10 @@ STARS = [
     ("ALPHECCA", "CORONA BOR", "75 LY - CROWN JEWEL", "#E4ECFF"),
 ]
 
-# Faint background stars, kept out of the text area so it stays readable.
+# Faint background stars, kept out of the text area and out of the title so
+# everything stays readable.
 FIELD = [
-    (2, 5), (4, 27), (36, 4), (37, 28),
+    (2, 5), (3, 15), (36, 4), (37, 20),
     (118, 3), (124, 10), (121, 18), (126, 25), (114, 30),
     (100, 31), (84, 31), (66, 31),
 ]
@@ -107,11 +108,45 @@ FIELD = [
 # Cell height of each bundled font, so the stack can space itself evenly.
 FONT_H = {"7x12": 12, "6x8": 8, "5x7": 7, "4x5": 5}
 
-def fit_font(c, text, options, maxw):
+# The starburst is drawn from the top of the panel (y=0) down to Y_BOTTOM, the
+# row the old art already finished on, so it fills the whole space above the
+# title instead of floating in the middle of it.
+STAR_CX = 20
+STAR_TOP = 0
+STAR_BOTTOM = 18
+
+HEXD = "0123456789abcdef"
+
+def _hex2(v):
+    if v < 0:
+        v = 0
+    if v > 255:
+        v = 255
+    return HEXD[v // 16] + HEXD[v % 16]
+
+def _dim(col, num, den):
+    # Knock a colour back without alpha, so the short diagonal rays read as a
+    # softer glow behind the four main ones. Works for any "#rrggbb" entry.
+    r = int(col[1:3], 16) * num // den
+    g = int(col[3:5], 16) * num // den
+    b = int(col[5:7], 16) * num // den
+    return "#" + _hex2(r) + _hex2(g) + _hex2(b)
+
+def fit_line(c, text, options, maxw):
+    # Pick the biggest font the string fits in. If even the smallest one is too
+    # wide -- a very long star or constellation name -- clip characters off the
+    # end so it can never run into the panel edge.
     for f in options:
         if c.text_width(text, f) <= maxw:
-            return f
-    return options[len(options) - 1]
+            return f, text
+
+    f = options[len(options) - 1]
+    out = text
+    for _ in range(len(text)):
+        if c.text_width(out, f) <= maxw:
+            break
+        out = out[:len(out) - 1]
+    return f, out
 
 def _twinkle(c, x, y, col):
     c.pixel(x, y, col)
@@ -120,14 +155,41 @@ def _twinkle(c, x, y, col):
     c.pixel(x, y - 1, col)
     c.pixel(x, y + 1, col)
 
-def _big_star(c, cx, cy, col):
-    # four long rays + four short diagonals + a glowing core
-    c.line(cx, cy - 13, cx, cy + 13, col)
-    c.line(cx - 14, cy, cx + 14, cy, col)
-    c.line(cx - 7, cy - 7, cx + 7, cy + 7, col)
-    c.line(cx + 7, cy - 7, cx - 7, cy + 7, col)
-    c.fill_circle(cx, cy, 4, col)
-    c.fill_circle(cx, cy, 2, "white")
+def _ray_v(c, cx, cy, reach, sign, step, col):
+    # A vertical ray that tapers from a few pixels wide at the core to a single
+    # pixel at the tip. step controls how quickly it narrows.
+    for d in range(reach + 1):
+        half = (reach - d) // step
+        c.hline(cx - half, cy + sign * d, half + half + 1, col)
+
+def _ray_h(c, cx, cy, reach, sign, step, col):
+    for d in range(reach + 1):
+        half = (reach - d) // step
+        c.vline(cx + sign * d, cy - half, half + half + 1, col)
+
+def _big_star(c, cx, col):
+    # A tapered four-point burst plus four dimmer diagonals and a glowing core.
+    # It is anchored so the top tip lands on row STAR_TOP and the bottom tip on
+    # STAR_BOTTOM, whatever those are set to.
+    up = (STAR_BOTTOM - STAR_TOP) // 2
+    cy = STAR_TOP + up
+    down = STAR_BOTTOM - cy
+    side = 13
+
+    faint = _dim(col, 2, 5)
+    for d in range(1, 7):
+        c.pixel(cx - d, cy - d, faint)
+        c.pixel(cx + d, cy - d, faint)
+        c.pixel(cx - d, cy + d, faint)
+        c.pixel(cx + d, cy + d, faint)
+
+    _ray_h(c, cx, cy, side, 1, 5, col)
+    _ray_h(c, cx, cy, side, -1, 5, col)
+    _ray_v(c, cx, cy, up, -1, 4, col)
+    _ray_v(c, cx, cy, down, 1, 4, col)
+
+    c.fill_circle(cx, cy, 3, col)
+    c.fill_circle(cx, cy, 1, "white")
 
 def _stack(c, x, lines):
     # lines: [[text, font, color], ...]
@@ -174,18 +236,33 @@ def main(c, ctx):
     for p in FIELD:
         c.pixel(p[0], p[1], "#454c66")
     _twinkle(c, 124, 10, "#6a7291")
-    _twinkle(c, 4, 27, "#6a7291")
+    _twinkle(c, 3, 15, "#6a7291")
 
-    # the star of the day, on the left
-    _big_star(c, 20, 16, col)
+    # the star of the day, on the left, with the app's title captioned under it
+    _big_star(c, STAR_CX, col)
+
+    # Title of the panel. Two lines so "STAR OF THE DAY" fits the 38px art
+    # column at a readable size; fit_line drops to the smaller font if a build
+    # ever changes the metrics.
+    lw = 36
+    title_col = "#ffd24a"
+    tf, t1 = fit_line(c, "STAR OF", ["4x5", "3x4"], lw)
+    c.text(t1, STAR_CX, 21, font = tf, color = title_col, align = "center")
+    tf, t2 = fit_line(c, "THE DAY", ["4x5", "3x4"], lw)
+    c.text(t2, STAR_CX, 27, font = tf, color = title_col, align = "center")
 
     # four evenly spaced lines on the right
     tx = 40
     tw = c.width - tx - 2
 
+    nf, nt = fit_line(c, name, ["6x8", "5x7", "4x5"], tw)
+    cf, ct = fit_line(c, constel, ["5x7", "4x5"], tw)
+    df, dt = fit_line(c, dist, ["4x5"], tw)
+    ff, ft = fit_line(c, note, ["4x5"], tw)
+
     _stack(c, tx, [
-        [name, fit_font(c, name, ["6x8", "5x7", "4x5"], tw), col],
-        [constel, fit_font(c, constel, ["5x7", "4x5"], tw), "#8fa0c0"],
-        [dist, "4x5", "#9fb0cc"],
-        [note, fit_font(c, note, ["4x5"], tw), "#c2cad8"],
+        [nt, nf, col],
+        [ct, cf, "#8fa0c0"],
+        [dt, df, "#9fb0cc"],
+        [ft, ff, "#c2cad8"],
     ])

@@ -153,21 +153,21 @@ def moon(c, ctx):
     c.fill("black")
 
     # The moon itself, hugging the left edge.
-    _draw_moon(c, 17, 16, 14, p, south)
+    _draw_moon(c, 20, 16, 14, p, south)
 
     # Phase name across the top of the right side.
     name = _phase_name(p)
-    c.text(name, 38, 1, font = fit_font(c, name, ["6x8", "5x7", "4x5"], 150), color = accent)
+    c.text(name, 41, 1, font = fit_font(c, name, ["6x8", "5x7", "4x5"], 141), color = accent)
 
     # Big percent illuminated.
     pct_s = str(pct) + "%"
     pf = fit_font(c, pct_s, ["10x16", "7x12", "6x8"], 44)
-    c.text(pct_s, 38, 10, font = pf, color = "white")
-    c.text("LIT", 38 + c.text_width(pct_s, pf) + 4, 19, font = "5x7", color = MUTED)
+    c.text(pct_s, 41, 10, font = pf, color = "white")
+    c.text("LIT", 41 + c.text_width(pct_s, pf) + 4, 19, font = "5x7", color = MUTED)
 
     # Countdown to the next full moon.
-    c.text("NEXT FULL", 120, 10, font = "5x7", color = MUTED)
-    c.text(full_line, 120, 19, font = "5x7", color = "white")
+    c.text("NEXT FULL", 182, 10, font = "5x7", color = MUTED, align = "right")
+    c.text(full_line, 182, 19, font = "5x7", color = "white", align = "right")
 
     # Where we are in the lunar cycle.
-    c.progress_bar(38, 28, 150, 3, int(p * 100.0), color = accent)
+    c.progress_bar(41, 28, 141, 3, int(p * 100.0), color = accent)

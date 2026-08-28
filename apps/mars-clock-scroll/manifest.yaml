@@ -1,7 +1,7 @@
 gdn: 1
 id: mars-clock-scroll
 version: 0.1.0
-name: Mars Clock (Scroll)
+name: Mars Clock
 author: glance-led-dev
 description: Coordinated Mars Time and the current Mars Sol Date, alongside Earth's.
 category: Science

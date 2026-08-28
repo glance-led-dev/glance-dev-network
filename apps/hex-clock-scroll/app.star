@@ -124,10 +124,24 @@ def channels(c, ctx):
     h = 6 if c.width >= 128 else 5
     gap = 3
     y = (c.height - (3 * h + 2 * gap)) // 2
-    for i in range(3):
-        yy = y + i * (h + gap)
-        c.text(names[i], 3, yy - 1, font = "4x5", color = cols[i])
-        c.progress_bar(11, yy, c.width - 30, h, p[i] * 100.0 / 255.0,
-                       color = cols[i], bg = "#181A24")
-        c.text(hx(p[i]), c.width - 4, yy - 1, font = "4x5", color = "#C8D0E8",
-               align = "right")
+    if c.width >= 128:
+        # bars 20px shorter and the whole label/bar/value group centered on
+        # the panel, per the audit rulings - same internal spacing.
+        barw = c.width - 50
+        total = 8 + barw + 4 + 9   # label+gap | bar | gap | 2-digit hex
+        x0 = (c.width - total) // 2
+        for i in range(3):
+            yy = y + i * (h + gap)
+            c.text(names[i], x0, yy - 1, font = "4x5", color = cols[i])
+            c.progress_bar(x0 + 8, yy, barw, h, p[i] * 100.0 / 255.0,
+                           color = cols[i], bg = "#181A24")
+            c.text(hx(p[i]), x0 + total, yy - 1, font = "4x5",
+                   color = "#C8D0E8", align = "right")
+    else:
+        for i in range(3):
+            yy = y + i * (h + gap)
+            c.text(names[i], 3, yy - 1, font = "4x5", color = cols[i])
+            c.progress_bar(11, yy, c.width - 30, h, p[i] * 100.0 / 255.0,
+                           color = cols[i], bg = "#181A24")
+            c.text(hx(p[i]), c.width - 4, yy - 1, font = "4x5",
+                   color = "#C8D0E8", align = "right")

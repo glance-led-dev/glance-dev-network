@@ -102,7 +102,7 @@ def aqi(c, ctx):
     r = http.get("https://air-quality-api.open-meteo.com/v1/air-quality",
                  params = {"latitude": str(g[0]), "longitude": str(g[1]),
                            "current": "us_aqi,pm2_5", "timezone": "auto"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO AIR DATA", "NO CONNECTION")
         return

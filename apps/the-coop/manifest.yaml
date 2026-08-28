@@ -12,7 +12,7 @@ height: 32
 
 # Static content -- nothing here ever changes, so there's no reason to
 # re-render often.
-refresh: 3600
+refresh: 259200
 
 pages: [main]
 

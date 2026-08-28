@@ -1,7 +1,7 @@
 gdn: 1
 id: elementary-ca-scroll
 version: 0.1.0
-name: Elementary Automata (Scroll)
+name: Elementary Automata
 author: glance-led-dev
 description: Wolfram's one-dimensional automata — chaotic Rule 30, fractal Rule 90 and Turing-complete Rule 110, one per page.
 category: Science

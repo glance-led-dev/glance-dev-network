@@ -9,7 +9,7 @@ entry: app.star
 width: 128
 height: 32
 # 5 minutes — options chains are heavy; avoid hammering Tradier.
-refresh: 300
+refresh: 900
 pages: [board, wings]
 inputs:
   - key: apikey

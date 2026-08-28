@@ -1,7 +1,7 @@
 gdn: 1
 id: volcano-watch-scroll
 version: 0.1.0
-name: Volcano Watch (Scroll)
+name: Volcano Watch
 author: glance-led-dev
 description: Every US volcano currently above normal alert level, worst first.
 category: Science
@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 3600
+refresh: 7200
 
 pages: [alerts]
 

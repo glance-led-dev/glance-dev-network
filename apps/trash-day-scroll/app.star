@@ -137,27 +137,32 @@ def bins(c, ctx):
             live.append(s[0])
 
     urgent = tonight or ahead == 0
-    c.gradient_rect(0, 0, c.width - 1, c.height - 1,
-                    "#161006" if urgent else "#080A10",
-                    "#3A2408" if urgent else "#161A26", horizontal = False)
+    c.fill("#161006" if urgent else "#080A10")
 
     sz = 22 if c.width >= 128 else 15
     x = 2
+    if c.width >= 128:
+        # Content lives in a 180x30 box centred on the panel, framed in a
+        # rounded yellow border, with the TRASH DAY tag above the bins.
+        c.round_rect(6, 0, 185, 31, 3, outline = "#F5D64E")
+        c.badge("TRASH DAY", 6, 1, color = "black", bg = "#F5D64E",
+                font = "4x5")
+        x = 10
     for nm in live:
-        y = c.height - sz - 1
+        y = c.height - sz - 2 if c.width >= 128 else c.height - sz - 1
         if nm == "BINTRASH":
             c.image("BINTRASH.png", x, y, w = sz, h = sz)
         elif nm == "BINRECYCLE":
             c.image("BINRECYCLE.png", x, y, w = sz, h = sz)
         else:
             c.image("BINYARD.png", x, y, w = sz, h = sz)
-        x += sz + 2
+        x += sz + 4 if c.width >= 128 else sz + 2
 
     col = "#FFB03A" if urgent else "#8FA8D0"
     if c.width >= 128:
-        c.text_fit(when, c.width - 6, 2, ["16x20", "10x16"], color = col,
-                   align = "right", maxw = c.width - x - 10)
-        c.text(target, c.width - 6, 24, font = "6x8", color = "#7C88A8",
+        c.text_fit(when, c.width - 12, 3, ["16x20", "10x16"], color = col,
+                   align = "right", maxw = c.width - x - 16)
+        c.text(target, c.width - 12, 22, font = "6x8", color = "#7C88A8",
                align = "right")
     else:
         c.text_fit(when, c.width - 2, 1, ["10x16", "6x8", "5x7"], color = col,

@@ -165,7 +165,7 @@ def fetch(ctx, g):
                               "daily": "weather_code,temperature_2m_max,temperature_2m_min",
                               "temperature_unit": str(ctx.inputs.get("units", "F")).lower() == "c" and "celsius" or "fahrenheit",
                               "timezone": "auto", "forecast_days": "4"},
-                    ttl_seconds = 900)
+                    ttl_seconds = 1800)
 
 
 def now(c, ctx):

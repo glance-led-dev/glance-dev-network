@@ -1,7 +1,7 @@
 gdn: 1
 id: weather-scene-scroll
 version: 0.1.0
-name: Weather (Scroll)
+name: Weather
 author: glance-led-dev
 description: Now and the next three days, told by drawn weather art rather than words.
 category: Weather
@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 900
+refresh: 1800
 
 pages: [now, forecast]
 
@@ -21,6 +21,16 @@ assets:
   - SNOW.png
   - STORM.png
   - FOG.png
+  # Black silhouettes of the seven drawings above, derived from their own
+  # alpha channels. sprite_at() stamps one at each of the eight neighbouring
+  # offsets to give the art a 1px keyline against the sky.
+  - SUN_KEY.png
+  - CLOUD_KEY.png
+  - PARTLY_KEY.png
+  - RAIN_KEY.png
+  - SNOW_KEY.png
+  - STORM_KEY.png
+  - FOG_KEY.png
 
 inputs:
   - key: zip

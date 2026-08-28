@@ -11,7 +11,7 @@ width: 192
 height: 32
 
 # Nothing here changes unless the settings do.
-refresh: 3600
+refresh: 259200
 
 pages: [wifi]
 

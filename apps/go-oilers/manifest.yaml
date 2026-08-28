@@ -8,7 +8,7 @@ category: Lifestyle
 entry: app.star
 width: 192
 height: 32
-refresh: 300
+refresh: 259200
 pages: [main]
 inputs: []
 assets:

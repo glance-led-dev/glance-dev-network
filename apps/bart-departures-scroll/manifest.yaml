@@ -1,7 +1,7 @@
 gdn: 1
 id: bart-departures-scroll
 version: 0.1.0
-name: "BART Departures (Bay Area, Scroll)"
+name: "BART Departures (Bay Area)"
 author: glance-led-dev
 description: "Real-time BART trains leaving your station in the San Francisco Bay Area, by line and minutes."
 category: Transportation

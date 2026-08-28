@@ -21,6 +21,8 @@ MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
 
 UP = [[0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [1, 1, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]
 DOWN = [[0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0]]
+GLASS = [[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [1, 1, 1, 1, 1]]
+GLOBE = [[0, 1, 1, 1, 0], [1, 1, 0, 1, 1], [1, 0, 1, 0, 1], [1, 1, 0, 1, 1], [0, 1, 1, 1, 0]]
 
 # ---------- input ----------
 
@@ -83,6 +85,41 @@ def fmt12(hour, minute):
         hh = 12
     return str(hh) + ":" + pad2(minute), ap
 
+def fit(c, s, font, maxw):
+    # Longest-first truncation with a trailing dot, so a runaway city or zone
+    # name shrinks instead of running off the panel (the renderer clips silently).
+    if c.text_width(s, font) <= maxw:
+        return s
+    out = ""
+    for i in range(len(s)):
+        cand = s[:i + 1] + "."
+        if c.text_width(cand, font) > maxw:
+            break
+        out = cand
+    return out
+
+def utc_str(off):
+    # Fractional UTC offset -> "UTC-4" / "UTC+5:30".
+    sign = "-" if off < 0 else "+"
+    a = off if off >= 0 else -off
+    h = int(a)
+    m = int((a - h) * 60.0 + 0.5)
+    s = "UTC" + sign + str(h)
+    if m:
+        s = s + ":" + pad2(m)
+    return s
+
+def zone_str(tj, off):
+    # One generic label for every location: the live DST abbreviation while it is
+    # actually in force, otherwise the raw offset. Never a per-city special case.
+    if tj.get("isDayLightSavingActive", False):
+        dst = tj.get("dstInterval", None)
+        if dst:
+            n = str(dst.get("dstName", "")).upper()
+            if n:
+                return n
+    return utc_str(off)
+
 # ---------- the lookups ----------
 # Returns {"ok": True, ...} or {"ok": False, "title":..., "sub":...}
 
@@ -128,12 +165,14 @@ def place(ctx):
     if off_secs == None:
         return {"ok": False, "title": "NO OFFSET", "sub": "UNEXPECTED REPLY"}
 
+    off = float(off_secs) / 3600.0
     return {
         "ok": True,
         "city": city,
         "lat": lat,
         "lon": lon,
-        "off": float(off_secs) / 3600.0,
+        "off": off,
+        "zone": zone_str(tj, off),
     }
 
 def local_parts(ctx, off_hours):
@@ -187,16 +226,38 @@ def clock(c, ctx):
 
     c.fill("black")
     c.rect(0, 0, c.width - 1, 8, fill = "blue")
-    c.text(info["city"], c.width // 2, 1, font = "5x7", color = "white", align = "center")
+    c.text(fit(c, info["city"], "5x7", c.width - 4), c.width // 2, 1,
+           font = "5x7", color = "white", align = "center")
+
+    # Two containers -- [time + AM/PM] and [sun icon over date] -- with a 10px
+    # buffer, the pair centred on the panel in the band under the banner.
+    w_time = c.text_width(tstr, "16x20") + 3 + c.text_width(ap, "6x8")
+
+    # Worst case (12:59 PM + a long date) still leaves a 10px margin each side.
+    cap = c.width - 20 - w_time - 10
+    if cap < 11:
+        cap = 11
+    date = fit(c, WEEKDAYS[t["wd"]] + " " + MONTHS[t["mo"] - 1] + " " + str(t["d"]),
+               "4x5", cap)
+    w_sd = c.text_width(date, "4x5")
+    if w_sd < 11:
+        w_sd = 11
+
+    x = (c.width - (w_time + 10 + w_sd)) // 2
+    if x < 5:
+        x = 5
+
+    # Band under the banner is y 9..31; the taller container (20px) sets the group.
+    top = 9 + ((c.height - 9) - 20) // 2
+    sd_x = x + w_time + 10
+    sd_top = top + 1
+
+    c.text(tstr, x, top, font = "16x20", color = "white")
+    c.text(ap, x + c.text_width(tstr, "16x20") + 3, top + 2, font = "6x8", color = "yellow")
 
     # A custom PNG icon you dropped in this folder, listed under `assets:`.
-    c.image("sun.png" if is_day else "moon.png", c.width - 13, 10, w = 11, h = 11)
-
-    c.text(tstr, 3, 11, font = "16x20", color = "white")
-    c.text(ap, 6 + c.text_width(tstr, "16x20"), 13, font = "6x8", color = "yellow")
-
-    date = WEEKDAYS[t["wd"]] + " " + MONTHS[t["mo"] - 1] + " " + str(t["d"])
-    c.text(date, c.width - 3, 25, font = "4x5", color = "gray", align = "right")
+    c.image("sun.png" if is_day else "moon.png", sd_x + (w_sd - 11) // 2, sd_top, w = 11, h = 11)
+    c.text(date, sd_x + w_sd // 2, sd_top + 13, font = "4x5", color = "gray", align = "center")
 
 def sun(c, ctx):
     info = place(ctx)
@@ -209,14 +270,28 @@ def sun(c, ctx):
     sr, srap = fmt12(sunrise[0], sunrise[1])
     ss, ssap = fmt12(sunset[0], sunset[1])
 
+    # Daylight length, straight off the same two times so they can't disagree.
+    span = (sunset[0] * 60 + sunset[1]) - (sunrise[0] * 60 + sunrise[1])
+    if span < 0:
+        span = span + 1440
+    daylen = str(span // 60) + "H " + pad2(span % 60) + "M"
+
     c.fill("black")
     c.rect(0, 0, c.width - 1, 8, fill = "orange")
-    c.text(info["city"], c.width // 2, 1, font = "5x7", color = "black", align = "center")
+    c.text(fit(c, info["city"], "5x7", c.width - 4), c.width // 2, 1,
+           font = "5x7", color = "black", align = "center")
 
-    c.bitmap(UP, 4, 12, "yellow")
-    c.text("RISE", 13, 12, font = "5x7", color = "yellow")
-    c.text(sr + " " + srap, 46, 12, font = "5x7", color = "white")
+    # Left column keeps the wide 5x7 labels; the right column spells its labels
+    # out in full in the narrow 3x7 face so DAYLIGHT / TIMEZONE say what they are
+    # without pushing the values past the safe zone at x=182.
+    _cell(c, 10, 11, UP, "yellow", "RISE", "5x7", 35, sr + " " + srap, 50)
+    _cell(c, 10, 23, DOWN, "orange", "SET", "5x7", 35, ss + " " + ssap, 50)
+    _cell(c, 98, 11, GLASS, "cyan", "DAYLIGHT", "3x7", 43, daylen, 41)
+    _cell(c, 98, 23, GLOBE, "green", "TIMEZONE", "3x7", 43, info["zone"], 41)
 
-    c.bitmap(DOWN, 4, 22, "orange")
-    c.text("SET", 13, 22, font = "5x7", color = "orange")
-    c.text(ss + " " + ssap, 46, 22, font = "5x7", color = "white")
+def _cell(c, x, y, mark, color, label, lfont, vdx, value, maxw):
+    # One data point: 5x5 mark, coloured label, white value. Values are fitted to
+    # the column so a long zone name truncates rather than crossing the gutter.
+    c.bitmap(mark, x, y + 1, color)
+    c.text(fit(c, label, lfont, vdx - 10), x + 8, y, font = lfont, color = color)
+    c.text(fit(c, value, "5x7", maxw), x + vdx, y, font = "5x7", color = "white")

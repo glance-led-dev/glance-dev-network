@@ -1,7 +1,7 @@
 gdn: 1
 id: hex-clock-scroll
 version: 0.1.0
-name: Hex Clock (Scroll)
+name: Hex Clock
 author: glance-led-dev
 description: The time read as a hex colour — the panel becomes that colour, all day long.
 category: Time

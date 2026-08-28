@@ -1,7 +1,7 @@
 gdn: 1
 id: mbta-tracker-scroll
 version: 0.1.0
-name: "MBTA Tracker (Boston, Scroll)"
+name: "MBTA Tracker (Boston)"
 author: "gabetrainor"
 description: Live upcoming-train countdown board for any MBTA subway or commuter rail station.
 category: Transportation
@@ -14,7 +14,7 @@ height: 32
 # 60 is the minimum refresh for a public app; http.get's own ttl_seconds=20 in
 # app.star keeps a live-editing Studio session fresher than that without
 # hammering the (unauthenticated, rate-limited) MBTA API on every panel.
-refresh: 60
+refresh: 120
 
 pages: [main]
 

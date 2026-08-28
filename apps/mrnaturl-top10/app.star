@@ -29,7 +29,7 @@ MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
 def fetch_feed():
     # The feed only changes once a week, so an hour of caching costs nothing
     # and keeps the panel from refetching on every page turn.
-    return http.get(FEED_URL, ttl_seconds = 3600)
+    return http.get(FEED_URL, ttl_seconds = 86400)
 
 def get_data():
     resp = fetch_feed()

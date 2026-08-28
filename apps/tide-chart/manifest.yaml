@@ -9,7 +9,7 @@ entry: app.star
 width: 192
 height: 32
 # Predictions are stable; refresh a few times an hour is plenty.
-refresh: 900
+refresh: 3600
 pages: [tide, today, conditions]
 inputs:
   - key: zip

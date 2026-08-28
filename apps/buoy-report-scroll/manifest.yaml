@@ -1,7 +1,7 @@
 gdn: 1
 id: buoy-report-scroll
 version: 0.1.0
-name: Buoy Report (Scroll)
+name: Buoy Report
 author: glance-led-dev
 description: Live wind, waves and water temperature straight off an NDBC ocean buoy.
 category: Weather
@@ -12,9 +12,6 @@ height: 32
 refresh: 1800
 
 pages: [buoy]
-
-assets:
-  - BUOY.png
 
 inputs:
   - key: station
