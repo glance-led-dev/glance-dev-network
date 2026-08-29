@@ -369,7 +369,7 @@ def fetch_observation(token, station_id):
             "units_pressure": "inhg",
             "units_distance": "mi",
         },
-        ttl_seconds = 60,
+        ttl_seconds = 900,
     )
 
 def fetch_device_observations(token, device_id, time_start, time_end):

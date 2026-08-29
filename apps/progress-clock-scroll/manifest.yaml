@@ -1,7 +1,7 @@
 gdn: 1
 id: progress-clock-scroll
 version: 0.1.0
-name: Progress Clock (Scroll)
+name: Progress Clock
 author: glance-led-dev
 description: The day as a set of filling bars — hour, day and year all at once.
 category: Time

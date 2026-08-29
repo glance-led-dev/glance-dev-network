@@ -114,14 +114,14 @@ def block(c, text, x, y, maxw, maxh, fonts, color, gap):
 def story(n):
     """The nth top story, or None."""
     r = http.get("https://hacker-news.firebaseio.com/v0/topstories.json",
-                 ttl_seconds = 900)
+                 ttl_seconds = 1800)
     if r["status_code"] != 200 or not r["json"]:
         return None
     ids = r["json"]
     if len(ids) <= n:
         return None
     s = http.get("https://hacker-news.firebaseio.com/v0/item/" + str(ids[n]) + ".json",
-                 ttl_seconds = 900)
+                 ttl_seconds = 1800)
     if s["status_code"] != 200 or not s["json"]:
         return None
     return s["json"]

@@ -9,6 +9,6 @@ entry: app.star
 
 width: 64
 height: 32
-refresh: 900
+refresh: 1800
 
 pages: [kp]

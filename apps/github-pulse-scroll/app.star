@@ -58,10 +58,8 @@ def fit(c, text, fonts, maxw):
 
 def tab(c, word, accent, x = 4):
     """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -472,15 +470,14 @@ def main(c, ctx):
     c.fill("black")
     st = read_repo(ctx)
     col = ci_color(st["ci"])
-    w = c.text_width("MAIN", "4x5")
-    c.round_rect(4, 0, 4 + w + 3, 7, 2, fill = col if st["state"] == "ok" else STRUCT)
-    c.text("MAIN", 6, 2, font = "4x5", color = "black" if st["state"] == "ok" else "gray")
+    c.badge("MAIN", 4, 1, color = "black" if st["state"] == "ok" else "gray",
+            bg = col if st["state"] == "ok" else STRUCT, font = "4x5")
     if gh_fail(c, st):
         return
     rail(c, col)
     c.text(clip(c, st["repo"], "4x5", 120), 31, 2, font = "4x5", color = "gray")
     if len(st["runs"]) > 0:
-        c.text(ago_short(st["runs"][0]["age"]), 190, 2, font = "4x5",
+        c.text(ago_short(st["runs"][0]["age"]), 186, 2, font = "4x5",
                color = "gray", align = "right")
 
     if st["ci"] == "ok":
@@ -514,8 +511,8 @@ def main(c, ctx):
             c.sprite(MINI_SKIP, 97, y, color = "gray")
         when = ago_short(r["age"])
         ww = c.text_width(when, "4x5")
-        c.text(when, 190, y, font = "4x5", color = "gray", align = "right")
-        c.text(clip(c, r["name"], "4x5", 190 - ww - 4 - 105), 105, y,
+        c.text(when, 186, y, font = "4x5", color = "gray", align = "right")
+        c.text(clip(c, r["name"], "4x5", 186 - ww - 4 - 105), 105, y,
                font = "4x5", color = "white")
 
 def queue(c, ctx):
@@ -526,9 +523,8 @@ def queue(c, ctx):
         if p["review"] and not p["draft"]:
             waiting += 1
     col = PEND if waiting > 0 else OK_C
-    w = c.text_width("QUEUE", "4x5")
-    c.round_rect(4, 0, 4 + w + 3, 7, 2, fill = col if st["state"] == "ok" else STRUCT)
-    c.text("QUEUE", 6, 2, font = "4x5", color = "black" if st["state"] == "ok" else "gray")
+    c.badge("QUEUE", 4, 1, color = "black" if st["state"] == "ok" else "gray",
+            bg = col if st["state"] == "ok" else STRUCT, font = "4x5")
     if gh_fail(c, st):
         return
     rail(c, col)
@@ -570,12 +566,12 @@ def queue(c, ctx):
         if p["draft"]:
             acol = "midgray"
         aw = c.text_width(age, "4x5")
-        c.text(age, 190, y, font = "4x5", color = acol, align = "right")
+        c.text(age, 186, y, font = "4x5", color = acol, align = "right")
         lab = "#" + str(p["num"])
         c.text(lab, 63, y, font = "4x5",
                color = "midgray" if p["draft"] else "white")
         tx = 63 + c.text_width(lab, "4x5") + 4
-        c.text(clip_words(c, p["title"], "4x5", 186 - aw - tx), tx, y,
+        c.text(clip_words(c, p["title"], "4x5", 186 - aw - tx - 5), tx, y,
                font = "4x5", color = "gray")
 
 def review(c, ctx):
@@ -592,10 +588,8 @@ def review(c, ctx):
     chip = STRUCT
     if st["state"] == "ok":
         chip = PEND if pick != None else OK_C
-    w = c.text_width("REVIEW", "4x5")
-    c.round_rect(4, 0, 4 + w + 3, 7, 2, fill = chip)
-    c.text("REVIEW", 6, 2, font = "4x5",
-           color = "gray" if chip == STRUCT else "black")
+    c.badge("REVIEW", 4, 1, color = "gray" if chip == STRUCT else "black",
+            bg = chip, font = "4x5")
     if gh_fail(c, st):
         return
     if pick == None:
@@ -611,7 +605,7 @@ def review(c, ctx):
         acol = PEND
     rail(c, acol)
     c.text("#" + str(pick["num"]), 41, 2, font = "4x5", color = "gray")
-    c.text("WAITING " + ago_short(pick["age"]), 190, 2, font = "4x5",
+    c.text("WAITING " + ago_short(pick["age"]), 186, 2, font = "4x5",
            color = acol, align = "right")
     c.sprite(EYE, 6, 13, legend = {"#": PEND, "O": "white"})
     c.text_wrapped(pick["title"], 24, 10, 165, font = "5x7", color = "white",

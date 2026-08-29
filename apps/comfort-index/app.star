@@ -126,7 +126,7 @@ def feels(c, ctx):
                            "current": "temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m",
                            "temperature_unit": "celsius" if metric else "fahrenheit",
                            "timezone": "auto"},
-                 ttl_seconds = 900)
+                 ttl_seconds = 1800)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO WEATHER", "NO CONNECTION")
         return

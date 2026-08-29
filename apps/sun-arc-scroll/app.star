@@ -201,6 +201,9 @@ def arc(c, ctx):
         ty = int(ground - 2 - math.sin(f * math.pi) * (ground - 8))
         c.pixel(4 + i, ty, "#FFFFFF" if alt > 0 else "#5A5A80")
 
+    # Black ring around the body so it separates from any sky color - the
+    # pixel-art version of drawTextWithStroke (design guidelines, &sect;5).
+    c.circle(x, y, 4, "black")
     c.fill_circle(x, y, 3, body)
     c.pixel(x - 1, y - 1, glow)
 

@@ -1,7 +1,7 @@
 gdn: 1
 id: air-quality-scroll
 version: 0.1.0
-name: Air Quality (Scroll)
+name: Air Quality
 author: glance-led-dev
 description: US AQI and fine particulates, with a skyline that hazes over as the air gets worse.
 category: Weather
@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 1800
+refresh: 3600
 
 pages: [aqi]
 

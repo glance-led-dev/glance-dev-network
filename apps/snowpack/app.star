@@ -83,7 +83,7 @@ def depth(c, ctx):
                  params = {"latitude": str(g[0]), "longitude": str(g[1]),
                            "daily": "snow_depth_max", "timezone": "auto",
                            "past_days": "7", "forecast_days": "1"},
-                 ttl_seconds = 3600)
+                 ttl_seconds = 7200)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO SNOW DATA", "NO CONNECTION")
         return

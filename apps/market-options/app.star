@@ -335,7 +335,7 @@ def fetch(ctx):
         base + "/markets/quotes",
         headers = hdrs,
         params = {"symbols": sym},
-        ttl_seconds = 300,
+        ttl_seconds = 900,
     )
     st = rq["status_code"]
     if st == 401 or st == 403:
@@ -395,7 +395,7 @@ def fetch(ctx):
         base + "/markets/options/chains",
         headers = hdrs,
         params = {"symbol": sym, "expiration": expiry, "greeks": "true"},
-        ttl_seconds = 300,
+        ttl_seconds = 900,
     )
     st = rc["status_code"]
     if st == 401 or st == 403:

@@ -124,7 +124,7 @@ def fetch_leaders(stat_key, league_id, season):
                 "sportId": "1",
                 "limit": "4",
             },
-            ttl_seconds = 600,
+            ttl_seconds = 14400,
         )
     return http.get(
         "https://statsapi.mlb.com/api/v1/stats/leaders",
@@ -136,7 +136,7 @@ def fetch_leaders(stat_key, league_id, season):
             "leagueId": str(league_id),
             "limit": "4",
         },
-        ttl_seconds = 600,
+        ttl_seconds = 14400,
     )
 
 def fetch_teams():

@@ -191,7 +191,7 @@ def tides(c, ctx):
                            "time_zone": "lst_ldt", "units": "english",
                            "interval": "hilo", "format": "json",
                            "date": "today"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO TIDE DATA", "NO CONNECTION")
         return

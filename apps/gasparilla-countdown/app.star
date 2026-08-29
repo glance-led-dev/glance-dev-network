@@ -1,8 +1,14 @@
 # Gasparilla countdown for a Glance Scroll panel (192x32).
-# Draws PIRATE_FLAG.png on the left and days-until-Gasparilla on the right.
+# Draws PIRATE_FLAG.png beside the days-until-Gasparilla block, and centres the
+# flag + text group as a single unit on the canvas.
 
 EVENT_DATE = (2027, 1, 30)   # hardcoded festival date (Y, M, D)
 LABEL      = "GASPARILLA"    # hardcoded header text
+
+FLAG_W   = 48                # drawn width of PIRATE_FLAG.png
+FLAG_GAP = 4                 # space between the flag and the text block
+SAFE_L   = 10
+SAFE_R   = 182
 
 # Days since an epoch for a civil date (Hinnant's algorithm). We only ever
 # subtract two of these, so the epoch it counts from doesn't matter.
@@ -25,56 +31,57 @@ def fit_font(c, text, options, maxw):
     return options[len(options) - 1]
 
 def countdown(c, ctx):
-    label  = LABEL
     accent = ctx.inputs.get("accent", "#FFC300")
 
     c.fill("black")
-    c.image("PIRATE_FLAG.png", 2, 0, w = 48, h = 32)
-
-    tx = 52
-    tw = c.width - tx - 2
-    cx = tx + tw // 2
 
     today = days_from_civil(ctx.now.year, ctx.now.month, ctx.now.day)
     event = days_from_civil(EVENT_DATE[0], EVENT_DATE[1], EVENT_DATE[2])
     n = event - today
 
+    # Header is fixed: GASPARILLA at y=0 in 6x8.
+    hdr = LABEL
+    hdrfont = "6x8"
+    hw = c.text_width(hdr, hdrfont)
+
+    # Big line: the days number in the tallest font that fits the band under
+    # the header (rows 9..31, 23 rows -> 16x20 is the tallest rung that fits),
+    # plus a small DAYS tag, or the festival-day message. The widest it may get
+    # is the safe zone, so the number ladder degrades on absurd day counts.
+    maxbig = (SAFE_R - SAFE_L + 1) - FLAG_W - FLAG_GAP
+
     if n <= 0:
-        msg = "TODAY!" if n == 0 else "AHOY!"
-        c.text(label, cx, 0, font = fit_font(c, label, ["6x8", "5x7", "4x5"], tw), color = accent, align = "center")
-        c.text(msg, cx, 12, font = fit_font(c, msg, ["16x24", "10x16", "7x12"], tw), color = "white", align = "center")
-        return
+        numstr = "TODAY!" if n == 0 else "AHOY!"
+        daystr = ""
+        dw = 0
+        gap = 0
+    else:
+        numstr = str(n)
+        daystr = "DAY" if n == 1 else "DAYS"
+        dw = c.text_width(daystr, "5x7")
+        gap = 3
 
-    numstr = str(n)
-    daystr = "DAY" if n == 1 else "DAYS"
-
-    # Lay out the number + small DAYS label first, centered together in the area.
-    numfont = fit_font(c, numstr, ["16x24", "10x16", "7x12"], tw - 24)
-    nh = font_h(numfont)
+    numfont = fit_font(c, numstr, ["16x20", "10x16", "7x12", "5x7"], maxbig - gap - dw)
     nw = c.text_width(numstr, numfont)
-    dw = c.text_width(daystr, "5x7")
-    gap = 3
-    startx = cx - (nw + gap + dw) // 2
-    numcx  = startx + nw // 2          # center of the number itself
+    bigw = nw + gap + dw
 
-    # Header, centered over the number's midpoint (not the whole area).
-    hdr = fit_label(c, label, ["6x8", "5x7", "4x5"], tw, numcx)
-    c.text(hdr[0], hdr[1], 0, font = hdr[2], color = accent, align = "center")
+    # Text block is as wide as its widest line; the group is flag + block.
+    bw = hw if hw > bigw else bigw
+    groupw = FLAG_W + FLAG_GAP + bw
+    gx = (c.width - groupw) // 2
+    if gx < SAFE_L:
+        gx = SAFE_L
 
-    numy = 8 + (24 - nh) // 2
-    c.text(numstr, startx, numy, font = numfont, color = "white", align = "left")
-    c.text(daystr, startx + nw + gap, 8 + (24 - 7) // 2, font = "5x7", color = accent, align = "left")
+    bx = gx + FLAG_W + FLAG_GAP
 
-# Pick a header font that fits, then nudge its center-x so the drawn text stays
-# fully on-panel even when centered over a number near the left/right edge.
-def fit_label(c, text, fonts, maxw, want_cx):
-    f = fit_font(c, text, fonts, maxw)
-    w = c.text_width(text, f)
-    cx = want_cx
-    left = 52
-    right = 190
-    if cx - w // 2 < left:
-        cx = left + w // 2
-    if cx + w // 2 > right:
-        cx = right - w // 2
-    return (text, cx, f)
+    c.image("PIRATE_FLAG.png", gx, 0, w = FLAG_W, h = 32)
+    c.text(hdr, bx + (bw - hw) // 2, 0, font = hdrfont, color = accent, align = "left")
+
+    # Lower band starts 1px under the header ink (row 9) and ends at the bottom
+    # of the panel; sit the big line on the bottom edge.
+    nh = font_h(numfont)
+    numy = 32 - nh
+    bigx = bx + (bw - bigw) // 2
+    c.text(numstr, bigx, numy, font = numfont, color = "white", align = "left")
+    if daystr:
+        c.text(daystr, bigx + nw + gap, numy + nh - 7, font = "5x7", color = accent, align = "left")

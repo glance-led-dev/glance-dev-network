@@ -1,7 +1,7 @@
 gdn: 1
 id: ebird-nearby-scroll
 version: 0.1.0
-name: Bird Sightings (Scroll)
+name: Bird Sightings
 author: glance-led-dev
 description: "Notable birds reported near you in the last week, from eBird."
 category: Science

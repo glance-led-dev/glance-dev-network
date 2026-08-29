@@ -12,7 +12,7 @@ height: 32
 
 # Agile publishes the next day's prices once, mid-afternoon. Half-hourly slots
 # change on the half hour, so this is as often as there is anything new to say.
-refresh: 900
+refresh: 3600
 
 pages: [now, curve, best]
 

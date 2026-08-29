@@ -1,8 +1,8 @@
 # Binary Clock
 #
-# Two ways to read the time in binary. BCD gives a column per decimal
-# digit, the way a classic binary desk clock does; BITS gives one row
-# per unit, which is easier to decode once you are used to it.
+# BCD gives a column per decimal digit of the time, the way a classic
+# binary desk clock does. DATE is the other half of the calendar in the
+# same language: one row per unit, day / month / year, in plain binary.
 
 
 
@@ -107,51 +107,77 @@ def bcd(c, ctx):
     r = 2 if c.width >= 128 else 1
     step = 2 * r + 3
     block = 6 * step + 2 * (2 * r + 2)
-    # On the Scroll the dots take the left half and leave the right to the
-    # faint plain reading; centring the block ran the two together.
-    x0 = (8 + r) if c.width >= 128 else ((c.width - block) // 2 + r)
+    # The dot cluster alone leaves most of a 192 panel empty, so the Scroll
+    # also carries the plain reading to check yourself against. Dots and
+    # clock travel as one centred group with a tight gutter -- widest the
+    # reading ever gets is "23:59", so the group width never grows.
+    plain = fmt.pad(t["hour"]) + ":" + fmt.pad(t["minute"])
+    pw = c.text_width(plain, "16x20")
+    left = (c.width - block) // 2
+    if c.width >= 128:
+        left = (c.width - (block + 10 + pw)) // 2
+    x0 = left + r
     y0 = (c.height - 4 * step) // 2 + r + 3
 
     for i in range(6):
         x = x0 + i * step + (i // 2) * (2 * r + 2)
         for b in range(4):
             dot(c, x, y0 + b * step, r, digits[i] // BITS[b] % 2 == 1, accent)
-    c.text("H   M   S", x0 + 3 * step + r, 1, font = "4x5",
-           color = "#4A5068", align = "center")
+    # Each label sits centred on the pair of columns it names, so the letter
+    # tracks its own two digits no matter how the block is placed. The 4x5
+    # cap is parked just clear of the top dot row, never on top of it.
+    lab_y = y0 - r - 5
+    if lab_y < 0:
+        lab_y = 0
+    for g in range(3):
+        first = x0 + 2 * g * step + g * (2 * r + 2)
+        c.text(["H", "M", "S"][g], first + (step + 1) // 2, lab_y,
+               font = "4x5", color = "#4A5068", align = "center")
     if c.width >= 128:
-        # The dot cluster alone leaves most of a 192 panel empty, so the Scroll
-        # also carries the plain reading to check yourself against.
-        c.text(fmt.pad(t["hour"]) + ":" + fmt.pad(t["minute"]),
-               c.width - 10, 7, font = "16x20", color = "#22304A",
-               align = "right")
+        c.text(plain, left + block + 10 + pw, 7, font = "16x20",
+               color = "#22304A", align = "right")
 
 
-def bits(c, ctx):
-    """One row per unit: hours, minutes, seconds as plain binary."""
+def date(c, ctx):
+    """The date in binary: one row per unit, day / month / year."""
     t = local(ctx)
     accent = ctx.inputs.get("accent", "#3FC8FF")
-    rows = [["H", t["hour"], 5], ["M", t["minute"], 6], ["S", t["second"], 6]]
+    rows = [["D", t["day"], 5], ["M", t["month"], 4], ["Y", t["year"] % 100, 7]]
 
     c.fill("#05070E")
     r = 2 if c.width >= 128 else 1
     step = 2 * r + 3
-    y0 = (c.height - 3 * step) // 2 + r
+    # Year is the widest row at 7 bits, so it sets the block width.
+    block = 6 * step + 2 * r + 1
+    lab = c.text_width("D", "4x5") + 3
+
+    # Longest reading is a fixed ten characters ("WED 25 SEP"), but measure
+    # anyway and drop a font rung if it ever outgrows the safe zone.
+    plain = DOW[t["weekday"]] + " " + fmt.pad(t["day"]) + " " + MON[t["month"] - 1]
+    font = "8x12"
+    pw = c.text_width(plain, font)
+    if lab + block + 10 + pw > c.width - 20:
+        font = "6x8"
+        pw = c.text_width(plain, font)
+
+    left = (c.width - (lab + block)) // 2
+    if c.width >= 128:
+        left = (c.width - (lab + block + 10 + pw)) // 2
+    x0 = left + lab + r
+    y0 = (c.height - 2 * step - 2 * r - 1) // 2 + r
 
     for i in range(3):
-        label = rows[i][0]
         val = rows[i][1]
         nbits = rows[i][2]
         y = y0 + i * step
-        c.text(label, 3, y - 2, font = "4x5", color = "#4A5068")
-        x0 = 11 + r
+        c.text(rows[i][0], left, y - 2, font = "4x5", color = "#4A5068")
         for b in range(nbits):
             place = nbits - 1 - b
             p = 1
             for k in range(place):
                 p = p * 2
             dot(c, x0 + b * step, y, r, val // p % 2 == 1, accent)
-        if c.width >= 128:
-            # 4x5, not 6x8: the row pitch here is 7px and an 8px glyph runs
-            # straight into the row below it.
-            c.text(fmt.pad(val), c.width - 6, y - 2, font = "4x5",
-                   color = "#C8D0E8", align = "right")
+    if c.width >= 128:
+        c.text(plain, left + lab + block + 10,
+               (c.height - (12 if font == "8x12" else 8)) // 2,
+               font = font, color = "#2E4066")

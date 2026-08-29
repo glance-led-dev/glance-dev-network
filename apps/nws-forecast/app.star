@@ -222,7 +222,7 @@ def periods(ctx):
     if url == None:
         return None
     f = http.get(url, headers = {"User-Agent": "glance-dev-network (glance-led.com)"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if f["status_code"] != 200 or not f["json"]:
         return None
     return f["json"].get("properties", {}).get("periods", [])

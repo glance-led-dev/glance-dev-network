@@ -58,10 +58,8 @@ def fit(c, text, fonts, maxw):
 
 def tab(c, word, accent, x = 4):
     """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -318,7 +316,7 @@ def read_server(ctx):
     if host == "":
         st["state"] = "setup"
         return st
-    r = http.get(API + host, ttl_seconds = 120)
+    r = http.get(API + host, ttl_seconds = 600)
     if r["status_code"] != 200 or r["json"] == None:
         # mcsrvstat itself being unreachable is NOT the same as the server being
         # down, and saying "OFFLINE" for it would be a lie about someone's world.
@@ -373,7 +371,7 @@ def mc(c, ctx):
     rail(c, "green")
     c.text(clip(c, st["host"], "4x5", 130), 21, 1, font = "4x5", color = "gray")
     if st["version"] != "":
-        c.text(clip(c, st["version"], "4x5", 40), 189, 1, font = "4x5",
+        c.text(clip(c, st["version"], "4x5", 40), 182, 1, font = "4x5",
                color = "midgray", align = "right")
     c.sprite(GRASS_BLOCK, 6, 13, legend = BLOCK_LEGEND)
     c.text("ONLINE", 28, 10, font = "8x12", color = "green")
@@ -423,7 +421,7 @@ def players(c, ctx):
             message(c, "MINECRAFT SERVER", "ADD A SERVER ADDRESS IN SETTINGS")
         return
     rail(c, "green")
-    c.text(str(st["count"]) + " OF " + str(st["max"]), 189, 1, font = "4x5",
+    c.text(str(st["count"]) + " OF " + str(st["max"]), 182, 1, font = "4x5",
            color = "gray", align = "right")
     c.sprite(CREEPER, 8, 12, legend = AWAKE, scale = 2)
     if len(st["players"]) == 0:

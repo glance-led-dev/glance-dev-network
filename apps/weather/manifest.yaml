@@ -1,11 +1,11 @@
 id: weather
-name: Weather
+name: Weather Report
 author: cfdmb
 description: another weather app
 category: Weather
 width: 128
 height: 32
-refresh: 300
+refresh: 3600
 pages:
   - current
   - conditions

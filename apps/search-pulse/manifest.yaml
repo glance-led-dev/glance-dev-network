@@ -9,7 +9,7 @@ entry: app.star
 width: 192
 height: 32
 # Google says Trending Now refreshes about every 10 minutes.
-refresh: 600
+refresh: 900
 pages: [pulse, one, two, three, four, five]
 inputs:
   - key: country

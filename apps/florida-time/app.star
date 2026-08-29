@@ -8,41 +8,75 @@
 # ctx.now (UTC) rather than asking a time API. Nothing to be down, nothing to
 # rate-limit, and no error screen to design: the panel is always right.
 #
-# LAYOUT (128x32). Everything on the right edge is measured from c.width, so a
-# wider panel just gets more black between the clock and the labels.
+# DESIGN. A sunset strip over a beach: the gradient header is the sky, the palm
+# stands on sand at the far left as the app's identity art, and the clock is the
+# hero it shades. The palm is drawn full-height between the two horizontal
+# rules -- one clear pixel under the header bar, one clear pixel over the day
+# bar -- so the panel reads as a single scene rather than an icon parked next to
+# a number.
 #
-#   header  y=0..7    sunset gradient bar: FLORIDA left, local date right
-#   palm    y=11      x=1, 14x16 sprite
-#   time    y=10      x=20, 16x20  (H:MM or HH:MM -- max width 84px)
-#   AM/PM   y=11      right, 6x8   (12-hour mode only)
-#   zone    y=21      right, 5x7   -- green while DST is in effect
-#   bar     y=31      how far through the day it is
+# LAYOUT (128x32). The palm's own size drives the clock's x, and the two labels
+# are placed off the WIDEST clock the field can produce, so nothing moves when
+# the string does.
+#
+#   header  y=0..7     sunset gradient bar: FLORIDA left, local date right
+#   palm    y=9..29    x=1, 17x21 sprite -- 1px clear of the header and the bar
+#   time    y=10..29   x=20, 16x20  ("12:22" is the 84px worst case)
+#   AM/PM   y=11..18   x=108, 6x8   (12-hour mode only)
+#   zone    y=21..27   x=108, 5x7   -- green while DST is in effect
+#   bar     y=31       how far through the day it is
 
 DOW = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
-# Fronds, a leaning trunk, and a little sand. Drawn with c.sprite, so it needs
-# no PNG in the folder and no `assets:` entry in the manifest.
+# A coconut palm, 17x21, baked as a sprite string so the app needs no PNG and
+# no `assets:` entry. Seven fronds arc out of the crown and droop, each one a
+# lit rachis (G, brightening to L at the tip) over a darker pinnae shadow (D),
+# with sky left between them so the crown reads as leaves and not a blob. The
+# trunk leans left as it falls, widening 2px -> 5px into a root flare, lit on
+# the left (H) and shaded on the right (K) with a ring notch every other row.
+# N are the two coconuts under the crown; S/s are the sand mound it stands on.
 PALM = """
-.....ggg......
-...ggggggg....
-..ggg.t.ggg...
-.gg...t...gg..
-gg....tt...gg.
-g.....tt....g.
-......tt......
-.....tt.......
-.....tt.......
-....tt........
-....tt........
-...tt.........
-...tt.........
-..tt..........
-..tt..........
-sssssssssssss.
+........GGL......
+...LGDD.GDDDDD...
+..LLGGG.G.GGGLL..
+..DDDDG.GGGDDDD..
+.LGGGG.GGG.GGGGD.
+LLDDD.GGGGG.DDDLL
+...DDGGGGGGGD....
+..DGGGN.TK.GGGD..
+..LLD...TK.NDL...
+.LD....HTK...DL..
+.......HKK.......
+......HTK........
+......HKK........
+.....HTTK........
+.....HKTK........
+....HTTK.........
+....HKTK.........
+...HTTTK.........
+...HKTTK.........
+SSSSSSSSSSSss....
+SSsSSSsSSsSSSssss
 """
-PALM_COLORS = {"g": "#1FA64A", "t": "#8A5A2B", "s": "#5A4020"}
+PALM_COLORS = {
+    "D": "#0E5C2A",  # frond shadow / pinnae
+    "G": "#1FA64A",  # frond body
+    "L": "#5FE07F",  # sunlit frond tip
+    "T": "#8A5A2B",  # trunk
+    "H": "#B9843F",  # trunk, sunlit edge
+    "K": "#55361A",  # trunk, shaded edge and ring notches
+    "N": "#C87E2C",  # coconuts -- lighter than every trunk tone and held one
+                     # black pixel off the trunk, or they merge into it and
+                     # read as a lumpy collar; staggered a row apart so the
+                     # pair doesn't sit either side of the trunk like eyes
+    "S": "#B08B48",  # sand
+    "s": "#6B5124",  # sand, in shadow
+}
+PALM_ROWS = PALM.strip("\n").split("\n")
+PALM_W = len(PALM_ROWS[0])
+PALM_H = len(PALM_ROWS)
 
 HEADER_A = "#FF8A00"
 HEADER_B = "#FF2E7E"
@@ -50,6 +84,32 @@ TIME_COLOR = "#FFF3D6"
 AMPM_COLOR = "#FFB03A"
 DST_COLOR = "#5FD0A0"
 STD_COLOR = "#9AA6B2"
+
+TIME_FONT = "16x20"
+AMPM_FONT = "6x8"
+ZONE_FONT = "5x7"
+DATE_FONT = "4x5"
+# Starlark has no font-metrics call, so the row counts travel with the app.
+FONTH = {"16x20": 20, "6x8": 8, "5x7": 7, "4x5": 5}
+
+HEADER_H = 8        # the gradient bar owns y=0..7; its bottom rule is y=7
+PALM_X = 1
+PALM_GAP = 2                         # air between the sand and the clock
+TIME_X = PALM_X + PALM_W + PALM_GAP  # = 20
+TIME_Y = 10
+
+# The labels are anchored to the WIDEST clock this field can print, not to the
+# one that happens to be live: every 16x20 digit and the colon are 16px, so
+# "12:22" measures 84px and ends at x=103, while a live "1:22" is 17px shorter.
+# Hanging the labels off the live string would let them slide left at 1 o'clock
+# and jump back at 10; hanging them off the worst case keeps them still.
+WORST_TIME = "12:22"
+LABEL_GAP = 4       # air between the widest clock and the label column
+LABEL_LEAD = 2      # blank rows between AM/PM and the zone
+
+# Margin between the date's last pixel and the right edge. 5px: the date is the
+# quietest thing on the panel and was reading as if it had fallen off the end.
+DATE_MARGIN = 5
 
 # The two zones Florida actually uses: (standard UTC offset, abbreviations).
 ZONES = {
@@ -153,28 +213,55 @@ def main(c, ctx):
             h = 12
     time_s = str(h) + ":" + pad2(t["mi"])
 
-    right = c.width - 2
+    bar_y = c.height - 1
 
     c.fill("black")
 
     # ----- header: the state, and today's date in Florida -----
-    c.gradient_rect(0, 0, c.width - 1, 7, HEADER_A, HEADER_B)
+    c.gradient_rect(0, 0, c.width - 1, HEADER_H - 1, HEADER_A, HEADER_B)
     c.text("FLORIDA", 3, 1, font = "5x7b", color = "black")
+
+    # "WED SEP 30" is the worst case at 45px in 4x5; right-aligned against
+    # c.width - DATE_MARGIN it runs x=78..122, which clears FLORIDA (ends x=43).
     date_s = DOW[t["wd"]] + " " + MONTHS[t["mo"] - 1] + " " + str(t["d"])
-    c.text(date_s, right, 2, font = "4x5", color = "black", align = "right")
+    c.text(date_s, c.width - DATE_MARGIN, 2,
+           font = DATE_FONT, color = "black", align = "right")
 
     # ----- the palm, then the clock -----
-    c.sprite(PALM, 1, 11, legend = PALM_COLORS)
-    c.text(time_s, 20, 10, font = "16x20", color = TIME_COLOR)
+    # The palm is centered in the 23-row band between the header's bottom rule
+    # (y=7) and the day bar (y=31). The art is 21 rows, so that lands its crown
+    # on y=9 and its sand on y=29: exactly one clear black pixel off each rule,
+    # top and bottom. Resize the art and the clearance stays even on both sides.
+    band_h = bar_y - HEADER_H
+    palm_y = HEADER_H + (band_h - PALM_H) // 2
+    c.sprite(PALM, PALM_X, palm_y, legend = PALM_COLORS)
+    c.text(time_s, TIME_X, TIME_Y, font = TIME_FONT, color = TIME_COLOR)
 
+    # ----- AM/PM over the zone, both left-justified in one column -----
+    # LABEL_X = 108. The column's widest string is a 3-letter zone at 17px in
+    # 5x7 (EST/EDT/CST/CDT all measure 17), so it ends at x=124 with 3px to
+    # spare; AM/PM is 13px in 6x8. The pair is centered against the clock's 20
+    # rows, which leaves the lower label ending at y=27 -- 3 rows clear of the
+    # day bar at y=31.
+    label_x = TIME_X + c.text_width(WORST_TIME, TIME_FONT) + LABEL_GAP
+
+    stack = []
     if ampm:
-        c.text(ampm, right, 11, font = "6x8", color = AMPM_COLOR, align = "right")
-    c.text(abbr, right, 21, font = "5x7",
-           color = DST_COLOR if is_dst else STD_COLOR, align = "right")
+        stack.append([ampm, AMPM_FONT, AMPM_COLOR])
+    stack.append([abbr, ZONE_FONT, DST_COLOR if is_dst else STD_COLOR])
+
+    stack_h = LABEL_LEAD * (len(stack) - 1)
+    for row in stack:
+        stack_h += FONTH[row[1]]
+
+    ly = TIME_Y + (FONTH[TIME_FONT] - stack_h) // 2
+    for row in stack:
+        c.text(row[0], label_x, ly, font = row[1], color = row[2])
+        ly += FONTH[row[1]] + LABEL_LEAD
 
     # ----- how far through the day it is -----
     mins = t["h"] * 60 + t["mi"]
-    c.rect(0, 31, c.width - 1, 31, fill = "#241018")
+    c.rect(0, bar_y, c.width - 1, bar_y, fill = "#241018")
     filled = (mins * (c.width - 1)) // 1440
     if filled > 0:
-        c.rect(0, 31, filled, 31, fill = HEADER_A)
+        c.rect(0, bar_y, filled, bar_y, fill = HEADER_A)

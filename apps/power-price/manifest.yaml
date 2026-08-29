@@ -9,7 +9,7 @@ entry: app.star
 
 width: 64
 height: 32
-refresh: 600
+refresh: 14400
 
 pages: [price]
 

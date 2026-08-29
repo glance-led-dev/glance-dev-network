@@ -816,10 +816,10 @@ def alert(c, ctx):
 
     right = ""
     if rec["new"]:
-        c.badge("NEW", c.width - 26, 2, color = "black", bg = col, font = "4x5", pad = 1)
+        c.badge("NEW", c.width - 26, 1, color = "black", bg = col, font = "4x5", pad = 1)
     elif rec["usa"]:
         right = "USA"
-        c.text(right, c.width - 4, 3, font = "5x7", color = "gray", align = "right")
+        c.text(right, c.width - 8, 3, font = "5x7", color = "gray", align = "right")
 
     place = state_label(rec["state"], "UNITED STATES")
     if rec["usa"] and rec["state"] == "":
@@ -832,7 +832,7 @@ def alert(c, ctx):
     if rec["today"]:
         sub = "NEW DECLARATION"
     sfont, sub_t = fit_one(c, sub, ["6x8", "5x7", "4x5"], 182)
-    c.text(sub_t, 6, 23, font = sfont, color = col)
+    c.text(sub_t, 6, 24, font = sfont, color = col)
 
 def incident(c, ctx):
     rec = load_desk(ctx)
@@ -857,8 +857,8 @@ def incident(c, ctx):
     right_w = 0
     if code != "":
         right_w = c.text_width(code, "4x5") + 10
-        c.text(code, c.width - 4, 2, font = "4x5", color = col, align = "right")
-    draw_clipped(c, head, 8, 2, c.width - 12 - right_w, ["5x7", "4x5"], "white")
+        c.text(code, c.width - 8, 2, font = "4x5", color = col, align = "right")
+    draw_clipped(c, head, 8, 1, c.width - 12 - right_w, ["5x7", "4x5"], "white")
 
     draw_incident_icon(c, rec["ikey"], 6, 13, icol)
     title = safe_upper(rec["title"])
@@ -884,9 +884,9 @@ def declared(c, ctx):
     head = "DECLARED"
     if rec["today"]:
         head = "DECLARED TODAY"
-    c.text(head, 8, 2, font = "5x7", color = "white")
+    c.text(head, 8, 1, font = "5x7", color = "white")
     if rec["new"] and not rec["today"]:
-        c.badge("NEW", c.width - 26, 2, color = "black", bg = col, font = "4x5", pad = 1)
+        c.badge("NEW", c.width - 26, 1, color = "black", bg = col, font = "4x5", pad = 1)
 
     when = fmt_date(rec["decl_n"])
     if when == "":
@@ -901,10 +901,10 @@ def declared(c, ctx):
     if rec["begin_n"] > 0 and rec["begin_n"] != rec["decl_n"]:
         began = "BEGAN " + fmt_date_short(rec["begin_n"])
     if began != "":
-        c.text(code, 6, 24, font = "5x7", color = "white")
-        c.text(began, c.width - 4, 24, font = "4x5", color = "gray", align = "right")
+        c.text(code, 6, 25, font = "5x7", color = "white")
+        c.text(began, c.width - 4, 25, font = "4x5", color = "gray", align = "right")
     else:
-        c.text(code, 6, 24, font = "5x7", color = "white")
+        c.text(code, 6, 25, font = "5x7", color = "white")
 
 def aid(c, ctx):
     rec = load_desk(ctx)
@@ -924,10 +924,10 @@ def aid(c, ctx):
 
     has_flags = rec["ia"] or rec["pa"] or rec["hm"]
     if has_flags:
-        c.text("FEMA AID", 8, 2, font = "5x7", color = "white")
+        c.text("FEMA AID", 8, 1, font = "5x7", color = "white")
         if rec["n_areas"] > 1:
             more = areas_label(rec)
-            c.text(more, c.width - 4, 2, font = "4x5", color = col, align = "right")
+            c.text(more, c.width - 8, 2, font = "4x5", color = col, align = "right")
         c.text("PUBLIC", 6, 12, font = "5x7", color = "gray")
         c.text(yesno(rec["pa"]), 58, 12, font = "5x7", color = aid_color(rec["pa"]))
         c.text("INDIVIDUAL", 90, 12, font = "5x7", color = "gray")
@@ -942,7 +942,7 @@ def aid(c, ctx):
         draw_clipped(c, extra, 6, 24, 182, ["5x7", "4x5"], "white")
         return
 
-    c.text("AFFECTED AREA", 8, 2, font = "5x7", color = "white")
+    c.text("AFFECTED AREA", 8, 1, font = "5x7", color = "white")
     area = rec["area"]
     if area == "":
         area = areas_label(rec)

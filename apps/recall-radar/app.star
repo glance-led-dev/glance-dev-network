@@ -1006,7 +1006,7 @@ def draw_header_bar(c, rec, title, ctx):
     c.hline(3, 9, c.width - 3, col)
     maxw = c.width - 8 - header_right_w(c, rec)
     draw_clipped(c, title, 8, 2, maxw, ["5x7", "4x5"], "white")
-    draw_header_right(c, rec, col, 2)
+    draw_header_right(c, rec, col, 1)
 
 # ---------- pages ----------
 
@@ -1026,7 +1026,7 @@ def alert(c, ctx):
         c.rect(0, 0, c.width - 1, 9, fill = "red")
         c.text("CLASS I RECALL", 4, 1, font = "6x8", color = "white")
         if rec["new"]:
-            c.badge("NEW", c.width - 26, 1, color = "black", bg = "yellow", font = "4x5", pad = 1)
+            c.badge("NEW", c.width - 26, 0, color = "black", bg = "yellow", font = "4x5", pad = 1)
         c.text(cat_word(rec["cat"]), 6, 13, font = "7x12", color = "white")
         c.text("DATA: FDA", c.width - 5, 24, font = "4x5", color = "gray", align = "right")
         return
@@ -1034,7 +1034,7 @@ def alert(c, ctx):
     draw_frame(c, rec, False)
     c.text("RECALL RADAR", 6, 2, font = "5x7", color = "white")
     if rec["new"]:
-        c.badge("NEW", c.width - 24, 2, color = "black", bg = col, font = "4x5", pad = 1)
+        c.badge("NEW", c.width - 24, 1, color = "black", bg = col, font = "4x5", pad = 1)
     if key == "PENDING":
         c.text("FDA ALERT", 6, 12, font = "6x8", color = col)
         c.text(cat_word(rec["cat"]) + " RECALL", 6, 22, font = "5x7", color = "white")
@@ -1088,7 +1088,7 @@ def details(c, ctx):
     c.hline(3, 9, c.width - 3, col)
     maxw = c.width - 8 - header_right_w(c, rec)
     draw_clipped(c, title, 8, 2, maxw, ["4x5"], "white")
-    draw_header_right(c, rec, col, 2)
+    draw_header_right(c, rec, col, 1)
 
     # Mid line is the product — more useful than repeating the firm/brand.
     mid = product

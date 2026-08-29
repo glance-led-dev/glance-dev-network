@@ -9,7 +9,7 @@ entry: app.star
 width: 192
 height: 32
 # Press-release list can update the same day.
-refresh: 1800
+refresh: 3600
 pages: [alert, product, reason, details]
 inputs:
   - key: category

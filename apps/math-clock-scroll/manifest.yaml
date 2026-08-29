@@ -1,7 +1,7 @@
 gdn: 1
 id: math-clock-scroll
 version: 0.1.0
-name: Math Clock (Scroll)
+name: Math Clock
 author: glance-led-dev
 description: Read the time by solving it — each unit shown as a small arithmetic problem.
 category: Fun

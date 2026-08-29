@@ -103,12 +103,12 @@ def countdown(c, ctx):
     cx = (ZONEL + ZONER) // 2
 
     if n == 0:
-        c.text("HAPPY", cx, 1, font = "6x8", color = accent, align = "center")
-        c.text("HALLOWEEN", cx, 11, font = "10x16", color = "white",
-               align = "center")
+        c.text_stroke("HAPPY", cx, 1, font = "6x8", color = accent, align = "center")
+        c.text_stroke("HALLOWEEN", cx, 11, font = "10x16", color = "white",
+                      align = "center")
         return
 
-    c.text("HALLOWEEN", cx, 0, font = "6x8", color = accent, align = "center")
+    c.text_stroke("HALLOWEEN", cx, 0, font = "6x8", color = accent, align = "center")
 
     numstr = str(n)
     numfont = "16x20"
@@ -123,6 +123,6 @@ def countdown(c, ctx):
         labw = datew
 
     x0 = cx - (numw + 4 + labw) // 2
-    c.text(numstr, x0, 8, font = numfont, color = "white")
-    c.text(daystr, x0 + numw + 4, 10, font = "5x7", color = accent)
-    c.text("OCT 31", x0 + numw + 4, 19, font = "4x5", color = "#9a7fd0")
+    c.text_stroke(numstr, x0, 9, font = numfont, color = "white")
+    c.text_stroke(daystr, x0 + numw + 4, 11, font = "5x7", color = accent)
+    c.text_stroke("OCT 31", x0 + numw + 4, 20, font = "4x5", color = "#9a7fd0")

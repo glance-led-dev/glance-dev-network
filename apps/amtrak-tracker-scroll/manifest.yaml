@@ -1,7 +1,7 @@
 gdn: 1
 id: amtrak-tracker-scroll
 version: 0.1.0
-name: Amtrak Tracker (Scroll)
+name: Amtrak Tracker
 author: glance-led-dev
 description: "Where your Amtrak train actually is, how late it is, and its next stop."
 category: Transportation

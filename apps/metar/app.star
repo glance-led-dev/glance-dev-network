@@ -58,10 +58,8 @@ def fit(c, text, fonts, maxw):
 
 def tab(c, word, accent, x = 4):
     """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -294,7 +292,7 @@ def read_metar(ctx):
     if ids == "":
         st["state"] = "setup"
         return st
-    r = http.get(AWC + ids, ttl_seconds = 600)
+    r = http.get(AWC + ids, ttl_seconds = 1800)
     if r["status_code"] != 200 or r["json"] == None:
         st["state"] = "offline"
         return st
@@ -446,9 +444,7 @@ def metar(c, ctx):
     # The badge. A filled chip in the category's own colour, black text, so the
     # answer survives being seen from an angle or through a workshop door.
     if m["cat"] != "":
-        bw = c.text_width(m["cat"], "6x8")
-        c.round_rect(46, 10, 46 + bw + 5, 21, 2, fill = col)
-        c.text(m["cat"], 49, 12, font = "6x8", color = "black")
+        c.badge(m["cat"], 46, 11, color = "black", bg = col, font = "6x8", pad = 3)
 
     if m["wspd"] > 0 and str(m["wdir"]).upper() != "VRB" and m["wdir"] != None:
         arrow(c, 112, 16, (m["wdir"] + 180) % 360, "#7FE9FF", 8)
@@ -483,7 +479,7 @@ def sky(c, ctx):
     col = cat_of(m)[0]
     rail(c, col)
     tab(c, "SKY", col)
-    c.text(m["id"], 188, 2, font = "4x5", color = DIM, align = "right")
+    c.text(m["id"], 182, 2, font = "4x5", color = DIM, align = "right")
 
     c.line(4, GND, 100, GND, STRUCT)
 
@@ -514,11 +510,11 @@ def sky(c, ctx):
         if shown < 3:
             ty = 9 + shown * 6
             c.text(cv, 106, ty, font = "4x5", color = lc)
-            c.text(fmt.commas(base) + "FT", 188, ty, font = "4x5", color = DIM,
+            c.text(fmt.commas(base) + "FT", 182, ty, font = "4x5", color = DIM,
                    align = "right")
             shown += 1
     if len(order) > 3:
-        c.text("+" + str(len(order) - 3) + " MORE", 188, 27, font = "4x5",
+        c.text("+" + str(len(order) - 3) + " MORE", 182, 27, font = "4x5",
                color = "midgray", align = "right")
 
     line = ""

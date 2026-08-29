@@ -3,7 +3,7 @@
 gdn: 1
 id: motorsports-live-scroll
 version: 0.1.0
-name: Motorsports Live (Scroll)
+name: Motorsports Live
 author: jdhine02
 description: Broadcast-style live leaderboard for NASCAR Cup, O'Reilly, Trucks, and Formula 1 — series logo, event info, flag state, lap and stage progress, and a rotating full-field board with car numbers, gaps to the leader, and playoff/chase status (NASCAR only). Between sessions, shows the next scheduled race — track, date, and time — in your local time zone.
 category: Sports

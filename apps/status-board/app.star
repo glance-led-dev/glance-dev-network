@@ -311,7 +311,7 @@ def read_board(ctx):
     reached = 0
     for k in picks:
         sv = SERVICES[k]
-        r = http.get(sv[1] + "/api/v2/status.json", ttl_seconds = 300)
+        r = http.get(sv[1] + "/api/v2/status.json", ttl_seconds = 900)
         if r["status_code"] != 200 or r["json"] == None:
             # One unreachable service is not a broken app. It gets a grey row
             # and the others still report.

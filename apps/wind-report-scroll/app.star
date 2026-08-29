@@ -103,7 +103,7 @@ def wind(c, ctx):
                            "current": "wind_speed_10m,wind_gusts_10m,wind_direction_10m",
                            "wind_speed_unit": "kmh" if metric else "mph",
                            "timezone": "auto"},
-                 ttl_seconds = 900)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO WIND DATA", "NO CONNECTION")
         return
@@ -119,15 +119,19 @@ def wind(c, ctx):
     c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#08131C", "#1E3648",
                     horizontal = False)
     n = 24 if c.width >= 128 else 16
-    c.image("WINDSOCK.png", 2, 3, w = n, h = n)
+    if c.width >= 128:
+        c.badge("WIND", 6, 0, color = "black", bg = "#7FB6E8", font = "4x5")
+        c.image("WINDSOCK.png", 6, c.height - n - 1, w = n, h = n)
+    else:
+        c.image("WINDSOCK.png", 2, 3, w = n, h = n)
 
     if c.width >= 128:
-        c.text(str(int(speed)), 30, 6, font = "16x20", color = b[2])
-        c.text(unit, 30 + c.text_width(str(int(speed)), "16x20") + 3, 19,
+        c.text(str(int(speed)), 34, 6, font = "16x20", color = b[2])
+        c.text(unit, 34 + c.text_width(str(int(speed)), "16x20") + 3, 19,
                font = "5x7", color = "#7C90A8")
-        c.text_fit(b[1], c.width - 6, 3, ["10x16", "6x8", "5x7"], color = b[2],
+        c.text_fit(b[1], c.width - 10, 3, ["10x16", "6x8", "5x7"], color = b[2],
                    align = "right", maxw = c.width - 110)
-        c.text("GUST " + str(int(gust)) + "   " + card, c.width - 6, 22,
+        c.text("GUST " + str(int(gust)) + "   " + card, c.width - 10, 22,
                font = "6x8", color = "#A8BCD0", align = "right")
     else:
         c.text_fit(str(int(speed)), c.width - 2, 3, ["16x20", "10x16"],

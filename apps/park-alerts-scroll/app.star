@@ -274,11 +274,9 @@ def alerts(c, ctx):
                     horizontal = False)
     c.rect(0, 0, c.width - 1, 6, fill = col)
     if c.width >= 128:
-        c.text(clip(c, cat, "4x5", c.width - 60), 3, 1, font = "4x5",
+        line = "NPS " + cat + " - " + chosen + " " + str(len(rows))
+        c.text(clip(c, line, "4x5", c.width - 20), 10, 1, font = "4x5",
                color = "#0A1A10")
-        c.text(fitwords(c, chosen, "4x5", 96) + "  " + str(len(rows)),
-               c.width - 3, 1, font = "4x5", color = "#0A1A10",
-               align = "right")
     else:
         # The banner colour already carries the category on the small panel.
         c.text(clip(c, chosen, "4x5", c.width - 8), 3, 1, font = "4x5",

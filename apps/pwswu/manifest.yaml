@@ -4,7 +4,7 @@ author: Brayden Slater
 description: Personal Weather Station display with current conditions, wind, and rain data from Weather Underground
 width: 192
 height: 32
-refresh: 120
+refresh: 1800
 pages:
   - main
   - wind

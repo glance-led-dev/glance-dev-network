@@ -121,7 +121,7 @@ def surf(c, ctx):
                  params = {"latitude": str(g[0]), "longitude": str(g[1]),
                            "current": "wave_height,wave_period,wave_direction",
                            "timezone": "auto"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO SURF DATA", "NO CONNECTION")
         return

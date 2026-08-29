@@ -105,16 +105,22 @@ def price(c, ctx):
     c.image("PLUG.png", 1, (c.height - sz) // 2, w = sz, h = sz)
 
     if c.width >= 128:
-        c.text("CENTS PER KWH", 28, 1, font = "4x5", color = "#8A9060")
-        c.text_fit(str(int(now * 10) / 10.0), 28, 7, ["16x20", "10x16"],
-                   color = col, maxw = c.width - 120)
-        c.text(verdict, c.width - 6, 4, font = "10x16", color = col,
+        # Title row names the app; content sits 4px further toward the middle
+        # on both sides so nothing rides the edges while scrolling.
+        c.text("POWER PRICE - CENTS PER KWH", 32, 1, font = "4x5",
+               color = "#8A9060")
+        c.text_fit(str(int(now * 10) / 10.0), 32, 7, ["16x20", "10x16"],
+                   color = col, maxw = c.width - 124)
+        c.text(verdict, c.width - 10, 7, font = "10x16", color = col,
                align = "right")
-        c.text(arrow, c.width - 6, 22, font = "6x8", color = "#B0B890",
+        c.text(arrow, c.width - 10, 24, font = "6x8", color = "#B0B890",
                align = "right")
     else:
-        c.text_fit(str(int(now * 10) / 10.0), c.width - 2, 3,
-                   ["16x20", "10x16"], color = col, align = "right",
+        # Number and verdict centred in the space between the plug art and
+        # the right edge, instead of hugging the edge.
+        cxm = (17 + c.width) // 2
+        c.text_fit(str(int(now * 10) / 10.0), cxm, 3,
+                   ["16x20", "10x16"], color = col, align = "center",
                    maxw = c.width - 20)
-        c.text_fit(verdict, c.width - 2, 25, ["4x5", "3x4"], color = col,
-                   align = "right", maxw = c.width - 4)
+        c.text_fit(verdict, cxm, 25, ["4x5", "3x4"], color = col,
+                   align = "center", maxw = c.width - 20)

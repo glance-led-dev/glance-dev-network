@@ -1,7 +1,7 @@
 gdn: 1
 id: aurora-watch-scroll
 version: 0.1.0
-name: Aurora Watch (Scroll)
+name: Aurora Watch
 author: glance-led-dev
 description: The planetary K index right now, and whether the aurora is worth stepping outside for.
 category: Science
@@ -9,6 +9,6 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 900
+refresh: 1800
 
 pages: [kp]

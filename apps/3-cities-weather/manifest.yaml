@@ -4,7 +4,7 @@ author: drb
 description: A simple app to look at the current weather in 3 cities.
 width: 64
 height: 32
-refresh: 600
+refresh: 900
 
 pages:
   - weather

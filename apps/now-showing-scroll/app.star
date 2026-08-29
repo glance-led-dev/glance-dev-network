@@ -36,7 +36,7 @@ def _clean_year(v):
 # ---------- OMDb ----------
 
 def omdb_get(params):
-    r = http.get("https://www.omdbapi.com/", params = params, ttl_seconds = 3600)
+    r = http.get("https://www.omdbapi.com/", params = params, ttl_seconds = 86400)
     if r["status_code"] != 200:
         return None, "HTTP " + str(r["status_code"])
     j = r["json"]

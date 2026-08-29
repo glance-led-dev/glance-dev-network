@@ -1,7 +1,7 @@
 gdn: 1
 id: stripe-revenue-scroll
 version: 0.1.0
-name: Stripe Revenue (Scroll)
+name: Stripe Revenue
 author: glance-led-dev
 description: Your available Stripe balance, per currency, at a glance.
 category: Finance

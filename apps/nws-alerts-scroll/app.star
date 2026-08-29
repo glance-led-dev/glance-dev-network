@@ -162,6 +162,8 @@ def alert(c, ctx):
     feats = r["json"].get("features", [])
     if len(feats) == 0:
         c.fill("#06110A")
+        c.text("NATIONAL WEATHER SERVICE", c.width // 2, 2, font = "4x5",
+               color = "#3E6E52", align = "center")
         c.text("ALL CLEAR", c.width // 2, c.height // 2 - 8,
                font = "10x16" if c.width >= 128 else "6x8",
                color = "#4EE38A", align = "center")
@@ -179,5 +181,7 @@ def alert(c, ctx):
     c.rect(0, 0, c.width - 1, 6, fill = col)
     c.text(sev + (" - " + str(len(feats)) if len(feats) > 1 else ""),
            3, 1, font = "4x5", color = "#12060A")
+    c.text("NATIONAL WEATHER SERVICE", c.width - 3, 1, font = "4x5",
+           color = "#12060A", align = "right")
     block(c, event, 3, 9, c.width - 6, 21,
           ["10x16", "6x8", "5x7", "4x5"], col, 1)

@@ -89,6 +89,18 @@ SYMBOL = {"USD": "$", "EUR": "E", "GBP": "L", "JPY": "Y", "AUD": "A$",
           "CAD": "C$"}
 
 
+def money_abbrev(v, sym):
+    """$4.8M-style truncation, only used when the full number cannot fit."""
+    for div, tag in [(1000000000, "B"), (1000000, "M"), (1000, "K")]:
+        if v >= div:
+            whole = int(v // div)
+            tenth = int((v % div) * 10 // div)
+            if whole >= 100 or tenth == 0:
+                return sym + str(whole) + tag
+            return sym + str(whole) + "." + str(tenth) + tag
+    return sym + str(int(v))
+
+
 def money(amount, cur):
     up = cur.upper()
     div = 1.0
@@ -127,12 +139,29 @@ def balance(c, ctx):
     c.fill("#080A12")
     if c.width >= 128 and rows == 1:
         a = avail[0]
-        c.text("STRIPE AVAILABLE", 6, 2, font = "5x7", color = "#6A72A8")
-        c.text_fit(money(float(a.get("amount", 0) or 0), str(a.get("currency", ""))),
-                   6, 10, ["16x20", "10x16"], color = "#8FA8FF",
-                   maxw = c.width - 60)
-        c.text(str(a.get("currency", "")).upper(), c.width - 6, 14,
-               font = "10x16", color = "#4E5680", align = "right")
+        cur = str(a.get("currency", "")).upper()
+        raw = float(a.get("amount", 0) or 0)
+        c.text_stroke("STRIPE AVAILABLE", 6, 2, font = "5x7",
+                      color = "#6A72A8", stroke = "black")
+        # full number when it fits, K/M/B truncation when it cannot
+        amt = money(raw, cur)
+        maxw = c.width - 60
+        font = "16x20"
+        if c.text_width(amt, font) > maxw:
+            font = "10x16"
+        if c.text_width(amt, font) > maxw:
+            div = 1.0 if cur in ZERO_DECIMAL else 100.0
+            amt = money_abbrev(raw / div, SYMBOL.get(cur, ""))
+            font = "16x20" if c.text_width(amt, "16x20") <= maxw else "10x16"
+        c.text_stroke(amt, 6, 10, font = font, color = "#8FA8FF",
+                      stroke = "black")
+        # currency code rides 3px off the end of the number
+        ux = 6 + c.text_width(amt, font) + 3
+        c.text_stroke(cur, ux, 14, font = "10x16", color = "#4E5680",
+                      stroke = "black")
+        # stripe mark: 7px tall, right edge 10px off the panel edge
+        c.round_rect(c.width - 16, 2, c.width - 10, 8, 2, fill = "#635BFF")
+        c.text("S", c.width - 14, 3, font = "4x5", color = "white")
         if is_demo(ctx):
             demo_badge(c)
         return

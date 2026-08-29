@@ -148,6 +148,37 @@ def eastern_offset(ctx):
     return -5 + (1 if is_dst(uy, umo, ud, usecs // 3600) else 0)
 
 
+# 1px silhouette outline of BELL.png at its drawn 24x24 size, offset (-1,-1).
+BELL_EDGE = """
+..........................
+..........####............
+..........#..#............
+.........##..##...........
+........##....##..........
+.......##......##.........
+.......#........#.........
+......##........##........
+......#..........#........
+.....##..........##.......
+.....#............#.......
+.....#............#.......
+....##............##......
+....#..............#......
+....#..............#......
+...##..............##.....
+...#................#.....
+..##................##....
+..#..................#....
+..#..................#....
+..#######......#######....
+........##....##..........
+.........######...........
+..........................
+..........................
+..........................
+"""
+
+
 def bell(c, ctx):
     off = eastern_offset(ctx)
     shifted = ctx.now.unix + int(off * 3600)
@@ -204,8 +235,12 @@ def bell(c, ctx):
     # Centred on the Scroll, which has the width to put text beside it. On
     # 64px the state needs a full-width row of its own along the bottom, so
     # the bell moves to the top-left to stay out of it.
-    c.image("BELL.png", 1, (c.height - sz) // 2 if c.width >= 128 else 1,
-            w = sz, h = sz)
+    by = (c.height - sz) // 2 if c.width >= 128 else 1
+    if c.width >= 128:
+        # 1px black outline traced from the bell's own silhouette, so the art
+        # carries the same black border as the stroked text.
+        c.sprite(BELL_EDGE, 0, by - 1, color = "black")
+    c.image("BELL.png", 1, by, w = sz, h = sz)
 
     if c.width >= 128:
         # The state used to share a row with the note: it was left-aligned at
@@ -218,17 +253,17 @@ def bell(c, ctx):
         if left != "":
             # OPEN / PRE-MARKET: the countdown is the answer, so it keeps the
             # big font and the state name gives way.
-            c.text_fit(state, 28, 0, ["10x16", "8x12", "6x8"], color = col,
-                       maxw = c.width - 34)
-            c.text(note, 28, 18, font = "5x7", color = "#8A92AC")
-            c.text(left, c.width - 6, 16, font = "10x16", color = "#FFFFFF",
-                   align = "right")
+            sf = _fit_clip(c, state, ["10x16", "8x12", "6x8"], c.width - 34)
+            c.text_stroke(sf[1], 28, 0, font = sf[0], color = col)
+            c.text_stroke(note, 28, 18, font = "5x7", color = "#8A92AC")
+            c.text_stroke(left, c.width - 6, 16, font = "10x16",
+                          color = "#FFFFFF", align = "right")
         else:
             # CLOSED / AFTER HOURS: there is no countdown, so the state itself
             # is the message and takes the full width above the note.
-            c.text_fit(state, 28, 2, ["16x20", "10x16", "8x12"], color = col,
-                       maxw = c.width - 34)
-            c.text(note, 28, 23, font = "6x8", color = "#8A92AC")
+            sf = _fit_clip(c, state, ["16x20", "10x16", "8x12"], c.width - 34)
+            c.text_stroke(sf[1], 28, 2, font = sf[0], color = col)
+            c.text_stroke(note, 28, 23, font = "6x8", color = "#8A92AC")
     else:
         # 64px had the same fault as the wide panel and worse: text_fit still
         # draws when even its smallest option overflows, so "AFTER HOURS" and
@@ -246,8 +281,8 @@ def bell(c, ctx):
                 top = "WEEKEND"
         if top != "":
             tf = _fit_clip(c, top, ["6x8", "5x7", "4x5"], c.width - 20)
-            c.text(tf[1], c.width - 2, 3, font = tf[0], color = "#DCE0F0",
-                   align = "right")
+            c.text_stroke(tf[1], c.width - 2, 3, font = tf[0],
+                          color = "#DCE0F0", align = "right")
         sf = _fit_clip(c, state, ["6x8", "5x7", "4x5"], c.width - 4)
-        c.text(sf[1], c.width // 2, 20, font = sf[0], color = col,
-               align = "center")
+        c.text_stroke(sf[1], c.width // 2, 20, font = sf[0], color = col,
+                      align = "center")

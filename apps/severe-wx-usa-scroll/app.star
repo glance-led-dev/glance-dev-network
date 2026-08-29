@@ -58,10 +58,8 @@ def fit(c, text, fonts, maxw):
 
 def tab(c, word, accent, x = 4):
     """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -316,7 +314,7 @@ BOLT = """
 
 def read_alerts(ctx):
     st = {"state": "ok", "total": 0, "extreme": 0, "fams": [], "states": []}
-    r = http.get(API, headers = UA, ttl_seconds = 300)
+    r = http.get(API, headers = UA, ttl_seconds = 900)
     if r["status_code"] != 200 or r["json"] == None:
         st["state"] = "offline"
         return st
@@ -379,7 +377,7 @@ def usa(c, ctx):
         return
     col = top_color(st)
     rail(c, col)
-    c.text("SEVERE + EXTREME NOW", 190, 2, font = "4x5", color = "gray",
+    c.text("SEVERE + EXTREME NOW", 186, 2, font = "4x5", color = "gray",
            align = "right")
     hf = fit(c, str(st["total"]), ["16x20", "10x16"], 60)
     c.text(hf[1], 6, 9, font = hf[0], color = col)
@@ -400,7 +398,7 @@ def usa(c, ctx):
         f = st["fams"][i]
         y = 10 + i * 7
         c.rect(102, y, 104, y + 4, fill = f[2])
-        c.text(str(f[1]), 190, y, font = "4x5", color = "white", align = "right")
+        c.text(str(f[1]), 186, y, font = "4x5", color = "white", align = "right")
         c.text(clip(c, f[0], "4x5", 60), 108, y, font = "4x5", color = f[2])
 
 def hazards(c, ctx):
@@ -415,7 +413,7 @@ def hazards(c, ctx):
             message(c, "ALL QUIET", "NO SEVERE ALERTS NATIONWIDE")
         return
     rail(c, top_color(st))
-    c.text(str(len(st["fams"])) + " KINDS", 190, 2, font = "4x5", color = "gray",
+    c.text(str(len(st["fams"])) + " KINDS", 186, 2, font = "4x5", color = "gray",
            align = "right")
     top = st["fams"][0][1] if len(st["fams"]) > 0 else 1
     for i in range(len(st["fams"])):
@@ -426,11 +424,11 @@ def hazards(c, ctx):
         c.text(clip(c, f[0], "4x5", 60), 4, y, font = "4x5", color = f[2])
         # Bars share one scale, so the shape of the outbreak is comparable
         # across rows rather than each row filling its own width.
-        w = f[1] * 92 // top
+        w = f[1] * 86 // top
         if w < 1:
             w = 1
         c.rect(68, y, 68 + w - 1, y + 4, fill = f[2])
-        c.text(str(f[1]), 190, y, font = "4x5", color = "white", align = "right")
+        c.text(str(f[1]), 186, y, font = "4x5", color = "white", align = "right")
 
 def states(c, ctx):
     c.fill("black")
@@ -444,7 +442,7 @@ def states(c, ctx):
             message(c, "ALL QUIET", "NO SEVERE ALERTS NATIONWIDE")
         return
     rail(c, top_color(st))
-    c.text(str(len(st["states"])) + " STATES", 190, 2, font = "4x5",
+    c.text(str(len(st["states"])) + " STATES", 186, 2, font = "4x5",
            color = "gray", align = "right")
     if len(st["states"]) == 0:
         message(c, "NO LAND ALERTS", "ONLY MARINE ZONES ARE ACTIVE")
@@ -456,12 +454,12 @@ def states(c, ctx):
         if i > 7:
             break
         s = st["states"][i]
-        cx = 4 if i < 4 else 100
+        cx = 5 if i < 4 else 100
         y = 9 + (i % 4) * 6
         c.text(s[0], cx, y, font = "4x5", color = "white")
-        w = s[1] * 52 // top
+        w = s[1] * 49 // top
         if w < 1:
             w = 1
-        c.rect(cx + 16, y, cx + 16 + w - 1, y + 4, fill = col)
-        c.text(str(s[1]), cx + 88, y, font = "4x5", color = "gray",
+        c.rect(cx + 14, y, cx + 14 + w - 1, y + 4, fill = col)
+        c.text(str(s[1]), cx + 84, y, font = "4x5", color = "gray",
                align = "right")

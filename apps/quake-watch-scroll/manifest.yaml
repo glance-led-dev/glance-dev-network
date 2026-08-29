@@ -1,7 +1,7 @@
 gdn: 1
 id: quake-watch-scroll
 version: 0.1.0
-name: Quake Watch (Scroll)
+name: Quake Watch
 author: glance-led-dev
 description: "The most recent magnitude 2.5+ earthquakes worldwide, biggest first."
 category: Science
@@ -9,6 +9,6 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 900
+refresh: 3600
 
-pages: [biggest, recent]
+pages: [splash, biggest, recent]

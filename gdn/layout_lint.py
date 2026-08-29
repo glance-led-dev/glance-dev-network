@@ -173,8 +173,31 @@ def _height(fonts) -> int:
     return max(hs) if hs else 8
 
 
+def _fn_spans(src: str) -> list:
+    """(first_line, last_line, name) for every top-level def."""
+    spans, cur = [], None
+    lines = src.splitlines()
+    for i, ln in enumerate(lines, 1):
+        m = re.match(r"^def\s+([A-Za-z_]\w*)\s*\(", ln)
+        if m:
+            if cur:
+                spans.append((cur[0], i - 1, cur[1]))
+            cur = (i, m.group(1))
+    if cur:
+        spans.append((cur[0], len(lines), cur[1]))
+    return spans
+
+
+def _fn_at(spans, line):
+    for lo, hi, name in spans:
+        if lo <= line <= hi:
+            return name
+    return ""
+
+
 def _draws(src: str, width: int) -> list:
     ok = _branch_ok(src, width)
+    spans = _fn_spans(src)
     out = []
     for m in _CALL.finditer(src):
         fn, args = m.group(1), _split_args(m.group("args"))
@@ -197,7 +220,7 @@ def _draws(src: str, width: int) -> list:
             "center" if fn == "text_center" else "left")
         fonts_tok = args[3] if (fn == "text_fit" and len(args) > 3) else _kwarg(args, "font")
         out.append({
-            "line": line, "x": x, "y": y, "align": align,
+            "line": line, "fn": _fn_at(spans, line), "x": x, "y": y, "align": align,
             "fonts": _FONT.findall(fonts_tok) if fonts_tok else ["5x7"],
             "maxw": _number(_kwarg(args, "maxw"), width), "expr": args[0],
         })
@@ -213,6 +236,12 @@ def layout_warnings(src: str, width: int) -> list:
         if left["align"] != "left" or left["x"] is None:
             continue
         for right in draws:
+            # Two draws in different functions are two different PAGES and can
+            # never be on the panel together. Comparing them reported a splash
+            # screen's title as overlapping another page's body text, which is
+            # a false alarm that teaches people to ignore the linter.
+            if left["fn"] != right["fn"]:
+                continue
             if right is left or right["align"] != "right" or right["x"] is None:
                 continue
             lb = (left["y"], left["y"] + _height(left["fonts"]) - 1)

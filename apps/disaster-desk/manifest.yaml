@@ -9,7 +9,7 @@ entry: app.star
 width: 192
 height: 32
 # OpenFEMA refreshes about every 20 minutes. Half an hour is enough.
-refresh: 1800
+refresh: 3600
 pages: [alert, incident, declared, aid]
 inputs:
   - key: area

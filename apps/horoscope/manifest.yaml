@@ -9,7 +9,7 @@ entry: app.star
 width: 192
 height: 32
 # Re-render often enough to rotate through multiple signs; API TTL still caches readings.
-refresh: 120
+refresh: 1800
 pages: [main]
 
 inputs:

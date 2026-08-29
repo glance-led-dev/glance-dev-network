@@ -1,6 +1,6 @@
 gdn: 1
 id: steam-players
-version: 0.3.1
+version: 0.4.0
 name: Steam Players
 author: reyos86
 description: Live Steam player counts plus review %, price/F2P, genre, and year for AppIDs you type in.
@@ -8,9 +8,9 @@ category: Games
 entry: app.star
 width: 192
 height: 32
-# Rotate multi-game picks on refresh; player/news TTL-cache separately.
-refresh: 120
-pages: [main]
+# GAMES lists every configured AppID at once; DETAIL rotates through them.
+refresh: 1800
+pages: [games, detail]
 
 inputs:
   - key: game1

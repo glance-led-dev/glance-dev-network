@@ -169,7 +169,7 @@ def draw(c, ctx, n):
     if url == "":
         nodata(c, "NO FEED", "SET A FEED URL")
         return
-    r = http.get(url, ttl_seconds = 900,
+    r = http.get(url, ttl_seconds = 3600,
                  headers = {"User-Agent": "glance-dev-network (glance-led.com)"})
     if r["status_code"] != 200 or r["body"] == "":
         nodata(c, "NO FEED DATA", "CHECK THE URL")

@@ -96,6 +96,17 @@ def fit_font(c, text, options, maxw):
             return f
     return options[len(options) - 1]
 
+def clip_text(c, text, font, maxw):
+    # Last resort once the smallest font still overruns: chop characters off
+    # the end until it fits. Keeps a long name inside its column.
+    if c.text_width(text, font) <= maxw:
+        return text
+    for i in range(len(text)):
+        cut = text[:len(text) - 1 - i]
+        if c.text_width(cut, font) <= maxw:
+            return cut
+    return ""
+
 # ---------- page ----------
 
 def neo(c, ctx):
@@ -181,17 +192,22 @@ def neo(c, ctx):
     # Number goes big; the unit is spelled out beside it so nobody has to
     # guess what "LD" means.
     dist = _ld_num(best_ld)
-    dfont = fit_font(c, dist, ["10x16", "7x12", "6x8"], 52)
+    dfont = fit_font(c, dist, ["10x16", "7x12", "6x8"], 50)
     c.text(dist, 30, 8, font=dfont, color=col)
 
     ux = 30 + c.text_width(dist, dfont) + 3
     c.text("LUNAR", ux, 10, font="4x5", color=col)
     c.text("DIST", ux, 17, font="4x5", color=col)
 
-    c.text(name, 30, 25, font=fit_font(c, name, ["5x7", "4x5"], 86), color=MUTED)
+    # Name column stops short of the divider at 110.
+    nfont = fit_font(c, name, ["5x7", "4x5"], 77)
+    c.text(clip_text(c, name, nfont, 77), 30, 25, font=nfont, color=MUTED)
 
     # ----- right column: the details -----
-    c.rect(120, 3, 120, 28, fill=DIM)        # divider
+    # Divider, labels and stats all sit 10px further left than they used to,
+    # and each stat starts in a fixed column right beside its label instead
+    # of being flung out to the right edge.
+    c.rect(110, 3, 110, 28, fill=DIM)        # divider
 
     rows = [
         ["DIST", _big(miles) + " MI"],
@@ -201,6 +217,12 @@ def neo(c, ctx):
 
     y = 5
     for row in rows:
-        c.text(row[0], 126, y, font="4x5", color=DIM)
-        c.text(row[1], 190, y, font="4x5", color="white", align="right")
+        c.text(row[0], 116, y, font="4x5", color=DIM)
+        # 139..180 is all the stat gets; drop a rung, then clip, if a value
+        # ever runs long.
+        vfont = fit_font(c, row[1], ["4x5", "3x4"], 41)
+        vy = y
+        if vfont == "3x4":
+            vy = y + 1
+        c.text(clip_text(c, row[1], vfont, 41), 139, vy, font=vfont, color="white")
         y = y + 9

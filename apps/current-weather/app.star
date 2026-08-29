@@ -199,7 +199,7 @@ def fetch_weather(lat, lon):
             "timezone": "auto",
             "forecast_days": "4",
         },
-        ttl_seconds=60,
+        ttl_seconds=3600,
     )
 
 
@@ -295,7 +295,7 @@ def fetch_alerts(lat, lon):
         "https://api.weather.gov/alerts/active",
         params={"point": str(lat) + "," + str(lon)},
         headers={"User-Agent": "GDN-Weather-App (glance-led-panel)", "Accept": "application/geo+json"},
-        ttl_seconds=60,
+        ttl_seconds=3600,
     )
 
 

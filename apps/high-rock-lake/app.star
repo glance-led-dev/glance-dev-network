@@ -113,7 +113,7 @@ def _extract_number_after(text, landmark, window=40):
 
 
 def _fetch_level_and_temp():
-    resp = http.get(LEVEL_URL, ttl_seconds=900)
+    resp = http.get(LEVEL_URL, ttl_seconds=3600)
     if resp["status_code"] != 200 or resp["body"] == "":
         return None, None
     clean = _strip_tags(resp["body"][:_SCAN_CAP])
@@ -123,7 +123,7 @@ def _fetch_level_and_temp():
 
 
 def _fetch_forecast():
-    resp = http.get(FORECAST_URL, ttl_seconds=900)
+    resp = http.get(FORECAST_URL, ttl_seconds=3600)
     if resp["status_code"] != 200 or resp["body"] == "":
         return "?"
     body = resp["body"][:_SCAN_CAP]

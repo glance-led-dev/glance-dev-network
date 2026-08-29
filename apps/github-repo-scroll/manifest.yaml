@@ -1,7 +1,7 @@
 gdn: 1
 id: github-repo-scroll
 version: 0.1.0
-name: GitHub Repo (Scroll)
+name: GitHub Repo
 author: glance-led-dev
 description: Stars, forks and open issues for any public repository.
 category: Other

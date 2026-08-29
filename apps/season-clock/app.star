@@ -45,7 +45,7 @@ def offset_hours(ctx):
         "https://timeapi.io/api/TimeZone/coordinate",
         params = {"latitude": places[0]["latitude"],
                   "longitude": places[0]["longitude"]},
-        ttl_seconds = 3600,
+        ttl_seconds = 14400,
     )
     if t["status_code"] != 200 or not t["json"]:
         return 0.0

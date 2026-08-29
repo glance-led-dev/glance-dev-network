@@ -9,7 +9,7 @@ entry: app.star
 width: 192
 height: 32
 # Votes are not live-tick data; a few times an hour is enough.
-refresh: 600
+refresh: 3600
 pages: [score, tally, title, extra]
 inputs:
   - key: chamber

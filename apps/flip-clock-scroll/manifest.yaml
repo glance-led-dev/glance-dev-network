@@ -1,7 +1,7 @@
 gdn: 1
 id: flip-clock-scroll
 version: 0.1.0
-name: Flip Clock (Scroll)
+name: Flip Clock
 author: glance-led-dev
 description: Split-flap cards for the time, with a matching date board.
 category: Time

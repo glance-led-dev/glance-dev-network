@@ -1,10 +1,135 @@
 # Surf Report
 #
-# Open-Meteo's marine model. Period matters as much as height —
-# a four foot swell at fourteen seconds is a different ocean from
-# four foot at six — so both get equal billing, and the verdict
-# weighs them together rather than ranking on height alone.
+# DESIGN. Three bands on a black ground, no gradient: an identity block on the
+# left (a "SURF" title over a baked barrelling-wave sprite), the hero wave
+# height in the middle, and a stack of secondary readings down the right edge.
+#
+# Period matters as much as height -- a four foot swell at fourteen seconds is
+# a different ocean from four foot at six -- so both get equal billing, and the
+# verdict weighs them together rather than ranking on height alone.
+#
+# The unit is not part of the hero any more: "FT" rides as two tiny 4x5 letters
+# stacked against the right edge of the number, so the digits themselves get
+# every pixel of the font ladder ("4.1FT" at 16x24 is 117px; "4.1" alone fits
+# 19x28 in the same slot). Period and swell direction each carry their own
+# pixel-art label -- a clock face and a compass arrow -- so neither number is a
+# magic number, and the arrow can never disagree with the letters beside it
+# because both come out of compass().
 
+
+PAD = 10                      # scroll safe zone: content lives in x 10..181
+GAP = 5                       # gap between the three bands
+ICON = 7                      # every inline sprite is 7x7
+ICON_GAP = 2                  # sprite -> its number
+PAIR_GAP = 5                  # period pair -> direction pair
+UNIT_GAP = 2                  # hero digits -> stacked unit letters
+UNIT_H = 5                    # 4x5 ink height (the font reserves a 6th row)
+TOWN_MAX = 62                 # 4x5 town clip; keeps the right column off the hero
+PERIOD_MAX = 23               # 5x7 period clip ("14S" is 17px)
+
+# Starlark has no font-metrics call, so the ink heights travel with the ladder.
+# _fit_clip only ever picks on width, so each ladder is pre-trimmed to fonts
+# whose ink also fits its band: 19x28 in the 32px wide hero, 10x16 in the 18px
+# band a 64 panel has left between the title row and the swell row.
+HERO_FONTS = ["19x28", "16x24", "16x20", "10x16"]
+NARROW_HERO_FONTS = ["10x16", "6x8"]
+HERO_INK = {"19x28": 28, "16x24": 24, "16x20": 20, "10x16": 15, "6x8": 8}
+
+SEA = "#0F4A85"
+BODY = "#1B6FB8"
+MID = "#3FA0E0"
+CREST = "#9BDDFF"
+FOAM = "#FFFFFF"
+TITLE_COL = "#BFE4FF"
+HERO_COL = "#FFFFFF"
+UNIT_COL = "#79BDE8"
+TOWN_COL = "#7AA4C4"
+ICON_COL = "#4E9BD8"
+VALUE_COL = "#DCF0FF"
+
+# A wave mid-barrel: spray off the lip, a dark tube punched through the
+# shoulder, and two rows of flat water underneath to stand it on.
+WAVE_ART = """
+.......W..................
+......W...W...............
+.............W............
+......WWWW................
+.....WCCCCWW....W.........
+.....CLLLLCCWW............
+....WLBBBBLLCCWW..........
+....CBBBBBBBLLCCW.........
+...WLBD....BBBLLCW........
+...CBD......BBBBLCW.......
+...LBD......DDBBBLCW......
+...BDD......DDDDBBLCW.....
+...BDDD....DDDDDDBBLCW....
+....DDDDDDDDDDDDDDBBLCW...
+....DDDDDDDDDDDDDDDBBLCW..
+....DDDDDDDDDDDDDDDDBBLCW.
+.....DDDDDDDDDDDDDDDDBBLCW
+.....DDDDDDDDDDDDDDDDDBBLC
+......DDDDDDDDDDDDDDDDDBBL
+......DDDDDDDDDDDDDDDDDDBB
+.......DDDDDDDDDDDDDDDDDDB
+LLCCLLLLLLLLCCLLLLLLCCLLLL
+.BBBBBBBBBBBBBBBBBBBBBBBB.
+..DDDDDDDDDDDDDDDDDDDDDD..
+"""
+WAVE_W = 26
+WAVE_H = 24
+WAVE_LEGEND = {"W": FOAM, "C": CREST, "L": MID, "B": BODY, "D": SEA}
+
+# Period label: a clock face. Direction label: an arrow, drawn once pointing
+# north and rotated for the other seven octants so all eight are the same shape.
+CLOCK_ART = [
+    "..###..",
+    ".#...#.",
+    "#..#..#",
+    "#..##.#",
+    "#.....#",
+    ".#...#.",
+    "..###..",
+]
+ARROW_N = [
+    "...#...",
+    "..###..",
+    ".#####.",
+    "#######",
+    "..###..",
+    "..###..",
+    "..###..",
+]
+ARROW_NE = [
+    "..#####",
+    "...####",
+    "....###",
+    "...#.##",
+    "..##..#",
+    ".##....",
+    "##.....",
+]
+
+
+def rot90(rows):
+    """Rotate square string-art a quarter turn clockwise."""
+    n = len(rows)
+    out = []
+    for r in range(n):
+        line = ""
+        for k in range(n):
+            line += rows[n - 1 - k][r]
+        out.append(line)
+    return out
+
+
+ARROW_E = rot90(ARROW_N)
+ARROW_S = rot90(ARROW_E)
+ARROW_W = rot90(ARROW_S)
+ARROW_SE = rot90(ARROW_NE)
+ARROW_SW = rot90(ARROW_SE)
+ARROW_NW = rot90(ARROW_SW)
+ARROWS = {"N": ARROW_N, "NE": ARROW_NE, "E": ARROW_E, "SE": ARROW_SE,
+          "S": ARROW_S, "SW": ARROW_SW, "W": ARROW_W, "NW": ARROW_NW}
 
 
 def geo(ctx):
@@ -112,6 +237,48 @@ def verdict(ft, period):
     return ["BIG", "#FF6B4A"]
 
 
+def swell_row(c, x, y, per, way):
+    """[clock][period] [arrow][direction], left to right from x. 7px tall, the
+    height of its sprites, so it can sit flush on the bottom edge."""
+    pw = c.text_width(per, "5x7")
+    c.sprite(CLOCK_ART, x, y, color = ICON_COL)
+    c.text(per, x + ICON + ICON_GAP, y, font = "5x7", color = VALUE_COL)
+    ax = x + ICON + ICON_GAP + pw + PAIR_GAP
+    c.sprite(ARROWS[way], ax, y, color = ICON_COL)
+    c.text(way, ax + ICON + ICON_GAP, y, font = "5x7", color = VALUE_COL)
+
+
+def swell_row_w(c, per, way):
+    return (ICON + ICON_GAP + c.text_width(per, "5x7") + PAIR_GAP +
+            ICON + ICON_GAP + c.text_width(way, "5x7"))
+
+
+def hero(c, num, unit, fonts, x, avail, y0, y1):
+    """The wave height, as big as `avail` allows, with the unit stacked in 4x5
+    against the digits' right edge. Centres itself in `avail` and in y0..y1.
+
+    The unit column is measured, not assumed: "M" and "F"/"T" are all 4px in
+    4x5, but taking the max keeps the group width honest if that ever changes."""
+    uw = 0
+    for i in range(len(unit)):
+        w = c.text_width(unit[i], "4x5")
+        if w > uw:
+            uw = w
+    fit = _fit_clip(c, num, fonts, avail - UNIT_GAP - uw)
+    font = fit[0]
+    txt = fit[1]
+    nw = c.text_width(txt, font)
+    ink = HERO_INK[font]
+    nx = x + (avail - (nw + UNIT_GAP + uw)) // 2
+    ny = y0 + (y1 - y0 + 1 - ink) // 2
+    c.text(txt, nx, ny, font = font, color = HERO_COL)
+    stack = len(unit) * UNIT_H + (len(unit) - 1)
+    uy = ny + (ink - stack) // 2
+    for i in range(len(unit)):
+        c.text(unit[i], nx + nw + UNIT_GAP, uy + i * (UNIT_H + 1),
+               font = "4x5", color = UNIT_COL)
+
+
 def surf(c, ctx):
     g = geo(ctx)
     if g == None:
@@ -121,7 +288,7 @@ def surf(c, ctx):
                  params = {"latitude": str(g[0]), "longitude": str(g[1]),
                            "current": "wave_height,wave_period,wave_direction",
                            "timezone": "auto"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO SURF DATA", "NO CONNECTION")
         return
@@ -138,42 +305,46 @@ def surf(c, ctx):
     unit = "M" if metric else "FT"
     v = verdict(metres * 3.28084, period)
 
-    c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#04121E", "#0A2E4C",
-                    horizontal = False)
-    n = 24 if c.width >= 128 else 16
-    c.image("WAVE.png", 2, c.height - n + 4, w = n, h = n)
+    num = str(int(height * 10) / 10.0)
+    per = clip(c, str(int(period)) + "S", "5x7", PERIOD_MAX)
+    way = compass(deg)
+
+    c.fill("#000000")
 
     if c.width >= 128:
-        # Two columns, both filled top to bottom. Before, the height sat in a
-        # 16x20 at the top left with the town tucked under it, and the right
-        # held only a verdict and a swell line -- which left a dead block
-        # through the middle of the panel and a bare strip along the bottom.
-        #
-        # The town moves into the right column so the three secondary readings
-        # stack there (0-5, 7-22, 24-31), and the height takes whatever font
-        # actually fits the space that leaves. It lands on 16x24 for a normal
-        # reading instead of 16x20, so the hero number grows into the gap
-        # rather than the gap staying empty.
-        htxt = str(int(height * 10) / 10.0) + unit
-        town = clip(c, g[2], "4x5", 70)
-        rcol = c.text_width(v[0], "10x16")
-        if c.text_width(town, "4x5") > rcol:
-            rcol = c.text_width(town, "4x5")
-        swell = str(int(period)) + "S " + compass(deg)
-        if c.text_width(swell, "6x8") > rcol:
-            rcol = c.text_width(swell, "6x8")
+        # Right column, right-aligned on x=182 so its last lit pixel is 181 and
+        # the app keeps 10px of air at both edges. Bands 0-4 / 7-21 / 25-31 can
+        # never touch: 4x5 inks 5 rows, 10x16 inks 15, and the swell row is
+        # exactly as tall as its 7px sprites.
+        right = c.width - PAD
+        town = clip(c, g[2], "4x5", TOWN_MAX)
+        sw = swell_row_w(c, per, way)
+        rw = c.text_width(v[0], "10x16")
+        if c.text_width(town, "4x5") > rw:
+            rw = c.text_width(town, "4x5")
+        if sw > rw:
+            rw = sw
 
-        c.text(town, c.width - 6, 0, font = "4x5", color = "#4E7A9C",
-               align = "right")
-        c.text(v[0], c.width - 6, 7, font = "10x16", color = v[1],
-               align = "right")
-        c.text(swell, c.width - 6, 24, font = "6x8", color = "#7FB6E8",
-               align = "right")
-        c.text_fit(htxt, 30, 3, ["19x28", "16x24", "16x20", "10x16"],
-                   color = "#DCF0FF", maxw = c.width - rcol - 44)
+        c.text(town, right, 0, font = "4x5", color = TOWN_COL, align = "right")
+        c.text(v[0], right, 7, font = "10x16", color = v[1], align = "right")
+        swell_row(c, right - sw, c.height - ICON, per, way)
+
+        # Identity block: title over art, both inside the left padding. The
+        # title inks rows 1-5 and the art's highest spray pixel lands on row 8.
+        c.text("SURF", PAD + (WAVE_W - c.text_width("SURF", "4x5")) // 2, 1,
+               font = "4x5", color = TITLE_COL)
+        c.sprite(WAVE_ART, PAD, c.height - WAVE_H, legend = WAVE_LEGEND)
+
+        hx = PAD + WAVE_W + GAP
+        hero(c, num, unit, HERO_FONTS, hx, right - rw - GAP - hx, 0,
+             c.height - 1)
     else:
-        c.text_fit(str(int(height * 10) / 10.0) + unit, c.width - 2, 3,
-                   ["16x20", "10x16"], color = "#DCF0FF", align = "right",
-                   maxw = c.width - 20)
-        c.text(str(int(period)) + "S " + compass(deg), c.width - 2, 25,
-               font = "4x5", color = "#7FB6E8", align = "right")
+        # 64px: the wave art and the 10x16 verdict are dropped rather than
+        # squeezed; the title still identifies the app, and every number keeps
+        # its label. Bands: 1-5 title/verdict | 6-23 hero | 25-31 swell row.
+        c.text("SURF", 2, 1, font = "4x5", color = TITLE_COL)
+        c.text(v[0], c.width - 2, 1, font = "4x5", color = v[1],
+               align = "right")
+        hero(c, num, unit, NARROW_HERO_FONTS, 2, c.width - 4, 6, 23)
+        swell_row(c, (c.width - swell_row_w(c, per, way)) // 2,
+                  c.height - ICON, per, way)

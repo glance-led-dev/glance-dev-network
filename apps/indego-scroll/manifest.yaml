@@ -1,14 +1,14 @@
 gdn: 1
 id: indego-scroll
 version: 0.1.0
-name: "Indego Bikes (Philadelphia, Scroll)"
+name: "Indego Bikes (Philadelphia)"
 author: AJ
 description: Bikes and docks free right now at a Philadelphia Indego station, from the public GBFS feed.
 category: Transportation
 entry: app.star
 width: 192
 height: 32
-refresh: 300
+refresh: 600
 pages: [bikes]
 inputs:
   - key: station

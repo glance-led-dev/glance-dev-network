@@ -7,6 +7,8 @@
 
 
 
+PAGES = 3  # matches `pages:` in the manifest; drives the masthead pips
+
 NODATA_FONTS = ["10x16", "6x8", "5x7", "4x5"]
 
 
@@ -47,67 +49,170 @@ def nodata(c, title, sub):
         t = _fit_clip(c, title, NODATA_FONTS, maxw)
         c.text(t[1], c.width // 2, 4, font = t[0], color = "#E8B04A",
                align = "center")
-        d = _fit_clip(c, sub, ["5x7", "4x5"], maxw)
+        d = _fit_clip(c, sub, ["5x7", "4x5", "picopixel"], maxw)
         c.text(d[1], c.width // 2, 22, font = d[0], color = "#6A7090",
                align = "center")
     else:
         t = _fit_clip(c, title, ["6x8", "5x7", "4x5"], maxw)
         c.text(t[1], c.width // 2, 5, font = t[0], color = "#E8B04A",
                align = "center")
-        d = _fit_clip(c, sub, ["4x5"], maxw)
+        d = _fit_clip(c, sub, ["4x5", "picopixel"], maxw)
         c.text(d[1], c.width // 2, 18, font = d[0], color = "#6A7090",
                align = "center")
 
 
-FONTH = {"16x20": 20, "10x16": 16, "6x8": 8, "5x7": 7, "4x5": 5}
+# Row pitch per face: glyph rows plus one blank row between lines. Measured
+# from the font data, not guessed -- 4x5 is really six rows tall (the comma
+# descends), and a wrong number here overlaps the line beneath.
+PITCH = {"10x16": 17, "7x10": 12, "6x8": 9, "5x7": 8, "3x7": 8,
+         "4x5": 7, "picopixel": 6}
+
+# Headline ladder, widest face first, bottoming out at 4x5 -- the body face
+# for this app. Each rung holds meaningfully more text than the one above it
+# on a 64-wide panel: 10x16 ~5 chars, 6x8 ~19, 5x7 ~31, 4x5 ~36 over 3 lines.
+HEAD_NARROW = ["10x16", "6x8", "5x7", "4x5"]
+HEAD_WIDE = ["10x16", "7x10", "6x8", "5x7", "4x5"]
+
+ELL = "..."  # the bitmap faces carry no single-glyph ellipsis
 
 
-def wrap(c, words, font, maxw):
+def trim_end(s):
+    """Drop trailing spaces and dangling punctuation before an ellipsis."""
+    for k in range(len(s), 0, -1):
+        ch = s[k - 1]
+        if ch != " " and ch != "," and ch != "-" and ch != ".":
+            return s[:k]
+    return ""
+
+
+def ellipsize(c, line, font, maxw):
+    """`line` cut back until it plus an ellipsis fits maxw."""
+    for k in range(len(line), 0, -1):
+        t = trim_end(line[:k]) + ELL
+        if c.text_width(t, font) <= maxw:
+            return t
+    return ELL
+
+
+def split_long(c, word, font, maxw):
+    """A word wider than the column, chopped into pieces that each fit.
+
+    Without this a single 40-character token -- a URL, a hashtag, a German
+    compound -- runs straight off the panel, and the renderer clips it
+    silently mid-glyph.
+    """
+    parts = []
+    rest = word
+    # `while` is a reserved keyword in Starlark even though the language has
+    # no while loop, so this is a bounded for.
+    for _i in range(24):
+        if c.text_width(rest, font) <= maxw:
+            parts.append(rest)
+            return parts
+        cut = 1
+        for k in range(len(rest), 0, -1):
+            if c.text_width(rest[:k], font) <= maxw:
+                cut = k
+                break
+        parts.append(rest[:cut])
+        rest = rest[cut:]
+        if rest == "":
+            return parts
+    parts.append(rest)
+    return parts
+
+
+def wrap(c, text, font, maxw):
     """Greedily pack words into lines no wider than maxw."""
     lines = []
     cur = ""
-    for w in words:
-        trial = w if cur == "" else cur + " " + w
-        if c.text_width(trial, font) <= maxw:
-            cur = trial
-        else:
-            if cur != "":
-                lines.append(cur)
-            cur = w
+    for raw in text.split(" "):
+        if raw == "":
+            continue
+        for w in split_long(c, raw, font, maxw):
+            trial = w if cur == "" else cur + " " + w
+            if c.text_width(trial, font) <= maxw:
+                cur = trial
+            else:
+                if cur != "":
+                    lines.append(cur)
+                cur = w
     if cur != "":
         lines.append(cur)
     return lines
 
 
-def block(c, text, x, y, maxw, maxh, fonts, color, gap):
-    """Draw text at the largest font whose wrapped lines fit maxh."""
-    words = str(text).upper().split(" ")
+def headline(c, text, x, y, maxw, maxh, fonts, color):
+    """Fill the block with the whole headline at the largest face that holds it.
+
+    Drops a rung at a time rather than clipping, so a short headline gets big
+    type and a long one gets more, smaller lines -- as many as genuinely fit.
+    Only when even the smallest face overruns does the tail get an ellipsis.
+    """
+    words = str(text).upper()
+    face = fonts[len(fonts) - 1]
+    lines = []
+    done = False
     for f in fonts:
-        lines = wrap(c, words, f, maxw)
-        if len(lines) * (FONTH[f] + gap) - gap <= maxh:
-            for i in range(len(lines)):
-                c.text(lines[i], x, y + i * (FONTH[f] + gap), font = f,
-                       color = color)
-            return len(lines)
-    # Nothing fits: use the smallest face, draw what we can, and mark the
-    # cut so a dropped tail reads as deliberate rather than as a bug.
-    f = fonts[len(fonts) - 1]
-    lines = wrap(c, words, f, maxw)
-    n = maxh // (FONTH[f] + gap)
-    if n > len(lines):
-        n = len(lines)
-    for i in range(n):
-        line = lines[i]
-        if i == n - 1 and n < len(lines):
-            # `while` is a reserved keyword in Starlark even though the
-            # language has no while loop, so this walks back with a for.
-            for k in range(len(line), 0, -1):
-                if c.text_width(line[:k] + "..", f) <= maxw:
-                    line = line[:k]
-                    break
-            line = line + ".."
-        c.text(line, x, y + i * (FONTH[f] + gap), font = f, color = color)
-    return n
+        rows = (maxh + 1) // PITCH[f]
+        if rows < 1:
+            continue
+        cand = wrap(c, words, f, maxw)
+        if len(cand) <= rows:
+            face = f
+            lines = cand
+            done = True
+            break
+    if not done:
+        face = fonts[len(fonts) - 1]
+        rows = (maxh + 1) // PITCH[face]
+        if rows < 1:
+            rows = 1
+        lines = wrap(c, words, face, maxw)
+        if len(lines) > rows:
+            lines = lines[:rows]
+            lines[rows - 1] = ellipsize(c, lines[rows - 1], face, maxw)
+    used = len(lines) * PITCH[face] - 1
+    top = y + (maxh - used) // 2
+    for i in range(len(lines)):
+        c.text(lines[i], x, top + i * PITCH[face], font = face, color = color)
+    return len(lines)
+
+
+def masthead(c, label, n, total, h):
+    """Source strip: feed name, headline number, then the page pips.
+
+    Two different jobs, so two different marks. The number after the source
+    names the headline itself -- NPR 2 is NPR's second story. The pips on the
+    right are a count, filled up to the page you are on, so they read 1/3,
+    2/3, 3/3 rather than as a jumping dot.
+
+    The number is never the part that gets cut: a long source name is
+    ellipsized to whatever room is left once the number and pips are booked.
+    """
+    c.rect(0, 0, c.width - 1, h - 1, fill = "#D8442C")
+    pips = h // 3
+    if pips < 2:
+        pips = 2
+    pw = total * 3 - 1
+    py = (h - pips) // 2
+    for i in range(total):
+        px = c.width - 2 - pw + i * 3
+        c.rect(px, py, px + 1, py + pips - 1,
+               fill = "#2A0704" if i <= n else "#F0A091")
+
+    # Three clear columns before the first pip, so a number pushed all the
+    # way right by a long source name never reads as a fourth pip.
+    maxw = c.width - 8 - pw
+    face = "4x5" if h < 9 else "5x7"
+    small = "picopixel" if h < 9 else "4x5"
+    num = " " + str(n + 1)
+    if c.text_width(label + num, face) > maxw:
+        face = small
+    room = maxw - c.text_width(num, face)
+    if c.text_width(label, face) > room:
+        label = ellipsize(c, label, face, room)
+    c.text(label + num, 2, 1, font = face, color = "#2A0704")
 
 
 ENTITIES = [["&amp;", "&"], ["&#39;", "'"], ["&apos;", "'"],
@@ -166,10 +271,12 @@ def titles(body, want):
 def draw(c, ctx, n):
     url = str(ctx.inputs.get("url", "")).strip()
     label = str(ctx.inputs.get("label", "NEWS")).strip().upper()
+    if label == "":
+        label = "NEWS"
     if url == "":
         nodata(c, "NO FEED", "SET A FEED URL")
         return
-    r = http.get(url, ttl_seconds = 900,
+    r = http.get(url, ttl_seconds = 3600,
                  headers = {"User-Agent": "glance-dev-network (glance-led.com)"})
     if r["status_code"] != 200 or r["body"] == "":
         nodata(c, "NO FEED DATA", "CHECK THE URL")
@@ -180,14 +287,13 @@ def draw(c, ctx, n):
         nodata(c, "NO HEADLINE", "FEED TOO SHORT")
         return
 
+    # Source strip on top, then the headline owns everything below it: full
+    # panel width, vertically centred, wrapped to as many lines as fit.
     c.fill("#0A0B10")
-    c.rect(0, 0, c.width - 1, 6, fill = "#D8442C")
-    c.text(label + " " + str(n + 1), 3, 1, font = "4x5", color = "#1A0604")
-
-    sz = 16 if c.width >= 128 else 12
-    c.image("NEWS.png", c.width - sz - 1, c.height - sz - 1, w = sz, h = sz)
-    block(c, rows[n], 3, 9, c.width - sz - 8, 22,
-          ["10x16", "6x8", "5x7", "4x5"], "#EDEFF6", 1)
+    h = 10 if c.width >= 128 else 7
+    masthead(c, label, n, PAGES, h)
+    headline(c, rows[n], 2, h + 1, c.width - 4, c.height - h - 1,
+             HEAD_WIDE if c.width >= 128 else HEAD_NARROW, "#EDEFF6")
 
 
 def one(c, ctx):

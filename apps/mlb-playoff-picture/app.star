@@ -108,7 +108,7 @@ def fetch_standings(standings_type, season):
             "season": str(season),
             "standingsTypes": standings_type,
         },
-        ttl_seconds = 60,
+        ttl_seconds = 7200,
     )
 
 def fetch_teams():
@@ -387,7 +387,7 @@ def intro(c, ctx):
     c.line(20, 18, 108, 18, "#555555")
     c.text("IF SEASON ENDED TODAY".upper(), 64, 21, font = "4x5", color = "gray", align = "center")
     # matches manifest.yaml's refresh (and fetch_standings' ttl_seconds) - keep in sync
-    c.text("LIVE - UPDATES EVERY 60s".upper(), 64, 27, font = "picopixel", color = "#555555", align = "center")
+    c.text("UPDATES EVERY 2 HOURS".upper(), 64, 27, font = "picopixel", color = "#555555", align = "center")
 
 def byes(c, ctx):
     draw_byes_page(c, ctx)

@@ -112,7 +112,7 @@ def block(c, text, x, y, maxw, maxh, fonts, color, gap):
 
 def feed():
     r = http.get("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson",
-                 ttl_seconds = 900)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         return None
     return r["json"].get("features", [])
@@ -135,6 +135,27 @@ def ago(ctx, ms):
     if mins < 1440:
         return str(mins // 60) + "H AGO"
     return str(mins // 1440) + "D AGO"
+
+
+# Burst amplitudes for the splash seismograph - a quiet line, one violent
+# event, then the coda dying off. Baked so the trace is identical every render.
+SPLASH_BURST = [3, -6, 9, -13, 12, -10, 13, -12, 10, -8, 11, -9, 7, -6, 8,
+                -5, 6, -4, 5, -3, 4, -3, 3, -2, 3, -2, 2, -1, 2, -1, 1, -1]
+
+def splash(c, ctx):
+    c.fill("#0B0908")
+    c.text_stroke("QUAKE WATCH", c.width // 2, 3, font = "10x16",
+                  color = "#FFB03A", align = "center")
+    # Seismograph trace along the bottom: flatline in, the event, the coda.
+    base = 27
+    prev = base
+    for x in range(8, 185):
+        v = 0
+        if x >= 78 and x < 78 + len(SPLASH_BURST):
+            v = SPLASH_BURST[x - 78]
+        y = base - v
+        c.line(x - 1, prev, x, y, "#FF5B3A" if v != 0 else "#6E5A44")
+        prev = y
 
 
 def biggest(c, ctx):

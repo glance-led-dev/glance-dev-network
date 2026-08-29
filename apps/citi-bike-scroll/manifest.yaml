@@ -1,7 +1,7 @@
 gdn: 1
 id: citi-bike-scroll
 version: 0.1.0
-name: "Citi Bike (New York, Scroll)"
+name: "Citi Bike (New York)"
 author: AJ
 description: Bikes and docks free right now at a Citi Bike station, from NYC's public GBFS feed.
 category: Transportation

@@ -4,7 +4,7 @@ author: cfdmb
 name: Box Office Rewind
 width: 128
 height: 32
-refresh: 7200
+refresh: 86400
 pages:
   - intro
   - years_5

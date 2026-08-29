@@ -1,9 +1,9 @@
 gdn: 1
 id: binary-clock-scroll
 version: 0.1.0
-name: Binary Clock (Scroll)
+name: Binary Clock
 author: glance-led-dev
-description: The time in binary — one column per digit on the BCD page, one row per unit on the bits page.
+description: The clock and calendar in binary — one column per digit of the time, one row per unit of the date.
 category: Time
 entry: app.star
 
@@ -11,7 +11,7 @@ width: 192
 height: 32
 refresh: 60
 
-pages: [bcd, bits]
+pages: [bcd, date]
 
 inputs:
   - key: zip

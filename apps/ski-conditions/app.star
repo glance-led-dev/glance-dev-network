@@ -101,7 +101,7 @@ def snow(c, ctx):
                            "daily": "snowfall_sum,temperature_2m_min",
                            "temperature_unit": "celsius" if metric else "fahrenheit",
                            "timezone": "auto", "forecast_days": "3"},
-                 ttl_seconds = 1800)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO SNOW DATA", "NO CONNECTION")
         return

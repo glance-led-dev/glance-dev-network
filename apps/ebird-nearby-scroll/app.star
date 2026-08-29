@@ -227,8 +227,9 @@ def sightings(c, ctx):
                align = "center")
         return
 
-    c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#06100C", "#16301E",
-                    horizontal = False)
+    # Black ground per the design guidelines: full-bleed gradients merge into
+    # the neighboring apps in the scroll, and black is the cheapest contrast.
+    c.fill("black")
     sz = 24 if c.width >= 128 else 16
     c.image("BIRD.png", 1, (c.height - sz) // 2, w = sz, h = sz)
 

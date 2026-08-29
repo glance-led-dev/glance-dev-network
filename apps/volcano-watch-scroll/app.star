@@ -79,9 +79,38 @@ COLORS = {"NORMAL": "#4EE38A", "ADVISORY": "#F5D64E",
           "WATCH": "#FF9A4A", "WARNING": "#FF3B3B"}
 
 
+# 1px silhouette outline of VOLCANO.png at its drawn 24x24 size, offset (-1,-1).
+VOLCANO_EDGE = """
+..........................
+............####..........
+............#..#..........
+..........###..###........
+.........##......##.......
+.........#........#.......
+.........##......##.......
+..........#......#........
+..........##..####........
+.........##....##.........
+.........#......#.........
+........##......##........
+.......##........##.......
+......##..........##......
+......#............#......
+.....##............##.....
+....##..............##....
+...##................##...
+...#..................#...
+..##..................##..
+.##....................##.
+##......................##
+#........................#
+#........................#
+#........................#
+"""
+
 def alerts(c, ctx):
     r = http.get("https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes",
-                 ttl_seconds = 3600)
+                 ttl_seconds = 7200)
     if r["status_code"] != 200 or r["json"] == None:
         nodata(c, "NO USGS DATA", "NO CONNECTION")
         return
@@ -112,14 +141,34 @@ def alerts(c, ctx):
     c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#140A06", "#301608",
                     horizontal = False)
     sz = 24 if c.width >= 128 else 16
-    c.image("VOLCANO.png", 1, c.height - sz, w = sz, h = sz)
+    if c.width >= 128:
+        c.sprite(VOLCANO_EDGE, 6, c.height - sz - 1, color = "black")
+    c.image("VOLCANO.png", 7, c.height - sz, w = sz, h = sz)
+
+    # The observatory tells you where the volcano is.
+    region = {"avo": "ALASKA", "hvo": "HAWAII", "cvo": "CASCADES",
+              "calvo": "CALIFORNIA", "yvo": "YELLOWSTONE"}.get(
+        str(top.get("obs_abbr", "")).lower(),
+        str(top.get("obs_fullname", "")).upper().replace(" VOLCANO OBSERVATORY", ""))
 
     if c.width >= 128:
-        c.text_fit(name, 30, 3, ["10x16", "6x8", "5x7"], color = "#FFE8D8",
-                   maxw = c.width - 110)
-        c.text(lv, c.width - 6, 4, font = "10x16", color = col, align = "right")
-        c.text(str(len(rows)) + " ELEVATED", c.width - 6, 23, font = "5x7",
-               color = "#C09880", align = "right")
+        # Left column stacks name / region / count, each 2px apart; the
+        # alert level rides vertically centred at the right.
+        nfont = "10x16"
+        for f in ["10x16", "6x8", "5x7"]:
+            nfont = f
+            if c.text_width(name, f) <= c.width - 116:
+                break
+        nh = {"10x16": 16, "6x8": 8, "5x7": 7}[nfont]
+        c.text_stroke(clip(c, name, nfont, c.width - 116), 36, 3, font = nfont,
+                      color = "#FFE8D8")
+        ry = 3 + nh + 2
+        c.text_stroke(clip(c, region, "4x5", c.width - 116), 36, ry,
+                      font = "4x5", color = "#C09880")
+        c.text_stroke(str(len(rows)) + " ELEVATED", 36, ry + 5 + 2,
+                      font = "4x5", color = "#C09880")
+        c.text_stroke(lv, c.width - 10, (c.height - 16) // 2, font = "10x16",
+                      color = col, align = "right")
     else:
         c.text_fit(name, c.width - 2, 1, ["6x8", "5x7", "4x5"],
                    color = "#FFE8D8", align = "right", maxw = c.width - 20)

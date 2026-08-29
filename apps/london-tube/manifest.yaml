@@ -1,0 +1,14 @@
+gdn: 1
+id: london-tube
+version: 0.1.0
+name: London Tube
+author: glance-led-dev
+description: Every Underground, Elizabeth, DLR and Overground line as a strip of its own colour, with whatever is broken named above it. Live TfL data, no API key.
+category: Transportation
+entry: app.star
+
+width: 192
+height: 32
+refresh: 120
+
+pages: [tube, detail]

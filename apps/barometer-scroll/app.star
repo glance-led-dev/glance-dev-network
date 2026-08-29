@@ -45,6 +45,50 @@ def _fit_clip(c, text, fonts, maxw):
     return [pick, t]
 
 
+def _wrap2(c, text, font, maxw):
+    """Split `text` into two lines at the word break that balances them best.
+
+    Returns a one-item list when there is nothing to split on."""
+    words = text.split(" ")
+    if len(words) < 2:
+        return [text]
+    bw = -1
+    ba = ""
+    bb = ""
+    for i in range(1, len(words)):
+        a = " ".join(words[:i])
+        b = " ".join(words[i:])
+        w = c.text_width(a, font)
+        wb = c.text_width(b, font)
+        if wb > w:
+            w = wb
+        if bw < 0 or w < bw:
+            bw = w
+            ba = a
+            bb = b
+    return [ba, bb]
+
+
+def _fit_wrap2(c, text, fonts, maxw):
+    """[font, lines] for the largest font whose two wrapped lines fit maxw.
+
+    Falls back to the smallest font and clips, so a phrase longer than any
+    listed here still degrades to something that stays inside its column."""
+    for f in fonts:
+        lines = _wrap2(c, text, f, maxw)
+        ok = True
+        for ln in lines:
+            if c.text_width(ln, f) > maxw:
+                ok = False
+        if ok:
+            return [f, lines]
+    f = fonts[len(fonts) - 1]
+    out = []
+    for ln in _wrap2(c, text, f, maxw):
+        out.append(_fit_clip(c, ln, [f], maxw)[1])
+    return [f, out]
+
+
 def nodata(c, title, sub):
     """Shown whenever a feed is unreachable or a key is missing.
 
@@ -122,30 +166,44 @@ def pressure(c, ctx):
         col = "#4EE38A"
         note = "CLEARING"
 
-    c.gradient_rect(0, 0, c.width - 1, c.height - 1, "#0A0C12", "#1E2434",
-                    horizontal = False)
     sz = 24 if c.width >= 128 else 16
-    c.image("GAUGE.png", 1, (c.height - sz) // 2, w = sz, h = sz)
+    dial_x = 7 if c.width >= 128 else 1
+    c.image("GAUGE.png", dial_x, (c.height - sz) // 2, w = sz, h = sz)
 
     sign = "+" if delta >= 0 else ""
     change = sign + str(int(delta * 10) / 10.0) + " IN 3H"
 
     if c.width >= 128:
-        # Everything sits in the column right of the dial (x=28 onward). The
-        # detail line used to be right-aligned from x=186 with no left bound,
-        # and at its longest -- "-1.0 IN 3H   TURNING UNSETTLED", 30 characters
-        # -- it reached back to x=6 and printed underneath the gauge face, so
-        # the leading digits were lost in the dial.
+        # Everything sits in the column right of the dial, which now starts at
+        # x=34 -- the whole layout is pulled 6px toward the middle, right edge
+        # included (186 -> 180).
         #
-        # Three rows instead: reading 0-15, trend and change 17-23, outlook
-        # 25-31. Every string is measured against the 158px the dial leaves,
-        # and the widest of each row fits it, so nothing clips at any state.
-        c.text(str(int(now)) + " HPA", 28, 0, font = "10x16",
-               color = "#DCE4F4")
-        c.text(trend, 28, 17, font = "5x7", color = col)
-        c.text(change, c.width - 6, 17, font = "5x7", color = "#96A0B8",
-               align = "right")
-        c.text(note, 28, 25, font = "5x7", color = "#7F8CA8")
+        # Left stack: reading 0-15, trend 17-23, change 25-31, all inside the
+        # 72px measured from x=34. Right column holds the outlook wrapped onto
+        # two lines at y=17/25, right-aligned to 180 with 69px to play with.
+        # The widest outlook word, "UNSETTLED", is 53px at 5x7, so the two
+        # columns stay 24px apart even in the worst state.
+        left = 34
+        right = c.width - 12
+        lw = 72
+        rf = _fit_clip(c, str(int(now)) + " HPA", ["10x16", "6x8", "5x7"],
+                       right - left + 1)
+        c.text(rf[1], left, 0, font = rf[0], color = "#DCE4F4")
+        tf = _fit_clip(c, trend, ["5x7", "4x5"], lw)
+        c.text(tf[1], left, 17, font = tf[0], color = col)
+        cf = _fit_clip(c, change, ["5x7", "4x5"], lw)
+        c.text(cf[1], left, 25, font = cf[0], color = "#96A0B8")
+
+        nf = _fit_wrap2(c, note, ["5x7", "4x5"], right - (left + lw + 6) + 1)
+        lines = nf[1]
+        if len(lines) < 2:
+            c.text(lines[0], right, 21, font = nf[0], color = "#7F8CA8",
+                   align = "right")
+        else:
+            c.text(lines[0], right, 17, font = nf[0], color = "#7F8CA8",
+                   align = "right")
+            c.text(lines[1], right, 25, font = nf[0], color = "#7F8CA8",
+                   align = "right")
     else:
         c.text_fit(str(int(now)), c.width - 2, 3, ["16x20", "10x16"],
                    color = "#DCE4F4", align = "right", maxw = c.width - 20)

@@ -1,7 +1,7 @@
 gdn: 1
 id: halloween-countdown-scroll
 version: 0.1.0
-name: Halloween Countdown (Scroll)
+name: Halloween Countdown
 author: glance-led-dev
 description: Nights until Halloween on a moonlit panel, with a jack-o'-lantern, ghost, or witch of your choosing.
 category: Lifestyle

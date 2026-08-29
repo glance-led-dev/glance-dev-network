@@ -58,10 +58,8 @@ def fit(c, text, fonts, maxw):
 
 def tab(c, word, accent, x = 4):
     """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -293,7 +291,7 @@ DEG = 3.141592653589793 / 180.0
 SHAPES = {
     "jet":   [7.5, 6.5, 1.3, 7.5, 0.0, 4.6, 1.5, 2.8, 3.4, -5.0, 2.4, 1.0, 1.3, 0],
     "heavy": [9.0, 7.5, 1.4, 8.8, -0.4, 4.8, 1.6, 2.9, 4.0, -6.0, 2.6, 1.1, 1.4, 2],
-    "light": [4.6, 6.6, 1.3, 7.0, 2.2, 2.6, 2.1, 0.2, 3.2, -5.8, 2.1, 1.5, 0.2, 0],
+    "light": [4.6, 6.6, 1.4, 6.8, 2.2, 3.2, 2.6, 0.2, 3.2, -5.6, 2.4, 1.8, 0.2, 0],
 }
 
 def family_for(cat, typ):
@@ -374,6 +372,17 @@ def draw_aircraft(c, cx, cy, bearing, fam, col, scale = 1.0):
     r = int(r + 1.5)
 
     ix, iy = int(cx), int(cy)
+    # Four sub-samples per pixel rather than one at the centre, lit when at
+    # least two land inside the shape.
+    #
+    # Testing only the centre made the silhouette depend on exactly where the
+    # pixel grid happened to fall across an edge, so the same aircraft came out
+    # clean at one bearing and lumpy and asymmetric at another -- a wing would
+    # gain a pixel on one side and lose one on the other. Sampling the corners
+    # of each pixel instead averages that out: edges land in the same place
+    # whichever way the aircraft is pointing, which is what makes a 16px
+    # silhouette read as a shape instead of a smudge.
+    offs = [[-0.25, -0.25], [0.25, -0.25], [-0.25, 0.25], [0.25, 0.25]]
     for py in range(-r, r + 1):
         y = iy + py
         if y < 0 or y >= c.height:
@@ -382,13 +391,18 @@ def draw_aircraft(c, cx, cy, bearing, fam, col, scale = 1.0):
             x = ix + px
             if x < 0 or x >= c.width:
                 continue
-            u = fx * px + fy * py
-            v = fx * py - fy * px
-            if _in_body(u, v, nose, tail, bw):
-                c.pixel(x, y, col)
-            elif _in_wing(u, v, span, wst, croot, ctip, sweep):
-                c.pixel(x, y, col)
-            elif _in_wing(u, v, tspan, tst, tcroot, tctip, tsweep):
+            hits = 0
+            for o in offs:
+                sx, sy = px + o[0], py + o[1]
+                u = fx * sx + fy * sy
+                v = fx * sy - fy * sx
+                if _in_body(u, v, nose, tail, bw):
+                    hits += 1
+                elif _in_wing(u, v, span, wst, croot, ctip, sweep):
+                    hits += 1
+                elif _in_wing(u, v, tspan, tst, tcroot, tctip, tsweep):
+                    hits += 1
+            if hits >= 2:
                 c.pixel(x, y, col)
 
     # Nacelles, on the wide-bodies only. Two dots a side is the difference
@@ -583,6 +597,13 @@ def miles(t):
 
 SKY_L = 69
 SKY_R = 178
+# The wake's own box, inset from the sky so it never crosses a readout: clear
+# of the type code and speed on the top row, and of the floating altitude on
+# the right.
+TRAIL_L = 92
+TRAIL_R = 146
+TRAIL_TOP = 8
+
 ALT_TOP = 9                # the row a 40,000ft aircraft sits on
 ALT_GND = 22               # the row something on the ground sits on
 
@@ -678,7 +699,11 @@ def draw_trail(c, cx, cy, p, col):
     d = 12.0
     for k in range(9):
         x, y = int(cx - fx * d), int(cy - fy * d)
-        if x < SKY_L or x > SKY_R or y < 1 or y > 26:
+        # The wake stops before it reaches anything written down. It used to be
+        # allowed the whole sky, so a westbound aircraft trailed dots straight
+        # through the type code in the top-left and an eastbound one through
+        # the altitude on the right -- which reads as interference, not motion.
+        if x < TRAIL_L or x > TRAIL_R or y < TRAIL_TOP or y > 26:
             return
         if k % 2 == 0:
             c.pixel(x, y, faint)

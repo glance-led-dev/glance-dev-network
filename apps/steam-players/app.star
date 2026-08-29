@@ -438,7 +438,58 @@ def pack_chips(c, chips, maxw, font):
     return out
 
 
-def main(c, ctx):
+def games(c, ctx):
+    """Every AppID that is set, at once.
+
+    The app used to have a single page that rotated between the configured
+    games on a two-minute timer, so somebody who filled in four slots saw one
+    arbitrary game and no sign of the other three -- and which one it was
+    depended on the wall clock. This page answers "how are my games doing"
+    without waiting, and DETAIL still gives each of them the full card.
+
+    Only the player count is fetched here: one request per game, so four games
+    cost four of the eight requests an app gets per render. Pulling the store
+    and review data for all four as well would blow that limit and the page
+    would fail outright."""
+    picks = games_list(ctx)
+    n = len(picks)
+    c.fill("#0B141C")
+    if n == 0:
+        c.text("NO APPIDS SET", c.width // 2, 8, font = "5x7", color = WARN,
+               align = "center")
+        c.text("ADD ONE FROM A STORE URL", c.width // 2, 19, font = "4x5",
+               color = MUTED, align = "center")
+        return
+
+    # Four rows of eight fill the panel exactly; fewer are centred so two games
+    # do not sit in the top half with dead space under them.
+    rows = n if n < 4 else 4
+    top = (32 - rows * 8) // 2 + 1
+    for i in range(rows):
+        appid = picks[i]
+        y = top + i * 8
+        count = fetch_players(appid)
+        if count != None:
+            num = format_count(count)
+            cw = c.text_width(num, "4x7")
+            c.text(num, c.width - 2, y, font = "4x7", color = OK_GREEN,
+                   align = "right")
+        else:
+            # One game the API would not answer for is not a broken panel: the
+            # row says so and the others still report.
+            num = "--"
+            cw = c.text_width(num, "4x7")
+            c.text(num, c.width - 2, y, font = "4x7", color = WARN,
+                   align = "right")
+        name = game_name(appid, None)
+        if name == None or str(name).strip() == "":
+            name = appid
+        # fit_clip returns [font, text], not a string. Drawing the pair
+        # straight out printed "'47', 'COUNTER-STRIKE 2'" across the row.
+        fitted = fit_clip(c, name, c.width - 8 - cw, ["4x7", "4x5"])
+        c.text(fitted[1], 2, y, font = fitted[0], color = STEAM_BLUE)
+
+def detail(c, ctx):
     picks = games_list(ctx)
     total = len(picks)
     slot = active_slot(ctx, picks)

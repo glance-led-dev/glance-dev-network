@@ -834,11 +834,11 @@ def draw_count_bar(c, x, y, w, h, n, scale, color):
 def draw_chamber_bar(c, vote, left_label, show_bill):
     bg, fg = chamber_theme(vote["chamber"])
     c.rect(0, 0, c.width - 1, 8, fill = bg)
-    c.sprite(chamber_mark(vote["chamber"]), 3, 1, color = fg)
+    c.sprite(chamber_mark(vote["chamber"]), 7, 1, color = fg)
     label = left_label.upper()
-    c.text(label, 13, 1, font = "5x7", color = fg)
+    c.text(label, 17, 1, font = "5x7", color = fg)
     roll = "#" + str(vote["roll"])
-    c.text(roll, c.width - 4, 1, font = "5x7", color = fg, align = "right")
+    c.text(roll, c.width - 8, 1, font = "5x7", color = fg, align = "right")
     if not show_bill:
         return
     bill = vote["bill"].upper()
@@ -846,8 +846,8 @@ def draw_chamber_bar(c, vote, left_label, show_bill):
         return
     lw = c.text_width(label, "5x7")
     rw = c.text_width(roll, "5x7")
-    bx = 13 + lw + 10
-    maxw = c.width - 6 - rw - bx
+    bx = 17 + lw + 10
+    maxw = c.width - 10 - rw - bx
     if maxw >= 24:
         c.text_fit(bill, bx, 1, ["5x7", "4x5"], color = fg, maxw = maxw)
 
@@ -912,7 +912,7 @@ def draw_tally(c, vote):
     count_w = c.text_width("000", "10x16")
     label_x = RAIL + 3
     bar_x = label_x + 21
-    count_x = c.width - 3
+    count_x = c.width - 13
     gutter = 8
     bar_w = count_x - count_w - gutter - bar_x
     if bar_w < 40:

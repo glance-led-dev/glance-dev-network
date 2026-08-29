@@ -107,15 +107,17 @@ def bars(c, ctx):
     gap = 4
     y = (c.height - (3 * h + 2 * gap)) // 2
     wide = c.width >= 128
-    lw = 26 if wide else 17
-    rw = 26 if wide else 20
+    lw = 29 if wide else 17
+    rw = 33 if wide else 20
+    lx = 5 if wide else 2
+    px = c.width - 9 if wide else c.width - 2
     for i in range(3):
         yy = y + i * (h + gap)
         label = rows[i][0] if wide else SHORT[i]
-        c.text(label, 2, yy - 1, font = "4x5", color = "#6A7090")
+        c.text(label, lx, yy - 1, font = "4x5", color = "#6A7090")
         c.progress_bar(lw, yy, c.width - lw - rw, h, rows[i][1],
                        color = accent, bg = "#181C26")
-        c.text(str(int(rows[i][1])) + "%", c.width - 2, yy - 1, font = "4x5",
+        c.text(str(int(rows[i][1])) + "%", px, yy - 1, font = "4x5",
                color = "#C8D0E8", align = "right")
 
 
@@ -130,7 +132,16 @@ def dial(c, ctx):
     # disc that gives it a background of its own.
     wide = c.width >= 128
     r = c.height // 2 - 3
-    cx = r + 3 if wide else c.width // 2
+    if wide:
+        # Ring, time and the AM/day column measured as one container -
+        # current internal offsets kept - and centred on the panel.
+        t0 = local(ctx)
+        lab0 = str(h12(t0["hour"])) + ":" + fmt.pad(t0["minute"])
+        tw0 = c.text_width(lab0, "16x20")
+        total = (2 * r + 1) + 12 + tw0 + 5 + 18
+        cx = (c.width - total) // 2 + r
+    else:
+        cx = c.width // 2
     cy = c.height // 2
     frac = ((t["hour"] % 12) * 3600.0 + t["minute"] * 60.0 + t["second"]) / 43200.0
 
@@ -143,11 +154,14 @@ def dial(c, ctx):
 
     label = str(h12(t["hour"])) + ":" + fmt.pad(t["minute"])
     if wide:
-        c.text(label, cx + r + 12, 6, font = "16x20", color = "#FFFFFF")
-        c.text("AM" if t["hour"] < 12 else "PM", c.width - 6, 4, font = "6x8",
-               color = accent, align = "right")
-        c.text(DOW[t["weekday"]], c.width - 6, 20, font = "6x8",
-               color = "#6A7090", align = "right")
+        # The AM/PM + day column rides directly off the end of the time,
+        # wherever the digit count puts it.
+        tx = cx + r + 12
+        c.text(label, tx, 6, font = "16x20", color = "#FFFFFF")
+        ex = tx + c.text_width(label, "16x20") + 5
+        c.text("AM" if t["hour"] < 12 else "PM", ex, 6, font = "6x8",
+               color = accent)
+        c.text(DOW[t["weekday"]], ex, 17, font = "6x8", color = "#6A7090")
     else:
         c.fill_circle(cx, cy, r - 3, "#0B0D14")
         c.text(label, cx, cy - 3, font = "6x8", color = "#FFFFFF",

@@ -66,7 +66,7 @@ def fetch(ctx):
             "API_KEY": key,
         },
         # Stations report hourly. No point asking more often than that.
-        ttl_seconds = 900,
+        ttl_seconds = 1800,
     )
 
     # ALWAYS check status_code before touching the json

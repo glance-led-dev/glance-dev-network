@@ -83,7 +83,7 @@ def _page(c, ctx, i):
     tx = 28
     # rank badge, top-right, in the movie's accent color
     c.round_rect(112, 1, 126, 13, 2, fill = m["accent"])
-    c.text(str(i + 1), 119, 3, font = "5x7", color = "black", align = "center")
+    c.text(str(i + 1), 119, 4, font = "5x7", color = "black", align = "center")
 
     # title, wrapped to two lines
     c.text_wrapped(m["title"], tx, 1, 80, font = "5x7", color = "white", max_lines = 2)

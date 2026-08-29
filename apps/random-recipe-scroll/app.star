@@ -57,11 +57,10 @@ def fit(c, text, fonts, maxw):
     return [pick, clip(c, text, pick, maxw)]
 
 def tab(c, word, accent, x = 4):
-    """The page chip. Same object, same place, on every page of every app."""
-    w = c.text_width(word, "4x5")
-    c.round_rect(x, 0, x + w + 3, 7, 2, fill = accent)
-    c.text(word, x + 2, 2, font = "4x5", color = "black")
-    return x + w + 5
+    """The page chip - drawn with c.badge so the text sits ink-centered in
+    the pill (1px above and below, >=2px sides) per the design guidelines."""
+    w = c.badge(word, x, 0, color = "black", bg = accent, font = "4x5")
+    return x + w + 1
 
 def rail(c, color):
     c.rect(0, 0, 1, 31, fill = color)
@@ -534,9 +533,8 @@ def tonight(c, ctx):
     cat = cat_of(st["cat"])
     col, glyph = cat[0], cat[1]
     rail(c, col)
-    w = c.text_width("TONIGHT", "4x5")
-    c.round_rect(4, 0, 4 + w + 3, 7, 2, fill = col)
-    c.text("TONIGHT", 6, 2, font = "4x5", color = cat[2])
+    chip_end = 4 + c.badge("TONIGHT", 4, 0, color = cat[2], bg = col,
+                           font = "4x5") + 5
 
     # The place setting: fork, plate, knife -- and tonight's category served on
     # it. After three evenings you read the colour before the words.
@@ -557,15 +555,17 @@ def tonight(c, ctx):
     else:
         c.text_wrapped(st["name"], 4, 9, 143, font = "4x7", color = "white",
                        line_gap = 1, max_lines = 2)
-        info(c, st, col, 2)
+        # On the top row the info line starts AFTER the chip - drawn from
+        # x=4 it wrote the area straight across the pill.
+        info(c, st, col, 2, chip_end)
 
-def info(c, st, col, y):
+def info(c, st, col, y, x0 = 4):
     """Area, a coloured dot, category, and the ingredient count. The count is
     pinned right; if the words cannot fit what is left, the AREA gives way --
     the category word is the key that teaches the colour system."""
     n = str(len(st["items"])) + " ITEMS"
     c.text(n, 146, y, font = "4x5", color = "gray", align = "right")
-    budget = 146 - c.text_width(n, "4x5") - 10
+    budget = 146 - c.text_width(n, "4x5") - 10 - (x0 - 4)
     area, cat = st["area"], st["cat"]
     # The category is never clipped -- it is the key that teaches the colour
     # system. The area gives way instead, but by being SHORTENED, not dropped:
@@ -574,12 +574,12 @@ def info(c, st, col, y):
     room = budget - 7 - c.text_width(cat, "4x5")
     if area != "" and room >= 12:
         shown = clip(c, area, "4x5", room)
-        c.text(shown, 4, y, font = "4x5", color = "white")
-        dx = 4 + c.text_width(shown, "4x5") + 3
+        c.text(shown, x0, y, font = "4x5", color = "white")
+        dx = x0 + c.text_width(shown, "4x5") + 3
         c.rect(dx, y + 2, dx + 1, y + 3, fill = col)
         c.text(cat, dx + 4, y, font = "4x5", color = col)
     else:
-        c.text(clip(c, cat, "4x5", budget), 4, y, font = "4x5", color = col)
+        c.text(clip(c, cat, "4x5", budget), x0, y, font = "4x5", color = col)
 
 def basket(c, ctx):
     c.fill("black")
@@ -592,9 +592,7 @@ def basket(c, ctx):
     cat = cat_of(st["cat"])
     col = cat[0]
     rail(c, col)
-    w = c.text_width("BASKET", "4x5")
-    c.round_rect(4, 0, 4 + w + 3, 7, 2, fill = col)
-    c.text("BASKET", 6, 2, font = "4x5", color = cat[2])
+    c.badge("BASKET", 4, 0, color = cat[2], bg = col, font = "4x5")
     items = st["items"]
     c.text(str(len(items)) + " ITEMS", 188, 2, font = "4x5", color = "gray",
            align = "right")

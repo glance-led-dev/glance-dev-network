@@ -232,7 +232,7 @@ def _predictions(station_id, begin, end, interval):
             "format": "json",
             "application": "glance-tide-chart",
         },
-        ttl_seconds = 900,
+        ttl_seconds = 3600,
     )
     status = r["status_code"]
     body = r["json"]
@@ -259,7 +259,7 @@ def _latest(station_id, product):
             "format": "json",
             "application": "glance-tide-chart",
         },
-        ttl_seconds = 900,
+        ttl_seconds = 3600,
     )
     if r["status_code"] != 200 or not r["json"]:
         return None

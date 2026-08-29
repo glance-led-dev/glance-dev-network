@@ -1,7 +1,7 @@
 gdn: 1
 id: currency-rates-scroll
 version: 0.1.0
-name: Currency Rates (Scroll)
+name: Currency Rates
 author: glance-led-dev
 description: "What your currency is worth against three others, updated daily."
 category: Finance

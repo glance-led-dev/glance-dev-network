@@ -112,7 +112,7 @@ def block(c, text, x, y, maxw, maxh, fonts, color, gap):
 
 def feed():
     r = http.get("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson",
-                 ttl_seconds = 900)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         return None
     return r["json"].get("features", [])

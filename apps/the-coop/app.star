@@ -12,11 +12,11 @@ TEAL = "#2CBABE"
 
 def main(c, ctx):
     c.fill("black")
-    c.image("logo.png", LOGO_X, LOGO_Y, w = LOGO_W, h = LOGO_H)
-
     msg = "WELCOME TO THE COOP"
-    text_x0 = LOGO_X + LOGO_W + 6
     tw = c.text_width(msg, "5x7b")
-    x = text_x0 + max(0, (c.width - text_x0 - tw) // 2)
+    # Logo and message measured as one group - a 10px gap between them -
+    # and the whole thing centred on the panel.
+    gx = max(0, (c.width - (LOGO_W + 10 + tw)) // 2)
+    c.image("logo.png", gx, LOGO_Y, w = LOGO_W, h = LOGO_H)
     y = (c.height - 7) // 2
-    c.text(msg, x, y, font = "5x7b", color = TEAL)
+    c.text(msg, gx + LOGO_W + 10, y, font = "5x7b", color = TEAL)

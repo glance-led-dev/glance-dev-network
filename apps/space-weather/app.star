@@ -76,7 +76,7 @@ def flare_class(flux):
 
 def flux(c, ctx):
     r = http.get("https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json",
-                 ttl_seconds = 900)
+                 ttl_seconds = 3600)
     if r["status_code"] != 200 or not r["json"]:
         nodata(c, "NO SWPC DATA", "NO CONNECTION")
         return

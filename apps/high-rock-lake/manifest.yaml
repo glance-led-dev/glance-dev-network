@@ -20,7 +20,7 @@ height: 32
 
 # 15 min: level/temp/forecast pages don't change fast enough to justify more frequent
 # scraping, and it keeps us well clear of the 8-uncached-requests-per-render cap.
-refresh: 900
+refresh: 3600
 
 pages: [brand, water]
 

@@ -45,7 +45,7 @@ def offset_hours(ctx):
         "https://timeapi.io/api/TimeZone/coordinate",
         params = {"latitude": places[0]["latitude"],
                   "longitude": places[0]["longitude"]},
-        ttl_seconds = 3600,
+        ttl_seconds = 14400,
     )
     if t["status_code"] != 200 or not t["json"]:
         return 0.0
@@ -123,7 +123,14 @@ def wheel(c, ctx):
 
     wide = c.width >= 128
     r = c.height // 2 - 3
-    cx = r + 3 if wide else c.width // 2
+    if wide:
+        name0 = SEASONS[idx][0]
+        nf0 = "16x20" if c.text_width(name0, "16x20") <= 96 else "10x16"
+        total = (2 * r + 1) + 8 + c.text_width(name0, nf0) + 10 + \
+            c.text_width("DAY " + str(t["yday"]), "6x8")
+        cx = (c.width - total) // 2 + r
+    else:
+        cx = c.width // 2
     cy = c.height // 2
     yspan = 366.0 if is_leap(t["year"]) else 365.0
     frac = (t["yday"] - 1) / yspan
@@ -147,11 +154,19 @@ def wheel(c, ctx):
     c.fill_circle(cx + int(math.cos(a) * r), cy + int(math.sin(a) * r), 1,
                   "#FFFFFF")
     if wide:
-        # Reserve the day counter's column, then fit the name to what is left.
-        c.text("DAY " + str(t["yday"]), c.width - 6, 12, font = "6x8",
-               color = "#6A7090", align = "right")
-        c.text_fit(SEASONS[idx][0], cx + r + 12, 6, ["16x20", "10x16", "6x8"],
-                   color = SEASONS[idx][3], maxw = c.width - (cx + r + 12) - 62)
+        # Wheel, season name and day counter measured as one container with
+        # tightened gaps (8px, 10px) and centred on the panel. The wheel was
+        # already drawn at cx, so the text hangs off it.
+        name = SEASONS[idx][0]
+        nfont = "16x20" if c.text_width(name, "16x20") <= 96 else "10x16"
+        day = "DAY " + str(t["yday"])
+        nx = cx + r + 8
+        # Bottom-aligned on a shared baseline (row 25), whatever season name
+        # or day count the year serves up.
+        ny = 6 if nfont == "16x20" else 10
+        c.text(name, nx, ny, font = nfont, color = SEASONS[idx][3])
+        c.text(day, nx + c.text_width(name, nfont) + 10, 17, font = "6x8",
+               color = "#6A7090")
     else:
         c.fill_circle(cx, cy, r - 3, "#0A0B12")
         c.text(SEASONS[idx][0], cx, cy - 2, font = "4x5",
@@ -166,12 +181,15 @@ def next(c, ctx):
 
     c.fill("#06070E")
     if c.width >= 128:
-        c.text(SEASONS[idx][0], 6, 2, font = "6x8", color = SEASONS[idx][3])
-        c.text(str(n), 6, 12, font = "16x20", color = "#FFFFFF")
-        c.text("DAYS TO", c.width - 6, 6, font = "4x5", color = "#6A7090",
-               align = "right")
-        c.text(nxt[0], c.width - 6, 14, font = "10x16", color = nxt[3],
-               align = "right")
+        # "27 DAYS TO AUTUMN" as one centred container: the count big, then
+        # DAYS TO stacked over the season name.
+        num = str(n)
+        nw = c.text_width(num, "16x20")
+        rw = max(c.text_width("DAYS TO", "4x5"), c.text_width(nxt[0], "10x16"))
+        x0 = (c.width - (nw + 8 + rw)) // 2
+        c.text(num, x0, 8, font = "16x20", color = "#FFFFFF")
+        c.text("DAYS TO", x0 + nw + 8, 8, font = "4x5", color = "#6A7090")
+        c.text(nxt[0], x0 + nw + 8, 15, font = "10x16", color = nxt[3])
     else:
         c.text(SEASONS[idx][0], c.width // 2, 0, font = "4x5",
                color = SEASONS[idx][3], align = "center")

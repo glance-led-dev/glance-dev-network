@@ -94,7 +94,7 @@ def category(kt):
 
 
 def storms(c, ctx):
-    r = http.get("https://www.nhc.noaa.gov/CurrentStorms.json", ttl_seconds = 1800)
+    r = http.get("https://www.nhc.noaa.gov/CurrentStorms.json", ttl_seconds = 3600)
     if r["status_code"] != 200 or r["json"] == None:
         nodata(c, "NO NHC DATA", "NO CONNECTION")
         return
@@ -152,9 +152,22 @@ def storms(c, ctx):
             c.text("+" + str(n - 1) + " MORE", 28, 22, font = "5x7",
                    color = "#A8788C")
     else:
-        c.text_fit(name, c.width - 2, 1, ["6x8", "5x7", "4x5"],
+        c.text_fit(name, c.width - 2, 0, ["6x8", "5x7", "4x5"],
                    color = "#FFFFFF", align = "right", maxw = c.width - 20)
-        c.text_fit(cat[0], c.width - 2, 11, ["10x16", "6x8"], color = cat[1],
-                   align = "right", maxw = c.width - 20)
-        c.text(str(mph) + "MPH", c.width - 2, 25, font = "4x5",
+        # "CAT n" fits on one line at 10x16, but "TROP STORM" / "TROP DEPR"
+        # do not fit the 44px beside the icon in any font, so the two-word
+        # labels are stacked one word per line at 6x8 instead of clipping.
+        words = cat[0].split(" ")
+        maxw = c.width - 20
+        mph_y = 26
+        if len(words) == 2 and c.text_width(cat[0], "6x8") > maxw:
+            c.text(words[0], c.width - 2, 9, font = "6x8", color = cat[1],
+                   align = "right")
+            c.text(words[1], c.width - 2, 18, font = "6x8", color = cat[1],
+                   align = "right")
+            mph_y = 27
+        else:
+            c.text_fit(cat[0], c.width - 2, 11, ["10x16", "6x8"], color = cat[1],
+                       align = "right", maxw = maxw)
+        c.text(str(mph) + "MPH", c.width - 2, mph_y, font = "4x5",
                color = "#E8A8B8", align = "right")

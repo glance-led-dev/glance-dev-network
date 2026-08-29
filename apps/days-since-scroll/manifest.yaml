@@ -1,7 +1,7 @@
 gdn: 1
 id: days-since-scroll
 version: 0.1.0
-name: Days Since (Scroll)
+name: Days Since
 author: glance-led-dev
 description: A streak counter for the thing you are keeping up — or keeping away from — with a weeks and months breakdown.
 category: Lifestyle
