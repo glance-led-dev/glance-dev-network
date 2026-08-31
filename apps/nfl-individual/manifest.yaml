@@ -1,0 +1,96 @@
+gdn: 1
+id: nfl-individual
+version: 0.1.0
+name: NFL Scores
+author: DanielSavitsky32
+description: Live, final, and upcoming games for one NFL team, with team logos, score, quarter and clock, and a team-coloured score banner.
+category: Sports
+entry: app.star
+
+width: 64
+height: 32
+
+refresh: 60
+
+pages: [board]
+
+assets:
+  - ARI.png
+  - ATL.png
+  - BAL.png
+  - BUF.png
+  - CAR.png
+  - CHI.png
+  - CIN.png
+  - CLE.png
+  - DAL.png
+  - DEN.png
+  - DET.png
+  - GB.png
+  - HOU.png
+  - IND.png
+  - JAX.png
+  - KC.png
+  - LV.png
+  - LAC.png
+  - LAR.png
+  - MIA.png
+  - MIN.png
+  - NE.png
+  - NO.png
+  - NYG.png
+  - NYJ.png
+  - PHI.png
+  - PIT.png
+  - SF.png
+  - SEA.png
+  - TB.png
+  - TEN.png
+  - WSH.png
+
+inputs:
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Team
+    default: "PHI"
+    choices:
+      - "ARI"
+      - "ATL"
+      - "BAL"
+      - "BUF"
+      - "CAR"
+      - "CHI"
+      - "CIN"
+      - "CLE"
+      - "DAL"
+      - "DEN"
+      - "DET"
+      - "GB"
+      - "HOU"
+      - "IND"
+      - "JAX"
+      - "KC"
+      - "LV"
+      - "LAC"
+      - "LAR"
+      - "MIA"
+      - "MIN"
+      - "NE"
+      - "NO"
+      - "NYG"
+      - "NYJ"
+      - "PHI"
+      - "PIT"
+      - "SF"
+      - "SEA"
+      - "TB"
+      - "TEN"
+      - "WSH"
+    help: Which team to follow.
+  - key: utcoffset
+    type: string
+    app_input_type: free-text
+    label: UTC offset
+    default: "-4"
+    help: Hours from UTC for kickoff times. Eastern is -4 in summer, -5 in winter.
