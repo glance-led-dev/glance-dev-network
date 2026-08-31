@@ -1,0 +1,113 @@
+gdn: 1
+id: cinemaboard
+version: 0.1.0
+name: CinemaBoard
+author: jrodarte
+# Movie-theater marquee for Glance Scroll Premier.
+description: A premium home-theater movie marquee showing theatrical now-playing, upcoming releases, TMDB ratings, countdowns, and optional box-office provider data.
+category: Entertainment
+entry: app.star
+
+# Glance Scroll Premier is the 8.5 ft / six-module model. GDN modules are 64 px wide;
+# six modules use the documented maximum app canvas: 384 x 32.
+width: 384
+height: 32
+
+# Movie data changes slowly. Six-hour app refresh plus per-request TTLs avoid needless API traffic.
+refresh: 21600
+
+pages: [boxoffice, nowplaying, newreleases, comingsoon, spotlight, ratings, countdown, message]
+
+inputs:
+  - key: tmdbapikey
+    type: string
+    app_input_type: api-key
+    label: TMDB API key
+    default: ""
+    help: Required. Create a TMDB account, then get an API key at https://www.themoviedb.org/settings/api. Stored encrypted by Glance.
+
+  - key: region
+    type: choice
+    app_input_type: dropdown
+    label: Region
+    default: US
+    choices: [US, CA, GB, AU]
+    help: TMDB region code for theatrical release lists.
+
+  - key: language
+    type: choice
+    app_input_type: dropdown
+    label: Language
+    default: en-US
+    choices: [en-US, en-CA, en-GB, en-AU]
+    help: TMDB response language.
+
+  - key: moviecount
+    type: choice
+    app_input_type: dropdown
+    label: Number of movies
+    default: "5"
+    choices: ["3", "5", "8", "10"]
+    help: How many movies CinemaBoard rotates or considers per screen.
+
+  - key: showboxoffice
+    type: string
+    app_input_type: checkbox
+    label: Weekend Box Office screen
+    default: "true"
+
+  - key: shownowplaying
+    type: string
+    app_input_type: checkbox
+    label: Now Playing screen
+    default: "true"
+
+  - key: shownewreleases
+    type: string
+    app_input_type: checkbox
+    label: New Releases screen
+    default: "true"
+
+  - key: showcomingsoon
+    type: string
+    app_input_type: checkbox
+    label: Coming Soon screen
+    default: "true"
+
+  - key: showspotlight
+    type: string
+    app_input_type: checkbox
+    label: Movie Spotlight screen
+    default: "true"
+
+  - key: showratings
+    type: string
+    app_input_type: checkbox
+    label: Ratings screen
+    default: "true"
+
+  - key: showcountdown
+    type: string
+    app_input_type: checkbox
+    label: Release Countdown screen
+    default: "true"
+
+  - key: showmessage
+    type: string
+    app_input_type: checkbox
+    label: Theater Message screen
+    default: "false"
+
+  - key: custommessage
+    type: string
+    app_input_type: free-text
+    label: Theater Message
+    default: "WELCOME TO THE CINEMA"
+    help: Optional custom marquee text. Keep it short for best readability.
+
+  - key: boxofficeurl
+    type: string
+    app_input_type: free-text
+    label: Optional box-office JSON URL
+    default: ""
+    help: Optional public HTTPS JSON endpoint from a licensed box-office provider. Leave blank to use TMDB-only screens.
