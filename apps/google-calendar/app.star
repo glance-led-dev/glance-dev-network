@@ -534,6 +534,19 @@ def clip_words(c, text, font, maxw):
         return t[:sp]
     return t
 
+# A day letter is centred on its column line, but `align="center"` centres the
+# glyph's CELL and 4x5's T is the one letter whose cell is wider than its ink:
+# three lit columns in a four-column cell, so the crossbar landed a pixel left
+# of the line while M, W, F and S -- which fill their cells -- sat true. The
+# nudge puts T's ink on the line. Any letter not named here needs none.
+DOW1_NUDGE = {"T": 1}
+
+
+def day_letter(c, ch, mid, y, color):
+    c.text(ch, mid + DOW1_NUDGE.get(ch, 0), y, font = "4x5", color = color,
+           align = "center")
+
+
 def tab(c, word, x = 4):
     """The blue page chip. Same object, same place, on every page.
 
@@ -710,16 +723,38 @@ G_RED = "#EA4335"
 G_YELLOW = "#FBBC05"
 G_GREEN = "#34A853"
 
+# The Google wordmark's own colour sequence: G blue, o red, o yellow, g blue,
+# l green, e red. Drawn a letter at a time at the 5x7 advance (5px glyph + 1px
+# letter space) so it lands exactly where c.text would have put the string.
+GOOGLE_LETTER_COLORS = [G_BLUE, G_RED, G_YELLOW, G_BLUE, G_GREEN, G_RED]
+
+
+def google_wordmark(c, x, y):
+    word = "GOOGLE"
+    for i in range(len(word)):
+        c.text(word[i], x + i * 6, y, font = "5x7",
+               color = GOOGLE_LETTER_COLORS[i])
+
+
 def calendar_icon(c, x, y, accent):
-    """A 22x22 calendar page, top-left at (x, y)."""
+    """A 21x22 calendar page, top-left at (x, y).
+
+    21 columns, not 22, and the odd width is the whole point: the date is
+    centred in this tile, every 5x7 digit inks all five of its columns, and so
+    a date inks 5 columns at one digit and 11 at two -- both odd. An even tile
+    has its centre on a boundary, which left every date half a pixel left of
+    true. An odd tile has its centre ON a column, and odd ink centres on it
+    exactly, at one digit or two."""
     c.rect(x + 2, y + 1, x + 3, y + 4, fill = "#9AA0A6")
-    c.rect(x + 18, y + 1, x + 19, y + 4, fill = "#9AA0A6")
-    c.round_rect(x, y + 3, x + 21, y + 21, 2, fill = "#F1F3F4")
-    c.rect(x + 1, y + 4, x + 20, y + 9, fill = accent)
+    c.rect(x + 17, y + 1, x + 18, y + 4, fill = "#9AA0A6")
+    c.round_rect(x, y + 3, x + 20, y + 21, 2, fill = "#F1F3F4")
+    c.rect(x + 1, y + 4, x + 19, y + 9, fill = accent)
+    # Four 3px ruling marks, 1px apart: 15 wide, centred in the 21 with 3
+    # columns of margin each side.
     for i in range(4):
-        c.rect(x + 3 + i * 5, y + 12, x + 5 + i * 5, y + 13,
+        c.rect(x + 3 + i * 4, y + 12, x + 5 + i * 4, y + 13,
                fill = "#BDC1C6")
-        c.rect(x + 3 + i * 5, y + 16, x + 5 + i * 5, y + 17,
+        c.rect(x + 3 + i * 4, y + 16, x + 5 + i * 4, y + 17,
                fill = "#BDC1C6")
 
 def splash(c, ctx):
@@ -745,7 +780,7 @@ def splash(c, ctx):
     if wide:
         calendar_icon(c, 6, 5, accent)
         c.text(day_of_month(st["today"]), 17, 14, font = "5x7",
-               color = "#3C4043", align = "center")
+               color = "black", align = "center")
         c.text("GOOGLE", 38, 4, font = "6x8", color = "white")
         c.text("CALENDAR", 38, 14, font = "6x8", color = accent)
         c.text(date_label(st["today"]), 38, 25, font = "4x5", color = "gray")
@@ -760,17 +795,36 @@ def splash(c, ctx):
             c.text(str(n) + word, 188, 25, font = "4x5", color = accent,
                    align = "right")
     else:
-        calendar_icon(c, 4, 5, accent)
-        c.text(day_of_month(st["today"]), 15, 14, font = "5x7",
-               color = "#3C4043", align = "center")
-        c.text("GCAL", 30, 6, font = "5x7", color = "white")
+        # The app's own name rather than an abbreviation. CALENDAR is 39px at
+        # 4x5 and the art is 22 wide, so the words only fit once the tile sits
+        # against the left edge: from x=24 the run is 40. The three lines are
+        # stacked on the tile's own centre row.
+        calendar_icon(c, 1, 5, accent)
+        # The tile spans x 1..21 and its centre column is 11; a 5x7 date inks
+        # 5 columns at one digit and 11 at two, so both land dead on it.
+        day = day_of_month(st["today"])
+        dw = c.text_width(day, "5x7")
+        c.text(day, 1 + (21 - dw) // 2, 14, font = "5x7", color = "black")
+        # GOOGLE carries the wordmark's colours, as on the scroll panel;
+        # CALENDAR stays white so the day's load colour is spent on the one
+        # line that reports it -- the event count.
+        # Two blank rows between every line, and the 21-row stack that makes
+        # centres on the tile's own centre row: GOOGLE inks 6-12, CALENDAR
+        # 15-19, the count 22-26, against a tile spanning 6-26.
+        google_wordmark(c, 24, 6)
+        c.text("CALENDAR", 24, 15, font = "4x5", color = "white")
         if st["state"] in ["setup", "offline", "badfeed"]:
-            c.text("SET UP", 30, 18, font = "4x5", color = "midgray")
+            c.text("SET UP", 24, 22, font = "4x5", color = "midgray")
         elif n == 0:
-            c.text("CLEAR", 30, 18, font = "4x5", color = G_GREEN)
+            c.text("CLEAR", 24, 22, font = "4x5", color = G_GREEN)
         else:
-            c.text(str(n) + ("EV" if n != 1 else "EV"), 30, 18, font = "4x5",
-                   color = accent)
+            # "3 EVENTS" is 37px and fits the 40px run; a two-digit count is
+            # 42 and does not, so it falls back to the short form rather than
+            # running off the panel.
+            word = str(n) + (" EVENT" if n == 1 else " EVENTS")
+            if c.text_width(word, "4x5") > c.width - 24 - 1:
+                word = str(n) + "EV"
+            c.text(word, 24, 22, font = "4x5", color = accent)
 
 def day_of_month(z):
     return str(civil_from_days(z)[2])
@@ -877,19 +931,23 @@ def next(c, ctx):
         slot = clock(ev["start"])
     c.text(slot, 62, 1, font = "4x5", color = "gray", align = "right")
 
+    # The 10x16 hero sits under the pill and shares its columns, so it starts a
+    # row below the pill's last one rather than against it -- row 7 is the
+    # channel between them. The title follows the hero down; at 4x7 it still
+    # ends its ink on row 31.
     if mode == "now":
-        c.text("NOW", 5, 7, font = "10x16", color = "green")
+        c.text("NOW", 5, 8, font = "10x16", color = "green")
     elif mode == "allday":
         c.text("ALL DAY", 5, 13, font = "6x8", color = "white")
     elif mode == "soon":
         n = str(ev["start"] - now)
-        c.text(n, 5, 7, font = "10x16",
+        c.text(n, 5, 8, font = "10x16",
                color = "amber" if ev["start"] - now <= 10 else "white")
-        c.text("MIN", 5 + c.text_width(n, "10x16") + 4, 18, font = "4x5",
+        c.text("MIN", 5 + c.text_width(n, "10x16") + 4, 19, font = "4x5",
                color = "gray")
     else:
         c.text(clock(ev["start"]), 5, 10, font = "8x12", color = "white")
-    c.text(clip_words(c, ev["title"], "4x7", 59), 5, 24, font = "4x7",
+    c.text(clip_words(c, ev["title"], "4x7", 59), 5, 25, font = "4x7",
            color = "white")
 
 # ------------------------------------------------------------ page 2: today
@@ -935,7 +993,9 @@ def today(c, ctx):
         if c.width >= 128:
             c.text(n, 36, 2, font = "4x5", color = "midgray")
         else:
-            c.text(n, 62, 19, font = "4x5", color = "midgray", align = "right")
+            # One row lower, so it sits on the second card's time rather than
+            # riding the channel between the two cards.
+            c.text(n, 62, 20, font = "4x5", color = "midgray", align = "right")
 
     for i in range(len(shown)):
         ev = shown[i]
@@ -958,14 +1018,20 @@ def today(c, ctx):
             # Two stacked cards, not three rows: a 64px row minus a rail and a
             # time column leaves about six glyphs of title, which is no use to
             # anybody. Stacking the time over the name buys twelve.
-            # The standard pill owns rows 0-6, so the first card starts at 7
-            # and the pair has 25 rows to live in -- one short of two 13-row
-            # cards. The row comes out of the gap inside a card, not the gap
-            # between them: the second card still ends its title on row 31.
-            y = 7 + i * 13
-            c.rect(0, y, 1, y + 11, fill = ev["tint"][0])
+            # The standard pill owns rows 0-6 and the first card used to start
+            # on row 7, so an amber time sat directly against the pill's
+            # underside. The stack starts a row lower: the pill keeps its
+            # place, row 7 is the channel under it, and the pair runs 8-31. The time and the title used to sit on adjacent
+            # rows with nothing between them -- 4x5 inks all five of its rows
+            # and 4x7 all seven -- so an amber time and a white title read as
+            # one block. The title drops to 4x5, which costs no characters at
+            # all (4x5 and 4x7 share a 5px advance, so both fit twelve) and
+            # frees the two rows that put a blank channel inside each card and
+            # another between them.
+            y = 8 + i * 13
+            c.rect(0, y, 1, y + 10, fill = ev["tint"][0])
             c.text(when, 4, y, font = "4x5", color = hue)
-            c.text(clip_words(c, ev["title"], "4x7", 59), 4, y + 5, font = "4x7",
+            c.text(clip_words(c, ev["title"], "4x5", 59), 4, y + 6, font = "4x5",
                    color = "white")
 
     if len(shown) < rows:
@@ -973,7 +1039,7 @@ def today(c, ctx):
             c.text("NO MORE TODAY", 68, 8 + len(shown) * 8 + 1, font = "4x5",
                    color = "midgray")
         else:
-            c.text("NOTHING ELSE", 4, 7 + len(shown) * 13 + 1, font = "4x5",
+            c.text("NOTHING ELSE", 4, 8 + len(shown) * 13 + 1, font = "4x5",
                    color = "midgray")
 
 # ------------------------------------------------------------- page 3: week
@@ -1107,6 +1173,10 @@ def week(c, ctx):
         day = st["today"] + i
         x = x0 + i * colw
         mid = x + (colw - 3) // 2
+        # One half-width for every per-day marker -- chip, all-day band and
+        # base bar -- so all three are the same width and all three are
+        # symmetric about the column line the strip is drawn on.
+        chalf = (colw - 3) // 2
         mine = i == 0
         if c.width >= 128:
             if mine:
@@ -1114,17 +1184,21 @@ def week(c, ctx):
             c.text(DOW[weekday(day)], mid, 2, font = "4x5",
                    color = "white" if mine else "gray", align = "center")
             if allday[i] != None:
-                c.rect(x + inset, 9, x + colw - 4, 10, fill = allday[i])
+                c.rect(mid - chalf, 9, mid + chalf, 10, fill = allday[i])
         else:
             if mine:
-                c.round_rect(x, 8, x + colw - 2, 14, 1, fill = BLUE)
-            c.text(DOW1[weekday(day)], mid, 9, font = "4x5",
-                   color = "white" if mine else "gray", align = "center")
+                # Centred on `mid` -- the same column line the strip below is
+                # drawn on. Spanning the whole cell put the chip's centre half
+                # a pixel off that line, so it read as sitting left of its day.
+                c.round_rect(mid - chalf, 8, mid + chalf, 14, 1, fill = BLUE)
+            day_letter(c, DOW1[weekday(day)], mid, 9,
+                       "white" if mine else "gray")
         c.vline(mid, lo, hi - lo + 1, BLUE_DIM if mine else STRUCT)
         if c.width < 128 and allday[i] != None:
             # No separate lane at this width: the all-day event pins to the top
             # of the strip instead, which is where a calendar draws it anyway.
-            c.rect(x + inset, band, x + colw - 3, band + 1, fill = allday[i])
+            c.rect(mid - chalf, band, mid + chalf, band + 1,
+                   fill = allday[i])
         for ev in blocks[i]:
             t = ev["start"] % 1440
             if t < d_lo:
@@ -1139,7 +1213,8 @@ def week(c, ctx):
             if y + h - 1 > hi:
                 h = hi - y + 1
             c.rect(mid - half, y, mid + half, y + h - 1, fill = ev["tint"][0])
-        c.hline(x + inset, 31, colw - 3 - inset + 1, STRUCT)
+        # Symmetric about the column line, like the chip and the blocks.
+        c.hline(mid - chalf, 31, 2 * chalf + 1, STRUCT)
 
 
 # ---- time zones -----------------------------------------------------------
