@@ -1,6 +1,6 @@
 # SPPL Live
 
-Live weekly matchup scores and league standings for the Skrymshaw Pigskin Prognosticators League.
+Live weekly matchup scores and league standings for the Straight-Up Pigskin Pick'em League.
 
 The app displays six graphical pages on a 384×32 Glance Scroll Pro:
 

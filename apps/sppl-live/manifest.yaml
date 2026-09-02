@@ -3,7 +3,7 @@ id: sppl-live
 version: 0.2.0
 name: SPPL Live
 author: dlockstein
-description: Live weekly scores and standings for the Skrymshaw Pigskin Prognosticators League.
+description: Live weekly scores and standings for the Straight-Up Pigskin Pick'em League.
 category: Sports
 entry: app.star
 
