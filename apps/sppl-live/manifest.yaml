@@ -1,0 +1,21 @@
+gdn: 1
+id: sppl-live
+version: 0.2.0
+name: SPPL Live
+author: dlockstein
+description: Live weekly scores and standings for the Skrymshaw Pigskin Prognosticators League.
+category: Sports
+entry: app.star
+
+width: 384
+height: 32
+refresh: 60
+
+pages: [scores_one, scores_two, standings_one, standings_two, standings_three, standings_four]
+
+assets:
+  - sppl-shield.png
+  - team-dph.png
+  - team-fig.png
+  - team-long.png
+  - team-pp.png
