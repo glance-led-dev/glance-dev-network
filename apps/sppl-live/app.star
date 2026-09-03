@@ -11,6 +11,8 @@ TEAM_LOGOS = {
     "FIG": "team-fig.png",
     "LONG": "team-long.png",
     "PP": "team-pp.png",
+    "RHCP": "team-rhcp.png",
+    "TPOD": "team-tpod.png",
 }
 
 

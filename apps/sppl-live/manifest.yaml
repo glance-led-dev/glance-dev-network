@@ -1,6 +1,6 @@
 gdn: 1
 id: sppl-live
-version: 0.2.0
+version: 0.2.1
 name: SPPL Live
 author: dlockstein
 description: Live weekly scores and standings for the Straight-Up Pigskin Pick'em League.
@@ -19,3 +19,5 @@ assets:
   - team-fig.png
   - team-long.png
   - team-pp.png
+  - team-rhcp.png
+  - team-tpod.png
