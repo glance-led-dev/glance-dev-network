@@ -1,4 +1,4 @@
-# Motorsports Live
+# Motorsports Live - Delete this version.
 
 Motorsports Live is a live broadcast style leaderboard for NASCAR Cup, O'Reilly's, Trucks, and Formula 1, as well as a next race preview for when there is no live session.
 
