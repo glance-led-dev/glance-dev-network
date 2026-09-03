@@ -9,9 +9,12 @@ BADGE = "#16314E"
 TEAM_LOGOS = {
     "DPH": "team-dph.png",
     "FIG": "team-fig.png",
+    "GRUF": "team-gruf.png",
     "LONG": "team-long.png",
+    "PB": "team-pb.png",
     "PP": "team-pp.png",
     "RHCP": "team-rhcp.png",
+    "TOR": "team-tor.png",
     "TPOD": "team-tpod.png",
 }
 
