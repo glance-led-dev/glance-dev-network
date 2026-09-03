@@ -36,20 +36,8 @@ def _color(team_name, teams_map, role):
             return col
     return "white" if role == "secondary" else "darkgray"
 
-def season_year(ctx):
-    """The football season a date belongs to.
-
-    The season spans August to January, so January and February still belong to
-    the year before. Hardcoding it meant the app silently queried a finished
-    season the moment the calendar rolled over."""
-    if ctx.now.month <= 2:
-        return ctx.now.year - 1
-    return ctx.now.year
-
 def get_rivalry_titles():
     url = "https://raw.githubusercontent.com/SlaterDen/ncaaf-rivalries/refs/heads/main/rivalries.json"
-    # A hand-maintained title list that changes a few times a season; a 10s TTL
-    # (left over from testing) re-fetched it on every render of every panel.
     res = http.get(url, ttl_seconds=86400)
     
     if res["status_code"] == 200 and res["json"] != None:
@@ -73,7 +61,7 @@ def cfbd_get(path, params, apikey):
         "https://api.collegefootballdata.com" + path,
         headers={"Authorization": "Bearer " + apikey},
         params=params,
-        ttl_seconds=86400,
+        ttl_seconds=3600,
     )
 
 def _safe_int(val):
@@ -108,6 +96,12 @@ def main(c, ctx):
         c.text_center("COLLEGEFOOTBALLDATA.COM", 20, font="4x5", color="gray")
         return
 
+    # Derive year dynamically, treating Jan/Feb as the previous CFB season
+    now = ctx.now
+    current_year = now.year
+    if now.month <= 2:
+        current_year -= 1
+
     # Fetch dynamic FBS team directory for validation, colors, and abbreviations
     teams_r = cfbd_get("/teams/fbs", {}, apikey)
     teams_map = {}
@@ -133,8 +127,7 @@ def main(c, ctx):
 
     # Fetch dynamic rankings (CFP preferred, AP fallback)
     rankings_map = {}
-    year = season_year(ctx)
-    rank_r = cfbd_get("/rankings", {"year": year}, apikey)
+    rank_r = cfbd_get("/rankings", {"year": current_year}, apikey)
     if rank_r["status_code"] == 200 and rank_r["json"] != None:
         weeks_data = rank_r["json"]
         if len(weeks_data) > 0:
@@ -227,7 +220,7 @@ def main(c, ctx):
 
     if next_matchup_date == None:
         sched_r = cfbd_get("/games", {
-            "year": year,
+            "year": current_year,
             "team": team1,
         }, apikey)
         if sched_r["status_code"] == 200 and sched_r["json"] != None:
@@ -249,7 +242,6 @@ def main(c, ctx):
 
     past_games = sorted(past_games, key=lambda g: g.get("season", 0), reverse=True)
 
-    # The bitmap fonts are ASCII: an em dash has no glyph and draws as nothing.
     last_game_str = "-"
     streak_who = ""
     streak_len = 0
@@ -318,8 +310,8 @@ def main(c, ctx):
 
     if total > 0:
         # ----- STANDARD SERIES LAYOUT -----
-        c.rect(0, 0, c.width - 1, 9, fill="#4D8064")
-        c.text_center(title, 1, font="6x8", color="white")
+        c.rect(0, 0, 1, 9, fill="#4D8064")
+        c.text(title, 4, 1, font="6x8", color="white")
 
         bg1 = _color(team1, teams_map, "color")
         bg2 = _color(team2, teams_map, "color")

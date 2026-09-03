@@ -1,6 +1,6 @@
 gdn: 1
 id: ncaaf-rivalry-tracker
-version: 1.0.0
+version: 1.2.0
 name: NCAAF Rivalry Tracker
 author: Brayden Slater
 description: Head-to-head series for any two college football teams (Winsipedia-style). Titles and abbreviations load from a remote JSON so you can update them without changing code. Defaults to Red River.
@@ -8,11 +8,10 @@ category: Sports
 entry: app.star
 width: 192
 height: 32
-refresh: 86400
+refresh: 3600
 pages: [main]
 inputs:
   - key: apikey
-    required: true
     type: string
     app_input_type: api-key
     label: CFBD API Key
