@@ -447,10 +447,10 @@ def games(c, ctx):
     depended on the wall clock. This page answers "how are my games doing"
     without waiting, and DETAIL still gives each of them the full card.
 
-    Only the player count is fetched here: one request per game, so four games
-    cost four of the eight requests an app gets per render. Pulling the store
-    and review data for all four as well would blow that limit and the page
-    would fail outright."""
+    Four games cost eight requests (store name + player count each), which is
+    the per-render cap. Store appdetails is cached 24h and shared with DETAIL,
+    so later refreshes only pay for player counts. Reviews stay off this page
+    so the first uncached render still fits."""
     picks = games_list(ctx)
     n = len(picks)
     c.fill("#0B141C")
@@ -468,6 +468,7 @@ def games(c, ctx):
     for i in range(rows):
         appid = picks[i]
         y = top + i * 8
+        store = fetch_store(appid)
         count = fetch_players(appid)
         if count != None:
             num = format_count(count)
@@ -481,7 +482,7 @@ def games(c, ctx):
             cw = c.text_width(num, "4x7")
             c.text(num, c.width - 2, y, font = "4x7", color = WARN,
                    align = "right")
-        name = game_name(appid, None)
+        name = game_name(appid, store["name"])
         if name == None or str(name).strip() == "":
             name = appid
         # fit_clip returns [font, text], not a string. Drawing the pair
