@@ -1,4 +1,4 @@
-# Now Showing
+# Now Showing - Delete this version
 
 Now Showing is one movie or TV show/episode, always on the panel: title, runtime, genre, and IMDb + Rotten Tomatoes ratings (each color-coded red/amber/green).
 
