@@ -113,7 +113,9 @@ def tonight(c, ctx):
                font = "4x5", color = "#4A5478", align = "center")
         return
 
-    n = 16 if c.width >= 128 else 12
+    # As big as the column allows: 18 on the Scroll leaves the two text rows
+    # under it, 20 on the 64 fills the third of the panel each planet gets.
+    n = 18 if c.width >= 128 else 20
     show = len(vis)
     cap = 5 if c.width >= 128 else 3
     if show > cap:
@@ -126,9 +128,9 @@ def tonight(c, ctx):
         x = i * col
         draw_planet(c, nm, x + (col - n) // 2, 1, n)
         if c.width >= 128:
-            c.text_fit(nm, x + col // 2, n + 3, ["4x5", "3x4"],
+            c.text_fit(nm, x + col // 2, n + 2, ["4x5", "3x4"],
                        color = "#C8D0EC", align = "center", maxw = col - 2)
-            c.text_fit(v[0], x + col // 2, n + 10, ["4x5", "3x4"], color = v[1],
+            c.text_fit(v[0], x + col // 2, n + 8, ["4x5", "3x4"], color = v[1],
                        align = "center", maxw = col - 2)
         else:
             c.text(nm[:3], x + col // 2, n + 3, font = "4x5", color = "#C8D0EC",
