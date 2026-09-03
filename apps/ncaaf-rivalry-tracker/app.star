@@ -61,7 +61,7 @@ def cfbd_get(path, params, apikey):
         "https://api.collegefootballdata.com" + path,
         headers={"Authorization": "Bearer " + apikey},
         params=params,
-        ttl_seconds=3600,
+        ttl_seconds=refresh: 86400,
     )
 
 def _safe_int(val):
