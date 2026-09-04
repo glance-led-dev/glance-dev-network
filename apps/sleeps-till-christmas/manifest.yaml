@@ -1,0 +1,97 @@
+gdn: 1
+id: sleeps-till-christmas
+version: 0.1.0
+name: Sleeps Till Christmas
+author: glance-led-dev
+description: Sleeps until Christmas morning on a snowy panel strung with lights. A tree, Santa, a snowman, a reindeer or a gingerbread man keeps count while the sleigh crosses the moon.
+category: Lifestyle
+entry: app.star
+
+width: 192
+height: 32
+# The count only changes at midnight, so twice a day is plenty. The date is
+# worked out in the chosen time zone, so the roll-over lands on a real night.
+refresh: 43200
+
+pages: [countdown]
+
+inputs:
+  - key: hero
+    type: choice
+    app_input_type: dropdown
+    label: Who keeps count
+    default: TREE
+    help: The pixel art on the left of the panel.
+    choices: [TREE, SANTA, SNOWMAN, REINDEER, GINGERBREAD]
+  - key: unit
+    type: choice
+    app_input_type: dropdown
+    label: Count in
+    default: SLEEPS
+    help: SLEEPS is what the kids say. DAYS if you prefer.
+    choices: [SLEEPS, DAYS]
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#FF2A2A"
+    help: Colors the word CHRISTMAS. The number stays white.
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/New_York"
+    help: Pick the city nearest you so the count rolls over at your midnight. Daylight saving is applied automatically.
+    choices:
+      - "Pacific/Honolulu"
+      - "America/Anchorage"
+      - "America/Los_Angeles"
+      - "America/Phoenix"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/Mexico_City"
+      - "America/New_York"
+      - "America/Bogota"
+      - "America/Halifax"
+      - "America/Sao_Paulo"
+      - "America/Argentina/Buenos_Aires"
+      - "UTC"
+      - "Europe/Lisbon"
+      - "Europe/Dublin"
+      - "Europe/London"
+      - "Europe/Madrid"
+      - "Europe/Paris"
+      - "Europe/Amsterdam"
+      - "Europe/Berlin"
+      - "Europe/Rome"
+      - "Europe/Stockholm"
+      - "Europe/Warsaw"
+      - "Africa/Lagos"
+      - "Europe/Athens"
+      - "Europe/Helsinki"
+      - "Africa/Johannesburg"
+      - "Europe/Moscow"
+      - "Africa/Nairobi"
+      - "Asia/Dubai"
+      - "Asia/Karachi"
+      - "Asia/Kolkata"
+      - "Asia/Dhaka"
+      - "Asia/Bangkok"
+      - "Asia/Jakarta"
+      - "Asia/Shanghai"
+      - "Asia/Singapore"
+      - "Asia/Hong_Kong"
+      - "Australia/Perth"
+      - "Asia/Tokyo"
+      - "Asia/Seoul"
+      - "Australia/Adelaide"
+      - "Australia/Brisbane"
+      - "Australia/Sydney"
+      - "Australia/Melbourne"
+      - "Pacific/Auckland"
+      - "Atlantic/Reykjavik"
+      - "Europe/Kyiv"
+      - "Europe/Istanbul"
+      - "Africa/Cairo"
+      - "Asia/Jerusalem"
+      - "Asia/Manila"
