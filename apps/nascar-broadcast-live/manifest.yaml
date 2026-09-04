@@ -1,0 +1,92 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: nascar-broadcast-live
+version: 0.2.0
+name: NASCAR - Broadcast Live
+author: jdhine02
+description: Broadcast-style live leaderboard for the NASCAR Cup, Xfinity (O'Reilly), and Craftsman Truck series. A real page rotation - series logo, event with flag/lap/stage/cautions/lead changes, then the full running order a screen at a time and a biggest-movers board. Between sessions it shows the next race in your local time, the last race's full result, and the rest of the schedule. Built for a 192-wide panel; the running-order board widens to 3 columns on 384/640.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width 64/128/192/384. 192 fits every
+# scroll panel (Studio/Pro/Premier); the order board goes 2-up on 192, 3-up
+# when wider.
+width: 192
+height: 32
+
+# One fixed interval for the whole app. 2 minutes matches what's wanted while
+# live; the off-season cards just re-fetch on the same timer.
+refresh: 120
+
+# The panel rotates through these pages in order, one render request per page.
+# app.star defines a function per name. Each page has one fixed job; order1-5
+# and movers show running order / movers while live and the last race and
+# schedule between sessions. Five order pages (8 cars each on a 192 board)
+# cover NASCAR Cup's full 40-car field.
+pages: [logo, event, order1, order2, order3, order4, order5, movers]
+
+assets:
+  - checkered.png
+  - nascar-logo.png
+  - oreilly-logo.png
+  - trucks-logo.png
+  - track-daytona.png
+  - track-talladega.png
+  - track-atlanta.png
+  - track-homestead-miami.png
+  - track-pocono.png
+  - track-indianapolis-oval.png
+  - track-martinsville.png
+  - track-bristol.png
+  - track-richmond.png
+  - track-north-wilkesboro.png
+  - track-sonoma.png
+  - track-watkins-glen.png
+  - track-lime-rock.png
+  - track-lucas-oil-irp.png
+  - track-coronado.png
+  - track-dover.png
+  - track-rockingham.png
+  - track-iowa-oval.png
+  - track-texas.png
+  - track-kansas.png
+  - track-michigan.png
+  - track-nashville.png
+  - track-las-vegas.png
+  - track-darlington.png
+  - track-wwt-raceway.png
+  - track-new-hampshire.png
+  - track-charlotte.png
+  - track-chicagoland.png
+
+# What the client fills in at install time.
+inputs:
+  - key: series
+    type: choice
+    app_input_type: dropdown
+    label: Series
+    default: NASCAR
+    choices: ["NASCAR", "NASCAR - O'Reilly", "NASCAR - Trucks"]
+    help: NASCAR Cup, the O'Reilly Auto Parts (Xfinity) Series, or the Craftsman Truck Series.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/New_York"
+    choices:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "America/Anchorage"
+      - "Pacific/Honolulu"
+    help: Race dates and times are shown in this zone. NASCAR's schedule is published in US Eastern.
+
+  - key: datecolor
+    type: string
+    app_input_type: color
+    label: Next-race date/time color
+    default: "#FFD166"
