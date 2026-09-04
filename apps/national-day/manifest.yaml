@@ -1,0 +1,29 @@
+gdn: 1
+id: national-day
+version: 0.1.0
+name: National Day
+author: reyos86
+description: Today's unofficial US national days (National Donut Day, etc.) — American observances only, not federal holidays or world days.
+category: Lifestyle
+entry: app.star
+width: 192
+height: 32
+# Days themselves do not change, but the featured name rotates among today's list.
+refresh: 900
+pages: [today]
+
+inputs:
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Timezone
+    default: US CENTRAL
+    choices:
+      - US EASTERN
+      - US CENTRAL
+      - US MOUNTAIN
+      - US PACIFIC
+      - US ALASKA
+      - US HAWAII
+      - UTC
+    help: Used to pick the US calendar date. US zones follow daylight saving.
