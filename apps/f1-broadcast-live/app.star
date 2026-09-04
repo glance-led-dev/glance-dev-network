@@ -1,23 +1,20 @@
 # F1 - Broadcast Live (384x32).
 #
 # A real page rotation (the panel requests one render per page, in manifest
-# order -- no single page faking frames off the wall clock):
+# order -- no single page faking frames off the wall clock). Two rotations off
+# one fixed 5-page manifest:
 #
-#   logo    - the F1 wordmark
-#   event   - grand prix / circuit / session, plus flag / lap / track weather
-#             while running; the next-race card between sessions
-#   track   - the circuit shape, big
-#   board1..board2 + feed1..feed2 - four "flex" slots. While a session is live
-#             they carry the full order a screen at a time (car #, driver, tyre
-#             compound, gap to leader), then a race-control feed and a pit-stop
-#             board. Between sessions they carry the next-race card, the rest of
-#             the calendar, and the last grand prix's podium.
+#   BETWEEN SESSIONS         LIVE SESSION
+#   1 logo                   1 logo
+#   2 next race (event)      2 event info (flag / lap / track temp)
+#   3 last race, full order  3 order  P1-9
+#   4 calendar (next 6)      4 order  P10-18
+#   5 calendar (+6 more)     5 order  P19-22
 #
-# Data: OpenF1 (api.openf1.org) for live timing, weather, stints, race control
-# and pit stops -- free, no key. Jolpica-Ergast (api.jolpi.ca) for the schedule
-# and last result. OpenF1 has no "current session" endpoint, so the app fetches
-# the latest session and checks it is actually inside its live window (plus an
-# end-of-day grace) before trusting it.
+# Data: OpenF1 (api.openf1.org) for live timing, weather and stints -- free, no
+# key; no "current session" endpoint, so the app checks the latest session is
+# actually inside its live window (plus an end-of-day grace). Jolpica-Ergast
+# (api.jolpi.ca) for the calendar and the last result.
 
 # OpenF1's race_control feed reports flag state as text, not a numeric code.
 F1_FLAG_COLOR = {
@@ -472,7 +469,10 @@ def fetch_f1_live(ctx):
         gap_raw = interval_entry.get("gap_to_leader")
         gap_str = ""
         if gap_raw != None:
-            gap_str = gap_raw if type(gap_raw) == "string" else format_gap_time(gap_raw)
+            # OpenF1 hands back a number of seconds for cars on the lead lap and
+            # a string ("+1 LAP" / "+2 LAPS") for lapped cars -- pass the string
+            # straight through so the board shows laps down, not a time.
+            gap_str = str(gap_raw).upper().strip() if type(gap_raw) == "string" else format_gap_time(gap_raw)
 
         last_name = str(driver.get("last_name", "")).upper()
         first_name = str(driver.get("first_name", ""))
@@ -541,7 +541,44 @@ def fetch_f1_next(ctx):
         "race_time": str(race.get("time", "")),
     }
 
-def fetch_f1_schedule_after_next(ctx, n):
+
+def fetch_f1_last(ctx):
+    resp = http_json("https://api.jolpi.ca/ergast/f1/current/last/results.json", 3600)
+    if not resp["ok"]:
+        return None
+    races = resp["data"].get("MRData", {}).get("RaceTable", {}).get("Races", [])
+    if len(races) == 0:
+        return None
+    race = races[0]
+    results = race.get("Results", [])
+    leader_laps = int(results[0].get("laps", 0)) if len(results) > 0 else 0
+    top = []
+    for x in results[:12]:
+        drv = x.get("Driver", {})
+        pos = str(x.get("position", ""))
+        t = str(x.get("Time", {}).get("time", ""))
+        status = str(x.get("status", ""))
+        if "Lap" in status:               # Jolpica: "Lapped" (or classic "+1 Lap")
+            down = leader_laps - int(x.get("laps", leader_laps))
+            gap = ("+" + str(down) + (" LAP" if down == 1 else " LAPS")) if down > 0 else "LAPPED"
+        elif status != "Finished" and status != "":
+            gap = "DNF"
+        elif t != "":
+            gap = t                       # leader: total time; others: "+11.536"
+        else:
+            gap = ""
+        top.append((pos, str(drv.get("familyName", "")).upper(), gap))
+    return {
+        "race_name": str(race.get("raceName", "GRAND PRIX")).upper(),
+        "circuit": str(race.get("Circuit", {}).get("circuitName", "")).upper(),
+        "top": top,
+    }
+
+# ---------- calendar (Jolpica) ----------
+
+def fetch_f1_upcoming(ctx):
+    # Not-yet-run rounds this season. current.json is one keyless call, cached
+    # an hour.
     resp = http_json("https://api.jolpi.ca/ergast/f1/current.json", 3600)
     if not resp["ok"]:
         return []
@@ -555,70 +592,7 @@ def fetch_f1_schedule_after_next(ctx, n):
         y, mo, d, _, _ = parse_iso(ds + "T00:00")
         if _days_from_civil(y, mo, d) >= today:
             upcoming.append(r)
-    return upcoming[1:1 + n]
-
-def fetch_f1_last(ctx):
-    resp = http_json("https://api.jolpi.ca/ergast/f1/current/last/results.json", 3600)
-    if not resp["ok"]:
-        return None
-    races = resp["data"].get("MRData", {}).get("RaceTable", {}).get("Races", [])
-    if len(races) == 0:
-        return None
-    race = races[0]
-    top = []
-    for x in race.get("Results", [])[:5]:
-        drv = x.get("Driver", {})
-        top.append((
-            str(x.get("position", "")),
-            str(drv.get("familyName", "")).upper(),
-            str(x.get("Constructor", {}).get("name", "")).upper(),
-        ))
-    return {
-        "race_name": str(race.get("raceName", "GRAND PRIX")).upper(),
-        "circuit": str(race.get("Circuit", {}).get("circuitName", "")).upper(),
-        "top": top,
-    }
-
-# ---------- pit stops / race control (OpenF1, feed pages) ----------
-
-def fetch_pits(session_key):
-    resp = http_json("https://api.openf1.org/v1/pit?session_key=" + str(session_key), 30)
-    if not resp["ok"]:
-        return {}
-    best = {}
-    cnt = {}
-    for s in resp["data"]:
-        dn = s.get("driver_number")
-        dur = s.get("pit_duration")
-        if dn == None:
-            continue
-        cnt[str(dn)] = cnt.get(str(dn), 0) + 1
-        if dur != None and dur > 0:
-            if str(dn) not in best or dur < best[str(dn)]:
-                best[str(dn)] = dur
-    return {"best": best, "cnt": cnt}
-
-RC_KEEP = ["PENALTY", "INVESTIGAT", "DELETED", "NOTED", "SAFETY CAR",
-           "BLACK", "DRS ", "PIT ", "STOP/GO", "REPRIMAND", "WARNING"]
-
-def fetch_race_control(session_key):
-    resp = http_json("https://api.openf1.org/v1/race_control?session_key=" + str(session_key), 20)
-    if not resp["ok"]:
-        return []
-    msgs = []
-    for e in resp["data"]:
-        m = str(e.get("message", "")).upper().strip()
-        if m == "":
-            continue
-        cat = str(e.get("category", ""))
-        keep = cat == "SafetyCar" or cat == "Drs"
-        for kw in RC_KEEP:
-            if kw in m:
-                keep = True
-                break
-        if keep:
-            msgs.append((int(e.get("lap_number", 0) or 0), m))
-    return msgs[-6:]
+    return upcoming
 
 # ---------- top-level state ----------
 
@@ -642,14 +616,23 @@ def _mock_live(ctx, mode):
         ("5", "G", "BORTOLETO", "#C00000"),
         ("30", "L", "LAWSON", "#2647D8"),
         ("6", "I", "HADJAR", "#2647D8"),
-        ("87", "O", "BEARMAN", "#FFFFFF"),
-        ("31", "E", "OCON", "#FFFFFF"),
+        ("87", "O", "BEARMAN", "#B6BABD"),
+        ("31", "E", "OCON", "#B6BABD"),
+        ("2", "S", "PEREZ", "#C8102E"),
+        ("77", "V", "BOTTAS", "#C8102E"),
     ]
     comps = ["SOFT", "MEDIUM", "HARD", "MEDIUM", "SOFT"]
     rows = []
     for i in range(len(TEAMS)):
         num, ini, name, col = TEAMS[i]
-        gap = "" if i == 0 else format_gap_time(0.3 + i * 1.7)
+        if i == 0:
+            gap = ""
+        elif i >= 20:
+            gap = "+2 LAPS"
+        elif i >= 18:
+            gap = "+1 LAP"
+        else:
+            gap = format_gap_time(0.3 + i * 1.7)
         rows.append({
             "pos": i + 1, "num": num, "initial": ini, "name": name,
             "gap": gap if mode == "race" else format_gap_time(0.05 + i * 0.12),
@@ -659,13 +642,17 @@ def _mock_live(ctx, mode):
         })
     mark_duplicate_names(rows)
     is_race = mode == "race"
+    # Track temp respects the tempunit dropdown, same as the live path.
+    tc = 48 if is_race else 39
+    unit = safe_input(ctx, "tempunit", "C")
+    tv = int(tc * 9.0 / 5.0 + 32) if unit == "F" else tc
     return {
         "mode": "live", "session": "RACE" if is_race else "QUALIFYING",
         "is_race": is_race, "race_name": "SAO PAULO GRAND PRIX",
         "track_name": "INTERLAGOS", "track_key": "interlagos",
         "flag": "GREEN" if is_race else "CHEQUERED",
         "lap": 38 if is_race else 0,
-        "weather": "31C DRY" if is_race else "24C DRY", "weather_cond": "DRY",
+        "weather": str(tv) + unit + " DRY", "weather_cond": "DRY",
         "rows": rows, "session_key": "mock", "num2name": {},
     }
 
@@ -717,7 +704,7 @@ def draw_flag_bar(c, flag):
         c.rect(0, 0, c.width - 1, 1, fill = F1_FLAG_COLOR.get(flag, COLORS["muted"]))
 
 BOARD_COLS = 3
-BOARD_ROWS = 4
+BOARD_ROWS = 3
 
 def board_capacity():
     return BOARD_COLS * BOARD_ROWS
@@ -787,33 +774,6 @@ def draw_order_group(c, rows, start, y0, y1):
             draw_driver_row_block(c, cx0, cx1, ry0, ry0 + row_h - 1 - row_gap, rows[idx])
             idx += 1
 
-def draw_stat_group(c, items, y0, y1, accent):
-    col_w = grid_dims(c.width, 3)
-    row_h = (y1 - y0 + 1) // 3
-    bw = c.text_width("00", "4x5") + 4
-    idx = 0
-    for col in range(3):
-        cx0 = col * (col_w + 2)
-        cx1 = cx0 + col_w - 1
-        for r in range(3):
-            if idx >= len(items):
-                return
-            rank_str, name, val, vcol = items[idx]
-            idx += 1
-            ry0 = y0 + r * row_h
-            c.rect(cx0, ry0, cx0 + bw - 1, ry0 + 7, fill = accent)
-            c.text(rank_str, cx0 + 2, ry0 + 1, font = "4x5", color = best_text_color(accent))
-            vw = c.text_width(val, "4x5")
-            c.text(val, cx1, ry0 + 1, font = "4x5", color = vcol, align = "right")
-            nx = cx0 + bw + 3
-            c.text(fit_text(c, name, "5x7", cx1 - nx - vw - 4), nx, ry0, font = "5x7", color = COLORS["text"])
-
-def _sec(v):
-    v = float(v)
-    whole = int(v)
-    frac = int((v - whole) * 100 + 0.5)
-    return str(whole) + "." + (("0" + str(frac)) if frac < 10 else str(frac))
-
 # ---------- pages: fixed ----------
 
 def logo(c, ctx):
@@ -872,114 +832,50 @@ def event(c, ctx):
             wcol = WEATHER_COLOR.get(st.get("weather_cond", ""), COLORS["accent2"])
             c.text(fit_text(c, wtxt, "4x5", smw), stx, 21, font = "4x5", color = wcol)
 
-def track(c, ctx):
+# ---------- pages: running order ----------
+# Two rotations off one fixed 5-page manifest. Between sessions: logo, next
+# race, last race, next 3 GPs (page 5 is blank). Live: logo, event, then the
+# order 9 cars a screen at a time (P1-9 / P10-18 / P19-27).
+
+def order1(c, ctx):
     st = get_state(ctx)
     c.fill(COLORS["bg"])
     if st["mode"] == "error":
         draw_error(c, st["title"], st["sub"])
-        return
-    asset, nw, nh = track_asset_dims(st["track_key"])
-    tw, th = cap_track_dims(nw, nh, 150, 30)
-    tx = (c.width - tw) // 2 - 30
-    draw_f1_track(c, asset, tx, (32 - th) // 2, tw, th)
-    lx = tx + tw + 12
-    c.text(fit_text(c, st["track_name"], "6x8", c.width - lx - 2), lx, 6, font = "6x8", color = COLORS["text"])
-    if st["mode"] == "live" and st.get("is_race"):
-        c.text("LAP " + str(st["lap"]), lx, 17, font = "4x5", color = COLORS["muted"])
+    elif st["mode"] == "live":
+        _draw_running_order(c, st, 0)
     else:
-        c.text("THE CIRCUIT", lx, 17, font = "4x5", color = COLORS["muted"])
-
-# ---------- pages: flex ----------
-
-def board1(c, ctx):
-    _flex(c, ctx, 0)
-
-def board2(c, ctx):
-    _flex(c, ctx, 1)
-
-def feed1(c, ctx):
-    _flex(c, ctx, 2)
-
-def feed2(c, ctx):
-    _flex(c, ctx, 3)
-
-def _flex_blocks(ctx, st):
-    if st["mode"] == "error":
-        return [("error", 0)]
-    if st["mode"] == "off":
-        return [("next", 0), ("sched", 0), ("result", 0)]
-    cap = board_capacity()
-    pages = max(1, (len(st["rows"]) + cap - 1) // cap)
-    blocks = []
-    for p in range(pages):
-        blocks.append(("order", p))
-    blocks.append(("racecontrol", 0))
-    if st["is_race"]:
-        blocks.append(("pits", 0))
-    return blocks
-
-def _flex(c, ctx, slot):
-    st = get_state(ctx)
-    c.fill(COLORS["bg"])
-    blocks = _flex_blocks(ctx, st)
-    kind, arg = blocks[slot % len(blocks)]
-    if kind == "error":
-        draw_error(c, st["title"], st["sub"])
-    elif kind == "next":
-        _draw_next_card(c, ctx, st, big = False)
-    elif kind == "sched":
-        _draw_schedule(c, ctx)
-    elif kind == "result":
         _draw_last(c, ctx)
-    elif kind == "order":
-        _draw_order(c, st, arg)
-    elif kind == "racecontrol":
-        _draw_racecontrol(c, st)
-    elif kind == "pits":
-        _draw_pits(c, st)
 
-def _draw_order(c, st, page):
-    draw_flag_bar(c, st["flag"])
-    draw_page_tab(c, "ORDER " + str(page + 1), COLORS["accent"])
-    draw_order_group(c, st["rows"], page * board_capacity(), 8, 31)
-
-def _draw_racecontrol(c, st):
-    draw_page_tab(c, "RACE CONTROL", COLORS["accent2"])
-    if st.get("session_key", "mock") == "mock":
-        msgs = [(37, "TRACK LIMITS - CAR 16 LAP TIME DELETED"),
-                (36, "INCIDENT INVOLVING CARS 4 AND 81 NOTED"),
-                (34, "SAFETY CAR IN THIS LAP")]
+def order2(c, ctx):
+    st = get_state(ctx)
+    c.fill(COLORS["bg"])
+    if st["mode"] == "error":
+        draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "live":
+        _draw_running_order(c, st, 1)
     else:
-        msgs = fetch_race_control(st["session_key"])
-    if len(msgs) == 0:
-        c.text("NO MESSAGES", c.width // 2, 15, font = "5x7", color = COLORS["muted"], align = "center")
-        return
-    y = 8
-    for lap, m in msgs[-3:]:
-        tag = ("L" + str(lap) + " ") if lap > 0 else ""
-        c.text(tag, 4, y, font = "4x5", color = COLORS["muted"])
-        tx = 4 + c.text_width("L00 ", "4x5")
-        c.text(fit_text(c, m, "4x5", c.width - tx - 4), tx, y, font = "4x5", color = COLORS["text"])
-        y += 8
+        _draw_calendar(c, ctx, 0)
 
-def _draw_pits(c, st):
-    draw_page_tab(c, "PIT STOPS", "#38BDF8")
-    if st.get("session_key", "mock") == "mock":
-        c.text("2.4S  VERSTAPPEN", 6, 10, font = "5x7", color = COLORS["text"])
-        c.text("2.6S  RUSSELL", 6, 20, font = "5x7", color = COLORS["text"])
+def order3(c, ctx):
+    st = get_state(ctx)
+    c.fill(COLORS["bg"])
+    if st["mode"] == "error":
+        draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "live":
+        _draw_running_order(c, st, 2)
+    else:
+        _draw_calendar(c, ctx, CAL_PER_PAGE)
+
+def _draw_running_order(c, st, page):
+    draw_flag_bar(c, st["flag"])
+    lo = page * board_capacity()
+    hi = min(lo + board_capacity(), len(st["rows"]))
+    draw_page_tab(c, "ORDER  P" + str(lo + 1) + "-" + str(max(hi, lo + 1)), COLORS["accent"])
+    if lo >= len(st["rows"]):
+        c.text("--", c.width // 2, 14, font = "6x8", color = COLORS["muted"], align = "center")
         return
-    pd = fetch_pits(st["session_key"])
-    best = pd.get("best", {})
-    if len(best) == 0:
-        c.text("NO STOPS YET", c.width // 2, 15, font = "5x7", color = COLORS["muted"], align = "center")
-        return
-    pairs = sorted(best.items(), key = lambda kv: kv[1])[:9]
-    items = []
-    for i in range(len(pairs)):
-        dn, dur = pairs[i]
-        nm = st.get("num2name", {}).get(str(dn), "#" + str(dn))
-        items.append((str(i + 1), nm, _sec(dur) + "S", "#7DD3FC"))
-    draw_stat_group(c, items, 8, 31, "#38BDF8")
+    draw_order_group(c, st["rows"], lo, 8, 31)
 
 # ---------- off-season cards ----------
 
@@ -1001,35 +897,51 @@ def _draw_next_card(c, ctx, st, big):
     c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
     c.text(fit_text(c, local_dt(ctx, st["race_date"], st.get("race_time", "")), "5x7", text_w), cx, 21, font = "5x7", color = date_color, align = "center")
 
-def _draw_schedule(c, ctx):
-    draw_page_tab(c, "CALENDAR", COLORS["accent2"])
-    races = fetch_f1_schedule_after_next(ctx, 3)
-    if len(races) == 0:
-        c.text("NO RACES SCHEDULED", c.width // 2, 15, font = "5x7", color = COLORS["muted"], align = "center")
-        return
-    date_color = safe_input(ctx, "datecolor", COLORS["accent2"])
-    dx = 4 + c.text_width("SEP 00", "5x7") + 8
-    y = 8
-    for r in races:
-        dt = local_daydate(ctx, str(r.get("date", "")), str(r.get("time", "")))
-        c.text(dt, 4, y, font = "5x7", color = date_color)
-        nm = str(r.get("raceName", "GRAND PRIX")).upper().replace(" GRAND PRIX", " GP")
-        c.text(fit_text(c, nm, "5x7", c.width - dx - 4), dx, y, font = "5x7", color = COLORS["text"])
-        y += 8
+# order2 shows the six grands prix after the next one; order3 continues with the
+# six after that -- three per column, two columns, so a full "GRAND PRIX" name
+# fits without truncation and the overflow rolls onto the next page.
+CAL_PER_PAGE = 6
 
+def _draw_calendar(c, ctx, skip):
+    date_color = safe_input(ctx, "datecolor", COLORS["accent2"])
+    draw_page_tab(c, "CALENDAR", date_color)
+    up = fetch_f1_upcoming(ctx)
+    # up[0] is the immediate next race -- that's already the `event` page.
+    races = up[1 + skip:1 + skip + CAL_PER_PAGE]
+    if len(races) == 0:
+        c.text("SEASON COMPLETE" if skip == 0 else "END OF CALENDAR", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
+        return
+    col_w = grid_dims(c.width, 2)
+    for i in range(len(races)):
+        r = races[i]
+        cx0 = (i // 3) * (col_w + 2)
+        ry = 8 + (i % 3) * 8
+        dt = local_daydate(ctx, str(r.get("date", "")), str(r.get("time", "")))
+        c.text(dt, cx0, ry, font = "4x5", color = date_color)
+        dx = cx0 + c.text_width("SEP 00", "4x5") + 5
+        nm = str(r.get("raceName", "GRAND PRIX")).upper()
+        c.text(fit_text(c, nm, "4x5", cx0 + col_w - dx - 2), dx, ry, font = "4x5", color = COLORS["text"])
+
+# The full finishing order, three columns of four, filling the page.
 def _draw_last(c, ctx):
     draw_page_tab(c, "LAST RACE", "#E2E8F0")
     res = fetch_f1_last(ctx)
     if res == None:
-        c.text("NO RESULT AVAILABLE", c.width // 2, 15, font = "5x7", color = COLORS["muted"], align = "center")
+        c.text("NO RESULT AVAILABLE", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
-    c.text(fit_text(c, res["race_name"], "5x7", 200), 4, 8, font = "5x7", color = COLORS["text"])
-    c.text(fit_text(c, short_circuit(res["circuit"]), "picopixel", 200), 4, 16, font = "picopixel", color = COLORS["muted"])
-    x = 4
-    for pos, name, team in res["top"]:
-        chip = pos + " " + name
-        w = c.text_width(chip, "picopixel") + 5
-        if x + w > c.width - 2:
-            break
-        c.text(chip, x, 23, font = "picopixel", color = GOLD if pos == "1" else COLORS["muted"])
-        x += w
+    tabw = c.text_width("LAST RACE", "4x5") + 10
+    c.text(fit_text(c, res["race_name"], "picopixel", c.width - tabw - 4), tabw, 1, font = "picopixel", color = COLORS["muted"])
+    top = res["top"][:12]
+    col_w = grid_dims(c.width, 3)
+    pw = c.text_width("00", "4x5") + 3
+    for i in range(len(top)):
+        pos, name, gap = top[i]
+        cx0 = (i // 4) * (col_w + 2)
+        cx1 = cx0 + col_w - 1
+        ry = 8 + (i % 4) * 6
+        c.text(pos, cx0, ry, font = "4x5", color = GOLD if pos == "1" else COLORS["accent2"])
+        gw = 0
+        if gap != "":
+            gw = c.text_width(gap, "picopixel")
+            c.text(gap, cx1, ry + 1, font = "picopixel", color = COLORS["muted"], align = "right")
+        c.text(fit_text(c, name, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry, font = "4x5", color = COLORS["text"])

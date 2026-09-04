@@ -20,7 +20,7 @@ refresh: 120
 # The panel rotates through these pages in order, one render request per page.
 # board*/feed* are "flex" slots -- each figures out what to show from the
 # current state (running order while live, calendar/podium cards off-season).
-pages: [logo, event, track, board1, board2, feed1, feed2]
+pages: [logo, event, order1, order2, order3]
 
 assets:
   - checkered.png
