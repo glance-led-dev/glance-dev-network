@@ -1,19 +1,26 @@
-# F1 - Broadcast Live (384x32).
+# F1 - Broadcast Live (192x32).
 #
 # A real page rotation (the panel requests one render per page, in manifest
 # order -- no single page faking frames off the wall clock). Two rotations off
-# one fixed 5-page manifest:
+# one fixed 5-page manifest. Field is 22 cars (11 teams x 2 since the 2026
+# grid expansion). The order board holds 8/page on a 192 panel, 12/page on
+# 384/640:
 #
-#   BETWEEN SESSIONS         LIVE SESSION
-#   1 logo                   1 logo
-#   2 next race (event)      2 event info (flag / lap / track temp)
-#   3 last race, full order  3 order  P1-9
-#   4 calendar (next 6)      4 order  P10-18
-#   5 calendar (+6 more)     5 order  P19-22
+#   BETWEEN SESSIONS           LIVE SESSION
+#   1 logo                     1 logo
+#   2 next race (event)        2 event info (flag / lap / weather)
+#   3 last race  P1-8 / P1-12  3 order  P1-8 / P1-9
+#   4 last race  P9-16/P13-22  4 order  P9-16 / P10-18
+#   5 calendar                 5 order  P17-22 / P19-22
+#
+# On a 192 panel, order1-2's last-race pages cover P1-16 only -- P17-22 don't
+# have a between-sessions slot (order3 is needed for the calendar instead of
+# a third last-race page). On 384/640, order1-2 already covers the full
+# 22-car field (12+12), so nothing is missed there.
 #
 # Data: OpenF1 (api.openf1.org) for live timing, weather and stints -- free, no
 # key; no "current session" endpoint, so the app checks the latest session is
-# actually inside its live window (plus an end-of-day grace). Jolpica-Ergast
+# actually inside its live window (plus a post-session grace). Jolpica-Ergast
 # (api.jolpi.ca) for the calendar and the last result.
 
 # OpenF1's race_control feed reports flag state as text, not a numeric code.
@@ -60,6 +67,10 @@ COLORS = {
 }
 
 GOLD = "#FFD700"
+
+# How long past a session's scheduled end fetch_f1_live still treats it as
+# "just finished" rather than falling back to the between-sessions cards.
+F1_GRACE_SECONDS = 6 * 3600
 
 # circuit_id / circuit_short_name -> (asset, native width, native height).
 # Each asset is pre-sized in Python so it is drawn at its own dimensions, not
@@ -272,12 +283,6 @@ def format_iso_utc(unix_ts):
     ss = secs_of_day % 60
     return str(y) + "-" + _pad2(mo) + "-" + _pad2(d) + "T" + _pad2(hh) + ":" + _pad2(mm) + ":" + _pad2(ss)
 
-def keep_until_end_of_day(ctx, end_unix):
-    off = panel_offset_seconds(ctx)
-    local_end = end_unix + off
-    local_day_start = (local_end // 86400) * 86400
-    return local_day_start + 86399 - off
-
 def format_ampm(lh, lm):
     ampm = "AM" if lh < 12 else "PM"
     h12 = lh % 12
@@ -442,7 +447,11 @@ def fetch_f1_live(ctx):
     start_unix = _days_from_civil(sy, smo, sd) * 86400 + sh * 3600 + smi * 60
     end_unix = _days_from_civil(ey, emo, ed) * 86400 + eh * 3600 + emi * 60
     now_unix = ctx.now.unix
-    if now_unix < start_unix or now_unix > keep_until_end_of_day(ctx, end_unix):
+    # A per-viewer local-midnight grace (like NASCAR's) needs a timezone
+    # lookup, and fetch_f1_live already spends its full 8-call http budget on
+    # OpenF1 data alone -- one more call over the limit fails validation. A
+    # flat post-session window approximates "still today" without the call.
+    if now_unix < start_unix or now_unix > end_unix + F1_GRACE_SECONDS:
         return None
 
     session_key = session.get("session_key")
@@ -600,7 +609,7 @@ def fetch_f1_last(ctx):
     results = race.get("Results", [])
     leader_laps = int(results[0].get("laps", 0)) if len(results) > 0 else 0
     top = []
-    for x in results[:12]:
+    for x in results:  # order1/order2 page through this, capped at 16 there
         drv = x.get("Driver", {})
         pos = str(x.get("position", ""))
         t = str(x.get("Time", {}).get("time", ""))
@@ -753,7 +762,7 @@ def draw_flag_bar(c, flag):
 
 # 192 can't hold three driver rows across, so the board runs 2 columns x 4 rows
 # there and 3 x 3 on 384/640. Either way a page holds 8-9 cars, so 3 order
-# pages still cover the 20-car grid.
+# pages still cover the 22-car grid (11 teams x 2 cars).
 def board_cols_rows(width):
     if width >= 320:
         return 3, 3
@@ -942,7 +951,7 @@ def order1(c, ctx):
     elif st["mode"] == "live":
         _draw_running_order(c, st, 0)
     else:
-        _draw_last(c, ctx)
+        _draw_last_page(c, ctx, 0)
 
 def order2(c, ctx):
     st = get_state(ctx)
@@ -952,7 +961,7 @@ def order2(c, ctx):
     elif st["mode"] == "live":
         _draw_running_order(c, st, 1)
     else:
-        _draw_calendar(c, ctx, 0)
+        _draw_last_page(c, ctx, 1)
 
 def order3(c, ctx):
     st = get_state(ctx)
@@ -962,7 +971,7 @@ def order3(c, ctx):
     elif st["mode"] == "live":
         _draw_running_order(c, st, 2)
     else:
-        _draw_calendar(c, ctx, cal_per_page(c.width))
+        _draw_calendar(c, ctx, 0)
 
 def _draw_running_order(c, st, page):
     draw_flag_bar(c, st["flag"])
@@ -994,9 +1003,9 @@ def _draw_next_card(c, ctx, st, big):
     c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
     c.text(fit_text(c, local_dt(ctx, st["race_date"], st.get("race_time", "")), "5x7", text_w), cx, 21, font = "5x7", color = date_color, align = "center")
 
-# order2 lists the grands prix after the next one; order3 continues from where
-# it stopped. 384/640: two columns of three (6 a page). 192: one column of four
-# (4 a page), so a full "GRAND PRIX" name never has to truncate.
+# order3's single CALENDAR page, showing the grands prix after the next one.
+# 384/640: two columns of three (6). 192: one column of four (4), so a full
+# "GRAND PRIX" name never has to truncate.
 def cal_per_page(width):
     return 6 if width >= 320 else 4
 
@@ -1024,9 +1033,12 @@ def _draw_calendar(c, ctx, skip):
         nm = str(r.get("raceName", "GRAND PRIX")).upper()
         c.text(fit_text(c, nm, "4x5", cx0 + col_w - dx - 2), dx, ry, font = "4x5", color = COLORS["text"])
 
-# The finishing order filling the page: 384/640 fit three columns of four (P1
-# -12); 192 fits two columns of four (P1-8), where a full surname still reads.
-def _draw_last(c, ctx):
+# LAST RACE across order1-2: 384/640 fits 12/page (three columns of four), so
+# both pages together already cover the full 22-car field. 192 fits 8/page
+# (two columns of four), so order1-2 cover P1-16 -- order3 is needed for the
+# single CALENDAR page instead of a third LAST RACE page, so P17-22 aren't
+# shown between sessions (they still appear live, on order3, during a race).
+def _draw_last_page(c, ctx, page):
     draw_page_tab(c, "LAST RACE", "#E2E8F0")
     res = fetch_f1_last(ctx)
     if res == None:
@@ -1034,16 +1046,24 @@ def _draw_last(c, ctx):
         return
     tabw = c.text_width("LAST RACE", "4x5") + 10
     c.text(fit_text(c, res["race_name"], "picopixel", c.width - tabw - 4), tabw, 1, font = "picopixel", color = COLORS["muted"])
+
     ncols = 3 if c.width >= 320 else 2
-    rows_per = 4
-    top = res["top"][:ncols * rows_per]
+    per_page = ncols * 4
+    top = res["top"]
+    lo = page * per_page
+    if lo >= len(top):
+        c.text("--", c.width // 2, 18, font = "6x8", color = COLORS["muted"], align = "center")
+        return
+
     col_w = grid_dims(c.width, ncols)
     pw = c.text_width("00", "4x5") + 3
-    for i in range(len(top)):
+    hi = min(lo + per_page, len(top))
+    for i in range(lo, hi):
         pos, name, gap = top[i]
-        cx0 = (i // rows_per) * (col_w + 2)
+        j = i - lo
+        cx0 = (j // 4) * (col_w + 2)
         cx1 = cx0 + col_w - 1
-        ry = 8 + (i % rows_per) * 6
+        ry = 8 + (j % 4) * 6
         c.text(pos, cx0, ry, font = "4x5", color = GOLD if pos == "1" else COLORS["accent2"])
         gw = 0
         if gap != "":
