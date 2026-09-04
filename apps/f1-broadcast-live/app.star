@@ -393,6 +393,42 @@ def latest_by_driver(entries):
         latest[dn] = e
     return latest
 
+def _last_scalar(v):
+    # Qualifying's session_result carries gap_to_leader/duration as a
+    # [Q1, Q2, Q3] array (nulls past a driver's last segment); Practice and
+    # Race hand back a plain number. Either way, the last non-null entry is
+    # the value for a driver's most advanced segment.
+    if v == None:
+        return None
+    if type(v) == "list":
+        for i in range(len(v) - 1, -1, -1):
+            if v[i] != None:
+                return v[i]
+        return None
+    return v
+
+def _f1_row(dn, driver, pos, gap_str, stints):
+    last_name = str(driver.get("last_name", "")).upper()
+    first_name = str(driver.get("first_name", ""))
+    team_colour = str(driver.get("team_colour", ""))
+    bg = ("#" + team_colour) if team_colour != "" else "#222222"
+    compound = str(stints.get(dn, {}).get("compound", "")).upper()
+    nm = last_name if last_name != "" else ("#" + str(dn))
+    acr = str(driver.get("name_acronym", "")).upper()
+    return {
+        "pos": pos,
+        "num": str(dn),
+        "initial": first_name[0].upper() if first_name else "",
+        "name": nm,
+        "acr": acr if acr != "" else nm[:3],
+        "gap": gap_str,
+        "bg": bg,
+        "txt_color": best_text_color(bg),
+        "pos_bg": "#000000",
+        "pos_txt": "#FFFFFF",
+        "compound": compound,
+    }
+
 # ---------- live state (OpenF1) ----------
 
 def fetch_f1_live(ctx):
@@ -441,12 +477,6 @@ def fetch_f1_live(ctx):
             if dn != None:
                 drivers[dn] = d
 
-    cutoff = format_iso_utc(now_unix - 150)
-    presp = http_json("https://api.openf1.org/v1/position?session_key=" + str(session_key) + "&date%3E" + cutoff, 15)
-    positions = latest_by_driver(presp["data"]) if presp["ok"] else {}
-    iresp = http_json("https://api.openf1.org/v1/intervals?session_key=" + str(session_key) + "&date%3E" + cutoff, 15)
-    intervals = latest_by_driver(iresp["data"]) if iresp["ok"] else {}
-
     tresp = http_json("https://api.openf1.org/v1/stints?session_key=" + str(session_key), 60)
     stints = latest_by_driver(tresp["data"]) if tresp["ok"] else {}
 
@@ -461,41 +491,57 @@ def fetch_f1_live(ctx):
             if e.get("category") == "Flag" and e.get("scope") == "Track" and e.get("flag") != None:
                 flag_str = str(e.get("flag")).upper()
 
+    is_race = session_type == "RACE"
     num2name = {}
     rows = []
-    for dn, pos_entry in positions.items():
-        driver = drivers.get(dn, {})
-        interval_entry = intervals.get(dn, {})
-        gap_raw = interval_entry.get("gap_to_leader")
-        gap_str = ""
-        if gap_raw != None:
-            # OpenF1 hands back a number of seconds for cars on the lead lap and
-            # a string ("+1 LAP" / "+2 LAPS") for lapped cars -- pass the string
-            # straight through so the board shows laps down, not a time.
-            gap_str = str(gap_raw).upper().strip() if type(gap_raw) == "string" else format_gap_time(gap_raw)
 
-        last_name = str(driver.get("last_name", "")).upper()
-        first_name = str(driver.get("first_name", ""))
-        team_colour = str(driver.get("team_colour", ""))
-        bg = ("#" + team_colour) if team_colour != "" else "#222222"
-        compound = str(stints.get(dn, {}).get("compound", "")).upper()
-        nm = last_name if last_name != "" else ("#" + str(dn))
-        acr = str(driver.get("name_acronym", "")).upper()
-        num2name[str(dn)] = nm
+    if is_race:
+        # Race: /position is the real running order and /intervals is the real
+        # gap to the leader -- both are meaningful mid-race.
+        cutoff = format_iso_utc(now_unix - 150)
+        presp = http_json("https://api.openf1.org/v1/position?session_key=" + str(session_key) + "&date%3E" + cutoff, 15)
+        positions = latest_by_driver(presp["data"]) if presp["ok"] else {}
+        iresp = http_json("https://api.openf1.org/v1/intervals?session_key=" + str(session_key) + "&date%3E" + cutoff, 15)
+        intervals = latest_by_driver(iresp["data"]) if iresp["ok"] else {}
 
-        rows.append({
-            "pos": int(pos_entry.get("position", 0)),
-            "num": str(dn),
-            "initial": first_name[0].upper() if first_name else "",
-            "name": nm,
-            "acr": acr if acr != "" else nm[:3],
-            "gap": gap_str,
-            "bg": bg,
-            "txt_color": best_text_color(bg),
-            "pos_bg": "#000000",
-            "pos_txt": "#FFFFFF",
-            "compound": compound,
-        })
+        for dn, pos_entry in positions.items():
+            interval_entry = intervals.get(dn, {})
+            gap_raw = interval_entry.get("gap_to_leader")
+            gap_str = ""
+            if gap_raw != None:
+                # OpenF1 hands back a number of seconds for cars on the lead
+                # lap and a string ("+1 LAP" / "+2 LAPS") for lapped cars --
+                # pass the string straight through so the board shows laps
+                # down, not a time.
+                gap_str = str(gap_raw).upper().strip() if type(gap_raw) == "string" else format_gap_time(gap_raw)
+            row = _f1_row(dn, drivers.get(dn, {}), int(pos_entry.get("position", 0)), gap_str, stints)
+            num2name[str(dn)] = row["name"]
+            rows.append(row)
+    else:
+        # Practice/Qualifying: /position is raw track order, not a real
+        # classification -- it can put a driver through five positions in
+        # fifteen minutes as cars cycle through out-laps and in-laps. What
+        # "standings" mean here is the best-lap-time ranking, which is what
+        # session_result carries (and it updates live, mid-session, too).
+        # Qualifying's gap_to_leader/duration come back as a [Q1, Q2, Q3]
+        # array; the last non-null entry is a driver's most advanced segment.
+        rresp = http_json("https://api.openf1.org/v1/session_result?session_key=" + str(session_key), 15)
+        for res in (rresp["data"] if rresp["ok"] else []):
+            dn = res.get("driver_number")
+            if dn == None:
+                continue
+            if res.get("dnf"):
+                gap_str = "DNF"
+            elif res.get("dsq"):
+                gap_str = "DSQ"
+            elif res.get("dns"):
+                gap_str = "DNS"
+            else:
+                gap_raw = _last_scalar(res.get("gap_to_leader"))
+                gap_str = format_gap_time(gap_raw) if gap_raw != None else ""
+            row = _f1_row(dn, drivers.get(dn, {}), int(res.get("position", 0)), gap_str, stints)
+            num2name[str(dn)] = row["name"]
+            rows.append(row)
 
     mark_duplicate_names(rows)
     n = len(rows)
@@ -506,7 +552,6 @@ def fetch_f1_live(ctx):
                 rows[j] = rows[j + 1]
                 rows[j + 1] = tmp
 
-    is_race = session_type == "RACE"
     return {
         "mode": "live",
         "session": session_type,
