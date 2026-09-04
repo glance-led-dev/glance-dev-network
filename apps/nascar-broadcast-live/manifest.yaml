@@ -2,15 +2,17 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: nascar-broadcast-live
-version: 0.1.0
+version: 0.2.0
 name: NASCAR - Broadcast Live
 author: jdhine02
-description: Broadcast-style live leaderboard for the NASCAR Cup, Xfinity (O'Reilly), and Craftsman Truck series. A real page rotation - series logo, event with flag/lap/stage/cautions/lead changes, then the full running order a screen at a time and a biggest-movers board. Between sessions it shows the next race in your local time, the last race's full result, and the rest of the schedule.
+description: Broadcast-style live leaderboard for the NASCAR Cup, Xfinity (O'Reilly), and Craftsman Truck series. A real page rotation - series logo, event with flag/lap/stage/cautions/lead changes, then the full running order a screen at a time and a biggest-movers board. Between sessions it shows the next race in your local time, the last race's full result, and the rest of the schedule. Built for a 192-wide panel; the running-order board widens to 3 columns on 384/640.
 category: Sports
 entry: app.star
 
-# Panel geometry. Height is 32 (fixed); width up to 384.
-width: 384
+# Panel geometry. Height is 32 (fixed); width 64/128/192/384. 192 fits every
+# scroll panel (Studio/Pro/Premier); the order board goes 2-up on 192, 3-up
+# when wider.
+width: 192
 height: 32
 
 # One fixed interval for the whole app. 2 minutes matches what's wanted while
@@ -18,10 +20,11 @@ height: 32
 refresh: 120
 
 # The panel rotates through these pages in order, one render request per page.
-# app.star defines a function per name. Each page has one fixed job; order1-4
+# app.star defines a function per name. Each page has one fixed job; order1-5
 # and movers show running order / movers while live and the last race and
-# schedule between sessions.
-pages: [logo, event, order1, order2, order3, order4, movers]
+# schedule between sessions. Five order pages (8 cars each on a 192 board)
+# cover NASCAR Cup's full 40-car field.
+pages: [logo, event, order1, order2, order3, order4, order5, movers]
 
 assets:
   - checkered.png

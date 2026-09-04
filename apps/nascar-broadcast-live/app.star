@@ -1,16 +1,20 @@
-# NASCAR - Broadcast Live (384x32).
+# NASCAR - Broadcast Live (192x32).
 #
 # A real page rotation (not one page faking frames off the wall clock -- the
 # panel requests one render per page in manifest order). Every page has one
-# fixed job and a permanent tab label; each reads in both live and off-season:
+# fixed job; each reads in both live and off-season. The position badge on
+# every row already says what a page is, so there's no "ORDER" tab text.
 #
 #   logo     - series wordmark (LIVE / NEXT UP)
 #   event    - race / session + flag / lap / stage / cautions / lead changes
 #              and the track shape;   off: NEXT RACE card
-#   order1   - running order P1-12;   off: LAST RACE, the full finishing order
-#   order2-4 - running order P13-40;  off: SCHEDULE (the upcoming slate)
+#   order1   - running order P1-8;    off: LAST RACE, the full finishing order
+#   order2-5 - running order P9-40;   off: SCHEDULE (the upcoming slate)
 #   movers   - the six biggest gainers and six biggest losers vs. their start
 #              spot;                  off: SCHEDULE, continued
+#
+# The order board is 2 columns x 4 rows on a 192 panel (8 cars/page, so 5
+# pages cover NASCAR Cup's full 40-car field) and 3 x 4 on 384/640.
 #
 # NASCAR's public feed has no race-control / penalty message stream (unlike F1).
 #
@@ -837,7 +841,7 @@ def fetch_last_result(ctx):
     if live["ok"]:
         rows = vehicle_rows(live["data"], series, False)
         leader_laps = rows[0]["laps"] if len(rows) > 0 else 0
-        for r in rows[:12]:
+        for r in rows:  # every finisher -- order1-5 page through the full field
             ld = leader_laps - r["laps"]
             if r["status"] == 3:
                 gap = "DNF"
@@ -909,22 +913,27 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     if gap != "":
         c.text(gap, x1 - 3, gap_cy, font = gap_font, color = txt_color, align = "right")
 
-BOARD_COLS = 3
 BOARD_ROWS = 4
 
-def driver_grid_dims(avail_w, avail_h, num_cols = BOARD_COLS, rows_per_col = BOARD_ROWS):
+# 192 can't hold three driver rows across, so the board runs 2 columns on a
+# 192 panel and 3 on 384/640. Either way a page holds 8-12 cars, so 5 order
+# pages cover NASCAR Cup's full 40-car field on a 192 panel.
+def board_cols(width):
+    return 3 if width >= 320 else 2
+
+def driver_grid_dims(avail_w, avail_h, num_cols, rows_per_col = BOARD_ROWS):
     col_gap = 2
     col_w = (avail_w - col_gap * (num_cols - 1)) // num_cols
     row_h = avail_h // rows_per_col
     return num_cols, col_w, row_h
 
-def board_capacity():
-    return BOARD_COLS * BOARD_ROWS
+def board_capacity(width):
+    return board_cols(width) * BOARD_ROWS
 
 def draw_driver_group(c, rows, start, col_x0, y0, y1):
     avail_w = c.width - col_x0
     avail_h = y1 - y0 + 1
-    num_cols, col_w, row_h = driver_grid_dims(avail_w, avail_h)
+    num_cols, col_w, row_h = driver_grid_dims(avail_w, avail_h, board_cols(c.width))
     row_gap = 1 if row_h > 6 else 0
     idx = start
     for col in range(num_cols):
@@ -966,6 +975,10 @@ def event(c, ctx):
         _draw_next_card(c, ctx, st, big = True)
         return
 
+    if c.width < 320:
+        _event_narrow(c, st)
+        return
+
     is_race = st["is_race"]
     session = st.get("session", "RACE")
     gap = 10
@@ -1004,6 +1017,39 @@ def event(c, ctx):
         extra = str(st.get("cautions", 0)) + " CAU   " + str(st.get("lead_changes", 0)) + " LEAD CHG"
         c.text(fit_text(c, extra, "picopixel", smw), sx, 25, font = "picopixel", color = COLORS["muted"])
 
+# 192: no room for the text | track | status trio, so stack the text and tuck
+# a small track outline against the right edge.
+def _event_narrow(c, st):
+    is_race = st["is_race"]
+    session = st.get("session", "RACE")
+
+    track_asset, nw, nh = nascar_track_dims(st["track_key"])
+    track_w, track_h = cap_track_dims(nw, nh, 30, 22)
+    trx = c.width - track_w - 3
+    draw_nascar_track(c, st["track_key"], track_asset, trx, (32 - track_h) // 2, track_w, track_h)
+    tzw = trx - 6
+
+    c.text(fit_text(c, st["race_name"], "6x8", tzw), 3, 1, font = "6x8", color = COLORS["text"])
+    c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), 3, 12, font = "4x5", color = COLORS["muted"])
+
+    if not is_race:
+        c.text(fit_text(c, session, "5x7", tzw), 3, 21, font = "5x7", color = COLORS["accent2"])
+        return
+
+    flag_s = fit_text(c, FLAG_LABEL.get(st["flag"], "FLAG"), "5x7", tzw)
+    c.text(flag_s, 3, 19, font = "5x7", color = flag_color(st["flag"]))
+    fx = 3 + c.text_width(flag_s, "5x7") + 6
+    if fx < tzw:
+        lap_txt = "LAP " + str(st["lap"]) + "/" + str(st["laps_total"])
+        c.text(fit_text(c, lap_txt, "4x5", tzw - fx + 3), fx, 20, font = "4x5", color = COLORS["text"])
+
+    stage_txt = "STAGE " + str(st["stage_num"]) + "/3" if st["stage_num"] > 0 else "FINAL STAGE"
+    c.text(fit_text(c, stage_txt, "4x5", tzw), 3, 26, font = "4x5", color = COLORS["accent2"])
+    ex = 3 + c.text_width(stage_txt, "4x5") + 6
+    if ex < tzw:
+        extra = str(st.get("cautions", 0)) + " CAU  " + str(st.get("lead_changes", 0)) + " LEAD CHG"
+        c.text(fit_text(c, extra, "picopixel", tzw - ex + 3), ex, 27, font = "picopixel", color = COLORS["muted"])
+
 # ---------- pages: order / leaders / pit road ----------
 # Every page has one fixed job and a permanent tab label. The manifest page
 # count is fixed across live and off-season, so each page reads in both modes:
@@ -1018,7 +1064,7 @@ def order1(c, ctx):
     elif st["mode"] == "live":
         _draw_running_order(c, st, 0)
     else:
-        _draw_last_result(c, ctx)
+        _draw_last_page(c, ctx, 0)
 
 def order2(c, ctx):
     st = fetch_state(ctx)
@@ -1028,7 +1074,7 @@ def order2(c, ctx):
     elif st["mode"] == "live":
         _draw_running_order(c, st, 1)
     else:
-        _draw_schedule(c, ctx, st, 0)
+        _draw_last_page(c, ctx, 1)
 
 def order3(c, ctx):
     st = fetch_state(ctx)
@@ -1038,7 +1084,7 @@ def order3(c, ctx):
     elif st["mode"] == "live":
         _draw_running_order(c, st, 2)
     else:
-        _draw_schedule(c, ctx, st, 3)
+        _draw_last_page(c, ctx, 2)
 
 def order4(c, ctx):
     st = fetch_state(ctx)
@@ -1048,7 +1094,17 @@ def order4(c, ctx):
     elif st["mode"] == "live":
         _draw_running_order(c, st, 3)
     else:
-        _draw_schedule(c, ctx, st, 6)
+        _draw_last_page(c, ctx, 3)
+
+def order5(c, ctx):
+    st = fetch_state(ctx)
+    c.fill(COLORS["bg"])
+    if st["mode"] == "error":
+        draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "live":
+        _draw_running_order(c, st, 4)
+    else:
+        _draw_last_page(c, ctx, 4)
 
 def movers(c, ctx):
     st = fetch_state(ctx)
@@ -1058,22 +1114,23 @@ def movers(c, ctx):
     elif st["mode"] == "live":
         _draw_gains_losses(c, st)
     else:
-        _draw_schedule(c, ctx, st, 9)
+        _draw_schedule(c, ctx, st, 0)
 
 def _draw_running_order(c, st, page):
     draw_flag_bar(c, st["flag"])
-    lo = page * board_capacity()
+    lo = page * board_capacity(c.width)
     rows = st["rows"]
-    hi = min(lo + board_capacity(), len(rows))
-    draw_page_tab(c, "ORDER  P" + str(lo + 1) + "-" + str(max(hi, lo + 1)), COLORS["accent"])
+    # No "ORDER P1-8" tab: the position badge on every row already says what
+    # this page is and which range it covers.
     if lo >= len(rows):
         c.text("--", c.width // 2, 14, font = "6x8", color = COLORS["muted"], align = "center")
         return
     draw_driver_group(c, rows, lo, 0, 8, 31)
 
-# Live MOVERS page: the six biggest gainers and the six biggest losers vs.
+# Live MOVERS page: the four biggest gainers and the four biggest losers vs.
 # their starting spot, side by side (gainers in the left two columns, losers
-# in the right two).
+# in the right two). Four instead of six on a 192 panel -- a 46px column has
+# no room for six rows' worth of name + value without crowding.
 GREEN = "#22C55E"
 
 def _draw_gains_losses(c, st):
@@ -1081,8 +1138,8 @@ def _draw_gains_losses(c, st):
     for r in st["rows"]:
         if r["start_pos"] > 0 and r["pos"] > 0:
             moved.append((r, r["start_pos"] - r["pos"]))
-    gainers = sorted([m for m in moved if m[1] > 0], key = lambda e: -e[1])[:6]
-    losers = sorted([m for m in moved if m[1] < 0], key = lambda e: e[1])[:6]
+    gainers = sorted([m for m in moved if m[1] > 0], key = lambda e: -e[1])[:4]
+    losers = sorted([m for m in moved if m[1] < 0], key = lambda e: e[1])[:4]
     draw_page_tab(c, "MOVERS", GREEN)
     if len(gainers) == 0 and len(losers) == 0:
         c.text("NO POSITIONS CHANGED YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
@@ -1098,9 +1155,9 @@ def _draw_gains_losses(c, st):
 def _mv_half(c, entries, col_off, col_w, vcol):
     for i in range(len(entries)):
         r, delta = entries[i]
-        cx0 = (col_off + i // 3) * (col_w + 2)
+        cx0 = (col_off + i // 2) * (col_w + 2)
         cx1 = cx0 + col_w - 1
-        ry = 8 + (i % 3) * 8
+        ry = 10 + (i % 2) * 12
         who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
         val = ("+" + str(delta)) if delta > 0 else str(delta)
         vw = c.text_width(val, "4x5")
@@ -1116,7 +1173,7 @@ def _draw_next_card(c, ctx, st, big):
         return
     date_color = safe_input(ctx, "datecolor", COLORS["accent2"])
     asset, nw, nh = nascar_track_dims(st["track_key"])
-    tw, th = cap_track_dims(nw, nh, 52, 28)
+    tw, th = cap_track_dims(nw, nh, 40 if c.width < 320 else 52, 28)
     gap = 10
     text_w = c.width - tw - gap - 16
     total = text_w + gap + tw
@@ -1152,9 +1209,10 @@ def _draw_schedule(c, ctx, st, skip):
         y += 8
 
 
-# The full finishing order, three columns of four, filling the page (mirrors
-# the F1 app's LAST RACE page).
-def _draw_last_result(c, ctx):
+# The full finishing order across order1-5, the same 2x4 (192) / 3x4 (384+)
+# grid as the live running-order board -- so between sessions, order1-5 walk
+# the whole field (P1-8 ... P33-40) instead of stopping at a top-N cutoff.
+def _draw_last_page(c, ctx, page):
     draw_page_tab(c, "LAST RACE", "#E2E8F0")
     res = fetch_last_result(ctx)
     if res == None:
@@ -1163,19 +1221,29 @@ def _draw_last_result(c, ctx):
     tabw = c.text_width("LAST RACE", "4x5") + 10
     label = res["race_name"] + "  -  " + res["track_name"]
     c.text(fit_text(c, label, "picopixel", c.width - tabw - 4), tabw, 1, font = "picopixel", color = COLORS["muted"])
-    top = res["top"][:12]
-    if len(top) == 0:
-        cmt = res["comment"]
-        if cmt != "":
-            c.text(fit_text(c, cmt.upper(), "4x5", c.width - 8), 4, 15, font = "4x5", color = COLORS["accent2"])
+
+    ncols = 3 if c.width >= 320 else 2
+    per_page = ncols * 4
+    top = res["top"]
+    lo = page * per_page
+    if lo >= len(top):
+        if lo == 0:
+            cmt = res["comment"]
+            if cmt != "":
+                c.text(fit_text(c, cmt.upper(), "4x5", c.width - 8), 4, 15, font = "4x5", color = COLORS["accent2"])
+        else:
+            c.text("--", c.width // 2, 18, font = "6x8", color = COLORS["muted"], align = "center")
         return
-    col_w = (c.width - 4) // 3
+
+    col_w = (c.width - 2 * (ncols - 1)) // ncols
     pw = c.text_width("00", "4x5") + 3
-    for i in range(len(top)):
+    hi = min(lo + per_page, len(top))
+    for i in range(lo, hi):
         pos, who, gap = top[i]
-        cx0 = (i // 4) * (col_w + 2)
+        j = i - lo
+        cx0 = (j // 4) * (col_w + 2)
         cx1 = cx0 + col_w - 1
-        ry = 8 + (i % 4) * 6
+        ry = 8 + (j % 4) * 6
         c.text(pos, cx0, ry, font = "4x5", color = GOLD if pos == "1" else COLORS["accent2"])
         gw = 0
         if gap != "":
