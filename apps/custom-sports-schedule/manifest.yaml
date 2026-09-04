@@ -1,9 +1,9 @@
 gdn: 1
 id: custom-sports-schedule
 version: 0.1.0
-name: "Prout School Sports"
+name: "Custom Sports Schedule"
 author: "gabetrainor"
-description: Upcoming soccer and volleyball games for The Prout School in Wakefield, Rhode Island - opponent logos, date and kickoff, in the style of the major-league game-card apps.
+description: Prout's next 7 games (logos, teams, live score, date/time, sport), filterable by sport. Live off the schedule spreadsheet.
 category: Sports
 entry: app.star
 
@@ -11,23 +11,53 @@ entry: app.star
 width: 192
 height: 32
 
-refresh: 3600
+# 60 = the schema minimum -- polls the sheet every minute so an In Progress
+# score doesn't sit stale on the board.
+refresh: 60
 
 # A title/splash page, then one page per game, in schedule order. 8 is the
 # hard limit (gdn/data/scene.schema.json caps every app at 8 pages), so
-# that's 1 title + 7 games.
+# that's 1 title + 7 games -- same 7 slots regardless of which sport is
+# picked below, just filled from a different filtered list.
 pages: [title, game1, game2, game3, game4, game5, game6, game7]
 
-# Hardcoded snapshot of the schedule spreadsheet's next 7 games, not a live
-# read -- see the note at the top of app.star.
+inputs:
+  - key: sport
+    type: choice
+    app_input_type: dropdown
+    label: Sport
+    default: "All Sports"
+    help: >-
+      "All Sports" shows the next 7 games across every sport, each with its
+      own sport-ball icon on the left. Picking one sport instead shows that
+      sport's next 7 games (with more room for team names, since there's no
+      per-game icon needed) and moves the ball icon to the title page.
+    choices:
+      - "All Sports"
+      - "Mens Soccer"
+      - "Womens Soccer"
+      - "Volleyball"
+
+# Logos for known opponents -- see TEAM_LOGOS in app.star. A team not listed
+# here draws as a colored badge instead, so a live sheet update never breaks
+# on a missing logo.
 assets:
+  - barrington.png
   - chariho.png
+  - coventry.png
   - cranstonwest.png
+  - cumberland.png
   - daviesct.png
+  - eastgreenwich.png
   - eghs.png
   - foxborough.png
   - juanita.png
+  - lincoln.png
+  - middletown.png
+  - mphs.png
   - pilgrim.png
+  - ponaganset.png
   - prout.png
+  - southkingstown.png
   - soccer_ball.png
   - volleyball.png
