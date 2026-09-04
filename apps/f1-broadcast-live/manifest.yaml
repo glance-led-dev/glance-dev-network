@@ -2,15 +2,16 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: f1-broadcast-live
-version: 0.1.0
+version: 0.2.0
 name: F1 - Broadcast Live
 author: jdhine02
-description: Broadcast-style live timing for Formula 1. A real page rotation - the F1 wordmark, the grand prix and flag/lap/track weather, the circuit, the full order a screen at a time with tyre compound and gap to the leader, then race-control messages and pit-stop times. Between sessions it shows the next grand prix in your local time, the rest of the calendar, and the last race's podium.
+description: Broadcast-style live timing for Formula 1. A real page rotation - the F1 wordmark, the grand prix and flag/lap/track weather, the circuit, the full order a screen at a time with tyre compound and gap to the leader. Between sessions it shows the next grand prix in your local time, the rest of the calendar, and the last race's podium. Built for a 192-wide panel; the boards widen to 3 columns on 384/640.
 category: Sports
 entry: app.star
 
-# Panel geometry. Height is 32 (fixed); width up to 384.
-width: 384
+# Panel geometry. Height is 32 (fixed); width 64/128/192/384. 192 fits every
+# scroll panel (Studio/Pro/Premier); boards go 2-up on 192, 3-up when wider.
+width: 192
 height: 32
 
 # One fixed interval for the whole app. 2 minutes keeps the OpenF1 calls light

@@ -480,6 +480,7 @@ def fetch_f1_live(ctx):
         bg = ("#" + team_colour) if team_colour != "" else "#222222"
         compound = str(stints.get(dn, {}).get("compound", "")).upper()
         nm = last_name if last_name != "" else ("#" + str(dn))
+        acr = str(driver.get("name_acronym", "")).upper()
         num2name[str(dn)] = nm
 
         rows.append({
@@ -487,6 +488,7 @@ def fetch_f1_live(ctx):
             "num": str(dn),
             "initial": first_name[0].upper() if first_name else "",
             "name": nm,
+            "acr": acr if acr != "" else nm[:3],
             "gap": gap_str,
             "bg": bg,
             "txt_color": best_text_color(bg),
@@ -635,6 +637,7 @@ def _mock_live(ctx, mode):
             gap = format_gap_time(0.3 + i * 1.7)
         rows.append({
             "pos": i + 1, "num": num, "initial": ini, "name": name,
+            "acr": name[:3],
             "gap": gap if mode == "race" else format_gap_time(0.05 + i * 0.12),
             "bg": col, "txt_color": best_text_color(col),
             "pos_bg": "#000000", "pos_txt": "#FFFFFF",
@@ -703,11 +706,17 @@ def draw_flag_bar(c, flag):
     else:
         c.rect(0, 0, c.width - 1, 1, fill = F1_FLAG_COLOR.get(flag, COLORS["muted"]))
 
-BOARD_COLS = 3
-BOARD_ROWS = 3
+# 192 can't hold three driver rows across, so the board runs 2 columns x 4 rows
+# there and 3 x 3 on 384/640. Either way a page holds 8-9 cars, so 3 order
+# pages still cover the 20-car grid.
+def board_cols_rows(width):
+    if width >= 320:
+        return 3, 3
+    return 2, 4
 
-def board_capacity():
-    return BOARD_COLS * BOARD_ROWS
+def board_capacity(width):
+    cols, rows = board_cols_rows(width)
+    return cols * rows
 
 def grid_dims(avail_w, num_cols):
     return (avail_w - 2 * (num_cols - 1)) // num_cols
@@ -739,7 +748,12 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     if len(num_str) < 2:
         num_str = " " * (2 - len(num_str)) + num_str
     prefix = num_str + " "
-    who = (row["initial"] + "." + row["name"]) if row["initial"] else row["name"]
+    # Narrow boards use the broadcast 3-letter code (VER, NOR, ...) instead of
+    # the full surname -- a 95px column can't hold "VERSTAPPEN" plus a gap.
+    if c.width < 320:
+        who = row.get("acr", "") or row["name"]
+    else:
+        who = (row["initial"] + "." + row["name"]) if row["initial"] else row["name"]
 
     gap = row.get("gap", "")
     gap_w = c.text_width(gap, gap_font) if gap != "" else 0
@@ -759,15 +773,15 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
         c.text(gap, x1 - 3, gap_cy, font = gap_font, color = txt_color, align = "right")
 
 def draw_order_group(c, rows, start, y0, y1):
-    avail_w = c.width
-    col_w = grid_dims(avail_w, BOARD_COLS)
-    row_h = (y1 - y0 + 1) // BOARD_ROWS
+    cols, nrows = board_cols_rows(c.width)
+    col_w = grid_dims(c.width, cols)
+    row_h = (y1 - y0 + 1) // nrows
     row_gap = 1 if row_h > 6 else 0
     idx = start
-    for col in range(BOARD_COLS):
+    for col in range(cols):
         cx0 = col * (col_w + 2)
         cx1 = cx0 + col_w - 1
-        for r in range(BOARD_ROWS):
+        for r in range(nrows):
             if idx >= len(rows):
                 return
             ry0 = y0 + r * row_h
@@ -796,6 +810,10 @@ def event(c, ctx):
         return
     if st["mode"] == "off":
         _draw_next_card(c, ctx, st, big = True)
+        return
+
+    if c.width < 320:
+        _event_narrow(c, st)
         return
 
     is_race = st["is_race"]
@@ -832,6 +850,40 @@ def event(c, ctx):
             wcol = WEATHER_COLOR.get(st.get("weather_cond", ""), COLORS["accent2"])
             c.text(fit_text(c, wtxt, "4x5", smw), stx, 21, font = "4x5", color = wcol)
 
+# 192: no room for the text | circuit | status trio, so stack the text and
+# tuck a small circuit outline against the right edge.
+def _event_narrow(c, st):
+    is_race = st["is_race"]
+    session = st.get("session", "RACE")
+    show_status = is_race or st.get("weather", "") != ""
+
+    asset, nw, nh = track_asset_dims(st["track_key"])
+    tw, th = cap_track_dims(nw, nh, 32, 22)
+    trx = c.width - tw - 3
+    draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
+    tzw = trx - 6
+
+    c.text(fit_text(c, st["race_name"], "6x8", tzw), 3, 1, font = "6x8", color = COLORS["text"])
+    c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), 3, 12, font = "4x5", color = COLORS["muted"])
+
+    if not show_status:
+        c.text(fit_text(c, session, "5x7", tzw), 3, 21, font = "5x7", color = COLORS["accent2"])
+        return
+
+    x = 3
+    flag_s = fit_text(c, str(st["flag"]), "5x7", tzw)
+    fcol = F1_FLAG_COLOR.get(st["flag"], COLORS["muted"])
+    c.text(flag_s, x, 21, font = "5x7", color = fcol)
+    x += c.text_width(flag_s, "5x7") + 6
+    if is_race and x < tzw:
+        lap_s = "LAP " + str(st["lap"])
+        c.text(lap_s, x, 22, font = "4x5", color = COLORS["text"])
+        x += c.text_width(lap_s, "4x5") + 6
+    wtxt = st.get("weather", "")
+    if wtxt != "" and x < tzw:
+        wcol = WEATHER_COLOR.get(st.get("weather_cond", ""), COLORS["accent2"])
+        c.text(fit_text(c, wtxt, "4x5", tzw - x), x, 22, font = "4x5", color = wcol)
+
 # ---------- pages: running order ----------
 # Two rotations off one fixed 5-page manifest. Between sessions: logo, next
 # race, last race, next 3 GPs (page 5 is blank). Live: logo, event, then the
@@ -865,13 +917,13 @@ def order3(c, ctx):
     elif st["mode"] == "live":
         _draw_running_order(c, st, 2)
     else:
-        _draw_calendar(c, ctx, CAL_PER_PAGE)
+        _draw_calendar(c, ctx, cal_per_page(c.width))
 
 def _draw_running_order(c, st, page):
     draw_flag_bar(c, st["flag"])
-    lo = page * board_capacity()
-    hi = min(lo + board_capacity(), len(st["rows"]))
-    draw_page_tab(c, "ORDER  P" + str(lo + 1) + "-" + str(max(hi, lo + 1)), COLORS["accent"])
+    lo = page * board_capacity(c.width)
+    # No "ORDER P1-8" tab: the position badge on every row already says what
+    # this page is and which range it covers.
     if lo >= len(st["rows"]):
         c.text("--", c.width // 2, 14, font = "6x8", color = COLORS["muted"], align = "center")
         return
@@ -882,7 +934,7 @@ def _draw_running_order(c, st, page):
 def _draw_next_card(c, ctx, st, big):
     date_color = safe_input(ctx, "datecolor", COLORS["accent2"])
     asset, nw, nh = track_asset_dims(st["track_key"])
-    tw, th = cap_track_dims(nw, nh, 52, 28)
+    tw, th = cap_track_dims(nw, nh, 40 if c.width < 320 else 52, 28)
     gap = 10
     text_w = c.width - tw - gap - 16
     total = text_w + gap + tw
@@ -897,32 +949,38 @@ def _draw_next_card(c, ctx, st, big):
     c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
     c.text(fit_text(c, local_dt(ctx, st["race_date"], st.get("race_time", "")), "5x7", text_w), cx, 21, font = "5x7", color = date_color, align = "center")
 
-# order2 shows the six grands prix after the next one; order3 continues with the
-# six after that -- three per column, two columns, so a full "GRAND PRIX" name
-# fits without truncation and the overflow rolls onto the next page.
-CAL_PER_PAGE = 6
+# order2 lists the grands prix after the next one; order3 continues from where
+# it stopped. 384/640: two columns of three (6 a page). 192: one column of four
+# (4 a page), so a full "GRAND PRIX" name never has to truncate.
+def cal_per_page(width):
+    return 6 if width >= 320 else 4
 
 def _draw_calendar(c, ctx, skip):
     date_color = safe_input(ctx, "datecolor", COLORS["accent2"])
     draw_page_tab(c, "CALENDAR", date_color)
     up = fetch_f1_upcoming(ctx)
+    per = cal_per_page(c.width)
     # up[0] is the immediate next race -- that's already the `event` page.
-    races = up[1 + skip:1 + skip + CAL_PER_PAGE]
+    races = up[1 + skip:1 + skip + per]
     if len(races) == 0:
         c.text("SEASON COMPLETE" if skip == 0 else "END OF CALENDAR", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
-    col_w = grid_dims(c.width, 2)
+    ncols = 2 if c.width >= 320 else 1
+    rows_per = per // ncols
+    line_h = 8 if c.width >= 320 else 6
+    col_w = grid_dims(c.width, ncols)
     for i in range(len(races)):
         r = races[i]
-        cx0 = (i // 3) * (col_w + 2)
-        ry = 8 + (i % 3) * 8
+        cx0 = (i // rows_per) * (col_w + 2)
+        ry = 8 + (i % rows_per) * line_h
         dt = local_daydate(ctx, str(r.get("date", "")), str(r.get("time", "")))
         c.text(dt, cx0, ry, font = "4x5", color = date_color)
         dx = cx0 + c.text_width("SEP 00", "4x5") + 5
         nm = str(r.get("raceName", "GRAND PRIX")).upper()
         c.text(fit_text(c, nm, "4x5", cx0 + col_w - dx - 2), dx, ry, font = "4x5", color = COLORS["text"])
 
-# The full finishing order, three columns of four, filling the page.
+# The finishing order filling the page: 384/640 fit three columns of four (P1
+# -12); 192 fits two columns of four (P1-8), where a full surname still reads.
 def _draw_last(c, ctx):
     draw_page_tab(c, "LAST RACE", "#E2E8F0")
     res = fetch_f1_last(ctx)
@@ -931,14 +989,16 @@ def _draw_last(c, ctx):
         return
     tabw = c.text_width("LAST RACE", "4x5") + 10
     c.text(fit_text(c, res["race_name"], "picopixel", c.width - tabw - 4), tabw, 1, font = "picopixel", color = COLORS["muted"])
-    top = res["top"][:12]
-    col_w = grid_dims(c.width, 3)
+    ncols = 3 if c.width >= 320 else 2
+    rows_per = 4
+    top = res["top"][:ncols * rows_per]
+    col_w = grid_dims(c.width, ncols)
     pw = c.text_width("00", "4x5") + 3
     for i in range(len(top)):
         pos, name, gap = top[i]
-        cx0 = (i // 4) * (col_w + 2)
+        cx0 = (i // rows_per) * (col_w + 2)
         cx1 = cx0 + col_w - 1
-        ry = 8 + (i % 4) * 6
+        ry = 8 + (i % rows_per) * 6
         c.text(pos, cx0, ry, font = "4x5", color = GOLD if pos == "1" else COLORS["accent2"])
         gw = 0
         if gap != "":
