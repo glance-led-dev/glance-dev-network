@@ -2,22 +2,22 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: date-time
-version: 0.2.0
+version: 0.3.0
 name: Date & Time
 author: jdhine02
-description: Local date, time, and current weather for a US zip code on one line. Pick a 12/24-hour clock, a US/international/written date format, a font, and a color for each section; the temperature can match the weather color or follow a hot/cold scale, and rain, snow, and clear-night moon phase are called out by name and icon.
+description: Local date, time, and current weather for a US zip code, one per page (date, then time, then weather) so each gets a big, easy-to-read size. Pick a 12/24-hour clock, a US/international/written date format, a font, and a color for each section; the temperature can match the weather color or follow a hot/cold scale, and rain, snow, and clear-night moon phase are called out by name and icon.
 category: Time
 entry: app.star
 
-# Panel geometry. Height is 32 (fixed); width up to 384.
-width: 384
+# Panel geometry. Height is 32 (fixed); width 64/128/192/384.
+width: 192
 height: 32
 
 # Re-render every minute so the clock stays current.
 refresh: 60
 
 # Pages the panel rotates through, in order. app.star must define a function per name.
-pages: [main]
+pages: [date, time, weather]
 
 # What the client fills in at install time.
 #   type            — the data type: string | number | choice
