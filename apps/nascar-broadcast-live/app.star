@@ -1,18 +1,18 @@
 # NASCAR - Broadcast Live (384x32).
 #
 # A real page rotation (not one page faking frames off the wall clock -- the
-# panel requests one render per page in manifest order):
+# panel requests one render per page in manifest order). Every page has one
+# fixed job and a permanent tab label; each reads in both live and off-season:
 #
-#   logo    - series wordmark
-#   event   - race name / track / session, and flag / lap / stage while racing;
-#             the next-race card between sessions
-#   track   - the track shape, big
-#   board1..board5 + feed1..feed2 - seven "flex" slots. While a race is live
-#             they carry the full running order a screen at a time, then a
-#             laps-led board and a pit-stop board. In practice/qualifying they
-#             carry the timing order, then fastest-lap and biggest-movers
-#             boards. Between sessions they carry the next-race card, the rest
-#             of the schedule, and the last race's result.
+#   logo     - series wordmark (LIVE / NEXT UP)
+#   event    - race / session + flag / lap / stage / cautions / lead changes
+#              and the track shape;   off: NEXT RACE card
+#   order1   - running order P1-12;   off: LAST RACE, the full finishing order
+#   order2-4 - running order P13-40;  off: SCHEDULE (the upcoming slate)
+#   movers   - the six biggest gainers and six biggest losers vs. their start
+#              spot;                  off: SCHEDULE, continued
+#
+# NASCAR's public feed has no race-control / penalty message stream (unlike F1).
 #
 # Data: NASCAR's public Content Feed CDN (cf.nascar.com) -- race_list_basic for
 # the schedule, the live-feed for everything in-session (running order, laps
@@ -608,26 +608,6 @@ def gap_text(row, leader_laps, live_race):
 def series_key(name):
     return "series_" + str(SERIES_IDS.get(str(name), 1))
 
-def _laps_led_total(car):
-    total = 0
-    for seg in car.get("laps_led", []):
-        a = int(seg.get("start_lap", 0))
-        b = int(seg.get("end_lap", 0))
-        if b >= a:
-            total += b - a + 1
-    return total
-
-def _pit_summary(stops):
-    best = None
-    cnt = 0
-    for s in stops:
-        dur = s.get("pit_stop_duration", 0)
-        if dur and dur > 0:
-            cnt += 1
-            if best == None or dur < best:
-                best = dur
-    return best, cnt
-
 def vehicle_rows(feed, series, live_race):
     vehicles = feed.get("vehicles", [])
     rows = []
@@ -646,10 +626,6 @@ def vehicle_rows(feed, series, live_race):
             "mfg": str(car.get("vehicle_manufacturer", "")),
             "chase": bool(driver.get("is_in_chase", False)),
             "start_pos": int(car.get("starting_position", 0)),
-            "laps_led": _laps_led_total(car),
-            "best_speed": float(car.get("best_lap_speed", 0) or 0),
-            "best_lap_time": float(car.get("best_lap_time", 0) or 0),
-            "pit_raw": car.get("pit_stops", []),
         })
     mark_duplicate_names(rows)
     n = len(rows)
@@ -701,20 +677,12 @@ def pick_last_completed(schedule, series):
             last = race
     return last
 
-def upcoming_after_next(schedule, series, n):
+def upcoming_races(schedule, series):
+    # Every not-yet-run race, in order. up[0] is the immediate next race (shown
+    # on the `event` page); the SCHEDULE pages walk from up[1].
     races = schedule.get(series_key(series), [])
-    out = []
-    seen_first = False
-    for race in races:
-        if _has_winner(race):
-            continue
-        if not seen_first:
-            seen_first = True
-            continue
-        out.append(race)
-        if len(out) >= n:
-            break
-    return out
+    return [r for r in races if not _has_winner(r)]
+
 
 # Temporary preview harness: `_debug` = "race" or "quali" returns a mock live
 # state so the live boards can be rendered without a session in progress. Not a
@@ -740,9 +708,16 @@ def _mock_live(ctx, mode):
         (16, "23", "B", "WALLACE", "Tyt", True, 15, 26.7, 1, 1, 0, 177.2, 28.20),
         (17, "34", "T", "GILLILAND", "Frd", False, 18, 1, 1, 1, 0, 176.8, 28.25),
         (18, "3", "A", "DILLON", "Chv", False, 17, 1, 1, 1, 0, 176.5, 28.30),
-        (19, "77", "C", "HOCEVAR", "Chv", False, 20, 1, 1, 0, 0, 176.0, 28.40),
-        (20, "43", "E", "JONES", "Tyt", False, 19, 1, 3, 1, 0, 175.5, 28.50),
+        (19, "77", "C", "HOCEVAR", "Chv", False, 30, 1, 1, 0, 0, 176.0, 28.40),
+        (20, "43", "E", "JONES", "Tyt", False, 8, 1, 3, 1, 0, 175.5, 28.50),
     ]
+    # Filler back half of the field so every ORDER page populates in preview.
+    _fill = ["71", "42", "51", "38", "7", "16", "4", "10", "2", "21",
+             "47", "88", "35", "60", "78", "31", "33", "44"]
+    for k in range(len(_fill)):
+        p = 21 + k
+        specs.append((p, _fill[k], "", "CAR " + _fill[k], "Frd", False,
+                      p + (3 if k % 3 == 0 else -2), 1.0, 1, 1, 0, 174.0 - k, 29.0 + k * 0.1))
     rows = []
     for spec in specs:
         pos, num, ini, name, mfg, chase, start, delta, status, on_t, led, spd, blt = spec
@@ -772,7 +747,9 @@ def _mock_live(ctx, mode):
         "track_key": "DARLINGTON RACEWAY",
         "flag": 1 if is_race else 9, "lap": 120 if is_race else 0,
         "laps_total": 367 if is_race else 0, "laps_to_go": 247 if is_race else 0,
-        "stage_num": 2 if is_race else 0, "rows": rows,
+        "stage_num": 2 if is_race else 0,
+        "cautions": 4 if is_race else 0, "lead_changes": 11 if is_race else 0,
+        "leaders": 6 if is_race else 0, "rows": rows,
     }
 
 def fetch_state(ctx):
@@ -839,6 +816,9 @@ def fetch_state(ctx):
         "laps_total": int(feed.get("laps_in_race", 0)),
         "laps_to_go": int(feed.get("laps_to_go", 0)),
         "stage_num": int(stage.get("stage_num", 0)),
+        "cautions": int(feed.get("number_of_caution_segments", 0)),
+        "lead_changes": int(feed.get("number_of_lead_changes", 0)),
+        "leaders": int(feed.get("number_of_leaders", 0)),
         "rows": vehicle_rows(feed, series, is_race),
     }
 
@@ -856,8 +836,19 @@ def fetch_last_result(ctx):
     top = []
     if live["ok"]:
         rows = vehicle_rows(live["data"], series, False)
-        for r in rows[:5]:
-            top.append((r["pos"], r["num"], r["name"], r["initial"]))
+        leader_laps = rows[0]["laps"] if len(rows) > 0 else 0
+        for r in rows[:12]:
+            ld = leader_laps - r["laps"]
+            if r["status"] == 3:
+                gap = "DNF"
+            elif r["pos"] == 1:
+                gap = ""
+            elif ld >= 1:
+                gap = "-" + str(ld) + (" LAP" if ld == 1 else " LAPS")
+            else:
+                gap = r["gap"]
+            who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
+            top.append((str(r["pos"]), who, gap))
     return {
         "race_name": short_race(race.get("race_name", "RACE")),
         "track_name": short_track(race.get("track_name", "")),
@@ -948,30 +939,6 @@ def draw_driver_group(c, rows, start, col_x0, y0, y1):
             ry1 = ry0 + row_h - 1 - row_gap
             draw_driver_row_block(c, cx0, cx1, ry0, ry1, row)
 
-def draw_stat_group(c, items, col_x0, y0, y1, accent):
-    # A generic single-line board, 3 per column: each item is
-    # (rank_str, name, value_str, value_color) laid out rank | name ... value.
-    avail_w = c.width - col_x0
-    avail_h = y1 - y0 + 1
-    num_cols, col_w, row_h = driver_grid_dims(avail_w, avail_h, 3, 3)
-    bw = c.text_width("00", "4x5") + 4
-    idx = 0
-    for col in range(num_cols):
-        cx0 = col_x0 + col * (col_w + 2)
-        cx1 = cx0 + col_w - 1
-        for row_i in range(3):
-            if idx >= len(items):
-                return
-            rank_str, name, val, vcol = items[idx]
-            idx += 1
-            ry0 = y0 + row_i * row_h
-            c.rect(cx0, ry0, cx0 + bw - 1, ry0 + 7, fill = accent)
-            c.text(rank_str, cx0 + 2, ry0 + 1, font = "4x5", color = best_text_color(accent))
-            vw = c.text_width(val, "4x5")
-            c.text(val, cx1, ry0 + 1, font = "4x5", color = vcol, align = "right")
-            nx = cx0 + bw + 3
-            c.text(fit_text(c, name, "5x7", cx1 - nx - vw - 4), nx, ry0, font = "5x7", color = COLORS["text"])
-
 # ---------- pages: fixed ----------
 
 def logo(c, ctx):
@@ -1029,181 +996,116 @@ def event(c, ctx):
     if is_race:
         sx = status_x0
         smw = c.width - sx - 2
-        c.text(fit_text(c, FLAG_LABEL.get(st["flag"], "FLAG"), "6x8", smw), sx, 1, font = "6x8", color = flag_color(st["flag"]))
+        c.text(fit_text(c, FLAG_LABEL.get(st["flag"], "FLAG"), "6x8", smw), sx, 0, font = "6x8", color = flag_color(st["flag"]))
         lap_txt = "LAP " + str(st["lap"]) + "/" + str(st["laps_total"])
-        c.text(fit_text(c, lap_txt, "4x5", smw), sx, 12, font = "4x5", color = COLORS["text"])
+        c.text(fit_text(c, lap_txt, "4x5", smw), sx, 10, font = "4x5", color = COLORS["text"])
         stage_txt = "STAGE " + str(st["stage_num"]) + "/3" if st["stage_num"] > 0 else "FINAL STAGE"
-        c.text(fit_text(c, stage_txt, "4x5", smw), sx, 21, font = "4x5", color = COLORS["accent2"])
+        c.text(fit_text(c, stage_txt, "4x5", smw), sx, 17, font = "4x5", color = COLORS["accent2"])
+        extra = str(st.get("cautions", 0)) + " CAU   " + str(st.get("lead_changes", 0)) + " LEAD CHG"
+        c.text(fit_text(c, extra, "picopixel", smw), sx, 25, font = "picopixel", color = COLORS["muted"])
 
-def track(c, ctx):
+# ---------- pages: order / leaders / pit road ----------
+# Every page has one fixed job and a permanent tab label. The manifest page
+# count is fixed across live and off-season, so each page reads in both modes:
+# running order <-> last race / schedule, laps-led <-> schedule,
+# pit road <-> season card.
+
+def order1(c, ctx):
     st = fetch_state(ctx)
     c.fill(COLORS["bg"])
     if st["mode"] == "error":
         draw_error(c, st["title"], st["sub"])
-        return
-    if st["mode"] == "off" and not st["has_next"]:
-        c.text("SEASON COMPLETE", c.width // 2, 13, font = "6x8", color = COLORS["muted"], align = "center")
-        return
-
-    track_key = st["track_key"]
-    track_name = st["track_name"]
-    asset, nw, nh = nascar_track_dims(track_key)
-    tw, th = cap_track_dims(nw, nh, 150, 30)
-    tx = (c.width - tw) // 2 - 30
-    ty = (32 - th) // 2
-    draw_nascar_track(c, track_key, asset, tx, ty, tw, th)
-
-    lx = tx + tw + 12
-    c.text(fit_text(c, track_name, "6x8", c.width - lx - 2), lx, 6, font = "6x8", color = COLORS["text"])
-    if st["mode"] == "live" and st.get("is_race"):
-        c.text("LAP " + str(st["lap"]) + "/" + str(st["laps_total"]), lx, 17, font = "4x5", color = COLORS["muted"])
-        if st.get("laps_to_go", 0) > 0:
-            c.text(str(st["laps_to_go"]) + " TO GO", lx, 24, font = "4x5", color = COLORS["accent2"])
+    elif st["mode"] == "live":
+        _draw_running_order(c, st, 0)
     else:
-        c.text("THE TRACK", lx, 17, font = "4x5", color = COLORS["muted"])
-
-# ---------- pages: flex slots ----------
-
-def board1(c, ctx):
-    _flex(c, ctx, 0)
-
-def board2(c, ctx):
-    _flex(c, ctx, 1)
-
-def board3(c, ctx):
-    _flex(c, ctx, 2)
-
-def board4(c, ctx):
-    _flex(c, ctx, 3)
-
-def feed(c, ctx):
-    _flex(c, ctx, 4)
-
-FLEX_SLOTS = 5
-
-def _flex_blocks(ctx, st):
-    # Ordered content blocks for the five flex slots (board1..board4 + feed),
-    # by state. Anything past the list wraps so no slot is ever blank.
-    if st["mode"] == "error":
-        return [("error", 0)]
-    if st["mode"] == "off":
-        return [("next", 0), ("sched", 0), ("result", 0)]
-
-    cap = board_capacity()
-    pages = max(1, (len(st["rows"]) + cap - 1) // cap)
-    blocks = []
-    for p in range(pages):
-        blocks.append(("order", p))
-    # The single feed slot alternates its two summaries each refresh -- it is
-    # not paging a list, just showing whichever of two equally useful boards.
-    tick = (ctx.now.unix // 120) % 2
-    if st["is_race"]:
-        blocks.append(("ledlaps", 0) if tick == 0 else ("pits", 0))
-    else:
-        blocks.append(("fastlap", 0) if tick == 0 else ("movers", 0))
-    return blocks
-
-def _flex(c, ctx, slot):
-    st = fetch_state(ctx)
-    c.fill(COLORS["bg"])
-    blocks = _flex_blocks(ctx, st)
-    kind, arg = blocks[slot % len(blocks)]
-
-    if kind == "error":
-        draw_error(c, st["title"], st["sub"])
-    elif kind == "next":
-        _draw_next_card(c, ctx, st, big = False)
-    elif kind == "sched":
-        _draw_schedule(c, ctx, st)
-    elif kind == "result":
         _draw_last_result(c, ctx)
-    elif kind == "order":
-        _draw_order(c, ctx, st, arg)
-    elif kind == "ledlaps":
-        _draw_ledlaps(c, st)
-    elif kind == "pits":
-        _draw_pits(c, st)
-    elif kind == "fastlap":
-        _draw_fastlap(c, st)
-    elif kind == "movers":
-        _draw_movers(c, st)
 
-def _draw_order(c, ctx, st, page):
+def order2(c, ctx):
+    st = fetch_state(ctx)
+    c.fill(COLORS["bg"])
+    if st["mode"] == "error":
+        draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "live":
+        _draw_running_order(c, st, 1)
+    else:
+        _draw_schedule(c, ctx, st, 0)
+
+def order3(c, ctx):
+    st = fetch_state(ctx)
+    c.fill(COLORS["bg"])
+    if st["mode"] == "error":
+        draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "live":
+        _draw_running_order(c, st, 2)
+    else:
+        _draw_schedule(c, ctx, st, 3)
+
+def order4(c, ctx):
+    st = fetch_state(ctx)
+    c.fill(COLORS["bg"])
+    if st["mode"] == "error":
+        draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "live":
+        _draw_running_order(c, st, 3)
+    else:
+        _draw_schedule(c, ctx, st, 6)
+
+def movers(c, ctx):
+    st = fetch_state(ctx)
+    c.fill(COLORS["bg"])
+    if st["mode"] == "error":
+        draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "live":
+        _draw_gains_losses(c, st)
+    else:
+        _draw_schedule(c, ctx, st, 9)
+
+def _draw_running_order(c, st, page):
     draw_flag_bar(c, st["flag"])
-    draw_page_tab(c, "ORDER " + str(page + 1), COLORS["accent"])
-    draw_driver_group(c, st["rows"], page * board_capacity(), 0, 8, 31)
-
-def _draw_ledlaps(c, st):
-    draw_page_tab(c, "LAPS LED", GOLD)
-    ranked = sorted(st["rows"], key = lambda r: -r["laps_led"])
-    ranked = [r for r in ranked if r["laps_led"] > 0][:9]
-    if len(ranked) == 0:
-        c.text("NO LAPS LED YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
+    lo = page * board_capacity()
+    rows = st["rows"]
+    hi = min(lo + board_capacity(), len(rows))
+    draw_page_tab(c, "ORDER  P" + str(lo + 1) + "-" + str(max(hi, lo + 1)), COLORS["accent"])
+    if lo >= len(rows):
+        c.text("--", c.width // 2, 14, font = "6x8", color = COLORS["muted"], align = "center")
         return
-    items = []
-    for i in range(len(ranked)):
-        r = ranked[i]
-        who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
-        items.append((str(i + 1), who, str(r["laps_led"]), COLORS["accent2"]))
-    draw_stat_group(c, items, 0, 8, 31, GOLD)
+    draw_driver_group(c, rows, lo, 0, 8, 31)
 
-def _draw_pits(c, st):
-    draw_page_tab(c, "PIT STOPS", "#38BDF8")
-    entries = []
-    for r in st["rows"]:
-        best, cnt = _pit_summary(r.get("pit_raw", []))
-        if best != None:
-            entries.append((r, best, cnt))
-    entries = sorted(entries, key = lambda e: e[1])[:9]
-    if len(entries) == 0:
-        c.text("NO GREEN-FLAG STOPS YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
-        return
-    items = []
-    for i in range(len(entries)):
-        r, dur, cnt = entries[i]
-        who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
-        items.append((str(i + 1), who, _sec(dur) + "S", "#7DD3FC"))
-    draw_stat_group(c, items, 0, 8, 31, "#38BDF8")
+# Live MOVERS page: the six biggest gainers and the six biggest losers vs.
+# their starting spot, side by side (gainers in the left two columns, losers
+# in the right two).
+GREEN = "#22C55E"
 
-def _draw_fastlap(c, st):
-    draw_page_tab(c, "FAST LAP", "#A78BFA")
-    ranked = [r for r in st["rows"] if r["best_speed"] > 0]
-    ranked = sorted(ranked, key = lambda r: -r["best_speed"])[:9]
-    if len(ranked) == 0:
-        c.text("NO LAP TIMES YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
-        return
-    items = []
-    for i in range(len(ranked)):
-        r = ranked[i]
-        who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
-        val = _sec(r["best_lap_time"]) if r["best_lap_time"] > 0 else str(int(r["best_speed"]))
-        items.append((str(i + 1), who, val, "#C4B5FD"))
-    draw_stat_group(c, items, 0, 8, 31, "#A78BFA")
-
-def _draw_movers(c, st):
-    draw_page_tab(c, "MOVERS", "#22C55E")
-    movers = []
+def _draw_gains_losses(c, st):
+    moved = []
     for r in st["rows"]:
         if r["start_pos"] > 0 and r["pos"] > 0:
-            movers.append((r, r["start_pos"] - r["pos"]))
-    movers = sorted(movers, key = lambda e: -e[1])[:9]
-    if len(movers) == 0 or movers[0][1] <= 0:
-        c.text("NO POSITIONS GAINED YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
+            moved.append((r, r["start_pos"] - r["pos"]))
+    gainers = sorted([m for m in moved if m[1] > 0], key = lambda e: -e[1])[:6]
+    losers = sorted([m for m in moved if m[1] < 0], key = lambda e: e[1])[:6]
+    draw_page_tab(c, "MOVERS", GREEN)
+    if len(gainers) == 0 and len(losers) == 0:
+        c.text("NO POSITIONS CHANGED YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
-    items = []
-    for i in range(len(movers)):
-        r, delta = movers[i]
-        who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
-        sign = "+" + str(delta) if delta >= 0 else str(delta)
-        col = "#22C55E" if delta >= 0 else COLORS["error"]
-        items.append((str(r["pos"]), who, sign, col))
-    draw_stat_group(c, items, 0, 8, 31, "#22C55E")
+    col_w = (c.width - 6) // 4
+    mid = 2 * (col_w + 2) - 1
+    c.line(mid, 7, mid, 31, COLORS["line"])
+    c.text("GAINED", mid - 2, 1, font = "picopixel", color = GREEN, align = "right")
+    c.text("LOST", c.width - 1, 1, font = "picopixel", color = COLORS["error"], align = "right")
+    _mv_half(c, gainers, 0, col_w, GREEN)
+    _mv_half(c, losers, 2, col_w, COLORS["error"])
 
-def _sec(v):
-    v = float(v)
-    whole = int(v)
-    frac = int((v - whole) * 100 + 0.5)
-    return str(whole) + "." + (("0" + str(frac)) if frac < 10 else str(frac))
+def _mv_half(c, entries, col_off, col_w, vcol):
+    for i in range(len(entries)):
+        r, delta = entries[i]
+        cx0 = (col_off + i // 3) * (col_w + 2)
+        cx1 = cx0 + col_w - 1
+        ry = 8 + (i % 3) * 8
+        who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
+        val = ("+" + str(delta)) if delta > 0 else str(delta)
+        vw = c.text_width(val, "4x5")
+        c.text(val, cx1, ry, font = "4x5", color = vcol, align = "right")
+        c.text(fit_text(c, who, "4x5", cx1 - cx0 - vw - 3), cx0, ry, font = "4x5", color = COLORS["text"])
 
 # ---------- off-season cards ----------
 
@@ -1230,13 +1132,16 @@ def _draw_next_card(c, ctx, st, big):
     c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
     c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = date_color, align = "center")
 
-def _draw_schedule(c, ctx, st):
-    draw_page_tab(c, "SCHEDULE", COLORS["accent2"])
-    races = upcoming_after_next(st["schedule"], st["series"], 3)
-    if len(races) == 0:
-        c.text("NO MORE RACES SCHEDULED", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
-        return
+def _draw_schedule(c, ctx, st, skip):
     date_color = safe_input(ctx, "datecolor", COLORS["accent2"])
+    draw_page_tab(c, "SCHEDULE", date_color)
+    up = upcoming_races(st["schedule"], st["series"])
+    # up[0] is the immediate next race -- that's the `event` page.
+    races = up[1 + skip:1 + skip + 3]
+    if len(races) == 0:
+        msg = "SEASON COMPLETE" if skip == 0 else "END OF SCHEDULE"
+        c.text(msg, c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
+        return
     dx = 4 + c.text_width("SEP 00", "5x7") + 8
     y = 8
     for r in races:
@@ -1246,27 +1151,34 @@ def _draw_schedule(c, ctx, st):
         c.text(fit_text(c, nm, "5x7", c.width - dx - 4), dx, y, font = "5x7", color = COLORS["text"])
         y += 8
 
+
+# The full finishing order, three columns of four, filling the page (mirrors
+# the F1 app's LAST RACE page).
 def _draw_last_result(c, ctx):
     draw_page_tab(c, "LAST RACE", "#E2E8F0")
     res = fetch_last_result(ctx)
     if res == None:
         c.text("NO RESULT AVAILABLE", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
-    c.text(fit_text(c, res["race_name"], "5x7", 180), 4, 8, font = "5x7", color = COLORS["text"])
-    c.text(fit_text(c, res["track_name"], "picopixel", 180), 4, 16, font = "picopixel", color = COLORS["muted"])
-    if len(res["top"]) > 0:
-        x = 4
-        y = 23
-        for pos, num, name, initial in res["top"]:
-            who = (initial + "." + name) if initial else name
-            chip = str(pos) + " " + who
-            w = c.text_width(chip, "picopixel") + 4
-            if x + w > c.width - 2:
-                break
-            col = GOLD if pos == 1 else COLORS["muted"]
-            c.text(chip, x, y, font = "picopixel", color = col)
-            x += w + 3
-    else:
+    tabw = c.text_width("LAST RACE", "4x5") + 10
+    label = res["race_name"] + "  -  " + res["track_name"]
+    c.text(fit_text(c, label, "picopixel", c.width - tabw - 4), tabw, 1, font = "picopixel", color = COLORS["muted"])
+    top = res["top"][:12]
+    if len(top) == 0:
         cmt = res["comment"]
         if cmt != "":
-            c.text(fit_text(c, cmt.upper(), "4x5", c.width - 8), 4, 23, font = "4x5", color = COLORS["accent2"])
+            c.text(fit_text(c, cmt.upper(), "4x5", c.width - 8), 4, 15, font = "4x5", color = COLORS["accent2"])
+        return
+    col_w = (c.width - 4) // 3
+    pw = c.text_width("00", "4x5") + 3
+    for i in range(len(top)):
+        pos, who, gap = top[i]
+        cx0 = (i // 4) * (col_w + 2)
+        cx1 = cx0 + col_w - 1
+        ry = 8 + (i % 4) * 6
+        c.text(pos, cx0, ry, font = "4x5", color = GOLD if pos == "1" else COLORS["accent2"])
+        gw = 0
+        if gap != "":
+            gw = c.text_width(gap, "picopixel")
+            c.text(gap, cx1, ry + 1, font = "picopixel", color = COLORS["muted"], align = "right")
+        c.text(fit_text(c, who, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry, font = "4x5", color = COLORS["text"])
