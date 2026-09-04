@@ -1,0 +1,35 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: del-norte-jv-football
+version: 0.1.0
+name: Del Norte JV Football
+author: sdaquino
+description: Next game, last result, and season record for Del Norte High School (San Diego) JV football.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+# 128 = two 64px modules daisy-chained. Change to 64 for a single panel, or
+# 192/384 if you've got more -- text auto-fits either way.
+width: 128
+height: 32
+
+# Games kick off at most once a day, so hourly redraws are plenty.
+refresh: 3600
+
+# Rotates: title card -> next game -> last result -> season record -> repeat.
+pages: [title, next, last, record]
+
+# Nighthawks logo, background removed, trimmed and downsized (60x26) for the
+# title card. Title page layout assumes width >= 128.
+assets:
+  - logo.png
+
+inputs:
+  - key: tz_offset
+    type: number
+    app_input_type: free-text
+    label: UTC offset (hours)
+    default: -7
+    help: San Diego is -8 in winter (PST) / -7 in summer (PDT). The 2026 season runs entirely in PDT.
