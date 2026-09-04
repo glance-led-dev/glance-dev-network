@@ -1,9 +1,10 @@
-# Now Showing — one movie or TV episode/show, always on the panel. (320x32, 1 page)
+# Now Showing — one movie or TV episode/show, always on the panel. (192x32, 2 pages)
 #
-# Layout: a stacked "NOW / SHOWING" label on the left, then three lines:
-#   1. NAME  S#:E# EPISODE  (RUNTIME)
-#   2. GENRE
-#   3. IMDB rating   RT rating          (each color-coded red/amber/green)
+# Two pages, so each half gets a bigger font than a 192-wide single line
+# could ever hold:
+#   title   - NOW SHOWING label, then NAME (YEAR) as the hero, then GENRE
+#   details - S#:E# EPISODE + RUNTIME, then IMDB rating + RT rating
+#             (each color-coded red/amber/green)
 #
 # One lookup: omdbapi.com — title (+year, +season/episode) -> ratings, genre,
 # runtime. Needs the user's own free API key (omdbapi.com/apikey.aspx).
@@ -52,7 +53,25 @@ def find_rt(ratings):
             return ratings[i].get("Value", "N/A")
     return "N/A"
 
+# Temporary preview harness: `_debug` = "movie" or "show" returns mock info
+# so the two pages can be rendered without a real OMDb key. Not a real
+# manifest input, so it's inert once shipped.
+def _mock_info(kind):
+    if kind == "show":
+        return {
+            "ok": True, "name": "THE BEAR", "year": "2022-", "genre": "COMEDY, DRAMA",
+            "headline": "S1:E7 REVIEW", "runtime": "20 MIN", "imdb": "9.4", "rt": "94%",
+        }
+    return {
+        "ok": True, "name": "DUNE: PART TWO", "year": "2024", "genre": "ACTION, ADVENTURE, DRAMA",
+        "headline": "", "runtime": "166 MIN", "imdb": "8.5", "rt": "92%",
+    }
+
 def fetch_info(ctx):
+    dbg = _s(ctx, "_debug", "")
+    if dbg == "movie" or dbg == "show":
+        return _mock_info(dbg)
+
     title = _s(ctx, "title", "")
     if not title:
         return {"ok": False, "title": "NO TITLE", "sub": "ENTER A TITLE"}
@@ -176,50 +195,91 @@ TOMATO_BODY = [
 ]
 TOMATO_W = 7
 
-# ---------- page ----------
+# ---------- pages ----------
+# Two pages instead of one 384-wide line with a vertical sidebar: at 192 that
+# sidebar alone would eat 30% of the width. TITLE carries the identity (label,
+# name, genre); DETAILS carries the episode/runtime and ratings. Each page
+# picks the biggest font its own content allows.
 
-SIDEBAR_W = 56
-DIVIDER_X = 58
-CONTENT_X = 64
-RIGHT_DIVIDER_GAP = 6
-RIGHT_EDGE_MARGIN = 6
+EDGE_MARGIN = 6
+HERO_FONTS = ["8x12", "6x8", "5x7", "4x5"]  # largest first
+ROW_FONTS = ["6x8", "5x7", "4x5"]           # largest first
+FONT_H = {"8x12": 12, "6x8": 8, "5x7": 7, "4x5": 6}
 
-LINE_H = {"6x8": 8, "5x7": 7, "4x5": 6}
-CONTENT_FONTS = ["6x8", "5x7", "4x5"]  # largest first
+def _hero_chain(text):
+    # 8x12's "-" glyph renders as a solid block, not a hyphen -- an ongoing
+    # show's year comes back as "2022-", so skip 8x12 whenever the hero line
+    # could contain one.
+    if "-" in text or "–" in text:
+        return HERO_FONTS[1:]
+    return HERO_FONTS
 
-def main(c, ctx):
+def _fit(c, text, font, max_w):
+    t = text
+    for _ in range(60):
+        if c.text_width(t, font) <= max_w or len(t) <= 3:
+            return t
+        cut = t.rfind(" ")
+        t = t[:cut] if cut > 0 else t[:len(t) - 1]
+    return t
+
+def _pick_font(c, chain, width_of, maxw):
+    for f in chain:
+        if width_of(f) <= maxw:
+            return f
+    return chain[len(chain) - 1]
+
+def _draw_error(c, title, sub):
+    c.text(title, c.width // 2, 10, font = "6x8", color = "white", align = "center")
+    c.text(sub, c.width // 2, 20, font = "4x5", color = "white", align = "center")
+
+def _label(c, ctx):
+    label_color = _s(ctx, "labelcolor", "#FFBF00")
+    c.text("NOW SHOWING", c.width // 2, 1, font = "4x5", color = label_color, align = "center")
+
+def title(c, ctx):
     c.fill("black")
-
     info = fetch_info(ctx)
     if not info["ok"]:
-        c.text(info["title"], c.width // 2, 10, font = "6x8", color = "white", align = "center")
-        c.text(info["sub"], c.width // 2, 20, font = "4x5", color = "white", align = "center")
+        _draw_error(c, info["title"], info["sub"])
         return
 
-    label_color = _s(ctx, "labelcolor", "#FFBF00")
+    _label(c, ctx)
+    maxw = c.width - EDGE_MARGIN * 2
 
-    # Left sidebar: NOW / SHOWING stacked, vertically centered.
-    c.text("NOW", SIDEBAR_W // 2, 7, font = "6x8", color = label_color, align = "center")
-    c.text("SHOWING", SIDEBAR_W // 2, 16, font = "6x8", color = label_color, align = "center")
-    c.line(DIVIDER_X, 4, DIVIDER_X, 28, "#444444")
-
-    right_divider_x = c.width - RIGHT_EDGE_MARGIN
-    c.line(right_divider_x, 4, right_divider_x, 28, "#444444")
-    maxw = right_divider_x - RIGHT_DIVIDER_GAP - CONTENT_X
-
-    line1 = info["name"]
+    name_line = info["name"]
     if info["year"]:
-        line1 += " (" + info["year"] + ")"
+        name_line += " (" + info["year"] + ")"
+
+    font = _pick_font(c, _hero_chain(name_line), lambda f: c.text_width(name_line, f), maxw)
+    c.text(_fit(c, name_line, font, maxw), c.width // 2, 9, font = font, color = "white", align = "center")
+
+    gy = 9 + FONT_H[font] + 3
+    c.text(_fit(c, info["genre"], "4x5", maxw), c.width // 2, gy, font = "4x5", color = "gray", align = "center")
+
+def details(c, ctx):
+    c.fill("black")
+    info = fetch_info(ctx)
+    if not info["ok"]:
+        _draw_error(c, info["title"], info["sub"])
+        return
+
+    _label(c, ctx)
+    maxw = c.width - EDGE_MARGIN * 2
+
+    top_parts = []
     if info["headline"]:
-        line1 += " " + info["headline"]
+        top_parts.append(info["headline"])
     if info["runtime"] != "N/A":
-        line1 += " - " + info["runtime"]
+        top_parts.append(info["runtime"])
+    top_line = "  -  ".join(top_parts)
 
     have_imdb = info["imdb"] != "N/A"
     have_rt = info["rt"] != "N/A"
+    have_ratings = have_imdb or have_rt
     imdb_str = "IMDB " + info["imdb"]
 
-    def row3_width(font):
+    def row_width(font):
         w = 0
         if have_imdb:
             w += c.text_width(imdb_str, font)
@@ -229,33 +289,37 @@ def main(c, ctx):
             w += TOMATO_W + 3 + c.text_width(info["rt"], font)
         return w
 
-    # All three rows share one font: the largest tier where name/episode/
-    # runtime, genre, and ratings each fit on their single line. The panel
-    # is 384px wide specifically so this rarely has to drop below 6x8.
-    font = CONTENT_FONTS[len(CONTENT_FONTS) - 1]
-    for f in CONTENT_FONTS:
-        if (c.text_width(line1, f) <= maxw and
-            c.text_width(info["genre"], f) <= maxw and
-            row3_width(f) <= maxw):
-            font = f
-            break
+    if top_line == "" and not have_ratings:
+        c.text("NO DETAILS AVAILABLE", c.width // 2, 16, font = "5x7", color = "gray", align = "center")
+        return
 
-    h = LINE_H[font]
-    y1 = 2
-    y2 = y1 + h + 2
-    y3 = y2 + h + 3  # a touch more clearance: the tomato hangs below its own baseline
+    top_font = _pick_font(c, ROW_FONTS, lambda f: c.text_width(top_line, f), maxw) if top_line != "" else None
+    rat_font = _pick_font(c, ROW_FONTS, row_width, maxw) if have_ratings else None
+    top_h = FONT_H[top_font] if top_font else 0
+    rat_h = FONT_H[rat_font] if rat_font else 0
 
-    c.text(line1, CONTENT_X, y1, font = font, color = "white")
-    c.text(info["genre"], CONTENT_X, y2, font = font, color = "gray")
+    if top_line != "" and have_ratings:
+        row_gap = 4
+        y1 = (32 - (top_h + row_gap + rat_h)) // 2
+        y2 = y1 + top_h + row_gap
+    elif top_line != "":
+        y1 = (32 - top_h) // 2
+        y2 = 0
+    else:
+        y1 = 0
+        y2 = (32 - rat_h) // 2
 
-    # IMDB rating and/or a tomato + Rotten Tomatoes rating — each
-    # color-coded, and each entirely absent (not "N/A") when unavailable.
-    # Tomato and text share row 3's baseline with the IMDB rating.
-    x = CONTENT_X
-    if have_imdb:
-        c.text(imdb_str, x, y3, font = font, color = imdb_color(info["imdb"]))
-        x += c.text_width(imdb_str, font) + 12
-    if have_rt:
-        c.bitmap(TOMATO_LEAF, x, y3, "green")
-        c.bitmap(TOMATO_BODY, x, y3 + 1, "red")
-        c.text(info["rt"], x + TOMATO_W + 3, y3, font = font, color = rt_color(info["rt"]))
+    if top_line != "":
+        c.text(_fit(c, top_line, top_font, maxw), c.width // 2, y1, font = top_font, color = "white", align = "center")
+
+    if have_ratings:
+        # IMDB rating and/or a tomato + Rotten Tomatoes rating — each
+        # color-coded, and each entirely absent (not "N/A") when unavailable.
+        x = (c.width - row_width(rat_font)) // 2
+        if have_imdb:
+            c.text(imdb_str, x, y2, font = rat_font, color = imdb_color(info["imdb"]))
+            x += c.text_width(imdb_str, rat_font) + 12
+        if have_rt:
+            c.bitmap(TOMATO_LEAF, x, y2, "green")
+            c.bitmap(TOMATO_BODY, x, y2 + 1, "red")
+            c.text(info["rt"], x + TOMATO_W + 3, y2, font = rat_font, color = rt_color(info["rt"]))
