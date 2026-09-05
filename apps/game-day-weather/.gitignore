@@ -1,0 +1,9 @@
+# gdn build output and packaged bundles
+build/
+*.gdnapp
+
+# local logo experiments — not part of the app
+_logo_trials/
+_logo_cache/
+_*.png
+
