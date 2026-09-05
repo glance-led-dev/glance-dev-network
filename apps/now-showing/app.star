@@ -196,23 +196,18 @@ TOMATO_BODY = [
 TOMATO_W = 7
 
 # ---------- pages ----------
-# Two pages instead of one 384-wide line with a vertical sidebar: at 192 that
-# sidebar alone would eat 30% of the width. TITLE carries the identity (label,
-# name, genre); DETAILS carries the episode/runtime and ratings. Each page
-# picks the biggest font its own content allows.
+# Two pages. TITLE: NOW / SHOWING stacked in a left column, name over genre to
+# its right. DETAILS: RUNTIME (with the episode number if it's a show), then
+# the IMDb + Rotten Tomatoes ratings row -- no header. Each row picks the
+# biggest font its own content fits in.
 
 EDGE_MARGIN = 6
-HERO_FONTS = ["8x12", "6x8", "5x7", "4x5"]  # largest first
-ROW_FONTS = ["6x8", "5x7", "4x5"]           # largest first
-FONT_H = {"8x12": 12, "6x8": 8, "5x7": 7, "4x5": 6}
+ROW_FONTS = ["6x8", "5x7", "4x5"]  # largest first
+FONT_H = {"6x8": 8, "5x7": 7, "4x5": 6}
 
-def _hero_chain(text):
-    # 8x12's "-" glyph renders as a solid block, not a hyphen -- an ongoing
-    # show's year comes back as "2022-", so skip 8x12 whenever the hero line
-    # could contain one.
-    if "-" in text or "–" in text:
-        return HERO_FONTS[1:]
-    return HERO_FONTS
+SIDEBAR_W = 48   # left NOW / SHOWING column on the title page
+DIVIDER_X = 50
+CONTENT_X = 54
 
 def _fit(c, text, font, max_w):
     t = text
@@ -233,10 +228,6 @@ def _draw_error(c, title, sub):
     c.text(title, c.width // 2, 10, font = "6x8", color = "white", align = "center")
     c.text(sub, c.width // 2, 20, font = "4x5", color = "white", align = "center")
 
-def _label(c, ctx):
-    label_color = _s(ctx, "labelcolor", "#FFBF00")
-    c.text("NOW SHOWING", c.width // 2, 1, font = "4x5", color = label_color, align = "center")
-
 def title(c, ctx):
     c.fill("black")
     info = fetch_info(ctx)
@@ -244,18 +235,28 @@ def title(c, ctx):
         _draw_error(c, info["title"], info["sub"])
         return
 
-    _label(c, ctx)
-    maxw = c.width - EDGE_MARGIN * 2
+    label_color = _s(ctx, "labelcolor", "#FFBF00")
+    # Left column: NOW / SHOWING stacked, with a hairline divider -- the same
+    # shape the 384 build used, just narrower.
+    c.text("NOW", SIDEBAR_W // 2, 7, font = "6x8", color = label_color, align = "center")
+    c.text("SHOWING", SIDEBAR_W // 2, 16, font = "6x8", color = label_color, align = "center")
+    c.line(DIVIDER_X, 4, DIVIDER_X, 27, "#444444")
+
+    # Right column: name over genre, vertically centred in what's left.
+    maxw = c.width - CONTENT_X - EDGE_MARGIN
+    cx = CONTENT_X + maxw // 2
 
     name_line = info["name"]
     if info["year"]:
         name_line += " (" + info["year"] + ")"
 
-    font = _pick_font(c, _hero_chain(name_line), lambda f: c.text_width(name_line, f), maxw)
-    c.text(_fit(c, name_line, font, maxw), c.width // 2, 9, font = font, color = "white", align = "center")
-
-    gy = 9 + FONT_H[font] + 3
-    c.text(_fit(c, info["genre"], "4x5", maxw), c.width // 2, gy, font = "4x5", color = "gray", align = "center")
+    nf = _pick_font(c, ROW_FONTS, lambda f: c.text_width(name_line, f), maxw)
+    nh = FONT_H[nf]
+    gap = 3
+    y1 = (32 - (nh + gap + FONT_H["4x5"])) // 2
+    y2 = y1 + nh + gap
+    c.text(_fit(c, name_line, nf, maxw), cx, y1, font = nf, color = "white", align = "center")
+    c.text(_fit(c, info["genre"], "4x5", maxw), cx, y2, font = "4x5", color = "gray", align = "center")
 
 def details(c, ctx):
     c.fill("black")
@@ -264,15 +265,14 @@ def details(c, ctx):
         _draw_error(c, info["title"], info["sub"])
         return
 
-    _label(c, ctx)
     maxw = c.width - EDGE_MARGIN * 2
 
     top_parts = []
     if info["headline"]:
         top_parts.append(info["headline"])
     if info["runtime"] != "N/A":
-        top_parts.append(info["runtime"])
-    top_line = "  -  ".join(top_parts)
+        top_parts.append("RUNTIME: " + info["runtime"])
+    top_line = "   ".join(top_parts)
 
     have_imdb = info["imdb"] != "N/A"
     have_rt = info["rt"] != "N/A"
