@@ -1,0 +1,95 @@
+gdn: 1
+id: weight-goals-scroll
+version: 0.1.0
+name: Weight Goals
+author: Zach - GLANCE
+description: Your weigh-in log from a Google Sheet, smoothed into a trend with a goal and an ETA.
+category: Lifestyle
+entry: app.star
+
+width: 192
+height: 32
+refresh: 14400
+
+pages: [splash, now, graph, stats]
+
+inputs:
+  - key: sheeturl
+    type: string
+    app_input_type: free-text
+    label: Google Sheet URL
+    default: ""
+    help: >-
+      ** This uses a public link and shown on your Glance which may be in a
+      public place ** In the Sheet, use Share and set "Anyone with the link"
+      to Viewer, then paste the link here. Anyone holding that link can read
+      the sheet. Turn on Trend Only below to keep the numbers off the panel.
+  - key: gid
+    type: string
+    app_input_type: free-text
+    label: Tab ID (optional)
+    default: ""
+    help: >-
+      Leave blank for the first tab. To use a different one, open that tab and
+      copy the number after "gid=" in the address bar.
+  - key: datecol
+    type: string
+    app_input_type: free-text
+    label: Date Column
+    default: A
+    help: >-
+      A column letter, or the exact header text. Dates can be 2026-09-02 or
+      9/2/2026 -- just keep the whole column in one format.
+  - key: weightcol
+    type: string
+    app_input_type: free-text
+    label: Weight Column
+    default: B
+    help: A column letter, or the exact header text. Numbers only, one per day.
+  - key: goal
+    type: string
+    app_input_type: free-text
+    label: Goal Weight
+    default: ""
+    help: >-
+      Your target, in the same units as the sheet. Draws as a solid line on the
+      chart and turns on the "to go" and ETA readouts. Above your current
+      weight is a gain goal, below it is a loss goal -- the app works out which
+      from the number, so there is nothing else to set. Leave blank to just
+      track the trend.
+  - key: goaldate
+    type: string
+    app_input_type: free-text
+    label: Goal Date (optional)
+    default: ""
+    help: >-
+      The date you want to hit the goal weight, e.g. 12/25/2026 or 2026-12-25.
+      Set it and the app stops guessing an ETA and starts telling you whether
+      you are ON PACE, BEHIND or OFF PACE for the date you chose. Leave blank
+      and it projects a finish date from your current rate instead.
+  - key: units
+    type: choice
+    app_input_type: dropdown
+    label: Units
+    default: POUNDS
+    choices: [POUNDS, KILOGRAMS, STONE]
+    help: The label shown next to the number. The sheet's values are used as-is.
+  - key: window
+    type: choice
+    app_input_type: dropdown
+    label: Chart Window
+    default: 90 DAYS
+    choices: ["30 DAYS", "90 DAYS", "1 YEAR"]
+    help: >-
+      How far back the chart and the weekly rate look. The chart is scaled by
+      date, so a week you skipped shows as a flat stretch rather than
+      disappearing. 1 YEAR is the ceiling: older rows are never fetched or drawn.
+  - key: trendonly
+    type: string
+    app_input_type: checkbox
+    label: Trend Only
+    default: false
+    help: >-
+      Hides every number -- weight, goal and rate -- and shows the direction,
+      the chart shape and the ETA instead. Use it if the panel is anywhere
+      other people can see it.
