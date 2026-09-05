@@ -28,7 +28,7 @@ If `gdn` is not on `PATH`, use `python -m gdn.cli` instead. Keep `app.star`, `ma
 | **Follow a team** | Any NFL club, or `ALL`. `ALL` prefers a live game, otherwise the next kickoff. A team pick follows that club’s next eligible game within 21 days (bye weeks included). Finished, cancelled, and postponed games are skipped. |
 | **Kickoff time zone** | `STADIUM LOCAL` (default), `ET`, `CT`, `MT`, `PT`, or `UTC`. Date and time convert together; the zone label sits under kickoff. ET/CT/MT/PT follow daylight saving at the kickoff instant. Weather always stays tied to the stadium and the real kickoff. |
 | **Weather units** | `F / MPH` or `C / KMH`. |
-| **Display mode** | `LIVE DATA` (default), `DEMO KICKOFF`, or `DEMO LIVE`. Demo is labelled `DEMO` on the panel and uses fictional scores and weather. |
+| **Display mode** | `LIVE DATA` (default), `DEMO KICKOFF`, or `DEMO LIVE`. Demo is labelled `DEMO` on the panel and uses fictional scores and weather. The followed team is **home** versus GB (CHI if you follow GB). `ALL` shows GB at Chicago. Kickoff follows your selected time zone; `STADIUM LOCAL` uses that club’s real venue zone, not a hardcoded CDT. |
 
 Kickoff date is month/day. `P` / `A` is PM/AM. An unconfirmed kickoff shows `TBD` and does not invent a forecast.
 

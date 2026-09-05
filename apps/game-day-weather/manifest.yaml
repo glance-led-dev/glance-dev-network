@@ -117,5 +117,4 @@ inputs:
   - LIVE DATA
   - DEMO KICKOFF
   - DEMO LIVE
-  help: Demo modes show clearly labelled fictional weather and scores. Kickoff times
-    use your selected time zone.
+  help: Demo is labelled DEMO and uses fictional scores and weather. The followed team is at home versus GB (CHI if you follow GB). ALL shows GB at Chicago. Kickoff converts to your selected time zone.
