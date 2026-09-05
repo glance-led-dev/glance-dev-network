@@ -468,12 +468,12 @@ def fetch_f1_live(ctx):
     wresp = http_json("https://api.openf1.org/v1/weather", 60, params = {"session_key": str(session_key)})
     if wresp["ok"] and len(wresp["data"]) > 0:
         w = wresp["data"][len(wresp["data"]) - 1]
-        track_temp = w.get("track_temperature")
-        if track_temp != None:
+        air_temp = w.get("air_temperature")
+        if air_temp != None:
             rain = w.get("rainfall", 0)
             weather_cond = "RAIN" if rain and rain > 0 else "DRY"
             unit = safe_input(ctx, "tempunit", "C")
-            temp_val = float(track_temp)
+            temp_val = float(air_temp)
             if unit == "F":
                 temp_val = temp_val * 9.0 / 5.0 + 32.0
             weather_txt = str(int(temp_val)) + unit + " " + weather_cond
@@ -699,8 +699,8 @@ def _mock_live(ctx, mode):
         })
     mark_duplicate_names(rows)
     is_race = mode == "race"
-    # Track temp respects the tempunit dropdown, same as the live path.
-    tc = 48 if is_race else 39
+    # Air temp respects the tempunit dropdown, same as the live path.
+    tc = 29 if is_race else 24
     unit = safe_input(ctx, "tempunit", "C")
     tv = int(tc * 9.0 / 5.0 + 32) if unit == "F" else tc
     return {

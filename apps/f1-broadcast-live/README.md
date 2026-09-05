@@ -9,12 +9,12 @@ one for between sessions:
 | # | between sessions | live session |
 |---|------------------|--------------|
 | 1 | F1 wordmark · NEXT UP | F1 wordmark · LIVE |
-| 2 | **NEXT RACE** — grand prix · circuit · local date/time | **event** — grand prix · session · flag / lap / track temp · circuit |
+| 2 | **NEXT RACE** — grand prix · circuit · local date/time | **event** — grand prix · session · flag / lap / air temp · circuit |
 | 3 | **LAST RACE** — the full finishing order (12 across the page) | **ORDER P1–9** (car #, driver, tyre, gap to leader) |
 | 4 | **CALENDAR** — the four grands prix after the next | **ORDER P10–18** |
 | 5 | **CALENDAR** — the four after that (the rest that fits) | **ORDER P19–22** (only the cars on track; the rest stays black) |
 
-Track temperature on the live `event` page follows the **Temperature unit**
+Air temperature on the live `event` page follows the **Temperature unit**
 dropdown (°C / °F).
 
 ## Data
@@ -27,7 +27,7 @@ dropdown (°C / °F).
 
 ## Configuration
 
-- **Temperature unit** — °C or °F for the live track-temperature reading.
+- **Temperature unit** — °C or °F for the live air-temperature reading.
 - **Time zone** — grand prix dates/times are shown in this zone (F1's calendar
   spans every region).
 - **Next-race date/time color** — color of the date/time text on the NEXT RACE

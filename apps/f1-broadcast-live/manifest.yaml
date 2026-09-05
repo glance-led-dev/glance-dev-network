@@ -5,7 +5,7 @@ id: f1-broadcast-live
 version: 0.2.0
 name: F1 - Broadcast Live
 author: jdhine02
-description: Broadcast-style live timing for Formula 1. A real page rotation - the F1 wordmark, the grand prix and flag/lap/track weather, the circuit, the full order a screen at a time with tyre compound and gap to the leader. Between sessions it shows the next grand prix in your local time, the rest of the calendar, and the last race's podium. Built for a 192-wide panel; the boards widen to 3 columns on 384/640.
+description: Broadcast-style live timing for Formula 1. A real page rotation - the F1 wordmark, the grand prix and flag/lap/air temp, the circuit, the full order a screen at a time with tyre compound and gap to the leader. Between sessions it shows the next grand prix in your local time, the rest of the calendar, and the last race's podium. Built for a 192-wide panel; the boards widen to 3 columns on 384/640.
 category: Sports
 entry: app.star
 
@@ -57,7 +57,7 @@ inputs:
     label: Temperature unit
     default: "C"
     choices: ["C", "F"]
-    help: Units for the live track-temperature reading.
+    help: Units for the live air-temperature reading.
 
   - key: timezone
     type: choice
