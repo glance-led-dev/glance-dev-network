@@ -817,14 +817,18 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     who = fit_text(c, who, font, who_max) if who_max > 0 else ""
     c.text(prefix + who, row_x0 + 3, cy, font = font, color = txt_color)
 
+    # Order across the row's right side: ... GAP  [TIRE]. The tire chip runs
+    # flush to the row's right edge -- its black fill covers the livery color
+    # all the way out, so nothing coloured shows past it -- and the gap is
+    # right-aligned just left of it.
+    if gap != "":
+        c.text(gap, x1 - 3 - tire_reserve, gap_cy, font = gap_font, color = txt_color, align = "right")
+
     if tire != None:
         letter, tcol = tire
-        tx0 = x1 - 3 - reserve - tire_w
-        c.rect(tx0, y0, tx0 + tire_w - 1, y1, fill = "#000000")
+        tx0 = x1 - tire_w
+        c.rect(tx0, y0, x1, y1, fill = "#000000")
         c.text(letter, tx0 + tire_w // 2, y0 + (box_h - 6) // 2, font = "4x5", color = tcol, align = "center")
-
-    if gap != "":
-        c.text(gap, x1 - 3, gap_cy, font = gap_font, color = txt_color, align = "right")
 
 def draw_order_group(c, rows, start, y0, y1):
     cols, nrows = board_cols_rows(c.width)
@@ -912,10 +916,10 @@ def _event_narrow(c, st):
     show_status = is_race or st.get("weather", "") != ""
 
     asset, nw, nh = track_asset_dims(st["track_key"])
-    tw, th = cap_track_dims(nw, nh, 32, 22)
-    trx = c.width - tw - 3
+    tw, th = cap_track_dims(nw, nh, 40, 28)
+    trx = c.width - tw - 2
     draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
-    tzw = trx - 6
+    tzw = trx - 3
 
     c.text(fit_text(c, st["race_name"], "6x8", tzw), 3, 1, font = "6x8", color = COLORS["text"])
     c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), 3, 12, font = "4x5", color = COLORS["muted"])
