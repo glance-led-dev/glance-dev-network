@@ -916,10 +916,10 @@ def _event_narrow(c, st):
     show_status = is_race or st.get("weather", "") != ""
 
     asset, nw, nh = track_asset_dims(st["track_key"])
-    tw, th = cap_track_dims(nw, nh, 40, 28)
-    trx = c.width - tw - 2
+    tw, th = cap_track_dims(nw, nh, 44, 30)
+    trx = c.width - tw - 5           # small black margin at the right edge
     draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
-    tzw = trx - 3
+    tzw = trx - 2                    # text runs almost up to the outline
 
     c.text(fit_text(c, st["race_name"], "6x8", tzw), 3, 1, font = "6x8", color = COLORS["text"])
     c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), 3, 12, font = "4x5", color = COLORS["muted"])
