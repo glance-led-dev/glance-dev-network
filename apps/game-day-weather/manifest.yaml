@@ -108,13 +108,3 @@ inputs:
   choices:
   - F / MPH
   - C / KMH
-- key: mode
-  type: choice
-  app_input_type: dropdown
-  label: Display mode
-  default: LIVE DATA
-  choices:
-  - LIVE DATA
-  - DEMO KICKOFF
-  - DEMO LIVE
-  help: Demo is labelled DEMO and uses fictional scores and weather. The followed team is at home versus GB (CHI if you follow GB). ALL shows GB at Chicago. Kickoff converts to your selected time zone.

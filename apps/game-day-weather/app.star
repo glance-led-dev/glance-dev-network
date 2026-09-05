@@ -5,8 +5,6 @@
 # accents. Scores refresh each minute; weather is cached 15 minutes.
 TEAMS = ["ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC", "LAC", "LAR", "LV", "MIA", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SEA", "SF", "TB", "TEN", "WSH"]
 LOGOS = {'ARI': 'assets/ari.png', 'ATL': 'assets/atl.png', 'BAL': 'assets/bal.png', 'BUF': 'assets/buf.png', 'CAR': 'assets/car.png', 'CHI': 'assets/chi.png', 'CIN': 'assets/cin.png', 'CLE': 'assets/cle.png', 'DAL': 'assets/dal.png', 'DEN': 'assets/den.png', 'DET': 'assets/det.png', 'GB': 'assets/gb.png', 'HOU': 'assets/hou.png', 'IND': 'assets/ind.png', 'JAX': 'assets/jax.png', 'KC': 'assets/kc.png', 'LAC': 'assets/lac.png', 'LAR': 'assets/lar.png', 'LV': 'assets/lv.png', 'MIA': 'assets/mia.png', 'MIN': 'assets/min.png', 'NE': 'assets/ne.png', 'NO': 'assets/no.png', 'NYG': 'assets/nyg.png', 'NYJ': 'assets/nyj.png', 'PHI': 'assets/phi.png', 'PIT': 'assets/pit.png', 'SEA': 'assets/sea.png', 'SF': 'assets/sf.png', 'TB': 'assets/tb.png', 'TEN': 'assets/ten.png', 'WSH': 'assets/wsh.png'}
-# Demo venues: city plus IANA zone so STADIUM LOCAL is not stuck on CDT.
-HOME = {"ARI": ["GLENDALE", "America/Phoenix"], "ATL": ["ATLANTA", "America/New_York"], "BAL": ["BALTIMORE", "America/New_York"], "BUF": ["ORCHARD PARK", "America/New_York"], "CAR": ["CHARLOTTE", "America/New_York"], "CHI": ["CHICAGO", "America/Chicago"], "CIN": ["CINCINNATI", "America/New_York"], "CLE": ["CLEVELAND", "America/New_York"], "DAL": ["ARLINGTON", "America/Chicago"], "DEN": ["DENVER", "America/Denver"], "DET": ["DETROIT", "America/Detroit"], "GB": ["GREEN BAY", "America/Chicago"], "HOU": ["HOUSTON", "America/Chicago"], "IND": ["INDIANAPOLIS", "America/Indiana/Indianapolis"], "JAX": ["JACKSONVILLE", "America/New_York"], "KC": ["KANSAS CITY", "America/Chicago"], "LAC": ["INGLEWOOD", "America/Los_Angeles"], "LAR": ["INGLEWOOD", "America/Los_Angeles"], "LV": ["LAS VEGAS", "America/Los_Angeles"], "MIA": ["MIAMI", "America/New_York"], "MIN": ["MINNEAPOLIS", "America/Chicago"], "NE": ["FOXBOROUGH", "America/New_York"], "NO": ["NEW ORLEANS", "America/Chicago"], "NYG": ["EAST RUTHERFORD", "America/New_York"], "NYJ": ["EAST RUTHERFORD", "America/New_York"], "PHI": ["PHILADELPHIA", "America/New_York"], "PIT": ["PITTSBURGH", "America/New_York"], "SEA": ["SEATTLE", "America/Los_Angeles"], "SF": ["SANTA CLARA", "America/Los_Angeles"], "TB": ["TAMPA", "America/New_York"], "TEN": ["NASHVILLE", "America/Chicago"], "WSH": ["LANDOVER", "America/New_York"]}
 WHITE = "#F2F6FF"
 MUTED = "#A7B4C8"
 BLUE = "#65CBFF"
@@ -225,7 +223,7 @@ def logo(c, ab, x):
     else:
         fit(c, ab, x, 8, 40, ["5x7", "4x5"])
 
-def draw(c, g, wx, metric, demo, timezone = "STADIUM LOCAL"):
+def draw(c, g, wx, metric, timezone = "STADIUM LOCAL"):
     c.fill("black")
     co = g["competition"]
     away = {}
@@ -248,7 +246,7 @@ def draw(c, g, wx, metric, demo, timezone = "STADIUM LOCAL"):
     c.line(122, 3, 122, 28, "#354255")
     status = g["status"]
     if g["state"] == "in":
-        fit(c, "DEMO" if demo else "LIVE", 91, 2, 30, ["4x5"], AMBER if demo else "#64E6AC")
+        fit(c, "LIVE", 91, 2, 30, ["4x5"], "#64E6AC")
         av = away.get("score", "-")
         hv = home.get("score", "-")
         av = obj(av).get("displayValue", "-") if type(av) == "dict" else av
@@ -273,7 +271,7 @@ def draw(c, g, wx, metric, demo, timezone = "STADIUM LOCAL"):
         date = civil(local // 86400)
         hour = (local // 3600) % 24
         minute = (local // 60) % 60
-        fit(c, "DEMO" if demo else "%d/%d" % (date[1], date[2]), 91, 2, 30, ["4x5"], AMBER if demo else MUTED)
+        fit(c, "%d/%d" % (date[1], date[2]), 91, 2, 30, ["4x5"], MUTED)
         valid = co.get("timeValid", True)
         time = str(hour % 12 or 12) + ":" + fmt.pad(minute) + ("P" if hour >= 12 else "A")
         fit(c, time if valid else "TBD", 91, 11, 30, ["6x8", "5x7", "4x5"])
@@ -302,21 +300,9 @@ def draw(c, g, wx, metric, demo, timezone = "STADIUM LOCAL"):
 def gameday(c, ctx):
     team = str(ctx.inputs.get("team", "ALL") or "ALL").upper()
     metric = ctx.inputs.get("units", "F / MPH") == "C / KMH"
-    mode = ctx.inputs.get("mode", "LIVE DATA")
     timezone = str(ctx.inputs.get("timezone", "STADIUM LOCAL") or "STADIUM LOCAL").upper()
     if team != "ALL" and team not in TEAMS:
         message(c, "UNKNOWN TEAM", "CHOOSE AN NFL TEAM IN SETTINGS")
-        return
-    if mode in ["DEMO KICKOFF", "DEMO LIVE"]:
-        # Followed club at home vs GB (CHI if following GB). ALL uses GB @ CHI.
-        h = "CHI" if team in ["ALL"] else team
-        a = "CHI" if h == "GB" else "GB"
-        info = HOME.get(h, ["VENUE TBD", "UTC"])
-        start = days(2026, 9, 13) * 86400 + 17 * 3600
-        tz = zone_at(info[1], start, 0)
-        g = {"start": start, "state": "in" if mode == "DEMO LIVE" else "pre", "status": {"period": 3, "displayClock": "8:42", "type": {}}, "competition": {"venue": {"address": {"city": info[0]}}, "competitors": [{"homeAway": "away", "team": {"abbreviation": a}, "score": "17"}, {"homeAway": "home", "team": {"abbreviation": h}, "score": "14"}]}}
-        wx = {"temp": 9 if metric else 48, "rain": 40, "wind": 19 if metric else 12, "code": 61, "offset": tz[0], "zone": tz[1]}
-        draw(c, g, wx, metric, True, timezone)
         return
     now = ctx.now.unix
     # Include yesterday to retain a live game spanning UTC midnight.
@@ -330,7 +316,7 @@ def gameday(c, ctx):
         message(c, "NO UPCOMING GAME", (team + " / NEXT 21 DAYS") if team != "ALL" else "NFL / NEXT 21 DAYS", True)
         return
     wx = weather(game, now, metric)
-    draw(c,game,wx,metric,False,timezone)
+    draw(c,game,wx,metric,timezone)
 
 
 
