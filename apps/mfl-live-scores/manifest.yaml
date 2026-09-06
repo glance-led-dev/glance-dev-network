@@ -1,0 +1,32 @@
+gdn: 1
+
+id: mfl-live-scores
+version: 1.0.0
+
+name: MFL Live Scores
+author: Brad Johnston
+description: Live weekly matchup scores and team progress for MyFantasyLeague leagues.
+category: Sports
+
+entry: app.star
+
+width: 64
+height: 32
+
+refresh: 60
+
+pages:
+  - game1
+  - game2
+  - game3
+  - game4
+  - game5
+  - game6
+
+inputs:
+  - key: leagueurl
+    type: string
+    app_input_type: free-text
+    label: MFL League URL
+    default: "https://www46.myfantasyleague.com/2026/home/38420"
+    help: Paste your MyFantasyLeague league home-page URL.
