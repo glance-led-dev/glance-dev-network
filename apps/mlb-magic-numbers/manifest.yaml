@@ -1,0 +1,22 @@
+id: mlb-magic-numbers
+name: MLB Magic Numbers
+author: cfdmb
+description: One league's (AL or NL) division, wild-card, home-field-advantage, and first-round-bye magic numbers to clinch, and every other team's elimination number, if the season ended today.
+width: 128
+height: 32
+refresh: 7200
+pages:
+  - intro
+  - leaders
+  - chasers1
+  - chasers2
+  - chasers3
+  - homefield
+  - bye
+inputs:
+  - key: league
+    type: string
+    app_input_type: dropdown
+    label: League
+    choices: [AL, NL]
+    default: AL
