@@ -20,5 +20,5 @@ inputs:
     type: string
     app_input_type: dropdown
     label: League
-    options: [MLB, AL, NL]
+    choices: [MLB, AL, NL]
     default: MLB

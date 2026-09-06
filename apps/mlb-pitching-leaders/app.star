@@ -52,6 +52,35 @@ def _s(ctx, key, fallback):
         return fallback
     return v
 
+# ---------- name normalization ----------
+# The bitmap fonts here only cover plain ASCII - no accented glyphs at all -
+# and a lot of MLB players (Ramirez, Suarez, Pena, Nunez, Acuna...) have one.
+# Left as-is, the panel's own font decoder doesn't just drop the accented
+# letter cleanly - it renders a stray symbol in its place, which reads as a
+# missing/broken letter. Stripping to the closest ASCII letter first avoids
+# that entirely.
+ACCENT_MAP = {
+    "Á": "A", "À": "A", "Â": "A", "Ä": "A", "Ã": "A", "Å": "A",
+    "É": "E", "È": "E", "Ê": "E", "Ë": "E",
+    "Í": "I", "Ì": "I", "Î": "I", "Ï": "I",
+    "Ó": "O", "Ò": "O", "Ô": "O", "Ö": "O", "Õ": "O",
+    "Ú": "U", "Ù": "U", "Û": "U", "Ü": "U",
+    "Ñ": "N", "Ç": "C", "Ý": "Y",
+    "á": "a", "à": "a", "â": "a", "ä": "a", "ã": "a", "å": "a",
+    "é": "e", "è": "e", "ê": "e", "ë": "e",
+    "í": "i", "ì": "i", "î": "i", "ï": "i",
+    "ó": "o", "ò": "o", "ô": "o", "ö": "o", "õ": "o",
+    "ú": "u", "ù": "u", "û": "u", "ü": "u",
+    "ñ": "n", "ç": "c", "ý": "y",
+}
+
+def strip_accents(s):
+    out = ""
+    for i in range(len(s)):
+        ch = s[i]
+        out += ACCENT_MAP.get(ch, ch)
+    return out
+
 # ---------- color helpers ----------
 
 def _hash(n):
@@ -164,7 +193,16 @@ def league_id_for(league_choice):
 
 # ---------- drawing ----------
 
-def draw_leaderboard(c, ctx, stat_key, label):
+def draw_page_edges(c, left = True):
+    # A 1px light line marking a clean page break while the kiosk scrolls
+    # horizontally between pages. Only the first page draws a left edge too -
+    # otherwise a page's right border and the next page's left border would
+    # double up into a 2px-thick seam at every transition.
+    if left:
+        c.rect(0, 0, 0, c.height - 1, fill = "gray")
+    c.rect(c.width - 1, 0, c.width - 1, c.height - 1, fill = "gray")
+
+def draw_leaderboard(c, ctx, stat_key, label, left = False):
     c.fill("black")
 
     league_choice = _s(ctx, "league", "MLB")
@@ -173,11 +211,13 @@ def draw_leaderboard(c, ctx, stat_key, label):
     resp = fetch_leaders(stat_key, league_id, ctx.now.year)
     if resp["status_code"] != 200:
         c.text("DATA ERROR".upper(), 4, 12, font = "5x7", color = "red", align = "left")
+        draw_page_edges(c, left = left)
         return
 
     blocks = resp["json"].get("leagueLeaders", [])
     if len(blocks) == 0 or len(blocks[0].get("leaders", [])) == 0:
         c.text("NO DATA YET".upper(), 4, 12, font = "5x7", color = "gray", align = "left")
+        draw_page_edges(c, left = left)
         return
 
     leaders = blocks[0]["leaders"][:4]
@@ -191,14 +231,17 @@ def draw_leaderboard(c, ctx, stat_key, label):
     y = 8
     for entry in leaders:
         rank = entry.get("rank", 0)
-        name = entry.get("person", {}).get("lastName", "?")
+        name = strip_accents(entry.get("person", {}).get("lastName", "?"))
         value = entry.get("value", "")
         team_id = entry.get("team", {}).get("id", -1)
         team_abbr = abbrev.get(team_id, "")
         colors = TEAM_COLORS.get(team_id, ["#444444"])
         stripe = pick_color(colors, team_id, day_seed)
 
-        row_text = (str(rank) + " " + name + " - " + team_abbr).upper()
+        # No punctuation separator - a dash reads as one long hyphenated
+        # string against names that already have one (Crow-Armstrong), and
+        # a comma looked cluttered on the panel.
+        row_text = (str(rank) + " " + name + " " + team_abbr).upper()
         text_col = pick_accent_color(colors, team_id, day_seed) if rank == 1 else "gray"
 
         c.rect(0, y - 1, 3, y + 5, fill = stripe)
@@ -206,10 +249,12 @@ def draw_leaderboard(c, ctx, stat_key, label):
         c.text(str(value).upper(), 126, y, font = "4x5", color = text_col, align = "right")
         y += 6
 
+    draw_page_edges(c, left = left)
+
 # ---------- pages ----------
 
 def era(c, ctx):
-    draw_leaderboard(c, ctx, "earnedRunAverage", "ERA")
+    draw_leaderboard(c, ctx, "earnedRunAverage", "ERA", left = True)
 
 def k(c, ctx):
     draw_leaderboard(c, ctx, "strikeouts", "STRIKEOUTS")
