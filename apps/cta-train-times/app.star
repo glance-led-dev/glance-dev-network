@@ -234,37 +234,23 @@ def _fit(c, s, max_w):
             return s[:n]
     return ""
 
-def main(c, ctx):
+
+# Full-screen board for one station: centered line-colored name + up to 4 trains.
+def _render_board(c, ctx, station):
     c.fill("black")
-
-    station = ctx.inputs.get("station", "Jarvis")
     mapid = STATIONS.get(station, "41190")
-
-    resp = http.get(
-        BASE_URL,
-        params = {
-            "mapid": mapid,
-        },
-        ttl_seconds = 60,
-    )
-
+    resp = http.get(BASE_URL, params = {"mapid": mapid}, ttl_seconds = 60)
     if resp["status_code"] != 200 or resp["json"] == None:
         c.text_center("CTA UNAVAILABLE", 12, font=FONT, color="red")
         return
-
     ctatt = resp["json"].get("ctatt", {})
     if ctatt.get("errCd", "0") != "0":
-        print("CTA errCd=" + str(ctatt.get("errCd")) + " errNm=" + str(ctatt.get("errNm")))
         c.text_center("CTA ERR " + str(ctatt.get("errCd", "?")), 12, font=FONT, color="red")
         return
-
     etas = ctatt.get("eta", [])
-    if type(etas) != "list":   # CTA returns a bare object when there's exactly 1
+    if type(etas) != "list":
         etas = [etas]
-
     now = _to_epoch(ctatt.get("tmst", ""))
-
-    # Build (minutes, index, eta) so sorted() orders by time without a lambda.
     rows = []
     for i in range(len(etas)):
         e = etas[i]
@@ -272,27 +258,16 @@ def main(c, ctx):
         rows.append((mins, i, e))
     rows = sorted(rows)
 
-    # Station header: centered, tinted with the soonest arrival's line color.
-    # (Multi-line hubs follow whatever train is coming next.)
     if len(rows) > 0:
         sta = rows[0][2].get("staNm", station)
         head_color = LINE_COLORS.get(rows[0][2].get("rt", ""), "white")
     else:
         sta = station
-        idx = sta.find(" (")        # strip the "(Brown)" tag from the dropdown label
+        idx = sta.find(" (")
         if idx > 0:
             sta = sta[:idx]
         head_color = GRAY
-    c.text("CTA", 6, 0, font="4x5", color="red")
-    # header truncated so a long station name never runs into the CTA chip
-    hd = sta.upper()
-    hmax = ctx.width - 44
-    if c.text_width(hd, font=FONT) > hmax:
-        for n in range(len(hd), 0, -1):
-            if c.text_width(hd[:n], font=FONT) <= hmax:
-                hd = hd[:n]
-                break
-    c.text_center(hd, 0, font=FONT, color=head_color)
+    c.text_center(sta.upper(), 0, font=FONT, color=head_color)
 
     if len(rows) == 0:
         c.text_center("NO TRAINS", 18, font=FONT, color=GRAY)
@@ -305,28 +280,31 @@ def main(c, ctx):
             break
         mins = row[0]
         e = row[2]
-
         rt = e.get("rt", "")
         label = LINE_LABELS.get(rt, rt.upper()[:3])
         color = LINE_COLORS.get(rt, "white")
-
         if e.get("isApp", "0") == "1" or mins <= 0:
             when = "DUE"
         elif e.get("isDly", "0") == "1":
             when = "DLY"
         else:
             when = str(int(mins)) + "M"
-
-        # line badge (left)
-        c.text(label, 6, y, font=ROW_FONT, color=color)
-
-        # minutes (right-aligned)
+        c.text(label, 1, y, font=ROW_FONT, color=color)
         w = c.text_width(when, font=ROW_FONT)
-        c.text(when, ctx.width - 5 - w, y, font=ROW_FONT, color=color)
-
-        # destination (middle, trimmed to remaining space)
-        dest = _fit(c, e.get("destNm", "").upper(), ctx.width - w - 31)
-        c.text(dest, 23, y, font=ROW_FONT, color="white")
-
+        c.text(when, ctx.width - w, y, font=ROW_FONT, color=color)
+        dest = _fit(c, e.get("destNm", "").upper(), ctx.width - w - 21)
+        c.text(dest, 18, y, font=ROW_FONT, color="white")
         y += 6
         shown += 1
+
+# Page 1: station one.
+def board1(c, ctx):
+    _render_board(c, ctx, ctx.inputs.get("station", "Jarvis"))
+
+# Page 2: station two. If none is set, repeat station one so single-station
+# users see an unchanging board (no dead/blank rotation frame).
+def board2(c, ctx):
+    s2 = ctx.inputs.get("station2", "(none)")
+    if s2 == "(none)" or s2 == "":
+        s2 = ctx.inputs.get("station", "Jarvis")
+    _render_board(c, ctx, s2)
