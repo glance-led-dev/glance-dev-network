@@ -1,0 +1,24 @@
+gdn: 1
+id: zmanim
+version: 0.1.0
+name: Zmanim
+author: dsavitsky
+description: Daily Jewish prayer times (zmanim) for your ZIP code — dawn, sunrise, Shema deadline, Mincha, sunset, nightfall and more, from Chabad.org.
+category: Utility
+
+entry: app.star
+
+width: 64
+height: 32
+
+refresh: 3600
+
+pages: [p1, p2, p3, p4, p5, p6, p7, p8]
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: ZIP code
+    default: "11367"
+    help: Your local ZIP code, used to look up zmanim times from Chabad.org.
