@@ -52,6 +52,31 @@ TIRE_BADGE = {
     "WET": ("W", "#2563EB"),
 }
 
+# Team livery hex, keyed by Jolpica/Ergast constructorId. Live rows get their
+# colour straight from OpenF1's team_colour field; the between-sessions LAST
+# RACE board has no OpenF1 data, so it maps the Jolpica constructorId here to
+# put each driver's name in the team colour. Same values the mock board uses.
+F1_TEAM_COLOR = {
+    "red_bull": "#1E5BC6",
+    "mclaren": "#FF8000",
+    "ferrari": "#DC0000",
+    "mercedes": "#00D2BE",
+    "aston_martin": "#006F62",
+    "alpine": "#0090FF",
+    "williams": "#005AFF",
+    "rb": "#2647D8",
+    "racing_bulls": "#2647D8",
+    "alphatauri": "#2647D8",
+    "sauber": "#C00000",
+    "kick_sauber": "#C00000",
+    "audi": "#C00000",
+    "haas": "#B6BABD",
+    "cadillac": "#C8102E",
+}
+
+def team_color(constructor_id, fallback):
+    return F1_TEAM_COLOR.get(str(constructor_id).lower().strip(), fallback)
+
 MONTHS_FULL = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
                "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
 
@@ -614,16 +639,19 @@ def fetch_f1_last(ctx):
         pos = str(x.get("position", ""))
         t = str(x.get("Time", {}).get("time", ""))
         status = str(x.get("status", ""))
-        if "Lap" in status:               # Jolpica: "Lapped" (or classic "+1 Lap")
+        if pos == "1":
+            gap = ""                      # the winner's full race time doesn't fit the 2-col board
+        elif "Lap" in status:             # Jolpica: "Lapped" (or classic "+1 Lap")
             down = leader_laps - int(x.get("laps", leader_laps))
             gap = ("+" + str(down) + (" LAP" if down == 1 else " LAPS")) if down > 0 else "LAPPED"
         elif status != "Finished" and status != "":
             gap = "DNF"
         elif t != "":
-            gap = t                       # leader: total time; others: "+11.536"
+            gap = t                       # others: "+11.536"
         else:
             gap = ""
-        top.append((pos, str(drv.get("familyName", "")).upper(), gap))
+        tcol = team_color(x.get("Constructor", {}).get("constructorId", ""), COLORS["text"])
+        top.append((pos, str(drv.get("familyName", "")).upper(), gap, tcol))
     return {
         "race_name": str(race.get("raceName", "GRAND PRIX")).upper(),
         "circuit": str(race.get("Circuit", {}).get("circuitName", "")).upper(),
@@ -1063,7 +1091,7 @@ def _draw_last_page(c, ctx, page):
     pw = c.text_width("00", "4x5") + 3
     hi = min(lo + per_page, len(top))
     for i in range(lo, hi):
-        pos, name, gap = top[i]
+        pos, name, gap, name_color = top[i]
         j = i - lo
         cx0 = (j // 4) * (col_w + 2)
         cx1 = cx0 + col_w - 1
@@ -1073,4 +1101,6 @@ def _draw_last_page(c, ctx, page):
         if gap != "":
             gw = c.text_width(gap, "picopixel")
             c.text(gap, cx1, ry + 1, font = "picopixel", color = COLORS["muted"], align = "right")
-        c.text(fit_text(c, name, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry, font = "4x5", color = COLORS["text"])
+        # Driver name in the team's livery colour (falls back to white if the
+        # constructorId isn't in the table).
+        c.text(fit_text(c, name, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry, font = "4x5", color = name_color)
