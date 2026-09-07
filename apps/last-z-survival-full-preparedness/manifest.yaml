@@ -1,0 +1,20 @@
+gdn: 1
+id: last-z-survival-full-preparedness
+version: 0.1.0
+name: "Last Z Full Prep"
+author: "maniac782"
+description: Current Last Z Full Preparedness theme. Six 4-hour blocks a day on Apocalypse Time (UTC-2). Shows the live theme, what to spend, time left, and what's next.
+category: Lifestyle
+entry: app.star
+width: 128
+height: 32
+refresh: 60
+pages:
+  - main
+inputs: []
+assets:
+  - shelter.png
+  - vehicle.png
+  - hero.png
+  - army.png
+  - research.png
