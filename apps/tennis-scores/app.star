@@ -4,9 +4,10 @@
 # Ported to the Glance Developer Network. Data logic follows the original;
 # the render tree is rewritten as c.* draw calls.
 #
-# Layout (128x32):
-#   y 0-5    title bar (tournament city/name)
-#   y 7-18   match 1  (two player rows)
+# Layout (64x32):
+#   y 0-4    title bar (tournament city/name)
+#   y 6-17   match 1  (two player rows)
+#   y 18     divider
 #   y 20-31  match 2  (two player rows)
 
 SCORES_URL = "https://site.api.espn.com/apis/site/v2/sports/tennis/%s/scoreboard"
@@ -255,7 +256,7 @@ def draw_title(c, text, ev):
             bg = col
             break
     fg = MASTERS_GOLD if is_masters(ev) else "white"
-    c.rect(0, 0, c.width - 1, 5, fill = bg)
+    c.rect(0, 0, c.width - 1, 4, fill = bg)
     tf = FONT
     if c.text_width(text, font = tf) > c.width - 2 and text.find(" ") == -1:
         tf = FONT_NARROW
@@ -344,7 +345,7 @@ def message(c, lines, color = "white"):
 # Order is live matches first, then matches completed in the last 24h.
 
 PER_PAGE = 2
-PAGE_COUNT = 5
+PAGE_COUNT = 8
 
 def all_matches(ev, now, slug):
     """Live first, then recently completed."""
@@ -384,18 +385,21 @@ def draw_slice(c, ctx, slot):
     start = (slot % slices) * PER_PAGE
 
     first = matches[start]
-    draw_match(c, first, 7)
-    mark(c, 7, first["live"])
+    draw_match(c, first, 6)
+    mark(c, 6, first["live"])
 
     if start + 1 < len(matches):
         second = matches[start + 1]
-        c.line(0, 19, c.width - 1, 19, "darkgray")
+        c.line(0, 18, c.width - 1, 18, "darkgray")
         draw_match(c, second, 20)
         mark(c, 20, second["live"])
 
 def mark(c, y, is_live):
-    """1px rail on the left edge: green while playing, dim once final."""
-    c.line(0, y, 0, y + ROW_H * 2 - 2, "green" if is_live else "darkgray")
+    """Green rail only while a match is in progress. A completed match draws
+    nothing here, so the column stays background — the rail is now a live
+    indicator rather than a border."""
+    if is_live:
+        c.line(0, y, 0, y + ROW_H * 2 - 2, "green")
 
 def p1(c, ctx):
     draw_slice(c, ctx, 0)
@@ -411,3 +415,12 @@ def p4(c, ctx):
 
 def p5(c, ctx):
     draw_slice(c, ctx, 4)
+
+def p6(c, ctx):
+    draw_slice(c, ctx, 5)
+
+def p7(c, ctx):
+    draw_slice(c, ctx, 6)
+
+def p8(c, ctx):
+    draw_slice(c, ctx, 7)
