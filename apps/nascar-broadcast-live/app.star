@@ -172,18 +172,33 @@ TRUCK_DRIVER_COLOR = {
     "99": ("#C71121", "#FFFFFF"),
 }
 
-# Playoff (chase) drivers get their position badge recolored per series
-# instead of a " C" suffix crammed onto an already-tight name column.
-CHASE_BADGE = {
-    "NASCAR": ("#FACC15", "#000000"),
-    "NASCAR - O'Reilly": ("#EF4444", "#FFFFFF"),
-    "NASCAR - Trucks": ("#7DF9FF", "#FFFFFF"),
+# Playoff (chase) drivers are flagged per series rather than with a " C"
+# suffix crammed onto an already-tight name column:
+#   live board  -> the position badge takes the series colour
+#   last race   -> the driver's NAME takes the series colour (the position
+#                  number there already carries the finish-order colour)
+# Cup = championship gold, O'Reilly (Xfinity) = series green, Trucks = series red.
+CHASE_COLOR = {
+    "NASCAR": ("#D4AF37", "#000000"),
+    "NASCAR - O'Reilly": ("#009D57", "#FFFFFF"),
+    "NASCAR - Trucks": ("#E20514", "#FFFFFF"),
 }
 
-def pos_badge_colors(series, chase):
+POS_BADGE_BG = "#000000"
+POS_BADGE_TXT = "#FFFFFF"
+
+def chase_pos_badge(series, chase):
     if not chase:
-        return "#000000", "#FFFFFF"
-    return CHASE_BADGE.get(series, ("#000000", "#FFFFFF"))
+        return POS_BADGE_BG, POS_BADGE_TXT
+    return CHASE_COLOR.get(series, (POS_BADGE_BG, POS_BADGE_TXT))
+
+# Chase tint for a driver's name, or "" when the caller should keep its own
+# default name colour (white on the last-race board).
+def chase_name_color(series, chase):
+    if not chase:
+        return ""
+    entry = CHASE_COLOR.get(series)
+    return entry[0] if entry else ""
 
 MONTHS_FULL = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
                "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
@@ -647,9 +662,8 @@ def vehicle_rows(feed, series, live_race):
         bg, txt_color = driver_colors(row["num"], series)
         row["bg"] = bg
         row["txt_color"] = txt_color
-        pos_bg, pos_txt = pos_badge_colors(series, row["chase"])
-        row["pos_bg"] = pos_bg
-        row["pos_txt"] = pos_txt
+        row["pos_bg"], row["pos_txt"] = chase_pos_badge(series, row["chase"])
+        row["name_color"] = chase_name_color(series, row["chase"])
     return rows
 
 # ---------- state ----------
@@ -738,12 +752,12 @@ def _mock_live(ctx, mode):
     for r in rows:
         g, _ = gap_text(r, 120, is_race)
         r["gap"] = g
-        bg, tc = driver_colors(r["num"], safe_input(ctx, "series", "NASCAR"))
+        series = safe_input(ctx, "series", "NASCAR")
+        bg, tc = driver_colors(r["num"], series)
         r["bg"] = bg
         r["txt_color"] = tc
-        pb, pt = pos_badge_colors(safe_input(ctx, "series", "NASCAR"), r["chase"])
-        r["pos_bg"] = pb
-        r["pos_txt"] = pt
+        r["pos_bg"], r["pos_txt"] = chase_pos_badge(series, r["chase"])
+        r["name_color"] = chase_name_color(series, r["chase"])
     return {
         "mode": "live", "series": safe_input(ctx, "series", "NASCAR"),
         "session": "RACE" if is_race else "QUALIFYING", "is_race": is_race,
@@ -852,7 +866,7 @@ def fetch_last_result(ctx):
             else:
                 gap = r["gap"]
             who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
-            top.append((str(r["pos"]), who, gap))
+            top.append((str(r["pos"]), who, gap, r["name_color"]))
     return {
         "race_name": short_race(race.get("race_name", "RACE")),
         "track_name": short_track(race.get("track_name", "")),
@@ -1239,7 +1253,7 @@ def _draw_last_page(c, ctx, page):
     pw = c.text_width("00", "4x5") + 3
     hi = min(lo + per_page, len(top))
     for i in range(lo, hi):
-        pos, who, gap = top[i]
+        pos, who, gap, name_color = top[i]
         j = i - lo
         cx0 = (j // 4) * (col_w + 2)
         cx1 = cx0 + col_w - 1
@@ -1249,4 +1263,7 @@ def _draw_last_page(c, ctx, page):
         if gap != "":
             gw = c.text_width(gap, "picopixel")
             c.text(gap, cx1, ry + 1, font = "picopixel", color = COLORS["muted"], align = "right")
-        c.text(fit_text(c, who, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry, font = "4x5", color = COLORS["text"])
+        # Between sessions the chase flag rides on the name (the position
+        # number here already carries the finish-order colour).
+        c.text(fit_text(c, who, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry,
+               font = "4x5", color = name_color or COLORS["text"])
