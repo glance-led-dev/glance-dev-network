@@ -1,5 +1,5 @@
 # Countdown - days remaining until an event. (128x32)
-# Uses ctx.now for today's date; the target comes from the `date` input.
+# Today is ctx.now shifted to Eastern; the target comes from the `date` input.
 
 MDAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
@@ -85,6 +85,35 @@ def _target_date(ctx):
     return [ty, tm, td]
 
 
+# ctx.now is UTC. The day flips at midnight Eastern, which is where this event
+# lives, so the date is shifted by the Eastern offset with US daylight saving
+# applied (2nd Sunday in March 02:00 -> 1st Sunday in November 02:00).
+
+
+def _edfc(y, m, d):
+    yy = y - 1 if m <= 2 else y
+    era = (yy if yy >= 0 else yy - 399) // 400
+    yoe = yy - era * 400
+    mp = m - 3 if m > 2 else m + 9
+    doy = (153 * mp + 2) // 5 + d - 1
+    doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
+    return era * 146097 + doe - 719468
+
+
+def _enth_sunday(y, m, n):
+    wd = (_edfc(y, m, 1) + 4) % 7      # 0 = Sunday; 1970-01-01 was a Thursday
+    return 1 + (7 - wd) % 7 + 7 * (n - 1)
+
+
+def eastern_offset_minutes(ctx):
+    std = -300
+    t = ctx.now.unix // 60
+    y = ctx.now.year
+    start = _edfc(y, 3, _enth_sunday(y, 3, 2)) * 1440 + 120 - std
+    end = _edfc(y, 11, _enth_sunday(y, 11, 1)) * 1440 + 120 - std - 60
+    return std + 60 if (t >= start and t < end) else std
+
+
 def days(c, ctx):
     event = _s(ctx, "event", "EVENT").upper()
 
@@ -101,7 +130,8 @@ def days(c, ctx):
     tm = target_ymd[1]
     td = target_ymd[2]
 
-    left = _days_from_civil(ty, tm, td) - _days_from_civil(ctx.now.year, ctx.now.month, ctx.now.day)
+    today = (ctx.now.unix + eastern_offset_minutes(ctx) * 60) // 86400
+    left = _days_from_civil(ty, tm, td) - today
     target = MONTHS[tm - 1] + " " + str(td) + " " + str(ty)
 
     # ----- the two states with no number to show -----
