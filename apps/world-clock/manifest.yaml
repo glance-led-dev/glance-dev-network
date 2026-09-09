@@ -1,0 +1,37 @@
+gdn: 1
+id: world-clock
+version: 0.2.0
+name: World Clock
+author: glance-led
+description: Local time for a US time zone, with sunrise and sunset for a zip code. Daylight saving is worked out locally, no time API.
+category: Time
+entry: app.star
+# Canvas: 32 tall, width up to 384. Set what your panel is.
+width: 192
+height: 32
+# Re-render every minute so the clock stays current.
+refresh: 60
+# Pages the panel rotates through. app.star defines one function per name.
+# You can instead give a count, e.g. `pages: 2`, and define page1, page2.
+pages: [clock, sun]
+# The one thing the client fills in.
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: Any US zip code; it names the city and places sunrise and sunset. The clock follows the time zone below.
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "EASTERN"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "PACIFIC"]
+    help: US time zone. Daylight saving is applied automatically.
+# Custom art you drop in this folder (or an assets/ subfolder), drawn with
+# c.image(). Every image you draw MUST be listed here. Make them in any editor
+# (Photoshop, etc.), keep them small PNGs with a transparent background.
+assets:
+  - sun.png
+  - moon.png
