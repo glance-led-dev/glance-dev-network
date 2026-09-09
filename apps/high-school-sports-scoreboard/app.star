@@ -24,7 +24,9 @@ VALUE_FONT = "7x12"  # of these constants to tune one box at a time
 FILL_COLOR = "darkgray"
 STATUS_BAR_FILL = "darkgray"
 STATUS_BAR_TEXT = "white"
-BOX_COLOR = "black"  # outline color
+BOX_COLOR = "black"  # internal divider color; outer edge is removed below
+STAT_FILL_COLOR = "black"
+STAT_DIVIDER_COLOR = "darkgray"
 # Last-resort sample/error fallback. Real games first resolve both schools'
 # colors below; this is deliberately a neutral gold instead of cyan.
 TEAM_COLOR_FALLBACK = "#d8b04a"
@@ -15318,8 +15320,8 @@ def team_logo_size(logo, large = False):
     # preserves each mascot's natural proportions while giving wide, square,
     # and narrow marks the same available identity area.
     if logo == "shg-maxpreps-led-v5.png":
-        return [29, 22] if large else [16, 12]
-    return [40, 22] if large else [20, 11]
+        return [29, 23] if large else [16, 12]
+    return [40, 23] if large else [20, 11]
 
 def badge_letters(code):
     value = str(code).upper()
@@ -15381,11 +15383,31 @@ def scoreboard_school(c, ctx):
         draw_final(c, g)
     else:
         draw_next(c, g)
-    # Logos are intentionally allowed to use their full natural footprint, but
-    # they must never paint over the scoreboard's outside frame. Restore the
-    # far-left edge last so it remains visible from the identity/logo area to
-    # the bottom in Next, Live, and Final.
-    c.line(0, 8, 0, 31, BOX_COLOR)
+    # Remove the continuous outside outline while keeping every internal
+    # divider connected cleanly to the top, bottom, and sides.
+    away = team_info(g.get("away", "TBD"), g, "away")
+    home = team_info(g.get("home", "TBD"), g, "home")
+    away_logo = team_logo(g.get("away", "TBD"), g, "away")
+    home_logo = team_logo(g.get("home", "TBD"), g, "home")
+    c.hline(0, 0, 95, FILL_COLOR)
+    c.hline(95, 0, 97, STAT_FILL_COLOR)
+    if away_logo == None:
+        c.hline(0, 31, 48, away["color"])
+    if home_logo == None:
+        c.hline(48, 31, 48, home["color"])
+    c.hline(96, 31, 96, STAT_FILL_COLOR)
+    c.vline(0, 0, 32, FILL_COLOR)
+    c.vline(191, 0, 32, STAT_FILL_COLOR)
+    c.vline(0, 9, 23, "black" if away_logo != None else away["color"])
+    c.hline(95, 16, 97, STAT_FILL_COLOR)
+    if g.get("status") != "live" and g.get("status") != "final" and g.get("type") != "final":
+        redraw_stat_labels(c, g)
+    for divider_x in [95, 119, 143, 167]:
+        c.pixel(divider_x, 16, STAT_DIVIDER_COLOR)
+        c.pixel(divider_x, 0, STAT_DIVIDER_COLOR)
+        c.pixel(divider_x, 31, STAT_DIVIDER_COLOR)
+    c.pixel(191, 15, STAT_DIVIDER_COLOR)
+    c.pixel(0, 8, BOX_COLOR)
 
 # ---------------------------------------------------------------------------
 # Restored logo-matchup presentation (v0.13.6)
@@ -15549,14 +15571,14 @@ def restored_identity(c, team, code, g, side, x, w):
     if logo != None:
         # Keep real logo artwork on the neutral panel background. Text-only
         # identities retain the school-color fill below.
-        c.rect(x, 9, x + w - 1, 30, fill = FILL_COLOR)
+        c.rect(x, 9, x + w - 1, 31, fill = "black")
         logo_size = team_logo_size(logo, True)
         logo_w = logo_size[0]
         logo_h = logo_size[1]
         logo_y = 9
         c.image(logo, x + (w - logo_w) // 2, logo_y, w = logo_w, h = logo_h)
         return
-    c.rect(x, 9, x + w - 1, 30, fill = team["color"])
+    c.rect(x, 9, x + w - 1, 31, fill = team["color"])
     mascot = g.get(side + "Mascot")
     mascot_style = restored_mascot_style(mascot)
     text_color = identity_text_color(team)
@@ -15606,13 +15628,11 @@ def restored_matchup(c, g):
     # Draw the header last so the full-size artwork runs underneath it and is
     # cleanly covered rather than rescaled or allowed to overlap header text.
     restored_header(c, g)
-    # Restore the outer bottom edge after drawing full-size logos so artwork
-    # is clipped behind the frame instead of covering its outline.
-    c.hline(31, 0, 95, BOX_COLOR)
+    # Identity artwork is intentionally allowed to use the bottom row.
 
 def restored_abbreviation(c, team, code, record, box):
     letters = badge_letters(code)[:3]
-    draw_box(c, box["x"], box["y"], box["w"], box["h"])
+    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
     color = team["color"]
     if is_whiteish(color) or is_darkish(color):
         color = TEAM_COLOR_FALLBACK
@@ -15620,7 +15640,7 @@ def restored_abbreviation(c, team, code, record, box):
     restored_center_text(c, record, box["x"], box["y"] + 10, box["w"], "4x5", "white")
 
 def restored_value(c, value, box, color = "white"):
-    draw_box(c, box["x"], box["y"], box["w"], box["h"])
+    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
     restored_center_text(c, value, box["x"], box["y"] + 4, box["w"], "7x12", color)
 
 def restored_period(period):
@@ -15700,7 +15720,7 @@ def compact_unix_time(unix, display_timezone):
     return str(display_hour) + ":" + pad2(local_time["minute"]) + suffix
 
 def restored_detail(c, g):
-    draw_box(c, DETAIL_BOX["x"], DETAIL_BOX["y"], DETAIL_BOX["w"], DETAIL_BOX["h"])
+    draw_box(c, DETAIL_BOX["x"], DETAIL_BOX["y"], DETAIL_BOX["w"], DETAIL_BOX["h"], STAT_DIVIDER_COLOR)
     center = DETAIL_BOX["x"] + DETAIL_BOX["w"] // 2
     if g.get("type") == "final" or g.get("status") == "final":
         return
@@ -15795,12 +15815,14 @@ def restored_frame(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
+    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     restored_detail(c, g)
 
 def draw_final(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
+    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     away = team_info(g["away"], g, "away")
     home = team_info(g["home"], g, "home")
     restored_abbreviation(c, away, g["away"], g.get("awayRecord", "0-0"), FINAL_AWAY_ABBR)
@@ -15825,7 +15847,7 @@ def restored_three_stat_final(c, g, suffixes):
         values = [g.get(side + suffixes[0], g.get(side + "Score", "-")), g.get(side + suffixes[1], "-"), g.get(side + suffixes[2], "-")]
         for index in range(3):
             box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"])
+            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             color = "green" if index == 0 and g.get("winner") == side else "white"
             restored_center_text(c, values[index], box["x"] + 5, box["y"] + 4, box["w"] - 5, "5x7", color)
     labels = ["R", "H", "E"]
@@ -15839,10 +15861,10 @@ def restored_volleyball_final(c, g):
         sets = g.get(side + "Sets", ["-", "-", "-", "-", "-"])
         for index in range(5):
             box = {"x": 119 + index * 10, "y": y, "w": 10, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"])
+            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             restored_center_text(c, sets[index] if index < len(sets) else "-", box["x"], box["y"] + 5, box["w"], "3x7", "white")
         total_box = {"x": 169, "y": y, "w": 22, "h": 15}
-        draw_box(c, total_box["x"], total_box["y"], total_box["w"], total_box["h"])
+        draw_box(c, total_box["x"], total_box["y"], total_box["w"], total_box["h"], STAT_DIVIDER_COLOR)
         total = g.get(side + "SetsWon", g.get(side + "Score", "-"))
         restored_center_text(c, total, total_box["x"], total_box["y"] + 4, total_box["w"], "7x12", "green" if g.get("winner") == side else "white")
 
@@ -15854,14 +15876,14 @@ def restored_soccer_final(c, g):
         values = [halves[0] if len(halves) > 0 else "-", halves[1] if len(halves) > 1 else "-", g.get(side + "Score", "-")]
         for index in range(3):
             box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"])
+            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             color = "green" if index == 2 and g.get("winner") == side else "white"
             restored_center_text(c, str(values[index]), box["x"], box["y"] + 4, box["w"], "5x7" if index < 2 else "7x12", color)
 
 def restored_quarter_row(c, scores, y):
     for index in range(4):
         box = {"x": 119 + index * 13, "y": y, "w": 13, "h": 15}
-        draw_box(c, box["x"], box["y"], box["w"], box["h"])
+        draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
         score = scores[index] if index < len(scores) else "-"
         restored_center_text(c, score, box["x"], box["y"] + 5, box["w"], "3x7", "white")
 
@@ -15870,6 +15892,7 @@ def draw_next(c, g):
         c.fill(FILL_COLOR)
         draw_box(c, 0, 0, 191, 31)
         restored_matchup(c, g)
+        c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
         away = team_info(g["away"], g, "away")
         home = team_info(g["home"], g, "home")
         restored_abbreviation(c, away, g["away"], g.get("awayRecord", "0-0"), NEXT_AWAY_ABBR)
@@ -15893,10 +15916,11 @@ def restored_volleyball_live(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
+    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     away = team_info(g["away"], g, "away")
     home = team_info(g["home"], g, "home")
     detail = {"x": 95, "y": 0, "w": 34, "h": 31}
-    draw_box(c, detail["x"], detail["y"], detail["w"], detail["h"])
+    draw_box(c, detail["x"], detail["y"], detail["w"], detail["h"], STAT_DIVIDER_COLOR)
     set_number = restored_period(g.get("livePeriod")).replace("Q", "")
     c.text("SET", 112, 5, font = "5x7", color = "white", align = "center")
     c.text(set_number if set_number != "" else "1", 112, 16, font = "7x12", color = "white", align = "center")
@@ -15914,7 +15938,7 @@ def restored_volleyball_live(c, g):
     restored_value(c, str(g.get("homeSetsWon", "0")), home_sets)
 
 def restored_small_value(c, value, box):
-    draw_box(c, box["x"], box["y"], box["w"], box["h"])
+    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
     restored_center_text(c, value, box["x"], box["y"] + 5, box["w"], "5x7", "white")
 
 def restored_stats_grid(c, g):
@@ -15927,7 +15951,7 @@ def restored_stats_grid(c, g):
         values = [g.get(side + keys[0], "-"), g.get(side + keys[1], "-"), g.get(side + keys[2], "-")]
         for index in range(3):
             box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"])
+            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             value_color = "green" if stat_leader(g, side, index) else "white"
             value_y = box["y"] + 4
             restored_tight_stat_value(c, values[index] if values[index] != None else "-", box["x"] + 4, value_y, 20, value_color, index == 2, index < 2)
@@ -15941,6 +15965,18 @@ def restored_stats_grid(c, g):
         y = (32 - label_height) // 2
         for char_index in range(len(label)):
             c.text(label[char_index], x, y + char_index * advance, font = font, color = "#aeb8c4")
+
+def redraw_stat_labels(c, g):
+    # The perimeter/divider cleanup crosses the vertically stacked labels at
+    # y=16, so restore them last to keep PPG/PAPG/STRK (and sport variants)
+    # fully legible on the black stat panel.
+    labels = next_stat_config(g.get("sport", "FB"))[0]
+    for index in range(3):
+        x = 120 + index * 24
+        label = labels[index]
+        y = (32 - len(label) * 5) // 2
+        for char_index in range(len(label)):
+            c.text(label[char_index], x, y + char_index * 5, font = "3x4", color = "#aeb8c4")
 
 def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = False, small_font = False):
     text = str(value)
