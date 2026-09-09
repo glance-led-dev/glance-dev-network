@@ -1,0 +1,74 @@
+gdn: 1
+
+id: tempest-wx
+version: 1
+name: Tempest Compact
+author: Ben
+description: Live readings, a six-hour outlook and weather alerts from your own
+  WeatherFlow Tempest station, on a single 64x32 panel.
+category: Weather
+
+entry: app.star
+width: 64
+height: 32
+refresh: 120
+
+pages: [now, outlook, alerts]
+
+inputs:
+  - key: apikey
+    app_input_type: api-key
+    type: string
+    label: Tempest API token
+    help: >-
+      Your personal token from tempestwx.com - Settings, then Data Authorizations,
+      then Create Token. Stored encrypted. Everything else is read from your own
+      station, so this is usually the only thing you need to fill in.
+
+  - key: station
+    app_input_type: free-text
+    type: string
+    label: Station ID
+    help: >-
+      Optional. Leave blank and the app uses the first station on your account.
+      Fill it in only if you have more than one - the numeric ID is in the URL
+      of your station page at tempestwx.com.
+
+  - key: town
+    app_input_type: free-text
+    type: string
+    label: Place name
+    help: >-
+      Optional. Shown on the alerts page. Leave blank to use your station's own
+      name. Keep it short - about 14 characters fit.
+
+  - key: units
+    app_input_type: dropdown
+    type: choice
+    label: Units
+    default: imperial
+    choices: [imperial, metric]
+    help: >-
+      imperial shows Fahrenheit, inches and mph. metric shows Celsius,
+      millimetres and km/h. The colour coding means the same thing either way -
+      it follows the actual conditions, not the numbers on screen.
+
+  - key: baro
+    app_input_type: dropdown
+    type: choice
+    label: Pressure
+    default: mb
+    choices: [mb, inhg]
+    help: >-
+      Chosen separately from the other units, since plenty of people want
+      Fahrenheit alongside millibars. mb shows 1016, inhg shows 30.00.
+
+  - key: arrow
+    app_input_type: dropdown
+    type: choice
+    label: Wind arrow points
+    default: from
+    choices: [from, to]
+    help: >-
+      "from" aims the arrow back along the bearing the wind is coming from,
+      the way a weather vane sits. "to" aims it the way the wind is blowing.
