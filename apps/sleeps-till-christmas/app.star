@@ -423,9 +423,19 @@ def zone_offset_at(zone, t):
     end = _utcmin(y, 4, nth_sunday(y, 4, 1), 3) - std - 60
     return std if t >= end and t < start else std + 60
 
+# The dropdown offers the four US zones by name. The table above is keyed by
+# IANA zone, so the name is mapped across; an older saved IANA value passes
+# through untouched.
+US_ZONES = {"EASTERN": "America/New_York", "CENTRAL": "America/Chicago",
+            "MOUNTAIN": "America/Denver", "PACIFIC": "America/Los_Angeles"}
+
+def us_zone(raw):
+    z = str(raw).strip()
+    return US_ZONES.get(z.upper(), z)
+
 def local_today(ctx):
     """[y, m, d] on the reader's wall clock."""
-    zone = str(ctx.inputs.get("timezone", "America/New_York")).strip()
+    zone = us_zone(ctx.inputs.get("timezone", "EASTERN"))
     mins = ctx.now.unix // 60 + zone_offset_at(zone, ctx.now.unix // 60)
     return civil_from_days(mins // 1440)
 
