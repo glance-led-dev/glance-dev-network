@@ -191,6 +191,15 @@ def seeds_for_league(div_records, wc_records, league_id):
 
 # ---------- drawing ----------
 
+def draw_page_edges(c, left = True):
+    # A 1px light line marking a clean page break while the kiosk scrolls
+    # horizontally between pages. Only page 1 (intro) draws a left edge too -
+    # otherwise a page's right border and the next page's left border would
+    # double up into a 2px-thick seam at every transition.
+    if left:
+        c.rect(0, 0, 0, c.height - 1, fill = "gray")
+    c.rect(c.width - 1, 0, c.width - 1, c.height - 1, fill = "gray")
+
 def team_label(t, abbrev):
     team_id = t.get("team", {}).get("id", -1)
     return abbrev.get(team_id, "???")
@@ -221,9 +230,9 @@ def draw_bye_quadrant(c, x0, y0, x1, y1, team_id, text):
     # visually framed regardless of how dark that team's color is.
     c.rect(x0, y0, x1, y1, outline = "#888888")
     cx = (x0 + x1) // 2
-    cy = y0 + (y1 - y0 - 5) // 2  # roughly vertical-center the 6px-tall "4x5" font
+    cy = y0 + (y1 - y0 - 7) // 2  # roughly vertical-center the 8px-tall "4x7" font
     maxw = x1 - x0 - 4  # small margin so text never touches the divider lines
-    c.text(fit_text(c, text, "4x5", maxw), cx, cy, font = "4x5", color = text_color_for(team_id), align = "center")
+    c.text(fit_text(c, text, "4x7", maxw), cx, cy, font = "4x7", color = text_color_for(team_id), align = "center")
 
 def draw_split_bg(c, y, away_id, home_id):
     c.rect(0, y - 1, 64, y + 5, fill = badge_color(away_id))
@@ -263,6 +272,7 @@ def draw_ds_preview_page(c, ctx, league_id, league_label):
     wc_resp = fetch_standings("wildCard", ctx.now.year)
     if div_resp["status_code"] != 200 or wc_resp["status_code"] != 200:
         c.text("DATA ERROR".upper(), 4, 12, font = "5x7", color = "red", align = "left")
+        draw_page_edges(c, left = False)
         return
 
     seeds = seeds_for_league(
@@ -272,6 +282,7 @@ def draw_ds_preview_page(c, ctx, league_id, league_label):
     )
     if len(seeds) < 6:
         c.text("NO DATA YET".upper(), 4, 12, font = "5x7", color = "gray", align = "left")
+        draw_page_edges(c, left = False)
         return
 
     nicknames = team_nickname_map()
@@ -299,6 +310,7 @@ def draw_ds_preview_page(c, ctx, league_id, league_label):
                  seed3_id, team_label(seed3, abbrev), seed6_id, team_label(seed6, abbrev))
     y += 6
     c.text(gms_line(cities.get(seed2_id, "")).upper(), 64, y, font = "picopixel", color = "gray", align = "center")
+    draw_page_edges(c, left = False)
 
 def draw_wc_series_page(c, ctx, league_id, league_label):
     c.fill("black")
@@ -307,6 +319,7 @@ def draw_wc_series_page(c, ctx, league_id, league_label):
     wc_resp = fetch_standings("wildCard", ctx.now.year)
     if div_resp["status_code"] != 200 or wc_resp["status_code"] != 200:
         c.text("DATA ERROR".upper(), 4, 12, font = "5x7", color = "red", align = "left")
+        draw_page_edges(c, left = False)
         return
 
     seeds = seeds_for_league(
@@ -316,6 +329,7 @@ def draw_wc_series_page(c, ctx, league_id, league_label):
     )
     if len(seeds) < 6:
         c.text("NO DATA YET".upper(), 4, 12, font = "5x7", color = "gray", align = "left")
+        draw_page_edges(c, left = False)
         return
 
     nicknames = team_nickname_map()
@@ -338,6 +352,7 @@ def draw_wc_series_page(c, ctx, league_id, league_label):
     draw_matchup_row(c, y, seed5_id, "5 " + team_label(seed5, nicknames), seed4_id, "4 " + team_label(seed4, nicknames))
     y += 6
     c.text(city_line(cities.get(seed4_id, "")).upper(), 64, y, font = "picopixel", color = "gray", align = "center")
+    draw_page_edges(c, left = False)
 
 def draw_byes_page(c, ctx):
     c.fill("black")
@@ -346,6 +361,7 @@ def draw_byes_page(c, ctx):
     wc_resp = fetch_standings("wildCard", ctx.now.year)
     if div_resp["status_code"] != 200 or wc_resp["status_code"] != 200:
         c.text("DATA ERROR".upper(), 4, 12, font = "5x7", color = "red", align = "left")
+        draw_page_edges(c, left = False)
         return
 
     div_records = div_resp["json"].get("records", [])
@@ -354,6 +370,7 @@ def draw_byes_page(c, ctx):
     nl_seeds = seeds_for_league(div_records, wc_records, NL_ID)
     if len(al_seeds) < 2 or len(nl_seeds) < 2:
         c.text("NO DATA YET".upper(), 4, 12, font = "5x7", color = "gray", align = "left")
+        draw_page_edges(c, left = False)
         return
 
     nicknames = team_nickname_map()
@@ -378,6 +395,7 @@ def draw_byes_page(c, ctx):
 
     c.line(64, 7, 64, 31, "#888888")
     c.line(0, 18, 127, 18, "#888888")
+    draw_page_edges(c, left = False)
 
 # ---------- pages ----------
 
@@ -388,6 +406,7 @@ def intro(c, ctx):
     c.text("IF SEASON ENDED TODAY".upper(), 64, 21, font = "4x5", color = "gray", align = "center")
     # matches manifest.yaml's refresh (and fetch_standings' ttl_seconds) - keep in sync
     c.text("UPDATES EVERY 2 HOURS".upper(), 64, 27, font = "picopixel", color = "#555555", align = "center")
+    draw_page_edges(c, left = True)
 
 def byes(c, ctx):
     draw_byes_page(c, ctx)
@@ -417,14 +436,18 @@ def wildcard_bubble3(wc_records, league_id):
 def bubble_gb_label(t):
     gb = t.get("wildCardGamesBack", "-")
     if gb in ("-", "", None):
-        return "TIED"
+        # Every team on this page is already outside the field - "TIED" alone
+        # left it unclear why a team with the same record as the cutoff isn't
+        # holding the spot. Present tense (not "LOST") since the tiebreaker
+        # picture is still live, same as the GB number below.
+        return "TIED-LOSE TB"
     return gb + " GB"
 
 def draw_bubble_row(c, y, team_id, left_text, right_text):
-    c.rect(0, y - 1, 127, y + 5, fill = badge_color(team_id))
+    c.rect(0, y - 1, 127, y + 6, fill = badge_color(team_id))
     tc = text_color_for(team_id)
-    c.text(left_text, 3, y, font = "4x5", color = tc, align = "left")
-    c.text(right_text, 124, y, font = "4x5", color = tc, align = "right")
+    c.text(left_text, 3, y, font = "4x7", color = tc, align = "left")
+    c.text(right_text, 124, y, font = "4x7", color = tc, align = "right")
 
 def draw_bubble_page(c, ctx, league_id, league_label):
     c.fill("black")
@@ -432,11 +455,13 @@ def draw_bubble_page(c, ctx, league_id, league_label):
     wc_resp = fetch_standings("wildCard", ctx.now.year)
     if wc_resp["status_code"] != 200:
         c.text("DATA ERROR".upper(), 4, 12, font = "5x7", color = "red", align = "left")
+        draw_page_edges(c, left = False)
         return
 
     bubble = wildcard_bubble3(wc_resp["json"].get("records", []), league_id)
     if len(bubble) < 3:
         c.text("NO DATA YET".upper(), 4, 12, font = "5x7", color = "gray", align = "left")
+        draw_page_edges(c, left = False)
         return
 
     nicknames = team_nickname_map()
@@ -453,6 +478,7 @@ def draw_bubble_page(c, ctx, league_id, league_label):
         draw_bubble_row(c, y, team_id, left, right)
         y += 8
         rank += 1
+    draw_page_edges(c, left = False)
 
 def albubble(c, ctx):
     draw_bubble_page(c, ctx, AL_ID, "AL")

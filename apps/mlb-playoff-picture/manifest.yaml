@@ -5,14 +5,14 @@ description: The AL/NL playoff bracket and Wild Card Round matchups, if the seas
 category: Sports
 width: 128
 height: 32
-refresh: 14400
+refresh: 7200
 pages:
   - intro
   - byes
   - al
-  - nl
   - alds
-  - nlds
   - albubble
+  - nl
+  - nlds
   - nlbubble
 inputs: []
