@@ -212,9 +212,11 @@ def geocode(ctx):
     p = places[0]
     return {"ok": True, "lat": float(p["latitude"]), "lon": float(p["longitude"])}
 
-# The time zone is a four-way US dropdown resolved right here: no zip lookup
-# and no time API, so every panel in a zone shares one render and a dead API
-# can never cost the clock its offset.
+# The clock's offset rides along with the weather: Open-Meteo answers with the
+# zip's utc_offset_seconds (timezone=auto, DST applied), so there is no time
+# API and no second input. What follows is the FALLBACK for when the weather
+# feed is down -- Eastern, worked out locally -- so a dead feed costs the
+# weather, not the panel.
 #
 # zone -> standard offset in minutes east of UTC. All four observe US daylight
 # saving: 2nd Sunday in March 02:00 -> 1st Sunday in November 02:00.
@@ -241,8 +243,8 @@ def _nth_sunday(y, m, n):
 
 
 def offset_hours(ctx):
-    """UTC offset for the chosen US zone, daylight saving already applied."""
-    zone = str(ctx.inputs.get("timezone", "EASTERN")).strip()
+    """Fallback offset (Eastern), daylight saving already applied."""
+    zone = "EASTERN"
     std = US_ZONES.get(zone.upper(), US_ZONES.get(zone, -300))
     t = ctx.now.unix // 60
     y = ctx.now.year
@@ -269,7 +271,7 @@ def fetch_weather(lat, lon):
     j = r["json"]
     if not j:
         return None
-    return j.get("current", None)
+    return j
 
 # ---------- weather icon + condition text ----------
 
@@ -463,7 +465,12 @@ def main(c, ctx):
         c.text(geo["sub"], c.width // 2, 20, font = "4x5", color = "white", align = "center")
         return
 
+    wxj = fetch_weather(geo["lat"], geo["lon"])
+    # Open-Meteo returns the zip's UTC offset with the weather, DST applied.
+    # Without it the clock falls back to Eastern rather than going blank.
     off = offset_hours(ctx)
+    if wxj != None and wxj.get("utc_offset_seconds", None) != None:
+        off = float(wxj["utc_offset_seconds"]) / 3600.0
 
     t = local_parts(ctx, off)
 
@@ -471,7 +478,7 @@ def main(c, ctx):
     time_str, ap = format_time(ctx, t)
     time_text = time_str + (" " + ap if ap else "")
 
-    wx = fetch_weather(geo["lat"], geo["lon"])
+    wx = wxj.get("current", None) if wxj != None else None
     temp = wx.get("temperature_2m", None) if wx != None else None
     have_weather = temp != None
 
