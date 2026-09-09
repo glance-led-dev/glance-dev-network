@@ -10250,6 +10250,8 @@ def normalized_contest_adaptive(contest, sport, slot, tracked_school, team_data,
         "homeName": home_name,
         "awaySchoolId": away_school_id,
         "homeSchoolId": home_school_id,
+        "awaySchoolUrl": team_stat(away_side, ["school_url", "schoolUrl", "url"]),
+        "homeSchoolUrl": team_stat(home_side, ["school_url", "schoolUrl", "url"]),
         "awayColor": away_color,
         "awayColor2": away_color2,
         "awayColor3": away_color3,
@@ -10380,6 +10382,33 @@ def normalized_contest_adaptive(contest, sport, slot, tracked_school, team_data,
     base["hasLiveScore"] = has_live_score
     return base
 
+def schedule_streak(data):
+    if type(data) != "dict":
+        return None
+    streak_result = None
+    streak_count = 0
+    # MaxPreps schedules are chronological. Skipping unfinished entries lets
+    # the latest consecutive completed results determine the current streak.
+    for contest in data.get("contests", []):
+        result = str(contest.get("result", "")).strip().upper()
+        result_type = None
+        if result.startswith("W"):
+            result_type = "W"
+        elif result.startswith("L"):
+            result_type = "L"
+        elif result == "T" or result.startswith("T "):
+            result_type = "T"
+        if result_type == None:
+            continue
+        if result_type == streak_result:
+            streak_count += 1
+        else:
+            streak_result = result_type
+            streak_count = 1
+    if streak_result == None:
+        return None
+    return streak_result + str(streak_count)
+
 def games_from_schedule(resp, sport, slot, school_name, source_timezone, display_timezone, now_unix):
     if not valid_schedule(resp):
         return []
@@ -10397,6 +10426,7 @@ def games_from_schedule(resp, sport, slot, school_name, source_timezone, display
         elif result == "T" or result.startswith("T "):
             ties += 1
     calculated_record = str(wins) + "-" + str(losses) + (("-" + str(ties)) if ties > 0 else "")
+    calculated_streak = schedule_streak(data)
     tracked_name = team_data.get("school_name", team_data.get("schoolName", team_data.get("name", school_name)))
     final_game = None
     next_game = None
@@ -10415,8 +10445,10 @@ def games_from_schedule(resp, sport, slot, school_name, source_timezone, display
             continue
         if game.get("trackedIsHome", False):
             game["homeRecord"] = calculated_record
+            game["homeStreak"] = calculated_streak
         else:
             game["awayRecord"] = calculated_record
+            game["awayStreak"] = calculated_streak
         # Scoretracker does not include team records, and the tracked-team
         # schedule can omit the opponent's record. For an opening-game final,
         # safely derive the opponent's 1-game record instead of leaving 0-0.
@@ -10703,6 +10735,35 @@ def enrich_game_with_matchup(api_key, game, force_final = False):
     )
     data = matchup_data(response)
     return merge_matchup_game(game, data) if data != None else game
+
+def enrich_game_with_opponent_streak(ctx, api_key, game, sport, season, source_timezone):
+    if type(game) != "dict":
+        return game
+    opponent_side = "away" if game.get("trackedIsHome", False) else "home"
+    streak_key = opponent_side + "Streak"
+    existing = game.get(streak_key)
+    if existing != None and str(existing).strip() not in ["", "-"]:
+        return game
+    opponent_path = maxpreps_school_path(game.get(opponent_side + "SchoolUrl"))
+    if opponent_path == None:
+        return game
+    # Cache one opponent schedule per week. The normal five-minute image
+    # refresh therefore reuses this response instead of spending more credits.
+    response = event_schedule(
+        ctx,
+        api_key,
+        opponent_path,
+        sport["path"],
+        season,
+        "opponent-streak",
+        source_timezone,
+        sport["check_minutes"],
+    )
+    data = parsed_schedule_data(response)
+    streak = schedule_streak(data)
+    if streak != None:
+        game[streak_key] = streak
+    return game
 
 def normalized_scoretracker_game(data):
     if type(data) != "dict":
@@ -11190,6 +11251,7 @@ def fetch_game_adaptive(ctx, kind, slot):
     # and season averages exactly once.
     matchup_was_final = game.get("type") == "final" or game.get("status") == "final"
     game = enrich_game_with_matchup(api_key, game, matchup_was_final)
+    game = enrich_game_with_opponent_streak(ctx, api_key, game, sport, season, source_timezone)
     if game.get("type") != "final" and game.get("status") != "final":
         game = overlay_gamechanger_live(game, gc_live, display_timezone)
 
