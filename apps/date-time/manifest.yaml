@@ -13,8 +13,8 @@ entry: app.star
 width: 384
 height: 32
 
-# Re-render every minute so the clock stays current.
-refresh: 60
+# Cached with the other location apps: one render per zip + zone per 30 minutes.
+refresh: 1800
 
 # Pages the panel rotates through, in order. app.star must define a function per name.
 pages: [main]
