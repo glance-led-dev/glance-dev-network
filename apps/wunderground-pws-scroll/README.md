@@ -21,7 +21,7 @@ Display real-time weather from **your** Weather Underground personal weather sta
 ## How to Get Your API Key
 
 1. Sign in via Weather Underground member devices:  
-   (https://www.wunderground.com/login?action=member-devices)
+   (https://www.wunderground.com/member/api-keys)
 2. Open the **API Keys** section for your account/devices.
 3. Click **Generate**, copy the key, and paste it into the Glance app settings as **API Key**.
 
