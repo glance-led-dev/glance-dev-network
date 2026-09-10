@@ -1,0 +1,347 @@
+gdn: 1
+id: event-milestone
+version: 0.1.0
+name: Event Milestone
+author: ShulinZhou
+description: Days since - or days to - your weddings, birthdays and graduations, with themed pixel art and a count colour per event. Up to five events take turns on the panel.
+category: Lifestyle
+entry: app.star
+
+width: 192
+height: 32
+refresh: 60
+
+pages: [since]
+
+inputs:
+  - key: event1
+    type: string
+    app_input_type: free-text
+    label: Event 1 name
+    default: "WEDDING"
+    help: "Completes the title: DAYS SINCE ___ (or DAYS TO ___). Leave blank to use the theme name."
+  - key: date1
+    type: string
+    app_input_type: date
+    label: Event 1 date
+    default: "2019-06-15"
+    help: A past date counts up from it; a future date counts down to it.
+  - key: theme1
+    type: string
+    app_input_type: dropdown
+    label: Event 1 theme
+    default: Wedding
+    choices:
+      - Wedding
+      - Birthday
+      - Graduation
+      - House
+      - Car
+      - Bicycle
+      - Yacht
+      - Departure
+      - Arrival
+      - Tree
+      - Flower
+      - Beach
+      - Mountains
+      - "Torii Gate"
+      - Pagoda
+      - Heart
+      - Couple
+      - "Couple Blue"
+      - "Couple Pink"
+      - Girl
+      - Boy
+      - Campfire
+      - Helicopter
+      - Paraglider
+      - Fishing
+      - Running
+      - "Gold Medal"
+      - "Silver Medal"
+      - "Bronze Medal"
+      - Trophy
+      - Podium
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Volleyball
+      - Hockey
+      - Skiing
+      - Chess
+      - Golf
+  - key: numcolor1
+    type: string
+    app_input_type: color
+    label: Event 1 number color
+    default: "#FFFFFF"
+    help: The colour of this event's day count.
+
+  - key: event2
+    type: string
+    app_input_type: free-text
+    label: Event 2 name
+    default: ""
+    help: Optional. Leave blank to use the theme name.
+  - key: date2
+    type: string
+    app_input_type: date
+    label: Event 2 date
+    default: ""
+    help: Leave blank to skip this event entirely.
+  - key: theme2
+    type: string
+    app_input_type: dropdown
+    label: Event 2 theme
+    default: Birthday
+    choices:
+      - Wedding
+      - Birthday
+      - Graduation
+      - House
+      - Car
+      - Bicycle
+      - Yacht
+      - Departure
+      - Arrival
+      - Tree
+      - Flower
+      - Beach
+      - Mountains
+      - "Torii Gate"
+      - Pagoda
+      - Heart
+      - Couple
+      - "Couple Blue"
+      - "Couple Pink"
+      - Girl
+      - Boy
+      - Campfire
+      - Helicopter
+      - Paraglider
+      - Fishing
+      - Running
+      - "Gold Medal"
+      - "Silver Medal"
+      - "Bronze Medal"
+      - Trophy
+      - Podium
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Volleyball
+      - Hockey
+      - Skiing
+      - Chess
+      - Golf
+  - key: numcolor2
+    type: string
+    app_input_type: color
+    label: Event 2 number color
+    default: "#39D98A"
+    help: The colour of this event's day count.
+
+  - key: event3
+    type: string
+    app_input_type: free-text
+    label: Event 3 name
+    default: ""
+    help: Optional. Leave blank to use the theme name.
+  - key: date3
+    type: string
+    app_input_type: date
+    label: Event 3 date
+    default: ""
+    help: Leave blank to skip this event entirely.
+  - key: theme3
+    type: string
+    app_input_type: dropdown
+    label: Event 3 theme
+    default: Graduation
+    choices:
+      - Wedding
+      - Birthday
+      - Graduation
+      - House
+      - Car
+      - Bicycle
+      - Yacht
+      - Departure
+      - Arrival
+      - Tree
+      - Flower
+      - Beach
+      - Mountains
+      - "Torii Gate"
+      - Pagoda
+      - Heart
+      - Couple
+      - "Couple Blue"
+      - "Couple Pink"
+      - Girl
+      - Boy
+      - Campfire
+      - Helicopter
+      - Paraglider
+      - Fishing
+      - Running
+      - "Gold Medal"
+      - "Silver Medal"
+      - "Bronze Medal"
+      - Trophy
+      - Podium
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Volleyball
+      - Hockey
+      - Skiing
+      - Chess
+      - Golf
+  - key: numcolor3
+    type: string
+    app_input_type: color
+    label: Event 3 number color
+    default: "#FFD24A"
+    help: The colour of this event's day count.
+
+  - key: event4
+    type: string
+    app_input_type: free-text
+    label: Event 4 name
+    default: ""
+    help: Optional. Leave blank to use the theme name.
+  - key: date4
+    type: string
+    app_input_type: date
+    label: Event 4 date
+    default: ""
+    help: Leave blank to skip this event entirely.
+  - key: theme4
+    type: string
+    app_input_type: dropdown
+    label: Event 4 theme
+    default: Heart
+    choices:
+      - Wedding
+      - Birthday
+      - Graduation
+      - House
+      - Car
+      - Bicycle
+      - Yacht
+      - Departure
+      - Arrival
+      - Tree
+      - Flower
+      - Beach
+      - Mountains
+      - "Torii Gate"
+      - Pagoda
+      - Heart
+      - Couple
+      - "Couple Blue"
+      - "Couple Pink"
+      - Girl
+      - Boy
+      - Campfire
+      - Helicopter
+      - Paraglider
+      - Fishing
+      - Running
+      - "Gold Medal"
+      - "Silver Medal"
+      - "Bronze Medal"
+      - Trophy
+      - Podium
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Volleyball
+      - Hockey
+      - Skiing
+      - Chess
+      - Golf
+  - key: numcolor4
+    type: string
+    app_input_type: color
+    label: Event 4 number color
+    default: "#E85AA8"
+    help: The colour of this event's day count.
+
+  - key: event5
+    type: string
+    app_input_type: free-text
+    label: Event 5 name
+    default: ""
+    help: Optional. Leave blank to use the theme name.
+  - key: date5
+    type: string
+    app_input_type: date
+    label: Event 5 date
+    default: ""
+    help: Leave blank to skip this event entirely.
+  - key: theme5
+    type: string
+    app_input_type: dropdown
+    label: Event 5 theme
+    default: Trophy
+    choices:
+      - Wedding
+      - Birthday
+      - Graduation
+      - House
+      - Car
+      - Bicycle
+      - Yacht
+      - Departure
+      - Arrival
+      - Tree
+      - Flower
+      - Beach
+      - Mountains
+      - "Torii Gate"
+      - Pagoda
+      - Heart
+      - Couple
+      - "Couple Blue"
+      - "Couple Pink"
+      - Girl
+      - Boy
+      - Campfire
+      - Helicopter
+      - Paraglider
+      - Fishing
+      - Running
+      - "Gold Medal"
+      - "Silver Medal"
+      - "Bronze Medal"
+      - Trophy
+      - Podium
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Volleyball
+      - Hockey
+      - Skiing
+      - Chess
+      - Golf
+  - key: numcolor5
+    type: string
+    app_input_type: color
+    label: Event 5 number color
+    default: "#6FB7E8"
+    help: The colour of this event's day count.
+
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#4EA8FF"
+    help: The edge rail.
