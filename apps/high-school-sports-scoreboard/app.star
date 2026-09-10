@@ -15402,7 +15402,8 @@ def scoreboard_school(c, ctx):
     c.hline(95, 16, 97, STAT_FILL_COLOR)
     if g.get("status") != "live" and g.get("status") != "final" and g.get("type") != "final":
         redraw_stat_labels(c, g)
-    for divider_x in [95, 119, 143, 167]:
+    divider_positions = [95, 143, 168]
+    for divider_x in divider_positions:
         c.pixel(divider_x, 16, STAT_DIVIDER_COLOR)
         c.pixel(divider_x, 0, STAT_DIVIDER_COLOR)
         c.pixel(divider_x, 31, STAT_DIVIDER_COLOR)
@@ -15423,8 +15424,8 @@ RESTORED_AWAY_ABBR = {"x": 141, "y": 0, "w": 24, "h": 15}
 RESTORED_AWAY_VALUE = {"x": 165, "y": 0, "w": 26, "h": 15}
 RESTORED_HOME_ABBR = {"x": 141, "y": 16, "w": 24, "h": 15}
 RESTORED_HOME_VALUE = {"x": 165, "y": 16, "w": 26, "h": 15}
-NEXT_AWAY_ABBR = {"x": 95, "y": 0, "w": 24, "h": 15}
-NEXT_HOME_ABBR = {"x": 95, "y": 16, "w": 24, "h": 15}
+NEXT_AWAY_ABBR = {"x": 95, "y": 0, "w": 23, "h": 15}
+NEXT_HOME_ABBR = {"x": 95, "y": 16, "w": 23, "h": 15}
 NEXT_AWAY_STATS = {"x": 119, "y": 0, "w": 72, "h": 15}
 NEXT_HOME_STATS = {"x": 119, "y": 16, "w": 72, "h": 15}
 FINAL_AWAY_ABBR = {"x": 95, "y": 0, "w": 24, "h": 15}
@@ -15636,8 +15637,11 @@ def restored_abbreviation(c, team, code, record, box):
     color = team["color"]
     if is_whiteish(color) or is_darkish(color):
         color = TEAM_COLOR_FALLBACK
-    restored_center_text(c, letters, box["x"], box["y"] + 1, box["w"], "6x8", color)
-    restored_center_text(c, record, box["x"], box["y"] + 10, box["w"], "4x5", "white")
+    # draw_box includes both edge pixels, so the visual midpoint is based on
+    # w + 1. Anchor both lines to that same exact horizontal center.
+    center_x = box["x"] + (box["w"] + 1) // 2
+    c.text(letters, center_x, box["y"] + 1, font = "6x8", color = color, align = "center")
+    c.text(record, center_x, box["y"] + 10, font = "4x5", color = "white", align = "center")
 
 def restored_value(c, value, box, color = "white"):
     draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
@@ -15845,8 +15849,9 @@ def restored_three_stat_final(c, g, suffixes):
         side = "away" if row == 0 else "home"
         y = 0 if row == 0 else 16
         values = [g.get(side + suffixes[0], g.get(side + "Score", "-")), g.get(side + suffixes[1], "-"), g.get(side + suffixes[2], "-")]
+        stat_boxes = [{"x": 117, "w": 24}, {"x": 143, "w": 24}, {"x": 167, "w": 24}]
         for index in range(3):
-            box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
+            box = {"x": stat_boxes[index]["x"], "y": y, "w": stat_boxes[index]["w"], "h": 15}
             draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             color = "green" if index == 0 and g.get("winner") == side else "white"
             restored_center_text(c, values[index], box["x"] + 5, box["y"] + 4, box["w"] - 5, "5x7", color)
@@ -15875,7 +15880,7 @@ def restored_soccer_final(c, g):
         halves = g.get(side + "Halves", ["-", "-"])
         values = [halves[0] if len(halves) > 0 else "-", halves[1] if len(halves) > 1 else "-", g.get(side + "Score", "-")]
         for index in range(3):
-            box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
+            box = {"x": 117 if index == 0 else 143 + (index - 1) * 24, "y": y, "w": 26 if index == 0 else 24, "h": 15}
             draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             color = "green" if index == 2 and g.get("winner") == side else "white"
             restored_center_text(c, str(values[index]), box["x"], box["y"] + 4, box["w"], "5x7" if index < 2 else "7x12", color)
@@ -15950,13 +15955,16 @@ def restored_stats_grid(c, g):
         y = 0 if row == 0 else 16
         values = [g.get(side + keys[0], "-"), g.get(side + keys[1], "-"), g.get(side + keys[2], "-")]
         for index in range(3):
-            box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
+            stat_boxes = [{"x": 118, "w": 25}, {"x": 143, "w": 25}, {"x": 168, "w": 23}]
+            box = {"x": stat_boxes[index]["x"], "y": y, "w": stat_boxes[index]["w"], "h": 15}
             draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             value_color = "green" if stat_leader(g, side, index) else "white"
             value_y = box["y"] + 4
-            restored_tight_stat_value(c, values[index] if values[index] != None else "-", box["x"] + 4, value_y, 20, value_color, index == 2, index < 2)
+            # Use the approved bold, tightly spaced treatment consistently
+            # across every stat cell and both team rows.
+            restored_tight_stat_value(c, values[index] if values[index] != None else "-", box["x"] + 4, value_y, 20, value_color, index == 2, index < 2, index < 2)
     for index in range(3):
-        border_x = 119 + index * 24
+        border_x = [118, 143, 168][index]
         label = labels[index]
         font = "3x4"
         advance = 5
@@ -15972,13 +15980,13 @@ def redraw_stat_labels(c, g):
     # fully legible on the black stat panel.
     labels = next_stat_config(g.get("sport", "FB"))[0]
     for index in range(3):
-        x = 120 + index * 24
+        x = [119, 144, 169][index]
         label = labels[index]
         y = (32 - len(label) * 5) // 2
         for char_index in range(len(label)):
             c.text(label[char_index], x, y + char_index * 5, font = "3x4", color = "#aeb8c4")
 
-def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = False, small_font = False):
+def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = False, small_font = False, bold = False):
     text = str(value)
     advances = []
     total = 0
@@ -15988,14 +15996,18 @@ def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = Fal
         if char.isdigit() and char_index + 1 < len(text) and text[char_index + 1].isdigit():
             advance += 1
         if small_font and char.isdigit() and char_index + 1 < len(text) and text[char_index + 1] == ".":
-            advance -= 1
-        if streak_spacing and char_index + 1 < len(text):
-            advance += 1
+            # The bold PPG comparison keeps one extra pixel before the
+            # decimal; the standard compact values retain their tight fit.
+            advance += 1 if bold else -1
+        if streak_spacing and char_index == 0 and char_index + 1 < len(text):
+            advance += 2
         advances.append(advance)
         total += advance
-    start = x + (width - total) // 2
+    start = x + (width - total - (1 if bold else 0)) // 2
     if small_font:
         start += 1
+    if bold:
+        start -= 1
     cursor = start
     font = "4x7" if small_font else "5x7"
     decimal_index = -1
@@ -16005,7 +16017,21 @@ def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = Fal
             break
     for index in range(len(text)):
         draw_x = cursor + (1 if small_font and decimal_index >= 0 and index < decimal_index else 0)
-        c.text(text[index], draw_x, y, font = font, color = color)
+        if bold and decimal_index >= 0:
+            if index < decimal_index:
+                draw_x += 1
+            elif index == decimal_index:
+                draw_x += 2
+        if bold and text[index] == ".":
+            # Keep the decimal crisp instead of thickening it with the digits.
+            c.pixel(draw_x, y + 6, color)
+        else:
+            is_streak_letter = streak_spacing and index == 0 and text[index] in ["W", "L"]
+            c.text(text[index], draw_x, y, font = font, color = color)
+            # W/L glyphs lose their shape when horizontally doubled. Keep
+            # the streak letter native while retaining bold streak numbers.
+            if bold and not is_streak_letter:
+                c.text(text[index], draw_x + 1, y, font = font, color = color)
         cursor += advances[index]
 
 def next_stat_config(sport):
