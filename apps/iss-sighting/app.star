@@ -43,11 +43,7 @@ TWO_PI = 6.283185307179586
 
 WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
-UP = [[0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [1, 1, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]
-DOWN = [[0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0]]
-PEAK = [[0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0]]
-
-# Rise/set/peak icon colors on the path pages - mirrors the up/down/new
+# Rise/set/peak text colors on the path pages - mirrors the up/down/new
 # trend-color language the sibling MLB leaderboard apps already use.
 RISE_COLOR = "#2ECC71"
 SET_COLOR = "#E74C3C"
@@ -125,13 +121,6 @@ def brightness(hex_color):
 def pad2(n):
     return str(n) if n >= 10 else "0" + str(n)
 
-def pad3(n):
-    if n < 10:
-        return "00" + str(n)
-    if n < 100:
-        return "0" + str(n)
-    return str(n)
-
 # ---------- position at an arbitrary instant between N2YO's given points ----------
 # N2YO only gives az/el at startUTC/maxUTC/endUTC, not at startVisibility, so
 # the rise direction has to be interpolated between the two points that
@@ -184,31 +173,19 @@ def time_at_elevation(threshold, t0, el0, t1, el1):
     frac = (el0 - threshold) / (el0 - el1)
     return int(float(t0) + frac * float(t1 - t0))
 
-def dhms_str(secs):
-    if secs < 0:
-        secs = 0
-    d = secs // 86400
-    rem = secs % 86400
-    h = rem // 3600
-    rem = rem % 3600
-    m = rem // 60
-    s = rem % 60
-    if d > 0:
-        return str(d) + "D " + pad2(h) + "H " + pad2(m) + "M " + pad2(s) + "S"
-    if h > 0:
-        return str(h) + "H " + pad2(m) + "M " + pad2(s) + "S"
-    if m > 0:
-        return str(m) + "M " + pad2(s) + "S"
-    return str(s) + "S"
-
 def duration_str(secs):
     return str(secs // 60) + "M " + pad2(secs % 60) + "S"
 
 # The local-time line still mixes fonts (AM/PM smaller than the digits), so
 # it builds a list of (text, font, y_offset) parts for draw_mixed() rather
 # than a plain string - see UNIT_FONT/UNIT_DY below.
+MAIN_FONT = "4x7"
 UNIT_FONT = "3x4"
-UNIT_DY = 1
+# 4x7 and 4x5 share identical per-glyph widths (only height differs), so this
+# was a safe drop-in bump from 4x5 for "a tad larger" text. UNIT_DY re-tuned
+# to 3 (from 1) so the shorter AM/PM suffix still bottom-aligns against the
+# now-taller main digits (7 rows vs 4).
+UNIT_DY = 3
 
 def hms_ap(hour, minute, second):
     ap = "AM" if hour < 12 else "PM"
@@ -223,12 +200,12 @@ def fmt12_range_parts(h1, mi1, s1, h2, mi2, s2):
     t2, ap2 = hms_ap(h2, mi2, s2)
     if ap1 == ap2:
         return [
-            (t1, "4x5", 0), (" - ", "4x5", 0), (t2, "4x5", 0),
-            (" ", "4x5", 0), (ap2, UNIT_FONT, UNIT_DY),
+            (t1, MAIN_FONT, 0), (" - ", MAIN_FONT, 0), (t2, MAIN_FONT, 0),
+            (" ", MAIN_FONT, 0), (ap2, UNIT_FONT, UNIT_DY),
         ]
     return [
-        (t1, "4x5", 0), (" ", "4x5", 0), (ap1, UNIT_FONT, UNIT_DY),
-        (" - ", "4x5", 0), (t2, "4x5", 0), (" ", "4x5", 0), (ap2, UNIT_FONT, UNIT_DY),
+        (t1, MAIN_FONT, 0), (" ", MAIN_FONT, 0), (ap1, UNIT_FONT, UNIT_DY),
+        (" - ", MAIN_FONT, 0), (t2, MAIN_FONT, 0), (" ", MAIN_FONT, 0), (ap2, UNIT_FONT, UNIT_DY),
     ]
 
 def _civil_from_days(z):
@@ -258,24 +235,26 @@ def local_from_epoch(epoch_utc, off_hours):
 def bright_label(mag):
     # Real apparent-magnitude tiers (lower = brighter; Venus peaks around
     # -4.7, the ISS itself tops out near -3.9 on a great pass). Returns a
-    # background color for the word - dark slate (dimmest) fading up to
-    # gold (brightest), interpolated evenly across all 8 steps. Mirrors how
-    # a faint vs. brilliant point of light actually looks, rather than
-    # borrowing a red/green good-bad convention.
+    # background color for the word. A straight linear RGB blend from gold
+    # to dark slate put the middle tiers in a muddy olive-khaki band, so this
+    # instead holds an amber hue at high saturation and only ramps value down
+    # tier by tier - DAZZLING through VISIBLE all read as vivid warm colors,
+    # and only FAINT/DIM actually desaturate toward gray/slate, matching how
+    # a genuinely faint pass looks washed out rather than just less golden.
     if mag <= -4.0:
-        return "DAZZLING", "#FFD700"
+        return "DAZZLING", "#FFCC00"
     if mag <= -3.0:
-        return "BRILLIANT", "#E5C20B"
+        return "BRILLIANT", "#E6B000"
     if mag <= -2.0:
-        return "VIVID", "#CAAE17"
+        return "VIVID", "#D19200"
     if mag <= -1.0:
-        return "BRIGHT", "#B09922"
+        return "BRIGHT", "#BF7D0A"
     if mag <= 0.0:
-        return "CLEAR", "#95842E"
+        return "CLEAR", "#AD6A11"
     if mag <= 1.0:
-        return "VISIBLE", "#7B6F39"
+        return "VISIBLE", "#94602C"
     if mag <= 2.5:
-        return "FAINT", "#605B45"
+        return "FAINT", "#735845"
     return "DIM", "#464650"
 
 # ---------- the lookups ----------
@@ -361,13 +340,42 @@ def cloud_color(pct):
         return "#87B9CB"
     return "gray"
 
-def moon_illumination_pct(epoch):
+def moon_phase_fraction(epoch):
+    # 0.0 = new, 0.25 = first quarter, 0.5 = full, 0.75 = last quarter.
     cycles = (float(epoch) - float(MOON_NEW_EPOCH)) / 86400.0 / MOON_SYNODIC
     p = cycles - float(int(cycles))
     if p < 0.0:
         p = p + 1.0
+    return p
+
+def moon_illumination_pct(p):
     illum = (1.0 - math.cos(TWO_PI * p)) / 2.0
     return int(illum * 100.0 + 0.5)
+
+def _moon_lit(dx, dy, r, t, waxing):
+    # Same terminator equation the sibling moon-phase app uses (an ellipse
+    # whose half-width is t * w, t = cos(2*pi*phase)) - just at icon scale,
+    # and fixed to the Northern-hemisphere view since this app is US-only.
+    w = math.sqrt(float(r * r - dy * dy))
+    x = float(dx)
+    if waxing:
+        return x >= t * w
+    return x <= -t * w
+
+MOON_LIT_COLOR = "#F7E7C1"
+MOON_DARK_COLOR = "#23252E"
+MOON_ICON_R = 4
+
+def draw_moon_icon(c, cx, cy, r, p):
+    t = math.cos(TWO_PI * p)
+    waxing = p < 0.5
+    rr = r * r
+    for dy in range(-r, r + 1):
+        for dx in range(-r, r + 1):
+            if dx * dx + dy * dy > rr:
+                continue
+            color = MOON_LIT_COLOR if _moon_lit(dx, dy, r, t, waxing) else MOON_DARK_COLOR
+            c.pixel(cx + dx, cy + dy, color)
 
 # ---------- true visibility window (sun below the horizon, not just satellite geometry) ----------
 # A pass can be well above 10 deg elevation and still be washed out by daylight
@@ -592,11 +600,15 @@ def next_sighting(ctx, index = 0):
             break
 
     if len(visible) <= index:
-        return {
-            "ok": False,
-            "title": "SIGHTING #" + str(index + 1),
-            "sub": "ONLY " + str(len(visible)) + " VISIBLE IN 10 DAYS",
-        }
+        # Not a real error - zip/key/API all worked fine, this slot just has
+        # no visible pass right now. The page renders filler facts instead
+        # of an error card (see draw_filler), so it still needs the city.
+        # visible_count is the true total (the loop above only breaks early
+        # once it has more than `index` results, so whenever it falls short
+        # instead, it ran to completion and this is the real count) - callers
+        # use it to tell "zero sightings at all" apart from "ran out partway"
+        # and to know whether THIS is the first slot to come up short.
+        return {"ok": False, "insufficient": True, "city": loc["city"], "visible_count": len(visible)}
 
     return visible[index]
 
@@ -628,11 +640,21 @@ def truncate_to_width(c, text, font, max_width):
             return candidate
     return ""
 
+def draw_page_edges(c, left = True):
+    # A 1px light line marking a clean page break while the kiosk scrolls
+    # horizontally from one page to the next. Every page draws its own right
+    # edge, but only page 1 (intro) also draws a left edge - otherwise a
+    # page's right border and the next page's left border would double up
+    # into a 2px-thick seam at every transition.
+    if left:
+        c.rect(0, 0, 0, c.height - 1, fill = "gray")
+    c.rect(c.width - 1, 0, c.width - 1, c.height - 1, fill = "gray")
+
 def _err(c, d):
     c.fill("black")
     c.rect(0, 0, c.width - 1, 8, fill = "#0B2559")
-    # Icon, not the old "ISS SIGHTING" wordmark - the intro dropped that
-    # text already, so keeping it only here read as a mismatched leftover.
+    # Icon only, no text wordmark - matches the intro page, which doesn't
+    # show one either.
     c.bitmap(ISS_ICON, 51, 1, "cyan")
 
     # Stars in the gaps around the (variable-length, error-specific)
@@ -645,53 +667,100 @@ def _err(c, d):
     c.text(d["sub"], 4, 23, font = "4x5", color = "gray")
     c.rect(15, 29, 15, 29, fill = "gray")
     c.rect(115, 29, 115, 29, fill = "white")
+    draw_page_edges(c, left = False)
 
-def draw_header(c, tag, city, bar, tag_color = "cyan", max_city_width = None):
+def draw_header(c, tag, city, bar, tag_color = "cyan", city_color = "white", font = "picopixel", y = 2):
     # picopixel, not 4x5 - "weekday + month + day" plus a long city name no
-    # longer fit side by side at 4x5 without colliding.
+    # longer fit side by side at 4x5 without colliding. Sighting/path pages
+    # pass font="3x7" instead (identical per-glyph width to picopixel except
+    # a narrower "W", so cap math below still holds) for a taller header;
+    # crew keeps the picopixel default.
     c.rect(0, 0, c.width - 1, 8, fill = bar)
-    c.text(tag, 3, 2, font = "picopixel", color = tag_color, align = "left")
+    c.text(tag, 3, y, font = font, color = tag_color, align = "left")
 
     # Always leave room past the tag - a city like "TRUTH OR CONSEQUENCES,
     # NM" (zip 87901) is long enough to run into it even at picopixel.
-    # Sighting pages additionally pass max_city_width to also clear the
-    # brightness-tinted ISS icon sitting in the bar's center; whichever cap
-    # is tighter wins.
-    tag_gap_cap = c.width - 9 - c.text_width(tag, "picopixel")
-    cap = tag_gap_cap if max_city_width == None else min(max_city_width, tag_gap_cap)
-    shown_city = truncate_to_width(c, city, "picopixel", cap)
-    c.text(shown_city, c.width - 3, 2, font = "picopixel", color = "white", align = "right")
+    cap = c.width - 9 - c.text_width(tag, font)
+    shown_city = truncate_to_width(c, city, font, cap)
+    c.text(shown_city, c.width - 3, y, font = font, color = city_color, align = "right")
+
+# Shown instead of an error card when a slot simply has no visible pass in
+# the next 10 days (0/1/2 sightings instead of 3) - zip/key/API all worked,
+# so an error card would be misleading. Most important/recognizable facts
+# first; each of the up to 6 filler pages (sighting/path x3) gets its own
+# slice via page_number, so scrolling through several empty slots doesn't
+# just repeat the same three lines. All checked to fit at picopixel width.
+FILLER_FACTS = [
+    "TRAVELS 17500 MPH",
+    "ORBITS EARTH EVERY 90 MIN",
+    "ORBITS ABOUT 254 MI UP",
+    "LARGEST STRUCTURE IN SPACE",
+    "CREWED NONSTOP SINCE NOV 2000",
+    "SEES 16 SUNRISES A DAY",
+    "SOLAR ARRAYS SPAN 356 FT",
+    "BUILT BY 15 COUNTRIES",
+    "FIRST PIECE LAUNCHED NOV 1998",
+    "SIZE OF A FOOTBALL FIELD",
+    "WEIGHS NEARLY 1 MILLION LBS",
+    "TRAVELS 5 MILES PER SECOND",
+    "CABIN VOLUME LIKE A 747 JET",
+    "VISIBLE TO THE NAKED EYE",
+    "3RD BRIGHTEST OBJECT IN SKY",
+    "TOILET CURTAIN, NOT A DOOR",
+    "CREW EXERCISES 2 HRS A DAY",
+    "RECYCLES URINE INTO WATER",
+]
+
+def draw_filler(c, city, page_number, headline = None):
+    c.fill("black")
+    draw_header(c, "ISS FACT", city, "#0B2559", tag_color = "white", font = "3x7", y = 1)
+
+    y = 9
+    if headline != None:
+        # Only the very first slot to come up short carries this - it takes
+        # one of the three line slots, so this page shows 2 facts instead of 3.
+        c.text(headline, c.width // 2, y, font = "picopixel", color = "orange", align = "center")
+        y += 8
+
+    start = (page_number * 3) % len(FILLER_FACTS)
+    num_facts = 2 if headline != None else 3
+    for i in range(num_facts):
+        fact = FILLER_FACTS[(start + i) % len(FILLER_FACTS)]
+        c.text(fact, c.width // 2, y, font = "picopixel", color = "gray", align = "center")
+        y += 8
+    draw_page_edges(c, left = False)
 
 def draw_word_badge(c, x_right, y, text, bg):
     # A filled rect sized to the word, right edge pinned at x_right. The
     # slate-to-gold scale spans dark to light, so pick whichever text color
     # actually contrasts against this particular fill.
-    w = c.text_width(text, "4x5")
+    w = c.text_width(text, MAIN_FONT)
     x0 = x_right - w
     textcolor = "white" if brightness(bg) < 140 else "black"
-    c.rect(x0 - 1, y, x_right, y + 5, fill = bg)
-    c.text(text, x0, y, font = "4x5", color = textcolor, align = "left")
+    c.rect(x0 - 1, y, x_right, y + 6, fill = bg)
+    c.text(text, x0, y, font = MAIN_FONT, color = textcolor, align = "left")
 
-def draw_look_row(c, y, icon, icon_color, label, az, az_deg, el):
-    c.bitmap(icon, 3, y, icon_color)
-    c.text(label, 10, y, font = "4x5", color = "white", align = "left")
-    # Fixed columns (rather than one right-aligned blob) so AZ/ELEV line up
-    # row to row regardless of how many letters the compass point takes.
-    c.text("AZ", 40, y, font = "4x5", color = "gray", align = "left")
-    c.text(pad3(az_deg), 52, y, font = "4x5", color = "gray", align = "left")
-    c.text(az, 69, y, font = "4x5", color = "gray", align = "left")
-    c.text("ELEV", 90, y, font = "4x5", color = "gray", align = "left")
-    c.text(str(el), 112, y, font = "4x5", color = "gray", align = "left")
+def draw_look_row(c, y, verb, color, az, az_deg, el):
+    # Fixed columns (verb / direction+degrees / ELEV) rather than one
+    # centered sentence, so RISES/PEAKS/SETS and the ELEV values all line up
+    # vertically row to row regardless of how long the compass name or verb
+    # is. 32px covers the widest verb (RISES/PEAKS); 84px covers the widest
+    # "<compass> AT <deg>" (e.g. "WNW AT 349").
+    c.text(verb, 3, y, font = MAIN_FONT, color = color, align = "left")
+    c.text(az + " AT " + str(az_deg), 32, y, font = MAIN_FONT, color = color, align = "left")
+    c.text("ELEV " + str(el), 84, y, font = MAIN_FONT, color = color, align = "left")
 
 # ---------- pages ----------
 
 def intro(c, ctx):
     c.clear()
     c.text("ISS", 3, 4, font = "7x12", color = "white", align = "left")
-    # one row down so the stack doesn't merge with the top edge
-    c.text("NEXT", 102, 3, font = "4x5", color = "gray", align = "center")
-    c.text("3", 102, 9, font = "4x5", color = "gray", align = "center")
-    c.text("SIGHTINGS", 102, 15, font = "4x5", color = "gray", align = "center")
+    # Not "NEXT 3 SIGHTINGS" - the actual count over the next 10 days can be
+    # 0-3 depending on orbit geometry and twilight, so this splash page (no
+    # zip/key inputs, no lookups) can't commit to a number without also
+    # taking on the same API dependency the other pages have.
+    c.text("UPCOMING", 102, 5, font = "4x5", color = "gray", align = "center")
+    c.text("SIGHTINGS", 102, 11, font = "4x5", color = "gray", align = "center")
     c.bitmap(ISS_ICON, 51, 8, "cyan")
     # A handful of stars in the empty space around the text/icon (never
     # below y21 - the curve's own black background already reads as space
@@ -715,85 +784,132 @@ def intro(c, ctx):
     c.rect(55, 21, 72, 26, fill = LAND_COLOR)
     c.rect(92, 25, 99, 28, fill = LAND_COLOR)
     c.rect(114, 29, 120, 31, fill = LAND_COLOR)
+    draw_page_edges(c)
 
-def draw_sighting_page(c, ctx, index):
+def draw_sighting_page(c, ctx, index, page_number):
     d = next_sighting(ctx, index)
     if not d["ok"]:
-        _err(c, d)
+        if d.get("insufficient"):
+            # index == visible_count exactly on the first slot to come up
+            # short (see next_sighting) - every later slot is insufficient
+            # too, but only this one, on its sighting page, gets the headline.
+            headline = None
+            if index == d["visible_count"]:
+                if d["visible_count"] == 0:
+                    headline = "NO SIGHTINGS IN NEXT 10 DAYS"
+                else:
+                    headline = "NO OTHER SIGHTINGS IN 10 DAYS"
+            draw_filler(c, d["city"], page_number, headline = headline)
+        else:
+            _err(c, d)
         return
 
     label, bg = bright_label(d["mag"])
+    # No "STARTS IN X" countdown here - the data (and this render) is only
+    # refreshed on the manifest's `refresh:` cadence, so a live countdown
+    # would just freeze mid-count and read as wrong for most of that window.
+    # (Peak elevation lives on the path pages instead - no need to repeat it
+    # here too.)
+    is_live = d["now"] >= d["start"] and d["now"] < d["end"]
 
     c.fill("black")
-    # 46px cap on the city text leaves the bar's center clear for the icon
-    # below (icon spans x51-77, +2px margin) - see draw_header.
-    draw_header(c, d["weekday"], d["city"], "#0B2559", max_city_width = 46)
-    # Center of the header bar is otherwise empty (tag/city sit at the two
-    # edges) - tinting the icon with the same brightness color as the badge
-    # below reinforces dazzling-vs-faint right at a glance.
-    c.bitmap(ISS_ICON, 51, 1, bg)
-
-    starts_in = d["start"] - d["now"]
-    is_live = starts_in <= 0 and d["now"] < d["end"]
+    if is_live:
+        # A live pass gets an inverted, dazzling gold header instead of the
+        # usual navy one - "look up now" should read at a glance, not just
+        # from a single tinted line of text.
+        draw_header(c, d["weekday"], d["city"], "#FFD700", tag_color = "black", city_color = "black", font = "3x7", y = 1)
+    else:
+        # City name gets the header's full width, same as path pages - the
+        # brightness cue already lives on the badge at the bottom of the page.
+        draw_header(c, d["weekday"], d["city"], "#0B2559", tag_color = "white", font = "3x7", y = 1)
 
     if is_live:
-        headline = "VISIBLE NOW!"
-        headline_color = "yellow"
-    else:
-        headline = "STARTS IN " + dhms_str(starts_in)
-        headline_color = "white"
-    c.text(headline, c.width // 2, 9, font = "4x5", color = headline_color, align = "center")
+        # A scatter of bright sparkle points in the header's top/bottom
+        # border rows - the tag/city text (drawn at y=1, 7px tall) never
+        # touches y=0 or y=8, so this stays clear regardless of how long
+        # either string is.
+        c.rect(15, 0, 15, 0, fill = "white")
+        c.rect(60, 8, 60, 8, fill = "white")
+        c.rect(100, 0, 100, 0, fill = "white")
+        c.rect(35, 8, 35, 8, fill = "white")
 
     if d["off"] != None:
         t1 = local_from_epoch(d["start"], d["off"])
         t2 = local_from_epoch(d["end"], d["off"])
         when_parts = fmt12_range_parts(t1["h"], t1["mi"], t1["s"], t2["h"], t2["mi"], t2["s"])
     else:
-        when_parts = [("LOCAL TIME UNKNOWN", "4x5", 0)]
-    draw_mixed(c, c.width // 2, 15, when_parts, "gray", align = "center")
+        when_parts = [("LOCAL TIME UNKNOWN", MAIN_FONT, 0)]
+    # Tinting the actual time range yellow when live (rather than a separate
+    # "VISIBLE NOW!" line) still surfaces that signal without adding a row
+    # that's just as prone to going stale between refreshes.
+    draw_mixed(c, c.width // 2, 9, when_parts, "yellow" if is_live else "gray", align = "center")
 
-    moon_pct = moon_illumination_pct(d["start"])
     if d["cloud_pct"] != None:
-        cloud_line = "CLOUDS " + str(d["cloud_pct"]) + "% - MOON " + str(moon_pct) + "%"
+        cloud_line = "CLOUDS " + str(d["cloud_pct"]) + "%"
         cloud_color_ = cloud_color(d["cloud_pct"])
     else:
-        cloud_line = "CLOUDS N/A - MOON " + str(moon_pct) + "%"
+        cloud_line = "CLOUDS N/A"
         cloud_color_ = "gray"
-    c.text(cloud_line, c.width // 2, 21, font = "picopixel", color = cloud_color_, align = "center")
 
-    c.text("DURATION " + duration_str(d["duration"]), 3, 27, font = "4x5", color = "gray", align = "left")
-    draw_word_badge(c, c.width - 3, 27, label, bg)
+    # The phase icon already says "this is the moon", so only the percentage
+    # needs spelling out. Cloud text, icon, and percentage are laid out as
+    # one centered cluster so the row doesn't read as two islands with a
+    # dead gap between them.
+    moon_phase = moon_phase_fraction(d["start"])
+    moon_pct_str = str(moon_illumination_pct(moon_phase)) + "%"
+    cloud_w = c.text_width(cloud_line, "3x7")
+    pct_w = c.text_width(moon_pct_str, MAIN_FONT)
+    icon_d = MOON_ICON_R * 2 + 1
+    gap1 = 10
+    gap2 = 3
+    total_w = cloud_w + gap1 + icon_d + gap2 + pct_w
+    start_x = (c.width - total_w) // 2
+
+    c.text(cloud_line, start_x, 17, font = "3x7", color = cloud_color_, align = "left")
+    icon_cx = start_x + cloud_w + gap1 + MOON_ICON_R
+    draw_moon_icon(c, icon_cx, 20, MOON_ICON_R, moon_phase)
+    c.text(moon_pct_str, icon_cx + MOON_ICON_R + gap2, 17, font = MAIN_FONT, color = "white", align = "left")
+
+    c.text("DURATION " + duration_str(d["duration"]), 3, 25, font = MAIN_FONT, color = "gray", align = "left")
+    draw_word_badge(c, c.width - 3, 25, label, bg)
+    draw_page_edges(c, left = False)
 
 def sighting(c, ctx):
-    draw_sighting_page(c, ctx, 0)
+    draw_sighting_page(c, ctx, 0, 0)
 
 def sighting2(c, ctx):
-    draw_sighting_page(c, ctx, 1)
+    draw_sighting_page(c, ctx, 1, 2)
 
 def sighting3(c, ctx):
-    draw_sighting_page(c, ctx, 2)
+    draw_sighting_page(c, ctx, 2, 4)
 
-def draw_path_page(c, ctx, index):
+def draw_path_page(c, ctx, index, page_number):
     d = next_sighting(ctx, index)
     if not d["ok"]:
-        _err(c, d)
+        if d.get("insufficient"):
+            draw_filler(c, d["city"], page_number)
+        else:
+            _err(c, d)
         return
 
     c.fill("black")
-    draw_header(c, d["weekday"], d["city"], "purple")
+    # Matches the sighting pages' header bar so pages 2-7 read as one
+    # consistent set (crew is the only page that intentionally breaks from it).
+    draw_header(c, d["weekday"], d["city"], "#0B2559", tag_color = "white", font = "3x7", y = 1)
 
-    # Stars in the thin gaps between rows (and after the last row) - these
-    # bands never have text drawn in them regardless of row content, so
-    # placement here needs no width-checking against anything.
-    c.rect(20, 15, 20, 15, fill = "white")
-    c.rect(105, 14, 105, 14, fill = "gray")
-    c.rect(60, 23, 60, 23, fill = "white")
-    c.rect(15, 30, 15, 30, fill = "gray")
-    c.rect(115, 30, 115, 30, fill = "white")
+    # Stars in the right margin, past the widest possible ELEV column
+    # ("ELEV 90" tops out at x=116) - the taller rows below only leave a 1px
+    # gap between them now, so this column is the one place still guaranteed
+    # clear of text regardless of row content.
+    c.rect(120, 10, 120, 10, fill = "white")
+    c.rect(123, 15, 123, 15, fill = "gray")
+    c.rect(119, 21, 119, 21, fill = "white")
+    c.rect(124, 27, 124, 27, fill = "gray")
 
-    draw_look_row(c, 9, UP, RISE_COLOR, "RISE", d["start_az"], d["start_az_deg"], d["start_el"])
-    draw_look_row(c, 17, PEAK, PEAK_COLOR, "PEAK", d["max_az"], d["max_az_deg"], d["max_el"])
-    draw_look_row(c, 25, DOWN, SET_COLOR, "SET", d["end_az"], d["end_az_deg"], d["end_el"])
+    draw_look_row(c, 9, "RISES", RISE_COLOR, d["start_az"], d["start_az_deg"], d["start_el"])
+    draw_look_row(c, 17, "PEAKS", PEAK_COLOR, d["max_az"], d["max_az_deg"], d["max_el"])
+    draw_look_row(c, 25, "SETS", SET_COLOR, d["end_az"], d["end_az_deg"], d["end_el"])
+    draw_page_edges(c, left = False)
 
 def crew(c, ctx):
     names = crew_names()
@@ -808,7 +924,7 @@ def crew(c, ctx):
     draw_header(c, "CREW", str(len(names)) + " ABOARD", "green", tag_color = "black")
 
     lines = wrap(c, names, "picopixel", 122)[:3]
-    y = 10   # one row clear of the green header bar
+    y = 9
     for line in lines:
         c.text(line, c.width // 2, y, font = "picopixel", color = "gray", align = "center")
         y += 6
@@ -825,12 +941,13 @@ def crew(c, ctx):
 
     days = (ctx.now.unix - ISS_CREWED_SINCE) // 86400
     c.text("ISS OCCUPIED " + str(days) + " DAYS STRAIGHT", c.width // 2, 27, font = "picopixel", color = "white", align = "center")
+    draw_page_edges(c, left = False)
 
 def path(c, ctx):
-    draw_path_page(c, ctx, 0)
+    draw_path_page(c, ctx, 0, 1)
 
 def path2(c, ctx):
-    draw_path_page(c, ctx, 1)
+    draw_path_page(c, ctx, 1, 3)
 
 def path3(c, ctx):
-    draw_path_page(c, ctx, 2)
+    draw_path_page(c, ctx, 2, 5)
