@@ -1,0 +1,270 @@
+# Commute
+# AI-generated with ChatGPT at the request of the app author.
+
+id: commute
+name: "Commute"
+author: "Josh"
+description: "AI-generated with ChatGPT. Smart commute guidance using HERE Location Services for live and typical traffic, configurable workdays and holidays, worldwide addresses and time zones, and leave-by planning."
+category: "Lifestyle"
+
+entry: app.star
+
+width: 64
+height: 32
+refresh: 300
+
+pages:
+  - main
+
+inputs:
+  # LOCATIONS
+  - key: home
+    type: string
+    app_input_type: free-text
+    label: "Home address"
+    default: ""
+    help: "Enter a complete worldwide address including city and country. Example: 350 5th Ave, New York, NY 10118, USA."
+
+  - key: work
+    type: string
+    app_input_type: free-text
+    label: "Work address"
+    default: ""
+    help: "Examples: 425 W Randolph St, Chicago, IL 60606, USA; 10 Downing St, London SW1A 2AA, United Kingdom; 1-1 Marunouchi, Chiyoda City, Tokyo 100-0005, Japan."
+
+  - key: workname
+    type: string
+    app_input_type: free-text
+    label: "Workplace name"
+    default: "WORK"
+    help: "Short label such as WORK, OFFICE, HQ, CLINIC, or CAMPUS."
+
+  - key: panelplace
+    type: choice
+    app_input_type: dropdown
+    label: "Where is this GLANCE?"
+    default: "At home - show trip to work"
+    choices:
+      - "At home - show trip to work"
+      - "At work - show trip home"
+      - "Auto - switch by time"
+    help: "Choose the commute that is useful where this GLANCE is installed. Auto shows the work trip first, then switches to the home trip at the return-traffic switch time."
+
+  # MORNING COMMUTE
+  - key: arrivalwork
+    type: string
+    app_input_type: free-text
+    label: "Arrive at work by"
+    default: "800 AM"
+    help: "Desired work arrival time. Enter without a colon. Examples: 800 AM, 830 AM, 0800, or 1730."
+
+  - key: buffer
+    type: choice
+    app_input_type: dropdown
+    label: "Extra leave-time buffer"
+    default: "10 minutes"
+    choices:
+      - "0 minutes"
+      - "5 minutes"
+      - "10 minutes"
+      - "15 minutes"
+      - "20 minutes"
+      - "30 minutes"
+    help: "Leaves this many minutes earlier than the traffic-based departure time. Useful for parking, walking, elevators, or a safety margin."
+
+  # RETURN COMMUTE
+  - key: returnmode
+    type: choice
+    app_input_type: dropdown
+    label: "Return trip goal"
+    default: "Leave work at"
+    choices:
+      - "Leave work at"
+      - "Arrive home by"
+    help: "Leave work at calculates your expected home arrival. Arrive home by calculates when you should leave work."
+
+  - key: returntime
+    type: string
+    app_input_type: free-text
+    label: "Return trip target time"
+    default: "500 PM"
+    help: "If the goal is Leave work at, enter your work departure time. If the goal is Arrive home by, enter your desired home arrival time. Enter without a colon. Examples: 500 PM or 1700."
+
+  - key: returnstart
+    type: string
+    app_input_type: free-text
+    label: "Auto switch to return commute at"
+    default: "300 PM"
+    help: "Only controls when Auto changes from the work-bound display to the home-bound display. It is not your leave-work time. Enter without a colon. Examples: 300 PM or 1500."
+
+  # TIME ZONES AND DISPLAY
+  - key: timeformat
+    type: choice
+    app_input_type: dropdown
+    label: "Time display format"
+    default: "12 hour"
+    choices:
+      - "12 hour"
+      - "24 hour"
+    help: "Controls times shown on the GLANCE. Time inputs may still be entered in either 12-hour or 24-hour format."
+
+  - key: hometimezone
+    type: string
+    app_input_type: free-text
+    label: "Home time zone override"
+    default: ""
+    help: "Optional. Leave blank to auto-detect from the home address. If needed, enter an IANA time zone such as America/Chicago, Europe/London, Asia/Tokyo, or Australia/Sydney."
+
+  - key: worktimezone
+    type: string
+    app_input_type: free-text
+    label: "Work time zone override"
+    default: ""
+    help: "Optional. Leave blank to auto-detect from the work address. If needed, enter an IANA time zone such as America/New_York, Europe/Paris, Asia/Singapore, or Pacific/Auckland."
+
+  # WORK DAYS - MONDAY THROUGH FRIDAY BY DEFAULT
+  - key: monday
+    type: string
+    app_input_type: checkbox
+    label: "Work Monday"
+    default: true
+
+  - key: tuesday
+    type: string
+    app_input_type: checkbox
+    label: "Work Tuesday"
+    default: true
+
+  - key: wednesday
+    type: string
+    app_input_type: checkbox
+    label: "Work Wednesday"
+    default: true
+
+  - key: thursday
+    type: string
+    app_input_type: checkbox
+    label: "Work Thursday"
+    default: true
+
+  - key: friday
+    type: string
+    app_input_type: checkbox
+    label: "Work Friday"
+    default: true
+
+  - key: saturday
+    type: string
+    app_input_type: checkbox
+    label: "Work Saturday"
+    default: false
+
+  - key: sunday
+    type: string
+    app_input_type: checkbox
+    label: "Work Sunday"
+    default: false
+
+  # U.S. FEDERAL HOLIDAYS
+  - key: useusholidays
+    type: string
+    app_input_type: checkbox
+    label: "Use U.S. federal holiday rules"
+    default: true
+    help: "Turn this off outside the United States or if you only want to use custom days off. Observed Friday or Monday dates are handled automatically."
+
+  - key: newyear
+    type: string
+    app_input_type: checkbox
+    label: "No commute on New Year's Day"
+    default: true
+
+  - key: mlk
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Martin Luther King Jr. Day"
+    default: true
+
+  - key: presidents
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Presidents Day"
+    default: true
+
+  - key: memorial
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Memorial Day"
+    default: true
+
+  - key: juneteenth
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Juneteenth"
+    default: true
+
+  - key: independence
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Independence Day"
+    default: true
+
+  - key: labor
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Labor Day"
+    default: true
+
+  - key: columbus
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Columbus Day"
+    default: true
+
+  - key: veterans
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Veterans Day"
+    default: true
+
+  - key: thanksgiving
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Thanksgiving"
+    default: true
+
+  - key: christmas
+    type: string
+    app_input_type: checkbox
+    label: "No commute on Christmas Day"
+    default: true
+
+  # EXTRA DAYS OFF
+  - key: dayoff1
+    type: string
+    app_input_type: date
+    label: "Extra day off 1"
+    default: ""
+    help: "Optional PTO, company holiday, or other non-commute date."
+
+  - key: dayoff2
+    type: string
+    app_input_type: date
+    label: "Extra day off 2"
+    default: ""
+    help: "Optional additional non-commute date."
+
+  - key: dayoff3
+    type: string
+    app_input_type: date
+    label: "Extra day off 3"
+    default: ""
+    help: "Optional additional non-commute date."
+
+  # TRAFFIC PROVIDER
+  - key: herekey
+    type: string
+    app_input_type: api-key
+    label: "HERE Location Services API key"
+    default: ""
+    help: "Required for live and typical traffic. Create a HERE Platform account at platform.here.com, create a project/app, generate an API key under credentials, and paste that key here. The key is also used for worldwide address lookup and time-zone detection."
