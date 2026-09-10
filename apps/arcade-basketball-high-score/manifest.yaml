@@ -1,0 +1,37 @@
+gdn: 1
+id: arcade-basketball-high-score
+version: 0.3.0
+name: Arcade Basketball High Score
+author: pairic
+description: The house record on an arcade basketball machine — the champ's name and an oversized score beside a ball dropping through the hoop.
+category: Fun
+entry: app.star
+
+width: 64
+height: 32
+
+# Nothing is fetched, so this only needs to be often enough that editing the
+# settings shows up on the wall without anyone waiting around.
+refresh: 300
+
+pages: [champ]
+
+inputs:
+  - key: name
+    type: string
+    app_input_type: free-text
+    label: Champ
+    default: ""
+    help: Who holds the record. Panel fonts are uppercase only, so it is shown in caps.
+  - key: score
+    type: string
+    app_input_type: free-text
+    label: High score
+    default: ""
+    help: The record itself. Whole numbers only.
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Title
+    default: "ARCADE HOOPS"
+    help: The top strip — name your machine. Change it and this app runs any other game in the room.
