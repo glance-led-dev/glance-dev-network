@@ -1,0 +1,317 @@
+gdn: 1
+id: event-reminder
+version: 0.1.0
+name: Event Reminder
+author: ShulinZhou
+description: Days until the next time a recurring thing happens - every day, every few days, weekly, monthly or yearly - with themed pixel art and a count colour per reminder. Up to five reminders take turns on the panel.
+category: Lifestyle
+entry: app.star
+
+width: 192
+height: 32
+refresh: 60
+
+pages: [reminder]
+
+inputs:
+  - key: title1
+    type: string
+    app_input_type: free-text
+    label: Reminder 1 title
+    default: "SOCCER"
+    help: "Completes the title: DAYS TO ___. Leave blank to use the theme name."
+  - key: date1
+    type: string
+    app_input_type: date
+    label: Reminder 1 first date
+    default: "2026-09-12"
+    help: The first time it happens. The schedule counts from here.
+  - key: repeat1
+    type: string
+    app_input_type: dropdown
+    label: Reminder 1 repeats
+    default: Weekly
+    choices:
+      - "Every day"
+      - "Every 2 days"
+      - "Every 3 days"
+      - Weekly
+      - "Every 2 weeks"
+      - Monthly
+      - Yearly
+  - key: theme1
+    type: string
+    app_input_type: dropdown
+    label: Reminder 1 theme
+    default: Soccer
+    choices:
+      - Walking
+      - Dumbbell
+      - Fishing
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Hockey
+      - Skiing
+      - Billiards
+      - Darts
+      - Golf
+      - Chess
+      - Frisbee
+      - Archery
+      - Bicycle
+      - Climbing
+      - Trash
+      - Hospital
+      - School
+      - Restaurant
+  - key: numcolor1
+    type: string
+    app_input_type: color
+    label: Reminder 1 number color
+    default: "#FFFFFF"
+    help: The colour of this reminder's day count.
+
+  - key: title2
+    type: string
+    app_input_type: free-text
+    label: Reminder 2 title
+    default: ""
+    help: Optional. Leave blank to use the theme name.
+  - key: date2
+    type: string
+    app_input_type: date
+    label: Reminder 2 first date
+    default: ""
+    help: Leave blank to skip this reminder entirely.
+  - key: repeat2
+    type: string
+    app_input_type: dropdown
+    label: Reminder 2 repeats
+    default: Weekly
+    choices:
+      - "Every day"
+      - "Every 2 days"
+      - "Every 3 days"
+      - Weekly
+      - "Every 2 weeks"
+      - Monthly
+      - Yearly
+  - key: theme2
+    type: string
+    app_input_type: dropdown
+    label: Reminder 2 theme
+    default: Trash
+    choices:
+      - Walking
+      - Dumbbell
+      - Fishing
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Hockey
+      - Skiing
+      - Billiards
+      - Darts
+      - Golf
+      - Chess
+      - Frisbee
+      - Archery
+      - Bicycle
+      - Climbing
+      - Trash
+      - Hospital
+      - School
+      - Restaurant
+  - key: numcolor2
+    type: string
+    app_input_type: color
+    label: Reminder 2 number color
+    default: "#39D98A"
+    help: The colour of this reminder's day count.
+
+  - key: title3
+    type: string
+    app_input_type: free-text
+    label: Reminder 3 title
+    default: ""
+    help: Optional. Leave blank to use the theme name.
+  - key: date3
+    type: string
+    app_input_type: date
+    label: Reminder 3 first date
+    default: ""
+    help: Leave blank to skip this reminder entirely.
+  - key: repeat3
+    type: string
+    app_input_type: dropdown
+    label: Reminder 3 repeats
+    default: Monthly
+    choices:
+      - "Every day"
+      - "Every 2 days"
+      - "Every 3 days"
+      - Weekly
+      - "Every 2 weeks"
+      - Monthly
+      - Yearly
+  - key: theme3
+    type: string
+    app_input_type: dropdown
+    label: Reminder 3 theme
+    default: Hospital
+    choices:
+      - Walking
+      - Dumbbell
+      - Fishing
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Hockey
+      - Skiing
+      - Billiards
+      - Darts
+      - Golf
+      - Chess
+      - Frisbee
+      - Archery
+      - Bicycle
+      - Climbing
+      - Trash
+      - Hospital
+      - School
+      - Restaurant
+  - key: numcolor3
+    type: string
+    app_input_type: color
+    label: Reminder 3 number color
+    default: "#FFD24A"
+    help: The colour of this reminder's day count.
+
+  - key: title4
+    type: string
+    app_input_type: free-text
+    label: Reminder 4 title
+    default: ""
+    help: Optional. Leave blank to use the theme name.
+  - key: date4
+    type: string
+    app_input_type: date
+    label: Reminder 4 first date
+    default: ""
+    help: Leave blank to skip this reminder entirely.
+  - key: repeat4
+    type: string
+    app_input_type: dropdown
+    label: Reminder 4 repeats
+    default: Weekly
+    choices:
+      - "Every day"
+      - "Every 2 days"
+      - "Every 3 days"
+      - Weekly
+      - "Every 2 weeks"
+      - Monthly
+      - Yearly
+  - key: theme4
+    type: string
+    app_input_type: dropdown
+    label: Reminder 4 theme
+    default: Dumbbell
+    choices:
+      - Walking
+      - Dumbbell
+      - Fishing
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Hockey
+      - Skiing
+      - Billiards
+      - Darts
+      - Golf
+      - Chess
+      - Frisbee
+      - Archery
+      - Bicycle
+      - Climbing
+      - Trash
+      - Hospital
+      - School
+      - Restaurant
+  - key: numcolor4
+    type: string
+    app_input_type: color
+    label: Reminder 4 number color
+    default: "#E85AA8"
+    help: The colour of this reminder's day count.
+
+  - key: title5
+    type: string
+    app_input_type: free-text
+    label: Reminder 5 title
+    default: ""
+    help: Optional. Leave blank to use the theme name.
+  - key: date5
+    type: string
+    app_input_type: date
+    label: Reminder 5 first date
+    default: ""
+    help: Leave blank to skip this reminder entirely.
+  - key: repeat5
+    type: string
+    app_input_type: dropdown
+    label: Reminder 5 repeats
+    default: Yearly
+    choices:
+      - "Every day"
+      - "Every 2 days"
+      - "Every 3 days"
+      - Weekly
+      - "Every 2 weeks"
+      - Monthly
+      - Yearly
+  - key: theme5
+    type: string
+    app_input_type: dropdown
+    label: Reminder 5 theme
+    default: Restaurant
+    choices:
+      - Walking
+      - Dumbbell
+      - Fishing
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Hockey
+      - Skiing
+      - Billiards
+      - Darts
+      - Golf
+      - Chess
+      - Frisbee
+      - Archery
+      - Bicycle
+      - Climbing
+      - Trash
+      - Hospital
+      - School
+      - Restaurant
+  - key: numcolor5
+    type: string
+    app_input_type: color
+    label: Reminder 5 number color
+    default: "#6FB7E8"
+    help: The colour of this reminder's day count.
+
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#4EA8FF"
+    help: The edge rail.
