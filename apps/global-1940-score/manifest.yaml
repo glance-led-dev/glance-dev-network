@@ -1,0 +1,19 @@
+gdn: 1
+id: axis-allies-g40-scoreboard
+version: 0.1.0
+name: Axis & Allies G40 Scoreboard
+author: Brad Johnston
+description: Live IPC totals and Axis victory cities from an Axis & Allies Global 1940 game.
+category: Fun
+entry: app.star
+width: 64
+height: 32
+refresh: 60
+pages: [main]
+inputs:
+  - key: scoreurl
+    type: string
+    app_input_type: free-text
+    label: Score feed URL
+    default: "https://axis-allies-scoreboard.brad-tuc.workers.dev/score"
+    help: HTTPS URL of a compatible Axis & Allies G40 score feed.
