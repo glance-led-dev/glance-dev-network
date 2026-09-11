@@ -1,0 +1,37 @@
+gdn: 1
+id: yesterdays-extremes
+version: 0.1.0
+name: Yesterday's Extremes
+author: jeff
+description: Yesterday's most extreme rain, snowfall, or temperature reading, ranked across tracked U.S. cities.
+category: Weather
+entry: app.star
+
+width: 64
+height: 32
+refresh: 60
+
+pages: [intro, ranked]
+
+inputs:
+  - key: metric
+    type: choice
+    app_input_type: dropdown
+    label: Metric
+    default: "Extreme High Temp"
+    help: Which yesterday's extreme to rank cities by.
+    choices:
+      - "Extreme High Temp"
+      - "Extreme Low Temp"
+      - "Extreme Rain"
+      - "Extreme Snowfall"
+  - key: count
+    type: choice
+    app_input_type: dropdown
+    label: Number of cities
+    default: "5"
+    help: How many ranked cities to cycle through, one per minute.
+    choices:
+      - "3"
+      - "5"
+      - "8"
