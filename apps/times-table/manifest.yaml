@@ -1,0 +1,56 @@
+gdn: 1
+id: times-table
+version: 0.3.0
+name: Times Table
+author: ShulinZhou
+description: Multiplication drill on the panel - one equation at a time, nine to a round. Normal walks a single table 1 to 9; Shuffle draws both numbers at random. Colours can be yours or freshly drawn each equation.
+category: Education
+entry: app.star
+
+width: 128
+height: 32
+refresh: 60
+
+pages: [table]
+
+inputs:
+  - key: mode
+    type: string
+    app_input_type: dropdown
+    label: Mode
+    default: Normal
+    choices:
+      - Normal
+      - Shuffle
+    help: Normal picks one multiplier and walks it 1-9. Shuffle draws both numbers each time.
+
+  - key: colormode
+    type: string
+    app_input_type: dropdown
+    label: Colors
+    default: Random
+    choices:
+      - Random
+      - Custom
+    help: Random draws three fresh colours for every equation. Custom uses the three you pick below.
+
+  - key: multcolor
+    type: string
+    app_input_type: color
+    label: Multiplier color
+    default: "#FFFFFF"
+    help: Used only when Colors is set to Custom.
+
+  - key: candcolor
+    type: string
+    app_input_type: color
+    label: Multiplicand color
+    default: "#6FB7E8"
+    help: Used only when Colors is set to Custom.
+
+  - key: prodcolor
+    type: string
+    app_input_type: color
+    label: Product color
+    default: "#FFD24A"
+    help: Used only when Colors is set to Custom.
