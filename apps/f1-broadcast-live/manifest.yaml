@@ -1,0 +1,94 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: f1-broadcast-live
+version: 0.2.0
+name: F1 - Broadcast Live
+author: jdhine02
+description: Broadcast-style live timing for Formula 1. A real page rotation - the F1 wordmark, the grand prix and flag/lap/air temp, the circuit, the full order a screen at a time with tyre compound and gap to the leader. Between sessions it shows the next grand prix in your local time, the rest of the calendar, and the last race's podium. Built for a 192-wide panel; the boards widen to 3 columns on 384/640.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width 64/128/192/384. 192 fits every
+# scroll panel (Studio/Pro/Premier); boards go 2-up on 192, 3-up when wider.
+width: 192
+height: 32
+
+# One fixed interval for the whole app. 2 minutes keeps the OpenF1 calls light
+# while a session is live; the off-season cards re-fetch on the same timer.
+refresh: 120
+
+# The panel rotates through these pages in order, one render request per page.
+# board*/feed* are "flex" slots -- each figures out what to show from the
+# current state (running order while live, calendar/podium cards off-season).
+pages: [logo, event, order1, order2, order3]
+
+assets:
+  - checkered.png
+  - f1-logo.png
+  - track-albert-park.png
+  - track-americas.png
+  - track-bahrain.png
+  - track-baku.png
+  - track-catalunya.png
+  - track-hungaroring.png
+  - track-imola.png
+  - track-interlagos.png
+  - track-istanbul.png
+  - track-jeddah.png
+  - track-losail.png
+  - track-marina-bay.png
+  - track-miami.png
+  - track-monaco.png
+  - track-monza.png
+  - track-nurburgring.png
+  - track-red-bull-ring.png
+  - track-ricard.png
+  - track-rodriguez.png
+  - track-silverstone.png
+  - track-villeneuve.png
+  - track-zandvoort.png
+
+# What the client fills in at install time.
+inputs:
+  - key: tempunit
+    type: choice
+    app_input_type: dropdown
+    label: Temperature unit
+    default: "C"
+    choices: ["C", "F"]
+    help: Units for the live air-temperature reading.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "Europe/London"
+    choices:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "America/Anchorage"
+      - "Pacific/Honolulu"
+      - "America/Sao_Paulo"
+      - "America/Mexico_City"
+      - "Europe/London"
+      - "Europe/Paris"
+      - "Europe/Moscow"
+      - "Africa/Johannesburg"
+      - "Asia/Dubai"
+      - "Asia/Kolkata"
+      - "Asia/Shanghai"
+      - "Asia/Tokyo"
+      - "Asia/Singapore"
+      - "Australia/Sydney"
+      - "Pacific/Auckland"
+    help: Grand prix dates and times are shown in this zone -- F1's calendar spans every region.
+
+  - key: datecolor
+    type: string
+    app_input_type: color
+    label: Next-race date/time color
+    default: "#FFD166"
