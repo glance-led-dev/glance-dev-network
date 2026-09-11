@@ -1,0 +1,96 @@
+gdn: 1
+id: sps-athletics-upcoming
+version: 0.1.0
+name: SPS Upcoming Games
+author: csmith
+description: >-
+  St. Paul's School (Big Red) games this week, across every team (Varsity,
+  JV, JV-B) — schedule and score in one place. Shows the upcoming time until
+  a game is played, then updates in place to the final score. Only real
+  games show — a day with nothing scheduled is skipped entirely rather than
+  padded with a blank. Companion to "SPS Recent Results", a dedicated
+  scores-only view of the same games. Rolls to next week every Monday.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+width: 192
+height: 32
+
+# Seconds between re-renders (minimum 60 for public apps).
+refresh: 300
+
+# 7 game slots (each picks from this week's actual games, skipping empty
+# days — see week_matches() in app.star) + 1 "this week" cover page = 8, the
+# platform's hard per-app maximum (gdn/data/scene.schema.json,
+# "pages": {"maxItems": 8}). All 8 pages share the same two http.get calls
+# (this month + next month of the combined calendar).
+pages:
+  - this_week
+  - slot1
+  - slot2
+  - slot3
+  - slot4
+  - slot5
+  - slot6
+  - slot7
+
+assets:
+  - logos/andover.png
+  - logos/austin-prep.png
+  - logos/avon-old-farms.png
+  - logos/bc-high.png
+  - logos/belmont-hill.png
+  - logos/berkshire-school.png
+  - logos/berwick-academy.png
+  - logos/brewster-academy.png
+  - logos/brooks.png
+  - logos/brunswick.png
+  - logos/buckingham-browne-and-nicols.png
+  - logos/cantebury.png
+  - logos/cardigan.png
+  - logos/choate.png
+  - logos/concord-hs.png
+  - logos/cushing.png
+  - logos/dana-hall.png
+  - logos/deerfield.png
+  - logos/dexter-southfield.png
+  - logos/dublin-hs.png
+  - logos/eaglebrook-school.png
+  - logos/exeter.png
+  - logos/fessenden-school.png
+  - logos/governors-academy.png
+  - logos/groton.png
+  - logos/hanover-hs.png
+  - logos/holderness.png
+  - logos/hotchkiss.png
+  - logos/kent-school.png
+  - logos/kingswood-oxford.png
+  - logos/kua.png
+  - logos/lawrence-academy.png
+  - logos/lawrenceville.png
+  - logos/loomis-chaffee.png
+  - logos/middlesex.png
+  - logos/milton.png
+  - logos/new-hampton.png
+  - logos/nobles.png
+  - logos/northfield-mount-hermon.png
+  - logos/pingree.png
+  - logos/pomfret.png
+  - logos/portsmouth-abbey.png
+  - logos/proctor.png
+  - logos/rivers.png
+  - logos/sps.png
+  - logos/st-marks.png
+  - logos/st-sebs.png
+  - logos/tabor-academy.png
+  - logos/taft.png
+  - logos/thayer-academy.png
+  - logos/tilton.png
+  - logos/vermont-academy.png
+  - logos/willbrham-and-monson.png
+  - logos/williston.png
+  - logos/winsor.png
+  - logos/worcester-academy.png
+
+inputs: []
