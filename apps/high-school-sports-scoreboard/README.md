@@ -74,6 +74,18 @@ For live baseball and softball, the diamond shows occupied bases in the batting 
 
 Parse pricing and endpoint costs can change; check the [usage page](https://parse.bot/settings?tab=usage) in your own Parse account. Never post your API key on GitHub or share it with another user.
 
+## Refresh and final-verification policy
+
+- A timezone-less scheduled time returned by MaxPreps or Parse is interpreted in the school's local timezone first, then converted to the display timezone selected in the app. The source timezone normally comes from the required MaxPreps school URL; a game URL must use its state as a fallback rather than silently defaulting to Eastern.
+- On game day, Scoretracker checks begin at the scheduled start time and use the selected live frequency for no more than four hours. Selecting **No live pulls** disables these recurring checks.
+- Every successful response is cached. Normal Scroll image refreshes read the cache and do not spend Parse credits or restart the live-check window.
+- A Final first reported at or before two hours after kickoff is provisional. The app checks it again after 30 minutes and once more after another 30 minutes, and locks the Final only when both confirmations match.
+- If an early Final conflicts with either confirmation, the last trusted score remains cached, the result is shown as pending, and normal checks may continue through the four-hour window.
+- If no trusted Final exists when the four-hour window ends, frequent checks stop and the app makes one additional check at the five-hour mark.
+- At 11:00 a.m. in the school's local timezone on the following day, the app always performs exactly one audit, even when a Final was accepted earlier. A conflicting audit flags the result without automatically replacing the last trusted score.
+- After the next-day audit, checks stop permanently for that matchup. A newly discovered matchup starts a new, separately cached refresh cycle.
+- A transient football `Final 0-0` response cannot replace a previously available real score or become the trusted Final.
+
 ## Common messages
 
 - **KEY ERROR:** the Parse key is missing, invalid, or connected to the wrong Parse account/API.
