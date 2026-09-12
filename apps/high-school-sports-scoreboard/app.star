@@ -10803,15 +10803,15 @@ def normalized_live_clock(value):
         return ""
     text = str(value).strip().upper()
     # MaxPreps frequently reports approximate prose such as "~5 mins to go".
-    # The detail box needs the compact clock form, and the approximation mark
-    # does not add useful scoreboard information.
-    if text.startswith("~"):
+    # Keep the approximation mark while compacting the clock for the display.
+    approximate = text.startswith("~")
+    if approximate:
         text = text[1:].strip()
     if "MIN" in text:
         first = text.split(" ")[0]
         if first.isdigit():
-            return first + ":00"
-    return text
+            text = first + ":00"
+    return ("~" if approximate else "") + text
 
 def scoretracker_game_in(value, depth = 0):
     if depth > 6:
@@ -10937,6 +10937,17 @@ def period_scores_count(side, count):
         scores.append("-")
     return scores[:count]
 
+def suspicious_empty_football_final(base, status, away_score, home_score):
+    # The MaxPreps Scoretracker can briefly publish `final` with placeholder
+    # zeroes even when a real live score was previously available. A scoreless
+    # football final is not accepted from that transient payload. The caller
+    # can retain its scheduled/final totals or fall back to the schedule feed.
+    if str(base.get("sport", "")).upper() != "FB" or status != "final":
+        return False
+    away_text = str(away_score).strip() if away_score != None else ""
+    home_text = str(home_score).strip() if home_score != None else ""
+    return away_text in ["0", "0.0", "00"] and home_text in ["0", "0.0", "00"]
+
 def merge_live_game(base, live_game, ctx, display_timezone):
     away_side = live_game.get("away_team", {})
     home_side = live_game.get("home_team", {})
@@ -10972,6 +10983,7 @@ def merge_live_game(base, live_game, ctx, display_timezone):
     home_score = home_side.get("score")
     has_score = away_score != None and home_score != None
     status = str(live_game.get("status", "live")).lower()
+    rejected_empty_final = suspicious_empty_football_final(base, status, away_score, home_score)
 
     base["awayName"] = away_name
     base["homeName"] = home_name
@@ -10992,6 +11004,9 @@ def merge_live_game(base, live_game, ctx, display_timezone):
                 base[side_name + suffix] = live_color
     base["awayRecord"] = team_record(away_side, base.get("awayRecord", "0-0"))
     base["homeRecord"] = team_record(home_side, base.get("homeRecord", "0-0"))
+    if rejected_empty_final:
+        base["rejectedEmptyFinal"] = True
+        return base
     # Never erase a previously usable schedule/live score because a later
     # Scoretracker payload contains status/clock but omits its score fields.
     if has_score:
@@ -11163,15 +11178,21 @@ def fetch_game_adaptive(ctx, kind, slot):
                 "when": "",
             }
             exact_game = merge_live_game(exact_base, live_game, ctx, display_timezone)
-            if exact_game.get("type") != "final" and exact_game.get("status") != "final":
+            if exact_game.get("rejectedEmptyFinal", False):
+                exact_game = None
+            if exact_game == None:
+                # Ignore the transient Final/0-0 Scoretracker shell and use
+                # the schedule result below instead of displaying it.
+                pass
+            elif exact_game.get("type") != "final" and exact_game.get("status") != "final":
                 exact_game = overlay_gamechanger_live(exact_game, gc_live, display_timezone)
-            if kind == "dynamic":
+            if exact_game != None and kind == "dynamic":
                 return exact_game
-            if kind == "final":
+            if exact_game != None and kind == "final":
                 return exact_game if exact_game.get("type") == "final" else {"displayState": "no_final"}
-            if kind == "live":
+            if exact_game != None and kind == "live":
                 return exact_game if exact_game.get("status") == "live" else {"displayState": "no_live"}
-            if exact_game.get("status") == "live":
+            if exact_game != None and exact_game.get("status") == "live":
                 return exact_game
 
     season = current_season(ctx, source_timezone)
@@ -15366,6 +15387,27 @@ def scoreboard_school(c, ctx):
         draw_empty(c, "OFFSEASON", "#d8b04a")
         return
     g = fetch_game_adaptive(ctx, "dynamic", "school")
+    # Exact-game live responses may contain scores and status but omit every
+    # schedule/date field. Preserve the configured game URL so the header can
+    # recover its M-D-YYYY path segment during Live rendering.
+    if g != None and (g.get("gameUrl") == None or str(g.get("gameUrl")).strip() == ""):
+        configured_game_url = schools.get("maxpreps_url")
+        if configured_game_url != None and str(configured_game_url).strip() != "":
+            g["gameUrl"] = configured_game_url
+    # Populate `when` here as well, before presentation begins. This avoids
+    # relying on the live payload to carry schedule metadata through each
+    # exact-game refresh.
+    if g != None and str(g.get("when", "")).strip() == "":
+        configured_game_url = str(schools.get("maxpreps_url", ""))
+        for segment in configured_game_url.split("/"):
+            pieces = segment.split("-")
+            if len(pieces) == 3 and len(pieces[2]) == 4 and pieces[0].isdigit() and pieces[1].isdigit() and pieces[2].isdigit():
+                year = int(pieces[2])
+                month = int(pieces[0])
+                day = int(pieces[1])
+                weekday = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][weekday_for_date(year, month, day)]
+                g["when"] = weekday + " " + str(month) + "/" + str(day)
+                break
     state = g.get("displayState")
     if state == "key_error":
         draw_empty(c, "KEY ERROR", "#ff3b30")
@@ -15397,17 +15439,29 @@ def scoreboard_school(c, ctx):
         c.hline(48, 31, 48, home["color"])
     c.hline(96, 31, 96, STAT_FILL_COLOR)
     c.vline(0, 0, 32, FILL_COLOR)
-    c.vline(191, 0, 32, STAT_FILL_COLOR)
+    # Close the rightmost score cells with a visible divider instead of the
+    # panel fill, which left the score box visually open on Live games.
+    c.vline(191, 0, 32, STAT_DIVIDER_COLOR)
     c.vline(0, 9, 23, "black" if away_logo != None else away["color"])
     c.hline(95, 16, 97, STAT_FILL_COLOR)
     if g.get("status") != "live" and g.get("status") != "final" and g.get("type") != "final":
         redraw_stat_labels(c, g)
-    divider_positions = [95, 143, 168]
+    # Restore junction pixels at the dividers that belong to the layout that
+    # was actually drawn. Reusing the Next-grid positions over a live game
+    # left stray/broken lines through its detail, abbreviation, and score
+    # columns.
+    if g.get("status") == "live":
+        divider_positions = [95, 141, 165]
+    elif g.get("type") == "final" or g.get("status") == "final":
+        divider_positions = [95, 119, 132, 145, 158, 171]
+    else:
+        divider_positions = [95, 118, 143, 168]
     for divider_x in divider_positions:
         c.pixel(divider_x, 16, STAT_DIVIDER_COLOR)
         c.pixel(divider_x, 0, STAT_DIVIDER_COLOR)
         c.pixel(divider_x, 31, STAT_DIVIDER_COLOR)
     c.pixel(191, 15, STAT_DIVIDER_COLOR)
+    c.pixel(191, 16, STAT_DIVIDER_COLOR)
     c.pixel(0, 8, BOX_COLOR)
 
 # ---------------------------------------------------------------------------
@@ -15452,7 +15506,32 @@ def restored_header(c, g):
     c.rect(1, 8, 94, 8, fill = "white")
     sport_text = SPORT_HEADER.get(g.get("sport", "FB"), g.get("sport", "FB"))
     c.text(sport_text, 2, 2, font = "4x5", color = STATUS_BAR_TEXT)
-    when = str(g.get("when", ""))
+    when = str(g.get("when", "")).strip()
+    # Some live Scoretracker responses omit the display-ready `when` field
+    # even though the scheduled date remains available. Reconstruct the
+    # header date from that preserved source so switching Next -> Live never
+    # makes the date disappear.
+    if when == "":
+        raw_date = g.get("sortDate", g.get("date"))
+        if raw_date == None or str(raw_date).strip() == "":
+            raw_date = g.get("gameDate", g.get("game_date"))
+        date_info = parse_game_date(raw_date)
+        # The live Scoretracker payload can omit all schedule date fields,
+        # while retaining the canonical MaxPreps URL. Its path contains the
+        # scheduled date as M-D-YYYY; recover that compactly for the header.
+        if date_info == None:
+            game_url = str(g.get("gameUrl", g.get("game_url", "")))
+            for segment in game_url.split("/"):
+                pieces = segment.split("-")
+                if len(pieces) == 3 and len(pieces[2]) == 4 and pieces[0].isdigit() and pieces[1].isdigit() and pieces[2].isdigit():
+                    raw_date = pieces[2] + "-" + pieces[0] + "-" + pieces[1] + " 00:00"
+                    date_info = parse_game_date(raw_date)
+                    break
+        if date_info != None:
+            weekday = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][
+                weekday_for_date(date_info["year"], date_info["month"], date_info["day"])
+            ]
+            when = weekday + " " + str(date_info["month"]) + "/" + str(date_info["day"])
     parts = when.split(" ")
     day_text = ""
     calendar_text = ""
@@ -15643,9 +15722,9 @@ def restored_abbreviation(c, team, code, record, box):
     c.text(letters, center_x, box["y"] + 1, font = "6x8", color = color, align = "center")
     c.text(record, center_x, box["y"] + 10, font = "4x5", color = "white", align = "center")
 
-def restored_value(c, value, box, color = "white"):
+def restored_value(c, value, box, color = "white", font = "7x12"):
     draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
-    restored_center_text(c, value, box["x"], box["y"] + 4, box["w"], "7x12", color)
+    restored_center_text(c, value, box["x"], box["y"] + 4, box["w"], font, color)
 
 def restored_period(period):
     if period == None:
@@ -15726,6 +15805,9 @@ def compact_unix_time(unix, display_timezone):
 def restored_detail(c, g):
     draw_box(c, DETAIL_BOX["x"], DETAIL_BOX["y"], DETAIL_BOX["w"], DETAIL_BOX["h"], STAT_DIVIDER_COLOR)
     center = DETAIL_BOX["x"] + DETAIL_BOX["w"] // 2
+    if g.get("finalPending", False):
+        c.text("F PEN", center, 13, font = "4x5", color = "#d8b04a", align = "center")
+        return
     if g.get("type") == "final" or g.get("status") == "final":
         return
     if g.get("status") in ["delayed", "postponed", "delay", "pp"]:
@@ -15738,12 +15820,28 @@ def restored_detail(c, g):
         clock = str(g.get("liveClock", "")).strip().upper()
         if clock == "NONE" or clock == "NULL":
             clock = ""
+        approximate_clock = clock.startswith("~")
+        if approximate_clock:
+            clock = clock[1:].strip()
         if period.startswith("OT"):
             period = ""
         if period != "":
             c.text(period, center, 7, font = "4x5", color = "white", align = "center")
         if clock != "":
-            c.text(clock, center, 18 if period != "" else 13, font = "4x5", color = "white", align = "center")
+            clock_y = 18 if period != "" else 13
+            if approximate_clock:
+                # The bundled pixel fonts do not contain a tilde glyph, so
+                # draw a compact one explicitly and center it with the clock.
+                clock_width = len(clock) * 5 - 1
+                group_width = clock_width + 5
+                group_x = center - group_width // 2
+                c.pixel(group_x, clock_y + 2, "white")
+                c.pixel(group_x + 1, clock_y + 1, "white")
+                c.pixel(group_x + 2, clock_y + 1, "white")
+                c.pixel(group_x + 3, clock_y + 2, "white")
+                c.text(clock, group_x + 5, clock_y, font = "4x5", color = "white")
+            else:
+                c.text(clock, center, clock_y, font = "4x5", color = "white", align = "center")
         # Once Parse has returned an actual live score or period, the detail
         # box should stay focused on game state instead of showing a redundant
         # scorekeeper update timestamp. Keep UPDATED only as a fallback when
