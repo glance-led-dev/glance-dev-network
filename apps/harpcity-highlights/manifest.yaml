@@ -1,0 +1,46 @@
+gdn: 1
+id: harpcity-highlights
+version: 1.0.0
+name: Harpcity Highlights - Sleeper
+author: Harpcity
+description: Sleeper matchup, score margin, team record, and league records.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages:
+- matchup
+- margin
+- record
+- league_records
+inputs:
+- key: leagueid
+  type: string
+  app_input_type: free-text
+  label: Sleeper league ID
+  default: ''
+  help: Numeric Sleeper NFL league ID from your league URL. Blank shows labeled demo
+    data.
+- key: teamname
+  type: string
+  app_input_type: free-text
+  label: Exact team name
+  default: ''
+  help: Exact team name, or leave blank and select a roster ID.
+- key: rosterid
+  type: number
+  label: Roster ID override (0 uses team name)
+  default: 0
+- key: week
+  type: number
+  label: NFL week (0 follows current week)
+  default: 0
+- key: mode
+  type: choice
+  app_input_type: dropdown
+  label: Display mode
+  default: live
+  choices:
+  - live
+  - demo
