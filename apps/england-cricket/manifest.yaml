@@ -1,0 +1,15 @@
+id: england-cricket
+name: England Cricket
+description: Live score and status for England's Test and ODI matches.
+author: Levi Solomon
+category: Sports
+width: 128
+height: 32
+refresh: 300
+pages:
+  - live
+  - commentary
+inputs:
+  - key: apikey
+    label: CricAPI Key
+    app_input_type: api-key
