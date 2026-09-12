@@ -1,0 +1,12 @@
+gdn: 1
+id: daily-affirmations
+version: 0.1.0
+name: "DAILY AFFIRMATIONS"
+author: "DAXintheLAB"
+description: A new Glance app.
+category: Lifestyle
+entry: app.star
+width: 128
+height: 32
+refresh: 3600
+pages: [main]

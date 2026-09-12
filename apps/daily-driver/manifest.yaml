@@ -1,0 +1,110 @@
+gdn: 1
+
+id: daily-driver
+version: 0.1.0
+name: "Daily Driver"
+author: "bchill"
+description: "A legendary car. Every day."
+category: Lifestyle
+
+entry: app.star
+
+width: 128
+height: 32
+refresh: 300
+
+pages:
+  - main
+  - engine_specs
+  - performance
+
+assets:
+  - r34-front-transparent.png
+  - r34-hero-transparent.png
+
+  - golf-r-2024-rear-gdn-final.png
+  - golf-r-2024-front-gdn-final.png
+
+  - f40-1987-rear-transparent.png
+  - f40-1987-front-transparent.png
+
+  - fordgt-2005-rear-final.png
+  - fordgt-2005-front-final.png
+
+  - supra-1994-rear-final.png
+  - supra-1994-front-final.png
+
+  - challenger-1970-rear-final.png
+  - challenger-1970-front-final-v2.png
+
+  - rx7-1993-rear-final.png
+  - rx7-1993-front-final.png
+
+  - porsche-993-1995-rear-gdn-v2.png
+  - porsche-993-1995-front-gdn-v2.png
+
+  - gt500-1967-rear-gdn-final-v3.png
+  - gt500-1967-front-gdn-final-v3.png
+
+  - countach-1988-rear-gdn-final.png
+  - countach-1988-front-gdn-final.png
+
+  - corvette-1963-rear-gdn-final.png
+  - corvette-1963-front-gdn-final.png
+
+  - bmw-e46-m3-rear-gdn-final.png
+  - bmw-e46-m3-front-gdn-final.png
+
+  - daewoo-lanos-2001-rear-gdn-final.png
+  - daewoo-lanos-2001-front-gdn-final.png
+
+  - viper-gts-1996-rear-gdn-final.png
+  - viper-gts-1996-front-gdn-final.png
+
+  - subaru-wrx-sti-2004-rear-gdn-final.png
+  - subaru-wrx-sti-2004-front-gdn-final.png
+
+  - audi-r8-v10-2020-rear-gdn-final.png
+  - audi-r8-v10-2020-front-gdn-final.png
+
+  - acura-nsx-1991-rear-gdn-final.png
+  - acura-nsx-1991-front-gdn-final.png
+
+  - mercedes-slr-mclaren-2005-rear-gdn-final.png
+  - mercedes-slr-mclaren-2005-front-gdn-final.png
+
+  - chevy-bel-air-1957-rear-gdn-final.png
+  - chevy-bel-air-1957-front-gdn-final.png
+
+  - lexus-lfa-nurburgring-2012-orange-rear-gdn-final.png
+  - lexus-lfa-nurburgring-2012-orange-front-gdn-final.png
+
+  - eclipse-1995-gsx-rear-gdn-final.png
+  - eclipse-1995-gsx-front-gdn-final.png
+
+  - cadillac-eldorado-1959-rear-gdn-final.png
+  - cadillac-eldorado-1959-front-gdn-final.png
+
+  - camaro-z28-1969-rallye-green-rear-gdn-final.png
+  - camaro-z28-1969-rallye-green-front-gdn-final.png
+
+  - delorean-dmc12-1981-rear-gdn-final.png
+  - delorean-dmc12-1981-front-gdn-final.png
+
+  - buick-gnx-1987-rear-gdn-final.png
+  - buick-gnx-1987-front-gdn-final.png
+
+  - mclaren-f1-orange-rear-gdn-final.png
+  - mclaren-f1-orange-front-gdn-final.png
+
+  - ferrari-enzo-2003-rear-gdn-final.png
+  - ferrari-enzo-2003-front-gdn-final.png
+
+  - dodge-charger-srt-hellcat-2015-rear-gdn-final.png
+  - dodge-charger-srt-hellcat-2015-front-gdn-final.png
+
+  - porsche-carrera-gt-2005-rear-gdn-final.png
+  - porsche-carrera-gt-2005-front-gdn-final.png
+
+  - mercedes-300sl-gullwing-1955-rear-gdn-final.png
+  - mercedes-300sl-gullwing-1955-front-gdn-final.png
