@@ -3194,6 +3194,22 @@ function seqLoad(src) {
 let seqGen = 0;
 async function seqFrames(pages) {           // called from render() on every preview
   const gen = ++seqGen;
+  // This app uses a paid upstream feed and exposes one state-selected page.
+  // Reuse the normal render in the sequence simulator instead of rendering
+  // the same scoreboard again at +1 and +2 minutes (and spending credits).
+  if (currentApp === 'high-school-sports-scoreboard') {
+    const frames = [];
+    for (let i = 0; i < pages.length; i++) {
+      const name = (pages[i].title && pages[i].title !== pages[i].name
+                    ? pages[i].title : pages[i].name).toUpperCase();
+      const im = await seqLoad(pages[i].dataUri);
+      if (gen !== seqGen) return;
+      if (im) frames.push({ name: name, img: im, dots: seqDots(im) });
+    }
+    SEQ.frames = frames;
+    if (!SEQ.started) seqStart();
+    return;
+  }
   // A page can change with TIME (a per-minute rotation) without having more
   // pages. Render the app one and two minutes ahead too; where a page's
   // pixels differ, those variants become TURNS - the sequence shows the

@@ -32,6 +32,7 @@ import json as _json
 import os
 import random
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -54,6 +55,36 @@ MAX_BODY_BYTES = 2_000_000
 MAX_REQUESTS_PER_RUN = 8            # an app can't hammer an API in one render
 
 CACHE_DIR = Path.home() / ".gdn" / "httpcache"
+
+
+@contextmanager
+def _cache_lock(key: str):
+    """Serialize the first fetch for one disk-cache key across render workers."""
+    handle = None
+    try:
+        try:
+            CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            handle = (CACHE_DIR / (key + ".lock")).open("a+")
+        except OSError:
+            # Sandboxed Studio sessions may not be allowed to write under the
+            # user's home directory. The sequence-preview guard still prevents
+            # duplicate renders, so continue without the optional file lock.
+            yield
+            return
+        try:
+            import fcntl
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        except (ImportError, OSError):
+            pass
+        yield
+    finally:
+        if handle is not None:
+            try:
+                import fcntl
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            except (ImportError, OSError):
+                pass
+            handle.close()
 
 # ---- outbound proxy pool --------------------------------------------------
 # All app http.get traffic egresses through a rotating proxy pool, so the render
@@ -240,20 +271,25 @@ class HttpHost:
         if hit is not None:
             return hit
 
-        self._count += 1
-        if self._count > MAX_REQUESTS_PER_RUN:
-            raise HttpLimit(f"http limit: at most {MAX_REQUESTS_PER_RUN} "
-                            "uncached requests per render")
-        try:
-            r = _fetch(url, headers, params)
-        except requests.RequestException as e:
-            # timeout / DNS / refused / all proxies failed — report, don't crash the render
-            out = _response(0, "", error=f"{type(e).__name__}: {e}"[:300])
+        with _cache_lock(key):
+            cached = _cache_read(key, ttl)
+            if cached is not None:
+                return _response(*cached)
+
+            self._count += 1
+            if self._count > MAX_REQUESTS_PER_RUN:
+                raise HttpLimit(f"http limit: at most {MAX_REQUESTS_PER_RUN} "
+                                "uncached requests per render")
+            try:
+                r = _fetch(url, headers, params)
+            except requests.RequestException as e:
+                # timeout / DNS / refused / all proxies failed — report, don't crash the render
+                out = _response(0, "", error=f"{type(e).__name__}: {e}"[:300])
+                self._mem[key] = out
+                return out
+            body = r.text[:MAX_BODY_BYTES]
+            if 200 <= r.status_code < 300 and ttl > 0:
+                _cache_write(key, r.status_code, body)
+            out = _response(r.status_code, body)
             self._mem[key] = out
             return out
-        body = r.text[:MAX_BODY_BYTES]
-        if 200 <= r.status_code < 300 and ttl > 0:
-            _cache_write(key, r.status_code, body)
-        out = _response(r.status_code, body)
-        self._mem[key] = out
-        return out
