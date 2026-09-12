@@ -1,0 +1,62 @@
+gdn: 1
+id: wwe-champions
+version: 0.2.0
+name: WWE Champions
+author: reyos86
+description: One detailed championship belt beside its current champion. Rotates every
+  minute; champion data from Wikipedia refreshes every 30 minutes. Includes Raw, SmackDown,
+  NXT, Evolve, ID and women's tag titles.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages:
+- board
+inputs:
+- key: brand
+  type: choice
+  app_input_type: dropdown
+  label: Brand
+  default: ALL
+  choices:
+  - ALL
+  - RAW
+  - SMACKDOWN
+  - NXT
+  - OPEN
+  - EVOLVE
+  - ID
+  - DEV
+  help: ALL includes every title. OPEN is the cross-brand women's tag title. DEV combines
+    OPEN, Evolve and ID.
+- key: title
+  type: choice
+  app_input_type: dropdown
+  label: Title
+  default: ROTATE
+  choices:
+  - ROTATE
+  - WORLD HEAVYWEIGHT
+  - WOMEN'S WORLD
+  - INTERCONTINENTAL
+  - WOMEN'S IC
+  - WORLD TAG TEAM
+  - UNDISPUTED WWE
+  - WWE WOMEN'S
+  - INTERIM WOMEN'S
+  - UNITED STATES
+  - WOMEN'S US
+  - WWE TAG TEAM
+  - WOMEN'S TAG TEAM
+  - NXT CHAMPION
+  - NXT WOMEN'S
+  - NXT NORTH AMERICAN
+  - NXT WOMEN'S NA
+  - NXT TAG TEAM
+  - EVOLVE MEN'S
+  - EVOLVE WOMEN'S
+  - WWE ID MEN'S
+  - WWE ID WOMEN'S
+  help: ROTATE advances through the selected brand once per minute. Choose a title
+    to keep it on screen; set Brand to ALL to find any title.
