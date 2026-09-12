@@ -15939,8 +15939,8 @@ def draw_final(c, g):
     else:
         restored_quarter_row(c, g.get("awayQuarters", ["-", "-", "-", "-"]), 0)
         restored_quarter_row(c, g.get("homeQuarters", ["-", "-", "-", "-"]), 16)
-        restored_value(c, str(g.get("awayScore", "-")), FINAL_AWAY_VALUE, "green" if g.get("winner") == "away" else "white")
-        restored_value(c, str(g.get("homeScore", "-")), FINAL_HOME_VALUE, "green" if g.get("winner") == "home" else "white")
+        restored_value(c, str(g.get("awayScore", "-")), FINAL_AWAY_VALUE, "green" if g.get("winner") == "away" else "white", "6x8")
+        restored_value(c, str(g.get("homeScore", "-")), FINAL_HOME_VALUE, "green" if g.get("winner") == "home" else "white", "6x8")
 
 def restored_three_stat_final(c, g, suffixes):
     for row in range(2):
