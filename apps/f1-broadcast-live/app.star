@@ -526,10 +526,18 @@ def fetch_f1_live(ctx):
                 flag_str = str(e.get("flag")).upper()
 
     is_race = session_type == "RACE"
+    # Once the chequered flag falls, OpenF1 stops emitting new /position and
+    # /intervals entries -- cars parked in the garage don't change track
+    # position. The recency filter below (last 150s) then matches nothing for
+    # the rest of the post-session grace window, leaving the board blank. Fall
+    # back to /session_result -- the same stable final-classification endpoint
+    # Practice/Qualifying already use -- once the session's scheduled end has
+    # passed.
+    session_over = now_unix > end_unix
     num2name = {}
     rows = []
 
-    if is_race:
+    if is_race and not session_over:
         # Race: /position is the real running order and /intervals is the real
         # gap to the leader -- both are meaningful mid-race.
         cutoff = format_iso_utc(now_unix - 150)
@@ -552,14 +560,20 @@ def fetch_f1_live(ctx):
             num2name[str(dn)] = row["name"]
             rows.append(row)
     else:
-        # Practice/Qualifying: /position is raw track order, not a real
-        # classification -- it can put a driver through five positions in
-        # fifteen minutes as cars cycle through out-laps and in-laps. What
-        # "standings" mean here is the best-lap-time ranking, which is what
-        # session_result carries (and it updates live, mid-session, too).
+        # Practice/Qualifying (still running): /position is raw track order,
+        # not a real classification -- it can put a driver through five
+        # positions in fifteen minutes as cars cycle through out-laps and
+        # in-laps. What "standings" mean here is the best-lap-time ranking,
+        # which is what session_result carries (and it updates live, mid-
+        # session, too). A finished Race (session_over, still within the
+        # post-session grace) lands here too, since its /position feed has
+        # gone stale -- session_result is also the final classification.
         # Qualifying's gap_to_leader/duration come back as a [Q1, Q2, Q3]
         # array; the last non-null entry is a driver's most advanced segment.
+        # A finished Race's gap_to_leader is a plain number for lead-lap
+        # finishers but a string ("+1 LAP" / "+2 LAPS") for lapped ones.
         rresp = http_json("https://api.openf1.org/v1/session_result?session_key=" + str(session_key), 15)
+        last_pos = 0
         for res in (rresp["data"] if rresp["ok"] else []):
             dn = res.get("driver_number")
             if dn == None:
@@ -572,8 +586,19 @@ def fetch_f1_live(ctx):
                 gap_str = "DNS"
             else:
                 gap_raw = _last_scalar(res.get("gap_to_leader"))
-                gap_str = format_gap_time(gap_raw) if gap_raw != None else ""
-            row = _f1_row(dn, drivers.get(dn, {}), int(res.get("position", 0)), gap_str, stints)
+                if gap_raw == None:
+                    gap_str = ""
+                elif type(gap_raw) == "string":
+                    gap_str = gap_raw.upper().strip()
+                else:
+                    gap_str = format_gap_time(gap_raw)
+            # A retired driver's session_result position is null (OpenF1
+            # only ranks classified finishers) -- session_result still lists
+            # them in classification order after the numbered rows, so keep
+            # counting on from the last real position seen.
+            pos_raw = res.get("position")
+            last_pos = int(pos_raw) if pos_raw != None else last_pos + 1
+            row = _f1_row(dn, drivers.get(dn, {}), last_pos, gap_str, stints)
             num2name[str(dn)] = row["name"]
             rows.append(row)
 
