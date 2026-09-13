@@ -1,0 +1,16 @@
+gdn: 1
+id: point-tracker
+version: 0.1.0
+name: "Point Tracker"
+author: "Sam Mulvey"
+description: Live point and rebirth tracker for Thomas and Mark.
+category: Fun
+
+entry: app.star
+
+width: 64
+height: 32
+
+refresh: 60
+
+pages: [main]
