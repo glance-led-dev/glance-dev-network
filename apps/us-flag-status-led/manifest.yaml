@@ -1,0 +1,38 @@
+gdn: 1
+id: "us-flag-status-led"
+version: "0.1.0"
+name: "Half-Staff Watch Mini"
+author: "Christian Kunz"
+description: "US flag position, why, and until when."
+entry: "app.star"
+category: "news"
+width: 64
+height: 32
+refresh: 900
+pages: ["flag", "why", "when"]
+inputs:
+  - key: "timezone"
+    type: "choice"
+    app_input_type: "dropdown"
+    label: "Time zone"
+    default: "Eastern"
+    choices: ["Eastern", "Central", "Mountain", "Arizona", "Pacific", "Alaska", "Hawaii"]
+    help: "Orders run until sunset local time."
+  - key: "accent"
+    type: "string"
+    app_input_type: "color"
+    label: "Half-staff color"
+    default: "#FFAA00"
+    help: "Color of the hero and end date."
+  - key: "bar"
+    type: "bool"
+    app_input_type: "checkbox"
+    label: "Show duration bar"
+    default: true
+    help: "How far through the order you are."
+  - key: "demo"
+    type: "bool"
+    app_input_type: "checkbox"
+    label: "Demo mode"
+    default: false
+    help: "Show a sample order instead of live data."
