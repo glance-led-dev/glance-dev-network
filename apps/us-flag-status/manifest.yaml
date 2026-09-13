@@ -1,0 +1,45 @@
+gdn: 1
+
+id: us-flag-status
+version: 0.1.0
+name: Half-Staff Watch
+author: Christian K
+description: Is the US flag at half-staff right now, why, and until when.
+entry: app.star
+category: news
+
+width: 192
+height: 32
+refresh: 900
+
+pages: [status]
+
+inputs:
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: Eastern
+    choices: [Eastern, Central, Mountain, Arizona, Pacific, Alaska, Hawaii]
+    help: Flag orders run until sunset local time, so the panel needs to know where it is.
+
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Half-staff color
+    default: "#FFAA00"
+    help: Color of the HALF hero, the end date and the duration bar.
+
+  - key: bar
+    type: bool
+    app_input_type: checkbox
+    label: Show duration bar
+    default: true
+    help: A thin bar under the end date showing how far through the order you are.
+
+  - key: demo
+    type: bool
+    app_input_type: checkbox
+    label: Demo mode
+    default: false
+    help: Show a labelled sample order instead of live data.
