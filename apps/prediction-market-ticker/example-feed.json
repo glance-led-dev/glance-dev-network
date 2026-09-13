@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "version": 2,
+  "count": 1,
+  "rows": [
+    {
+      "ticker": "KXNFLSPREAD-26SEP13ATLPIT-PIT11",
+      "matchup": [{"league":"NFL","code":"ATL"},{"league":"NFL","code":"PIT"}],
+      "game": {"state":"pre","phase":"PREGAME","scores":[null,null],"source":"Fictional demo"},
+      "label": "ATL +10.5",
+      "team": {
+        "league": "NFL",
+        "code": "ATL"
+      },
+      "market_team": {
+        "league": "NFL",
+        "code": "PIT"
+      },
+      "market_kind": "spread",
+      "line": 10.5,
+      "side": "NO",
+      "side_label": "SPREAD",
+      "pct": 61,
+      "delta": -6,
+      "settled": false
+    }
+  ]
+}

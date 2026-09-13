@@ -1,0 +1,6 @@
+fly.toml
+.env
+.env.*
+*.pem
+*.key
+*.txt

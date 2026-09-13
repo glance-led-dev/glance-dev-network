@@ -1,0 +1,166 @@
+gdn: 1
+id: prediction-market-ticker
+version: 0.4.0
+name: "Prediction Market Ticker"
+author: "jxshymetersky"
+description: Your prediction market odds, football matchups, scores and game clocks. Choose your positions and rotate every minute. Requires your own feed URL.
+category: Finance
+entry: app.star
+width: 64
+height: 32
+refresh: 60
+pages: [main]
+inputs:
+  - key: feedurl
+    type: string
+    app_input_type: free-text
+    label: "Feed URL"
+    help: "Paste your own JSON feed address. See the app setup guide to connect Kalshi."
+    default: ""
+  - key: league
+    type: string
+    app_input_type: dropdown
+    label: "League for older feeds"
+    help: "Leave Auto for new feeds. Choose NFL or CFB only for an older feed containing that league."
+    default: "Auto"
+    choices: ["Auto", "NFL", "CFB"]
+  - key: mode
+    type: string
+    app_input_type: dropdown
+    label: "Position display"
+    default: "Rotate"
+    choices: ["Rotate", "Pin one"]
+  - key: hold
+    type: string
+    app_input_type: dropdown
+    label: "Minutes per position"
+    default: "1"
+    choices: ["1", "2", "3", "5"]
+  - key: show
+    type: string
+    app_input_type: dropdown
+    label: "Show positions"
+    default: "All positions"
+    choices: ["All positions", "NFL", "CFB", "Live games"]
+  - key: positions
+    type: string
+    app_input_type: free-text
+    label: "Choose specific positions (optional)"
+    help: "Comma-separated market tickers from your feed. Leave blank for all. Positions sort by ticker."
+    default: ""
+  - key: pin
+    type: string
+    app_input_type: free-text
+    label: "Pinned position number"
+    help: "Used with Pin one. Enter the position number shown on the display, within your filtered list."
+    default: "1"
+  - key: scores
+    type: string
+    app_input_type: dropdown
+    label: "Scores and game clock"
+    help: "Snapshots refresh once a minute; the game clock does not count down between refreshes."
+    default: "Show"
+    choices: ["Show", "Hide"]
+assets:
+  - assets/cfb-bc.png
+  - assets/cfb-cal.png
+  - assets/cfb-clem.png
+  - assets/cfb-duke.png
+  - assets/cfb-fsu.png
+  - assets/cfb-gt.png
+  - assets/cfb-lou.png
+  - assets/cfb-mia.png
+  - assets/cfb-ncsu.png
+  - assets/cfb-unc.png
+  - assets/cfb-pitt.png
+  - assets/cfb-smu.png
+  - assets/cfb-stan.png
+  - assets/cfb-syr.png
+  - assets/cfb-uva.png
+  - assets/cfb-vt.png
+  - assets/cfb-wake.png
+  - assets/cfb-ill.png
+  - assets/cfb-iu.png
+  - assets/cfb-iowa.png
+  - assets/cfb-md.png
+  - assets/cfb-mich.png
+  - assets/cfb-msu.png
+  - assets/cfb-minn.png
+  - assets/cfb-neb.png
+  - assets/cfb-nu.png
+  - assets/cfb-osu.png
+  - assets/cfb-ore.png
+  - assets/cfb-psu.png
+  - assets/cfb-pur.png
+  - assets/cfb-rutg.png
+  - assets/cfb-ucla.png
+  - assets/cfb-usc.png
+  - assets/cfb-wash.png
+  - assets/cfb-wis.png
+  - assets/cfb-ariz.png
+  - assets/cfb-asu.png
+  - assets/cfb-bay.png
+  - assets/cfb-byu.png
+  - assets/cfb-cin.png
+  - assets/cfb-colo.png
+  - assets/cfb-hou.png
+  - assets/cfb-isu.png
+  - assets/cfb-ku.png
+  - assets/cfb-ksu.png
+  - assets/cfb-okst.png
+  - assets/cfb-tcu.png
+  - assets/cfb-ttu.png
+  - assets/cfb-ucf.png
+  - assets/cfb-utah.png
+  - assets/cfb-wvu.png
+  - assets/cfb-ala.png
+  - assets/cfb-ark.png
+  - assets/cfb-aub.png
+  - assets/cfb-fla.png
+  - assets/cfb-uga.png
+  - assets/cfb-uk.png
+  - assets/cfb-lsu.png
+  - assets/cfb-msst.png
+  - assets/cfb-mizz.png
+  - assets/cfb-ou.png
+  - assets/cfb-miss.png
+  - assets/cfb-sc.png
+  - assets/cfb-tenn.png
+  - assets/cfb-tex.png
+  - assets/cfb-tamu.png
+  - assets/cfb-van.png
+  - assets/cfb-orst.png
+  - assets/cfb-wsu.png
+  - assets/cfb-nd.png
+  - assets/nfl-ari.png
+  - assets/nfl-atl.png
+  - assets/nfl-bal.png
+  - assets/nfl-buf.png
+  - assets/nfl-car.png
+  - assets/nfl-chi.png
+  - assets/nfl-cin.png
+  - assets/nfl-cle.png
+  - assets/nfl-dal.png
+  - assets/nfl-den.png
+  - assets/nfl-det.png
+  - assets/nfl-gb.png
+  - assets/nfl-hou.png
+  - assets/nfl-ind.png
+  - assets/nfl-jax.png
+  - assets/nfl-kc.png
+  - assets/nfl-lv.png
+  - assets/nfl-lac.png
+  - assets/nfl-lar.png
+  - assets/nfl-mia.png
+  - assets/nfl-min.png
+  - assets/nfl-ne.png
+  - assets/nfl-no.png
+  - assets/nfl-nyg.png
+  - assets/nfl-nyj.png
+  - assets/nfl-phi.png
+  - assets/nfl-pit.png
+  - assets/nfl-sf.png
+  - assets/nfl-sea.png
+  - assets/nfl-tb.png
+  - assets/nfl-ten.png
+  - assets/nfl-wsh.png
