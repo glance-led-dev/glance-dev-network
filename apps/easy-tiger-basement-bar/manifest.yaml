@@ -1,0 +1,16 @@
+gdn: 1
+id: easy-tiger-basement-bar
+version: 0.1.0
+name: Easy Tiger Basement Bar
+author: Caleb Schleder
+description: Three-page Easy Tiger brand app for Glance Scroll.
+category: Fun
+entry: app.star
+width: 384
+height: 32
+refresh: 300
+pages: [hero, bar]
+assets:
+  - page1.png
+  - page2.png
+  - page3.png
