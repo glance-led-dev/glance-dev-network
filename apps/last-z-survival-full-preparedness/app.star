@@ -52,12 +52,14 @@ LABEL = {
 # shelter counts construction speedups and structure power, army counts
 # training speedups and troops built, science counts research and research
 # speedups, vehicle counts boomers, modification blueprints and golden
-# wrenches. Two lines each, most valuable first, spelled out rather than
-# abbreviated now that the countdown shares the name's row and frees a line.
+# wrenches. Two lines each, most valuable first, spelled out wherever the row
+# allows. Blueprints stay as BP on the vehicle line only because BLUEPRINTS +
+# WRENCHES is 94px against an 82px row, and TECH PWR for the same reason -
+# INCREASE TECH POWER is 89px.
 SPEND = {
     "SHELTER": ["BUILD SPEEDUPS", "STRUCTURE POWER"],
-    "SCIENCE": ["RESEARCH SPEEDUPS", "DO RESEARCH"],
-    "VEHICLE": ["KILL BOOMERS", "BLUEPRINTS/WRENCH"],
+    "SCIENCE": ["RESEARCH SPEEDUPS", "INCREASE TECH PWR"],
+    "VEHICLE": ["KILL BOOMERS", "BP + WRENCHES"],
     "HERO": ["CONSUME EXP", "PRIME RECRUITS"],
     "ARMY": ["TRAINING SPEEDUPS", "TRAIN TROOPS"],
 }
