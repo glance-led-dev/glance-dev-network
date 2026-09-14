@@ -76,8 +76,8 @@ COLOR = {
 # 6 px clear at both outer edges, like the sibling Universal/HHN apps, so the
 # app reads as its own unit in the rotation. Title row y 0..6, content band
 # y 7..31. Art occupies x 6..31; the text zone is x 40..121 (82 px), which is
-# the width the widest strings were fitted against: RESEARCH SPEEDUPS and
-# BLUEPRINTS/WRENCH are both exactly 82 px at 4x5.
+# the width the widest string was fitted against: RESEARCH SPEEDUPS is exactly
+# 82 px at 4x5.
 EDGEL = 6
 RZ_R = 121
 ARTX = 6
@@ -387,7 +387,13 @@ def title(c, ctx):
     theme = _now_theme(ctx)
     c.fill("black")
     _draw_art(c, theme)
-    c.text("LAST Z", TX, 5, font = "10x16", color = INK)
+    # 11x14, not 10x16: the 10x16 S hooks at the bottom-left but not the
+    # top-right, so its top half reads as a C. LAST and Z are drawn apart
+    # because the font's space is a full letter wide - it left 12px between
+    # T and Z against 1px between every other pair.
+    lw = c.text_width("LAST", "11x14")
+    c.text("LAST", TX, 6, font = "11x14", color = INK)
+    c.text("Z", TX + lw + 6, 6, font = "11x14", color = INK)
     c.text("FULL PREPAREDNESS", TX, 23, font = "4x5", color = COLOR[theme])
 
 def main(c, ctx):
