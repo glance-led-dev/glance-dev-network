@@ -1,0 +1,71 @@
+gdn: 1
+id: meac-team-tracker
+version: 0.1.0
+name: MEAC Team Tracker
+author: TAS
+description: Track a selected MEAC football team with live scores, records, kickoff times, final results, and its next scheduled game.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages: [intro, game]
+
+assets:
+  - meac-logo.png
+  - delaware-state.png
+  - howard.png
+  - morgan-state.png
+  - nc-central.png
+  - norfolk-state.png
+  - sc-state.png
+  - alabama-am.png
+  - albany.png
+  - arizona-state.png
+  - bethune-cookman.png
+  - campbell.png
+  - charleston-southern.png
+  - chicago-state.png
+  - east-carolina.png
+  - florida-am.png
+  - furman.png
+  - gardner-webb.png
+  - hampton.png
+  - indiana.png
+  - nc-at.png
+  - old-dominion.png
+  - penn.png
+  - richmond.png
+  - robert-morris.png
+  - south-florida.png
+  - stony-brook.png
+  - tennessee-state.png
+  - texas-southern.png
+  - the-citadel.png
+  - towson.png
+  - villanova.png
+  - virginia.png
+  - william-mary.png
+
+inputs:
+  - key: trackedteam
+    type: choice
+    app_input_type: dropdown
+    label: MEAC team
+    default: NC Central
+    choices:
+      - Delaware State
+      - Howard
+      - Morgan State
+      - NC Central
+      - Norfolk State
+      - SC State
+    help: Select the MEAC football team you want to track.
+
+  - key: scoreeffect
+    type: choice
+    app_input_type: dropdown
+    label: Scoring animation
+    default: team-colors
+    choices: [team-colors, flash, scoreboard, none]
+    help: Select the visual scoring style used during live games.
