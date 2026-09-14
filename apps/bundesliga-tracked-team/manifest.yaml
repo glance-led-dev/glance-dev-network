@@ -1,0 +1,76 @@
+gdn: 1
+id: bundesliga-tracked-team
+version: 0.1.0
+name: "Bundesliga Tracked Team"
+author: "Tim McCabe"
+description: Track a Bundesliga club's most recent match, next fixture, and league standing.
+category: Sports
+entry: app.star
+
+width: 128
+height: 32
+refresh: 60
+
+pages: [title, live_match, last_match, next_match, standing]
+
+assets:
+  - BUNDESLIGA.png
+  - DOR22.png
+  - MUN22.png
+  - B0422.png
+  - RBL22.png
+  - VFB22.png
+  - SGE22.png
+  - SCF22.png
+  - TSG22.png
+  - BMG22.png
+  - M0522.png
+  - FCU22.png
+  - SVW22.png
+  - FCA22.png
+  - KOE22.png
+  - HSV22.png
+  - S0422.png
+  - SCP22.png
+  - ELV22.png
+
+inputs:
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Your club
+    default: "DOR"
+    choices:
+      - "DOR"
+      - "MUN"
+      - "B04"
+      - "RBL"
+      - "VFB"
+      - "SGE"
+      - "SCF"
+      - "TSG"
+      - "BMG"
+      - "M05"
+      - "FCU"
+      - "SVW"
+      - "FCA"
+      - "KOE"
+      - "HSV"
+      - "S04"
+      - "SCP"
+      - "ELV"
+    help: Choose the Bundesliga club you want to track.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/Los_Angeles"
+    choices:
+      - "America/Los_Angeles"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/New_York"
+      - "UTC"
+      - "Europe/Berlin"
+    help: Used to display kickoff times in your local time.
