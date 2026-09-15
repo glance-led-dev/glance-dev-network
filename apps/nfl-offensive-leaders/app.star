@@ -12,11 +12,11 @@
 # category pages always exist.
 #
 # DESIGN. Same scorebook as mlb-offensive-leaders, on a black ground. The top
-# row opens directly on the league badge (2026-09-16, Chris's call, replacing
-# an earlier football/shield pixel-art logo) - AFC red or NFC blue solid when
-# a conference is picked, a red/blue SPLIT pill (half each) for plain "NFL"
-# with no conference filter, since there's no natural third color of its own
-# to reach for - then the stat in white and the season in gray. Under it,
+# row opens directly on the league mark - an AFC red or NFC blue pill when a
+# conference is picked, and for plain "NFL" a small pixel NFL shield in
+# those same two colors (2026-09-15 review, replacing a red/blue split pill
+# that spelled out "NFL") - then the stat in white and the season in gray.
+# Under it,
 # three rows: the rank in gray, a team badge, the last name in white, and the
 # number in white against the right edge. The badge is how a fan spots their
 # team across a room: the team's code in its own two colors, like a helmet
@@ -82,6 +82,23 @@ DIM = "#6E7A94"       # ranks, season, sub-lines
 AMBER = "#E8B04A"     # the one attention state (feed offline)
 AFC_RED = "#D22D3A"
 NFC_BLUE = "#2A66D9"
+
+# The NFL shield, 9x8, for the no-conference header: white rim, the raised
+# center peak where the shield's football sits, a blue crown with two white
+# stars, a red lower field tapering to the point. Blue is NFC_BLUE, not the
+# shield's literal navy #013369, which all but vanished against black at
+# this size. 8 rows keeps y 8 clear above the first leader row (ROW_Y[0]).
+SHIELD = """
+...WWW...
+WWWBWBWWW
+WBBBWBBBW
+WBWBBBWBW
+WRRRRRRRW
+.WRRRRRW.
+..WRRRW..
+...WWW...
+"""
+SHIELD_W = 9
 
 PAD = 6              # scroll safe zone, both edges
 RANK_W = 5           # one 5x7 digit
@@ -206,20 +223,14 @@ def short_name(c, name, maxw):
 # ---------- chrome ----------
 
 def league_chip(c, lg, x):
-    # 7px pill opening the header: 4x5 text with 1px of fill above and
-    # below, 2px either side. AFC/NFC get their own solid color; NFL (no
-    # conference picked) has no real "third color" of its own, so it's a
-    # red/blue split instead - the same two colors, half each, rather than
-    # inventing an unrelated third one (2026-09-16, Chris's call, replacing
-    # the football/shield logo this pill now opens the header in place of).
+    # NFL (no conference picked) opens on the shield; AFC/NFC on a 7px pill
+    # in their own solid color - 4x5 text with 1px of fill above and below,
+    # 2px either side.
+    if lg not in ("AFC", "NFC"):
+        c.sprite(SHIELD, x, 0, legend = {"W": "white", "B": NFC_BLUE, "R": AFC_RED})
+        return x + SHIELD_W
     w = c.text_width(lg, "4x5") + 4
-    if lg == "AFC":
-        c.round_rect(x, 1, x + w - 1, 7, 1, fill = AFC_RED)
-    elif lg == "NFC":
-        c.round_rect(x, 1, x + w - 1, 7, 1, fill = NFC_BLUE)
-    else:
-        c.round_rect(x, 1, x + w - 1, 7, 1, fill = AFC_RED)
-        c.rect(x + w // 2, 1, x + w - 1, 7, fill = NFC_BLUE)
+    c.round_rect(x, 1, x + w - 1, 7, 1, fill = AFC_RED if lg == "AFC" else NFC_BLUE)
     c.text(lg, x + 2, HEAD_Y, font = "4x5", color = "white")
     return x + w
 
