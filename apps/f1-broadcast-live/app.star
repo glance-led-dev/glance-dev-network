@@ -1,17 +1,23 @@
 # F1 - Broadcast Live (192x32).
 #
+# DESIGN. A broadcast timing graphic on a black ground. The F1 mark shares a
+# page with the grand prix it announces, so the app identifies itself without
+# spending a whole page on a logo. Every other page is a board: position,
+# livery-coloured driver, gap, tyre. All pages keep EDGE (4 px) clear on both
+# sides so the boards don't merge into the apps before and after this one in
+# the scroll stream.
+#
 # A real page rotation (the panel requests one render per page, in manifest
 # order -- no single page faking frames off the wall clock). Two rotations off
-# one fixed 5-page manifest. Field is 22 cars (11 teams x 2 since the 2026
-# grid expansion). The order board holds 8/page on a 192 panel, 12/page on
+# one fixed 4-page manifest. Field is 22 cars (11 teams x 2 since the 2026
+# grid expansion). The order board holds 8/page on a 192 panel, 9/page on
 # 384/640:
 #
-#   BETWEEN SESSIONS           LIVE SESSION
-#   1 logo                     1 logo
-#   2 next race (event)        2 event info (flag / lap / weather)
-#   3 last race  P1-8 / P1-12  3 order  P1-8 / P1-9
-#   4 last race  P9-16/P13-22  4 order  P9-16 / P10-18
-#   5 calendar                 5 order  P17-22 / P19-22
+#   BETWEEN SESSIONS                LIVE SESSION
+#   1 event  F1 mark + next race    1 event  F1 mark + LIVE, flag/lap/temp
+#   2 last race  P1-8 / P1-12       2 order  P1-8 / P1-9
+#   3 last race  P9-16 / P13-22     3 order  P9-16 / P10-18
+#   4 calendar                      4 order  P17-22 / P19-22
 #
 # On a 192 panel, order1-2's last-race pages cover P1-16 only -- P17-22 don't
 # have a between-sessions slot (order3 is needed for the calendar instead of
@@ -92,6 +98,57 @@ COLORS = {
 }
 
 GOLD = "#FFD700"
+
+# Clear columns at the left and right edge of every page.
+EDGE = 4
+
+# F1 mark on the event page: 44x12 keeps the 90:24 artwork's ratio and is as
+# wide as the NEXT RACE tag under it (41 px in 4x5).
+LOGO_W, LOGO_H = 44, 12
+
+# `datecolor` dropdown -> hex; default yellow. "accent" is the app's amber.
+# Yellow is pure #FFFF00 rather than the palette's #FFDC50, which is too
+# close to the amber accent to tell apart on the panel.
+DATE_COLORS = {
+    "accent": "#FFD166",
+    "red": "#FF0000",
+    "green": "#00DC46",
+    "blue": "#005AFF",
+    "white": "#FFFFFF",
+    "yellow": "#FFFF00",
+    "magenta": "#FF00C8",
+    "cyan": "#00DCDC",
+}
+
+# Bitmap fonts have no accented glyphs and skip them silently -- "Hülkenberg"
+# drew as HLKENBERG. Fold to plain ASCII after upper-casing.
+ASCII_FOLD = {
+    "Á": "A", "À": "A", "Â": "A", "Ä": "A", "Ã": "A", "Å": "A",
+    "É": "E", "È": "E", "Ê": "E", "Ë": "E",
+    "Í": "I", "Ì": "I", "Î": "I", "Ï": "I",
+    "Ó": "O", "Ò": "O", "Ô": "O", "Ö": "O", "Õ": "O", "Ø": "O",
+    "Ú": "U", "Ù": "U", "Û": "U", "Ü": "U",
+    "Ç": "C", "Ñ": "N",
+}
+
+# The narrow event page runs circuit + session on one 92 px row.
+SESSION_SHORT = {"QUALIFYING": "QUALI"}
+
+# Lit glyph height per font, measured off the rendered previews. Rows that mix
+# fonts share a bottom edge: draw each at top_for(font, row_bottom).
+FONT_H = {"6x8": 8, "5x7": 7, "4x5": 5, "picopixel": 5}
+
+def top_for(font, bottom):
+    return bottom - FONT_H[font] + 1
+
+# Broadcast abbreviations for flag states that outgrow their slot. A plain
+# word-cut would turn VIRTUAL SAFETY CAR into "VIRTUAL SAFETY" -- a different
+# state -- so these swap in whole instead.
+FLAG_SHORT = {
+    "VIRTUAL SAFETY CAR": "VSC",
+    "SAFETY CAR": "SC",
+    "DOUBLE YELLOW": "DBL YELLOW",
+}
 
 # How long past a session's scheduled end fetch_f1_live still treats it as
 # "just finished" rather than falling back to the between-sessions cards.
@@ -174,14 +231,57 @@ def safe_input(ctx, key, fallback):
         return fallback
     return value
 
+# Every API string goes through here before it's drawn. Prefer ending on a
+# whole word ("MIAMI INTERNATIONAL" from "... AUTODROME") unless that throws
+# away more than ~30% of the characters; otherwise cut mid-word and end on
+# ".." so the cut reads as deliberate. "" only when not even ".." fits.
 def fit_text(c, text, font, max_w):
-    t = text
-    for _ in range(60):
-        if c.text_width(t, font) <= max_w or len(t) <= 3:
-            return t
-        cut = t.rfind(" ")
-        t = t[:cut] if cut > 0 else t[:len(t) - 1]
+    if text == "" or c.text_width(text, font) <= max_w:
+        return text
+    words = text.split(" ")
+    for i in range(len(words) - 1, 0, -1):
+        cand = " ".join(words[:i])
+        if c.text_width(cand, font) <= max_w:
+            if len(cand) * 10 >= len(text) * 7:
+                return cand
+            break
+    for n in range(len(text) - 1, 0, -1):
+        cand = text[:n].rstrip(" -") + ".."
+        if c.text_width(cand, font) <= max_w:
+            return cand
+    return ""
+
+# Largest font first; within a font, the fullest wording that fits. Past the
+# last font, hard-clip the shortest wording.
+def fit_ladder(c, variants, fonts, max_w):
+    for f in fonts:
+        for v in variants:
+            if c.text_width(v, f) <= max_w:
+                return v, f
+    f = fonts[len(fonts) - 1]
+    return fit_text(c, variants[len(variants) - 1], f, max_w), f
+
+# "SAUDI ARABIAN GRAND PRIX" -> "SAUDI ARABIAN GP" -> "SAUDI ARABIAN"; a
+# hyphenated name also tries its first half (BARCELONA-CATALUNYA -> BARCELONA).
+def race_variants(name):
+    out = [name]
+    if name.endswith(" GRAND PRIX"):
+        base = name[:len(name) - len(" GRAND PRIX")]
+        out.append(base + " GP")
+        out.append(base)
+        if "-" in base:
+            out.append(base.split("-")[0])
+    return out
+
+def up(s):
+    t = str(s).upper()
+    for k, v in ASCII_FOLD.items():
+        t = t.replace(k, v)
     return t
+
+def pick_date_color(ctx):
+    v = str(safe_input(ctx, "datecolor", "yellow")).strip().lower()
+    return DATE_COLORS.get(v, DATE_COLORS["yellow"])
 
 def yiq_of(hex_color):
     h = hex_color.lstrip("#")
@@ -214,19 +314,19 @@ def clean_name(raw):
 def short_circuit(name):
     t = str(name).upper()
     for pre in ("AUTODROMO NAZIONALE DI ", "AUTODROMO INTERNAZIONALE ",
-                "AUTODROMO ", "AUTÓDROMO INTERNACIONAL ", "AUTÓDROMO ",
+                "AUTODROMO INTERNACIONAL ", "AUTODROMO ",
                 "CIRCUIT DE BARCELONA-", "CIRCUIT DE ", "CIRCUIT PARK ",
                 "CIRCUIT OF THE ", "CIRCUIT GILLES ", "CIRCUIT "):
         if t.startswith(pre):
             t = t[len(pre):]
     for suf in (" INTERNATIONAL CIRCUIT", " STREET CIRCUIT", " CITY CIRCUIT",
-                " GRAND PRIX CIRCUIT", " RACE CIRCUIT", " CIRCUIT"):
+                " GRAND PRIX CIRCUIT", " RACE CIRCUIT", " CIRCUIT",
+                " INTERNATIONAL AUTODROME", " AUTODROME"):
         if t.endswith(suf):
             t = t[:-len(suf)]
-    t = t.strip()
-    if len(t) > 18:
-        t = t[:18]
-    return t
+    # No character cap here -- the drawing side measures and truncates to the
+    # pixels it actually has.
+    return t.strip()
 
 def mark_duplicate_names(rows):
     counts = {}
@@ -438,7 +538,7 @@ def _last_scalar(v):
     return v
 
 def _f1_row(dn, driver, pos, gap_str, stints):
-    last_name = str(driver.get("last_name", "")).upper()
+    last_name = up(driver.get("last_name", ""))
     first_name = str(driver.get("first_name", ""))
     team_colour = str(driver.get("team_colour", ""))
     bg = ("#" + team_colour) if team_colour != "" else "#222222"
@@ -486,9 +586,10 @@ def fetch_f1_live(ctx):
     race_name = "GRAND PRIX"
     mresp = http_json("https://api.openf1.org/v1/meetings", 3600, params = {"meeting_key": str(session.get("meeting_key", ""))})
     if mresp["ok"] and len(mresp["data"]) > 0:
-        race_name = str(mresp["data"][0].get("meeting_name", "GRAND PRIX")).upper()
+        race_name = up(mresp["data"][0].get("meeting_name", "GRAND PRIX"))
 
-    weather_txt = ""
+    temp_txt = ""
+    unit = safe_input(ctx, "tempunit", "C")
     weather_cond = "DRY"
     wresp = http_json("https://api.openf1.org/v1/weather", 60, params = {"session_key": str(session_key)})
     if wresp["ok"] and len(wresp["data"]) > 0:
@@ -497,11 +598,10 @@ def fetch_f1_live(ctx):
         if air_temp != None:
             rain = w.get("rainfall", 0)
             weather_cond = "RAIN" if rain and rain > 0 else "DRY"
-            unit = safe_input(ctx, "tempunit", "C")
             temp_val = float(air_temp)
             if unit == "F":
                 temp_val = temp_val * 9.0 / 5.0 + 32.0
-            weather_txt = str(int(temp_val)) + unit + " " + weather_cond
+            temp_txt = str(int(temp_val))
 
     drivers = {}
     dresp = http_json("https://api.openf1.org/v1/drivers", 300, params = {"session_key": str(session_key)})
@@ -616,11 +716,12 @@ def fetch_f1_live(ctx):
         "session": session_type,
         "is_race": is_race,
         "race_name": race_name,
-        "track_name": circuit_short.upper(),
+        "track_name": up(circuit_short),
         "track_key": circuit_key_from_short(circuit_short),
         "flag": flag_str,
         "lap": lap_num,
-        "weather": weather_txt,
+        "temp": temp_txt,
+        "temp_unit": unit,
         "weather_cond": weather_cond,
         "rows": rows,
         "session_key": str(session_key),
@@ -640,8 +741,8 @@ def fetch_f1_next(ctx):
     circuit = race.get("Circuit", {})
     return {
         "ok": True,
-        "race_name": str(race.get("raceName", "GRAND PRIX")).upper(),
-        "track_name": str(circuit.get("circuitName", "")).upper(),
+        "race_name": up(race.get("raceName", "GRAND PRIX")),
+        "track_name": up(circuit.get("circuitName", "")),
         "circuit_id": str(circuit.get("circuitId", "")),
         "race_date": str(race.get("date", "")),
         "race_time": str(race.get("time", "")),
@@ -676,10 +777,10 @@ def fetch_f1_last(ctx):
         else:
             gap = ""
         tcol = team_color(x.get("Constructor", {}).get("constructorId", ""), COLORS["text"])
-        top.append((pos, str(drv.get("familyName", "")).upper(), gap, tcol))
+        top.append((pos, up(drv.get("familyName", "")), gap, tcol))
     return {
-        "race_name": str(race.get("raceName", "GRAND PRIX")).upper(),
-        "circuit": str(race.get("Circuit", {}).get("circuitName", "")).upper(),
+        "race_name": up(race.get("raceName", "GRAND PRIX")),
+        "circuit": up(race.get("Circuit", {}).get("circuitName", "")),
         "top": top,
     }
 
@@ -762,7 +863,7 @@ def _mock_live(ctx, mode):
         "track_name": "INTERLAGOS", "track_key": "interlagos",
         "flag": "GREEN" if is_race else "CHEQUERED",
         "lap": 38 if is_race else 0,
-        "weather": str(tv) + unit + " DRY", "weather_cond": "DRY",
+        "temp": str(tv), "temp_unit": unit, "weather_cond": "DRY",
         "rows": rows, "session_key": "mock", "num2name": {},
     }
 
@@ -793,25 +894,27 @@ def get_state(ctx):
 
 def draw_error(c, title, sub):
     c.fill(COLORS["bg"])
-    c.rect(0, 0, c.width - 1, 9, fill = COLORS["panel"])
-    c.image("checkered.png", 2, 1, w = 10, h = 8)
-    c.text("FORMULA 1", 16, 2, font = "5x7", color = COLORS["accent"])
-    c.text(str(title).upper(), 4, 14, font = "6x8", color = COLORS["error"])
-    c.text(str(sub).upper(), 4, 24, font = "4x5", color = COLORS["muted"])
+    c.rect(EDGE, 0, c.width - 1 - EDGE, 9, fill = COLORS["panel"])
+    c.image("checkered.png", EDGE + 2, 1, w = 10, h = 8)
+    c.text("FORMULA 1", EDGE + 16, 2, font = "5x7", color = COLORS["accent"])
+    maxw = c.width - 2 * EDGE
+    c.text(fit_text(c, str(title).upper(), "6x8", maxw), EDGE, 14, font = "6x8", color = COLORS["error"])
+    c.text(fit_text(c, str(sub).upper(), "4x5", maxw), EDGE, 24, font = "4x5", color = COLORS["muted"])
 
 def draw_page_tab(c, label, color):
     w = c.text_width(label, "4x5") + 6
-    c.rect(0, 0, w, 6, fill = color)
-    c.text(label, 3, 1, font = "4x5", color = best_text_color(color))
+    c.rect(EDGE, 0, EDGE + w, 6, fill = color)
+    c.text(label, EDGE + 3, 1, font = "4x5", color = best_text_color(color))
 
 def draw_flag_bar(c, flag):
+    x1 = c.width - 1 - EDGE
     if flag == "CHEQUERED":
         seg = 6
-        for i in range((c.width + seg - 1) // seg):
-            x = i * seg
-            c.rect(x, 0, min(x + seg - 1, c.width - 1), 1, fill = "#FFFFFF" if i % 2 == 0 else "#000000")
+        for i in range((x1 - EDGE + seg) // seg):
+            x = EDGE + i * seg
+            c.rect(x, 0, min(x + seg - 1, x1), 1, fill = "#FFFFFF" if i % 2 == 0 else "#000000")
     else:
-        c.rect(0, 0, c.width - 1, 1, fill = F1_FLAG_COLOR.get(flag, COLORS["muted"]))
+        c.rect(EDGE, 0, x1, 1, fill = F1_FLAG_COLOR.get(flag, COLORS["muted"]))
 
 # 192 can't hold three driver rows across, so the board runs 2 columns x 4 rows
 # there and 3 x 3 on 384/640. Either way a page holds 8-9 cars, so 3 order
@@ -834,8 +937,10 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     text_h = 7 if font == "5x7" else 6
     cy = y0 + (box_h - text_h) // 2
     gap_font = "4x5" if font == "5x7" else "picopixel"
-    gap_h = 6 if gap_font == "4x5" else 5
-    gap_cy = y0 + (box_h - gap_h) // 2
+    # Gap and tyre letter share the name's bottom edge. Centring each font in
+    # the 7 px box on its own put picopixel 1 px below the 4x5 name.
+    row_bottom = cy + FONT_H[font] - 1
+    gap_cy = top_for(gap_font, row_bottom)
 
     pos_str = str(row["pos"]) + ")"
     pos_w = c.text_width("20)", font) + 4
@@ -881,16 +986,16 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
         letter, tcol = tire
         tx0 = x1 - tire_w
         c.rect(tx0, y0, x1, y1, fill = "#000000")
-        c.text(letter, tx0 + tire_w // 2, y0 + (box_h - 6) // 2, font = "4x5", color = tcol, align = "center")
+        c.text(letter, tx0 + tire_w // 2, top_for("4x5", row_bottom), font = "4x5", color = tcol, align = "center")
 
 def draw_order_group(c, rows, start, y0, y1):
     cols, nrows = board_cols_rows(c.width)
-    col_w = grid_dims(c.width, cols)
+    col_w = grid_dims(c.width - 2 * EDGE, cols)
     row_h = (y1 - y0 + 1) // nrows
     row_gap = 1 if row_h > 6 else 0
     idx = start
     for col in range(cols):
-        cx0 = col * (col_w + 2)
+        cx0 = EDGE + col * (col_w + 2)
         cx1 = cx0 + col_w - 1
         for r in range(nrows):
             if idx >= len(rows):
@@ -901,104 +1006,152 @@ def draw_order_group(c, rows, start, y0, y1):
 
 # ---------- pages: fixed ----------
 
-def logo(c, ctx):
-    st = get_state(ctx)
-    c.fill(COLORS["bg"])
-    if st["mode"] == "error":
-        draw_error(c, st["title"], st["sub"])
-        return
-    lw, lh = f1_logo_dims(c.width - 60, 18)
-    c.image("f1-logo.png", (c.width - lw) // 2, (28 - lh) // 2, w = lw, h = lh)
-    tag = "LIVE" if st["mode"] == "live" else "NEXT UP"
-    tcol = COLORS["error"] if st["mode"] == "live" else COLORS["muted"]
-    c.text(tag, c.width // 2, 27, font = "picopixel", color = tcol, align = "center")
-
+# The F1 mark and the grand prix share one page. The mark (with a NEXT RACE
+# or LIVE tag under it) holds the left, the circuit outline the right, and
+# three text rows centre between them. 192: EDGE 4 + logo 44 + 6 + text 92 +
+# 6 + circuit 36 + EDGE 4. 384/640: the same group centred with the text
+# capped at 150, plus the live flag / lap / temp column after the circuit.
 def event(c, ctx):
     st = get_state(ctx)
     c.fill(COLORS["bg"])
     if st["mode"] == "error":
         draw_error(c, st["title"], st["sub"])
         return
-    if st["mode"] == "off":
-        _draw_next_card(c, ctx, st, big = True)
-        return
-
-    if c.width < 320:
-        _event_narrow(c, st)
-        return
-
-    is_race = st["is_race"]
-    session = st.get("session", "RACE")
-    gap = 10
+    live = st["mode"] == "live"
+    wide = c.width >= 320
+    status_w = 116 if (live and wide) else 0
+    gap = 10 if wide else 6
     asset, nw, nh = track_asset_dims(st["track_key"])
-    tw, th = cap_track_dims(nw, nh, 40, 26)
+    tw, th = cap_track_dims(nw, nh, 52 if wide else 36, 28 if wide else 26)
+    fixed = LOGO_W + gap + gap + tw + (gap + status_w if status_w > 0 else 0)
+    text_w = min(c.width - 2 * EDGE - fixed, 150)
+    x0 = (c.width - fixed - text_w) // 2
 
-    show_status = is_race or st.get("weather", "") != ""
-    status_w = 116 if show_status else 0
-    text_w = c.width - tw - gap * (3 if show_status else 2) - status_w
-
-    total = text_w + gap + tw + (gap + status_w if show_status else 0)
-    margin = (c.width - total) // 2
-    tx0 = margin
-    tcx = tx0 + text_w // 2
+    draw_logo_block(c, x0, live)
+    tx0 = x0 + LOGO_W + gap
+    cx = tx0 + text_w // 2
     trx = tx0 + text_w + gap
-    stx = trx + tw + gap
-
-    c.text(fit_text(c, st["race_name"], "6x8", text_w), tcx, 1, font = "6x8", color = COLORS["text"], align = "center")
-    c.text(fit_text(c, st["track_name"], "4x5", text_w), tcx, 12, font = "4x5", color = COLORS["muted"], align = "center")
-    c.text(fit_text(c, session, "5x7", text_w), tcx, 21, font = "5x7", color = COLORS["accent2"], align = "center")
-
     draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
 
-    if show_status:
-        smw = c.width - stx - 2
-        fcol = F1_FLAG_COLOR.get(st["flag"], COLORS["muted"])
-        c.text(fit_text(c, str(st["flag"]), "6x8", smw), stx, 1, font = "6x8", color = fcol)
-        if is_race:
-            c.text(fit_text(c, "LAP " + str(st["lap"]), "4x5", smw), stx, 12, font = "4x5", color = COLORS["text"])
-        wtxt = st.get("weather", "")
-        if wtxt != "":
-            wcol = WEATHER_COLOR.get(st.get("weather_cond", ""), COLORS["accent2"])
-            c.text(fit_text(c, wtxt, "4x5", smw), stx, 21, font = "4x5", color = wcol)
+    name, nf = fit_ladder(c, race_variants(st["race_name"]), ["6x8", "5x7", "4x5"], text_w)
+    # Row bottoms on this page: 9 (race / flag), 16 (circuit / lap),
+    # 27 (date / flag row / session / temp / the logo tag).
+    c.text(name, cx, top_for(nf, 9), font = nf, color = COLORS["text"], align = "center")
 
-# 192: no room for the text | circuit | status trio, so stack the text and
-# tuck a small circuit outline against the right edge.
-def _event_narrow(c, st):
-    is_race = st["is_race"]
-    session = st.get("session", "RACE")
-    show_status = is_race or st.get("weather", "") != ""
-
-    asset, nw, nh = track_asset_dims(st["track_key"])
-    tw, th = cap_track_dims(nw, nh, 44, 30)
-    trx = c.width - tw - 5           # small black margin at the right edge
-    draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
-    tzw = trx - 2                    # text runs almost up to the outline
-
-    c.text(fit_text(c, st["race_name"], "6x8", tzw), 3, 1, font = "6x8", color = COLORS["text"])
-    c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), 3, 12, font = "4x5", color = COLORS["muted"])
-
-    if not show_status:
-        c.text(fit_text(c, session, "5x7", tzw), 3, 21, font = "5x7", color = COLORS["accent2"])
+    if not live:
+        c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
+        when = local_dt(ctx, st["race_date"], st.get("race_time", ""))
+        wf = "5x7" if c.text_width(when, "5x7") <= text_w else "4x5"
+        c.text(fit_text(c, when, wf, text_w), cx, top_for(wf, 27), font = wf, color = pick_date_color(ctx), align = "center")
         return
 
-    x = 3
-    flag_s = fit_text(c, str(st["flag"]), "5x7", tzw)
+    session = st.get("session", "RACE")
+    if not wide:
+        draw_session_row(c, st["track_name"], SESSION_SHORT.get(session, session), cx, text_w, 12)
+        draw_status_row(c, st, cx, text_w, 21)
+        return
+
+    c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
+    c.text(fit_text(c, session, "5x7", text_w), cx, 21, font = "5x7", color = COLORS["accent2"], align = "center")
+    stx = trx + tw + gap
     fcol = F1_FLAG_COLOR.get(st["flag"], COLORS["muted"])
-    c.text(flag_s, x, 21, font = "5x7", color = fcol)
-    x += c.text_width(flag_s, "5x7") + 6
-    if is_race and x < tzw:
-        lap_s = "LAP " + str(st["lap"])
-        c.text(lap_s, x, 22, font = "4x5", color = COLORS["text"])
-        x += c.text_width(lap_s, "4x5") + 6
-    wtxt = st.get("weather", "")
-    if wtxt != "" and x < tzw:
-        wcol = WEATHER_COLOR.get(st.get("weather_cond", ""), COLORS["accent2"])
-        c.text(fit_text(c, wtxt, "4x5", tzw - x), x, 22, font = "4x5", color = wcol)
+    flag_raw = str(st["flag"])
+    flag, ff = fit_ladder(c, [flag_raw, FLAG_SHORT.get(flag_raw, flag_raw)], ["6x8", "5x7"], status_w)
+    c.text(flag, stx, top_for(ff, 9), font = ff, color = fcol)
+    if st["is_race"]:
+        c.text(fit_text(c, "LAP " + str(st["lap"]), "4x5", status_w), stx, 12, font = "4x5", color = COLORS["text"])
+    if st.get("temp", "") != "":
+        draw_temp(c, st, stx, top_for("4x5", 27), True)
+
+def draw_logo_block(c, x, live):
+    lw, lh = f1_logo_dims(LOGO_W, LOGO_H)
+    # Tag bottom-aligns with the third text row (bottom 27); the mark's 11 lit
+    # rows sit at 8-18, 4 px above it.
+    c.image("f1-logo.png", x + (LOGO_W - lw) // 2, 8, w = lw, h = lh)
+    tag = "LIVE" if live else "NEXT RACE"
+    tcol = COLORS["error"] if live else COLORS["muted"]
+    c.text(tag, x + LOGO_W // 2, top_for("4x5", 27), font = "4x5", color = tcol, align = "center")
+
+# Circuit (gray) then session (amber), centred. The session is the one that
+# matters live, so it keeps its width and a long circuit is truncated into
+# what's left ("SPA-FRANCORCHAMPS" is 84 px on its own); under 20 px left, the
+# circuit is dropped -- the outline beside the text still shows it.
+def draw_session_row(c, track, session, cx, max_w, y):
+    sw = c.text_width(session, "4x5")
+    tw = c.text_width(track, "4x5") if track != "" else 0
+    if tw > 0 and tw + 6 + sw > max_w:
+        room = max_w - sw - 6
+        track = fit_text(c, track, "4x5", room) if room >= 20 else ""
+        tw = c.text_width(track, "4x5") if track != "" else 0
+    if tw == 0:
+        c.text(fit_text(c, session, "4x5", max_w), cx, y, font = "4x5", color = COLORS["accent2"], align = "center")
+        return
+    x = cx - (tw + 6 + sw) // 2
+    c.text(track, x, y, font = "4x5", color = COLORS["muted"])
+    c.text(session, x + tw + 6, y, font = "4x5", color = COLORS["accent2"])
+
+def temp_suffix(st, with_cond):
+    return st["temp_unit"] + (" " + st["weather_cond"] if with_cond else "")
+
+def temp_width(c, st, with_cond):
+    return c.text_width(st["temp"], "4x5") + 5 + c.text_width(temp_suffix(st, with_cond), "4x5")
+
+# No bitmap font has a degree glyph (4x5 skips "°" silently), so the degree
+# sign is a 3x3 ring drawn 1 px after the digits.
+def draw_temp(c, st, x, y, with_cond):
+    col = WEATHER_COLOR.get(st.get("weather_cond", ""), COLORS["accent2"])
+    c.text(st["temp"], x, y, font = "4x5", color = col)
+    dx = x + c.text_width(st["temp"], "4x5") + 1
+    c.rect(dx, y, dx + 2, y + 2, fill = col)
+    c.rect(dx + 1, y + 1, dx + 1, y + 1, fill = COLORS["bg"])
+    c.text(temp_suffix(st, with_cond), dx + 4, y, font = "4x5", color = col)
+
+# Flag, lap and air temp on one centred row. When it's short, drop the
+# DRY/RAIN word first, then the temperature, then the lap:
+# "SAFETY CAR" (57 px) + "LAP 38" (27 px) + 5 already fills the 92 px zone.
+def draw_status_row(c, st, cx, max_w, y):
+    flag = str(st["flag"])
+    fcol = F1_FLAG_COLOR.get(flag, COLORS["muted"])
+    fw = c.text_width(flag, "5x7")
+    lap = ("LAP " + str(st["lap"])) if st["is_race"] else ""
+    lap_w = (5 + c.text_width(lap, "4x5")) if lap != "" else 0
+    if fw + lap_w > max_w and flag in FLAG_SHORT:
+        flag = FLAG_SHORT[flag]
+        fw = c.text_width(flag, "5x7")
+    options = []
+    if st.get("temp", "") != "":
+        options.append((lap, True, True))
+        options.append((lap, True, False))
+    options.append((lap, False, False))
+    options.append(("", False, False))
+    lap_s, with_temp, with_cond, total = "", False, False, fw
+    for opt in options:
+        lap_s, with_temp, with_cond = opt
+        total = fw
+        if lap_s != "":
+            total += 5 + c.text_width(lap_s, "4x5")
+        if with_temp:
+            total += 5 + temp_width(c, st, with_cond)
+        if total <= max_w:
+            break
+    if total > max_w:
+        flag = fit_text(c, flag, "5x7", max_w)
+        total = c.text_width(flag, "5x7")
+    x = cx - total // 2
+    # LAP and temp (4x5) share the 5x7 flag's bottom edge.
+    small_y = top_for("4x5", y + FONT_H["5x7"] - 1)
+    c.text(flag, x, y, font = "5x7", color = fcol)
+    x += c.text_width(flag, "5x7") + 5
+    if lap_s != "":
+        c.text(lap_s, x, small_y, font = "4x5", color = COLORS["text"])
+        x += c.text_width(lap_s, "4x5") + 5
+    if with_temp:
+        draw_temp(c, st, x, small_y, with_cond)
 
 # ---------- pages: running order ----------
-# Two rotations off one fixed 5-page manifest. Between sessions: logo, next
-# race, last race, next 3 GPs (page 5 is blank). Live: logo, event, then the
-# order 9 cars a screen at a time (P1-9 / P10-18 / P19-27).
+# Two rotations off one fixed 4-page manifest. Between sessions: next race,
+# last race x2, calendar. Live: event, then the order 8 cars a screen at a
+# time (P1-8 / P9-16 / P17-22).
 
 def order1(c, ctx):
     st = get_state(ctx)
@@ -1042,24 +1195,6 @@ def _draw_running_order(c, st, page):
 
 # ---------- off-season cards ----------
 
-def _draw_next_card(c, ctx, st, big):
-    date_color = safe_input(ctx, "datecolor", COLORS["accent2"])
-    asset, nw, nh = track_asset_dims(st["track_key"])
-    tw, th = cap_track_dims(nw, nh, 40 if c.width < 320 else 52, 28)
-    gap = 10
-    text_w = c.width - tw - gap - 16
-    total = text_w + gap + tw
-    margin = (c.width - total) // 2
-    tx0 = margin
-    trx = tx0 + text_w + gap
-    cx = tx0 + text_w // 2
-    draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
-    if not big:
-        draw_page_tab(c, "NEXT RACE", COLORS["accent"])
-    c.text(fit_text(c, st["race_name"], "6x8", text_w), cx, 2, font = "6x8", color = COLORS["text"], align = "center")
-    c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
-    c.text(fit_text(c, local_dt(ctx, st["race_date"], st.get("race_time", "")), "5x7", text_w), cx, 21, font = "5x7", color = date_color, align = "center")
-
 # order3's single CALENDAR page, showing the grands prix after the next one.
 # 384/640: two columns of three (6). 192: one column of four (4), so a full
 # "GRAND PRIX" name never has to truncate.
@@ -1067,27 +1202,27 @@ def cal_per_page(width):
     return 6 if width >= 320 else 4
 
 def _draw_calendar(c, ctx, skip):
-    date_color = safe_input(ctx, "datecolor", COLORS["accent2"])
+    date_color = pick_date_color(ctx)
     draw_page_tab(c, "CALENDAR", date_color)
-    up = fetch_f1_upcoming(ctx)
+    upcoming = fetch_f1_upcoming(ctx)
     per = cal_per_page(c.width)
     # up[0] is the immediate next race -- that's already the `event` page.
-    races = up[1 + skip:1 + skip + per]
+    races = upcoming[1 + skip:1 + skip + per]
     if len(races) == 0:
         c.text("SEASON COMPLETE" if skip == 0 else "END OF CALENDAR", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
     ncols = 2 if c.width >= 320 else 1
     rows_per = per // ncols
     line_h = 8 if c.width >= 320 else 6
-    col_w = grid_dims(c.width, ncols)
+    col_w = grid_dims(c.width - 2 * EDGE, ncols)
     for i in range(len(races)):
         r = races[i]
-        cx0 = (i // rows_per) * (col_w + 2)
+        cx0 = EDGE + (i // rows_per) * (col_w + 2)
         ry = 8 + (i % rows_per) * line_h
         dt = local_daydate(ctx, str(r.get("date", "")), str(r.get("time", "")))
         c.text(dt, cx0, ry, font = "4x5", color = date_color)
         dx = cx0 + c.text_width("SEP 00", "4x5") + 5
-        nm = str(r.get("raceName", "GRAND PRIX")).upper()
+        nm = up(r.get("raceName", "GRAND PRIX"))
         c.text(fit_text(c, nm, "4x5", cx0 + col_w - dx - 2), dx, ry, font = "4x5", color = COLORS["text"])
 
 # LAST RACE across order1-2: 384/640 fits 12/page (three columns of four), so
@@ -1101,8 +1236,8 @@ def _draw_last_page(c, ctx, page):
     if res == None:
         c.text("NO RESULT AVAILABLE", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
-    tabw = c.text_width("LAST RACE", "4x5") + 10
-    c.text(fit_text(c, res["race_name"], "picopixel", c.width - tabw - 4), tabw, 1, font = "picopixel", color = COLORS["muted"])
+    tabx = EDGE + c.text_width("LAST RACE", "4x5") + 10
+    c.text(fit_text(c, res["race_name"], "picopixel", c.width - EDGE - tabx), tabx, 1, font = "picopixel", color = COLORS["muted"])
 
     ncols = 3 if c.width >= 320 else 2
     per_page = ncols * 4
@@ -1112,20 +1247,23 @@ def _draw_last_page(c, ctx, page):
         c.text("--", c.width // 2, 18, font = "6x8", color = COLORS["muted"], align = "center")
         return
 
-    col_w = grid_dims(c.width, ncols)
-    pw = c.text_width("00", "4x5") + 3
+    col_w = grid_dims(c.width - 2 * EDGE, ncols)
+    # Positions right-justify in a two-digit slot, names start 2 px after it,
+    # so "9" and "16" share one right edge and every name lines up.
+    slot_w = c.text_width("00", "4x5")
+    pw = slot_w + 2
     hi = min(lo + per_page, len(top))
     for i in range(lo, hi):
         pos, name, gap, name_color = top[i]
         j = i - lo
-        cx0 = (j // 4) * (col_w + 2)
+        cx0 = EDGE + (j // 4) * (col_w + 2)
         cx1 = cx0 + col_w - 1
         ry = 8 + (j % 4) * 6
-        c.text(pos, cx0, ry, font = "4x5", color = GOLD if pos == "1" else COLORS["accent2"])
+        c.text(pos, cx0 + slot_w - c.text_width(pos, "4x5"), ry, font = "4x5", color = GOLD if pos == "1" else COLORS["accent2"])
         gw = 0
         if gap != "":
             gw = c.text_width(gap, "picopixel")
-            c.text(gap, cx1, ry + 1, font = "picopixel", color = COLORS["muted"], align = "right")
+            c.text(gap, cx1, top_for("picopixel", ry + FONT_H["4x5"] - 1), font = "picopixel", color = COLORS["muted"], align = "right")
         # Driver name in the team's livery colour (falls back to white if the
         # constructorId isn't in the table).
         c.text(fit_text(c, name, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry, font = "4x5", color = name_color)
