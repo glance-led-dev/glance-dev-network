@@ -14,10 +14,11 @@ width: 384
 height: 32
 
 refresh: 3600
+pages: [top, ranks]
 
 inputs:
   - key: citokey
     type: string
     app_input_type: api-key
     label: Cito API Key
-    help: Paste your Cito API key to load live UFC media rankings.
+    help: Paste your Cito API key to load live UFC media rankings. Leave it blank to see demo rankings.
