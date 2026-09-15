@@ -284,18 +284,90 @@ HERO_ART = """
 # bottom edge; the helmet floats, so it centres in the band instead.
 ART_Y = {"SHELTER": 11, "SCIENCE": 9, "VEHICLE": 13, "HERO": 9, "ARMY": 11}
 
-def _draw_art(c, theme):
+# The Z from the game's logo, drawn rather than typed: the logo's red-orange,
+# lit along its top edges and darkened along the bottom, with a scatter of its
+# splatter. The title card sets it after LAST the way the logo does. ARTX_R
+# reserves a 26px picture slot 6px off the right edge, mirroring the left
+# picture, for a second title-card picture.
+ARTX_R = RZ_R - 25
+LOGO_W = 24
+# The Z's bottom bar ends on its row 18; y3 lands that on LAST's bottom (y21).
+# It stands taller than LAST, like the logo, where the Z dwarfs the word.
+LOGO_TOP = 3
+LOGO_GAP = 2
+LOGO_LEG = {"R": "#E23B24", "O": "#FF7B3A", "D": "#8A1C12", "s": "#B02818"}
+LOGO_ART = """
+.......s....s...........
+.......s.............s..
+...OOOOOOOOOOOOOOOOOOO.s
+..sRRRRRRRRRRRRRRRRRRRs.
+ss.RRRRRRRRRRRRRRRRRRR..
+...DDDDDDDDDDDDRRRRRRR..
+...............ORRRRRD..
+..............ORRRRRD...
+.....s......ORRRRRD.....
+....s......ORRRRRD......
+.........ORRRRRD........
+........ORRRRRD....s....
+......ORRRRRD.......s...
+.....ORRRRRD............
+...ORRRRRD..............
+...OOOOOOOOOOOOOOOOOOO..
+..sRRRRRRRRRRRRRRRRRRRs.
+.s.RRRRRRRRRRRRRRRRRRR.s
+...DDDDDDDDDDDDDDDDDDD..
+.........s.......s......
+.................s......
+"""
+
+# The gold Zombie chest, in a three-quarter view: the lid's top face recedes
+# up and to the right with the side face in shadow, two gunmetal bands wrap
+# over the lid and down the front, and a square lock plate in the bands'
+# gunmetal sits centred across the lid seam, with a 1px keyhole - the front is
+# 21px wide so both can centre. A rounded gold plate hanging below the seam
+# read as a tongue poking out of a mouth. The chest's claw emblem is left off:
+# at this size its strokes merge into a checkerboard smudge. It stands on a
+# floor row, bottom-aligned to y31 in the right slot like the tank on the left.
+CHEST_Y = 13
+CHEST_LEG = {
+    "Y": "#FFE48A", "G": "#F2BE45", "g": "#C88A22", "o": "#9A6516",
+    "d": "#5C3C0E", "B": "#9AA0AA", "b": "#6A6F78", "n": "#474B52",
+    "K": "#3A2508", "z": "#5A4520",
+}
+CHEST_ART = """
+.....GGGBBbGGGGGGGGGBBbGGG
+....YYYBBbYYYYYYYYYBBbYYYo
+...YYYBBbYYYYYYYYYBBbYYYoo
+..YYYBBbYYYYYYYYYBBbYYYooo
+.YYYBbnYYYYYYYYYBbnYYgoooo
+.YGGBbnGGGGGGGGGBbnGGgoood
+.YGGBbnGGGGGGGGGBbnGGgoodo
+.YGGBbnGGBBBBbGGBbnGGgodoo
+.YGGBbnGGBbbbnGGBbnGGgdooo
+.ddddddddBbKbnddddddddoooo
+.YGGBbnGGBbbbnGGBbnGGgoooo
+.YGGBbnGGbnnnnGGBbnGGgoooo
+.YGGBbnGGGGGGGGGBbnGGgoooo
+.YGGBbnGGGGGGGGGBbnGGgoooo
+.YGGBbnGGGGGGGGGBbnGGgooo.
+.YGGBbnGGGGGGGGGBbnGGgoo..
+.YGGBbnGGGGGGGGGBbnGGgo...
+.gggBbngggggggggBbnggg....
+.zzzzzzzzzzzzzzzzzzzzzzzzz
+"""
+
+def _draw_art(c, theme, x = ARTX):
     y = ART_Y[theme]
     if theme == "SHELTER":
-        c.sprite(SHELTER_ART, ARTX, y, legend = SHELTER_LEG)
+        c.sprite(SHELTER_ART, x, y, legend = SHELTER_LEG)
     elif theme == "SCIENCE":
-        _art_science(c, ARTX, y)
+        _art_science(c, x, y)
     elif theme == "VEHICLE":
-        c.sprite(TANK_ART, ARTX, y, legend = TANK_LEG)
+        c.sprite(TANK_ART, x, y, legend = TANK_LEG)
     elif theme == "HERO":
-        c.sprite(HERO_ART, ARTX, y, legend = HERO_LEG)
+        c.sprite(HERO_ART, x, y, legend = HERO_LEG)
     else:
-        _art_army(c, ARTX, y)
+        _art_army(c, x, y)
 
 # ---- calendar ---------------------------------------------------------------
 def _is_leap_year(year):
@@ -385,20 +457,21 @@ def title(c, ctx):
     theme = _now_theme(ctx)
     c.fill("black")
     _draw_art(c, theme)
-    # 11x14, not 10x16: the 10x16 S hooks at the bottom-left but not the
-    # top-right, so its top half reads as a C. LAST and Z are drawn apart
-    # because the font's space is a full letter wide - it left 12px between
-    # T and Z against 1px between every other pair. Both lines centre in the
-    # text zone so the wider card doesn't leave them stranded at the left.
-    zone = RZ_R - TX + 1
+    # The name is set the way the game's own logo sets it: LAST in white, then
+    # the Z drawn large in the logo's red-orange instead of typed, with LAST's
+    # bottom lined up on the Z's lower bar. LAST stays 11x14 - the 10x16 S
+    # hooks at the bottom-left but not the top-right, so its top half reads as
+    # a C. The pair centres in the gap between the two pictures.
+    zl = ARTX + 26
+    zone = ARTX_R - zl
     lw = c.text_width("LAST", "11x14")
-    zw = c.text_width("Z", "11x14")
-    tx = TX + (zone - (lw + 6 + zw)) // 2
-    c.text("LAST", tx, 6, font = "11x14", color = INK)
-    c.text("Z", tx + lw + 6, 6, font = "11x14", color = INK)
+    tx = zl + (zone - (lw + LOGO_GAP + LOGO_W)) // 2
+    c.text("LAST", tx, 8, font = "11x14", color = INK)
+    c.sprite(LOGO_ART, tx + lw + LOGO_GAP, LOGO_TOP, legend = LOGO_LEG)
+    c.sprite(CHEST_ART, ARTX_R, CHEST_Y, legend = CHEST_LEG)
     sub = "FULL PREPAREDNESS"
-    sx = TX + (zone - c.text_width(sub, "4x5")) // 2
-    c.text(sub, sx, 23, font = "4x5", color = COLOR[theme])
+    sx = zl + (zone - c.text_width(sub, "4x5")) // 2
+    c.text(sub, sx, 25, font = "4x5", color = COLOR[theme])
 
 def main(c, ctx):
     at = _apocalypse(ctx.now)
