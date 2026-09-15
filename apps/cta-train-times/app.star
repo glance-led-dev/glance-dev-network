@@ -1,11 +1,20 @@
-# CTA Train Times for Glance LED
+# CTA Train Times (Chicago) for Glance
 #
-# Shows the next arrivals for a whole CTA station (both directions) on the
-# 128x32 panel. Data comes from the CTA Train Tracker "ttarrivals" endpoint.
+# DESIGN. A platform sign for one CTA 'L' station, readable from across the
+# room. The station name sits top-left over a stripe painted in the colors of
+# every line stopping there (all red at Jarvis, six colors at Clark/Lake).
+# Under it, two big departure rows: a small train front in the line's color
+# is the label, then the destination, then the minutes as the hero. Each row
+# is the next train to a different destination, so a two-way station shows
+# both directions at once; a terminal fills row two with its following train.
+# Black ground, white numbers; green only for DUE, amber only for a delay.
 #
-# Layout (128 x 32):
-#   row 0  (y=0):  station name, dim gray
-#   rows 1-3:      up to 3 next arrivals -> [LINE] DESTINATION .... 3M / DUE
+# Layout (128x32; content stays inside x 6..121 so the app reads as its own
+# unit between neighbors in the scroll sequence):
+#   y 0-6    STATION NAME (5x7, white)                      CTA (4x5, gray)
+#   y 8      line-color stripe
+#   y 10-19  [train] DESTINATION ....................... 7 MIN
+#   y 21-30  [train] DESTINATION ...................... 15 MIN
 #
 # Data comes from our own caching proxy (cta-proxy on Vercel), NOT directly
 # from CTA. The proxy holds the single CTA API key server-side and edge-caches
@@ -177,21 +186,52 @@ LINE_COLORS = {
     "Y": "yellow",
 }
 
-# rt code -> short label that fits the panel
-LINE_LABELS = {
-    "Red": "RED",
-    "Blue": "BLU",
-    "Brn": "BRN",
-    "G": "GRN",
-    "Org": "ORG",
-    "P": "PUR",
-    "Pink": "PNK",
-    "Y": "YEL",
+# Stripe order: CTA's usual line order.
+LINE_ORDER = ["Red", "Blue", "Brn", "G", "Org", "P", "Pink", "Y"]
+
+# Short forms, used only when the full name doesn't fit its slot.
+DEST_SHORT = {
+    "95TH/DAN RYAN": "95TH",
+    "DEMPSTER-SKOKIE": "SKOKIE",
+    "JEFFERSON PARK": "JEFF PARK",
+    "COTTAGE GROVE": "COTTAGE",
+    "ASHLAND/63RD": "ASHLAND/63",
+    "FOREST PARK": "FOREST PK",
+    "HARLEM/LAKE": "HARLEM",
+    "54TH/CERMAK": "54TH",
+    "UIC-HALSTED": "UIC",
+}
+STATION_SHORT = {
+    "HAROLD WASHINGTON LIBRARY-STATE/VAN BUREN": "HW LIBRARY",
+    "ILLINOIS MEDICAL DISTRICT": "MEDICAL DISTRICT",
+    "CERMAK-MCCORMICK PLACE": "MCCORMICK PLACE",
+    "35TH-BRONZEVILLE-IIT": "35TH-BRONZEVILLE",
 }
 
-FONT = "5x7"       # header
-ROW_FONT = "4x5"   # arrival rows (compact, so 4 fit under the header)
-GRAY = "#888888"
+PAD = 6               # scroll safe zone on each side
+NAME_FONT = "5x7"     # station name and destinations
+NUM_FONT = "10x10"    # hero minutes (8x10's slashed zero read "10" as "1Ø")
+SMALL_FONT = "4x5"    # CTA tag, MIN unit, message subline
+ROW_Y = [10, 21]      # 10px departure rows; 1px clear above, between, below
+DEST_X = PAD + 9 + 4  # after the 9px train and a 4px gap
+
+WHITE = "white"
+GRAY = "gray"
+AMBER = "#E8B04A"
+SLATE = "#6A7090"
+
+# Front of an 'L' car on its rail, 9x8: X body, W windshield, L headlights,
+# R rail (the rail is what keeps it from reading as a bus).
+TRAIN = """
+.XXXXXXX.
+XWWWWWWWX
+XWWWWWWWX
+XXXXXXXXX
+XLXXXXXLX
+XXXXXXXXX
+.X.....X.
+RRRRRRRRR
+"""
 
 # Convert "YYYYMMDD HH:MM:SS" -> seconds since 1970-01-01 (no time module).
 # Uses the days-from-civil algorithm so it is correct across month/year/DST
@@ -225,86 +265,178 @@ def _to_epoch(s):
     days = era * 146097 + doe - 719468
     return days * 86400 + h * 3600 + mi * 60 + se
 
-# Trim text to the widest prefix that fits in max_w pixels.
-def _fit(c, s, max_w):
-    if c.text_width(s, font=ROW_FONT) <= max_w:
-        return s
+# The bitmap fonts have no apostrophe ("O'HARE" drew as OHARE), so names are
+# drawn in parts with each apostrophe as a 1x2 tick and a pixel of space on
+# either side. _name_w measures the same way, 3px per apostrophe.
+def _name_w(c, s):
+    parts = s.split("'")
+    w = 0
+    for p in parts:
+        w += c.text_width(p, font = NAME_FONT)
+    return w + 3 * (len(parts) - 1)
+
+def _draw_name(c, s, x, y, col):
+    parts = s.split("'")
+    for i in range(len(parts)):
+        if i > 0:
+            c.vline(x + 1, y, 2, col)
+            x += 3
+        c.text(parts[i], x, y, font = NAME_FONT, color = col)
+        x += c.text_width(parts[i], font = NAME_FONT)
+
+# Widest prefix of s that fits max_w, without a dangling space or slash.
+def _clip(c, s, max_w):
     for n in range(len(s), 0, -1):
-        if c.text_width(s[:n], font=ROW_FONT) <= max_w:
-            return s[:n]
+        t = s[:n].rstrip(" /-('")
+        if _name_w(c, t) <= max_w:
+            return t
     return ""
 
+# Full name if it fits; else drop a "(...)" tag, then the short form, then clip.
+def _fit_name(c, s, short, max_w):
+    s = s.upper()
+    if _name_w(c, s) <= max_w:
+        return s
+    i = s.find(" (")
+    if i > 0:
+        s = s[:i]
+    s = short.get(s, s)
+    return _clip(c, s, max_w)
 
-# Full-screen board for one station: centered line-colored name + up to 4 trains.
-def _render_board(c, ctx, station):
-    c.fill("black")
-    mapid = STATIONS.get(station, "41190")
+def _text_right(c, s, right, y, font, col):
+    c.text(s, right - c.text_width(s, font = font) + 1, y, font = font, color = col)
+
+# Station name, CTA tag, and a stripe with one segment per line at the station.
+def _header(c, name, lines):
+    right = c.width - 1 - PAD
+    tw = c.text_width("CTA", font = SMALL_FONT)
+    _text_right(c, "CTA", right, 1, SMALL_FONT, GRAY)
+    _draw_name(c, _fit_name(c, name, STATION_SHORT, right - tw - PAD - 4), PAD, 0, WHITE)
+
+    total = right - PAD + 1
+    if len(lines) == 0:
+        c.hline(PAD, 8, total, "darkgray")
+        return
+    seg = (total - (len(lines) - 1)) // len(lines)
+    x = PAD
+    for i in range(len(lines)):
+        w = seg if i < len(lines) - 1 else right - x + 1
+        c.hline(x, 8, w, LINE_COLORS.get(lines[i], WHITE))
+        x += w + 1
+
+# Two-line card in the content band (y 10-31): what happened, what next.
+def _message(c, head, sub, col):
+    c.text_center(head, 13, font = NAME_FONT, color = col)
+    c.text_center(sub, 23, font = SMALL_FONT, color = SLATE)
+
+# One departure row with its top at y: train, destination, minutes.
+def _row(c, e, mins, y, dest_w):
+    right = c.width - 1 - PAD
+    col = LINE_COLORS.get(e.get("rt", ""), WHITE)
+    c.sprite(TRAIN, PAD, y + 2, legend = {"X": col, "W": color.dim(col, 30), "L": WHITE, "R": "midgray"})
+
+    if e.get("isApp", "0") == "1" or mins <= 0:
+        _text_right(c, "DUE", right, y, NUM_FONT, "green")
+    elif e.get("isDly", "0") == "1":
+        _text_right(c, "DLY", right, y, NUM_FONT, "amber")
+    else:
+        uw = c.text_width("MIN", font = SMALL_FONT)
+        _text_right(c, "MIN", right, y + 5, SMALL_FONT, GRAY)
+        _text_right(c, str(min(mins, 99)), right - uw - 2, y, NUM_FONT, WHITE)
+
+    dest = _fit_name(c, e.get("destNm") or "", DEST_SHORT, dest_w)
+    _draw_name(c, dest, DEST_X, y + 3, WHITE)
+
+# The next train to each destination, soonest first, two rows max. Trains
+# ending their run here are skipped (at O'Hare nobody boards for O'Hare);
+# a single-destination station fills the second row with its next train.
+def _pick(rows, sta):
+    live = [r for r in rows if (r[2].get("destNm") or "").upper() != sta.upper()]
+    if len(live) == 0:
+        live = rows
+    firsts = []
+    rest = []
+    seen = {}
+    for r in live:
+        key = (r[2].get("rt") or "") + "|" + (r[2].get("destNm") or "")
+        if key in seen:
+            rest.append(r)
+        else:
+            seen[key] = True
+            firsts.append(r)
+    out = firsts[:2]
+    for r in rest:
+        if len(out) >= 2:
+            break
+        out.append(r)
+    return sorted(out)
+
+def main(c, ctx):
+    c.clear()
+
+    station = ctx.inputs.get("station", "Jarvis")
+    mapid = STATIONS.get(station, STATIONS["Jarvis"])
+    i = station.find(" (")
+    label = station[:i] if i > 0 else station
+
+    # The proxy edge-caches 60s and the manifest refreshes every 180s, so
+    # each render gets a fresh board.
     resp = http.get(BASE_URL, params = {"mapid": mapid}, ttl_seconds = 60)
-    if resp["status_code"] != 200 or resp["json"] == None:
-        c.text_center("CTA UNAVAILABLE", 12, font=FONT, color="red")
+    body = resp["json"] if resp["status_code"] == 200 else None
+    ctatt = body.get("ctatt") if type(body) == "dict" else None
+    if type(ctatt) != "dict":
+        _header(c, label, [])
+        _message(c, "NO TRAIN DATA", "RETRYING SOON", AMBER)
         return
-    ctatt = resp["json"].get("ctatt", {})
-    if ctatt.get("errCd", "0") != "0":
-        c.text_center("CTA ERR " + str(ctatt.get("errCd", "?")), 12, font=FONT, color="red")
+
+    err = str(ctatt.get("errCd") or "0")
+    if err != "0":
+        print("CTA errCd=" + err + " errNm=" + str(ctatt.get("errNm")))
+        _header(c, label, [])
+        _message(c, "CTA ERROR " + err, "RETRYING SOON", AMBER)
         return
-    etas = ctatt.get("eta", [])
-    if type(etas) != "list":
+
+    etas = ctatt.get("eta")
+    if type(etas) == "dict":   # CTA returns a bare object when there's exactly 1
         etas = [etas]
-    now = _to_epoch(ctatt.get("tmst", ""))
+    elif type(etas) != "list":
+        etas = []
+
+    # (minutes, index, eta) so sorted() orders by time without a lambda.
+    now = _to_epoch(ctatt.get("tmst") or "")
     rows = []
+    seen_lines = {}
     for i in range(len(etas)):
         e = etas[i]
-        mins = (_to_epoch(e.get("arrT", "")) - now + 30) // 60
-        rows.append((mins, i, e))
+        if type(e) != "dict":
+            continue
+        arr = _to_epoch(e.get("arrT") or "")
+        if arr == 0 or now == 0:
+            continue
+        rows.append(((arr - now + 30) // 60, i, e))
+        seen_lines[e.get("rt") or ""] = True
     rows = sorted(rows)
+    lines = [rt for rt in LINE_ORDER if rt in seen_lines]
 
+    sta = label
     if len(rows) > 0:
-        sta = rows[0][2].get("staNm", station)
-        head_color = LINE_COLORS.get(rows[0][2].get("rt", ""), "white")
-    else:
-        sta = station
-        idx = sta.find(" (")
-        if idx > 0:
-            sta = sta[:idx]
-        head_color = GRAY
-    c.text_center(sta.upper(), 0, font=FONT, color=head_color)
+        sta = rows[0][2].get("staNm") or label
+    _header(c, sta, lines)
 
-    if len(rows) == 0:
-        c.text_center("NO TRAINS", 18, font=FONT, color=GRAY)
+    picked = _pick(rows, sta)
+    if len(picked) == 0:
+        _message(c, "NO TRAINS DUE", "CHECK BACK SOON", WHITE)
         return
 
-    y = 8
-    shown = 0
-    for row in rows:
-        if shown >= 4:
-            break
-        mins = row[0]
-        e = row[2]
-        rt = e.get("rt", "")
-        label = LINE_LABELS.get(rt, rt.upper()[:3])
-        color = LINE_COLORS.get(rt, "white")
-        if e.get("isApp", "0") == "1" or mins <= 0:
-            when = "DUE"
-        elif e.get("isDly", "0") == "1":
-            when = "DLY"
-        else:
-            when = str(int(mins)) + "M"
-        c.text(label, 1, y, font=ROW_FONT, color=color)
-        w = c.text_width(when, font=ROW_FONT)
-        c.text(when, ctx.width - w, y, font=ROW_FONT, color=color)
-        dest = _fit(c, e.get("destNm", "").upper(), ctx.width - w - 21)
-        c.text(dest, 18, y, font=ROW_FONT, color="white")
-        y += 6
-        shown += 1
+    # Destinations get a fixed width, sized to the widest time ("88 MIN" or
+    # DUE) plus a 5px gap, so a name never flips between long and short forms
+    # as it counts down. At 3px, "FOREST PARK" ran into the 10x10 "13" (its
+    # "1" flags left) and read as PARK13.
+    right = c.width - 1 - PAD
+    when_w = c.text_width("MIN", font = SMALL_FONT) + 2 + c.text_width("88", font = NUM_FONT)
+    when_w = max(when_w, c.text_width("DUE", font = NUM_FONT))
+    dest_w = right - when_w - 5 - DEST_X + 1
 
-# Page 1: station one.
-def board1(c, ctx):
-    _render_board(c, ctx, ctx.inputs.get("station", "Jarvis"))
-
-# Page 2: station two. If none is set, repeat station one so single-station
-# users see an unchanging board (no dead/blank rotation frame).
-def board2(c, ctx):
-    s2 = ctx.inputs.get("station2", "(none)")
-    if s2 == "(none)" or s2 == "":
-        s2 = ctx.inputs.get("station", "Jarvis")
-    _render_board(c, ctx, s2)
+    for n in range(len(picked)):
+        r = picked[n]
+        _row(c, r[2], r[0], ROW_Y[n], dest_w)
