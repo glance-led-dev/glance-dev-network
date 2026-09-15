@@ -3,7 +3,7 @@ id: event-milestone
 version: 0.1.0
 name: Event Milestone
 author: ShulinZhou
-description: Days since - or days to - your weddings, birthdays and graduations, with themed pixel art and a count colour per event. Up to three events take turns on the panel.
+description: Days since - or days to - your wedding, birthday, graduation or other milestone, with themed pixel art and a count colour you choose.
 category: Lifestyle
 entry: app.star
 
@@ -14,22 +14,22 @@ refresh: 1800
 pages: [since]
 
 inputs:
-  - key: event1
+  - key: event
     type: string
     app_input_type: free-text
-    label: Event 1 name
+    label: Event name
     default: "WEDDING"
     help: "Completes the title: DAYS SINCE ___ (or DAYS TO ___). Leave blank to use the theme name."
-  - key: date1
+  - key: date
     type: string
     app_input_type: date
-    label: Event 1 date
+    label: Event date
     default: "2019-06-15"
     help: A past date counts up from it; a future date counts down to it.
-  - key: theme1
-    type: string
+  - key: theme
+    type: choice
     app_input_type: dropdown
-    label: Event 1 theme
+    label: Event theme
     default: Wedding
     choices:
       - Wedding
@@ -72,145 +72,13 @@ inputs:
       - Skiing
       - Chess
       - Golf
-  - key: numcolor1
+  - key: numcolor
     type: choice
     app_input_type: dropdown
-    label: Event 1 color
+    label: Event color
     default: Pink
     choices: [Red, Yellow, Green, Blue, Purple, Pink]
-    help: The colour of this event's name and day count.
-
-  - key: event2
-    type: string
-    app_input_type: free-text
-    label: Event 2 name
-    default: ""
-    help: Optional. Leave blank to use the theme name.
-  - key: date2
-    type: string
-    app_input_type: date
-    label: Event 2 date
-    default: ""
-    help: Leave blank to skip this event entirely.
-  - key: theme2
-    type: string
-    app_input_type: dropdown
-    label: Event 2 theme
-    default: Birthday
-    choices:
-      - Wedding
-      - Birthday
-      - Graduation
-      - House
-      - Car
-      - Bicycle
-      - Yacht
-      - Departure
-      - Arrival
-      - Tree
-      - Flower
-      - Beach
-      - Mountains
-      - "Torii Gate"
-      - Pagoda
-      - Heart
-      - Couple
-      - "Couple Blue"
-      - "Couple Pink"
-      - Girl
-      - Boy
-      - Campfire
-      - Helicopter
-      - Paraglider
-      - Fishing
-      - Running
-      - "Gold Medal"
-      - "Silver Medal"
-      - "Bronze Medal"
-      - Trophy
-      - Podium
-      - Soccer
-      - Football
-      - Basketball
-      - Badminton
-      - Volleyball
-      - Hockey
-      - Skiing
-      - Chess
-      - Golf
-  - key: numcolor2
-    type: choice
-    app_input_type: dropdown
-    label: Event 2 color
-    default: Green
-    choices: [Red, Yellow, Green, Blue, Purple, Pink]
-    help: The colour of this event's name and day count.
-
-  - key: event3
-    type: string
-    app_input_type: free-text
-    label: Event 3 name
-    default: ""
-    help: Optional. Leave blank to use the theme name.
-  - key: date3
-    type: string
-    app_input_type: date
-    label: Event 3 date
-    default: ""
-    help: Leave blank to skip this event entirely.
-  - key: theme3
-    type: string
-    app_input_type: dropdown
-    label: Event 3 theme
-    default: Graduation
-    choices:
-      - Wedding
-      - Birthday
-      - Graduation
-      - House
-      - Car
-      - Bicycle
-      - Yacht
-      - Departure
-      - Arrival
-      - Tree
-      - Flower
-      - Beach
-      - Mountains
-      - "Torii Gate"
-      - Pagoda
-      - Heart
-      - Couple
-      - "Couple Blue"
-      - "Couple Pink"
-      - Girl
-      - Boy
-      - Campfire
-      - Helicopter
-      - Paraglider
-      - Fishing
-      - Running
-      - "Gold Medal"
-      - "Silver Medal"
-      - "Bronze Medal"
-      - Trophy
-      - Podium
-      - Soccer
-      - Football
-      - Basketball
-      - Badminton
-      - Volleyball
-      - Hockey
-      - Skiing
-      - Chess
-      - Golf
-  - key: numcolor3
-    type: choice
-    app_input_type: dropdown
-    label: Event 3 color
-    default: Yellow
-    choices: [Red, Yellow, Green, Blue, Purple, Pink]
-    help: The colour of this event's name and day count.
+    help: The colour of the event's name and day count.
 
   - key: accent
     type: choice

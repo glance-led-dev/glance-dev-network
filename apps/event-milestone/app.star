@@ -1,7 +1,7 @@
 # Event Milestone - how long since something happened, or how long until it
 # does. (192x32)
 #
-# Up to three events, taking turns. Two levels:
+# One event per install -- add the app again to track another. Two levels:
 #
 #   upper   DAYS SINCE <EVENT>                          [event date]
 #   lower   [theme art]  <count> DAYS               [month][week][day] lamps
@@ -35,13 +35,8 @@
 # LENGTH is the reading. Off is drawn as an outline, not left blank -- see
 # marks() and lamp_states().
 #
-# Up to three events rotate, time-multiplexed inside one page rather than split
-# across manifest pages, because `pages` is a fixed list: three pages would take
-# three turns in the scroll whether or not the user filled in three events.
-# Frames rotate over the events that actually exist -- see slots().
-#
-# Colour is the user's: each slot carries its own `numcolor` for its name and
-# count, and one `accent` dresses the rail. Both are dropdowns over the named
+# Colour is the user's: `numcolor` tints the event's name and count, and
+# `accent` dresses the rail. Both are dropdowns over the named
 # LED palette (see COLORS), resolved by color_of(). A hex saved back when these
 # were colour pickers still resolves, and still goes through lift().
 #
@@ -65,7 +60,6 @@ STRUCT = "#1E2030"       # the unlit lamps
 
 PAD = 8                  # scroll safe zone: neighbours slide past the edges
 BAND = 8                 # lower level starts here, below the title row
-ROTATE_EVERY = 1800      # seconds one event holds the panel; equals `refresh`
 
 # The anniversary lamps: three 5x5 blocks, 4px apart, right-aligned under the
 # date. 5 + 4 + 5 + 4 + 5 = 23 wide, ending at c.width-1-PAD (see marks_x).
@@ -1554,65 +1548,25 @@ def accent_of(ctx):
     return color_of(ctx.inputs.get("accent", "Purple"), "purple")
 
 
-def slots(ctx):
-    """The configured events, in form order.
+def configured(ctx):
+    """The event as the user set it up, or None when its date is unusable.
 
-    A slot counts as configured when its DATE parses -- the date is the only
-    field the app cannot invent. A name is optional and falls back to the
-    theme, so filling in nothing but a date still gives "DAYS SINCE BIRTHDAY"
-    rather than a blank title.
+    The date is the only field the app cannot invent. A name is optional and
+    falls back to the theme, so filling in nothing but a date still gives
+    "DAYS SINCE BIRTHDAY" rather than a blank title.
 
-    Slots the user left empty are dropped here rather than drawn as an error.
-    That is the whole reason the rotation is built on frames instead of
-    manifest pages: `pages` is a fixed list, so three pages means three turns in
-    the scroll whether or not the user filled in three events, and the empty
-    ones would each take their slot on the wall to say nothing.
-
-    Read out literally rather than by building "date" + i. The validator
-    scans the source for each declared key, so a computed name reads to it as
-    a setting the app never uses and fails the app.
+    One event per install: someone tracking several adds the app once for
+    each, and every copy takes its own turn in the scroll.
     """
-    raw = [
-        [ctx.inputs.get("event1", ""), ctx.inputs.get("date1", ""),
-         ctx.inputs.get("theme1", ""),
-         color_of(ctx.inputs.get("numcolor1", ""), "pink")],
-        [ctx.inputs.get("event2", ""), ctx.inputs.get("date2", ""),
-         ctx.inputs.get("theme2", ""),
-         color_of(ctx.inputs.get("numcolor2", ""), "green")],
-        [ctx.inputs.get("event3", ""), ctx.inputs.get("date3", ""),
-         ctx.inputs.get("theme3", ""),
-         color_of(ctx.inputs.get("numcolor3", ""), "yellow")],
-    ]
-    out = []
-    for r in raw:
-        ymd = parse_date(r[1])
-        if ymd == None:
-            continue
-        theme = norm_theme(r[2])
-        name = str(r[0]).strip().upper()
-        if name == "":
-            name = theme.upper()
-        out.append({"ymd": ymd, "theme": theme, "name": name,
-                    "numcolor": str(r[3]).strip()})
-    return out
-
-
-def active_slot(ctx, total):
-    """Which event this render shows.
-
-    Rotating on the wall clock rather than on a counter means every render is
-    a pure function of the time -- there is no state to keep between refreshes,
-    and the panel lands on the next event each time the scroll comes back
-    round to this app.
-
-    ROTATE_EVERY matches the manifest's `refresh` (1800), so each re-render
-    crosses one boundary and lands on the next event. Keep the two in step: a
-    refresh slower than the rotation skips events, and a faster one re-renders
-    the same event for nothing.
-    """
-    if total <= 1:
-        return 0
-    return (ctx.now.unix // ROTATE_EVERY) % total
+    ymd = parse_date(ctx.inputs.get("date", ""))
+    if ymd == None:
+        return None
+    theme = norm_theme(ctx.inputs.get("theme", ""))
+    name = str(ctx.inputs.get("event", "")).strip().upper()
+    if name == "":
+        name = theme.upper()
+    return {"ymd": ymd, "theme": theme, "name": name,
+            "numcolor": color_of(ctx.inputs.get("numcolor", ""), "pink")}
 
 
 def days_since(ctx, ymd):
@@ -1779,21 +1733,20 @@ def since(c, ctx):
     ink_accent = lift(accent_of(ctx))
 
     c.fill(INK)
-    events = slots(ctx)
+    ev = configured(ctx)
 
-    # Not one usable date across all three slots: say what is wrong and what to
-    # do, and dress the rail in the warning colour rather than the accent so
-    # the state is never contradicted by its own chrome.
-    if len(events) == 0:
+    # No usable date: say what is wrong and what to do, and dress the rail in
+    # the warning colour rather than the accent so the state is never
+    # contradicted by its own chrome.
+    if ev == None:
         rail(c, "#E8B04A")
         message(c, "SET A DATE", "PICK A DAY FOR THIS EVENT")
         return
 
-    ev = events[active_slot(ctx, len(events))]
     n = days_since(ctx, ev["ymd"])
 
-    # The count colour belongs to the event, not the app, so it is resolved
-    # per slot. lift() still guards a pick too dark for the black ground.
+    # The count colour belongs to the event, not the rail, so it is resolved
+    # separately. lift() still guards a pick too dark for the black ground.
     num_ink = lift(ev["numcolor"])
 
     # A date in the future counts DOWN, and the title says so. The direction
@@ -1805,7 +1758,7 @@ def since(c, ctx):
     #
     # Today belongs to neither side, and gets its own word rather than a drawn
     # zero. It keeps the SINCE head: the day is here, not still ahead.
-    # Every state takes the slot's own colour. Leaving TODAY on the accent
+    # Every state takes the event's own colour. Leaving TODAY on the accent
     # meant an event set to pink turned blue on the one day it mattered.
     if n == 0:
         head = "DAYS SINCE "
