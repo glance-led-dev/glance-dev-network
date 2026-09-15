@@ -25,3 +25,25 @@ Wikimedia's file page notes that although the image itself is out of
 copyright, "this image shows ... an official insignia" and related
 trademark rights are independent of copyright status and vary by
 jurisdiction.
+
+## Football-data.org API key (optional)
+
+RESULT normally uses TheSportsDB's shared free key, no setup needed. That
+key's `eventslast.php` endpoint has been observed serving a stale "last
+result" for Arsenal specifically — for example, it kept returning a Sept 6
+result days after Arsenal had already played and won a newer match on
+Sept 12, even though other endpoints (next fixture, standings) were
+current. Every alternative free TheSportsDB endpoint tried (season
+schedule, past-league results, round-by-round, day-by-day) is capped to a
+handful of items by the shared key and doesn't reliably include Arsenal's
+match either — there's no free/keyless fix for this.
+
+If you hit this, get a free API key from football-data.org
+(https://www.football-data.org/client/register — free tier, no credit
+card) and paste it into the app's "Football-data.org API key" input. When
+present, RESULT tries football-data.org first (it resolves Arsenal's team
+id by name against the Premier League roster rather than a hardcoded
+guess) and only falls back to the free TheSportsDB source if that request
+itself fails — so a genuinely quiet week (no finished match) still shows
+correctly either way. Leave the key blank to keep using the free source
+as before.
