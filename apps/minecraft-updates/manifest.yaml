@@ -1,5 +1,7 @@
 id: minecraft-updates
 name: Minecraft Updates
+author: r65vm5fghy-commits
+description: Latest Minecraft Bedrock release, Java snapshot and Bedrock preview, with what changed.
 width: 128
 height: 32
 refresh: 3600
@@ -8,12 +10,3 @@ pages:
   - release
   - java
   - bedrock
-
-inputs:
-  - key: mode
-    label: Mode
-    app_input_type: dropdown
-    default: LIVE
-    options:
-      - LIVE
-      - DEMO

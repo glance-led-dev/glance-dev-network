@@ -63,29 +63,6 @@ GRASS_BLOCK = [
 
 
 # ---------------------------------------------------------
-# DEMO CONTENT
-# ---------------------------------------------------------
-
-DEMO_RELEASE = {
-    "title": "MINECRAFT BEDROCK EDITION 26.45 HOTFIX",
-    "line1": "VIBRANT VISUALS",
-    "line2": "INPUT + ITEM FIXES",
-}
-
-DEMO_JAVA = {
-    "title": "MINECRAFT JAVA EDITION 26.3 PRE-RELEASE 3",
-    "line1": "BUG FIXES",
-    "line2": "TRADING + UI",
-}
-
-DEMO_PREVIEW = {
-    "title": "MINECRAFT BETA PREVIEW 26.60.22/23",
-    "line1": "STRAW BED FIXES",
-    "line2": "TRAPDOOR CHANGES",
-}
-
-
-# ---------------------------------------------------------
 # HTTP
 # ---------------------------------------------------------
 
@@ -603,30 +580,21 @@ def _header_label(kind, title):
     ).upper()
 
 
-def _badge_text(kind, demo):
-    if demo:
-        return "DEMO"
-
+def _badge_text(kind):
     if kind == "release":
         return "LIVE"
 
     return "TEST"
 
 
-def _badge_bg(kind, demo):
-    if demo:
-        return AMBER_DARK
-
+def _badge_bg(kind):
     if kind == "release":
         return GREEN_DARK
 
     return AMBER_DARK
 
 
-def _badge_fg(kind, demo):
-    if demo:
-        return AMBER
-
+def _badge_fg(kind):
     if kind == "release":
         return GREEN
 
@@ -799,7 +767,7 @@ def _draw_badge(c, text, x1, y0, bg, fg):
 # LIVE SCREEN
 # ---------------------------------------------------------
 
-def _draw_live(c, kind, title, line1, line2, demo):
+def _draw_live(c, kind, title, line1, line2):
     c.fill(BG)
 
     c.rect(
@@ -844,10 +812,9 @@ def _draw_live(c, kind, title, line1, line2, demo):
         GRAY,
     )
 
-    # LIVE / TEST / DEMO BADGE
+    # LIVE / TEST BADGE
     badge = _badge_text(
         kind,
-        demo,
     )
 
     _draw_badge(
@@ -855,8 +822,8 @@ def _draw_live(c, kind, title, line1, line2, demo):
         badge,
         123,
         0,
-        _badge_bg(kind, demo),
-        _badge_fg(kind, demo),
+        _badge_bg(kind),
+        _badge_fg(kind),
     )
 
     # MAIN UPDATE SUMMARY
@@ -999,25 +966,7 @@ def _draw_empty(c):
 # PAGE RENDERER
 # ---------------------------------------------------------
 
-def _render(c, ctx, kind, section_id, demo_data):
-    mode = str(
-        ctx.inputs.get(
-            "mode",
-            "LIVE",
-        )
-    ).upper()
-
-    if mode == "DEMO":
-        _draw_live(
-            c,
-            kind,
-            demo_data["title"].upper(),
-            demo_data["line1"].upper(),
-            demo_data["line2"].upper(),
-            True,
-        )
-        return
-
+def _render(c, kind, section_id):
     result = _fetch_latest(
         section_id,
     )
@@ -1036,7 +985,6 @@ def _render(c, ctx, kind, section_id, demo_data):
         result["title"].upper(),
         result["line1"].upper(),
         result["line2"].upper(),
-        False,
     )
 
 
@@ -1049,10 +997,8 @@ def release(c, ctx):
 
     _render(
         c,
-        ctx,
         "release",
         SECTION_RELEASE,
-        DEMO_RELEASE,
     )
 
 
@@ -1061,10 +1007,8 @@ def java(c, ctx):
 
     _render(
         c,
-        ctx,
         "java",
         SECTION_JAVA,
-        DEMO_JAVA,
     )
 
 
@@ -1073,8 +1017,6 @@ def bedrock(c, ctx):
 
     _render(
         c,
-        ctx,
         "bedrock",
         SECTION_PREVIEW,
-        DEMO_PREVIEW,
     )
