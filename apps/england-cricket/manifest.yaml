@@ -1,15 +1,21 @@
 id: england-cricket
-name: England Cricket
-description: Live score and status for England's Test and ODI matches.
+name: Test Cricket Scores
+description: Test match scorebug with pixel flags for the nations you follow - live score, overs and chase on match days, then a countdown to the next Test (or next ODI or T20I when no Test is fixed) and the last result.
 author: Levi Solomon
 category: Sports
 width: 128
 height: 32
-refresh: 300
+# Live scores move ball by ball, and each refresh advances the rotation to the
+# next match. app.star caches the live feed for the same 60 seconds.
+refresh: 600
 pages:
-  - live
-  - commentary
+  - score
+  - innings
 inputs:
-  - key: apikey
-    label: CricAPI Key
-    app_input_type: api-key
+  - key: teams
+    type: choice
+    app_input_type: selection
+    label: Teams
+    default: England
+    choices: [Afghanistan, Australia, Bangladesh, England, India, Ireland, New Zealand, Pakistan, South Africa, Sri Lanka, West Indies, Zimbabwe]
+    help: Pick one or more Test nations. Live Test scores on match days; in between, a countdown to the next Test, or to the next ODI or T20I when no Test is fixed. Several teams rotate between refreshes.
