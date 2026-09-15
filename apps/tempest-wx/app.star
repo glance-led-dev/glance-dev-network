@@ -523,6 +523,8 @@ def pick_device(devices):
 def token_of(ctx):
     return trim(ctx.inputs.get("apikey", ""))
 
+STATION_SLOTS = {"first": 0, "second": 1, "third": 2, "fourth": 3}
+
 def fetch_station(ctx):
     """One lookup gives the station's coordinates, its name and its devices,
     so the user never has to find a device id or type in latitude.
@@ -545,12 +547,10 @@ def fetch_station(ctx):
     if stations == None or len(stations) == 0:
         return {"err": "NO STATIONS"}
 
-    want = trim(ctx.inputs.get("station", ""))
-    chosen = stations[0]
-    if want != "":
-        for st in stations:
-            if str(st.get("station_id", "")) == want:
-                chosen = st
+    # the dropdown picks a position on the account, not an id; a position the
+    # account doesn't have falls back to the first station
+    slot = STATION_SLOTS.get(choice_of(ctx, "station", "first"), 0)
+    chosen = stations[slot] if slot < len(stations) else stations[0]
 
     device, dtype = pick_device(chosen.get("devices", []))
     return {
@@ -1253,10 +1253,8 @@ def alerts(c, ctx):
         nodata(c, station["err"], fix_for(station["err"]))
         return
 
-    # the place label defaults to the station's own name; the input overrides it
-    town = clamp(c, trim(ctx.inputs.get("town", "")).upper(), 60, "4x5")
-    if town == "":
-        town = clamp(c, station["name"].upper(), 60, "4x5")
+    # the place label is the station's own name from the Tempest account
+    town = clamp(c, station["name"].upper(), 60, "4x5")
 
     live = fetch_alerts(ctx, station)
 

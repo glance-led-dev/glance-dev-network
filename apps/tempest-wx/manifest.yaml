@@ -26,21 +26,16 @@ inputs:
       station, so this is usually the only thing you need to fill in.
 
   - key: station
-    app_input_type: free-text
-    type: string
-    label: Station ID
+    app_input_type: dropdown
+    type: choice
+    label: Station
+    default: first
+    choices: [first, second, third, fourth]
     help: >-
-      Optional. Leave blank and the app uses the first station on your account.
-      Fill it in only if you have more than one - the numeric ID is in the URL
-      of your station page at tempestwx.com.
-
-  - key: town
-    app_input_type: free-text
-    type: string
-    label: Place name
-    help: >-
-      Optional. Shown on the alerts page. Leave blank to use your station's own
-      name. Keep it short - about 14 characters fit.
+      Which station on your account to show. Most accounts have one, so leave
+      this on first. If you have several, the alerts page shows the station's
+      name whenever no alert is up. A pick past the end of your list uses the
+      first station.
 
   - key: units
     app_input_type: dropdown
