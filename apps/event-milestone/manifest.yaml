@@ -9,7 +9,7 @@ entry: app.star
 
 width: 192
 height: 32
-refresh: 60
+refresh: 1800
 
 pages: [since]
 
@@ -73,10 +73,11 @@ inputs:
       - Chess
       - Golf
   - key: numcolor1
-    type: string
-    app_input_type: color
+    type: choice
+    app_input_type: dropdown
     label: Event 1 color
-    default: "#E85AA8"
+    default: Pink
+    choices: [Red, Yellow, Green, Blue, Purple, Pink]
     help: The colour of this event's name and day count.
 
   - key: event2
@@ -138,10 +139,11 @@ inputs:
       - Chess
       - Golf
   - key: numcolor2
-    type: string
-    app_input_type: color
+    type: choice
+    app_input_type: dropdown
     label: Event 2 color
-    default: "#39D98A"
+    default: Green
+    choices: [Red, Yellow, Green, Blue, Purple, Pink]
     help: The colour of this event's name and day count.
 
   - key: event3
@@ -203,15 +205,17 @@ inputs:
       - Chess
       - Golf
   - key: numcolor3
-    type: string
-    app_input_type: color
+    type: choice
+    app_input_type: dropdown
     label: Event 3 color
-    default: "#FFD24A"
+    default: Yellow
+    choices: [Red, Yellow, Green, Blue, Purple, Pink]
     help: The colour of this event's name and day count.
 
   - key: accent
-    type: string
-    app_input_type: color
+    type: choice
+    app_input_type: dropdown
     label: Accent color
-    default: "#9B5CFF"
+    default: Purple
+    choices: [Red, Yellow, Green, Blue, Purple, Pink]
     help: The edge rail.

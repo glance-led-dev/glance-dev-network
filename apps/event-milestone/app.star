@@ -41,8 +41,9 @@
 # Frames rotate over the events that actually exist -- see slots().
 #
 # Colour is the user's: each slot carries its own `numcolor` for its name and
-# count, and one `accent` dresses the rail. Both are drawn on the near-black
-# ground, so both go through lift().
+# count, and one `accent` dresses the rail. Both are dropdowns over the named
+# LED palette (see COLORS), resolved by color_of(). A hex saved back when these
+# were colour pickers still resolves, and still goes through lift().
 #
 # Pure date arithmetic from ctx.now. Nothing is fetched, so there is no stale
 # or empty screen to design around -- only a date the user has not set yet.
@@ -64,7 +65,7 @@ STRUCT = "#1E2030"       # the unlit lamps
 
 PAD = 8                  # scroll safe zone: neighbours slide past the edges
 BAND = 8                 # lower level starts here, below the title row
-ROTATE_EVERY = 60        # seconds one event holds the panel before the next
+ROTATE_EVERY = 1800      # seconds one event holds the panel; equals `refresh`
 
 # The anniversary lamps: three 5x5 blocks, 4px apart, right-aligned under the
 # date. 5 + 4 + 5 + 4 + 5 = 23 wide, ending at c.width-1-PAD (see marks_x).
@@ -1525,8 +1526,32 @@ def fit(c, text, fonts, maxw):
     return [pick, clip(c, t, pick, maxw)]
 
 
+# The colour dropdowns' choices, lowercased, onto the panel's named palette.
+# Six hues that stay distinct on the LED -- orange, cyan, magenta and the rest
+# read as neighbours of these across a room, and four colour settings over a
+# long list was too many combinations to choose between.
+COLORS = {
+    "red": "#FF0000",
+    "yellow": "#FFDC50",
+    "green": "#00DC46",
+    "blue": "#005AFF",
+    "purple": "#7521F9",
+    "pink": "#FF69B4",
+}
+
+
+def color_of(value, fallback):
+    """A colour dropdown's value as hex. A "#RRGGBB" saved by the old colour
+    picker passes through so existing setups keep their colour; anything else
+    unknown falls back to the setting's default."""
+    v = str(value).strip()
+    if v.startswith("#"):
+        return v
+    return COLORS.get(v.lower(), COLORS[fallback])
+
+
 def accent_of(ctx):
-    return str(ctx.inputs.get("accent", "#9B5CFF")).strip()
+    return color_of(ctx.inputs.get("accent", "Purple"), "purple")
 
 
 def slots(ctx):
@@ -1549,11 +1574,14 @@ def slots(ctx):
     """
     raw = [
         [ctx.inputs.get("event1", ""), ctx.inputs.get("date1", ""),
-         ctx.inputs.get("theme1", ""), ctx.inputs.get("numcolor1", "")],
+         ctx.inputs.get("theme1", ""),
+         color_of(ctx.inputs.get("numcolor1", ""), "pink")],
         [ctx.inputs.get("event2", ""), ctx.inputs.get("date2", ""),
-         ctx.inputs.get("theme2", ""), ctx.inputs.get("numcolor2", "")],
+         ctx.inputs.get("theme2", ""),
+         color_of(ctx.inputs.get("numcolor2", ""), "green")],
         [ctx.inputs.get("event3", ""), ctx.inputs.get("date3", ""),
-         ctx.inputs.get("theme3", ""), ctx.inputs.get("numcolor3", "")],
+         ctx.inputs.get("theme3", ""),
+         color_of(ctx.inputs.get("numcolor3", ""), "yellow")],
     ]
     out = []
     for r in raw:
@@ -1576,6 +1604,11 @@ def active_slot(ctx, total):
     a pure function of the time -- there is no state to keep between refreshes,
     and the panel lands on the next event each time the scroll comes back
     round to this app.
+
+    ROTATE_EVERY matches the manifest's `refresh` (1800), so each re-render
+    crosses one boundary and lands on the next event. Keep the two in step: a
+    refresh slower than the rotation skips events, and a faster one re-renders
+    the same event for nothing.
     """
     if total <= 1:
         return 0
