@@ -1,20 +1,34 @@
-# Date & Time — local date, time, and current weather for a US zip code. (384x32, 1 page)
+# Date & Weather — local date and today's weather for a US zip code. (192x32, 2 pages)
 #
-# One line, left to right: DATE | TIME | weather ICON + TEMP + CONDITION.
-# Each section has its own configurable color. The whole line shares one
-# user-selectable font and only drops to a smaller one if the full line —
-# with real content — would overflow, so sizing stays consistent instead of
-# each section picking its own. The temperature reading can also be colored
-# by a hot/cold scale instead of the weather color.
+# DESIGN. The date is the anchor. TODAY puts the weekday over a big 10x16 date
+# on the left, so the panel reads as a date app first rather than as another
+# weather app, and gives the right zone to the weather at a glance: the place,
+# the drawn condition, a 10x16 temperature, today's high and low, and the
+# condition by name. SKY gives the rest of today three even columns -- chance
+# of rain, sunrise, sunset -- each a small drawn icon and label over a big value.
+#
+# No clock: the app re-renders every 30 minutes (refresh 1800), and a time
+# drawn at that rate would sit up to 30 minutes stale. Sunrise and sunset are
+# fixed times for the day, so the slow refresh never makes them wrong.
+#
+# Colors come from three five-way dropdowns (date, weather, temperature); the
+# place name and labels are gray, the dividers dim gray.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-MONTHS_FULL = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
-               "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
 WEEKDAYS_FULL = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY",
                   "SATURDAY", "SUNDAY"]
 
-# Compact weather glyphs, each <=9px tall so they sit on the one text line.
+# 192 scroll safe zone: content lives in x 10..181 so the app reads as its own
+# unit when a neighbouring app is on the glass beside it.
+LEFT = 10
+RIGHT = 181
+GAP = 6              # empty space on each side of a divider
+DIVIDER = "#444444"  # dim gray rule between zones; fixed, not a setting
+LABEL = "#969696"    # gray, for the place name and the SKY labels
+MOON_DIM = "#2A3A4A" # the moon's unlit side
+
+# Compact weather glyphs, drawn at 2x (18px) beside the temperature.
 SUN = [
     [0, 0, 0, 0, 1, 0, 0, 0, 0],
     [0, 1, 0, 0, 1, 0, 0, 1, 0],
@@ -61,6 +75,37 @@ FOG = [
     [1, 1, 1, 1, 1, 1, 1, 0, 0],
 ]
 
+# The degree mark. No bitmap font carries U+00B0, and a 1px dot beside a
+# 10x16 digit reads as dirt, so it is a drawn ring matched to the digit stroke.
+RING = [
+    [0, 1, 1, 1, 0],
+    [1, 1, 0, 1, 1],
+    [1, 0, 0, 0, 1],
+    [1, 1, 0, 1, 1],
+    [0, 1, 1, 1, 0],
+]
+
+# SKY icons, 1x. A drop for rain:
+DROP = [
+    [0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 0],
+]
+# and a half sun with rays on a gray horizon, yellow for sunrise and orange
+# for sunset. (An up/down arrow stacked on the sun read as a cross on a grave.)
+SUN_RAYS = [
+    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+    [1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1],
+]
+HORIZON = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+
 # ---------- input ----------
 
 def _s(ctx, key, fallback):
@@ -73,16 +118,15 @@ def _s(ctx, key, fallback):
 def pad2(n):
     return str(n) if n >= 10 else "0" + str(n)
 
-# ---------- calendar ----------
+# The five named colors the color dropdowns offer. Anything else -- like a hex
+# saved back when these were color wheels -- falls back to white.
+TEXT_COLORS = {"White": "#FFFFFF", "Amber": "#FFBF00", "Green": "#00DC46",
+               "Cyan": "#00DCDC", "Red": "#FF0000"}
 
-def _days_from_civil(y, m, d):
-    yy = y - 1 if m <= 2 else y
-    era = (yy if yy >= 0 else yy - 399) // 400
-    yoe = yy - era * 400
-    mm = m + (-3 if m > 2 else 9)
-    doy = (153 * mm + 2) // 5 + d - 1
-    doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
-    return era * 146097 + doe - 719468
+def _color(ctx, key):
+    return TEXT_COLORS.get(_s(ctx, key, "White"), "#FFFFFF")
+
+# ---------- calendar ----------
 
 def _civil_from_days(z):
     z = z + 719468
@@ -99,20 +143,31 @@ def _civil_from_days(z):
     return y, m, d
 
 def local_parts(ctx, off_hours):
-    # Date and clock both come off this one shifted timestamp, so they can
-    # never disagree near midnight.
+    # Shift to the zip's local time first, so the date turns over at local
+    # midnight rather than UTC midnight.
     local = ctx.now.unix + int(off_hours * 3600.0)
     sod = local % 86400
     days = (local - sod) // 86400
     y, mo, d = _civil_from_days(days)
     return {
-        "h": sod // 3600,
-        "mi": (sod % 3600) // 60,
         "y": y,
         "mo": mo,
         "d": d,
         "wd": (days + 3) % 7,  # 0 = Monday, matches WEEKDAYS_FULL
     }
+
+def format_date(ctx, t):
+    # Choices are written as an example date. The long formats saved before
+    # the 192 redesign (MM/DD/YYYY and friends) map onto their short form.
+    fmt = _s(ctx, "dateformat", "SEP 14")
+    mon = MONTHS[t["mo"] - 1]
+    if fmt == "09/14" or fmt.startswith("MM/DD"):
+        return pad2(t["mo"]) + "/" + pad2(t["d"])
+    if fmt == "14/09" or fmt.startswith("DD/MM"):
+        return pad2(t["d"]) + "/" + pad2(t["mo"])
+    if fmt == "14 SEP" or fmt.startswith("DD MON"):
+        return str(t["d"]) + " " + mon
+    return mon + " " + str(t["d"])
 
 # ---------- moon phase (same synodic-month math as the moon-phase app) ----------
 
@@ -126,104 +181,77 @@ def _moon_phase(ctx):
         p = p + 1.0
     return p
 
-def _moon_bitmap(p):
+def _moon_bitmaps(p):
     # A 9x9 disc split by the real terminator ellipse, so the icon shows the
     # actual current phase (crescent/quarter/gibbous/full) rather than a
-    # fixed crescent glyph.
+    # fixed crescent glyph. Returns [lit part, whole disc].
     r = 4
     t = math.cos(2.0 * math.pi * p)
     waxing = p < 0.5
-    grid = []
+    lit_grid = []
+    disc_grid = []
     for dy in range(-r, r + 1):
-        row = []
+        lit_row = []
+        disc_row = []
         for dx in range(-r, r + 1):
             if dx * dx + dy * dy > r * r:
-                row.append(0)
+                lit_row.append(0)
+                disc_row.append(0)
             else:
                 w = math.sqrt(float(r * r - dy * dy))
                 xf = float(dx)
                 lit = (xf >= t * w) if waxing else (xf <= -t * w)
-                row.append(1 if lit else 0)
-        grid.append(row)
-    return grid
+                lit_row.append(1 if lit else 0)
+                disc_row.append(1)
+        lit_grid.append(lit_row)
+        disc_grid.append(disc_row)
+    return [lit_grid, disc_grid]
 
-# ---------- formatting ----------
-
-def ordinal_suffix(d):
-    if d >= 11 and d <= 13:
-        return "TH"
-    r = d % 10
-    if r == 1:
-        return "ST"
-    if r == 2:
-        return "ND"
-    if r == 3:
-        return "RD"
-    return "TH"
-
-def format_date(ctx, t):
-    fmt = _s(ctx, "dateformat", "MM/DD/YYYY")
-    mo2 = pad2(t["mo"])
-    d2 = pad2(t["d"])
-    y4 = str(t["y"])
-    mon = MONTHS[t["mo"] - 1]
-    if fmt == "DD/MM/YYYY":
-        return d2 + "/" + mo2 + "/" + y4
-    if fmt == "YYYY-MM-DD":
-        return y4 + "-" + mo2 + "-" + d2
-    if fmt == "MON DD, YYYY":
-        return mon + " " + d2 + ", " + y4
-    if fmt == "DD MON YYYY":
-        return d2 + " " + mon + " " + y4
-    if fmt == "WEDNESDAY, AUGUST 5TH":
-        weekday = WEEKDAYS_FULL[t["wd"]]
-        month = MONTHS_FULL[t["mo"] - 1]
-        return weekday + ", " + month + " " + str(t["d"]) + ordinal_suffix(t["d"])
-    return mo2 + "/" + d2 + "/" + y4
-
-def format_time(ctx, t):
-    if _s(ctx, "timeformat", "12") == "24":
-        return pad2(t["h"]) + ":" + pad2(t["mi"]), ""
-    hh = t["h"] % 12
-    if hh == 0:
-        hh = 12
-    ap = "AM" if t["h"] < 12 else "PM"
-    return str(hh) + ":" + pad2(t["mi"]), ap
+def _moon(c, phase, x, y, scale):
+    # The unlit side is drawn dim: a few days from new moon the lit sliver
+    # alone read as a stray bracket, not a moon.
+    grids = _moon_bitmaps(phase)
+    _bmp(c, grids[1], x, y, MOON_DIM, scale)
+    _bmp(c, grids[0], x, y, "skyblue", scale)
 
 # ---------- lookups ----------
-# Each returns {"ok": True, ...} or {"ok": False, "title":..., "sub":...}
 
 def geocode(ctx):
+    # {"ok": True, lat, lon, place, state}, or {"ok": False, ...}. "fatal" marks
+    # a zip the user has to fix; a network failure is not fatal, so the date
+    # still draws.
     zip = _s(ctx, "zip", "")
     if not zip:
-        return {"ok": False, "title": "NO ZIP CODE", "sub": "ADD ONE IN SETTINGS"}
+        return {"ok": False, "fatal": True, "title": "NO ZIP CODE", "sub": "ADD ONE IN SETTINGS"}
 
     # Zip codes rarely move, so cache for a day.
     r = http.get("https://api.zippopotam.us/us/" + zip, ttl_seconds = 86400)
     if r["status_code"] == 404:
-        return {"ok": False, "title": "BAD ZIP CODE", "sub": zip + " NOT FOUND"}
+        return {"ok": False, "fatal": True, "title": "BAD ZIP CODE", "sub": zip.upper() + " NOT FOUND"}
     if r["status_code"] != 200:
-        return {"ok": False, "title": "LOOKUP ERROR", "sub": "CODE " + str(r["status_code"])}
+        return {"ok": False, "fatal": False}
 
     places = r["json"].get("places", [])
     if not places:
-        return {"ok": False, "title": "BAD ZIP CODE", "sub": zip + " NOT FOUND"}
+        return {"ok": False, "fatal": True, "title": "BAD ZIP CODE", "sub": zip.upper() + " NOT FOUND"}
 
     p = places[0]
-    return {"ok": True, "lat": float(p["latitude"]), "lon": float(p["longitude"])}
+    return {
+        "ok": True,
+        "lat": float(p["latitude"]),
+        "lon": float(p["longitude"]),
+        "place": str(p.get("place name", "")).upper(),
+        "state": str(p.get("state abbreviation", "")).upper(),
+    }
 
-# The clock's offset rides along with the weather: Open-Meteo answers with the
-# zip's utc_offset_seconds (timezone=auto, DST applied), so there is no time
+# The date's UTC offset rides along with the weather: Open-Meteo answers with
+# the zip's utc_offset_seconds (timezone=auto, DST applied), so there is no time
 # API and no second input. What follows is the FALLBACK for when the weather
 # feed is down -- Eastern, worked out locally -- so a dead feed costs the
-# weather, not the panel.
+# weather, not the date.
 #
-# zone -> standard offset in minutes east of UTC. All four observe US daylight
-# saving: 2nd Sunday in March 02:00 -> 1st Sunday in November 02:00.
-US_ZONES = {"EASTERN": -300, "CENTRAL": -360, "MOUNTAIN": -420, "PACIFIC": -480,
-            "America/New_York": -300, "America/Chicago": -360,
-            "America/Denver": -420, "America/Los_Angeles": -480}
-
+# US daylight saving: 2nd Sunday in March 02:00 -> 1st Sunday in November 02:00.
+EASTERN_STD = -300   # minutes east of UTC
 
 def _dfc(y, m, d):
     """Days since the Unix epoch (Howard Hinnant's algorithm)."""
@@ -235,24 +263,20 @@ def _dfc(y, m, d):
     doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
     return era * 146097 + doe - 719468
 
-
 def _nth_sunday(y, m, n):
     """Day of the month of the nth Sunday. 1970-01-01 was a Thursday."""
     wd = (_dfc(y, m, 1) + 4) % 7      # 0 = Sunday
     return 1 + (7 - wd) % 7 + 7 * (n - 1)
 
-
 def offset_hours(ctx):
-    """Fallback offset (Eastern), daylight saving already applied."""
-    zone = "EASTERN"
-    std = US_ZONES.get(zone.upper(), US_ZONES.get(zone, -300))
+    """Fallback offset (US Eastern), daylight saving already applied."""
+    std = EASTERN_STD
     t = ctx.now.unix // 60
     y = ctx.now.year
     start = _dfc(y, 3, _nth_sunday(y, 3, 2)) * 1440 + 120 - std
     end = _dfc(y, 11, _nth_sunday(y, 11, 1)) * 1440 + 120 - std - 60
     off = std + 60 if (t >= start and t < end) else std
     return off / 60.0
-
 
 def fetch_weather(lat, lon):
     r = http.get(
@@ -261,10 +285,12 @@ def fetch_weather(lat, lon):
             "latitude": str(lat),
             "longitude": str(lon),
             "current": "temperature_2m,weather_code,is_day",
+            "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset",
+            "forecast_days": "1",
             "temperature_unit": "fahrenheit",
             "timezone": "auto",
         },
-        ttl_seconds = 300,
+        ttl_seconds = 1800,   # matches refresh: 1800 in manifest.yaml
     )
     if r["status_code"] != 200:
         return None
@@ -273,14 +299,45 @@ def fetch_weather(lat, lon):
         return None
     return j
 
+def fetch_all(ctx):
+    # Both pages start here; the second page's calls come back from the cache.
+    geo = geocode(ctx)
+    wxj = fetch_weather(geo["lat"], geo["lon"]) if geo["ok"] else None
+    off = offset_hours(ctx)
+    if wxj != None and wxj.get("utc_offset_seconds", None) != None:
+        off = float(wxj["utc_offset_seconds"]) / 3600.0
+    return geo, wxj, local_parts(ctx, off)
+
+def _first(d, key):
+    # Today's value from one of Open-Meteo's daily arrays, or None.
+    if d == None:
+        return None
+    arr = d.get(key, None)
+    if arr == None or len(arr) == 0:
+        return None
+    return arr[0]
+
+def whole(v):
+    return int(v + 0.5) if v >= 0 else int(v - 0.5)
+
+def sun_time(s):
+    # Local ISO time under timezone=auto: "2026-09-14T06:32" -> "6:32".
+    if s == None or len(s) < 16:
+        return "--"
+    h = int(s[11]) * 10 + int(s[12]) if s[11].isdigit() and s[12].isdigit() else -1
+    if h < 0:
+        return "--"
+    h12 = h % 12
+    if h12 == 0:
+        h12 = 12
+    return str(h12) + ":" + s[14:16]
+
 # ---------- weather icon + condition text ----------
 
 RAIN_CODES = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]
 SNOW_CODES = [71, 73, 75, 77, 85, 86]
 
 def _bmp(c, bitmap, x, y, color, scale):
-    # Nearest-neighbor scale-up so the icon grows/shrinks with the chosen
-    # text size instead of staying pinned at its native 9x9.
     for ry in range(len(bitmap)):
         row = bitmap[ry]
         for rx in range(len(row)):
@@ -294,17 +351,19 @@ def _bmp(c, bitmap, x, y, color, scale):
                        fill = color)
 
 def draw_condition(c, code, is_day, phase, x, y, scale):
+    # Every glyph stays inside 9 rows x scale, so nothing reaches the
+    # condition text drawn one gap below the icon.
     if code == 0 or code == 1:
         if is_day:
             _bmp(c, SUN, x, y, "yellow", scale)
         else:
-            _bmp(c, _moon_bitmap(phase), x, y, "skyblue", scale)
+            _moon(c, phase, x, y, scale)
     elif code == 2:
         # Partly cloudy: sun or moon peeking out from behind the cloud.
         if is_day:
             _bmp(c, SUN, x, y, "yellow", scale)
         else:
-            _bmp(c, _moon_bitmap(phase), x, y, "skyblue", scale)
+            _moon(c, phase, x, y, scale)
         _bmp(c, CLOUD, x, y + 3 * scale, "gray", scale)
     elif code == 45 or code == 48:
         _bmp(c, FOG, x, y + scale, "gray", scale)
@@ -315,8 +374,10 @@ def draw_condition(c, code, is_day, phase, x, y, scale):
         _bmp(c, CLOUD, x, y, "gray", scale)
         _bmp(c, SNOWFLAKES, x, y + 6 * scale, "white", scale)
     elif code >= 95:
+        # The bolt starts inside the cloud: at row 5 its 5 rows ran to row 9,
+        # one past the 9-row box and into the condition text.
         _bmp(c, CLOUD, x, y, "gray", scale)
-        _bmp(c, LIGHTNING, x + 2 * scale, y + 5 * scale, "amber", scale)
+        _bmp(c, LIGHTNING, x + 2 * scale, y + 4 * scale, "amber", scale)
     else:
         # 3 = overcast, and any unmapped code.
         _bmp(c, CLOUD, x, y + 2 * scale, "gray", scale)
@@ -381,173 +442,166 @@ def condition_label(code, is_day):
         return "SEVERE STORMS"
     return "CLOUDY"
 
-# ---------- temperature color scale ----------
-# Bands loosely follow the NWS-style temperature map palette (icy blue for
-# cold, ramping through green/yellow to red for hot), in Fahrenheit.
+# ---------- text helpers ----------
 
-def temp_scale_color(f):
-    if f < 10:
-        return "#9966FF"
-    if f < 32:
-        return "#33CCFF"
-    if f < 45:
-        return "#66FFFF"
-    if f < 60:
-        return "#33FF99"
-    if f < 70:
-        return "#66FF33"
-    if f < 80:
-        return "#FFFF33"
-    if f < 90:
-        return "#FFA500"
-    if f < 100:
-        return "#FF4500"
-    return "#CC0000"
+def clip(c, text, font, maxw):
+    # Nothing in the API clips, so anything from a feed goes through here.
+    if c.text_width(text, font) <= maxw:
+        return text
+    for n in range(len(text) - 1, 0, -1):
+        s = text[:n].rstrip() + ".."
+        if c.text_width(s, font) <= maxw:
+            return s
+    return ""
 
-# ---------- page ----------
-# One font for the whole line — date, time, and weather all match, per the
-# user's font choice. That choice is a ceiling: we only drop to the next
-# font down if the *entire* line, with its real content, would overflow, so
-# sizing stays internally consistent instead of each section picking its
-# own font. The weather icon scales up in step.
+def place_text(c, geo, maxw):
+    # 'RANCHO SANTA MARGARITA, CA' is 119px at 4x5, past the ~90px weather
+    # zone: drop the state first, then clip the town.
+    full = geo["place"] + ", " + geo["state"]
+    if c.text_width(full, "4x5") <= maxw:
+        return full
+    return clip(c, geo["place"], "4x5", maxw)
 
-FONT_ORDER = ["4x5", "6x8", "8x12", "10x16", "16x24"]  # smallest to largest
-FONT_H = {"4x5": 6, "6x8": 8, "8x12": 12, "10x16": 16, "16x24": 24}
-ICON_SCALE = {"4x5": 1, "6x8": 2, "8x12": 2, "10x16": 3, "16x24": 4}
+def nodata(c, title, sub):
+    cx = (LEFT + RIGHT + 1) // 2
+    w = RIGHT - LEFT + 1
+    c.text(clip(c, title, "6x8", w), cx, 10, font = "6x8", color = "white", align = "center")
+    c.text(clip(c, sub, "4x5", w), cx, 20, font = "4x5", color = LABEL, align = "center")
 
-GAP = 10        # empty space on each side of a divider
-MARGIN = 8      # minimum breathing room left over on the panel
+def left_zone_w(c):
+    # Sized to the widest date any day can produce, so the divider and the
+    # weather zone stay put from one day to the next.
+    w = c.text_width("WEDNESDAY", "5x7")
+    for m in MONTHS:
+        w = max(w, c.text_width(m + " 30", "10x16"), c.text_width("30 " + m, "10x16"))
+    return w
 
-def font_fallback_chain(pref):
-    # Every font but the biggest still auto-shrinks through smaller fonts to
-    # stay on-panel. The biggest is a hard choice, not a ceiling: it always
-    # renders at full size, even if that means the line runs past the panel
-    # edge and gets clipped.
-    idx = FONT_ORDER.index(pref)
-    if idx == len(FONT_ORDER) - 1:
-        return [pref]
-    chain = []
-    for i in range(idx, -1, -1):
-        chain.append(FONT_ORDER[i])
-    return chain
+# ---------- pages ----------
 
-def vcenter(h):
-    return (32 - h) // 2
-
-def tw(c, text, font):
-    return c.text_width(text, font)
-
-def draw_text(c, text, x, y, font, color):
-    c.text(text, x, y, font = font, color = color)
-
-def line_width(c, font, date_text, time_text, have_weather, temp_str, cond_text):
-    icon_w = 9 * ICON_SCALE[font]
-    if have_weather:
-        temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
-        weather_w = icon_w + 6 + temp_w + 10 + tw(c, cond_text, font)
-    else:
-        weather_w = tw(c, "WEATHER N/A", font)
-    return (tw(c, date_text, font) + GAP + 1 + GAP +
-            tw(c, time_text, font) + GAP + 1 + GAP + weather_w)
-
-def main(c, ctx):
+def today(c, ctx):
     c.fill("black")
-
-    date_color = _s(ctx, "datecolor", "#FFFFFF")
-    time_color = _s(ctx, "timecolor", "#FFFFFF")
-    weather_color = _s(ctx, "weathercolor", "#FFFFFF")
-    divider_color = _s(ctx, "dividercolor", "#444444")
-    temp_color_mode = _s(ctx, "tempcolormode", "Weather color")
-
-    geo = geocode(ctx)
-    if not geo["ok"]:
-        c.text(geo["title"], c.width // 2, 10, font = "6x8", color = "white", align = "center")
-        c.text(geo["sub"], c.width // 2, 20, font = "4x5", color = "white", align = "center")
+    geo, wxj, t = fetch_all(ctx)
+    if not geo["ok"] and geo["fatal"]:
+        nodata(c, geo["title"], geo["sub"])
         return
 
-    wxj = fetch_weather(geo["lat"], geo["lon"])
-    # Open-Meteo returns the zip's UTC offset with the weather, DST applied.
-    # Without it the clock falls back to Eastern rather than going blank.
-    off = offset_hours(ctx)
-    if wxj != None and wxj.get("utc_offset_seconds", None) != None:
-        off = float(wxj["utc_offset_seconds"]) / 3600.0
+    # Left zone: weekday (5x7, y 3-9) over the big date (10x16, y 12-27).
+    date_color = _color(ctx, "datecolor")
+    lw = left_zone_w(c)
+    cx = LEFT + lw // 2
+    c.text(WEEKDAYS_FULL[t["wd"]], cx, 3, font = "5x7", color = date_color, align = "center")
+    c.text(format_date(ctx, t), cx, 12, font = "10x16", color = date_color, align = "center")
 
-    t = local_parts(ctx, off)
+    dx = LEFT + lw + GAP
+    c.line(dx, 3, dx, 28, DIVIDER)
+    rx = dx + 1 + GAP
+    rw = RIGHT - rx + 1
 
-    date_text = format_date(ctx, t)
-    time_str, ap = format_time(ctx, t)
-    time_text = time_str + (" " + ap if ap else "")
-
-    wx = wxj.get("current", None) if wxj != None else None
-    temp = wx.get("temperature_2m", None) if wx != None else None
-    have_weather = temp != None
-
-    phase = _moon_phase(ctx)
-
-    if have_weather:
-        code = int(wx.get("weather_code", 3))
-        is_day = int(wx.get("is_day", 1)) == 1
-        temp_i = int(temp + 0.5) if temp >= 0 else int(temp - 0.5)
-        temp_str = str(temp_i)
-        cond_text = condition_label(code, is_day)
-        temp_color = temp_scale_color(temp_i) if temp_color_mode == "Temperature scale" else weather_color
-    else:
-        temp_str = ""
-        cond_text = ""
-        temp_color = weather_color
-
-    chain = font_fallback_chain(_s(ctx, "font", "6x8"))
-
-    # Pick the biggest font (within the user's chosen ceiling) that still
-    # lets the whole line fit, so it only ever shrinks as one consistent unit.
-    font = chain[len(chain) - 1]
-    for f in chain:
-        if line_width(c, f, date_text, time_text, have_weather, temp_str, cond_text) <= c.width - MARGIN:
-            font = f
-            break
-
-    font_h = FONT_H[font]
-    icon_scale = ICON_SCALE[font]
-    icon_w = 9 * icon_scale
-
-    date_w = tw(c, date_text, font)
-    time_w = tw(c, time_text, font)
-    if have_weather:
-        temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
-        cond_w = tw(c, cond_text, font)
-        weather_w = icon_w + 6 + temp_w + 10 + cond_w
-    else:
-        weather_w = tw(c, "WEATHER N/A", font)
-
-    total = date_w + GAP + 1 + GAP + time_w + GAP + 1 + GAP + weather_w
-    x = (c.width - total) // 2
-    if x < 2:
-        x = 2
-
-    # ---- draw, left to right ----
-
-    draw_text(c, date_text, x, vcenter(font_h), font, date_color)
-    x += date_w + GAP
-    c.line(x, 5, x, 27, divider_color)
-    x += 1 + GAP
-
-    draw_text(c, time_text, x, vcenter(font_h), font, time_color)
-    x += time_w + GAP
-    c.line(x, 5, x, 27, divider_color)
-    x += 1 + GAP
-
-    if not have_weather:
-        draw_text(c, "WEATHER N/A", x, vcenter(font_h), font, weather_color)
+    cur = wxj.get("current", None) if wxj != None else None
+    temp = cur.get("temperature_2m", None) if cur != None else None
+    if temp == None:
+        c.text("NO WEATHER", rx + rw // 2, 12, font = "6x8", color = LABEL, align = "center")
         return
 
-    draw_condition(c, code, is_day, phase, x, vcenter(icon_w), icon_scale)
-    x += icon_w + 6
+    # Right zone rows: place y 1-5 · icon y 7-24 beside the 10x16 temperature
+    # (y 8-23) and high/low · condition y 26-30.
+    weather_color = _color(ctx, "weathercolor")
+    c.text(place_text(c, geo, rw), rx, 1, font = "4x5", color = LABEL)
 
-    ty = vcenter(font_h)
-    draw_text(c, temp_str, x, ty, font, temp_color)
-    deg_x = x + tw(c, temp_str, font) + 3
-    c.fill_circle(deg_x, ty + 1, 1, temp_color)
-    draw_text(c, "F", deg_x + 4, ty, font, temp_color)
-    x += temp_w + 10
+    code = int(cur.get("weather_code", 3))
+    is_day = int(cur.get("is_day", 1)) == 1
+    draw_condition(c, code, is_day, _moon_phase(ctx), rx, 7, 2)
 
-    draw_text(c, cond_text, x, vcenter(font_h), font, weather_color)
+    temp_color = _color(ctx, "tempcolormode")
+    ts = str(whole(temp))
+    tx = rx + 18 + 4
+    c.text(ts, tx, 8, font = "10x16", color = temp_color)
+    ring_x = tx + c.text_width(ts, "10x16") + 1
+    _bmp(c, RING, ring_x, 8, temp_color, 1)
+
+    daily = wxj.get("daily", None)
+    hi = _first(daily, "temperature_2m_max")
+    lo = _first(daily, "temperature_2m_min")
+    if hi != None and lo != None:
+        hx = ring_x + len(RING[0]) + 5
+        for row in [["H", hi, 10], ["L", lo, 17]]:
+            c.text(row[0], hx, row[2], font = "4x5", color = LABEL)
+            c.text(str(whole(row[1])), hx + c.text_width(row[0], "4x5") + 2, row[2],
+                   font = "4x5", color = weather_color)
+
+    c.text(clip(c, condition_label(code, is_day), "4x5", rw), rx, 26,
+           font = "4x5", color = weather_color)
+
+def sky_value(c, text, kind, cx, maxw, color):
+    # 10x16 digits with hand-set punctuation, y 13-28. The font's colon is a
+    # full digit wide ('6 : 36') and its % crowds the number, so the colon is
+    # two 2x2 dots and the % is 6x8 sitting on the digits' baseline.
+    y = 13
+    if text == "--":
+        c.text("--", cx, y, font = "10x16", color = LABEL, align = "center")
+        return
+    if kind == "pct":
+        nw = c.text_width(text, "10x16")
+        x = cx - (nw + 1 + c.text_width("%", "6x8")) // 2
+        c.text(text, x, y, font = "10x16", color = color)
+        c.text("%", x + nw + 1, y + 8, font = "6x8", color = color)
+        return
+    parts = text.split(":")
+    hw = c.text_width(parts[0], "10x16")
+    w = hw + 1 + 2 + 2 + c.text_width(parts[1], "10x16")
+    if w > maxw:
+        # '10:15' (an Alaska winter sunrise) steps down rather than crossing
+        # a divider.
+        c.text(text, cx, y + 2, font = "8x12", color = color, align = "center")
+        return
+    x = cx - w // 2
+    c.text(parts[0], x, y, font = "10x16", color = color)
+    kx = x + hw + 1
+    c.rect(kx, y + 4, kx + 1, y + 5, fill = color)
+    c.rect(kx, y + 10, kx + 1, y + 11, fill = color)
+    c.text(parts[1], kx + 2 + 2, y, font = "10x16", color = color)
+
+def sky(c, ctx):
+    c.fill("black")
+    geo, wxj, t = fetch_all(ctx)
+    if not geo["ok"] and geo["fatal"]:
+        nodata(c, geo["title"], geo["sub"])
+        return
+
+    daily = wxj.get("daily", None) if wxj != None else None
+    if daily == None:
+        nodata(c, "NO WEATHER", "CHECK BACK SOON")
+        return
+
+    weather_color = _color(ctx, "weathercolor")
+    rain = _first(daily, "precipitation_probability_max")
+    cols = [
+        ["RAIN", "--" if rain == None else str(whole(rain))],
+        ["SUNRISE", sun_time(_first(daily, "sunrise"))],
+        ["SUNSET", sun_time(_first(daily, "sunset"))],
+    ]
+
+    # Three even columns across the safe zone, a divider between each.
+    colw = (RIGHT - LEFT + 1 - 2 * (2 * GAP + 1)) // 3
+    x = LEFT
+    for i in range(3):
+        if i > 0:
+            c.line(x + GAP, 3, x + GAP, 28, DIVIDER)
+            x += 2 * GAP + 1
+        label = cols[i][0]
+        value = cols[i][1]
+        cx = x + colw // 2
+
+        # Top row, y 2-8: icon + label, centered as one unit.
+        icon_w = len(DROP[0]) if i == 0 else len(SUN_RAYS[0])
+        w = icon_w + 3 + c.text_width(label, "4x5")
+        ix = cx - w // 2
+        if i == 0:
+            _bmp(c, DROP, ix, 2, "cyan", 1)
+        else:
+            _bmp(c, SUN_RAYS, ix, 3, "yellow" if i == 1 else "orange", 1)
+            _bmp(c, HORIZON, ix, 8, "gray", 1)
+        c.text(label, ix + icon_w + 3, 4, font = "4x5", color = LABEL)
+
+        sky_value(c, value, "pct" if i == 0 else "time", cx, colw, weather_color)
+        x += colw
