@@ -1,0 +1,71 @@
+gdn: 1
+id: scholar-citations
+version: 0.1.0
+name: Scholar Citations
+author: ShulinZhou
+description: One researcher's Google Scholar profile - their name and today's date over a citations-per-year bar chart, with total citations, h-index, i10-index, this year's citations and the change against last year. Enter your own SerpApi key and Scholar profile ID; shows a sample profile until a key is added.
+category: Education
+entry: app.star
+
+width: 192
+height: 32
+
+# Re-render hourly so the date in the top-right turns over on time. The
+# SerpApi fetch is cached for a day (TTL in app.star), so it is still one
+# search a day on the viewer's own key: about 30 a month per profile, well
+# inside the free plan's 250.
+refresh: 3600
+
+pages:
+  - profile
+
+inputs:
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: SerpApi API key
+    default: ""
+    help: Free at serpapi.com (250 searches a month; this app uses about 30). Leave blank to see a demo profile. See this app's README.
+
+  - key: scholarid
+    type: string
+    app_input_type: free-text
+    label: Google Scholar profile ID
+    default: ""
+    help: The user= part of the profile address, like tyJLhv4AAAAJ. Pasting the whole profile link also works.
+
+  - key: citecolor
+    type: string
+    app_input_type: color
+    label: Total citations color
+    default: "#FFFFFF"
+    help: Color of the total citations number.
+
+  - key: hindexcolor
+    type: string
+    app_input_type: color
+    label: H-index color
+    default: "#FFFFFF"
+    help: Color of the h-index number.
+
+  - key: i10color
+    type: string
+    app_input_type: color
+    label: I10-index color
+    default: "#FFFFFF"
+    help: Color of the i10-index number.
+
+  - key: yearcolor
+    type: string
+    app_input_type: color
+    label: This year's color
+    default: "#F0B44D"
+    help: Color of this year's bar, this year's citation count and the date. Past years are light gray.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "EASTERN"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "PACIFIC"]
+    help: For the date shown on the panel. Daylight saving is applied automatically.
