@@ -1,13 +1,13 @@
 # Scholar Citations for a Glance SCROLL panel (192x32).
 #
 # DESIGN. Two levels, top and bottom. The top level says who: the
-# researcher's name in white, and today's date in an amber pill at the
+# researcher's name in white, and today's date in a Scholar-blue pill at the
 # right. The bottom level says how much they are cited:
 # a bar chart of citations per year with no year or axis labels, the current
-# year's bar in the viewer's chosen color (amber by default) against light
-# gray past years. To the right of the chart sit four numbers - total
-# citations, h-index, i10-index, and this year's citations in the same color
-# as its bar - and under them this year compared
+# year's bar in Scholar blue against light gray past years. To the right of
+# the chart sit four numbers - total citations, h-index and i10-index in white,
+# and this year's citations in the same blue as its bar - and under them this
+# year compared
 # with last year, green when ahead and red when behind. With no API key the
 # panel shows a sample profile. Every failure gets a two-line card:
 # what, and what to do.
@@ -19,7 +19,8 @@ TTL = 86400               # one search a day; refresh: is hourly only so the dat
 INK = "#F4F7FF"
 DIM = "#6E7A94"
 PAST = "#B4B8C0"          # light gray: history stays quiet so this year's color leads
-NOW = "#F0B44D"           # default for the yearcolor input
+NOW = "#4A8CFF"           # Scholar blue: this year's bar, this year's count and the date pill
+TOTALS = "#FFFFFF"        # total citations, h-index and i10: white, the resting color for numbers
 GREEN = "#42FF78"
 RED = "#FF4D5E"
 AMBER = "#F0B44D"
@@ -115,10 +116,10 @@ def commas(n):
     return ("-" if n < 0 else "") + out
 
 # ---- local date ----------------------------------------------------------------
-# A four-way US zone resolved here, as in flip-clock: no time API to fail.
-# zone -> standard offset in minutes east of UTC. All four observe US daylight
-# saving: 2nd Sunday in March 02:00 -> 1st Sunday in November 02:00.
-US_ZONES = {"EASTERN": -300, "CENTRAL": -360, "MOUNTAIN": -420, "PACIFIC": -480}
+# US Eastern, resolved here: no time API to fail (ctx.now is UTC).
+# Standard offset in minutes east of UTC; US daylight saving runs from the
+# 2nd Sunday in March 02:00 to the 1st Sunday in November 02:00.
+EASTERN = -300
 MONTH = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT",
          "NOV", "DEC"]
 
@@ -149,31 +150,14 @@ def nth_sunday(y, m, n):
     return 1 + (7 - wd) % 7 + 7 * (n - 1)
 
 def local_date(ctx):
-    """[year, month, day] on the viewer's wall clock."""
-    std = US_ZONES.get(str(ctx.inputs.get("timezone", "EASTERN")).strip().upper(), -300)
+    """[year, month, day] on a US Eastern wall clock."""
+    std = EASTERN
     t = ctx.now.unix // 60
     y = ctx.now.year
     start = days_from_civil(y, 3, nth_sunday(y, 3, 2)) * 1440 + 120 - std
     end = days_from_civil(y, 11, nth_sunday(y, 11, 1)) * 1440 + 120 - std - 60
     off = std + 60 if (t >= start and t < end) else std
     return civil_from_days((ctx.now.unix + off * 60) // 86400)
-
-# ---- colors --------------------------------------------------------------------
-HEX = "0123456789abcdefABCDEF"
-
-TOTALS = "#FFFFFF"        # default for citecolor, hindexcolor and i10color
-
-def color_input(ctx, key, fallback):
-    """A color input as #RRGGBB; anything else falls back."""
-    s = str(ctx.inputs.get(key, fallback)).strip()
-    if s.startswith("#"):
-        s = s[1:]
-    if len(s) != 6:
-        return fallback
-    for ch in s.elems():
-        if ch not in HEX:
-            return fallback
-    return "#" + s.upper()
 
 # ---- profile id ----------------------------------------------------------------
 IDCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
@@ -251,25 +235,18 @@ def series(graph, year):
     return [[y, counts.get(y, 0)] for y in range(first, year + 1)]
 
 # ---- drawing -------------------------------------------------------------------
-def luma(hexcolor):
-    """0..255 perceived brightness of #RRGGBB."""
-    v = int(hexcolor[1:], 16)
-    return ((v >> 16) * 299 + ((v >> 8) & 255) * 587 + (v & 255) * 114) // 1000
-
-def top_level(c, name, datestr, accent):
+def top_level(c, name, datestr):
     """Name on the left; today's date in a pill of this year's color at the
-    right edge. The date flips to white when the chosen color is too dark for
-    black text."""
+    right edge."""
     w = c.text_width(datestr, "4x5") + 4
-    ink = "black" if luma(accent) > 110 else "white"
-    c.badge(datestr, EDGER - w + 1, 0, color = ink, bg = accent, font = "4x5")
+    c.badge(datestr, EDGER - w + 1, 0, color = "black", bg = NOW, font = "4x5")
     right = EDGER - w - 3
     room = right - EDGEL + 1
     ft = fit(c, name.upper(), ["5x7", "4x5"], room)
     c.text(ft[1], EDGEL, TOPY, font = ft[0], color = INK)
 
-def chart(c, rows, year, right, accent):
-    """Bars for each year from x 6 to `right`, no labels; this year in accent.
+def chart(c, rows, year, right):
+    """Bars for each year from x 6 to `right`, no labels; this year in blue.
     The tallest year fills the full height."""
     peak = 0
     for r in rows:
@@ -296,18 +273,18 @@ def chart(c, rows, year, right, accent):
         h = (r[1] * hmax + peak - 1) // peak if r[1] > 0 else 0
         if h > 0:
             c.rect(x, CHART_BOT - h + 1, x + bw - 1, CHART_BOT,
-                   fill = accent if r[0] == year else PAST)
+                   fill = NOW if r[0] == year else PAST)
         x += step
 
-def stats(c, p, rows, year, accent, totals):
+def stats(c, p, rows, year):
     """Four labelled numbers, laid out from the right edge. Returns the x
     where the stats begin so the chart can take the rest."""
     this = rows[len(rows) - 1][1] if len(rows) > 0 else 0
     last = rows[len(rows) - 2][1] if len(rows) > 1 else 0
-    cols = [["CITATIONS", commas(p["cites"]), totals[0]],
-            ["H-IDX", commas(p["h"]), totals[1]],
-            ["I10", commas(p["i10"]), totals[2]],
-            [str(year), commas(this), accent]]
+    cols = [["CITATIONS", commas(p["cites"]), TOTALS],
+            ["H-IDX", commas(p["h"]), TOTALS],
+            ["I10", commas(p["i10"]), TOTALS],
+            [str(year), commas(this), NOW]]
 
     # One value font for every profile (6x9), so the panel doesn't change size
     # as the numbers grow; only past the planned worst case does it step down.
@@ -346,11 +323,11 @@ def stats(c, p, rows, year, accent, totals):
     c.sprite(ARROW_UP if diff >= 0 else ARROW_DN, tx - 7, 27, color = col)
     return statx
 
-def draw(c, p, year, datestr, accent, totals):
+def draw(c, p, year, datestr):
     rows = series(p["graph"], year)
-    top_level(c, p["name"], datestr, accent)
-    statx = stats(c, p, rows, year, accent, totals)
-    chart(c, rows, year, statx - 7, accent)
+    top_level(c, p["name"], datestr)
+    statx = stats(c, p, rows, year)
+    chart(c, rows, year, statx - 7)
 
 GHOST = [3, 5, 8, 7, 11, 14, 18, 22, 16]
 
@@ -380,11 +357,8 @@ CARDS = {
 def profile(c, ctx):
     c.fill("black")
     today = local_date(ctx)
-    year = today[0]           # local, so New Year's Eve in Pacific is still last year
+    year = today[0]           # local, so New Year's Eve in Eastern is still last year
     datestr = MONTH[today[1] - 1] + " " + str(today[2]) + " " + str(today[0])
-    accent = color_input(ctx, "yearcolor", NOW)
-    # [citations, h-index, i10] colors, each its own input
-    totals = [color_input(ctx, k, TOTALS) for k in ["citecolor", "hindexcolor", "i10color"]]
     apikey = str(ctx.inputs.get("apikey", "")).strip()
     sid = scholar_id(ctx.inputs.get("scholarid", ""))
     dbg = str(ctx.inputs.get("_debugstate", "")).strip().lower()
@@ -393,10 +367,10 @@ def profile(c, ctx):
         card(c, CARDS[dbg][0], CARDS[dbg][1], CARDS[dbg][2])
         return
     if dbg == "big":
-        draw(c, BIG, year, datestr, accent, totals)
+        draw(c, BIG, year, datestr)
         return
     if apikey == "" or dbg == "demo":
-        draw(c, DEMO, year, datestr, accent, totals)
+        draw(c, DEMO, year, datestr)
         return
     if sid == "":
         card(c, CARDS["noid"][0], CARDS["noid"][1], CARDS["noid"][2])
@@ -406,4 +380,4 @@ def profile(c, ctx):
         cd = CARDS[res[0]]
         card(c, cd[0], cd[1], cd[2])
         return
-    draw(c, res[1], year, datestr, accent, totals)
+    draw(c, res[1], year, datestr)

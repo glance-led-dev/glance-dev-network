@@ -2,8 +2,8 @@
 
 One researcher's Google Scholar profile on a 192x32 panel.
 
-- **Top level:** the researcher's name on the left, and today's date in an amber pill on the right.
-- **Bottom level:** a bar chart of citations per year with no year or axis labels. The current year is in the color you pick (amber by default) and past years are light gray. Beside it are total citations, h-index (H-IDX), i10-index, and this year's citations (labelled with the year, in the same color). Underneath, right-aligned, is this year compared with last year: green and up when ahead, red and down when behind.
+- **Top level:** the researcher's name on the left, and today's date in a Scholar-blue pill on the right.
+- **Bottom level:** a bar chart of citations per year with no year or axis labels. The current year is Scholar blue and past years are light gray. Beside it are total citations, h-index (H-IDX) and i10-index in white, and this year's citations (labelled with the year, in the same blue). Underneath, right-aligned, is this year compared with last year: green and up when ahead, red and down when behind.
 
 ## Inputs
 
@@ -11,11 +11,8 @@ One researcher's Google Scholar profile on a 192x32 panel.
 |---|---|
 | **SerpApi API key** *(credential)* | Sign up free at [serpapi.com](https://serpapi.com/users/sign_up), then copy the key from [serpapi.com/manage-api-key](https://serpapi.com/manage-api-key). Leave it blank to see a demo profile. |
 | **Google Scholar profile ID** | The `user=` value in the profile address. For `https://scholar.google.com/citations?user=tyJLhv4AAAAJ&hl=en` that is `tyJLhv4AAAAJ`. Pasting the whole link also works. |
-| **Total citations color** | Color for the total citations number. Defaults to white `#FFFFFF`. |
-| **H-index color** | Color for the h-index number. Defaults to white `#FFFFFF`. |
-| **I10-index color** | Color for the i10-index number. Defaults to white `#FFFFFF`. |
-| **This year's color** | Color for this year's bar, this year's citation count and the date pill. Defaults to amber `#F0B44D`. On dark colors the date text turns white. |
-| **Time zone** | US Eastern, Central, Mountain or Pacific. Used for the date and for when "this year" starts. Daylight saving is applied automatically. |
+
+The date and when "this year" starts follow US Eastern time, with daylight saving applied automatically.
 
 ## Data
 
