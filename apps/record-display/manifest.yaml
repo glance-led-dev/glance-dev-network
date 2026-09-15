@@ -1,0 +1,54 @@
+gdn: 1
+
+id: record-display
+version: 0.1.0
+
+name: Record Display
+author: Tim Connery
+description: Custom display for new sales records.
+
+entry: app.star
+
+width: 384
+height: 32
+
+refresh: 60
+
+pages: [page01, page02, page03, page04, page05]
+
+inputs:
+  - key: color
+    type: string
+    app_input_type: color
+    label: Color
+    default: "#FFFFFF"
+
+  - key: record1
+    type: string
+    app_input_type: free-text
+    label: Record 1
+    default: ""
+
+  - key: record2
+    type: string
+    app_input_type: free-text
+    label: Record 2
+    default: ""
+
+  - key: record3
+    type: string
+    app_input_type: free-text
+    label: Record 3
+    default: ""
+
+  - key: record4
+    type: string
+    app_input_type: free-text
+    label: Record 4
+    default: ""
+
+  - key: record5
+    type: string
+    app_input_type: free-text
+    label: Record 5
+    default: ""
