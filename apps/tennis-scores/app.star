@@ -4,23 +4,19 @@
 # Ported to the Glance Developer Network. Data logic follows the original;
 # the render tree is rewritten as c.* draw calls.
 #
-# Layout (128x32):
-#   y 0-5    title bar (tournament city/name)
-#   y 7-18   match 1  (two player rows)
+# Layout (64x32):
+#   y 0-4    title bar (tournament city/name)
+#   y 6-17   match 1  (two player rows)
+#   y 18     divider
 #   y 20-31  match 2  (two player rows)
 
 SCORES_URL = "https://site.api.espn.com/apis/site/v2/sports/tennis/%s/scoreboard"
 
-# ESPN serves ATP and WTA from separate endpoints, and each payload's
-# groupings carry both singles and doubles — so the tour picks the URL AND
-# the grouping slug.
 TOURS = {
     "ATP": ("atp", "mens-singles"),
     "WTA": ("wta", "womens-singles"),
 }
 
-# Slam/Masters detection is by NAME, not event id. ESPN ids carry the season
-# ("154-2025"), so an id list goes stale every January; names don't.
 SLAM_NAMES = ["AUSTRALIAN OPEN", "ROLAND GARROS", "FRENCH OPEN", "WIMBLEDON", "US OPEN"]
 MASTERS_NAMES = [
     "INDIAN WELLS", "MIAMI", "MONTE-CARLO", "MONTE CARLO", "MADRID",
@@ -55,18 +51,12 @@ SERVING = "green"
 SUSPENDED = "skyblue"
 SET_WON = "yellow"
 
-# The layout adapts to panel width: 64px is too tight for initials or a 6px
-# score column, so it drops to the 3x4 font and surname-only names.
 FONT = "4x5"
 FONT_NARROW = "3x4"
 ROW_H = 6
 SET_W = 6
 NAME_X = 3
 MAX_SETS = 5
-
-# ---------------------------------------------------------------- time helpers
-# Pixlet had time.parse_time(); GDN gives ctx.now (.unix/.year/.month/.day)
-# only, so ISO-8601 -> epoch is hand-rolled.
 
 def _days_from_civil(y, m, d):
     y = y - 1 if m <= 2 else y
@@ -86,7 +76,6 @@ def _atoi(s):
     return n
 
 def parse_iso(s):
-    """'2026-08-15T13:00Z' -> epoch seconds. Returns 0 on anything unexpected."""
     if type(s) != "string" or len(s) < 16:
         return 0
     y, mo, d = _atoi(s[0:4]), _atoi(s[5:7]), _atoi(s[8:10])
@@ -98,8 +87,6 @@ def parse_iso(s):
 def hours_since(iso, now_unix):
     t = parse_iso(iso)
     return 999999 if t == 0 else (now_unix - t) / 3600.0
-
-# ---------------------------------------------------------------- data fetch
 
 def fetch(tour_slug, ttl):
     resp = http.get(SCORES_URL % tour_slug, ttl_seconds = ttl)
@@ -123,7 +110,6 @@ def is_running(ev, now):
     return len(ev.get("groupings", [])) > 0
 
 def tier(ev):
-    """Slams outrank Masters outrank everything else."""
     if is_slam(ev):
         return 2
     if is_masters(ev):
@@ -131,7 +117,6 @@ def tier(ev):
     return 0
 
 def choose_event(data, tid, now, slug):
-    """A pinned id wins. Otherwise pick the best tournament running right now."""
     if tid != "" and tid != "auto":
         return find_event(data, tid)
 
@@ -140,7 +125,6 @@ def choose_event(data, tid, now, slug):
     for ev in data.get("events", []):
         if not is_running(ev, now):
             continue
-        # Prefer the event that actually has something to show.
         n = len(collect(ev, now, True, slug)) + len(collect(ev, now, False, slug))
         key = (1 if n > 0 else 0, tier(ev), n)
         if key > best_key:
@@ -149,7 +133,6 @@ def choose_event(data, tid, now, slug):
     return best
 
 def singles_grouping(ev, slug_want):
-    """Payloads carry singles and doubles; pick the singles draw for this tour."""
     groups = ev.get("groupings", [])
     if len(groups) == 0:
         return None
@@ -159,7 +142,6 @@ def singles_grouping(ev, slug_want):
     return groups[0]
 
 def score_str(v):
-    """humanize.ftoa() replacement — linescore values arrive as floats."""
     if type(v) == "int":
         return str(v)
     if type(v) == "float":
@@ -167,7 +149,6 @@ def score_str(v):
     return str(v)
 
 def read_match(comp):
-    """Flatten one competition into what the drawing code needs."""
     cs = comp.get("competitors", [])
     if len(cs) < 2:
         return None
@@ -192,7 +173,6 @@ def read_match(comp):
             "w2": ls2[i].get("winner", False) == True,
         })
 
-    # possession=True means competitor 0 is serving; False means competitor 1
     serving = 0
     if "possession" in cs[0]:
         serving = 1 if cs[0]["possession"] == True else 2
@@ -208,7 +188,6 @@ def read_match(comp):
     }
 
 def collect(ev, now_unix, want_live, slug):
-    """want_live: In Progress / Suspended / scored-but-Scheduled. Else: completed."""
     g = singles_grouping(ev, slug)
     if g == None:
         return []
@@ -230,8 +209,6 @@ def collect(ev, now_unix, want_live, slug):
                 m["live"] = want_live
                 out.append(m)
     return out
-
-# ---------------------------------------------------------------- drawing
 
 def title_text(ev, slug):
     if is_slam(ev):
@@ -255,7 +232,7 @@ def draw_title(c, text, ev):
             bg = col
             break
     fg = MASTERS_GOLD if is_masters(ev) else "white"
-    c.rect(0, 0, c.width - 1, 5, fill = bg)
+    c.rect(0, 0, c.width - 1, 4, fill = bg)
     tf = FONT
     if c.text_width(text, font = tf) > c.width - 2 and text.find(" ") == -1:
         tf = FONT_NARROW
@@ -265,12 +242,34 @@ def narrow(c):
     return c.width <= 64
 
 def score_font(c):
-    # Digits only, so 4x5 is safe at either width and far more legible than
-    # 3x4, whose 6 reads as a b.
     return FONT
 
 def set_w(c):
     return 5 if narrow(c) else SET_W
+
+def match_winner(m):
+    """1 or 2 for whichever player won more sets, 0 if undetermined.
+
+    Counted across the FULL set list, not draw_match's display slice
+    (m["sets"][-MAX_SETS:]) — a 5-set match must still resolve correctly
+    from all 5, not just whichever ones happen to be shown. Works for
+    retirements too: a retiree who lost at least one completed set still
+    correctly colors the survivor, since that's real set-win data, not a
+    guess. Zero completed sets (rare — e.g. injury before set 1 finishes)
+    returns 0, which draw_match treats as "no color", not a wrong guess.
+    """
+    w1 = 0
+    w2 = 0
+    for s in m["sets"]:
+        if s["w1"]:
+            w1 += 1
+        if s["w2"]:
+            w2 += 1
+    if w1 > w2:
+        return 1
+    if w2 > w1:
+        return 2
+    return 0
 
 def draw_match(c, m, y):
     """Two rows: name left, set scores right-aligned in fixed columns."""
@@ -278,11 +277,22 @@ def draw_match(c, m, y):
     n = len(sets)
     sw = set_w(c)
     sf = score_font(c)
-    # Leave a 2px gutter so a long name never touches the score columns.
     name_max = c.width - n * sw - NAME_X - 2
 
-    c1 = SUSPENDED if m["suspended"] else ("green" if m["serving"] == 1 else "white")
-    c2 = SUSPENDED if m["suspended"] else ("green" if m["serving"] == 2 else "white")
+    # Name colour priority: suspended overrides everything (paused, no
+    # winner yet); live-and-serving highlights the server; a genuinely
+    # finished match colors the winner's name the same yellow a won set
+    # uses, instead of leaving both names white once it's over.
+    if m["suspended"]:
+        c1 = SUSPENDED
+        c2 = SUSPENDED
+    elif m["live"]:
+        c1 = "green" if m["serving"] == 1 else "white"
+        c2 = "green" if m["serving"] == 2 else "white"
+    else:
+        winner = match_winner(m)
+        c1 = SET_WON if winner == 1 else "white"
+        c2 = SET_WON if winner == 2 else "white"
 
     t1, f1 = fit_name(c, m["n1"], name_max)
     t2, f2 = fit_name(c, m["n2"], name_max)
@@ -297,23 +307,15 @@ def draw_match(c, m, y):
                color = SET_WON if sets[i]["w2"] else "white")
 
 def surname(s):
-    """'A. DAVIDOVICH FOKINA' -> 'DAVIDOVICH FOKINA'. The initial is the first
-    thing to go: the surname is what identifies the player."""
     if len(s) > 2 and s[1] == ".":
         return s[2:].strip()
     return s
 
 def last_word(s):
-    """'VAN DE ZANDSCHULP' -> 'ZANDSCHULP'. Needed before 3x4, which has no
-    space glyph and would silently run the words together."""
     parts = surname(s).split(" ")
     return parts[len(parts) - 1]
 
 def fit_name(c, s, max_px):
-    """Degrade gracefully: full name, then surname only, then a narrower font,
-    and only clip as a last resort. Returns (text, font)."""
-    # 4x5 keeps spaces, so try every wording there first. Only single-word
-    # text is ever handed to 3x4.
     wide_opts = [surname(s), last_word(s)] if narrow(c) else [s, surname(s), last_word(s)]
     for text in wide_opts:
         if c.text_width(text, font = FONT) <= max_px:
@@ -335,19 +337,10 @@ def message(c, lines, color = "white"):
         c.text(line, c.width // 2, y, font = f, color = color, align = "center")
         y += ROW_H + 1
 
-# ---------------------------------------------------------------- pages
-#
-# GDN declares pages statically in manifest.yaml and gives the code no page
-# index, so each slot is its own function. PAGE_COUNT slots x PER_PAGE matches
-# is the ceiling; the panel cycles them in order.
-#
-# Order is live matches first, then matches completed in the last 24h.
-
 PER_PAGE = 2
-PAGE_COUNT = 5
+PAGE_COUNT = 8
 
 def all_matches(ev, now, slug):
-    """Live first, then recently completed."""
     return collect(ev, now, True, slug) + collect(ev, now, False, slug)
 
 def draw_slice(c, ctx, slot):
@@ -378,24 +371,22 @@ def draw_slice(c, ctx, slot):
         message(c, ["NO MATCHES", "TODAY"], "gray")
         return
 
-    # How many full slices the data fills. Fewer matches than slots means the
-    # later slots wrap and repeat rather than showing a black panel.
     slices = (len(matches) + PER_PAGE - 1) // PER_PAGE
     start = (slot % slices) * PER_PAGE
 
     first = matches[start]
-    draw_match(c, first, 7)
-    mark(c, 7, first["live"])
+    draw_match(c, first, 6)
+    mark(c, 6, first["live"])
 
     if start + 1 < len(matches):
         second = matches[start + 1]
-        c.line(0, 19, c.width - 1, 19, "darkgray")
+        c.line(0, 18, c.width - 1, 18, "darkgray")
         draw_match(c, second, 20)
         mark(c, 20, second["live"])
 
 def mark(c, y, is_live):
-    """1px rail on the left edge: green while playing, dim once final."""
-    c.line(0, y, 0, y + ROW_H * 2 - 2, "green" if is_live else "darkgray")
+    if is_live:
+        c.line(0, y, 0, y + ROW_H * 2 - 2, "green")
 
 def p1(c, ctx):
     draw_slice(c, ctx, 0)
@@ -411,3 +402,12 @@ def p4(c, ctx):
 
 def p5(c, ctx):
     draw_slice(c, ctx, 4)
+
+def p6(c, ctx):
+    draw_slice(c, ctx, 5)
+
+def p7(c, ctx):
+    draw_slice(c, ctx, 6)
+
+def p8(c, ctx):
+    draw_slice(c, ctx, 7)
