@@ -1,0 +1,95 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: fortnite-player-tracker
+version: 0.3.0
+name: Fortnite Player Tracker
+author: Smitty247
+description: >-
+  Lifetime Fortnite Battle Royale leaderboards for up to 8 friends — one
+  page per stat (wins, K/D, win rate, kills, top 10s), everyone ranked
+  highest to lowest.
+category: Gaming
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+width: 64
+height: 32
+
+# Seconds between re-renders. 60 is the platform minimum; the on-page rank
+# list swaps its visible half once per render (see FRAME_SECONDS in
+# app.star). The underlying fortnite-api.com call per player is cached for
+# 5 min via ttl_seconds so this refresh cadence does not multiply API traffic.
+refresh: 60
+
+# One page per stat — a leaderboard of up to 8 players, ranked highest to
+# lowest. Capped at 8 on purpose: ranking needs one fortnite-api.com lookup
+# per player, and GDN hard-caps an app at 8 http calls per render.
+pages: [wins, kd, winrate, kills, top10]
+
+# What the client fills in at install time.
+#   type            — the data type: string | number | choice
+#   app_input_type  — the UI widget the client sees. One of:
+#                     free-text | dropdown | selection | checkbox | date | date-past | color
+#                     (optional; if omitted the form infers it from `type`)
+#
+# All 8 name fields default blank: every installer starts with an empty
+# roster and fills in their own players, rather than inheriting a stranger's
+# friend list as sample data.
+inputs:
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: Fortnite-API.com key
+    default: ""
+    help: >-
+      Free key from dash.fortnite-api.com (sign in, Apps > Create App). The
+      stats endpoint requires one — leave blank to preview with demo numbers.
+  - key: name1
+    type: string
+    app_input_type: free-text
+    label: "Player 1 — Epic name"
+    default: ""
+    help: Exact Epic display name, case-sensitive. Leave blank to drop this player.
+  - key: name2
+    type: string
+    app_input_type: free-text
+    label: "Player 2 — Epic name"
+    default: ""
+    help: Leave blank to drop this player from the leaderboards.
+  - key: name3
+    type: string
+    app_input_type: free-text
+    label: "Player 3 — Epic name"
+    default: ""
+    help: Leave blank to drop this player from the leaderboards.
+  - key: name4
+    type: string
+    app_input_type: free-text
+    label: "Player 4 — Epic name"
+    default: ""
+    help: Leave blank to drop this player from the leaderboards.
+  - key: name5
+    type: string
+    app_input_type: free-text
+    label: "Player 5 — Epic name"
+    default: ""
+    help: Leave blank to drop this player from the leaderboards.
+  - key: name6
+    type: string
+    app_input_type: free-text
+    label: "Player 6 — Epic name"
+    default: ""
+    help: Leave blank to drop this player from the leaderboards.
+  - key: name7
+    type: string
+    app_input_type: free-text
+    label: "Player 7 — Epic name"
+    default: ""
+    help: Leave blank to drop this player from the leaderboards.
+  - key: name8
+    type: string
+    app_input_type: free-text
+    label: "Player 8 — Epic name"
+    default: ""
+    help: Leave blank to drop this player from the leaderboards.
