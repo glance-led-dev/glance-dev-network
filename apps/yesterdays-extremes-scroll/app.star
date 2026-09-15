@@ -1,91 +1,110 @@
-# DESIGN. Two pages. "intro" announces which extreme is being ranked and how
-# many cities follow (e.g. "HIGH U.S. TEMPS / TOP 5 YESTERDAY"), shown once
-# each time this app comes up in the panel's rotation -- since "ranked" below
-# serves all four metrics off the same layout, a viewer glancing at the panel
-# mid-cycle would otherwise have only the small HIGH/LOW word or icon to
-# place what they're looking at. "ranked" is a list, one entry at a time: an
-# identity glyph for the chosen metric (the word HIGH or LOW for
-# temperatures, a raindrop icon for rain, a snowflake sprite for snowfall),
-# "#N CITY, ST" as the headline, the extreme value as the hero, and a short
-# amber note underneath it (the departure from normal, or a measured/
-# estimated flag for snow reports) -- every row on this app is by definition
-# a standout, so amber (the catalog's "notable" color) is used uniformly
-# rather than per-row. Black ground throughout. 64-wide (this app) and
-# 192-wide (yesterdays-extremes-scroll) share this file -- only the identity
-# size, edge inset and how much narrow copy gets trimmed change with c.width.
+# DESIGN. A podium. Each page is one hero card for yesterday's #1, #2 or #3
+# most extreme U.S. reading in the chosen metric: a medal on the left (the
+# ribbon wears the metric's color, the disc the rank's metal, the rank knocked
+# out of it in black), the reading as the white hero, and the place under an
+# eyebrow that names the extreme ("HOTTEST"). Medal + eyebrow is the app's
+# identity on every page, so no separate splash page is spent on it.
 #
-# "ranked" is one manifest page, not one page per rank: the "Number of
-# cities" input picks how many items to cycle through, and a manifest's
-# `pages:` list is fixed at declare time -- there's no way to make its length
-# track an input. An earlier version declared rank1..rank10 pages and hit two
-# real problems: the render schema hard-caps a bundle at 8 pages (10 broke
-# the interactive preview outright), and even at 8 it meant a "top 3" pick
-# still cycled through 5 dead "THAT'S ALL" screens on the real device every
-# rotation. current_index() below is the catalog's actual answer:
-# time-multiplex through `count` items within one page, the same way
-# study-flashcards cycles its deck.
+# Color only where it means something: the metric accent on the ribbon, the
+# eyebrow and the hero's degree / unit mark; red only for a reading that tied
+# or broke the station's record. Black ground throughout.
 #
-# Three of the four metrics (rain, high temp, low temp) come from one
-# nationwide /api/v1/yesterday call and are ranked client-side. Snowfall
-# comes from /api/v1/snow/reports, whose "reports" schema isn't documented
-# and returns 0 reports outside snow season -- rows_for_snow() infers the
-# per-report fields from hail/week's identical "NWS Local Storm Reports via
-# IEM" attribution line (the same underlying source, verified structure),
-# but hasn't been checked against a live snow report. Read defensively.
+# 64 wide: medal left, eyebrow over a 10x16 hero beside it, the place on its
+# own full-width row along the bottom; the context line is dropped rather than
+# squeezed. 192 wide: everything inside the x 10-181 safe zone -- medal, a
+# text column (eyebrow + date, place in the largest font that fits, context
+# line), a hairline, and the hero right-aligned against the safe edge. Both
+# apps ship this file; the only branch is `c.width >= 128`.
+#
+# Why three fixed pages instead of cycling one city per minute: the source is
+# the NWS once-a-day climate report, so `refresh` is 3600, in sync with the
+# fetch ttl. At that cadence a per-minute cycle would park on a single city
+# for an hour, and a ranked list doesn't fit 64 wide ("PHILADELPHIA" alone is
+# 57px at 4x5, leaving no room for a rank and a value on the same row). Three
+# pages give every city the full width and never rotate through a dead screen.
+#
+# Rain, high and low temps come from one nationwide /api/v1/yesterday call,
+# ranked client-side. Snowfall comes from /api/v1/snow/reports, whose
+# "reports" schema isn't documented and is empty outside snow season --
+# rows_for_snow() infers the per-report fields from hail/week's identical
+# "NWS Local Storm Reports via IEM" source line but hasn't been checked
+# against a live snow report. Read defensively.
 
-BG = "#070B14"
+BG = "#000000"
+INK = "#FFFFFF"          # hero reading
+PLACE_COL = "#DCE6F2"    # city
+META_COL = "#6E7A94"     # date, "ABOVE NORMAL", report kind
+RULE_COL = "#232A3A"     # hairline between the text column and the hero
+RECORD_COL = "#FF3B30"   # the only color allowed to shout
+
 NODATA_BG = "#0B0C12"
-EMPTY_BG = "#081208"
-
-INK = "#EAF6FF"          # hero numbers
-LABEL_COL = "#7FB4DC"    # rank + place headline
-NOTE_COL = "#FFD27A"     # sub-line -- every row here is a notable extreme
 NODATA_TITLE = "#E8B04A"
 NODATA_SUB = "#6A7090"
 EMPTY_TITLE = "#4ADE80"
 EMPTY_SUB = "#6A9080"
-END_TITLE = "#8A93B4"
-END_SUB = "#6A7090"
+SHORT_TITLE = "#8A93B4"
 
-HOT_COL = "#FFB454"
-COLD_COL = "#8FC7FF"
-RAIN_COL = "#4FA8FF"
-SNOW_COL = "#BFE3FF"  # matches SNOWFLAKE_LEGEND's main spoke color
-
-# 15x15, symmetric 8-spoke snowflake -- identical to weather-totals-scroll's,
-# reused here rather than reinvented since it's the same visual language.
-SNOWFLAKE_ART = [
-    "#......#......#",
-    ".#.....#.....#.",
-    "..#...o#o...#..",
-    "...#...#...#...",
-    "....#..#..#....",
-    ".....#.#.#.....",
-    "..o...###...o..",
-    "###############",
-    "..o...###...o..",
-    ".....#.#.#.....",
-    "....#..#..#....",
-    "...#...#...#...",
-    "..#...o#o...#..",
-    ".#.....#.....#.",
-    "#......#......#",
+# [fill, rim] per podium spot.
+METALS = [
+    ["#FFC72C", "#A8740A"],  # gold
+    ["#DCE3EA", "#7F8B99"],  # silver
+    ["#E3894A", "#8C4A1F"],  # bronze
 ]
-SNOWFLAKE_ART_SMALL = [
-    "#...#...#",
-    ".#.o#o.#.",
-    "..#.#.#..",
-    ".o.###.o.",
-    "#########",
-    ".o.###.o.",
-    "..#.#.#..",
-    ".#.o#o.#.",
-    "#...#...#",
-]
-SNOWFLAKE_LEGEND = {"#": "#BFE3FF", "o": "#7FC8FF"}
+ORDINALS = ["1ST", "2ND", "3RD"]
 
-ART_W_WIDE = 16
-ART_W_NARROW = 9
+MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+
+FONTH = {"16x24": 24, "16x20": 20, "10x16": 16, "7x12": 12, "6x8": 8, "5x7": 7, "4x5": 5}
+
+# Degree rings, sized to the hero face they sit beside (top-aligned).
+RING6 = [
+    ".####.",
+    "######",
+    "##..##",
+    "##..##",
+    "######",
+    ".####.",
+]
+RING4 = [
+    ".##.",
+    "#..#",
+    "#..#",
+    ".##.",
+]
+RING3 = [
+    ".#.",
+    "#.#",
+    ".#.",
+]
+
+# hero face -> [degree ring, unit font]
+MARKS = {
+    "16x24": [RING6, "6x8"],
+    "16x20": [RING6, "6x8"],
+    "10x16": [RING4, "4x5"],
+    "7x12": [RING3, "4x5"],
+    "6x8": [RING3, "4x5"],
+}
+
+# The only three cities in the feed that overflow the 62px 64-wide place row
+# at 4x5 even without their state: COLORADO SPRINGS 76px, SAULT STE MARIE 68,
+# CORPUS CHRISTI 64. Each short form is the name locals already use.
+SHORT = {
+    "COLORADO SPRINGS": "COLO SPRINGS",
+    "SAULT STE MARIE": "SAULT",
+    "CORPUS CHRISTI": "CORPUS",
+}
+
+def theme(metric):
+    """[eyebrow word, accent, accent shade] -- one place, so the ribbon, the
+    eyebrow and the hero's mark can never disagree."""
+    if metric == "Extreme Low Temp":
+        return ["COLDEST", "#5CC8FF", "#2A7BB8"]
+    if metric == "Extreme Rain":
+        return ["WETTEST", "#3D7BFF", "#1F47B0"]
+    if metric == "Extreme Snowfall":
+        return ["SNOWIEST", "#D6E8FF", "#8AA6CC"]
+    return ["HOTTEST", "#FF8A1F", "#B34D00"]
 
 def clip(c, text, font, maxw):
     """Longest prefix of `text` that fits `maxw` in `font`."""
@@ -130,21 +149,21 @@ def fit_forms(c, forms, fonts, maxw):
 
 NODATA_FONTS = ["10x16", "6x8", "5x7", "4x5"]
 
-def message_card(c, bg, title, title_col, sub, sub_col, narrow_title = None, narrow_sub = None):
-    """The shared two-line card (error / empty / end-of-list all use this,
-    just with different colors) -- centered, never overlapping."""
+def message_card(c, bg, title, title_col, sub, sub_col, narrow_title, narrow_sub):
+    """The shared two-line card (error / empty / short list) -- centered, on
+    bands that can never overlap, inside the safe zone when wide."""
     c.fill(bg)
-    maxw = c.width - 6
     if c.width >= 128:
+        maxw = c.width - 20
         t = fit_clip(c, title, NODATA_FONTS, maxw)
         c.text(t[1], c.width // 2, 4, font = t[0], color = title_col, align = "center")
         d = fit_clip(c, sub, ["5x7", "4x5"], maxw)
         c.text(d[1], c.width // 2, 22, font = d[0], color = sub_col, align = "center")
     else:
-        t = fit_clip(c, narrow_title if narrow_title != None else title,
-                      ["6x8", "5x7", "4x5"], maxw)
+        maxw = c.width - 4
+        t = fit_clip(c, narrow_title, ["6x8", "5x7", "4x5"], maxw)
         c.text(t[1], c.width // 2, 5, font = t[0], color = title_col, align = "center")
-        d = fit_clip(c, narrow_sub if narrow_sub != None else sub, ["4x5"], maxw)
+        d = fit_clip(c, narrow_sub, ["4x5"], maxw)
         c.text(d[1], c.width // 2, 18, font = d[0], color = sub_col, align = "center")
 
 def get(obj, key, fallback = None):
@@ -154,12 +173,14 @@ def get(obj, key, fallback = None):
     v = obj.get(key, fallback)
     return fallback if v == None else v
 
-def in1(x):
-    """A float to one decimal place as a string. Truncates, not rounds."""
-    if x == None:
-        return None
-    v = int(float(x) * 10) / 10.0
-    return str(v)
+def decimals(x, places):
+    """A non-negative reading to `places` (1 or 2) decimals, rounded."""
+    scale = 100 if places == 2 else 10
+    v = int(float(x) * scale + 0.5)
+    frac = str(v % scale)
+    if places == 2 and len(frac) < 2:
+        frac = "0" + frac
+    return str(v // scale) + "." + frac
 
 OK_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ,.-/()&'"
 
@@ -181,59 +202,87 @@ def only_drawable(s):
         out += ch
     return out.strip()
 
-def fetch_yesterday():
-    """[cities, reason]. reason is "ok" or "error".
+def short_date(iso):
+    """"2026-09-13" -> "SEP 13"; "" when it doesn't parse."""
+    s = str(iso)
+    if len(s) < 10 or s[4] != "-" or s[7] != "-":
+        return ""
+    mm = s[5:7].lstrip("0")
+    dd = s[8:10].lstrip("0")
+    if not mm.isdigit() or not dd.isdigit():
+        return ""
+    m = int(mm)
+    if m < 1 or m > 12:
+        return ""
+    return MONTHS[m - 1] + " " + dd
 
-    ttl_seconds stays at 3600 even though `refresh` is 60 -- the two are
-    deliberately out of sync here. `refresh` just needs to be short enough
-    for current_index() to advance visibly through `count` items; the data
-    underneath only actually changes a few times a day, so re-fetching it
-    every 60s would be pure waste. Every render this hour reads the same
-    cached response and just picks a different row out of it."""
+def fetch_yesterday():
+    """[cities, date, reason]. reason is "ok" or "error". ttl matches the
+    manifest's hourly refresh: the climate report behind this changes once a
+    day, so every render within the hour reads the same cached response."""
     r = http.get("https://weathertotals.com/api/v1/yesterday", ttl_seconds = 3600)
     if r["status_code"] != 200 or r["json"] == None:
-        return [[], "error"]
-    return [get(get(r["json"], "data", {}), "cities", []), "ok"]
+        return [[], "", "error"]
+    data = get(r["json"], "data", {})
+    return [get(data, "cities", []), short_date(get(data, "date", "")), "ok"]
 
 def fetch_snow_reports():
-    """[reports, reason]. reason is "ok" or "error". Same ttl/refresh split
-    as fetch_yesterday() -- see its docstring."""
+    """[reports, reason]. reason is "ok" or "error". Same hourly ttl."""
     r = http.get("https://weathertotals.com/api/v1/snow/reports", ttl_seconds = 3600)
     if r["status_code"] != 200 or r["json"] == None:
         return [[], "error"]
     return [get(get(r["json"], "data", {}), "reports", []), "ok"]
 
+def row(place, state, value, unit, depart = None, note = "", alarm = False):
+    return {"place": place, "state": state, "value": value, "unit": unit,
+            "depart": depart, "note": note, "alarm": alarm}
+
 def rows_for_temp(cities, hottest):
     """Rows ranked by yesterday's high (hottest=True) or low (False), most
-    extreme first."""
+    extreme first. The feed's record is the one standing before yesterday, so
+    matching it ties and passing it breaks it."""
     items = []
     for city in cities:
         rep = get(city, "report", {})
         val = get(rep, "high") if hottest else get(rep, "low")
         if val == None:
             continue
+        rec = get(rep, "highRecord") if hottest else get(rep, "lowRecord")
+        note = ""
+        if rec != None:
+            if val == rec:
+                note = "TIES RECORD"
+            elif (val > rec) == hottest:
+                note = "NEW RECORD " + ("HIGH" if hottest else "LOW")
         depart = get(rep, "highDepart") if hottest else get(rep, "lowDepart")
-        sub = ""
-        if depart != None:
-            sign = "+" if depart >= 0 else ""
-            sub = sign + str(int(depart)) + " VS NORMAL"
-        label = str(get(city, "city", "")).upper() + ", " + str(get(city, "abbr", "")).upper()
-        items.append([val, {"label": label, "value": str(int(val)) + "F", "sub": sub}])
+        items.append([val, row(
+            str(get(city, "city", "")).upper(),
+            str(get(city, "abbr", "")).upper(),
+            str(int(val)),
+            "deg",
+            depart = int(depart) if depart != None else None,
+            note = note,
+            alarm = note != "",
+        )])
     items = sorted(items, key = lambda it: it[0], reverse = hottest)
     return [it[1] for it in items]
 
 def rows_for_rain(cities):
-    """Rows ranked by yesterday's precip, wettest first."""
+    """Rows ranked by yesterday's precip, wettest first. Dry cities are left
+    out, so a dry nationwide day lands on the empty screen, not a 0.00 podium."""
     items = []
     for city in cities:
         rep = get(city, "report", {})
         val = get(rep, "precip")
-        if val == None:
+        if val == None or val <= 0:
             continue
-        trace = get(rep, "trace", False)
-        sub = "TRACE" if (trace and val == 0) else ""
-        label = str(get(city, "city", "")).upper() + ", " + str(get(city, "abbr", "")).upper()
-        items.append([val, {"label": label, "value": in1(val) + " IN", "sub": sub}])
+        items.append([val, row(
+            str(get(city, "city", "")).upper(),
+            str(get(city, "abbr", "")).upper(),
+            decimals(val, 2),
+            "IN",
+            note = "DAILY RAINFALL",
+        )])
     items = sorted(items, key = lambda it: it[0], reverse = True)
     return [it[1] for it in items]
 
@@ -244,214 +293,282 @@ def rows_for_snow(reports):
     items = []
     for rep in reports:
         inches = get(rep, "inches")
-        if inches == None:
+        if inches == None or inches <= 0:
             continue
         place = only_drawable(str(get(rep, "place", "")).upper())
-        state = str(get(rep, "state", "")).upper()
-        label = place
-        if state != "":
-            label = (label + ", " + state) if label != "" else state
-        if label == "":
-            label = "UNKNOWN LOCATION"
+        if place == "":
+            place = "UNKNOWN"
         measured = get(rep, "measured", False)
-        items.append([inches, {"label": label, "value": in1(inches) + " IN",
-                                "sub": "MEASURED" if measured else "ESTIMATED"}])
+        items.append([inches, row(
+            place,
+            str(get(rep, "state", "")).upper(),
+            decimals(inches, 1),
+            "IN",
+            note = "MEASURED" if measured else "ESTIMATED",
+        )])
     items = sorted(items, key = lambda it: it[0], reverse = True)
     return [it[1] for it in items]
 
 def fetch_rows(metric):
-    """[rows, reason]. reason is "ok", "empty" or "error". rows is a list of
-    {label, value, sub} dicts, most extreme first."""
+    """[rows, meta, reason]. reason is "ok", "empty" or "error"; meta is the
+    window the rows cover ("SEP 13", or "LAST 24H" for snow)."""
     if metric == "Extreme Snowfall":
         reports, reason = fetch_snow_reports()
         if reason != "ok":
-            return [[], "error"]
+            return [[], "", "error"]
         rows = rows_for_snow(reports)
-        return [rows, "ok" if len(rows) > 0 else "empty"]
+        return [rows, "LAST 24H", "ok" if len(rows) > 0 else "empty"]
 
-    cities, reason = fetch_yesterday()
+    cities, date, reason = fetch_yesterday()
     if reason != "ok":
-        return [[], "error"]
+        return [[], "", "error"]
     if metric == "Extreme Rain":
         rows = rows_for_rain(cities)
     elif metric == "Extreme Low Temp":
         rows = rows_for_temp(cities, False)
     else:
         rows = rows_for_temp(cities, True)
-    return [rows, "ok" if len(rows) > 0 else "empty"]
+    return [rows, date, "ok" if len(rows) > 0 else "empty"]
 
 def empty_copy(metric):
-    """[title, sub, narrow_title, narrow_sub] for the positive "nothing to
-    show" screen -- e.g. no snow reports outside snow season is the answer
-    people want, not an error."""
+    """[title, sub, narrow_title, narrow_sub] -- nothing to rank is the
+    answer people want, so this is the positive green card, not an error."""
     if metric == "Extreme Snowfall":
         return ["NO SNOW REPORTS", "NONE IN THE LAST 24H", "NO SNOW", "LAST 24H"]
-    return ["NO DATA YET", "CHECK BACK SOON", "NO DATA", "CHECK BACK"]
-
-def banner_copy(metric, count):
-    """[title, sub, narrow_title, narrow_sub, color] for the intro screen --
-    shown once each time this app comes up in the rotation, before ranked()
-    cycles through the individual cities, so a viewer knows which extreme
-    (and how many cities) they're about to see. "U.S." makes the data's
-    coverage explicit (WeatherTotals is a U.S.-only source); narrow_title
-    drops the periods ("US" not "U.S.") and a trailing S off TEMPS/TEMP to
-    fit -- the full "HIGH U.S. TEMPS" is 63px at the smallest narrow font
-    against a 58px budget. "YESTERDAY" is only accurate for the three
-    metrics sourced from /api/v1/yesterday; snowfall's window is the rolling
-    last-24h of /api/v1/snow/reports, so it gets its own wording."""
-    n = str(count)
-    if metric == "Extreme Low Temp":
-        return ["LOW U.S. TEMPS", "TOP " + n + " YESTERDAY", "LOW US TEMP", "TOP " + n, COLD_COL]
     if metric == "Extreme Rain":
-        return ["MOST U.S. RAIN", "TOP " + n + " YESTERDAY", "MOST US RAIN", "TOP " + n, RAIN_COL]
-    if metric == "Extreme Snowfall":
-        return ["MOST U.S. SNOW", "TOP " + n + " LAST 24H", "MOST US SNOW", "TOP " + n, SNOW_COL]
-    return ["HIGH U.S. TEMPS", "TOP " + n + " YESTERDAY", "HIGH US TEMP", "TOP " + n, HOT_COL]
+        return ["NO RAIN ANYWHERE", "DRY ACROSS THE U.S.", "NO RAIN", "DRY US-WIDE"]
+    return ["NO REPORTS YET", "CHECK BACK SOON", "NO DATA", "CHECK BACK"]
 
-def art_metrics(c):
-    wide = c.width >= 128
-    art_w = ART_W_WIDE if wide else ART_W_NARROW
-    art_inset = 8 if wide else 0
-    gap = 6 if wide else 2
-    right_x = 10 if wide else 1
-    head_left = art_inset + art_w + gap
-    right_edge = c.width - right_x
-    return [wide, art_inset, head_left, right_edge]
+def half_width(r2, dy):
+    """Largest hw with hw*hw + dy*dy <= r2, or -1 when row dy is off the disc."""
+    rest = r2 - dy * dy
+    if rest < 0:
+        return -1
+    hw = 0
+    for k in range(1, 16):
+        if k * k > rest:
+            break
+        hw = k
+    return hw
 
-def draw_word(c, word, x, art_w, color, font, char_h):
-    """`word` spelled out one letter per row, centered in the art column --
-    used for HIGH/LOW instead of an icon: there's no built-in glyph for
-    "hot"/"cold" the way sun/moon usually stand in for them, and a sun icon
-    for a hot reading reads fine but the built-in "moon" (a thin crescent)
-    doesn't read as "cold" at a glance, so a plain word replaces both."""
-    total_h = len(word) * char_h + (len(word) - 1)
-    y = (c.height - total_h) // 2
-    cx = x + art_w // 2
-    for ch in word.elems():
-        c.text(ch, cx, y, font = font, color = color, align = "center")
-        y += char_h + 1
+def medal_height(d):
+    return (d // 2 - d // 3 + 2) + d
 
-def draw_identity(c, metric, wide, x):
-    if metric == "Extreme Snowfall":
-        art = SNOWFLAKE_ART if wide else SNOWFLAKE_ART_SMALL
-        y = 8 if wide else 12
-        c.sprite(art, x, y, legend = SNOWFLAKE_LEGEND)
+def draw_medal(c, x, y, d, rank, th):
+    """A ribbon over a d-wide disc (d odd). The straps are d//3 wide and step
+    in a pixel a row until they meet over the disc's center column; the disc
+    is drawn after, so the ribbon tucks behind it. The rank is knocked out in
+    black -- every metal's fill is brighter than ~150."""
+    sw = d // 3
+    cx = d // 2
+    rh = cx - sw + 2
+    for r in range(rh):
+        c.line(x + r, y + r, x + r + sw - 1, y + r, th[1])
+        c.line(x + d - r - sw, y + r, x + d - 1 - r, y + r, th[2])
+
+    top = y + rh
+    fill, rim = METALS[rank]
+    r2 = (d * d) // 4
+    ri2 = ((d - 2) * (d - 2)) // 4
+    for dy in range(-cx, cx + 1):
+        hw = half_width(r2, dy)
+        if hw < 0:
+            continue
+        yy = top + cx + dy
+        c.line(x + cx - hw, yy, x + cx + hw, yy, rim)
+        hi = half_width(ri2, dy)
+        if hi >= 0:
+            c.line(x + cx - hi, yy, x + cx + hi, yy, fill)
+
+    font = "7x12" if d >= 17 else "5x7"
+    label = str(rank + 1)
+    lx = x + cx - c.text_width(label, font) // 2
+    c.text(label, lx, top + cx - FONTH[font] // 2, font = font, color = "#000000")
+
+def dot_size(font):
+    return 3 if FONTH[font] >= 20 else 2
+
+def value_width(c, value, font):
+    """Width of a reading drawn with a hand-set minus and decimal point. The
+    faces' own "." takes a full cell -- "4.18" is 67px at 16x24, which
+    squeezed the wide text column under 64px and knocked the rain hero down
+    to 10x16; "4" + a 3px dot + "18" is 56px. And the faces' "-" sits well
+    above the digits' middle, so "-23" read like an overline."""
+    ds = dot_size(font)
+    w = 0
+    if value.startswith("-"):
+        w = 5 * ds - 2
+        value = value[1:]
+    parts = value.split(".")
+    if len(parts) != 2:
+        return w + c.text_width(value, font)
+    return w + c.text_width(parts[0], font) + 3 * ds - 2 + c.text_width(parts[1], font)
+
+def draw_bar(c, x, y, w, h, color):
+    for i in range(h):
+        c.line(x, y + i, x + w - 1, y + i, color)
+
+def draw_value(c, value, font, x, y, color):
+    ds = dot_size(font)
+    if value.startswith("-"):
+        mw = 4 * ds - 2
+        draw_bar(c, x, y + (FONTH[font] - ds) // 2, mw, ds, color)
+        x += mw + ds
+        value = value[1:]
+    parts = value.split(".")
+    if len(parts) != 2:
+        c.text(value, x, y, font = font, color = color)
         return
-    if metric == "Extreme Rain":
-        scale = 2 if wide else 1
-        y = 8 if wide else 12
-        c.icon("drop", x, y, color = RAIN_COL, scale = scale)
+    c.text(parts[0], x, y, font = font, color = color)
+    dx = x + c.text_width(parts[0], font) + ds - 1
+    draw_bar(c, dx, y + FONTH[font] - ds, ds, ds, color)
+    c.text(parts[1], dx + 2 * ds - 1, y, font = font, color = color)
+
+def hero_width(c, r, font):
+    w = value_width(c, r["value"], font)
+    mark = MARKS[font]
+    if r["unit"] == "deg":
+        return w + 1 + len(mark[0][0])
+    return w + 2 + c.text_width(r["unit"], mark[1])
+
+def draw_hero(c, r, font, x, y, th):
+    """The reading in white, its degree ring (top-aligned) or unit
+    (baseline-aligned) in the metric accent."""
+    draw_value(c, r["value"], font, x, y, INK)
+    w = value_width(c, r["value"], font)
+    mark = MARKS[font]
+    if r["unit"] == "deg":
+        c.sprite(mark[0], x + w + 1, y, legend = {"#": th[1]})
+    else:
+        c.text(r["unit"], x + w + 2, y + FONTH[font] - FONTH[mark[1]],
+               font = mark[1], color = th[1])
+
+def place_forms(r):
+    """Longest first: "CITY, ST", "CITY", then the known short name with and
+    without its state."""
+    names = [r["place"]]
+    if r["place"] in SHORT:
+        names.append(SHORT[r["place"]])
+    forms = []
+    for n in names:
+        if r["state"] != "":
+            forms.append(n + ", " + r["state"])
+        forms.append(n)
+    return forms
+
+def draw_context(c, r, x, y, maxw):
+    """The wide card's third line: a record in red, a snow report's kind or
+    "DAILY RAINFALL" in gray, or the departure from normal."""
+    if r["note"] != "":
+        col = RECORD_COL if r["alarm"] else META_COL
+        c.text(clip(c, r["note"], "4x5", maxw), x, y, font = "4x5", color = col)
         return
-    word = "HIGH" if metric == "Extreme High Temp" else "LOW"
-    col = HOT_COL if metric == "Extreme High Temp" else COLD_COL
-    art_w = ART_W_WIDE if wide else ART_W_NARROW
-    font, char_h = ("5x7", 7) if wide else ("4x5", 5)
-    draw_word(c, word, x, art_w, col, font, char_h)
+    dep = r["depart"]
+    if dep == None:
+        return
+    if dep == 0:
+        c.text("RIGHT AT NORMAL", x, y, font = "4x5", color = META_COL)
+        return
 
-def current_index(ctx, count):
-    """Which rank to show right now -- the catalog's standard way to cycle
-    through more items than fit as separate manifest pages (60s per item,
-    wrapping at `count`). `debugframe` is an undeclared, manifest-invisible
-    input for `gdn render --input debugframe=N` to preview a specific one."""
-    dbg = str(ctx.inputs.get("debugframe", "")).strip()
-    if dbg != "":
-        return int(dbg) % count
-    return (ctx.now.unix // 60) % count
+    # "16° ABOVE NORMAL" when it fits, else "+16° VS NORMAL", else just "+16°".
+    num = str(dep if dep > 0 else -dep)
+    words = "ABOVE NORMAL" if dep > 0 else "BELOW NORMAL"
+    if c.text_width(num, "4x5") + 8 + c.text_width(words, "4x5") > maxw:
+        num = ("+" if dep > 0 else "-") + num
+        words = "VS NORMAL"
+    c.text(num, x, y, font = "4x5", color = INK)
+    rx = x + c.text_width(num, "4x5") + 1
+    c.sprite(RING3, rx, y, legend = {"#": INK})
+    wx = rx + 3 + 4
+    if wx + c.text_width(words, "4x5") <= x + maxw:
+        c.text(words, wx, y, font = "4x5", color = META_COL)
 
-def draw_rank(c, ctx):
+def card_narrow(c, r, rank, th):
+    c.fill(BG)
+    d = 11
+    draw_medal(c, 1, 5, d, rank, th)
+
+    # Zone right of the medal: x 14-63.
+    zl = 1 + d + 2
+    zw = c.width - zl
+    c.text(th[0], zl + zw // 2, 0, font = "4x5", color = th[1], align = "center")
+
+    hf = "6x8"
+    for f in ["10x16", "7x12", "6x8"]:
+        if hero_width(c, r, f) <= zw:
+            hf = f
+            break
+    hw = hero_width(c, r, hf)
+    draw_hero(c, r, hf, zl + (zw - hw) // 2, 7 + (16 - FONTH[hf]) // 2, th)
+
+    p = fit_forms(c, place_forms(r), ["4x5"], c.width - 2)
+    c.text(p[1], c.width // 2, 26, font = p[0], color = PLACE_COL, align = "center")
+
+def card_wide(c, r, rank, th, meta):
+    c.fill(BG)
+    left = 10
+    right = c.width - 11  # last lit column of the x 10-181 safe zone on 192
+    d = 19
+    draw_medal(c, left, (c.height - medal_height(d)) // 2, d, rank, th)
+    tx = left + d + 7
+
+    # Right side first: measure the hero, then the text column gets what's
+    # left. "4.18 IN" is 82px at 16x24, which would leave the place 53px, so
+    # the hero steps down a face whenever the column would drop under 64.
+    hf = "10x16"
+    for f in ["16x24", "10x16"]:
+        if (right - hero_width(c, r, f) - 11) - tx >= 64:
+            hf = f
+            break
+    hw = hero_width(c, r, hf)
+    hx = right - hw + 1
+    draw_hero(c, r, hf, hx, (c.height - FONTH[hf]) // 2, th)
+
+    rule_x = hx - 6
+    c.line(rule_x, 4, rule_x, 27, RULE_COL)
+    tw = rule_x - 5 - tx
+
+    c.text(th[0], tx, 3, font = "4x5", color = th[1])
+    ew = c.text_width(th[0], "4x5")
+    if meta != "" and ew + 5 + c.text_width(meta, "4x5") <= tw:
+        c.text(meta, tx + ew + 5, 3, font = "4x5", color = META_COL)
+
+    p = fit_forms(c, place_forms(r), ["6x8", "5x7", "4x5"], tw)
+    c.text(p[1], tx, 11 + (8 - FONTH[p[0]]) // 2, font = p[0], color = PLACE_COL)
+
+    draw_context(c, r, tx, 23, tw)
+
+def podium(c, ctx, rank):
     metric = str(ctx.inputs.get("metric", "Extreme High Temp"))
-    count = int(str(ctx.inputs.get("count", "5")))
-    index = current_index(ctx, count)
-    rows, reason = fetch_rows(metric)
+    th = theme(metric)
+    rows, meta, reason = fetch_rows(metric)
 
     if reason == "error":
-        message_card(c, NODATA_BG, "DATA UNAVAILABLE", NODATA_TITLE,
-                      "TRY AGAIN LATER", NODATA_SUB, narrow_sub = "TRY LATER")
+        message_card(c, NODATA_BG, "NO WEATHER DATA", NODATA_TITLE,
+                     "CHECK BACK SOON", NODATA_SUB, "NO DATA", "TRY LATER")
         return
     if reason == "empty":
         title, sub, nt, ns = empty_copy(metric)
-        message_card(c, EMPTY_BG, title, EMPTY_TITLE, sub, EMPTY_SUB,
-                      narrow_title = nt, narrow_sub = ns)
+        message_card(c, NODATA_BG, title, EMPTY_TITLE, sub, EMPTY_SUB, nt, ns)
+        return
+    if rank >= len(rows):
+        n = len(rows)
+        noun = " REPORT" if n == 1 else " REPORTS"
+        message_card(c, BG, "NO " + ORDINALS[rank] + " PLACE", SHORT_TITLE,
+                     "ONLY " + str(n) + noun, NODATA_SUB,
+                     "NO " + ORDINALS[rank], str(n) + noun)
         return
 
-    n = count if count < len(rows) else len(rows)
-    if index >= n:
-        message_card(c, BG, "THAT'S ALL", END_TITLE, "FOR NOW", END_SUB)
-        return
+    if c.width >= 128:
+        card_wide(c, rows[rank], rank, th, meta)
+    else:
+        card_narrow(c, rows[rank], rank, th)
 
-    row = rows[index]
-    wide, art_inset, head_left, right_edge = art_metrics(c)
-    c.fill(BG)
-    draw_identity(c, metric, wide, art_inset)
+def gold(c, ctx):
+    podium(c, ctx, 0)
 
-    # The rank number is drawn as its own token, separate from fit_forms'
-    # word-boundary fitting on the label. Baking "#1 " onto the front of the
-    # label and fitting that as one string used to backfire: fit_forms saw
-    # the rank's own trailing space as a legitimate place to drop everything
-    # after it, so a label with no internal space to back off to instead
-    # ("#1 RIVERSIDE" clipped straight to "#1", losing the city entirely).
-    rank_tag = "#" + str(index + 1)
-    forms = [row["label"], row["label"].split(",")[0]]
+def silver(c, ctx):
+    podium(c, ctx, 1)
 
-    if not wide:
-        rank_font = "4x5"
-        rank_w = c.text_width(rank_tag, rank_font)
-        label_left = head_left + rank_w + 2
-        maxw = right_edge - label_left
-        if maxw < 12:
-            maxw = 12
-        c.text(rank_tag, head_left, 0, font = rank_font, color = LABEL_COL)
-        h = fit_forms(c, forms, ["4x5"], maxw)
-        c.text(h[1], label_left, 0, font = h[0], color = LABEL_COL)
-        maxw = right_edge - head_left
-        b = fit_clip(c, row["value"], ["10x16", "6x8", "5x7", "4x5"], maxw)
-        c.text(b[1], head_left, 7, font = b[0], color = INK)
-        # Sub sits on its own row at the bottom, clear of the hero: even at
-        # 10x16 (16 tall, rows 7-22) it leaves row 23 as a buffer before the
-        # sub's row 24 -- narrow never picks a taller hero font than that.
-        if row["sub"] != "":
-            c.text(clip(c, row["sub"], "4x5", maxw), right_edge, 24,
-                   font = "4x5", color = NOTE_COL, align = "right")
-        return
-
-    # Wide: a compact meta row up top (rank + city, sub-note opposite it),
-    # then the hero gets the *entire* width beneath it on its own row. An
-    # earlier version put the sub-note below the hero instead -- at 16x20
-    # the hero spans rows 8-27, which ran straight through a row-24 sub-note
-    # for 4 rows. Keeping them on separate bands instead of stacked closer
-    # removes the overlap instead of shrinking the hero to dodge it.
-    sub_w = 0
-    sub_font = "4x5"
-    sub_text = ""
-    if row["sub"] != "":
-        s = fit_clip(c, row["sub"], ["5x7", "4x5"], 74)
-        sub_font, sub_text = s[0], s[1]
-        sub_w = c.text_width(sub_text, sub_font)
-
-    rank_font = "5x7"
-    rank_w = c.text_width(rank_tag, rank_font)
-    label_left = head_left + rank_w + 3
-    head_maxw = (right_edge - (sub_w + 4 if sub_w > 0 else 0)) - label_left
-    if head_maxw < 24:
-        head_maxw = 24
-    c.text(rank_tag, head_left, 0, font = rank_font, color = LABEL_COL)
-    h = fit_forms(c, forms, ["5x7", "4x5"], head_maxw)
-    c.text(h[1], label_left, 0, font = h[0], color = LABEL_COL)
-    if sub_w > 0:
-        c.text(sub_text, right_edge, 0, font = sub_font, color = NOTE_COL, align = "right")
-
-    hero_maxw = right_edge - head_left
-    b = fit_clip(c, row["value"], ["16x20", "10x16", "6x8"], hero_maxw)
-    BIG_H = {"16x20": 20, "10x16": 16, "6x8": 8}
-    by = 8 + (20 - BIG_H[b[0]]) // 2
-    c.text(b[1], head_left, by, font = b[0], color = INK)
-
-def intro(c, ctx):
-    metric = str(ctx.inputs.get("metric", "Extreme High Temp"))
-    count = int(str(ctx.inputs.get("count", "5")))
-    title, sub, narrow_title, narrow_sub, color = banner_copy(metric, count)
-    message_card(c, BG, title, color, sub, NODATA_SUB,
-                 narrow_title = narrow_title, narrow_sub = narrow_sub)
-
-def ranked(c, ctx):
-    draw_rank(c, ctx)
+def bronze(c, ctx):
+    podium(c, ctx, 2)
