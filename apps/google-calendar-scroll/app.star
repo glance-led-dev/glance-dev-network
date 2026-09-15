@@ -630,6 +630,9 @@ def read_calendar(ctx):
     now = ctx.now.unix // 60 + offmin
     base = {"state": "ok", "events": [], "now": now, "today": now // 1440}
 
+    if str(ctx.inputs.get("calid", "")).strip().upper() == "DEMO":
+        return demo_calendar(ctx, base)
+
     url = feed_url(ctx)
     if url == "":
         base["state"] = "setup"
@@ -695,6 +698,55 @@ def read_calendar(ctx):
     base["events"] = out[:MAX_EVENTS]
     if len(base["events"]) == 0:
         base["state"] = "clear"
+    return base
+
+# --------------------------------------------------------------------- demo
+# A sample week behind the DEMO calendar id -- the app's default, and what the
+# catalog previews render -- so a new panel shows a real-looking schedule
+# before anyone has pasted in their own address.
+#
+# Days are offsets from today rather than weekdays, so today is always the busy
+# one whatever day the previews are drawn on. Each row is
+# [start minute of day, length in minutes (0 = all day), title, TINTS index].
+DEMO_DAYS = [
+    [[570, 30, "TEAM STANDUP", 0], [660, 60, "ROADMAP REVIEW", 3],
+     [750, 60, "LUNCH WITH SAM", 2], [900, 30, "1:1 WITH PRIYA", 1]],
+    [[570, 30, "TEAM STANDUP", 0], [780, 90, "SPRINT PLANNING", 5],
+     [960, 45, "DENTIST", 6]],
+    [[0, 0, "FAMILY VISIT", 4], [570, 30, "TEAM STANDUP", 0],
+     [840, 60, "CLIENT CALL", 1]],
+    [[570, 30, "TEAM STANDUP", 0], [630, 120, "WORKSHOP", 3],
+     [1020, 60, "GYM", 2]],
+    [[570, 30, "TEAM STANDUP", 0], [720, 60, "TEAM LUNCH", 7],
+     [930, 30, "WEEKLY DEMO", 5]],
+    [[600, 90, "SOCCER GAME", 2]],
+    [],
+    [[570, 30, "TEAM STANDUP", 0]],
+]
+
+# The demo's clock is pinned to 9:12 in the morning, so the first meeting is
+# always a few minutes off and nothing on today's list has finished yet --
+# a preview drawn at midnight would otherwise show an empty day.
+DEMO_NOW = 9 * 60 + 12
+
+def demo_calendar(ctx, base):
+    today = base["today"]
+    now = today * 1440 + DEMO_NOW
+    hide_allday = str(ctx.inputs.get("hidealldays", "Show")).strip().lower() == "hide"
+    out = []
+    for i in range(len(DEMO_DAYS)):
+        for row in DEMO_DAYS[i]:
+            allday = row[1] == 0
+            if allday and hide_allday:
+                continue
+            start = (today + i) * 1440 + row[0]
+            length = 1440 if allday else row[1]
+            out.append({"start": start, "end": start + length,
+                        "tint": TINTS[row[3]], "title": row[2],
+                        "allday": allday})
+    out = sorted(out, key = lambda e: e["start"] * 2 + (0 if e["allday"] else 1))
+    base["now"] = now
+    base["events"] = out
     return base
 
 # ------------------------------------------------------------------- pages

@@ -21,15 +21,14 @@ inputs:
     type: string
     app_input_type: free-text
     label: Calendar ID
-    default: "en.usa#holiday@group.v.calendar.google.com"
+    default: "DEMO"
     help: >-
       In Google Calendar: Settings, pick your calendar, Integrate calendar,
       "Secret address in iCal format". Paste the part BETWEEN /ical/ and
       /private-, e.g. you@gmail.com or c9f2b4@group.calendar.google.com. Do not
       paste the whole https:// link -- the colon in it stops the value ever
-      reaching the app. The default is Google's public US holiday calendar, so
-      the app shows something real before you have set it up; replace it with
-      your own.
+      reaching the app. The default, DEMO, shows a sample week so the app has
+      something to show before you have set it up; replace it with your own.
   # A credential, not a preference: anyone holding this token can read the whole
   # calendar, so it is declared api-key. That masks it in the Studio and marks
   # it for the platform to hold as a secret rather than a plain setting.

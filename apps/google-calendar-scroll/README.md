@@ -50,8 +50,8 @@ token is the half that is actually secret.
 carry their own time zone are shown exactly as written, which stays correct
 across a daylight-saving change — so most calendars never need this touched.
 
-Out of the box the Calendar ID is Google's public US holiday calendar, so the
-app shows something real before you configure it. Replace it with your own.
+Out of the box the Calendar ID is `DEMO`, which shows a built-in sample week so
+the app has something to show before you configure it. Replace it with your own.
 
 ## What it understands
 
