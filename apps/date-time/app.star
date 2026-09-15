@@ -1,11 +1,13 @@
-# Date & Time — local date, time, and current weather for a US zip code. (384x32, 1 page)
+# Date & Time — local date, time, and current weather for a US zip code. (192x32, 3 pages)
 #
-# One line, left to right: DATE | TIME | weather ICON + TEMP + CONDITION.
-# Each section has its own configurable color. The whole line shares one
-# user-selectable font and only drops to a smaller one if the full line —
-# with real content — would overflow, so sizing stays consistent instead of
-# each section picking its own. The temperature reading can also be colored
-# by a hot/cold scale instead of the weather color.
+# Three pages in rotation: DATE, then TIME, then weather ICON + TEMP +
+# CONDITION. Each gets the full panel to itself, so each renders at the
+# biggest font its own content allows -- a short time reads much bigger than
+# a spelled-out date. The date and time pages end in a trailing divider near
+# the right edge to signal the app continues onto its next page; weather is
+# last, so it has none. Each section keeps its own configurable color, and
+# the temperature reading can be colored by a hot/cold scale instead of the
+# weather color.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -380,19 +382,21 @@ def temp_scale_color(f):
         return "#FF4500"
     return "#CC0000"
 
-# ---------- page ----------
-# One font for the whole line — date, time, and weather all match, per the
-# user's font choice. That choice is a ceiling: we only drop to the next
-# font down if the *entire* line, with its real content, would overflow, so
-# sizing stays internally consistent instead of each section picking its
-# own font. The weather icon scales up in step.
+# ---------- pages ----------
+# Three pages -- date, then time, then weather -- so each gets its own hero
+# size instead of three things fighting over one line. Date and time end in
+# a trailing divider near the right edge to signal "this app continues";
+# weather is the last page, so it gets none. Each page still respects the
+# user's font choice as a ceiling and shrinks from there if its own content
+# would overflow -- with only one thing on the page, that rarely happens.
 
 FONT_ORDER = ["4x5", "6x8", "8x12", "10x16", "16x24"]  # smallest to largest
 FONT_H = {"4x5": 6, "6x8": 8, "8x12": 12, "10x16": 16, "16x24": 24}
 ICON_SCALE = {"4x5": 1, "6x8": 2, "8x12": 2, "10x16": 3, "16x24": 4}
 
-GAP = 10        # empty space on each side of a divider
-MARGIN = 8      # minimum breathing room left over on the panel
+MARGIN = 8         # minimum breathing room left over on the panel
+DIVIDER_EDGE = 8   # divider's distance from the right edge
+DIVIDER_GAP = 6    # empty space between content and the divider
 
 def font_fallback_chain(pref):
     # Every font but the biggest still auto-shrinks through smaller fonts to
@@ -416,39 +420,30 @@ def tw(c, text, font):
 def draw_text(c, text, x, y, font, color):
     c.text(text, x, y, font = font, color = color)
 
-def line_width(c, font, date_text, time_text, have_weather, temp_str, cond_text):
-    icon_w = 9 * ICON_SCALE[font]
-    if have_weather:
-        temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
-        weather_w = icon_w + 6 + temp_w + 10 + tw(c, cond_text, font)
-    else:
-        weather_w = tw(c, "WEATHER N/A", font)
-    return (tw(c, date_text, font) + GAP + 1 + GAP +
-            tw(c, time_text, font) + GAP + 1 + GAP + weather_w)
+def _pick_font(chain, width_of, maxw):
+    # Biggest font in the chain whose measured width fits; the smallest is
+    # the floor (and may clip, matching the single-font "hard choice" rule).
+    for f in chain:
+        if width_of(f) <= maxw:
+            return f
+    return chain[len(chain) - 1]
 
-def main(c, ctx):
-    c.fill("black")
+def _draw_error(c, title, sub):
+    c.text(title, c.width // 2, 10, font = "6x8", color = "white", align = "center")
+    c.text(sub, c.width // 2, 20, font = "4x5", color = "white", align = "center")
 
-    date_color = _s(ctx, "datecolor", "#FFFFFF")
-    time_color = _s(ctx, "timecolor", "#FFFFFF")
-    weather_color = _s(ctx, "weathercolor", "#FFFFFF")
-    divider_color = _s(ctx, "dividercolor", "#444444")
-    temp_color_mode = _s(ctx, "tempcolormode", "Weather color")
+# ---------- shared lookups, computed once per page render ----------
 
+def _state(ctx):
     geo = geocode(ctx)
     if not geo["ok"]:
-        c.text(geo["title"], c.width // 2, 10, font = "6x8", color = "white", align = "center")
-        c.text(geo["sub"], c.width // 2, 20, font = "4x5", color = "white", align = "center")
-        return
+        return {"ok": False, "title": geo["title"], "sub": geo["sub"]}
 
     off = tz_offset_hours(geo["lat"], geo["lon"])
     if off == None:
-        c.text("TIMEZONE ERROR", c.width // 2, 10, font = "6x8", color = "white", align = "center")
-        c.text("TRY AGAIN LATER", c.width // 2, 20, font = "4x5", color = "white", align = "center")
-        return
+        return {"ok": False, "title": "TIMEZONE ERROR", "sub": "TRY AGAIN LATER"}
 
     t = local_parts(ctx, off)
-
     date_text = format_date(ctx, t)
     time_str, ap = format_time(ctx, t)
     time_text = time_str + (" " + ap if ap else "")
@@ -456,9 +451,13 @@ def main(c, ctx):
     wx = fetch_weather(geo["lat"], geo["lon"])
     temp = wx.get("temperature_2m", None) if wx != None else None
     have_weather = temp != None
-
     phase = _moon_phase(ctx)
 
+    weather_color = _s(ctx, "weathercolor", "#FFFFFF")
+    temp_color_mode = _s(ctx, "tempcolormode", "Weather color")
+
+    code = 3
+    is_day = True
     if have_weather:
         code = int(wx.get("weather_code", 3))
         is_day = int(wx.get("is_day", 1)) == 1
@@ -471,49 +470,82 @@ def main(c, ctx):
         cond_text = ""
         temp_color = weather_color
 
+    return {
+        "ok": True,
+        "date_text": date_text, "time_text": time_text,
+        "have_weather": have_weather, "temp_str": temp_str, "cond_text": cond_text,
+        "code": code, "is_day": is_day, "phase": phase, "temp_color": temp_color,
+    }
+
+def _draw_continues(c, ctx, text, color_key):
+    # Centers `text` in the area left of a trailing divider near the right
+    # edge -- the divider's position is fixed, independent of font/content,
+    # so it lines up the same way on both the date and time pages.
+    color = _s(ctx, color_key, "#FFFFFF")
+    divider_color = _s(ctx, "dividercolor", "#444444")
+    dx = c.width - DIVIDER_EDGE
+    avail_w = dx - DIVIDER_GAP
+
+    chain = font_fallback_chain(_s(ctx, "font", "6x8"))
+    font = _pick_font(chain, lambda f: tw(c, text, f), avail_w - MARGIN)
+    w = tw(c, text, font)
+    x = (avail_w - w) // 2
+    if x < 2:
+        x = 2
+    draw_text(c, text, x, vcenter(FONT_H[font]), font, color)
+    c.line(dx, 5, dx, 27, divider_color)
+
+def date(c, ctx):
+    c.fill("black")
+    st = _state(ctx)
+    if not st["ok"]:
+        _draw_error(c, st["title"], st["sub"])
+        return
+    _draw_continues(c, ctx, st["date_text"], "datecolor")
+
+def time(c, ctx):
+    c.fill("black")
+    st = _state(ctx)
+    if not st["ok"]:
+        _draw_error(c, st["title"], st["sub"])
+        return
+    _draw_continues(c, ctx, st["time_text"], "timecolor")
+
+def weather(c, ctx):
+    c.fill("black")
+    st = _state(ctx)
+    if not st["ok"]:
+        _draw_error(c, st["title"], st["sub"])
+        return
+
+    weather_color = _s(ctx, "weathercolor", "#FFFFFF")
+    maxw = c.width - MARGIN
     chain = font_fallback_chain(_s(ctx, "font", "6x8"))
 
-    # Pick the biggest font (within the user's chosen ceiling) that still
-    # lets the whole line fit, so it only ever shrinks as one consistent unit.
-    font = chain[len(chain) - 1]
-    for f in chain:
-        if line_width(c, f, date_text, time_text, have_weather, temp_str, cond_text) <= c.width - MARGIN:
-            font = f
-            break
+    if not st["have_weather"]:
+        font = _pick_font(chain, lambda f: tw(c, "WEATHER N/A", f), maxw)
+        w = tw(c, "WEATHER N/A", font)
+        draw_text(c, "WEATHER N/A", (c.width - w) // 2, vcenter(FONT_H[font]), font, weather_color)
+        return
 
+    temp_str, cond_text, temp_color = st["temp_str"], st["cond_text"], st["temp_color"]
+    code, is_day, phase = st["code"], st["is_day"], st["phase"]
+
+    def block_w(f):
+        icon_w = 9 * ICON_SCALE[f]
+        temp_w = tw(c, temp_str, f) + 3 + 4 + tw(c, "F", f)
+        return icon_w + 6 + temp_w + 10 + tw(c, cond_text, f)
+
+    font = _pick_font(chain, block_w, maxw)
     font_h = FONT_H[font]
     icon_scale = ICON_SCALE[font]
     icon_w = 9 * icon_scale
-
-    date_w = tw(c, date_text, font)
-    time_w = tw(c, time_text, font)
-    if have_weather:
-        temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
-        cond_w = tw(c, cond_text, font)
-        weather_w = icon_w + 6 + temp_w + 10 + cond_w
-    else:
-        weather_w = tw(c, "WEATHER N/A", font)
-
-    total = date_w + GAP + 1 + GAP + time_w + GAP + 1 + GAP + weather_w
+    temp_w = tw(c, temp_str, font) + 3 + 4 + tw(c, "F", font)
+    cond_w = tw(c, cond_text, font)
+    total = icon_w + 6 + temp_w + 10 + cond_w
     x = (c.width - total) // 2
     if x < 2:
         x = 2
-
-    # ---- draw, left to right ----
-
-    draw_text(c, date_text, x, vcenter(font_h), font, date_color)
-    x += date_w + GAP
-    c.line(x, 5, x, 27, divider_color)
-    x += 1 + GAP
-
-    draw_text(c, time_text, x, vcenter(font_h), font, time_color)
-    x += time_w + GAP
-    c.line(x, 5, x, 27, divider_color)
-    x += 1 + GAP
-
-    if not have_weather:
-        draw_text(c, "WEATHER N/A", x, vcenter(font_h), font, weather_color)
-        return
 
     draw_condition(c, code, is_day, phase, x, vcenter(icon_w), icon_scale)
     x += icon_w + 6
