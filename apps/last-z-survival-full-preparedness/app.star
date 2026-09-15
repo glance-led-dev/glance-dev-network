@@ -1,4 +1,4 @@
-# Last Z Full Preparedness for a Glance panel (128x32).
+# Last Z Full Preparedness for a Glance panel (192x32).
 #
 # DESIGN. Last Z runs Full Preparedness on a fixed weekly grid: six 4-hour
 # blocks a day, each block naming the one thing worth spending on. Two pages,
@@ -8,8 +8,8 @@
 # busy is it" - the app name across the top with the next block right-aligned
 # beside it, then a content band split by a hairline: hand-drawn pixel art on
 # the left carrying the block's identity, and on the right the block name in
-# the block's color with the countdown beside it, the two things worth
-# spending listed under that, and a bar along the bottom draining across the
+# the block's color with the two things worth spending listed under it, and in
+# a right-hand column the countdown with a bar beneath it draining across the
 # block. The art is the label - a lit bunker, a
 # bubbling flask, a tank, a gold-braided commander, a camo helmet - so the name
 # is confirmation, not the only clue.
@@ -52,14 +52,11 @@ LABEL = {
 # shelter counts construction speedups and structure power, army counts
 # training speedups and troops built, science counts research and research
 # speedups, vehicle counts boomers, modification blueprints and golden
-# wrenches. Two lines each, most valuable first, spelled out wherever the row
-# allows. Blueprints stay as BP on the vehicle line only because BLUEPRINTS +
-# WRENCHES is 94px against an 82px row, and TECH PWR for the same reason -
-# INCREASE TECH POWER is 89px.
+# wrenches. Two lines each, most valuable first, spelled out in full.
 SPEND = {
     "SHELTER": ["BUILD SPEEDUPS", "STRUCTURE POWER"],
-    "SCIENCE": ["RESEARCH SPEEDUPS", "INCREASE TECH PWR"],
-    "VEHICLE": ["KILL BOOMERS", "BP + WRENCHES"],
+    "SCIENCE": ["RESEARCH SPEEDUPS", "INCREASE TECH POWER"],
+    "VEHICLE": ["KILL BOOMERS", "BLUEPRINTS + WRENCHES"],
     "HERO": ["CONSUME EXP", "PRIME RECRUITS"],
     "ARMY": ["TRAINING SPEEDUPS", "TRAIN TROOPS"],
 }
@@ -75,14 +72,15 @@ COLOR = {
 # ---- geometry ---------------------------------------------------------------
 # 6 px clear at both outer edges, like the sibling Universal/HHN apps, so the
 # app reads as its own unit in the rotation. Title row y 0..6, content band
-# y 7..31. Art occupies x 6..31; the text zone is x 40..121 (82 px), which is
-# the width the widest string was fitted against: RESEARCH SPEEDUPS is exactly
-# 82 px at 4x5.
+# y 7..31. Art occupies x 6..31; the text zone is x 40..185 (146 px), 6 px
+# clear of the right edge like the sibling 192-wide apps, and every task line -
+# the longest is BLUEPRINTS + WRENCHES - fits it spelled out in full.
 EDGEL = 6
-RZ_R = 121
+RZ_R = 185
 ARTX = 6
 DIVX = 36
 TX = 40
+DIV2 = 140
 
 DIM = "#6E7A94"
 INK = "#F4F7FF"
@@ -390,11 +388,17 @@ def title(c, ctx):
     # 11x14, not 10x16: the 10x16 S hooks at the bottom-left but not the
     # top-right, so its top half reads as a C. LAST and Z are drawn apart
     # because the font's space is a full letter wide - it left 12px between
-    # T and Z against 1px between every other pair.
+    # T and Z against 1px between every other pair. Both lines centre in the
+    # text zone so the wider card doesn't leave them stranded at the left.
+    zone = RZ_R - TX + 1
     lw = c.text_width("LAST", "11x14")
-    c.text("LAST", TX, 6, font = "11x14", color = INK)
-    c.text("Z", TX + lw + 6, 6, font = "11x14", color = INK)
-    c.text("FULL PREPAREDNESS", TX, 23, font = "4x5", color = COLOR[theme])
+    zw = c.text_width("Z", "11x14")
+    tx = TX + (zone - (lw + 6 + zw)) // 2
+    c.text("LAST", tx, 6, font = "11x14", color = INK)
+    c.text("Z", tx + lw + 6, 6, font = "11x14", color = INK)
+    sub = "FULL PREPAREDNESS"
+    sx = TX + (zone - c.text_width(sub, "4x5")) // 2
+    c.text(sub, sx, 23, font = "4x5", color = COLOR[theme])
 
 def main(c, ctx):
     at = _apocalypse(ctx.now)
@@ -425,30 +429,37 @@ def main(c, ctx):
     c.fill("black")
 
     # Identity never waits on anything: name, then art, then the words.
-    c.text("LAST Z FP", EDGEL, 1, font = "4x5", color = accent)
+    c.text("LAST Z FULL PREP", EDGEL, 1, font = "4x5", color = accent)
     c.text("NEXT " + LABEL[nxt], RZ_R, 1, font = "4x5", color = COLOR[nxt],
            align = "right")
 
     _draw_art(c, theme)
     c.vline(DIVX, 7, 25, STRUCT)
 
-    # The block name shares its row with the countdown, which frees a whole
-    # line for the task list: two full-width rows instead of one abbreviated
-    # one. 6x8 leaves the name 48px, the clock takes 28 right-aligned.
-    c.text(LABEL[theme], TX, 7, font = "6x8", color = accent)
-    remain = str(left_h) + "H " + _pad2(left_m) + "M"
-    c.text(remain, RZ_R, 9, font = "4x5", color = INK, align = "right")
-
+    # Middle column: the block name over the two things worth spending. It is
+    # 98px wide because BLUEPRINTS + WRENCHES is, and it has the band's full
+    # height to itself now that the bar sits under the countdown - which is
+    # what lets the name go back up to 8x10.
+    c.text(LABEL[theme], TX, 7, font = "8x10", color = accent)
     items = SPEND[theme]
-    c.text(items[0], TX, 16, font = "4x5", color = DIM)
-    c.text(items[1], TX, 22, font = "4x5", color = DIM)
+    c.text(items[0], TX, 18, font = "4x5", color = DIM)
+    c.text(items[1], TX, 24, font = "4x5", color = DIM)
 
-    # The bar drains across the 4-hour block, full width under the list. Its
-    # track is a step lighter than the divider so it still reads when nearly
-    # empty, and a 1px sliver of fill survives until the block actually ends.
-    c.rect(TX, 28, RZ_R, 31, fill = TRACK)
-    fill_w = left_t * (RZ_R - TX + 1) // 14400
+    # Right column: the countdown as the hero, in the title card's 11x14 face,
+    # the way Brightline gives its departure time the big type. H:MM is 43px,
+    # exactly the width left between the second hairline and the edge.
+    c.vline(DIV2, 7, 25, STRUCT)
+    c.text("TIME LEFT", RZ_R, 7, font = "4x5", color = DIM, align = "right")
+    remain = str(left_h) + ":" + _pad2(left_m)
+    c.text(remain, RZ_R, 13, font = "11x14", color = INK, align = "right")
+
+    # The bar drains across the 4-hour block directly under the countdown, so
+    # the time and how much of the block is left read as one unit. It spans the
+    # countdown's own 43px.
+    barx = DIV2 + 3
+    c.rect(barx, 28, RZ_R, 31, fill = TRACK)
+    fill_w = left_t * (RZ_R - barx + 1) // 14400
     if fill_w < 1 and left_t > 0:
         fill_w = 1
     if fill_w > 0:
-        c.rect(TX, 28, TX + fill_w - 1, 31, fill = accent)
+        c.rect(barx, 28, barx + fill_w - 1, 31, fill = accent)

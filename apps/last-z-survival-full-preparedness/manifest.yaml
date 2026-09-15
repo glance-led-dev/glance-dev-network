@@ -6,7 +6,7 @@ author: "maniac782"
 description: Current Last Z Full Preparedness theme. Six 4-hour blocks a day on Apocalypse Time (UTC-2). Shows the live theme, what to spend, time left, and what's next.
 category: Lifestyle
 entry: app.star
-width: 128
+width: 192
 height: 32
 refresh: 300
 pages:
