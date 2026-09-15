@@ -27,6 +27,7 @@ TRACK = "#242424"
 OK = "#22C55E"
 ALARM = "#E02020"
 GHOST = "#3E3E3E"
+HALF_C = "#FFAA00"
 
 # ----------------------------------------------------------------- layout ---
 # x 10..181 is the safe area; other apps play right before and after this one.
@@ -52,16 +53,8 @@ STARS = [
 
 HERO_FACES = [["10x16", 16], ["7x12", 12], ["6x8", 8]]
 
-# [standard UTC offset in hours, observes US daylight saving]
-ZONES = {
-    "EASTERN": [-5, True],
-    "CENTRAL": [-6, True],
-    "MOUNTAIN": [-7, True],
-    "ARIZONA": [-7, False],
-    "PACIFIC": [-8, True],
-    "ALASKA": [-9, True],
-    "HAWAII": [-10, False],
-}
+# US Eastern (Washington, DC), where federal flag orders are issued.
+STD_OFFSET = -5
 
 MONTHS = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
           "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
@@ -246,16 +239,6 @@ def fmt_age(n):
         return "1D AGO"
     return str(n) + "D AGO"
 
-def truthy(v, dflt):
-    if v == None:
-        return dflt
-    if v == True:
-        return True
-    if v == False:
-        return False
-    s = str(v).lower()
-    return s == "true" or s == "1" or s == "yes" or s == "on"
-
 # ---------------------------------------------------------------- drawing ---
 
 def draw_flag(c, x, y, ghost):
@@ -356,33 +339,17 @@ def next_observance(today, year):
 def status(c, ctx):
     c.fill(BG)
 
-    zone = ZONES.get(str(ctx.inputs.get("timezone", "EASTERN")).upper().strip(),
-                     ZONES["EASTERN"])
-    std = zone[0]
-    dst_on = zone[1]
-    accent = ctx.inputs.get("accent", "#FFAA00")
-    showbar = truthy(ctx.inputs.get("bar", True), True)
-
-    # ctx.now is UTC; shift it into the chosen zone before any date math.
+    # ctx.now is UTC; shift it into US Eastern before any date math.
     base = days_from_civil(ctx.now.year, ctx.now.month, ctx.now.day) * 1440 + \
-           ctx.now.hour * 60 + ctx.now.minute + std * 60
+           ctx.now.hour * 60 + ctx.now.minute + STD_OFFSET * 60
     guess = civil_from_days(base // 1440)
-    if dst_on and in_dst(guess[0], base // 1440):
+    if in_dst(guess[0], base // 1440):
         base = base + 60
     today = base // 1440
     minute = base % 1440
     year = civil_from_days(today)[0]
 
     draw_rules(c)
-
-    # ---- demo -------------------------------------------------------------
-    if truthy(ctx.inputs.get("demo", False), False):
-        draw_pole(c, True, False)
-        draw_hero(c, "HALF", "STAFF", accent)
-        lines = wrap2(c, "SAMPLE ORDER", COL_W, "5x7")
-        draw_detail(c, "REASON", "DEMO", accent, lines[0], lines[1], WHITE,
-                    "THRU " + fmt_md(today + 3), accent, 40 if showbar else -1)
-        return
 
     reached, order = live_order(today)
 
@@ -392,11 +359,10 @@ def status(c, ctx):
         pct = (today - order["start"]) * 100 // span if span > 0 else 50
         lines = wrap2(c, order["reason"], COL_W, "5x7")
         draw_pole(c, True, False)
-        draw_hero(c, "HALF", "STAFF", accent)
+        draw_hero(c, "HALF", "STAFF", HALF_C)
         draw_detail(c, "REASON", fmt_age(today - order["pub"]), LABEL,
                     lines[0], lines[1], WHITE,
-                    "THRU " + fmt_md(order["end"]), accent,
-                    pct if showbar else -1)
+                    "THRU " + fmt_md(order["end"]), HALF_C, pct)
         return
 
     # ---- half-staff by statute -------------------------------------------
@@ -408,10 +374,10 @@ def status(c, ctx):
         limit = 720 if ev["noon"] else 1440
         lines = wrap2(c, ev["name"], COL_W, "5x7")
         draw_pole(c, True, False)
-        draw_hero(c, "HALF", "STAFF", accent)
+        draw_hero(c, "HALF", "STAFF", HALF_C)
         draw_detail(c, "REASON", "BY LAW", LABEL, lines[0], lines[1], WHITE,
-                    "THRU NOON" if ev["noon"] else "THRU SUNSET", accent,
-                    minute * 100 // limit if showbar else -1)
+                    "THRU NOON" if ev["noon"] else "THRU SUNSET", HALF_C,
+                    minute * 100 // limit)
         return
 
     # ---- feed unreachable, and no statutory day to fall back on ----------
