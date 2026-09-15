@@ -33,6 +33,7 @@ TRACK = "#242424"
 OK = "#22C55E"
 ALARM = "#E02020"
 GHOST = "#3E3E3E"
+ACCENT = "#FFAA00"   # half-staff hero and end date
 
 # ----------------------------------------------------------------- layout ---
 # 64x32 has no neighbouring app to pad against, so every pixel is in play.
@@ -65,16 +66,8 @@ STARS = [
 HERO_FACES = [["7x12", 12], ["6x8", 8], ["5x7", 7]]
 BIG_FACES = [["10x16", 16], ["7x12", 12], ["6x8", 8], ["5x7", 7]]
 
-# [standard UTC offset in hours, observes US daylight saving]
-ZONES = {
-    "EASTERN": [-5, True],
-    "CENTRAL": [-6, True],
-    "MOUNTAIN": [-7, True],
-    "ARIZONA": [-7, False],
-    "PACIFIC": [-8, True],
-    "ALASKA": [-9, True],
-    "HAWAII": [-10, False],
-}
+# Orders run until sunset local time; the panel always keeps US Eastern.
+UTC_OFFSET = -5    # EST, plus an hour during US daylight saving
 
 MONTHS = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
           "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
@@ -284,16 +277,6 @@ def fmt_age(n):
         return "1D AGO"
     return str(n) + "D AGO"
 
-def truthy(v, dflt):
-    if v == None:
-        return dflt
-    if v == True:
-        return True
-    if v == False:
-        return False
-    s = str(v).lower()
-    return s == "true" or s == "1" or s == "yes" or s == "on"
-
 # ------------------------------------------------------------------- data ---
 
 def live_order(today):
@@ -343,35 +326,23 @@ def next_observance(today, year):
 def resolve(ctx):
     # One description of the world, shared by all three pages. The HTTP calls
     # are ttl-cached, so calling this once per page costs nothing extra.
-    zone = ZONES.get(str(ctx.inputs.get("timezone", "EASTERN")).upper().strip(),
-                     ZONES["EASTERN"])
-    accent = ctx.inputs.get("accent", "#FFAA00")
-    showbar = truthy(ctx.inputs.get("bar", True), True)
 
-    # ctx.now is UTC; shift it into the chosen zone before any date math.
+    # ctx.now is UTC; shift it into US Eastern before any date math.
     base = days_from_civil(ctx.now.year, ctx.now.month, ctx.now.day) * 1440 + \
-           ctx.now.hour * 60 + ctx.now.minute + zone[0] * 60
-    if zone[1] and in_dst(civil_from_days(base // 1440)[0], base // 1440):
+           ctx.now.hour * 60 + ctx.now.minute + UTC_OFFSET * 60
+    if in_dst(civil_from_days(base // 1440)[0], base // 1440):
         base = base + 60
     today = base // 1440
     minute = base % 1440
     year = civil_from_days(today)[0]
 
     st = {
-        "half": True, "hero": "HALF", "sub": "STAFF", "color": accent,
-        "tag": "", "tagcolor": LABEL, "ghost": False,
+        "half": True, "hero": "HALF", "sub": "STAFF", "color": ACCENT,
+        "tag": "", "ghost": False,
         "whylabel": "REASON", "why": "",
         "whenlabel": "IN EFFECT", "footlabel": "THRU", "foot": "",
-        "pct": -1, "showbar": showbar,
+        "pct": -1,
     }
-
-    if truthy(ctx.inputs.get("demo", False), False):
-        st["tag"] = "DEMO"
-        st["tagcolor"] = accent
-        st["why"] = "SAMPLE ORDER"
-        st["foot"] = fmt_md(today + 3)
-        st["pct"] = 40 if showbar else -1
-        return st
 
     reached, order = live_order(today)
 
@@ -380,8 +351,7 @@ def resolve(ctx):
         st["tag"] = fmt_age(today - order["pub"])
         st["why"] = order["reason"]
         st["foot"] = fmt_md(order["end"])
-        if showbar:
-            st["pct"] = (today - order["start"]) * 100 // span if span > 0 else 50
+        st["pct"] = (today - order["start"]) * 100 // span if span > 0 else 50
         return st
 
     for ev in statutory(year):
@@ -392,8 +362,7 @@ def resolve(ctx):
         st["tag"] = "BY LAW"
         st["why"] = ev["name"]
         st["foot"] = "NOON" if ev["noon"] else "SUNSET"
-        if showbar:
-            st["pct"] = minute * 100 // (720 if ev["noon"] else 1440)
+        st["pct"] = minute * 100 // (720 if ev["noon"] else 1440)
         return st
 
     if not reached:
@@ -462,7 +431,7 @@ def flag(c, ctx):
     c.text(clip(c, st["sub"], RC_W, "5x7"), RC_X, 19, font="5x7", color=WHITE)
     if st["tag"] != "":
         c.text(clip(c, st["tag"], RC_W, "4x5"), RC_X, 27,
-               font="4x5", color=st["tagcolor"])
+               font="4x5", color=LABEL)
 
 # ------------------------------------------------------------------ page 2 ---
 
