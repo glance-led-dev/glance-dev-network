@@ -1,0 +1,386 @@
+gdn: 1
+id: multi-sport-tracked-teams
+version: 0.1.0
+name: "Multi-Sport Tracked Teams"
+author: "Tim McCabe"
+description: Track your favorite NFL, MLB, NBA, NHL, and MLS teams in one app. Shows a live game when playing or the team's next matchup.
+category: Sports
+entry: app.star
+
+width: 128
+height: 32
+refresh: 60
+
+pages: [title, nfl_page, mlb_page, nba_page, nhl_page, mls_page]
+
+assets:
+  - arizona-cardinals_small_square.png
+  - atlanta-falcons_small_square.png
+  - baltimore-ravens_small_square.png
+  - buffalo-bills_small_square.png
+  - carolina-panthers_small_square.png
+  - chicago-bears_small_square.png
+  - cincinnati-bengals_small_square.png
+  - cleveland-browns_small_square.png
+  - dallas-cowboys_small_square.png
+  - denver-broncos_small_square.png
+  - detroit-lions_small_square.png
+  - green-bay-packers_small_square.png
+  - houston-texans_small_square.png
+  - indianapolis-colts_small_square.png
+  - jacksonville-jaguars_small_square.png
+  - kansas-city-chiefs_small_square.png
+  - las-vegas-raiders_small_square.png
+  - los-angeles-chargers_small_square.png
+  - los-angeles-rams_small_square.png
+  - miami-dolphins_small_square.png
+  - minnesota-vikings_small_square.png
+  - new-england-patriots_small_square.png
+  - new-orleans-saints_small_square.png
+  - new-york-giants_small_square.png
+  - new-york-jets_small_square.png
+  - philadelphia-eagles_small_square.png
+  - pittsburgh-steelers_small_square.png
+  - seattle-seahawks_small_square.png
+  - san-francisco-49ers_small_square.png
+  - tampa-bay-buccaneers_small_square.png
+  - tennessee-titans_small_square.png
+  - washington-commanders_small_square.png
+  # MLB
+  - arizona-diamondbacks_small_square.png
+  - athletics_small_square.png
+  - atlanta-braves_small_square.png
+  - baltimore-orioles_small_square.png
+  - boston-red-sox_small_square.png
+  - chicago-cubs_small_square.png
+  - chicago-white-sox_small_square.png
+  - cincinnati-reds_small_square.png
+  - cleveland-guardians_small_square.png
+  - colorado-rockies_small_square.png
+  - detroit-tigers_small_square.png
+  - houston-astros_small_square.png
+  - kansas-city-royals_small_square.png
+  - los-angeles-angels_small_square.png
+  - los-angeles-dodgers_small_square.png
+  - miami-marlins_small_square.png
+  - milwaukee-brewers_small_square.png
+  - minnesota-twins_small_square.png
+  - new-york-mets_small_square.png
+  - new-york-yankees_small_square.png
+  - philadelphia-phillies_small_square.png
+  - pittsburgh-pirates_small_square.png
+  - san-diego-padres_small_square.png
+  - seattle-mariners_small_square.png
+  - san-francisco-giants_small_square.png
+  - st-louis-cardinals_small_square.png
+  - tampa-bay-rays_small_square.png
+  - texas-rangers_small_square.png
+  - toronto-blue-jays_small_square.png
+  - washington-nationals_small_square.png
+  # NBA
+  - atlanta-hawks_small_square.png
+  - boston-celtics_small_square.png
+  - brooklyn-nets_small_square.png
+  - charlotte-hornets_small_square.png
+  - chicago-bulls_small_square.png
+  - cleveland-cavaliers_small_square.png
+  - dallas-mavericks_small_square.png
+  - denver-nuggets_small_square.png
+  - detroit-pistons_small_square.png
+  - golden-state-warriors_small_square.png
+  - houston-rockets_small_square.png
+  - indiana-pacers_small_square.png
+  - la-clippers_small_square.png
+  - los-angeles-lakers_small_square.png
+  - memphis-grizzlies_small_square.png
+  - miami-heat_small_square.png
+  - milwaukee-bucks_small_square.png
+  - minnesota-timberwolves_small_square.png
+  - new-orleans-pelicans_small_square.png
+  - new-york-knicks_small_square.png
+  - oklahoma-city-thunder_small_square.png
+  - orlando-magic_small_square.png
+  - philadelphia-76ers_small_square.png
+  - phoenix-suns_small_square.png
+  - portland-trail-blazers_small_square.png
+  - sacramento-kings_small_square.png
+  - san-antonio-spurs_small_square.png
+  - toronto-raptors_small_square.png
+  - utah-jazz_small_square.png
+  - washington-wizards_small_square.png
+  # NHL
+  - anaheim-ducks-logo.png
+  - boston-bruins-5-logo-png-transparent.png
+  - buffalo-sabres-logo.png
+  - calgary-flames-logo.png
+  - carolina-hurricanes-logo.png
+  - chicago-blackhawks-logo.png
+  - colorado-avalanche-logo.png
+  - Columbus-Blue-Jackets-Logo-2007-500x313.png
+  - dallas-stars-logo.png
+  - detroit-red-wings-logo.png
+  - Edmonton-Oilers-Logo-500x313.png
+  - florida-panthers-logo.png
+  - los-angeles-kings-logo.png
+  - minnesota-wild-logo.png
+  - Montreal-Canadiens-Logo-500x313.png
+  - nashville-predators-logo.png
+  - New-Jersey-Devils-Logo-500x313.png
+  - new-york-islanders-logo.png
+  - new-york-rangers-logo.png
+  - ottawa-senators-logo.png
+  - philadelphia-flyers-logo.png
+  - pittsburgh-penguins-logo.png
+  - san-jose-sharks-logo.png
+  - Seattle-Kraken-Logo-648x400.png
+  - st-louis-blues-logo.png
+  - Tampa-Bay-Lightning-Logo-500x312.png
+  - toronto-maple-leafs-logo.png
+  - Utah-Mammoth-Logo-500x281.png
+  - vancouver-canucks-logo.png
+  - vegas-golden-knights-logo.png
+  - Washington-Capitals-Logo-640x400.png
+  - winnipeg-jets-logo.png
+  # MLS
+  - usa_atlanta-united_64x64.football-logos.cc.png
+  - usa_austins-fc_64x64.football-logos.cc.png
+  - usa_chicago-fire-fc_64x64.football-logos.cc.png
+  - usa_fc-cincinnati_64x64.football-logos.cc.png
+  - usa_charlotte-fc_64x64.football-logos.cc.png
+  - usa_columbus-crew_64x64.football-logos.cc.png
+  - usa_colorado-rapids_64x64.football-logos.cc.png
+  - usa_fc-dallas_64x64.football-logos.cc.png
+  - usa_dc-united_64x64.football-logos.cc.png
+  - usa_houston-dynamo_64x64.football-logos.cc.png
+  - usa_la-galaxy_64x64.football-logos.cc.png
+  - usa_los-angeles-fc_64x64.football-logos.cc.png
+  - usa_inter-miami-cf_64x64.football-logos.cc.png
+  - usa_minnesota-united-fc_64x64.football-logos.cc.png
+  - usa_cf-montreal_64x64.football-logos.cc.png
+  - usa_nashville-sc_64x64.football-logos.cc.png
+  - usa_new-england-revolution_64x64.football-logos.cc.png
+  - usa_new-york-city-fc_64x64.football-logos.cc.png
+  - usa_new-york-red-bulls_64x64.football-logos.cc.png
+  - usa_orlando-city_64x64.football-logos.cc.png
+  - usa_philadelphia-union_64x64.football-logos.cc.png
+  - usa_portland-timbers_64x64.football-logos.cc.png
+  - usa_real-salt-lake_64x64.football-logos.cc.png
+  - usa_san-diego-fc_64x64.football-logos.cc.png
+  - usa_seattle-sounders-fc_64x64.football-logos.cc.png
+  - usa_san-jose-earthquakes_64x64.football-logos.cc.png
+  - usa_sporting-kansas-city_64x64.football-logos.cc.png
+  - usa_st-louis-city-sc_64x64.football-logos.cc.png
+  - usa_toronto-fc_64x64.football-logos.cc.png
+  - usa_vancouver-whitecaps-fc_64x64.football-logos.cc.png
+ # League logos
+  - NFL22.png
+  - MLB22.png
+  - Jerry-West-the-NBA-Logo-500x281.png
+  - nhl-1-logo-png-transparent.png
+  - MLS22.png
+
+inputs:
+  - key: nflteam
+    type: choice
+    app_input_type: dropdown
+    label: NFL Team
+    default: "SEA"
+    choices:
+      - "ARI"
+      - "ATL"
+      - "BAL"
+      - "BUF"
+      - "CAR"
+      - "CHI"
+      - "CIN"
+      - "CLE"
+      - "DAL"
+      - "DEN"
+      - "DET"
+      - "GB"
+      - "HOU"
+      - "IND"
+      - "JAX"
+      - "KC"
+      - "LV"
+      - "LAC"
+      - "LAR"
+      - "MIA"
+      - "MIN"
+      - "NE"
+      - "NO"
+      - "NYG"
+      - "NYJ"
+      - "PHI"
+      - "PIT"
+      - "SEA"
+      - "SF"
+      - "TB"
+      - "TEN"
+      - "WSH"
+
+  - key: mlbteam
+    type: choice
+    app_input_type: dropdown
+    label: MLB Team
+    default: "SEA"
+    choices:
+      - "ARI"
+      - "ATH"
+      - "ATL"
+      - "BAL"
+      - "BOS"
+      - "CHC"
+      - "CHW"
+      - "CIN"
+      - "CLE"
+      - "COL"
+      - "DET"
+      - "HOU"
+      - "KC"
+      - "LAA"
+      - "LAD"
+      - "MIA"
+      - "MIL"
+      - "MIN"
+      - "NYM"
+      - "NYY"
+      - "PHI"
+      - "PIT"
+      - "SD"
+      - "SEA"
+      - "SF"
+      - "STL"
+      - "TB"
+      - "TEX"
+      - "TOR"
+      - "WSH"
+
+  - key: nbateam
+    type: choice
+    app_input_type: dropdown
+    label: NBA Team
+    default: "POR"
+    choices:
+      - "ATL"
+      - "BOS"
+      - "BKN"
+      - "CHA"
+      - "CHI"
+      - "CLE"
+      - "DAL"
+      - "DEN"
+      - "DET"
+      - "GSW"
+      - "HOU"
+      - "IND"
+      - "LAC"
+      - "LAL"
+      - "MEM"
+      - "MIA"
+      - "MIL"
+      - "MIN"
+      - "NOP"
+      - "NYK"
+      - "OKC"
+      - "ORL"
+      - "PHI"
+      - "PHX"
+      - "POR"
+      - "SAC"
+      - "SAS"
+      - "TOR"
+      - "UTA"
+      - "WAS"
+
+  - key: nhlteam
+    type: choice
+    app_input_type: dropdown
+    label: NHL Team
+    default: "SEA"
+    choices:
+      - "ANA"
+      - "BOS"
+      - "BUF"
+      - "CGY"
+      - "CAR"
+      - "CHI"
+      - "COL"
+      - "CBJ"
+      - "DAL"
+      - "DET"
+      - "EDM"
+      - "FLA"
+      - "LAK"
+      - "MIN"
+      - "MTL"
+      - "NSH"
+      - "NJD"
+      - "NYI"
+      - "NYR"
+      - "OTT"
+      - "PHI"
+      - "PIT"
+      - "SJS"
+      - "SEA"
+      - "STL"
+      - "TBL"
+      - "TOR"
+      - "UTA"
+      - "VAN"
+      - "VGK"
+      - "WSH"
+      - "WPG"
+
+  - key: mlsteam
+    type: choice
+    app_input_type: dropdown
+    label: MLS Team
+    default: "SEA"
+    choices:
+      - "ATL"
+      - "ATX"
+      - "CHI"
+      - "CIN"
+      - "CLT"
+      - "CLB"
+      - "COL"
+      - "DAL"
+      - "DCU"
+      - "HOU"
+      - "LA"
+      - "LAFC"
+      - "MIA"
+      - "MIN"
+      - "MTL"
+      - "NSH"
+      - "NE"
+      - "NYC"
+      - "RBNY"
+      - "ORL"
+      - "PHI"
+      - "POR"
+      - "RSL"
+      - "SD"
+      - "SEA"
+      - "SJ"
+      - "SKC"
+      - "STL"
+      - "TOR"
+      - "VAN"
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/Los_Angeles"
+    choices:
+      - "Pacific/Honolulu"
+      - "America/Anchorage"
+      - "America/Los_Angeles"
+      - "America/Phoenix"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/New_York"
+      - "UTC"
+      - "Europe/London"
