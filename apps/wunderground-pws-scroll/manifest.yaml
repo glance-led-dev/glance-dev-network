@@ -1,6 +1,6 @@
 gdn: 1
 id: wunderground-pws-scroll
-version: 1.3.0
+version: 1.4.2
 name: Weather Underground PWS
 author: Brayden Slater
 description: Personal Weather Station display with current conditions, wind, and rain data from Weather Underground
@@ -8,7 +8,7 @@ category: Weather
 entry: app.star
 width: 192
 height: 32
-refresh: 1800
+refresh: 120
 pages:
   - main
   - wind
@@ -22,20 +22,21 @@ inputs:
     choices: [Fahrenheit (English / Imperial), Celsius (Metric)]
     default: Fahrenheit (English / Imperial)
   - key: apikey
-    required: true
     label: Weather Underground API Key
     type: api-key
     app_input_type: api-key
     default: ""
-    help: "From https://www.wunderground.com/member/api-keys -- sign in, then My Devices, then the API Keys tab."
+    help: "Get this from your WU Account → My Devices → API Keys Tab (wunderground.com/member/api-keys)" 
   - key: stationid
     label: PWS Station ID
-    type: free-text
+    type: string
+    pp_input_type: free-text
     default: ""
     help: "Your Weather Underground station ID"
   - key: location
     label: City Label (Optional)
-    type: free-text
+    type: string
+    app_input_type: optional-free-text
     default: ""
     help: "Custom name shown on the display (e.g. Home)"
   
@@ -49,61 +50,97 @@ assets:
   - code-orange.png
   - code-yellow.png
   - code-yellow-thunderstorm.png
+  - cyclone.png
   - day-thunderstorms.png
+  - day-rain-thunderstorms.png
+  - day-snow-thunderstorms.png
   - drizzle.png
+  - drizzle-overcast.png
+  - drizzle-thunderstorms.png
+  - drizzle-thunderstorms-overcast.png
+  - drizzle-thunderstorms-extreme.png
+  - drizzle-thunderstorms-bolt.png
+  - drizzle-thunderstorms-bolt-overcast.png
+  - drizzle-thunderstorms-bolt-extreme.png
   - fire-alert.png
+  - flag-hurricane-warning.png
   - fog.png
-  - fog-day.png
-  - fog-night.png
+  - fog-thunderstorms.png
   - humidity.png
   - hurricane.png
   - jack-o-lantern.png
+  - lightning-bolt.png
   - lightning-bolt-extreme.png
-  - partly-cloudy-day.png
-  - partly-cloudy-night.png
   - mostly-clear-day.png
   - mostly-clear-night.png
   - mostly-clear-day-rain.png
   - mostly-clear-day-snow.png
   - not-available.png
-  - pollen-alert.png
-  - rain.png
-  - raindrops.png
-  - rain-extreme.png
-  - rain-overcast.png
-  - rain-thunderstorms.png
-  - rainbow.png
   - overcast.png
   - overcast-extreme.png
+  - partly-cloudy-day.png
+  - partly-cloudy-day-drizzle.png
+  - partly-cloudy-day-rain.png
+  - partly-cloudy-day-snow.png
+  - partly-cloudy-night.png
+  - partly-cloudy-night-drizzle.png
+  - partly-cloudy-night-rain.png
+  - partly-cloudy-night-snow.png
+  - pollen-alert.png
+  - pollen-grass.png
+  - pressure-high.png
+  - pressure-low.png
+  - rain.png
+  - raindrops.png
+  - rain-overcast.png
+  - rain-extreme.png
+  - rain-thunderstorms.png
+  - rain-thunderstorms-overcast.png
+  - rain-thunderstorms-extreme.png
+  - rain-thunderstorms-bolt.png
+  - rain-thunderstorms-bolt-overcast.png
+  - rain-thunderstorms-bolt-extreme.png
+  - rainbow.png
+  - sleet.png
   - sleet-overcast.png
-  - snow-overcast.png
+  - sleet-extreme.png
+  - smoke.png
   - snow.png
   - snowflake.png
+  - snow-overcast.png
+  - snow-extreme.png
+  - snow-thunderstorms.png
+  - snow-thunderstorms-overcast.png
+  - snow-thunderstorms-extreme.png
+  - snow-thunderstorms-bolt.png
+  - snow-thunderstorms-bolt-overcast.png
   - snowman.png
-  - day-snow-thunderstorms.png
   - star.png
   - thermometer-raindrop.png
   - thermometer-sun.png
   - thermometer-alert.png
-  - rain-thunderstorms-bolt-extreme.png
-  - rain-thunderstorms-extreme.png
-  - rain-thunderstorms-overcast.png
-  - day-rain-thunderstorms.png
-  - night-rain-thunderstorms.png
-  - tornado.png
+  - thunderstorms.png
   - thunderstorms-overcast.png
+  - thunderstorms-extreme.png
+  - thunderstorms-bolt.png
+  - thunderstorms-bolt-overcast.png
   - thunderstorms-bolt-extreme.png
+  - tornado-alert.png
+  - tornado.png
   - turkey.png
   - umbrella-wind.png
   - uv-index.png
+  - water-alert.png
+  - water-tide-high.png
+  - weather-alert-day.png
+  - weather-alert-night.png
+  - weather-alert.png
   - wind.png
   - wind-black.png
   - wind-sun.png
   - wind-clear.png
   - wind-alert.png
-  - water-alert.png
   - wind-snow.png
   - wind-spinner.png
-  - water-tide-high.png
-  - WUnderground.png
+  - wunderground.png
   - nws.png
