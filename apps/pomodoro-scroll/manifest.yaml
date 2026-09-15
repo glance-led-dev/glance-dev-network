@@ -12,7 +12,7 @@ height: 32
 
 # The panel cannot animate, so this shows phase and progress rather than a
 # ticking clock. A minute is the finest resolution worth rendering.
-refresh: 300
+refresh: 600
 
 pages: [timer, cycle]
 
