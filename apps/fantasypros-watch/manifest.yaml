@@ -1,13 +1,25 @@
 gdn: 1
 id: fantasypros-watch
 version: 0.1.0
-name: "FantasyPros Watch"
-author: "your-name"
-description: A new Glance app.
+name: "RotoWire Fantasy Matchup"
+author: "jeffhutch-maker"
+description: "Your RotoWire fantasy football matchup, live: the score, your win odds and who is winning each position."
 category: Sports
 entry: app.star
 width: 128
 height: 32
-refresh: 60
-pages: [main]
-
+refresh: 1800
+pages: [matchup, positions]
+inputs:
+  - key: league
+    type: string
+    app_input_type: free-text
+    label: RotoWire league ID
+    default: ""
+    help: "Your league's ID number from RotoWire My Leagues. Leave blank for a demo."
+  - key: team
+    type: string
+    app_input_type: free-text
+    label: Your team name
+    default: ""
+    help: "As it shows in your league (part of the name works). The week and your opponent update on their own."
