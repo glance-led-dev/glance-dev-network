@@ -1,11 +1,10 @@
 # Event Reminder - how many days until the next time something happens.
 # (192x32)
 #
-# Built on event-milestone. Same two levels, same rotation over up to three
-# slots, same measured layout -- but each slot is a SCHEDULE, not a date: a
-# first occurrence plus a cadence (every day, every 2, 3 or 4 days, weekly,
-# every 2 weeks, monthly, quarterly, semi-yearly, yearly), and the count is
-# always to the NEXT one.
+# Built on event-milestone. Same two levels, same measured layout -- but the
+# reminder is a SCHEDULE, not a date: a first occurrence plus a cadence (every
+# day, every 2, 3 or 4 days, weekly, every 2 weeks, monthly, quarterly,
+# semi-yearly, yearly), and the count is always to the NEXT one.
 #
 #   upper   DAYS TO <TITLE>                             [next date]
 #   lower   [theme art]  <count> DAYS         [cadence] / [month][week][day]
@@ -39,9 +38,22 @@ DIM = "#5E5E7A"          # the next date, and the cadence under it
 MID = "#9A9AB8"          # secondary rows
 STRUCT = "#1E2030"       # the unlit lamps
 
+# The two colour dropdowns, count and accent, share this list. Every entry is
+# bright enough to read on INK, so no pick can vanish into the ground.
+COLORS = {
+    "pink": "#E85AA8",
+    "red": "#FF3B3B",
+    "orange": "#FF8C00",
+    "yellow": "#FFD24A",
+    "green": "#39D98A",
+    "cyan": "#00DCDC",
+    "blue": "#4EA8FF",
+    "purple": "#A070FF",
+    "white": "#F2F2F8",
+}
+
 PAD = 8                  # scroll safe zone: neighbours slide past the edges
 BAND = 8                 # lower level starts here, below the title row
-ROTATE_EVERY = 60        # seconds one reminder holds the panel before the next
 
 # The count block. 16x24 is deliberately NOT in the ladder: it is exactly as
 # tall as the band, so it lands one row under the title with nothing below.
@@ -887,13 +899,11 @@ def _hex2(v):
 
 
 def lift(bg):
-    """The accent, lightened until it reads as text on the near-black ground.
+    """A colour, lightened until it reads on the near-black ground.
 
-    The accent is the user's to choose and it is drawn on the near-black
-    ground -- rail, eyebrow, progress bar -- so a dark pick disappears: a navy
-    "#101044" rendered every one of those invisible. Anything below a
-    luminance of 70 is scaled up to roughly 110, which keeps the hue the user
-    chose and spends only the brightness needed to see it.
+    Only the lamp rims use it (see lamp()); every COLORS entry is already
+    bright enough. Anything below a luminance of 70 is scaled up to roughly
+    110, which keeps the hue and spends only the brightness needed to see it.
     """
     h = str(bg).replace("#", "")
     if len(h) != 6:
@@ -980,48 +990,31 @@ def draw_theme(c, theme, x, y):
     return x + ART_W
 
 
+def color_of(value, fallback):
+    """A colour dropdown pick -> its hex, or the `fallback` entry's hex."""
+    return COLORS.get(str(value).strip().lower(), COLORS[fallback])
+
+
 def accent_of(ctx):
-    return str(ctx.inputs.get("accent", "#4EA8FF")).strip()
+    return color_of(ctx.inputs.get("accent", "Blue"), "blue")
 
 
-def slots(ctx):
-    """The configured reminders, in form order.
+def reminder_of(ctx):
+    """The configured reminder, or None until its DATE parses.
 
-    A slot counts as configured when its DATE parses. A blank title falls back
-    to the theme name, so a date and a theme alone still read as a reminder.
-    Read out literally rather than by building "date" + i: the validator scans
-    the source for each declared key and cannot see a computed name.
+    A blank title falls back to the theme name, so a date and a theme alone
+    still read as a reminder.
     """
-    raw = [
-        [ctx.inputs.get("title1", ""), ctx.inputs.get("date1", ""),
-         ctx.inputs.get("repeat1", ""), ctx.inputs.get("theme1", ""),
-         ctx.inputs.get("numcolor1", "")],
-        [ctx.inputs.get("title2", ""), ctx.inputs.get("date2", ""),
-         ctx.inputs.get("repeat2", ""), ctx.inputs.get("theme2", ""),
-         ctx.inputs.get("numcolor2", "")],
-        [ctx.inputs.get("title3", ""), ctx.inputs.get("date3", ""),
-         ctx.inputs.get("repeat3", ""), ctx.inputs.get("theme3", ""),
-         ctx.inputs.get("numcolor3", "")],
-    ]
-    out = []
-    for r in raw:
-        ymd = parse_date(r[1])
-        if ymd == None:
-            continue
-        theme = norm_theme(r[3])
-        name = str(r[0]).strip().upper()
-        if name == "":
-            name = theme.upper()
-        out.append({"ymd": ymd, "cadence": norm_cadence(r[2]),
-                    "theme": theme, "name": name,
-                    "numcolor": str(r[4]).strip()})
-    return out
-
-
-def active_slot(ctx, total):
-    if total <= 1:
-        return 0
-    return (ctx.now.unix // ROTATE_EVERY) % total
+    ymd = parse_date(ctx.inputs.get("date1", ""))
+    if ymd == None:
+        return None
+    theme = norm_theme(ctx.inputs.get("theme1", ""))
+    name = str(ctx.inputs.get("title1", "")).strip().upper()
+    if name == "":
+        name = theme.upper()
+    return {"ymd": ymd, "cadence": norm_cadence(ctx.inputs.get("repeat1", "")),
+            "theme": theme, "name": name,
+            "numcolor": color_of(ctx.inputs.get("numcolor1", "Pink"), "pink")}
 
 
 def next_due(ctx, ymd, cadence):
@@ -1187,23 +1180,20 @@ def marks(c, due_ymd, ctx):
 # --------------------------------------------------------------------- page
 
 def reminder(c, ctx):
-    ink_accent = lift(accent_of(ctx))
+    ink_accent = accent_of(ctx)
 
     c.fill(INK)
-    events = slots(ctx)
+    ev = reminder_of(ctx)
 
-    if len(events) == 0:
+    if ev == None:
         rail(c, "#E8B04A")
         message(c, "SET A DATE", "PICK WHEN IT FIRST HAPPENS")
         return
 
-    ev = events[active_slot(ctx, len(events))]
     due = next_due(ctx, ev["ymd"], ev["cadence"])
     n = due[0]
 
-    # The count colour belongs to the reminder, not the app, so it is
-    # resolved per slot. lift() still guards a pick too dark to see.
-    num_ink = lift(ev["numcolor"])
+    num_ink = ev["numcolor"]
 
     rail(c, ink_accent)
     title_row(c, ev["name"], "DAYS TO ", short_date(due[1]), num_ink)
@@ -1224,7 +1214,7 @@ def reminder(c, ctx):
         col = LAMP_SPAN
     limit = right - col - CLEAR
 
-    # Every state takes the slot's own colour. Leaving TODAY on the accent
+    # Every state takes the reminder's own colour. Leaving TODAY on the accent
     # meant a reminder set to pink turned blue on the one day it mattered.
     if n == 0:
         word = "TODAY"
