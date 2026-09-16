@@ -1,6 +1,6 @@
 gdn: 1
 id: seriea-tracked-team
-version: 0.1.0
+version: 0.2.0
 name: "Serie A Tracked Team"
 author: "Tim McCabe"
 description: Track a Serie A club's most recent match, next fixture, live match and league standing.
