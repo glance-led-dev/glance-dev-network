@@ -1,0 +1,57 @@
+gdn: 1
+id: nhl-west-wildcard-standings
+version: 0.1.0
+name: "NHL Wild Card Standings"
+author: "MinifieTech"
+description: NHL division leaders, wild card spots and the playoff hunt for the Western or Eastern Conference.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [conference, division1_title, division1, division2_title, division2, wildcard_title, wildcard, hunt]
+
+inputs:
+  - key: conference
+    type: choice
+    app_input_type: dropdown
+    label: Conference
+    default: Western
+    choices: [Western, Eastern]
+    help: Which conference's division leaders, wild card spots and playoff hunt to show.
+
+assets:
+  # Western Conference
+  - ducks_glance_tiny.png
+  - flames_glance_tiny.png
+  - oilers_glance_tiny.png
+  - kings_glance_tiny.png
+  - sharks_glance_tiny.png
+  - kraken_glance_tiny.png
+  - canucks_glance_tiny.png
+  - golden_knights_glance_tiny.png
+  - blackhawks_glance_tiny.png
+  - avalanche_glance_tiny.png
+  - stars_glance_tiny.png
+  - wild_glance_tiny.png
+  - predators_glance_tiny.png
+  - blues_glance_tiny.png
+  - mammoth_glance_tiny.png
+  - jets_glance_tiny.png
+  # Eastern Conference
+  - bruins_glance_tiny.png
+  - sabres_glance_tiny.png
+  - red_wings_glance_tiny.png
+  - panthers_glance_tiny.png
+  - canadiens_glance_tiny.png
+  - senators_glance_tiny.png
+  - lightning_glance_tiny.png
+  - maple_leafs_glance_tiny.png
+  - hurricanes_glance_tiny.png
+  - blue_jackets_glance_tiny.png
+  - devils_glance_tiny.png
+  - islanders_glance_tiny.png
+  - rangers_glance_tiny.png
+  - flyers_glance_tiny.png
+  - penguins_glance_tiny.png
+  - capitals_glance_tiny.png
