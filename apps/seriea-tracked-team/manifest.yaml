@@ -1,0 +1,80 @@
+gdn: 1
+id: seriea-tracked-team
+version: 0.1.0
+name: "Serie A Tracked Team"
+author: "Tim McCabe"
+description: Track a Serie A club's most recent match, next fixture, live match and league standing.
+category: Sports
+entry: app.star
+
+width: 128
+height: 32
+refresh: 60
+
+pages: [title, live_match, last_match, next_match, standing]
+
+assets:
+  - SERIEA.png
+  - italy_roma_64x64.football-logos.cc.png
+  - italy_milan_64x64.football-logos.cc.png
+  - italy_inter_64x64.football-logos.cc.png
+  - italy_juventus--white_64x64.football-logos.cc.png
+  - italy_napoli_64x64.football-logos.cc.png
+  - italy_atalanta_64x64.football-logos.cc.png
+  - italy_bologna_64x64.football-logos.cc.png
+  - italy_cagliari_64x64.football-logos.cc.png
+  - italy_como-1907_64x64.football-logos.cc.png
+  - italy_fiorentina_64x64.football-logos.cc.png
+  - italy_frosinone_64x64.football-logos.cc.png
+  - italy_genoa_64x64.football-logos.cc.png
+  - italy_lazio_64x64.football-logos.cc.png
+  - italy_lecce_64x64.football-logos.cc.png
+  - italy_monza_64x64.football-logos.cc.png
+  - italy_parma_64x64.football-logos.cc.png
+  - italy_sassuolo_64x64.football-logos.cc.png
+  - italy_torino_64x64.football-logos.cc.png
+  - italy_udinese_64x64.football-logos.cc.png
+  - italy_venezia_64x64.football-logos.cc.png
+
+inputs:
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Your club
+    default: "ROM"
+    choices:
+      - "ROM"
+      - "ACM"
+      - "INT"
+      - "JUV"
+      - "NAP"
+      - "ATA"
+      - "BFC"
+      - "CAG"
+      - "COM"
+      - "FIO"
+      - "FRO"
+      - "GEN"
+      - "LAZ"
+      - "LEC"
+      - "MON"
+      - "PAR"
+      - "SAS"
+      - "TOR"
+      - "UDI"
+      - "VEN"
+    help: Choose the Serie A club you want to track.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/Los_Angeles"
+    choices:
+      - "America/Los_Angeles"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/New_York"
+      - "UTC"
+      - "Europe/Rome"
+    help: Used to display kickoff times in your local time.
