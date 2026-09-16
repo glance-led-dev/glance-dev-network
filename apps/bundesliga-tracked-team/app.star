@@ -338,37 +338,155 @@ def zone_offset(ctx):
 # ESPN match data
 # ------------------------------------------------------------
 
-def read_events(ctx):
-    #
-    # ESPN accepts a date range on the scoreboard endpoint.
-    # We ask for a broad range surrounding now so we can find
-    # both the previous and upcoming match.
-    #
+def score_value(competitor):
+    raw = get(competitor, "score", 0)
 
+    if type(raw) == "dict":
+        display = get(raw, "displayValue", None)
+        if display != None:
+            return num(display, 0)
+
+        value = get(raw, "value", None)
+        if value != None:
+            return num(value, 0)
+
+        return 0
+
+    return num(raw, 0)
+
+
+def espn_team_id(team):
+    url = BASE + "site/v2/sports/soccer/ger.1/teams"
+    response = http.get(url, ttl_seconds = 86400)
+
+    if response["status_code"] != 200 or response["json"] == None:
+        return None
+
+    sports = get(response["json"], "sports", [])
+    if type(sports) != "list" or len(sports) == 0:
+        return None
+
+    leagues = get(sports[0], "leagues", [])
+    if type(leagues) != "list" or len(leagues) == 0:
+        return None
+
+    for item in get(leagues[0], "teams", []):
+        info = get(item, "team", {})
+        abbr = str(get(info, "abbreviation", "")).upper()
+
+        if abbr == team:
+            return str(get(info, "id", ""))
+
+    return None
+
+
+def parse_competition(comp, ctx):
+    home = None
+    away = None
+
+    for competitor in get(comp, "competitors", []):
+        side = {
+            "abbr": str(
+                dig(competitor, ["team", "abbreviation"], "?")
+            ).upper(),
+            "score": score_value(competitor),
+        }
+
+        if str(get(competitor, "homeAway", "")) == "home":
+            home = side
+        else:
+            away = side
+
+    if home == None or away == None:
+        return None
+
+    return {
+        "home": home,
+        "away": away,
+        "start": parse_iso(
+            str(get(comp, "date", "")),
+            zone_offset(ctx),
+        ),
+    }
+
+
+def read_schedule_events(ctx):
+    team = team_selected(ctx)
+    team_id = espn_team_id(team)
+
+    if team_id == None or team_id == "":
+        return None
+
+    today = civil_from_days(ctx.now.unix // 86400)
+    season_year = today[0] if today[1] >= 7 else today[0] - 1
+
+    url = (
+        BASE +
+        "site/v2/sports/soccer/ger.1/teams/" +
+        team_id +
+        "/schedule?season=" +
+        str(season_year)
+    )
+
+    response = http.get(url, ttl_seconds = 60)
+
+    if response["status_code"] != 200 or response["json"] == None:
+        return None
+
+    events = []
+    now_local = (ctx.now.unix // 60) + zone_offset(ctx)
+
+    for event in get(response["json"], "events", []):
+        comps = get(event, "competitions", [])
+
+        if type(comps) != "list" or len(comps) == 0:
+            continue
+
+        comp = comps[0]
+        parsed = parse_competition(comp, ctx)
+
+        if parsed == None:
+            continue
+
+        if parsed["start"] == None:
+            parsed["start"] = parse_iso(
+                str(get(event, "date", "")),
+                zone_offset(ctx),
+            )
+
+        if parsed["start"] == None:
+            continue
+
+        if parsed["start"] < now_local - 180:
+            parsed["state"] = "post"
+        elif parsed["start"] > now_local:
+            parsed["state"] = "pre"
+        else:
+            parsed["state"] = "near"
+
+        parsed["clock"] = ""
+        events.append(parsed)
+
+    return events
+
+
+def read_live_events(ctx):
     now_days = ctx.now.unix // 86400
-
-    past = civil_from_days(now_days - 21)
-    future = civil_from_days(now_days + 35)
+    today = civil_from_days(now_days)
 
     def pad2(n):
         return ("0" + str(n)) if n < 10 else str(n)
 
-
-    start = (
-        str(past[0]) +
-        pad2(past[1]) +
-        pad2(past[2])
+    today_key = (
+        str(today[0]) +
+        pad2(today[1]) +
+        pad2(today[2])
     )
 
-    end = (
-        str(future[0]) +
-        pad2(future[1]) +
-        pad2(future[2])
+    response = http.get(
+        SCORES + "?dates=" + today_key,
+        ttl_seconds = 30
     )
-
-    url = SCORES + "?dates=" + start + "-" + end
-
-    response = http.get(url, ttl_seconds = 60)
 
     if response["status_code"] != 200 or response["json"] == None:
         return None
@@ -420,6 +538,89 @@ def read_events(ctx):
         })
 
     return events
+
+
+def find_next_match(ctx, team):
+    now_days = ctx.now.unix // 86400
+
+    def pad2(n):
+        return ("0" + str(n)) if n < 10 else str(n)
+
+    for offset in range(0, 22):
+        parts = civil_from_days(now_days + offset)
+
+        date_key = (
+            str(parts[0]) +
+            pad2(parts[1]) +
+            pad2(parts[2])
+        )
+
+        response = http.get(
+            SCORES + "?dates=" + date_key,
+            ttl_seconds = 300
+        )
+
+        if response["status_code"] != 200 or response["json"] == None:
+            continue
+
+        for event in get(response["json"], "events", []):
+            comps = get(event, "competitions", [])
+
+            if type(comps) != "list" or len(comps) == 0:
+                continue
+
+            comp = comps[0]
+
+            home = None
+            away = None
+
+            for competitor in get(comp, "competitors", []):
+                side = {
+                    "abbr": str(
+                        dig(competitor, ["team", "abbreviation"], "?")
+                    ).upper(),
+                    "score": num(get(competitor, "score", 0)),
+                }
+
+                if str(get(competitor, "homeAway", "")) == "home":
+                    home = side
+                else:
+                    away = side
+
+            if home == None or away == None:
+                continue
+
+            if not (
+                home["abbr"] == team or
+                away["abbr"] == team
+            ):
+                continue
+
+            state = str(
+                dig(event, ["status", "type", "state"], "")
+            ).lower()
+
+            if state != "pre":
+                continue
+
+            return {
+                "home": home,
+                "away": away,
+                "state": state,
+                "clock": str(
+                    dig(event, ["status", "type", "detail"], "")
+                ).upper(),
+                "start": parse_iso(
+                    str(get(event, "date", "")),
+                    zone_offset(ctx),
+                ),
+            }
+
+    return None
+
+
+def read_events(ctx):
+    return read_schedule_events(ctx)
 
 
 def previous_match(events, team):
@@ -571,7 +772,7 @@ def live_match(c, ctx):
     accent = team_color(team)
     draw_team_rail(c, team)
 
-    events = read_events(ctx)
+    events = read_live_events(ctx)
 
     if events == None:
         c.text_center("DATA OFFLINE", 13, font = "5x7", color = "red")
@@ -769,13 +970,7 @@ def next_match(c, ctx):
     if crest != "":
         c.image(crest, 4, 8, 22, 22)
 
-    events = read_events(ctx)
-
-    if events == None:
-        c.text_center("DATA OFFLINE", 13, font = "5x7", color = "red")
-        return
-
-    match = upcoming_match(events, team)
+    match = find_next_match(ctx, team)
 
     if match == None:
         c.text_center("NO MATCH FOUND", 13, font = "5x7", color = DIM)
