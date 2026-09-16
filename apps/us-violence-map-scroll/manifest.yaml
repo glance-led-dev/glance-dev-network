@@ -1,0 +1,86 @@
+gdn: 1
+id: us-violence-map-scroll
+version: 0.1.0
+name: US Violence Map
+author: glance-led-dev
+description: A pixel heat map of the United States shaded by homicide rate, the states with the highest rates, and how your own state compares. CDC provisional data, no key needed.
+category: Science
+entry: app.star
+
+width: 192
+height: 32
+# CDC refreshes this monthly; a day is as often as it can possibly change.
+refresh: 86400
+
+pages: [heatmap, toplist, mystate]
+
+inputs:
+  - key: metric
+    type: choice
+    app_input_type: dropdown
+    label: Measure
+    default: "HOMICIDE"
+    help: Which rate to map, per 100,000 people, over the most recent 12 months CDC has published. HOMICIDE counts all homicides; FIREARM HOMICIDE counts only those by firearm; FIREARM DEATHS adds firearm suicides and accidents; DRUG OVERDOSE is included for comparison.
+    choices:
+      - "HOMICIDE"
+      - "FIREARM HOMICIDE"
+      - "FIREARM DEATHS"
+      - "DRUG OVERDOSE"
+  - key: homestate
+    type: choice
+    app_input_type: dropdown
+    label: Your state
+    default: "FLORIDA"
+    help: The state the third page reports on, and the one outlined in white on the map.
+    choices:
+      - "ALABAMA"
+      - "ALASKA"
+      - "ARIZONA"
+      - "ARKANSAS"
+      - "CALIFORNIA"
+      - "COLORADO"
+      - "CONNECTICUT"
+      - "DELAWARE"
+      - "DISTRICT OF COLUMBIA"
+      - "FLORIDA"
+      - "GEORGIA"
+      - "HAWAII"
+      - "IDAHO"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "KANSAS"
+      - "KENTUCKY"
+      - "LOUISIANA"
+      - "MAINE"
+      - "MARYLAND"
+      - "MASSACHUSETTS"
+      - "MICHIGAN"
+      - "MINNESOTA"
+      - "MISSISSIPPI"
+      - "MISSOURI"
+      - "MONTANA"
+      - "NEBRASKA"
+      - "NEVADA"
+      - "NEW HAMPSHIRE"
+      - "NEW JERSEY"
+      - "NEW MEXICO"
+      - "NEW YORK"
+      - "NORTH CAROLINA"
+      - "NORTH DAKOTA"
+      - "OHIO"
+      - "OKLAHOMA"
+      - "OREGON"
+      - "PENNSYLVANIA"
+      - "RHODE ISLAND"
+      - "SOUTH CAROLINA"
+      - "SOUTH DAKOTA"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "UTAH"
+      - "VERMONT"
+      - "VIRGINIA"
+      - "WASHINGTON"
+      - "WEST VIRGINIA"
+      - "WISCONSIN"
+      - "WYOMING"
