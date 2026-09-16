@@ -3,10 +3,10 @@ id: study-flashcards
 name: Study Flashcards
 description: Cycles through term/definition flashcards from any JSON deck you host — build your own study set for any subject.
 author: jkapera
-width: 128
+width: 64
 height: 32
-refresh: 1800
-pages: [subject, term, definition]
+pages: [subject, term, fullname]
+refresh: 60
 inputs:
   - key: deckurl
     type: string

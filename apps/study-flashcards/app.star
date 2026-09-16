@@ -17,7 +17,8 @@ def wrap_text(text, max_chars):
     for w in words:
         candidate = current + " " + w if current != "" else w
         if len(candidate) > max_chars:
-            lines.append(current)
+            if current != "":
+                lines.append(current)
             current = w
         else:
             current = candidate
@@ -29,27 +30,57 @@ def subject(c, ctx):
     c.clear()
     deck = fetch_data(ctx)
     if deck == None:
-        c.text_center("SETUP NEEDED", 12, font="6x8", color="red")
+        c.text_center("SETUP", 12, font="6x8", color="red")
         return
-
     title = deck.get("title", "STUDY DECK")
-    lines = wrap_text(title, 16)
-    total = len(lines[:3])
-    y = (32 - total * 10) // 2
-    for line in lines[:3]:
-        c.text_center(line, y, font="6x8", color="amber")
-        y += 10
+    lines = wrap_text(title, 10)
+    total = len(lines[:4])
+    y = (32 - total * 8) // 2
+    for line in lines[:4]:
+        c.text_center(line, y, font="4x7", color="amber")
+        y += 8
+
+def split_long_word(word, chunk_size):
+    if len(word) <= chunk_size:
+        return [word]
+    mid = len(word) // 2
+    return [word[:mid] + "-", word[mid:]]
 
 def term(c, ctx):
     c.clear()
     deck = fetch_data(ctx)
     if deck == None:
-        c.text_center("SETUP NEEDED", 12, font="6x8", color="red")
+        c.text_center("SETUP", 12, font="6x8", color="red")
         return
-
     terms = deck.get("terms", [])
     if len(terms) == 0:
-        c.text_center("NO TERMS", 12, font="6x8", color="red")
+        return
+
+    idx = current_index(ctx, len(terms))
+    t = terms[idx]["term"]
+    words = t.replace("/", " / ").split(" ")
+
+    lines = []
+    for w in words:
+        lines.extend(split_long_word(w, 8))
+
+    lines = lines[:4]
+    total = len(lines)
+    h = 9 if total <= 2 else 7
+    font = "5x7" if total <= 2 else "4x5"
+
+    y = (32 - total * h) // 2
+    for line in lines:
+        c.text_center(line, y, font=font, color="cyan")
+        y += h
+
+def fullname(c, ctx):
+    c.clear()
+    deck = fetch_data(ctx)
+    if deck == None:
+        return
+    terms = deck.get("terms", [])
+    if len(terms) == 0:
         return
 
     idx = current_index(ctx, len(terms))
@@ -57,36 +88,22 @@ def term(c, ctx):
     full = entry.get("fullname", "")
 
     if full == "":
-        c.text_center(entry["term"], 12, font="8x12", color="cyan")
-    else:
-        c.text_center(entry["term"], 4, font="8x12", color="cyan")
-        lines = wrap_text(full, 22)
-        y = 20
-        for line in lines[:2]:
-            c.text_center(line, y, font="4x5", color="gray")
-            y += 6
-
-def definition(c, ctx):
-    c.clear()
-    deck = fetch_data(ctx)
-    if deck == None:
-        c.text_center("SETUP NEEDED", 12, font="6x8", color="red")
+        c.text_center("N/A", 12, font="6x8", color="gray")
         return
 
-    terms = deck.get("terms", [])
-    if len(terms) == 0:
-        return
+    words = full.replace(",", "").split(" ")[:4]
 
-    idx = current_index(ctx, len(terms))
-    entry = terms[idx]
-    lines = wrap_text(entry["definition"], 22)
+    rendered = []
+    total_height = 0
+    for w in words:
+        if len(w) <= 8:
+            font, h = "5x7", 9
+        else:
+            font, h = "4x5", 7
+        rendered.append((w, font, h))
+        total_height += h
 
-    shown = lines[:5]
-    if len(lines) > 5:
-        shown[4] = shown[4][:19] + "..."
-
-    total = len(shown)
-    y = (32 - total * 6) // 2
-    for line in shown:
-        c.text_center(line, y, font="4x5", color="white")
-        y += 6
+    y = (32 - total_height) // 2
+    for w, font, h in rendered:
+        c.text_center(w, y, font=font, color="gray")
+        y += h
