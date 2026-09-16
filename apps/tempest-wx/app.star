@@ -108,6 +108,21 @@ DROP = """
 DEG3 = "###\n#.#\n###"
 DEG4 = ".##.\n#..#\n#..#\n.##."
 
+# So is the minus sign on the hero. 7x16 is a digits-only font with no "-"
+# glyph at all, and a missing glyph is skipped silently AND measures as zero
+# width - so -12 printed as 12, a wrong sign on a weather panel, with nothing
+# in text_width able to warn about it. Drawing the sign makes the hero
+# independent of any font's glyph coverage.
+MINUS7  = "#####\n#####"
+MINUS10 = "#######\n#######"
+
+def sign_art(font):
+    return MINUS10 if font == "10x16" else MINUS7
+
+def sign_w(font):
+    """The bar plus the gap after it."""
+    return 9 if font == "10x16" else 7
+
 def slack_gap(avail, used, gaps, base, cap):
     """Spread whatever room is left over the gaps, so a short row breathes
     instead of hugging the left edge. Returns the gap to use."""
@@ -121,6 +136,25 @@ def slack_gap(avail, used, gaps, base, cap):
 
 def deg_w(ring):
     return 4 if ring == DEG4 else 3
+
+def hero_temp(c, x, y, s, col, ring, rail):
+    """The big reading. Measures the digits and the DRAWN sign separately,
+    because the sign is pixel art - see MINUS7 - then picks the largest font
+    that still leaves room for the degree ring inside `rail`."""
+    neg = s[0:1] == "-"
+    digits = s[1:] if neg else s
+    font = "10x16"
+    used = c.text_width(digits, font) + 1 + deg_w(ring)
+    if neg:
+        used = used + sign_w(font)
+    if used > rail:
+        font = "7x16"
+    dx = x
+    if neg:
+        c.sprite(sign_art(font), dx, y + 7, color = col)
+        dx = dx + sign_w(font)
+    c.text(digits, dx, y, font = font, color = col)
+    c.sprite(ring, dx + c.text_width(digits, font) + 1, y, color = col)
 
 def temp_left(c, x, y, s, font, col, ring):
     """Number plus its degree ring, left-aligned. Returns the width used."""
@@ -523,7 +557,17 @@ def pick_device(devices):
 def token_of(ctx):
     return trim(ctx.inputs.get("apikey", ""))
 
-STATION_SLOTS = {"first": 0, "second": 1, "third": 2, "fourth": 3}
+STATION_ORDER = ["first", "second", "third", "fourth"]
+
+def station_index(ctx, count):
+    """Which station on the account to read, by position. Anything out of
+    range falls back to the first, so an account that loses a station keeps
+    showing weather instead of an error."""
+    want = choice_of(ctx, "station", "first")
+    for i in range(len(STATION_ORDER)):
+        if STATION_ORDER[i] == want and i < count:
+            return i
+    return 0
 
 def fetch_station(ctx):
     """One lookup gives the station's coordinates, its name and its devices,
@@ -538,8 +582,12 @@ def fetch_station(ctx):
         return {"err": "NO REPLY"}
     if resp["status_code"] == 401 or resp["status_code"] == 403:
         return {"err": "BAD TOKEN"}
+    if resp["status_code"] == 429:
+        return {"err": "TOO MANY"}
+    if resp["status_code"] >= 500:
+        return {"err": "WF IS DOWN"}
     if resp["status_code"] != 200:
-        return {"err": "STATIONS " + str(resp["status_code"])}
+        return {"err": "BAD REPLY"}
     if resp["json"] == None:
         return {"err": "BAD REPLY"}
 
@@ -547,10 +595,7 @@ def fetch_station(ctx):
     if stations == None or len(stations) == 0:
         return {"err": "NO STATIONS"}
 
-    # the dropdown picks a position on the account, not an id; a position the
-    # account doesn't have falls back to the first station
-    slot = STATION_SLOTS.get(choice_of(ctx, "station", "first"), 0)
-    chosen = stations[slot] if slot < len(stations) else stations[0]
+    chosen = stations[station_index(ctx, len(stations))]
 
     device, dtype = pick_device(chosen.get("devices", []))
     return {
@@ -675,6 +720,11 @@ def read_station(ctx):
 
     cur = data.get("current_conditions", None)
     if cur == None:
+        return {"err": "NO READINGS"}
+
+    # A null temperature is no reading at all. Defaulting it to 0 would put a
+    # confident 0 degrees on the panel on the night the station drops out.
+    if cur.get("air_temperature", None) == None:
         return {"err": "NO READINGS"}
 
     # the station's own observation time is the app's clock throughout
@@ -835,6 +885,8 @@ def clamp(c, s, maxw, font):
 # eleven characters is what reliably fits this line.
 FIXES = {
     "NO TOKEN":    "ADD TOKEN",
+    "TOO MANY":    "WAIT A BIT",
+    "WF IS DOWN":  "NOT YOUR END",
     "BAD TOKEN":   "WRONG OR OLD",
     "NO REPLY":    "NO INTERNET",
     "BAD REPLY":   "TRY AGAIN",
@@ -853,42 +905,36 @@ def nodata(c, what, fix):
     c.text(clamp(c, what, 58, "4x5"), 5, 16, font = "4x5", color = GRAY)
     c.text(clamp(c, fix, 58, "4x5"), 5, 23, font = "4x5", color = MIDGRAY)
 
-def badge(c):
-    c.rect(41, 26, 63, 31, fill = "amber")
-    c.text("DEMO", 52, 27, font = "4x5", color = BLACK, align = "center")
+# A fixed Thursday afternoon, so the sample panel renders the same every
+# time: the catalogue thumbnail is a render of this, and a thumbnail that
+# changes between builds is a thumbnail nobody trusts.
+SAMPLE_REF = 1789232400
 
-def demo_now(c, metric, baro):
-    """Sample numbers, plainly labelled, so an unconfigured panel still
-    shows what the app does instead of sitting blank."""
-    temp_left(c, 0, 0, temp_str(68, metric), "10x16", temp_color(68), DEG4)
-    c.vline(31, 0, 15, MIDGRAY)
-    c.sprite(UP5, 33, 1, color = dew_color(52))
-    c.text("DP", 39, 1, font = "4x5", color = GRAY)
-    temp_right(c, 63, 1, temp_str(52, metric), "4x5", dew_color(52), DEG3)
-    c.sprite(FLAT5, 33, 9, color = GRAY)
-    c.text(baro_str(1016, baro), 63, 9, font = "4x5", color = WHITE, align = "right")
-    c.sprite(DROP, 0, 16, color = color.dim(SKY, 55))
-    sample = rain_str(0, metric)
-    c.text(sample, 7, 17, font = "4x5", color = color.dim(SKY, 42))
-    c.text("Y", 30, 17, font = "4x5", color = MIDGRAY)
-    c.text(sample, 35, 17, font = "4x5", color = GRAY)
-    runit = rain_unit(metric)
-    c.text(runit, 35 + c.text_width(sample, "4x5") + 3, 17, font = "4x5", color = MIDGRAY)
-    badge(c)
-
-def demo_outlook(c, metric, hours):
-    icons = [I_PCDAY, I_CLOUD, I_SUN]
-    temps = [68, 64, 74]
-    labs = ["NOW", "+" + str(hours) + "H", "THU"]
-    c.vline(21, 2, 28, DARK)
-    c.vline(43, 2, 28, DARK)
-    for i in range(3):
-        mid = col_mid(i)
-        mid_fit(c, COLS[i][0], COLS[i][1], 0, labs[i], "4x5", GRAY)
-        c.sprite(icons[i], mid - 5, 6, color = WHITE, legend = ICON_LEGEND)
-        temp_mid(c, COLS[i][0], COLS[i][1], 18, temp_str(temps[i], metric), "5x7",
-                 temp_color(temps[i]), DEG3)
-    badge(c)
+def sample_data():
+    """Believable readings for a panel that has no token yet. It is fed to
+    the same painters the live pages use, so the sample can never show a
+    layout the real thing doesn't have."""
+    return {
+        "err": "",
+        "ref": SAMPLE_REF,
+        "temp": 68.0,
+        "dew": 52.0,
+        "dew_trend": "rising",
+        "rain": 0.02,
+        "rain_y": 0.14,
+        "raining": False,
+        "wind": 6.0,
+        "gust": 14.0,
+        "card": "SW",
+        "mb": 1016.0,
+        "trend": "steady",
+        "icon": "partly-cloudy-day",
+        "pp": 10,
+        "hourly": [{"time": SAMPLE_REF + 21600, "local_hour": 23, "icon": "cloudy",
+                    "air_temperature": 64.0, "precip_probability": 20}],
+        "daily": [{}, {"day_start_local": SAMPLE_REF + 86400, "icon": "clear-day",
+                       "air_temp_high": 74.0, "precip_probability": 10}],
+    }
 
 def demo_alerts(c):
     c.vline(0, 0, 32, "amber")
@@ -901,25 +947,28 @@ def demo_alerts(c):
 
 def now(c, ctx):
     c.clear()
+    metric = is_metric(ctx)
+    baro = choice_of(ctx, "baro", "mb")
+    arrow_mode = choice_of(ctx, "arrow", "from")
     if token_of(ctx) == "":
-        demo_now(c, is_metric(ctx), choice_of(ctx, "baro", "mb"))
+        paint_now(c, sample_data(), metric, baro, arrow_mode)
         return
     d = read_station(ctx)
     if d["err"] != "":
         nodata(c, d["err"], fix_for(d["err"]))
         return
+    paint_now(c, d, metric, baro, arrow_mode)
 
+def paint_now(c, d, metric, baro, arrow_mode):
+    """Live readings and the sample panel go through here together, so the
+    two can never drift apart."""
     rail_x = 31
-    metric = is_metric(ctx)
 
     # temperature hero. 10x16 nearly always; the ladder only drops to 7x16
     # when a minus sign or a third digit arrives. Colour comes from the
     # Fahrenheit value whatever the panel is displaying.
-    tstr = temp_str(d["temp"], metric)
-    tfont = "10x16"
-    if c.text_width(tstr, "10x16") + 1 + deg_w(DEG4) > rail_x:
-        tfont = "7x16"
-    temp_left(c, 0, 0, tstr, tfont, temp_color(d["temp"]), DEG4)
+    hero_temp(c, 0, 0, temp_str(d["temp"], metric), temp_color(d["temp"]),
+              DEG4, rail_x)
     c.vline(rail_x, 0, 15, MIDGRAY)
 
     # dew point over pressure, arrows in a column, values right-aligned
@@ -933,7 +982,7 @@ def now(c, ctx):
     baro_arrow = trend_arrow5(d["trend"])
     if baro_arrow != None:
         c.sprite(baro_arrow, 33, 9, color = trend_color(d["trend"]))
-    c.text(baro_str(d["mb"], choice_of(ctx, "baro", "mb")), 63, 9,
+    c.text(baro_str(d["mb"], baro), 63, 9,
            font = "4x5", color = WHITE, align = "right")
 
     # rainfall today then yesterday. The drop is bright while it is actually
@@ -998,7 +1047,7 @@ def now(c, ctx):
         c.text("CALM", 8, 25, font = "4x5", color = GRAY)
         return
 
-    c.sprite(wind_arrow(d["card"], choice_of(ctx, "arrow", "from")), 0, 24, color = CYAN)
+    c.sprite(wind_arrow(d["card"], arrow_mode), 0, 24, color = CYAN)
 
     card = d["card"].upper()
     spd = wind_str(d["wind"], metric)
@@ -1067,15 +1116,19 @@ def col_mid(i):
 
 def outlook(c, ctx):
     """Now, six hours out, and tomorrow."""
-    hours = 6
     c.clear()
+    metric = is_metric(ctx)
     if token_of(ctx) == "":
-        demo_outlook(c, is_metric(ctx), hours)
+        paint_outlook(c, sample_data(), metric)
         return
     d = read_station(ctx)
     if d["err"] != "":
         nodata(c, d["err"], fix_for(d["err"]))
         return
+    paint_outlook(c, d, metric)
+
+def paint_outlook(c, d, metric):
+    hours = 6
 
     nxt = pick_hour(d["hourly"], d["ref"], hours)
     tmr = d["daily"][1] if len(d["daily"]) > 1 else None
@@ -1111,7 +1164,7 @@ def outlook(c, ctx):
         pc = SKY if p >= 50 else (GRAY if p >= 20 else MIDGRAY)
         mid_fit(c, lo, hi, 19, str(p) + "%", "4x5", pc)
 
-        temp_mid(c, lo, hi, 25, temp_str(temps[i], is_metric(ctx)), "5x7",
+        temp_mid(c, lo, hi, 25, temp_str(temps[i], metric), "5x7",
                  temp_color(temps[i]), DEG3)
 
 # ------------------------------------------------------------- page: alerts
@@ -1147,12 +1200,15 @@ def split_event(ev):
     return ("ALERT", " ".join(words))
 
 ABBR = {
-    "THUNDERSTORM": "TSTORM", "WEATHER": "WX", "COASTAL": "CSTL",
+    "THUNDERSTORM": "T-STORM", "WEATHER": "WX", "COASTAL": "CSTL",
     "SPECIAL": "SPCL", "TEMPERATURE": "TEMP", "EXCESSIVE": "EXCESS",
 }
 
+def abbrev(s):
+    return " ".join([ABBR.get(w, w) for w in s.split(" ")])
+
 def shorten(c, s, maxw, font):
-    out = " ".join([ABBR.get(w, w) for w in s.split(" ")])
+    out = abbrev(s)
     if c.text_width(out, font) <= maxw:
         return out
     # trim a character at a time rather than guessing at an average width
@@ -1253,7 +1309,7 @@ def alerts(c, ctx):
         nodata(c, station["err"], fix_for(station["err"]))
         return
 
-    # the place label is the station's own name from the Tempest account
+    # the place label is the station's own name, as WeatherFlow reports it
     town = clamp(c, station["name"].upper(), 60, "4x5")
 
     live = fetch_alerts(ctx, station)
@@ -1282,11 +1338,20 @@ def alerts(c, ctx):
         c.rect(0, 0, c.width - 1, 7, fill = bg)
         center_fit(c, a["cls"], 1, "5x7", on_fill(bg))
 
-        lines = wrap2(c, a["hazard"], c.width, "5x7")
+        # Abbreviate first, then wrap, then drop a size if a single word still
+        # will not fit - center_fit would otherwise clip it mid-word.
+        hazard = abbrev(a["hazard"])
+        hfont = "5x7"
+        lines = wrap2(c, hazard, c.width, hfont)
+        for ln in lines:
+            if c.text_width(ln, hfont) > c.width:
+                hfont = "4x5"
+        if hfont == "4x5":
+            lines = wrap2(c, hazard, c.width, hfont)
         if len(lines) > 0:
-            center_fit(c, lines[0], 10, "5x7", WHITE)
+            center_fit(c, lines[0], 10, hfont, WHITE)
         if len(lines) > 1:
-            center_fit(c, lines[1], 18, "5x7", WHITE)
+            center_fit(c, lines[1], 18, hfont, WHITE)
         if a["til"] != "":
             center_fit(c, "TIL " + a["til"], 26, "4x5", GRAY)
         return

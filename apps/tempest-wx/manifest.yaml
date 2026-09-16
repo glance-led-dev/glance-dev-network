@@ -1,17 +1,16 @@
 gdn: 1
 
 id: tempest-wx
-version: 1
+version: 2
 name: Tempest Compact
 author: Ben
-description: Live readings, a six-hour outlook and weather alerts from your own
-  WeatherFlow Tempest station, on a single 64x32 panel.
+description: Show live data direct from your WeatherFlow Tempest plus a forecast and any weather advisories active at your station's location.
 category: Weather
 
 entry: app.star
 width: 64
 height: 32
-refresh: 1800
+refresh: 120
 
 pages: [now, outlook, alerts]
 
@@ -32,10 +31,8 @@ inputs:
     default: first
     choices: [first, second, third, fourth]
     help: >-
-      Which station on your account to show. Most accounts have one, so leave
-      this on first. If you have several, the alerts page shows the station's
-      name whenever no alert is up. A pick past the end of your list uses the
-      first station.
+      Which station on your account to read, in the order tempestwx.com lists
+      them. Leave it on first unless you own more than one.
 
   - key: units
     app_input_type: dropdown
