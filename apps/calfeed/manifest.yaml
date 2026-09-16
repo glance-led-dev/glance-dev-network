@@ -1,0 +1,44 @@
+gdn: 1
+id: calfeed
+version: 0.1.0
+name: Calfeed Agenda
+author: cfsmp3
+description: Your next calendar event from a calfeed feed - merged calendars, one private URL, no sign-in on the panel.
+category: Lifestyle
+entry: app.star
+
+# 64x32 (LED V2). The same app.star lays itself out for 128+ (SCROLL).
+width: 64
+height: 32
+
+# The feed is cached 60 s upstream, but publishing rules require 300 for
+# apps with free-text or color inputs. The main fetch's ttl stays 60.
+refresh: 300
+
+pages: [now, next]
+
+inputs:
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Label
+    default: ""
+    help: Shown on every page, e.g. a name when two instances show two people's calendars. Blank uses the view's name.
+  - key: labelcolor
+    type: string
+    app_input_type: color
+    label: Label color
+    default: "#9AA3B2"
+    help: Colors the label, so two instances read apart at a glance.
+  - key: feedurl
+    type: string
+    app_input_type: api-key
+    label: Feed URL
+    default: ""
+    help: A calfeed view's feed URL (https://calfeed.io/v1/feed/...). It is a secret; leave blank for demo data.
+  - key: feedkey
+    type: string
+    app_input_type: api-key
+    label: Feed header (optional)
+    default: ""
+    help: Only if the feed requires a header, as Name=value (e.g. X-Feed-Key=secret123).
