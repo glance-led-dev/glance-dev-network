@@ -1,17 +1,19 @@
 # Commodities at a Glance
 
-Six commodities, each as a piece of pixel art and a price: what it costs,
-what it is priced in, and how far it has moved today. No key needed.
+Three commodities on one page, each as a piece of pixel art and a price:
+what it costs, what it is priced in, and how far it has moved today. No
+key needed.
 
 ## Settings
 
-Six dropdowns, three per page. Each one picks a commodity or `NONE` to
+Three dropdowns, one per tile. Each one picks a commodity or `NONE` to
 leave that tile empty.
 
-| page | default |
+| tile | default |
 |---|---|
-| Page 1 | Live cattle, corn, soybeans |
-| Page 2 | Crude oil, gold, wheat |
+| Left | Live cattle |
+| Middle | Corn |
+| Right | Soybeans |
 
 Choices: live cattle, feeder cattle, lean hogs, corn, soybeans, wheat,
 oats, crude oil, natural gas, gold, silver, copper, coffee, sugar, cotton,
@@ -35,7 +37,7 @@ unit under the price. Nothing is converted silently.
 | Cocoa | dollars a ton | `$5,951` per `TON` |
 
 The price is white. Green and red are only ever the day's move, and the
-left edge of the panel follows whichever way the page leans.
+left edge of the panel follows whichever way the board leans.
 
 ## Notes
 
@@ -45,7 +47,7 @@ left edge of the panel follows whichever way the page leans.
 - Spot-checked against CNBC's quote service while this app was built: corn
   534.00 and -0.33%, live cattle 220.325 and -1.35%, soybeans 1321.50,
   gold 4303.20 - the same numbers on both.
-- All six tiles come from a single request, so the panel asks once every
-  ten minutes however many commodities are on it.
+- All three tiles come from a single request, so the panel asks once per
+  refresh however many commodities are on it.
 - Futures roll: the front-month contract changes through the year, which
   is why a price can step when the contract does.

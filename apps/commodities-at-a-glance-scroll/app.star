@@ -1,10 +1,10 @@
 # Commodities at a Glance
 #
 # Front-month futures for the things that get grown, raised, pumped and
-# mined, six of them across two pages, each one a picture and a price.
+# mined, three of them on a single page, each one a picture and a price.
 #
 # Prices come from Yahoo Finance's spark endpoint, which answers for every
-# symbol in one request - one http.get for the whole panel, whichever six
+# symbol in one request - one http.get for the whole panel, whichever three
 # commodities are picked. Each symbol carries its own currency, and that is
 # what makes the numbers right: the CME grains and livestock are quoted in
 # US cents (Yahoo says "USX"), so corn comes back as 534.0 and has to be
@@ -21,8 +21,8 @@
 # the price beside it in 5x7, the unit under that in the smallest face the
 # panel has, and the day's move under that in green or red. The picture is
 # the label: no tile says CORN, because the corn is right there. White is
-# the price, so green and red only ever mean the move. Three tiles a page,
-# 56 px each, inside x 10..181.
+# the price, so green and red only ever mean the move. Three tiles on the
+# one page, 56 px each, inside x 10..181.
 #
 # Cadence: refresh 600 with a matching ttl, the ten minutes asked for.
 # Futures quotes from a free feed are delayed, which the chip row says.
@@ -265,7 +265,7 @@ COMMODITIES = {
     "COCOA": ["CC=F", "TON", "COCOA"],
     "ORANGE JUICE": ["OJ=F", "CLB", "ORANGE"],
 }
-SLOTS = ["slotone", "slottwo", "slotthree", "slotfour", "slotfive", "slotsix"]
+SLOTS = ["slotone", "slottwo", "slotthree"]
 
 # ------------------------------------------------------------- text tools
 def clip(c, text, font, maxw):
@@ -391,7 +391,7 @@ def clock(secs, offset):
 
 # ------------------------------------------------------------------- feed
 def picks(ctx):
-    """The six slots, in order, as [label, symbol, kind, icon]; NONE and
+    """The three slots, in order, as [label, symbol, kind, icon]; NONE and
     anything unknown drops out."""
     out = []
     for key in SLOTS:
@@ -439,11 +439,9 @@ def fetch(ctx, chosen):
     return {"ok": True, "quotes": quotes, "asof": asof}
 
 # ---------------------------------------------------------------- drawing
-def chip_row(c, page, asof):
+def chip_row(c, asof):
     w = c.badge("COMMODITIES", 10, 0, color = ink_for(BRAND), bg = BRAND, font = "4x5")
-    right = "1/2" if page == 1 else "2/2"
-    c.text(right, 181, 1, font = "4x5", color = DIM, align = "right")
-    x = 181 - c.text_width(right, "4x5") - 5
+    x = 181
     if asof != "":
         stamp = asof + " DELAYED"
         c.text(stamp, x, 1, font = "4x5", color = DIM, align = "right")
@@ -481,7 +479,7 @@ def message(c, head, sub, head_color):
     sf = fit(c, sub, ["4x5", "picopixel"], 145)
     c.text(sf[1], 108, 23, font = sf[0], color = DIM, align = "center")
 
-def board(c, ctx, page):
+def board(c, ctx):
     chosen = picks(ctx)
     d = fetch(ctx, chosen)
     c.fill("black")
@@ -489,15 +487,14 @@ def board(c, ctx, page):
         rail(c, OFFLINE)
         message(c, d["head"], d["sub"], "amber")
         return
-    mine = chosen[0:3] if page == 1 else chosen[3:6]
-    if mine[0] == None and mine[1] == None and mine[2] == None:
+    if chosen[0] == None and chosen[1] == None and chosen[2] == None:
         rail(c, BRAND)
         message(c, "NOTHING PICKED", "CHOOSE COMMODITIES IN SETTINGS", BRAND)
         return
-    # The rail follows the page: green when the tiles are mostly up, red
+    # The rail follows the board: green when the tiles are mostly up, red
     # when mostly down, so the edge reads before the numbers do.
     ups, downs = 0, 0
-    for p in mine:
+    for p in chosen:
         if p == None:
             continue
         q = d["quotes"].get(p[1], None)
@@ -508,15 +505,12 @@ def board(c, ctx, page):
         elif q["pct"] < -0.05:
             downs += 1
     rail(c, UP if ups > downs else (DOWN if downs > ups else FLAT))
-    chip_row(c, page, d["asof"])
+    chip_row(c, d["asof"])
     for i in range(3):
-        p = mine[i]
+        p = chosen[i]
         if p == None:
             continue
         tile(c, 10 + i * 58, p, d["quotes"].get(p[1], None))
 
 def pageone(c, ctx):
-    board(c, ctx, 1)
-
-def pagetwo(c, ctx):
-    board(c, ctx, 2)
+    board(c, ctx)
