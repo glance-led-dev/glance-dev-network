@@ -11,7 +11,7 @@ width: 192
 height: 32
 # The entry changes once a day, so a day is as often as anything can change.
 # The one live call (Wikipedia) carries a matching 86400s ttl.
-refresh: 86400
+refresh: 1800
 
 pages: [headline, story, legacy]
 
