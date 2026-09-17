@@ -16,6 +16,21 @@ UCL_STANDINGS_URL = (
     "https://site.api.espn.com/apis/v2/sports/soccer/uefa.champions/standings"
 )
 
+LIVERPOOL_TEAM_ID = "364"
+LIVERPOOL_SCHEDULE_URL = (
+    "https://site.web.api.espn.com/apis/site/v2/sports/soccer/all/teams/"
+    + LIVERPOOL_TEAM_ID
+    + "/schedule"
+)
+
+ALL_SOCCER_SCOREBOARD_URL = (
+    "https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard"
+)
+
+ALL_SOCCER_SUMMARY_URL = (
+    "https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary"
+)
+
 LIVERPOOL_RED = "#C8102E"
 WHITE = "white"
 BLACK = "black"
@@ -246,6 +261,184 @@ def local_match_datetime(iso, offset):
     return [date_text, time_text]
 
 
+def competition_name_from_text(text, fallback=""):
+    combined = text.lower()
+
+    if "premier league" in combined or "eng.1" in combined:
+        return "PREMIER LEAGUE"
+
+    if "champions" in combined:
+        return "CHAMPIONS LEAGUE"
+
+    if "fa cup" in combined or "eng.fa" in combined:
+        return "FA CUP"
+
+    if (
+        "league cup" in combined
+        or "carabao" in combined
+        or "eng.league_cup" in combined
+    ):
+        return "EFL CUP"
+
+    return fallback
+
+
+def competition_name_from_event(data, event, fallback=""):
+    # ESPN's all-soccer scoreboard does not consistently put league
+    # metadata directly on each event. Build a broad metadata string
+    # from the event/competition first, then match the event UID against
+    # the response-level league list when necessary.
+    league = get(event, "league", {})
+    competition_list = get(event, "competitions", [])
+    competition = {}
+
+    if len(competition_list) > 0:
+        competition = competition_list[0]
+
+    competition_type = get(competition, "type", {})
+    season = get(event, "season", {})
+
+    metadata = (
+        get(league, "name", "")
+        + " "
+        + get(league, "slug", "")
+        + " "
+        + get(league, "abbreviation", "")
+        + " "
+        + get(event, "name", "")
+        + " "
+        + get(event, "shortName", "")
+        + " "
+        + get(competition, "name", "")
+        + " "
+        + get(competition, "description", "")
+        + " "
+        + get(competition_type, "text", "")
+        + " "
+        + get(competition_type, "abbreviation", "")
+        + " "
+        + get(season, "slug", "")
+    )
+
+    detected = competition_name_from_text(
+        metadata,
+        "",
+    )
+
+    if detected != "":
+        return detected
+
+    event_uid = get(event, "uid", "")
+    leagues = get(data, "leagues", [])
+
+    for response_league in leagues:
+        league_uid = get(response_league, "uid", "")
+
+        if (
+            event_uid != ""
+            and league_uid != ""
+            and league_uid in event_uid
+        ):
+            league_text = (
+                get(response_league, "name", "")
+                + " "
+                + get(response_league, "slug", "")
+                + " "
+                + get(response_league, "abbreviation", "")
+            )
+
+            detected = competition_name_from_text(
+                league_text,
+                "",
+            )
+
+            if detected != "":
+                return detected
+
+            league_name = get(
+                response_league,
+                "name",
+                "",
+            )
+
+            if league_name != "":
+                return league_name.upper()
+
+    if fallback != "":
+        return fallback
+
+    league_name = get(league, "name", "")
+
+    if league_name != "":
+        return league_name.upper()
+
+    return "MATCH"
+
+
+def competition_name_from_summary(data, fallback=""):
+    # Match-summary responses normally expose richer league metadata
+    # than the broad all-soccer scoreboard. Prefer header.league, then
+    # inspect the header competition/season text as a fallback.
+    header = get(data, "header", {})
+    league = get(header, "league", {})
+    competitions = get(header, "competitions", [])
+    competition = {}
+
+    if len(competitions) > 0:
+        competition = competitions[0]
+
+    competition_type = get(competition, "type", {})
+    season = get(header, "season", {})
+
+    metadata = (
+        get(league, "name", "")
+        + " "
+        + get(league, "slug", "")
+        + " "
+        + get(league, "abbreviation", "")
+        + " "
+        + get(header, "name", "")
+        + " "
+        + get(header, "shortName", "")
+        + " "
+        + get(competition, "name", "")
+        + " "
+        + get(competition, "description", "")
+        + " "
+        + get(competition_type, "text", "")
+        + " "
+        + get(competition_type, "abbreviation", "")
+        + " "
+        + get(season, "slug", "")
+    )
+
+    detected = competition_name_from_text(
+        metadata,
+        "",
+    )
+
+    if detected != "":
+        return detected
+
+    league_name = get(league, "name", "")
+
+    if league_name != "":
+        return league_name.upper()
+
+    return fallback
+
+
+def is_liverpool_team(team):
+    abbr = get(team, "abbr", "").upper()
+    name = get(team, "name", "").lower()
+
+    return (
+        abbr == "LIV"
+        or abbr == "LFC"
+        or "liverpool" in name
+    )
+
+
 def normalize_events(data, competition_name):
     matches = []
 
@@ -303,12 +496,17 @@ def normalize_events(data, competition_name):
         )
 
         matches.append({
+            "id": get(event, "id", ""),
             "home": home,
             "away": away,
             "state": state,
             "detail": detail,
             "date": get(event, "date", ""),
-            "competition": competition_name,
+            "competition": competition_name_from_event(
+                data,
+                event,
+                competition_name,
+            ),
         })
 
     return matches
@@ -381,8 +579,8 @@ def find_next_liverpool_match(matches, now):
 
     for match in matches:
         is_liverpool = (
-            match["home"]["abbr"] == "LIV"
-            or match["away"]["abbr"] == "LIV"
+            is_liverpool_team(match["home"])
+            or is_liverpool_team(match["away"])
         )
 
         if not is_liverpool:
@@ -415,8 +613,8 @@ def find_next_liverpool_match(matches, now):
 def find_live_liverpool_match(matches, now):
     for match in matches:
         is_liverpool = (
-            match["home"]["abbr"] == "LIV"
-            or match["away"]["abbr"] == "LIV"
+            is_liverpool_team(match["home"])
+            or is_liverpool_team(match["away"])
         )
 
         if not is_liverpool:
@@ -451,8 +649,8 @@ def find_last_liverpool_match(matches):
             continue
 
         is_liverpool = (
-            match["home"]["abbr"] == "LIV"
-            or match["away"]["abbr"] == "LIV"
+            is_liverpool_team(match["home"])
+            or is_liverpool_team(match["away"])
         )
 
         if not is_liverpool:
@@ -469,14 +667,14 @@ def find_last_liverpool_match(matches):
 
 
 def liverpool_score(match):
-    if match["home"]["abbr"] == "LIV":
+    if is_liverpool_team(match["home"]):
         return match["home"]["score"]
 
     return match["away"]["score"]
 
 
 def opponent_score(match):
-    if match["home"]["abbr"] == "LIV":
+    if is_liverpool_team(match["home"]):
         return match["away"]["score"]
 
     return match["home"]["score"]
@@ -496,14 +694,14 @@ def match_result(match):
 
 
 def opponent_of(match):
-    if match["home"]["abbr"] == "LIV":
+    if is_liverpool_team(match["home"]):
         return match["away"]
 
     return match["home"]
 
 
 def match_symbol(match):
-    if match["home"]["abbr"] == "LIV":
+    if is_liverpool_team(match["home"]):
         return "VS"
 
     return "@"
@@ -535,114 +733,133 @@ def draw_branding(c):
     )
 
 
-def get_liverpool_matches(ctx):
+def get_live_liverpool_matches(ctx):
     now = ctx.now
 
-    year = now.year
-    month = now.month
-    day = now.day
-
-    past = subtract_days(
-        year,
-        month,
-        day,
-        30,
-    )
-
-    future = add_days(
-        year,
-        month,
-        day,
-        30,
-    )
-
-    start_date = (
-        str(past[0])
-        + pad2(past[1])
-        + pad2(past[2])
-    )
-
-    end_date = (
-        str(future[0])
-        + pad2(future[1])
-        + pad2(future[2])
-    )
-
-    date_query = (
-        "?dates="
-        + start_date
-        + "-"
-        + end_date
-        + "&limit=100"
+    today_date = (
+        str(now.year)
+        + pad2(now.month)
+        + pad2(now.day)
     )
 
     matches = []
 
-    epl_resp = http.get(
-        EPL_URL + date_query,
+    # LIVE: single-day all-soccer scoreboard only.
+    resp = http.get(
+        ALL_SOCCER_SCOREBOARD_URL
+        + "?dates="
+        + today_date,
         ttl_seconds=60,
     )
 
-    matches = matches + normalize_events(
-        epl_resp["json"],
-        "PREMIER LEAGUE",
-    )
+    data = get(resp, "json", None)
 
-    ucl_resp = http.get(
-        UCL_URL + date_query,
-        ttl_seconds=60,
-    )
+    if data != None:
+        matches = matches + normalize_events(
+            data,
+            "",
+        )
 
-    matches = matches + normalize_events(
-        ucl_resp["json"],
-        "CHAMPIONS LEAGUE",
-    )
+    return matches
 
-    fa_resp = http.get(
-        FA_CUP_URL + date_query,
-        ttl_seconds=60,
-    )
 
-    matches = matches + normalize_events(
-        fa_resp["json"],
-        "FA CUP",
-    )
+def get_next_liverpool_matches(ctx):
+    matches = []
 
-    # Single-day EFL request for freshest live state.
-    today_date = (
-        str(year)
-        + pad2(month)
-        + pad2(day)
-    )
-
-    efl_today_query = (
-        "?dates="
-        + today_date
-        + "&limit=100"
-    )
-
-    efl_today_resp = http.get(
-        EFL_CUP_URL + efl_today_query,
-        ttl_seconds=60,
-    )
-
-    matches = matches + normalize_events(
-        efl_today_resp["json"],
-        "EFL CUP",
-    )
-
-    # Broad EFL request keeps past and future cup fixtures available.
-    efl_range_resp = http.get(
-        EFL_CUP_URL + date_query,
+    # NEXT: Liverpool's all-competitions team schedule.
+    resp = http.get(
+        LIVERPOOL_SCHEDULE_URL
+        + "?fixture=true",
         ttl_seconds=300,
     )
 
-    matches = matches + normalize_events(
-        efl_range_resp["json"],
-        "EFL CUP",
-    )
+    data = get(resp, "json", None)
+
+    if data != None:
+        matches = matches + normalize_events(
+            data,
+            "",
+        )
 
     return matches
+
+
+def get_last_liverpool_match(ctx):
+    now = ctx.now
+
+    # Search one calendar day at a time, newest first. As soon as a
+    # completed Liverpool match is found, stop searching older days.
+    # Then use one event-summary request to recover the competition name.
+    # Worst case: 7 scoreboard requests + 1 summary request = 8 total.
+    for days_back in range(7):
+        check_date = subtract_days(
+            now.year,
+            now.month,
+            now.day,
+            days_back,
+        )
+
+        date_text = (
+            str(check_date[0])
+            + pad2(check_date[1])
+            + pad2(check_date[2])
+        )
+
+        resp = http.get(
+            ALL_SOCCER_SCOREBOARD_URL
+            + "?dates="
+            + date_text,
+            ttl_seconds=300,
+        )
+
+        data = get(resp, "json", None)
+
+        if data == None:
+            continue
+
+        matches = normalize_events(
+            data,
+            "",
+        )
+
+        last_game = find_last_liverpool_match(
+            matches
+        )
+
+        if last_game == None:
+            continue
+
+        event_id = get(
+            last_game,
+            "id",
+            "",
+        )
+
+        if event_id != "":
+            summary_resp = http.get(
+                ALL_SOCCER_SUMMARY_URL
+                + "?event="
+                + event_id,
+                ttl_seconds=300,
+            )
+
+            summary_data = get(
+                summary_resp,
+                "json",
+                None,
+            )
+
+            if summary_data != None:
+                last_game["competition"] = (
+                    competition_name_from_summary(
+                        summary_data,
+                        last_game["competition"],
+                    )
+                )
+
+        return last_game
+
+    return None
 
 
 def timezone_offset(ctx):
@@ -801,7 +1018,7 @@ def live_match(c, ctx):
     tzoffset = timezone_offset(ctx)
     now = ctx.now
 
-    matches = get_liverpool_matches(ctx)
+    matches = get_live_liverpool_matches(ctx)
 
     live_game = find_live_liverpool_match(
         matches,
@@ -1001,8 +1218,10 @@ def live_match(c, ctx):
 
         return
 
+    next_matches = get_next_liverpool_matches(ctx)
+
     next_game = find_next_liverpool_match(
-        matches,
+        next_matches,
         now,
     )
 
@@ -1072,7 +1291,7 @@ def next_match(c, ctx):
     tzoffset = timezone_offset(ctx)
     now = ctx.now
 
-    matches = get_liverpool_matches(ctx)
+    matches = get_next_liverpool_matches(ctx)
 
     next_game = find_next_liverpool_match(
         matches,
@@ -1164,9 +1383,7 @@ def last_match(c, ctx):
     c.clear()
     draw_branding(c)
 
-    matches = get_liverpool_matches(ctx)
-
-    last_game = find_last_liverpool_match(matches)
+    last_game = get_last_liverpool_match(ctx)
 
     if last_game == None:
         c.text(
@@ -1217,8 +1434,8 @@ def last_match(c, ctx):
     if crest != "":
         c.image(
             crest,
-            33,
-            9,
+            102,
+            8,
             20,
             20,
         )
@@ -1243,7 +1460,7 @@ def last_match(c, ctx):
 
     c.text(
         result,
-        109,
+        46,
         16,
         font="4x5",
         color=LIVERPOOL_RED,
