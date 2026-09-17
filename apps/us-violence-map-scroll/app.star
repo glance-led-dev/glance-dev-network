@@ -22,15 +22,31 @@
 # request: fifty states would be fifty requests against a budget of eight.
 #
 # DESIGN. The map is the app. It is a real Albers projection of the lower
-# 48 rasterised to 76 x 32, with a dark hairline between neighbours so two
-# states of a similar shade never merge into one blob, and every state is
-# its own character in one sprite, so a single legend recolours the whole
-# country each render. Alaska and Hawaii cannot be drawn at this size
-# without reading as part of the mainland, so they sit beside the map as
-# two labelled squares; DC is the single pixel between Maryland and
-# Virginia. The ramp runs deep blue through teal, amber and orange to red,
-# built from the data's own low and high so it works whether the numbers
-# run 1 to 15 or 5 to 60. White is kept for the one state you asked about.
+# 48, and every state is its own character in one sprite, so a single legend
+# recolours the whole country each render. Alaska and Hawaii cannot be drawn
+# at this size without reading as part of the mainland, so they sit beside
+# the map as two labelled squares; DC is the single pixel between Maryland
+# and Virginia. White is kept for the one state you asked about.
+#
+# Two things the map depends on, both easy to get wrong without it looking
+# wrong:
+#
+#   The art is stored north up and at the projection's own proportions.
+#   52 x 32 is an aspect of 1.6, which is what Albers gives the lower 48.
+#   An earlier cut filled a 76 x 32 box instead, stretching the country half
+#   again as wide; a stretched United States does not read as broken, it
+#   just reads as nowhere, with California sitting there as one fat block.
+#   Widening the map past 52 at this height means stretching it again.
+#
+#   The seams are closed. Bordering all 49 shapes in near-black reads as
+#   cracks in a wall rather than a country, so the border cells are filled
+#   from their neighbours and the shading is left to draw the regional
+#   blocks that are the real shape of this data.
+#
+# The ramp is sequential, not a rainbow: one warm arc from deep violet to
+# gold, lightness climbing every step, so the brightest thing on the panel
+# is always the worst number on it. It is built from the data's own low and
+# high, so it works whether the numbers run 1 to 15 or 5 to 60.
 #
 # Cadence: refresh 86400 with a matching ttl. CDC republishes monthly.
 
@@ -46,9 +62,13 @@ FAINT = "#3E465A"
 NR = "#1C2230"          # no rate published
 BRAND = "#5CC8F0"
 OFFLINE = "#3C4043"
-# cold to hot, five bands
-RAMP = ["#1B4FD8", "#00C2C7", "#8FD130", "#FFC219", "#FF3B21"]
-EDGE = "#0A0D14"        # the hairline between neighbours
+# A sequential thermal ramp: one warm arc, and lightness climbs every step,
+# so the brightest thing on the panel is always the worst number on it. A
+# rainbow (blue-cyan-lime-amber-red) puts its loudest colours on the lowest
+# values and asks hue to carry magnitude, which the eye cannot rank.
+RAMP = ["#3B2A5A", "#8C2981", "#DE4968", "#FF8C42", "#FFD84D"]
+UP = "#FF3B21"          # a rate that rose - the only colour allowed to shout
+DOWN = "#00DC46"        # a rate that fell
 
 # --------------------------------------------------------------- the map
 # Albers equal-area conic, lower 48 plus DC, one character per state.
@@ -56,40 +76,40 @@ EDGE = "#0A0D14"        # the hairline between neighbours
 # Rhode Island and DC are placed at their centroids when the raster loses
 # them to a larger neighbour entirely.
 USA = """
-.................................pppp..........................III..........
-.................................pppp........................IIIII..........
-................................pppppp......................IIIIII..........
-...............................pppppppppp...................IIIII...........
-.........................pppp.ppppppppppp-QQQQQQQ--.........IIII............
-........................ppppppppppppppppp--QQQQQ-W-A-.IIIIIIIIII............
-.......................ppppppppppppppppppp-QQQ--WW------------I.............
-................B--d..------ppppppppppppp-QQQ-WWWW-AAAA-JJJJJJ..............
-............BBBBBB-dddddddd-ppppppppppppp-----WWWW-AAAA-JJJJJ--.............
-..........BBBBBBBB-dddddddd-pppppp--------CCC--WWW-AAA-JJJJJ-mmm............
-......DDD--BBBBBBB-dddddddd-ppppp-iiiiii-CCCCC-WWW-AAA-JJJ--mmmmm...........
-......DDDD-BBBBBBB-dddddddd-pppp-iiiiiii-CCCCC-------------mmm---ff.........
-....DDDDDD-BBBBBBB--ddddddd--p---iiiiiii---------ooooooo------ffffff........
-..DDDDDDDD--BBBBBBB-ddd------------------XXXXXXX------------fffffffff.......
-..DDDDDDD-a------------EEEEEE-OOOOOOOOOO-XXXXXX-L---PPPPP-----------f.......
-.DDDDDDD-aaa-qqqqqq-EEEEEEEEE-OOOOOOOOOO-XXXXX-LL-----PPPP-u--sssss--.......
-.DDDDDD-aaaa-qqqqqq--EEEEEEEE-OOOOOOOOOO-XXXX--LLL-MM------uu--sss---.......
-.DDDDD-aaaaa--qqqqqq-EEEEEEEE--------------X-LLLLL-MM-hhhh--uu----SSS.......
-DDDDD-aaaaaaa-qqqqqq-EEE------ZZZZZZZZ-NNN----LLLL-MM-hhhhh-----SHSGc.......
-DDDD--aaaaaaa-qqqq------www-ZZZZZZZZZZ-NNNNNN--LL-----hhhhh-kkkkkk-ccc......
-DDDDD-aaaaaaa-qqq-wwwwwwwww-ZZZZZZZ---NNNNNNN------UU----hh-kkkkkkk-ce......
-DDDDD-aaa----------wwwwwwww--------nn--------vvvvv.UUUUUU..-k-------e---....
-DDDD-----j-KKKKKKK-wwwwwwww-nnnnnnnnn-VVVVV--vvvvv.UUUUUU....eeeeeee-FFlTT..
-D---jjjjjj-KKKKKKK-wwwwww---nnnnnnnnn-VVVV-vvvvvvv-UUUUUU....eeeeeee-----T..
-.jjjjjjjjj--KKKK---------YY-----------VVVV-vvvvv---UUUUU........eeee-rbbR...
-.jjjjjjjjjj--KK-YYYYYYYYYYYY-gggggggg-VVVV---v--UUUUUUUU........eee-rrbbRR..
-..jjjjjjjj---K-YYYYYYYYYYYYY-gggggggg-VVVVVV---UUUUUUU............e-rrbRRRRR
-..jjj-----t--K-YYYYYYYYYYYYY-gggggggg-VVVVVVVV-UU.....................RRRRRR
-...--ttttttt-K-YYYYYYYYYYYYY-ggggggg-VVVVVVV.V.UU......................RRRRR
-...ttttttttt--YYYYYYYYYYYYYY-ggggg.....VV..............................RRRR.
-...ttttttttt--YYYYYY...................................................RRR..
-...tttttttttt...............................................................
+..ttttttt...........................................
+..ttttttt-YYYY...................................RR.
+..ttttttt-YYYYYYYYYYgggg...VV....................RRR
+..--tttttKYYYYYYYYYYgggggVVVVVVVUU...............RRR
+..jj---t-KYYYYYYYYYYggggggVVVVVVUU..............RRRR
+..jjjjj--KYYYYYYYYYYggggggVVVVV-UUUUU........e-rbRRR
+.jjjjjjj-KKYYYYYYYYYggggggVVV--v-UUUUUU.....ee-rbbR.
+.jjjjjj-KKK------YY-------VVV-vvv--UUUU.....eeerbb..
+D--jjjj-KKKKKwwwww-nnnnnnnVVV-vvvvvUUUU...eeeee---T.
+DDD---j-KKKKKwwwwwwnnnnnnnVVVV-vvvvUUUU...eeeeeFFlT.
+DDDDaaa------wwwwww-----nn-----vvvvUUUU..k-----e--..
+DDDDaaaaa-qqwwwwwwwZZZZZ--NNNNN----UU--hhkkkkk-c....
+DDD-aaaaa-qqq----wwZZZZZZZ-NNNN-LL---hhhhkkkkkcc....
+DDDDaaaaa-qqqq-EE----ZZZZZ-NN---LLLMMhhhh---SHGc....
+.DDDDaaaa-qqqq-EEEEE----------XLLLLMMhhh-uu--SSS....
+.DDDD-aaaqqqq--EEEEE-OOOOOOOXXX-LLLMM----u-sss--....
+.DDDDDaaaqqqq-EEEEEE-OOOOOOOXXXXLL---PPP-u-sss--....
+..DDDDDa--------EEEE-OOOOOOOXXXXXL--PPP--------f....
+..DDDDD-BBBBB-dd------------XXXXX--------fffffff....
+...DDDD-BBBBB-ddddd-p--iiiii------ooooo----ffff.....
+....DDD-BBBBBddddddppp-iiiiiCCCC---------mm--f......
+....DDD-BBBBBddddddppppiiiiiCCCCWWWAA-JJ-mmmm.......
+.......BBBBBBddddddppppp-----CC-WWWAA-JJJJmm........
+........BBBBBddddddpppppppppp---WWWAAAJJJJ--........
+...........B-d.----ppppppppppQQ-WWWAAAJJJJJ.........
+................ppppppppppppp-QQ-WW--------I........
+.................pppppppppppp-QQQ-WA-IIIIIII........
+.................ppp.ppppppppQQQQQ-......III........
+.....................pppppppp............IIII.......
+......................pppp...............IIIII......
+.......................ppp................IIII......
+.......................ppp.................III......
 """
-MAP_W = 76
+MAP_X, MAP_W = 10, 52
 CELL = {"A": "AL", "B": "AZ", "C": "AR", "D": "CA", "E": "CO", "F": "CT", "G": "DE", "H": "DC",
         "I": "FL", "J": "GA", "K": "ID", "L": "IL", "M": "IN", "N": "IA", "O": "KS", "P": "KY",
         "Q": "LA", "R": "ME", "S": "MD", "T": "MA", "U": "MI", "V": "MN", "W": "MS", "X": "MO",
@@ -97,6 +117,53 @@ CELL = {"A": "AL", "B": "AZ", "C": "AR", "D": "CA", "E": "CO", "F": "CT", "G": "
         "g": "ND", "h": "OH", "i": "OK", "j": "OR", "k": "PA", "l": "RI", "m": "SC", "n": "SD",
         "o": "TN", "p": "TX", "q": "UT", "r": "VT", "s": "VA", "t": "WA", "u": "WV", "v": "WI",
         "w": "WY"}
+
+def _fill_pass(grid, h):
+    """One dilation sweep: every border cell takes the state that owns most
+    of its eight neighbours. Votes are read from the grid passed in, never
+    from the cells this sweep writes, so a state cannot creep across a seam."""
+    out, left = [], 0
+    for y in range(h):
+        row, new = grid[y], []
+        for x in range(len(row)):
+            ch = row[x]
+            if ch != "-":
+                new.append(ch)
+                continue
+            tally, best, bestn = {}, "-", 0
+            for dy in [-1, 0, 1]:
+                for dx in [-1, 0, 1]:
+                    ny, nx = y + dy, x + dx
+                    if ny < 0 or ny >= h or nx < 0 or nx >= len(grid[ny]):
+                        continue
+                    n = grid[ny][nx]
+                    if n == "-" or n == ".":
+                        continue
+                    tally[n] = tally.get(n, 0) + 1
+                    if tally[n] > bestn:
+                        best, bestn = n, tally[n]
+            if bestn == 0:
+                left += 1
+            new.append(best)
+        out.append(new)
+    return [out, left]
+
+def _solidify(art):
+    """Close the hairline between neighbours so the country draws as one
+    landmass. A dark seam around all 49 shapes reads as cracks in a wall, and
+    the eye stops seeing a country; without it the shading merges into the
+    regional blocks that are the actual shape of this data."""
+    rows = [r for r in art.split("\n") if r != ""]
+    grid = [[ch for ch in r.elems()] for r in rows]
+    h = len(grid)
+    for _ in range(4):        # wide seams need more than one sweep
+        res = _fill_pass(grid, h)
+        grid = res[0]
+        if res[1] == 0:
+            break
+    return "\n".join(["".join(r) for r in grid])
+
+USA = _solidify(USA)
 
 # CDC writes the jurisdiction out in full; the panel wants it short.
 ABBR = {
@@ -134,6 +201,15 @@ def clip(c, text, font, maxw):
     for k in range(len(t), 0, -1):
         if c.text_width(t[:k], font) <= maxw:
             return t[:k]
+    return ""
+
+def first_fit(c, options, font, maxw):
+    """Step down a wording until one fits whole. Some strings must never be
+    clipped: `RANK #45/51` cut to fit reads as `RANK #4`, which is not a
+    truncation but a different, entirely believable rank."""
+    for t in options:
+        if c.text_width(t, font) <= maxw:
+            return t
     return ""
 
 def fit(c, text, fonts, maxw):
@@ -295,14 +371,14 @@ def window_text(window):
 def draw_map(c, d, solo):
     """The whole country in one sprite: the legend carries a colour per
     state, so 49 shapes cost one draw. `solo` lights a single state."""
-    leg = {"-": EDGE}
+    leg = {"-": NR}
     for ch in CELL:
         ab = CELL[ch]
         if solo != "":
             leg[ch] = INK if ab == solo else NR
         else:
             leg[ch] = band_color(d["rates"].get(ab, None), d["lo"], d["hi"])
-    c.sprite(USA, 10, 0, legend = leg)
+    c.sprite(USA, MAP_X, 0, legend = leg)
 
 def swatch(c, x, y, ab, d, wide):
     """Alaska and Hawaii, which cannot be drawn in place at this size."""
@@ -316,10 +392,10 @@ def swatch(c, x, y, ab, d, wide):
 def fail_screen(c, d):
     c.fill("black")
     rail(c, OFFLINE)
-    leg = {"-": EDGE}
+    leg = {"-": FAINT}
     for ch in CELL:
         leg[ch] = FAINT
-    c.sprite(USA, 10, 0, legend = leg)
+    c.sprite(USA, MAP_X, 0, legend = leg)
     hf = fit(c, d["head"], ["5x7", "4x5"], 90)
     c.text(hf[1], 136, 10, font = hf[0], color = "amber", align = "center")
     sf = fit(c, d["sub"], ["4x5", "picopixel"], 90)
@@ -336,7 +412,7 @@ def heatmap(c, ctx):
 
     # Text column x 66..181. The map owns the full height at the left, so
     # the chip row starts here rather than at x 10.
-    tx = 90
+    tx = MAP_X + MAP_W + 4
     w = pill(c, d["metric"], BRAND, tx, 0)
     c.text("PER 100K", tx + w + 3, 1, font = "4x5", color = DIM)
     c.text(clip(c, window_text(d["window"]), "picopixel", 92), tx, 8, font = "picopixel", color = FAINT)
@@ -365,7 +441,7 @@ def toplist(c, ctx):
         fail_screen(c, d)
         return
     c.fill("black")
-    rail(c, RAMP[4])
+    rail(c, RAMP[3])
     w = pill(c, d["metric"], BRAND, 10, 0)
     edge = 181
     if d["natl"] != None:
@@ -418,7 +494,7 @@ def mystate(c, ctx):
     mine = d["rates"].get(ab, None)
     draw_map(c, d, ab)
 
-    tx = 90
+    tx = MAP_X + MAP_W + 4
     w = pill(c, ab, BRAND, tx, 0)
     nx = 182
     if d["natl"] != None:
@@ -457,7 +533,17 @@ def mystate(c, ctx):
     if prev != None:
         ch = mine - prev
         yr = signed_text(ch) + " VS 2024"
-        c.text(yr, 181, 26, font = "4x5", color = RAMP[4] if ch > 0 else RAMP[1], align = "right")
+        c.text(yr, 181, 26, font = "4x5", color = UP if ch > 0 else DOWN, align = "right")
         edge = 181 - c.text_width(yr, "4x5") - 5
-    line = ("RANK #" + str(rank) + "/" + str(len(d["ranked"]))) if rank > 0 else "UNRANKED"
-    c.text(clip(c, line, "4x5", edge - tx + 1), tx, 26, font = "4x5", color = INK)
+    # Never clipped, only stepped down: see first_fit. Of the 51 ranked, so
+    # the number always arrives with the field it is out of.
+    n = str(len(d["ranked"]))
+    room = edge - tx + 1
+    if rank > 0:
+        r = str(rank)
+        line = first_fit(c, ["RANK #" + r + " OF " + n, "RANK #" + r + "/" + n,
+                             "#" + r + "/" + n, "#" + r], "4x5", room)
+    else:
+        line = first_fit(c, ["UNRANKED", "NR"], "4x5", room)
+    if line != "":
+        c.text(line, tx, 26, font = "4x5", color = INK)

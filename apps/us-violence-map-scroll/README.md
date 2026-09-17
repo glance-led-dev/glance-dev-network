@@ -20,8 +20,11 @@ CDC provisional mortality data. No key or account needed.
   mainland. DC is a single pixel between Maryland and Virginia.
 - **Highest rates** - the five jurisdictions with the highest rate, each
   with a bar, and the national rate underneath for scale.
-- **Your state** - your state's rate, its rank out of 51, how it compares
-  with the national rate, and the change from the 2024 calendar year.
+- **Your state** - your state's rate, its rank, how it compares with the
+  national rate, and the change from the 2024 calendar year. The rank is
+  shown with the field it is out of (`#29/51`), and that field shrinks on
+  measures where CDC suppresses some jurisdictions, since a suppressed rate
+  is never ranked.
 
 ## What the numbers mean
 
