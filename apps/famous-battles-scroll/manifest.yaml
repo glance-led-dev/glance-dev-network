@@ -1,0 +1,44 @@
+gdn: 1
+id: famous-battles-scroll
+version: 0.1.0
+name: Famous Battles
+author: glance-led-dev
+description: A different famous battle every day, from the Bronze Age to the twentieth century - who fought, where, what happened and what changed because of it, with the place marked on a world map.
+category: Education
+entry: app.star
+
+width: 192
+height: 32
+# The battle changes once a day. An hour keeps the live line from Wikipedia
+# current without asking for a page that has not changed.
+refresh: 3600
+
+pages: [battle, story, where]
+
+inputs:
+  - key: era
+    type: choice
+    app_input_type: dropdown
+    label: Era
+    default: "ALL ERAS"
+    help: Narrow the roster to one period. Dates before the modern era are the commonly accepted ones, and for the oldest battles historians disagree by decades.
+    choices:
+      - "ALL ERAS"
+      - "ANCIENT"
+      - "MEDIEVAL"
+      - "GUNPOWDER"
+      - "MODERN"
+  - key: region
+    type: choice
+    app_input_type: dropdown
+    label: Region
+    default: "ALL REGIONS"
+    help: Narrow the roster to where the battle was fought, using the modern region rather than whatever the place was called at the time.
+    choices:
+      - "ALL REGIONS"
+      - "EUROPE"
+      - "ASIA"
+      - "AFRICA"
+      - "AMERICAS"
+      - "MIDDLE EAST"
+      - "PACIFIC"
