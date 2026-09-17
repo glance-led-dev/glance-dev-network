@@ -1187,7 +1187,8 @@ POSTERS = [
 ]
 # >>> PACK:END
 
-FONTH = {"16x20": 20, "10x16": 16, "7x12": 12, "6x8": 8, "5x7": 7, "4x5": 5}
+FONTH = {"19x28": 28, "16x24": 24, "16x20": 20, "10x16": 16, "7x12": 12,
+         "6x8": 8, "5x7": 7, "4x5": 5}
 
 # ------------------------------------------------------------- text plumbing
 def clip(c, text, font, maxw):
@@ -1356,29 +1357,135 @@ def slug_parts(slug):
         toks = toks[:len(toks) - 1]
     return [" ".join(toks).upper(), year]
 
-def list_slugs(user, list_slug):
-    """Ordered film slugs from a public Letterboxd list. Lists have no RSS, so
-    this reads the list page HTML (each poster carries data-film-slug). Empty on
-    any failure, so the caller falls back to the canon."""
-    resp = http.get("https://letterboxd.com/" + user + "/list/" + list_slug + "/", ttl_seconds = 900)
-    if resp["status_code"] != 200:
-        return []
-    body = resp["body"]
-    marker = "data-item-slug=\""  # list poster rows carry the film slug here
+# --------------------------------------------------------------- settings in
+# The two Letterboxd settings are handles, not prose, and a phone user reaches
+# them by copying an address bar -- not by counting path segments. So both
+# accept either the bare handle/slug or the whole pasted URL and normalise here,
+# once, before anything is concatenated into a request.
+def _lbpath(v):
+    """A pasted letterboxd.com address reduced to its non-empty path segments,
+    lowercased (Letterboxd handles and list slugs are both lowercase). A bare
+    handle or slug has no scheme or host to shed and falls through as itself."""
+    t = str(v).strip().lower()
+    for pre in ["https://", "http://", "www."]:
+        if t.startswith(pre):
+            t = t[len(pre):]
+    if t.startswith("letterboxd.com/"):
+        t = t[len("letterboxd.com/"):]
+    parts = []
+    for seg in t.strip("/").split("/"):
+        if seg != "":
+            parts.append(seg)
+    return parts
+
+def lb_user(v):
+    """The account handle: `abartos27`, or the first segment of any profile URL
+    (`letterboxd.com/abartos27/films/diary/` -> `abartos27`)."""
+    parts = _lbpath(v)
+    return parts[0] if len(parts) > 0 else ""
+
+def lb_list(v):
+    """The list slug: `top-10`, or whatever follows `/list/` in a pasted list URL
+    (`letterboxd.com/abartos27/list/top-10/` -> `top-10`). A pasted address that
+    is not a list URL falls back to its last segment rather than erroring."""
+    parts = _lbpath(v)
+    for i in range(len(parts)):
+        if parts[i] == "list" and i + 1 < len(parts):
+            return parts[i + 1]
+    return parts[len(parts) - 1] if len(parts) > 0 else ""
+
+def _slugs_in(region, limit):
+    """Ordered, de-duplicated film slugs from a Letterboxd poster grid. Every
+    poster carries data-item-slug, so one scraper serves a list page and a
+    watchlist alike."""
+    marker = "data-item-slug=\""
     slugs = []
-    i = body.find(marker)
-    for _n in range(300):
+    i = region.find(marker)
+    for _n in range(limit):
         if i < 0:
             break
         j = i + len(marker)
-        k = body.find("\"", j)
+        k = region.find("\"", j)
         if k < 0:
             break
-        s = body[j:k].strip("/").split("/")[-1]
+        s = region[j:k].strip("/").split("/")[-1]
         if s != "" and s not in slugs:
             slugs.append(s)
-        i = body.find(marker, k)
+        i = region.find(marker, k)
     return slugs
+
+def poster_page_slugs(url, limit):
+    """Ordered film slugs from any Letterboxd poster page. These views have no
+    RSS, so it is the page HTML or nothing. Empty on any failure, so every caller
+    falls back to the canon."""
+    resp = http.get(url, ttl_seconds = 900)
+    if resp["status_code"] != 200:
+        return []
+    return _slugs_in(resp["body"], limit)
+
+def list_slugs(user, list_slug):
+    """A public Letterboxd list, in the owner's rank order."""
+    return poster_page_slugs(
+        "https://letterboxd.com/" + user + "/list/" + list_slug + "/", 300)
+
+def _unescape(s):
+    """The list index carries names the owner typed, so HTML entities are ordinary
+    there ('Mum & Dad's', 'Dad&#39;s Westerns') and would otherwise draw raw."""
+    t = s
+    for pair in [["&amp;", "&"], ["&#39;", "'"], ["&rsquo;", "'"],
+                 ["&quot;", "\""], ["&lt;", "<"], ["&gt;", ">"]]:
+        t = t.replace(pair[0], pair[1])
+    return t
+
+def user_lists(user):
+    """The owner's own lists as [slug, name] pairs, off letterboxd.com/<user>/lists/.
+
+    This is the one thing the phone's setup form structurally cannot do: the form
+    is built from the static manifest before the app runs and before it knows the
+    username, so a dropdown of someone's lists is impossible. Read at render time
+    it is easy, and it stays right when they add a list without touching Glance.
+
+    Each list's masthead is
+        <h2 class="name prettify"><a href="/<user>/list/<slug>/">Name</a></h2>
+    so one anchor carries both the slug to fetch and the name to show."""
+    if user == "":
+        return []
+    resp = http.get("https://letterboxd.com/" + user + "/lists/", ttl_seconds = 900)
+    if resp["status_code"] != 200:
+        return []
+    body = resp["body"]
+    out = []
+    seen = []
+    marker = "<h2 class=\"name prettify\">"
+    i = body.find(marker)
+    for _n in range(60):
+        if i < 0:
+            break
+        a = body.find("href=\"", i)
+        if a < 0:
+            break
+        a += 6
+        b = body.find("\"", a)
+        if b < 0:
+            break
+        href = body[a:b]
+        ns = body.find(">", b)
+        ne = body.find("</a>", ns) if ns >= 0 else -1
+        name = _unescape(body[ns + 1:ne]).strip() if ne >= 0 else ""
+        parts = href.strip("/").split("/")
+        slug = parts[len(parts) - 1] if len(parts) > 0 else ""
+        if href.find("/list/") >= 0 and slug != "" and name != "" and slug not in seen:
+            seen.append(slug)
+            out.append([slug, name])
+        i = body.find(marker, b)
+    return out
+
+def watchlist_slugs(user):
+    """The queue rather than the diary. /watchlist/ is a fixed path -- the same
+    URL on every account -- which is exactly what lets WATCHLIST be a dropdown
+    choice where a custom list cannot be one. (The neighbouring /likes/films/ and
+    /films/by/rating/ views answer 403 to this fetch, so they are not offered.)"""
+    return poster_page_slugs("https://letterboxd.com/" + user + "/watchlist/", 300)
 
 def diary_films(user, n):
     """Up to n newest diary films as [slug, TITLE, year, rating10], live from the
@@ -1408,45 +1515,29 @@ def diary_films(user, n):
         pos = s + 6
     return out
 
-def profile_favorites(user):
-    """The films pinned as favorites on a public Letterboxd profile
-    (letterboxd.com/<user>/), in profile order -- the section#favourites poster
-    grid, each poster carrying data-item-slug. Up to four. Empty on any
-    failure, so the caller falls back to the pack."""
-    if user == "":
-        return []
-    resp = http.get("https://letterboxd.com/" + user + "/", ttl_seconds = 900)
-    if resp["status_code"] != 200:
-        return []
-    body = resp["body"]
-    s = body.find("id=\"favourites\"")
-    if s < 0:
-        return []
-    end = body.find("</section>", s)
-    region = body[s:end] if end >= 0 else body[s:]
-    marker = "data-item-slug=\""
-    slugs = []
-    i = region.find(marker)
-    for _n in range(20):
-        if i < 0:
-            break
-        j = i + len(marker)
-        k = region.find("\"", j)
-        if k < 0:
-            break
-        sl = region[j:k].strip("/").split("/")[-1]
-        if sl != "" and sl not in slugs:
-            slugs.append(sl)
-        i = region.find(marker, k)
-    return slugs
+# A FAVORITES source is deliberately absent. The pinned four live only on the
+# profile root, and letterboxd.com/<user>/ answers 403 to this fetch with and
+# without a browser User-Agent -- as do /likes/films/ and /films/by/rating/.
+# /films/ is reachable but carries no favourites section, so there is no route to
+# them. Offering the mode anyway would put a dropdown choice on the setup form
+# that silently shows the canon forever, and validation would pass, because the
+# fallback renders perfectly well.
 
 def latest(ctx):
     """The most-recent diary watch as [film, live, state]. Falls back to a canon
     pick (live=False, dim rail) when there is no user or the feed is down, so the
     board never goes dark; BADUSER is the one failure a viewer can fix, so it
     gets its own message screen."""
-    user = str(ctx.inputs.get("lbuser", "")).strip()
+    user = lb_user(ctx.inputs.get("lbuser", ""))
     fb = film_slug(CANON_ORDER[ctx.now.yday % len(CANON_ORDER)], -1)
+
+    # CANON is the source you pick to run without an account, so the headliner
+    # comes off the shelf too. Clearing the username is not enough on its own:
+    # a blank input is backfilled with the manifest default, which would put a
+    # stranger's diary on the marquee of anyone who cleared the box.
+    if str(ctx.inputs.get("mode", "recent")) == "canon":
+        return [fb, True, ""]
+
     if user == "":
         return [fb, False, ""]
 
@@ -1483,37 +1574,60 @@ def _live_films(slugs):
         out.append(film_live(s, parts[0], parts[1], 0))
     return out
 
+def canon_films(ctx):
+    """Four films off the house shelf, the window stepping one film a day so the
+    whole pack comes round -- `latest()` picks its own fallback the same way.
+    Serves two callers with opposite meanings: the CANON mode (chosen, and the
+    one source needing no account or network) and every live source's fallback
+    (degraded). They are told apart by the `live` flag the caller sets, not here."""
+    out = []
+    n = len(CANON_ORDER)
+    for i in range(4):
+        out.append(film_slug(CANON_ORDER[(ctx.now.yday + i) % n], -1))
+    return out
+
 def showcase_set(ctx):
-    """The mode's scrolling set as [films, label, live]. FAVORITES = the four
-    films pinned on the owner's Letterboxd profile; LIST = a public list, in rank
-    order, shown under its own name; RECENT = the diary, newest first. Any
-    empty/offline path falls back to the pack so the strip is never blank."""
-    user = str(ctx.inputs.get("lbuser", "")).strip()
+    """The mode's scrolling set as [films, label, live]. RECENT = the diary,
+    newest first; WATCHLIST = what the owner has queued up; LIST = a public list,
+    in rank order, under its own name; CANON = the bundled shelf, which needs
+    neither an account nor a network. Any empty/offline live path falls back to
+    the pack so the strip is never blank."""
+    user = lb_user(ctx.inputs.get("lbuser", ""))
     mode = str(ctx.inputs.get("mode", "recent"))
 
+    # chosen, not fallen back to: no user, no fetch, and a lit frame
+    if mode == "canon":
+        return [canon_films(ctx), "THE CANON", True]
+
     if mode == "list" and user != "":
-        list_slug = str(ctx.inputs.get("lblist", "")).strip().strip("/")
+        list_slug = lb_list(ctx.inputs.get("lblist", ""))
         slugs = list_slugs(user, list_slug) if list_slug != "" else []
         label = list_slug.replace("-", " ").upper() if list_slug != "" else "THE LIST"
         films = _live_films(slugs)
         if len(films) > 0:
             return [films, label, True]
+    elif mode == "lists" and user != "":
+        # a different one of the owner's lists each hour, under its own name --
+        # two fetches, well inside the 8-per-render budget
+        pairs = user_lists(user)
+        if len(pairs) > 0:
+            pick = pairs[ctx.now.hour % len(pairs)]
+            films = _live_films(list_slugs(user, pick[0]))
+            if len(films) > 0:
+                return [films, pick[1].upper(), True]
+    elif mode == "watchlist" and user != "":
+        films = _live_films(watchlist_slugs(user))
+        if len(films) > 0:
+            return [films, "WATCHLIST", True]
     elif mode == "recent" and user != "":
         films = []
         for row in diary_films(user, 8):
             films.append(film_live(row[0], row[1], row[2], row[3]))
         if len(films) > 0:
             return [films, "RECENTLY WATCHED", True]
-    elif mode == "favorites" and user != "":
-        films = _live_films(profile_favorites(user))
-        if len(films) > 0:
-            return [films, "FAVORITES", True]
-
-    # fallback when a live source is empty/offline: the pack's first four
-    films = []
-    for i in range(4):
-        films.append(film_slug(CANON_ORDER[i], -1))
-    return [films, "FAVORITES", False]
+    # a live source came back empty, offline, or with no username to ask about:
+    # the shelf stands in, dimmed so the frame says "this is not what you picked"
+    return [canon_films(ctx), "THE CANON", False]
 
 # -------------------------------------------------------------------- pages
 def marquee(c, ctx):
@@ -1567,38 +1681,111 @@ def _meta(year, runtime, director):
         parts.append("DIR " + director)
     return "   ".join(parts)
 
+# The card's fixed furniture as widths, left to right: the poster module, the gap
+# to the live rail, the rail, the gap to the title, then past the title the gap
+# to the divider, the divider itself, and the right block. Everything here is
+# constant -- the title is the only elastic part, which is what lets the card
+# size itself to what it actually drew.
+CARD_POSTER_W = 28
+CARD_RAIL_GAP = 3
+CARD_RAIL_W = 2
+CARD_TITLE_GAP = 5
+CARD_DIV_GAP = 6
+CARD_RIGHT_W = 78
+CARD_FURNITURE = (CARD_POSTER_W + CARD_RAIL_GAP + CARD_RAIL_W + CARD_TITLE_GAP +
+                  CARD_DIV_GAP + 1 + CARD_DIV_GAP + CARD_RIGHT_W)
+
+def _card_layout(c, title, mw):
+    """Pick the title's cut and where its credits sit: the largest that leaves
+    the whole group inside the board. A 28px cut reaches both bulb rows, so it
+    can only carry its credits inline beside the title; 24px and under can stack
+    them underneath, which costs no width. Returns [font, text, tw, cw, inline].
+
+    Measuring the group and not just the title is the whole point: 'SIDEWAYS' is
+    only 152px at 19x28, but its full credits ('2004  126 MIN  DIR PAYNE') add
+    110 more inline, and that group ran 7px off the board and clipped the rating
+    block to 'NOW SHOWI'. It takes the 24px cut and stacks instead."""
+    room = c.width - CARD_FURNITURE - 6
+    for f in ["19x28", "16x24", "16x20", "10x16", "7x12"]:
+        tw = c.text_width(title, f)
+        if FONTH[f] > 24:
+            cw = tw + (6 + mw if mw > 0 else 0)
+            if cw <= room:
+                return [f, title, tw, cw, True]
+        else:
+            cw = tw if tw > mw else mw
+            if cw <= room:
+                return [f, title, tw, cw, False]
+
+    # no cut holds the whole title: the smallest, clipped to the room it has
+    t = clip(c, title, "7x12", room)
+    tw = c.text_width(t, "7x12")
+    cw = tw if tw > mw else mw
+    return ["7x12", t, tw, room if cw > room else cw, False]
+
 def card(c, film, label, caption, live):
     """The single film card every page shares: poster module at the left, the
-    title as the hero with a year/runtime/director strip beneath, and a right
-    block carrying the page's label + the owner's star rating. Consistent slots
-    mean Now Showing, the Canon, a list and the recents all read as one board."""
+    title as the hero with its year/runtime/director credits, and a right block
+    carrying the page's label + the owner's star rating. Consistent slots mean
+    Now Showing, the Canon, a list and the recents all read as one board.
+
+    The group is centered rather than pinned to the board's two edges. The title
+    is the only elastic part, and on a 384-wide board a short one stranded a lot
+    of black in the middle: 'JUNO' is 64px at 16x20, in a zone cut to fit 'THE
+    LORD OF THE RINGS: THE FELLOWSHIP OF THE RING', leaving ~150px of hole
+    between the credits and the rating block. A hole in the middle reads as a
+    bug; even margins read as composition. So the card measures what it actually
+    drew and centers that -- and a short title also takes a taller cut of the
+    font, so the hero still carries the board instead of floating in it."""
     title, year, runtime, director = film[0], film[1], film[2], film[3]
     art, pfile, r10 = film[4], film[5], film[6]
+    accent = GOLD if live else DIM
 
     c.fill("black")
-    poster(c, pfile, title, 10, 1)
+
+    meta = _meta(year, runtime, director)
+    mw = c.text_width(meta, "4x5") if meta != "" else 0
+    fnt, t, tw, cw, inline = _card_layout(c, title, mw)
+    h = FONTH[fnt]
+
+    x0 = (c.width - (CARD_FURNITURE + cw)) // 2
+    if x0 < 3:
+        x0 = 3
+    px = x0 + 4                              # poster() draws from its x - 4
+    railx = px + CARD_POSTER_W - 1
+    tx = railx + CARD_RAIL_W + CARD_TITLE_GAP
+    divx = tx + cw + CARD_DIV_GAP
+    rx0 = divx + 1 + CARD_DIV_GAP
+    rcx = rx0 + CARD_RIGHT_W // 2
+
+    poster(c, pfile, title, px, 1)
     # the rail carries live/offline state, so the bands never spend a row on it
-    c.rect(37, 0, 38, 31, fill = GOLD if live else DIM)
+    c.rect(railx, 0, railx + 1, 31, fill = accent)
 
-    # lit bulb runs top and bottom of the stage: the card reads like a marquee
-    bulbs(c, 0, 44, 378)
-    bulbs(c, 31, 44, 378)
+    # lit bulb runs top and bottom of the stage: the card reads like a marquee.
+    # They span the drawn group, so they stop with it rather than running out
+    # across the black and advertising the empty width.
+    bulbs(c, 0, tx, rx0 + CARD_RIGHT_W)
+    bulbs(c, 31, tx, rx0 + CARD_RIGHT_W)
 
-    # right block = page label over the star rating; the divider fences the title
-    rx = 300
-    c.vline(rx - 6, 3, 28, STRUCT)
-    rcx = (rx + 378) // 2
+    # the divider fences the title off from the right block
+    c.vline(divx, 3, 28, STRUCT)
 
-    # left: title hero + credits strip
-    tw = rx - 6 - 44
-    fnt, t = fit(c, title, ["16x20", "10x16", "7x12"], tw)
-    c.text(t, 44, 3, font = fnt, color = INK)
-    c.text(clip(c, _meta(year, runtime, director), "4x5", tw), 44, 26,
-           font = "4x5", color = GOLD if live else DIM)
+    # left: title hero + credits
+    if inline:
+        c.text(t, tx, (32 - h) // 2, font = fnt, color = INK)
+        if mw > 0:
+            c.text(meta, tx + tw + 6, 14, font = "4x5", color = accent)
+    else:
+        # the 24px cut has to start at y=1 to clear the credits row at 26;
+        # the shorter cuts keep the roomier y=3 they always had
+        c.text(t, tx, 1 if h > 20 else 3, font = fnt, color = INK)
+        if mw > 0:
+            c.text(meta, tx, 26, font = "4x5", color = accent)
 
     # right: the page's identity, then the rating (stars, or NR when unrated)
-    c.text(clip(c, label, "4x5", 76), rcx, 3, font = "4x5",
-           color = GOLD if live else DIM, align = "center")
+    c.text(clip(c, label, "4x5", CARD_RIGHT_W), rcx, 3, font = "4x5",
+           color = accent, align = "center")
     if r10 > 0:
         stars(c, rcx - 15, 12, r10)  # 5 slots * 6px = 30 wide, so -15 centers
     else:
@@ -1659,12 +1846,31 @@ def tile(c, film, px, tw):
     if r10 > 0:
         stars(c, tx, 25, r10)
 
+def placard(c, x, w, head, name):
+    """A framed card standing in a film tile's slot to say what the strip is
+    showing. LISTS rotates a different list every hour, and a rotating set of
+    films with no name on it is just films -- the name is the whole feature."""
+    c.rect(x, 1, x + w, 30, outline = GOLD)
+    c.text(head, x + w // 2, 4, font = "4x5", color = DIM, align = "center")
+
+    # y=12..29 is all the name gets under the header, which is 17px. One 7x12
+    # line fits; two do not (12 + 1 + 12 = 25, and 'G.O.A.T. BLOCKBUSTERS' ran
+    # its second line off the bottom of the panel). So the big cut is only for a
+    # name that holds on one line, and anything longer wraps at 5x7 (7 + 1 + 7).
+    inner = w - 8
+    if c.text_width(name, "7x12") <= inner:
+        c.text(name, x + w // 2, 14, font = "7x12", color = CREAM,
+               align = "center")
+    else:
+        c.text_wrapped(name, x + 4, 13, inner, font = "5x7", color = CREAM,
+                       line_gap = 1, max_lines = 2)
+
 def showcase(c, ctx):
-    """The compressed scroll: three rich film tiles from the chosen source --
-    FAVORITES, a LIST, or the RECENT diary -- fenced by gold rules in the style
-    of the house marquee. The window advances one film per minute, so the whole
-    set scrolls past however long it is."""
-    films, _label, live = showcase_set(ctx)
+    """The compressed scroll: three rich film tiles from the chosen source -- the
+    WATCHLIST, a LIST, the RECENT diary or the CANON -- fenced by gold rules in
+    the style of the house marquee. The window advances one film per minute, so
+    the whole set scrolls past however long it is."""
+    films, label, live = showcase_set(ctx)
     c.fill("black")
     bulbs(c, 0, 4, 380)
     bulbs(c, 31, 4, 380)
@@ -1672,16 +1878,29 @@ def showcase(c, ctx):
     n = len(films)
     if n == 0:
         return
-    win = 3 if n >= 3 else n
-    start = ctx.now.minute % n
 
-    # three tiles, wrapping the window so every film comes around no matter how
-    # long the list; gold rules fence them
     frame = GOLD if live else DIM
     pxs = [6, 124, 242]
     tws = [84, 84, 88]
+
+    # LISTS is the one source whose set is not self-evident, so it spends the
+    # first slot on a placard naming the list and runs two films behind it. The
+    # others fill all three: their label ("WATCHLIST", "THE CANON") says nothing
+    # the films do not already.
+    named = str(ctx.inputs.get("mode", "recent")) == "lists" and live
+    first = 1 if named else 0
+    if named:
+        placard(c, 2, 110, "FROM THE LIST", label)
+
+    # tiles wrap the window so every film comes around no matter how long the
+    # set is; gold rules fence them
+    win = 3 - first
+    if win > n:
+        win = n
+    start = ctx.now.minute % n
     for k in range(win):
         idx = (start + k) % n
-        tile(c, films[idx], pxs[k], tws[k])
-        if k > 0:
-            c.vline(pxs[k] - 8, 3, 28, frame)
+        s = first + k
+        tile(c, films[idx], pxs[s], tws[s])
+        if s > 0:
+            c.vline(pxs[s] - 8, 3, 28, frame)

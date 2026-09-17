@@ -256,17 +256,22 @@ inputs:
     app_input_type: free-text
     label: Letterboxd username
     default: "abartos27"
-    help: Public Letterboxd account; the newest logged film becomes tonight's feature. Leave blank to run on the curated canon only.
+    help: Your handle, or paste your profile link - both work (abartos27, or letterboxd.com/abartos27). The newest logged film becomes tonight's feature. Ignored entirely when Feature source is CANON, which is how you run this with no Letterboxd account at all.
+  # The option list is spelled two ways on purpose: the published guide documents
+  # `choices`, while Studio emits `options` and the review tooling reads it. They
+  # are kept identical so the picker fills in under either reader - drop whichever
+  # one turns out to be dead.
   - key: mode
     type: choice
     app_input_type: dropdown
     label: Feature source
     default: recent
-    options: [recent, favorites, list]
-    help: What the showcase scrolls through. RECENT = your Letterboxd diary, newest first. FAVORITES = the four films pinned on your Letterboxd profile. LIST = a public Letterboxd list (set the slug below). Now Showing is always your latest watch, whichever you pick.
+    choices: [recent, watchlist, lists, list, canon]
+    options: [recent, watchlist, lists, list, canon]
+    help: What the showcase scrolls through. RECENT = your diary, newest first. WATCHLIST = the films you have queued up. LISTS = every list you have made, a different one each hour, each under its own name - no typing needed. LIST = one specific list, named below. CANON = the app's own shelf of 200-plus films, needing no account. Now Showing is always your latest watch, whichever you pick.
   - key: lblist
     type: string
     app_input_type: free-text
-    label: List slug
+    label: Letterboxd list
     default: "top-10"
-    help: Used only when the source is LIST. The last path segment of a public list URL, e.g. letterboxd.com/abartos27/list/TOP-10/ -> top-10.
+    help: Only read when Feature source is LIST - every other source ignores it. Paste the list's link, or just its name from the end of that link - letterboxd.com/abartos27/list/top-10/ and top-10 both work.
