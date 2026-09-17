@@ -1,0 +1,51 @@
+gdn: 1
+id: ww1-facts-scroll
+version: 0.1.0
+name: WW1 Facts
+author: glance-led-dev
+description: A different First World War fact every day, written the way a museum places a placard - what happened, when, where, and why it mattered. 103 curated entries covering every front, the home fronts and the settlement that followed.
+category: Education
+entry: app.star
+
+width: 192
+height: 32
+# The entry changes once a day and nothing else on the panel moves, so a day
+# is as often as this can possibly say something new.
+refresh: 86400
+
+pages: [headline, scene, legacy]
+
+inputs:
+  - key: theatre
+    type: choice
+    app_input_type: dropdown
+    label: Front or theatre
+    default: "ALL FRONTS"
+    help: Narrows the rotation to one part of the war. ALL FRONTS uses the whole roster of 103 entries and is the best choice if you want the war as a whole. Picking one theatre gives you a shorter, deeper rotation - WESTERN FRONT has 16 entries, WAR IN THE AIR has 7 - so it comes round sooner.
+    choices:
+      - "ALL FRONTS"
+      - "ROAD TO WAR"
+      - "WESTERN FRONT"
+      - "EASTERN FRONT"
+      - "ITALY & BALKANS"
+      - "OTTOMAN FRONTS"
+      - "WAR AT SEA"
+      - "WAR IN THE AIR"
+      - "BEYOND EUROPE"
+      - "HOME FRONT"
+      - "ARMISTICE & AFTER"
+  - key: year
+    type: choice
+    app_input_type: dropdown
+    label: Year
+    default: "ALL YEARS"
+    help: Narrows the rotation to one year of the war. BEFORE 1914 covers the alliances, the naval race and the Balkan crises that led into it; AFTER 1918 covers the peace treaties, the memorials and the remembrance that followed. Combining a theatre and a year can leave nothing to show - the panel says so and tells you to widen one of them.
+    choices:
+      - "ALL YEARS"
+      - "BEFORE 1914"
+      - "1914"
+      - "1915"
+      - "1916"
+      - "1917"
+      - "1918"
+      - "AFTER 1918"
