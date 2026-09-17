@@ -1,0 +1,52 @@
+gdn: 1
+id: cold-war-facts-scroll
+version: 0.1.0
+name: Cold War Facts
+author: glance-led-dev
+description: A different Cold War fact every day, in the register of a museum placard - what happened, when, where, and why it mattered. 90 curated entries from 1945 to 1991, even-handed between the blocs.
+category: Education
+entry: app.star
+
+width: 192
+height: 32
+# The entry changes once a day, so a day is as often as anything can change.
+# The one live call (Wikipedia) carries a matching 86400s ttl.
+refresh: 86400
+
+pages: [headline, story, legacy]
+
+inputs:
+  - key: theme
+    type: choice
+    app_input_type: dropdown
+    label: Theme
+    default: "ALL"
+    help: Narrow the rotation to one strand of the era. ALL uses every entry. IRON CURTAIN covers the division of Europe, Berlin and the bloc uprisings; ARMS RACE covers nuclear tests, the near-misses and the arms-control treaties; SPACE RACE covers Sputnik through Apollo-Soyuz; PROXY CONFLICT covers Korea, Vietnam, Afghanistan, decolonisation and the coups; ESPIONAGE covers the spies and the codebreakers; THAW AND COLLAPSE covers detente, 1989 and the end of the USSR.
+    choices:
+      - "ALL"
+      - "IRON CURTAIN"
+      - "ARMS RACE"
+      - "SPACE RACE"
+      - "PROXY CONFLICT"
+      - "ESPIONAGE"
+      - "THAW AND COLLAPSE"
+  - key: decade
+    type: choice
+    app_input_type: dropdown
+    label: Decade
+    default: "ALL"
+    help: Narrow the rotation to one decade. 1940S runs from 1945; 1990S runs to the dissolution of the Soviet Union in December 1991. If a decade and a theme together match nothing - there is no 1990S space-race entry - the app keeps the theme, widens the decade, and says so on the middle page.
+    choices:
+      - "ALL"
+      - "1940S"
+      - "1950S"
+      - "1960S"
+      - "1970S"
+      - "1980S"
+      - "1990S"
+  - key: wiki
+    type: string
+    app_input_type: checkbox
+    label: Wikipedia line
+    default: true
+    help: On by default. Adds one short supplementary line from Wikipedia to the bottom of the third page, credited on that page. Turn it off to run the app entirely from its own curated table with no network calls at all - the first two pages never make one either way.
