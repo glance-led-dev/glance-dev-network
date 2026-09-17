@@ -10,7 +10,7 @@ entry: app.star
 width: 192
 height: 32
 # IODA scores in near real time; a quarter hour is honest for a map of it.
-refresh: 900
+refresh: 3600
 
 pages: [worldmap, worst]
 
