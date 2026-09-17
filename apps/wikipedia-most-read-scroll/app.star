@@ -17,14 +17,18 @@
 # it changes once a day, so it is cached for six hours.
 #
 # DESIGN. A reading room, not a dashboard. The rank is the hero: a big
-# numeral in Wikipedia grey-black on a pale tile at the left, the way a
-# chart position reads, with the article title beside it as large as it
-# will go and the view count under that in the globe's own blue. The
-# puzzle-globe glyph sits in the chip row so the panel says whose list
-# this is without spending a word on it. A second page stacks the whole
-# top five as a compact chart, each row a bar scaled to the day's leader,
-# so the shape of the day - one runaway story, or five even ones - reads
-# at a glance from across the room.
+# numeral on a podium tile at the left - gold, silver, bronze, then grey -
+# the way a chart position reads, with the article title beside it as
+# large as it will go. Under the title an eye glyph stands in for the word
+# VIEWS, the count sits in the globe's own blue, and a trend arrow with the
+# day-over-day change says whether the story is still climbing; five small
+# bars at the right draw the last five days of views, so a story that
+# exploded overnight looks different from one that has been simmering all
+# week. The puzzle-globe glyph sits in the chip row so the panel says
+# whose list this is without spending a word on it. A second page stacks
+# the top four as a compact chart, each row a bar scaled to the day's
+# leader with the same podium colors and trend arrows, so the shape of the
+# day - one runaway story, or four even ones - reads from across the room.
 #
 # Cadence: refresh 3600. The list is a daily count that stops moving once
 # published, so an hour is generous; the fetch is cached for six.
@@ -37,10 +41,18 @@ TTL = 21600
 INK = "#F4F7FF"
 DIM = "#6E7A94"
 FAINT = "#3E465A"
-TILE = "#E8EAED"        # the pale tile the rank sits on
-TILE_INK = "#202122"    # Wikipedia's own near-black
 BLUE = "#5C9BE8"        # the blue of the globe and the view counts
 OFFLINE = "#3C4043"
+UP = "#3DDC6A"          # still climbing
+DOWN = "#E8564A"        # fading
+
+# The podium: rank 1 gold, 2 silver, 3 bronze, the rest a quiet grey.
+# ink_for() picks black or white text for each, so no tile can wash out.
+PODIUM = ["#F2C14E", "#DDE3EE", "#D08A4E"]
+TILE_REST = "#9AA3B5"
+
+def podium(rank):
+    return PODIUM[rank - 1] if rank <= len(PODIUM) else TILE_REST
 
 LANGS = {
     "ENGLISH": ["en", "EN"], "SPANISH": ["es", "ES"], "GERMAN": ["de", "DE"],
@@ -65,6 +77,18 @@ WWWWWWWWWWW
 ...WWWWW...
 """
 GLOBE_LEGEND = {"W": "#D8DCE3", "G": "#8A93A6"}
+
+# An eye, 9 x 5: the picture is the label, so the word VIEWS never has to
+# be spent. Lids in ink, pupil in the count's blue.
+EYE = """
+..LLLLL..
+.L.....L.
+L..PPP..L
+.L.....L.
+..LLLLL..
+"""
+EYE_LEGEND = {"L": "#D8DCE3", "P": BLUE}
+EYE_W = 9
 
 # ------------------------------------------------------------- text tools
 def clip(c, text, font, maxw):
@@ -174,6 +198,25 @@ def compact(n):
     tenths = (n + 50000) // 100000
     return str(tenths // 10) + "." + str(tenths % 10) + "M"
 
+def delta(hist):
+    """Day-over-day change as [direction, label]: '+26%' while the move is
+    under a doubling, '5X' once it is past one, so a story that came from
+    nowhere reads as a multiple rather than a four-digit percentage."""
+    if len(hist) < 2 or hist[-2] <= 0:
+        return None
+    now, prev = hist[-1], hist[-2]
+    if now >= prev * 2:
+        return [1, str((now + prev // 2) // prev) + "X"]
+    pct = (now - prev) * 100 // prev if now >= prev else -((prev - now) * 100 // prev)
+    if pct > 0:
+        return [1, "+" + str(pct) + "%"]
+    if pct < 0:
+        return [-1, str(pct) + "%"]
+    return [0, "FLAT"]
+
+def trend_color(direction):
+    return UP if direction > 0 else (DOWN if direction < 0 else DIM)
+
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
 def num(s, fallback = -1):
@@ -232,7 +275,17 @@ def fetch(ctx):
         # article, and it would swamp every real story.
         if title.startswith("MAIN PAGE") or title.startswith("SPECIAL"):
             continue
-        out.append({"title": title, "views": views, "extract": clean(get(a, "extract", ""))})
+        # The feed carries the last five days of counts for every article;
+        # they draw the bars and the trend. Today's count is always the
+        # last entry so the arrow compares the right two days.
+        hist = []
+        for h in get(a, "view_history", []):
+            v = get(h, "views", None)
+            if type(v) == "int" and v >= 0:
+                hist.append(v)
+        if len(hist) == 0 or hist[-1] != views:
+            hist.append(views)
+        out.append({"title": title, "views": views, "hist": hist[-5:]})
         if len(out) == 5:
             break
     if len(out) == 0:
@@ -281,19 +334,21 @@ def article(c, ctx):
     rail(c, BLUE)
     chip_row(c, d, str(idx + 1) + "/" + str(n))
 
-    # The rank on its tile, x 10..27, y 9..30: a chart position, not a
-    # bullet, so it gets the weight.
-    c.round_rect(10, 9, 27, 30, 3, fill = TILE)
-    c.text(str(idx + 1), 19, 13, font = "10x16", color = TILE_INK, align = "center")
+    # The rank on its podium tile, x 10..27, y 12..30: a chart position,
+    # not a bullet, so it gets the weight. The tile starts a row under the
+    # globe (y 0..10) so the two never touch.
+    rank = idx + 1
+    tile = podium(rank)
+    c.round_rect(10, 12, 27, 30, 3, fill = tile)
+    c.text(str(rank), 19, 13, font = "10x16", color = ink_for(tile), align = "center")
 
-    # Title as big as it goes in x 32..181, then the views under it. The
-    # title takes two lines at 6x8 when one will not hold it, because a
-    # title is the whole point of the page.
+    # Title as big as it goes in x 32..181. The title takes two lines at
+    # 6x8 when one will not hold it, because a title is the whole point
+    # of the page. Either way the footer row sits at y 27.
     tx, tw = 32, 150
     one = fit(c, a["title"], ["10x16", "8x10", "6x8"], tw)
     if c.text_width(a["title"], one[0]) <= tw:
         c.text(one[1], tx, 9, font = one[0], color = INK)
-        vy = 9 + (15 if one[0] == "10x16" else (10 if one[0] == "8x10" else 8)) + 3
     else:
         # Two lines split on a space, never inside a word: a title broken
         # as ZOZ / 6 LEG reads as a fault rather than as a wrap.
@@ -303,10 +358,24 @@ def article(c, ctx):
             cut = len(head)
         c.text(head[:cut], tx, 9, font = "6x8", color = INK)
         c.text(clip_words(c, a["title"][cut:].strip(), "6x8", tw), tx, 18, font = "6x8", color = INK)
-        vy = 27
-    if vy > 27:
-        vy = 27
-    c.text(commas(a["views"]) + " VIEWS", tx, vy, font = "4x5", color = BLUE)
+
+    # Footer row, y 27..31: eye, count, trend arrow with the day-over-day
+    # change, and the five-day bars right-aligned in the safe zone.
+    fy = 27
+    c.sprite(EYE, tx, fy, legend = EYE_LEGEND)
+    x = tx + EYE_W + 3
+    count = commas(a["views"])
+    c.text(count, x, fy, font = "4x5", color = BLUE)
+    x += c.text_width(count, "4x5") + 4
+    bars_w = 34     # five bars of 6 px, 1 px apart
+    bars_x = 181 - bars_w + 1
+    d = delta(a["hist"])
+    if d != None and x + 5 + 2 + c.text_width(d[1], "4x5") < bars_x - 3:
+        col = trend_color(d[0])
+        c.trend_arrow(x, fy, d[0], color = col)
+        c.text(d[1], x + 7, fy, font = "4x5", color = col)
+    if len(a["hist"]) >= 2:
+        c.bars(a["hist"], bars_x, fy, bars_w, 5, color = BLUE, gap = 1, min_val = 0)
 
 # -------------------------------------------------------------- page: five
 def toplist(c, ctx):
@@ -334,6 +403,15 @@ def toplist(c, ctx):
         bw = 171 * a["views"] // top if top > 0 else 0
         if bw > 0:
             c.rect(10, y, 10 + bw - 1, y + 4, fill = "#10294A")
-        c.text(str(i + 1), 11, y, font = "4x5", color = BLUE)
-        c.text(clip_words(c, a["title"], "4x5", 181 - vw - 5 - 17), 17, y, font = "4x5", color = INK)
+        # Rank numeral in its podium color, the same gold / silver / bronze
+        # as the tiles on the article page.
+        c.text(str(i + 1), 11, y, font = "4x5", color = podium(i + 1))
         c.text(vs, 181, y, font = "4x5", color = DIM, align = "right")
+        # A trend arrow just left of the count, right-aligned so the title
+        # column ends in the same place whatever the count's width.
+        right = 181 - vw - 2
+        dl = delta(a["hist"])
+        if dl != None:
+            c.trend_arrow(right - 5, y, dl[0], color = trend_color(dl[0]))
+            right -= 5 + 3
+        c.text(clip_words(c, a["title"], "4x5", right - 17), 17, y, font = "4x5", color = INK)

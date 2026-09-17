@@ -12,9 +12,15 @@ read them. No key or account needed.
 ## The pages
 
 - **Article** - one entry at a time, rotating every minute: its rank on a
-  pale tile, the title as large as it will fit, and the view count.
-- **Top five** - the whole list at once, each title on a bar scaled to the
-  day's leader, so you can see whether one story ran away with the day.
+  podium tile (gold, silver, bronze, then grey), the title as large as it
+  will fit, and under it an eye with the view count, an arrow with the
+  change since the day before, and five small bars for the last five days
+  of views - so a story that exploded overnight looks different from one
+  that has been building all week.
+- **Top four** - the list at once, each title on a bar scaled to the day's
+  leader with the same podium colors and trend arrows, so you can see
+  whether one story ran away with the day. The fifth is counted in the
+  header.
 
 ## Notes
 
