@@ -11,7 +11,7 @@ width: 192
 height: 32
 # Listings move when something goes on sale or gets rescheduled, neither of
 # which is a by-the-minute event. Half an hour is honest.
-refresh: 1800
+refresh: 21600
 
 pages: [next, upcoming]
 

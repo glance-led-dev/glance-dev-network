@@ -24,14 +24,24 @@ screen rather than pretending to have data.
 
 ## The pages
 
-- **Next** - the next event: what it is, when, where, and how far off. The
-  chip names the kind of event and the whole panel takes its colour from
-  it, so music and sport are distinguishable at a glance. A second chip
-  appears only when the event is not simply on sale, so a rescheduled or
-  cancelled date announces itself.
-- **Upcoming** - the four events after that, each with its date, its time
-  and its name, with the date in the same colour its kind carries on the
-  first page.
+The panel is drawn as a ticket on a black ground. A stub on the left
+carries a 16 px picture of the kind of event, lit in its colour with white
+highlights (a pair of notes, a trophy, comedy and tragedy masks, a strip of
+film, or a ticket for anything else), with a perforated tear line down its
+edge; the body to the right carries the words. Nothing is filled solid:
+lit strokes on black read across a room where holes in a bright block do
+not.
+
+- **Next** - the next event. The stub shows the picture and the date as a
+  calendar leaf (month over a big day number); the body has the kind of
+  event as a chip, the city, the event name as the hero, its start time,
+  venue, and how far off it is (TONIGHT, TOMORROW, THIS FRI, IN 2 WEEKS).
+  A second chip appears only when the event is not simply on sale, so a
+  rescheduled or cancelled date announces itself.
+- **Upcoming** - the three events after that, each with its date, its name
+  and its time, with the date in the same colour its kind carries on the
+  first page. The stub shows a ticket, Ticketmaster's count of everything
+  matching the search, and the ZIP code it was searched around.
 
 ## What it does and does not cover
 
@@ -45,12 +55,17 @@ events under its miscellaneous segment.
 
 ## Notes
 
-- One request per render, cached for half an hour, and the panel refreshes
-  every 30 minutes.
-- **The radius alone does not bound the search.** A Tampa ZIP code at 25
-  miles returns an event in Bielefeld, Germany unless the country is
-  pinned too, so the request pins it to the US. A non-US postcode will
-  therefore find nothing.
+- Two requests per render: the ZIP code is geocoded at zippopotam.us
+  (cached for a day), then Ticketmaster is asked for events around that
+  point (cached for half an hour). The panel refreshes every 30 minutes.
+- **Why the ZIP is geocoded first.** Ticketmaster's own `postalCode`
+  filter is an exact match on the venue's postcode, in any country, and
+  the radius does nothing beside it: a Tampa 33602 search returned an
+  event in Bielefeld, Germany (postcode 33602), and 90210 at 100 miles
+  returned one event where a point search returns thousands. Searching
+  by the ZIP's coordinates makes the radius setting mean what it says.
+  The country is still pinned to the US, and a ZIP that zippopotam does
+  not know shows a `ZIP NOT FOUND` setup screen.
 - The search window starts at midnight so the request stays cacheable
   through the day. Events that already started today are dropped against
   the panel clock instead, so nothing that has been and gone is shown.
@@ -59,5 +74,6 @@ events under its miscellaneous segment.
   reads as though the other nine were free.
 - Long names lose their tour subtitle before anything else, so
   `ZAC BROWN BAND: LOVE & FEAR TOUR` shows as `ZAC BROWN BAND`.
-- `N NEARBY` is Ticketmaster's own count of everything matching the
-  search, not just the handful listed on the panel.
+- The count in the tile on the Upcoming page is Ticketmaster's own count
+  of everything matching the search, not just the handful listed on the
+  panel.

@@ -1,15 +1,20 @@
 # Events Near Me - what is on around a ZIP code, from Ticketmaster.
 #
-# DATA. Ticketmaster Discovery v2 /events.json, one request per render. It
-# needs the viewer's own free Discovery key. There is no shared demo key, so
-# the no-key state here is a setup screen rather than a fault screen.
+# DATA. Two requests per render. The ZIP code goes to zippopotam.us once a
+# day for a latitude and longitude and a place name; that point, as a
+# geohash, goes to Ticketmaster Discovery v2 /events.json with the radius.
+# It needs the viewer's own free Discovery key. There is no shared demo
+# key, so the no-key state here is a setup screen rather than a fault.
 #
-# Three things the API does that would otherwise have shipped as bugs, all
-# found by probing it rather than by reading the docs:
+# Things the API does that would otherwise have shipped as bugs, all found
+# by probing it rather than by reading the docs:
 #
-#   1. postalCode with radius does NOT bound the search. A Tampa 33602
-#      search at a 25 mile radius returned an event in Bielefeld, Germany.
-#      countryCode is what actually bounds it, so it is not optional here.
+#   1. postalCode is an exact match on the venue's postcode, in any country,
+#      and radius does nothing beside it. A Tampa 33602 search returned an
+#      event in Bielefeld, Germany, whose postcode is also 33602; 90210 at
+#      100 miles returned one event where a geoPoint search returns
+#      thousands. So the ZIP is geocoded and the search is by geoPoint,
+#      which the radius does bound. countryCode is still pinned.
 #   2. An empty result carries no _embedded key at all, rather than an empty
 #      list, so the events have to be reached defensively.
 #   3. priceRanges and distance come back absent on ordinary listings, so
@@ -30,6 +35,7 @@
 # both pages: as a chip on the first and in place of the time on the list.
 
 API = "https://app.ticketmaster.com/discovery/v2/events.json"
+GEO = "https://api.zippopotam.us/us/"
 UA = {"User-Agent": "glance-events-near-me (glance-led.dev)"}
 
 INK = "#FFFFFF"
@@ -71,6 +77,23 @@ WINDOWS = {
     "NEXT 30 DAYS": 30,
     "NEXT 90 DAYS": 90,
     "ANYTIME": 0,
+}
+
+WIN_SHORT = {
+    "NEXT 7 DAYS": "7 DAYS",
+    "NEXT 30 DAYS": "30 DAYS",
+    "NEXT 90 DAYS": "90 DAYS",
+    "ANYTIME": "ANYTIME",
+}
+
+# The dropdown value, as the empty screen names it.
+CAT_SHORT = {
+    "ALL": "EVENTS",
+    "MUSIC": "MUSIC",
+    "SPORTS": "SPORTS",
+    "ARTS AND THEATRE": "THEATRE",
+    "FILM": "FILM",
+    "OTHER": "OTHER EVENTS",
 }
 
 # Chip text and colour for the first page.
@@ -115,66 +138,110 @@ TAIL = {
     "VS": True, "VS.": True, "V": True, "V.": True, "-": True, "&": True,
     "AND": True, "AT": True, "WITH": True, "THE": True, "A": True,
     "OF": True, "IN": True, "ON": True, "FOR": True, "TO": True, "FT": True,
-    "FEAT": True, "FEAT.": True, "PRESENTS": True,
+    "FEAT": True, "FEAT.": True, "PRESENTS": True, "@": True, "+": True,
 }
 
 # ------------------------------------------------------------- the icons
-# 7x7, one character, recoloured per segment from the legend.
+# Bold two-colour silhouettes, 16 wide, drawn lit on the black stub: "#" is
+# the segment colour, "o" is white. The 16-tall ones leave their last row
+# blank so the month under them keeps its 1 px gap.
 TICKET = """
-#######
-#.....#
-#.###.#
-#.....#
-#.###.#
-#.....#
-#######
+.##############.
+##########.oooo#
+##########.oooo#
+##########.oooo#
+.#########.ooo#.
+..########.oo#..
+..########.oo#..
+.#########.ooo#.
+##########.oooo#
+##########.oooo#
+##########.oooo#
+.##############.
 """
 
 NOTE = """
-..#####
-..#...#
-..#...#
-..#...#
-..#...#
-###.###
-###.###
+................
+......##########
+......##########
+......##########
+......##......##
+......##......##
+......##......##
+......##......##
+......##......##
+......##......##
+....####....####
+..######..######
+.#######.#######
+.#######.#######
+..#####...#####.
+................
 """
 
-BALL = """
-.#####.
-##...##
-#.#.#.#
-#..#..#
-#.#.#.#
-##...##
-.#####.
+TROPHY = """
+..############..
+.#.##########.#.
+#..##########..#
+#..##########..#
+#..##########..#
+.#.##########.#.
+..#.########.#..
+....########....
+.....######.....
+......####......
+.......##.......
+.......##.......
+......####......
+....########....
+...##########...
+................
 """
 
-MASK = """
-.#####.
-#######
-#.#.#.#
-#######
-#.###.#
-.#...#.
-..###..
+MASKS = """
+.#######........
+#########.......
+##.###.##.......
+##.###.##.......
+########ooooooo.
+#.#####ooooooooo
+##.....oo.ooo.oo
+#######oo.ooo.oo
+.######ooooooooo
+..#####oo.....oo
+...###.o.ooooo.o
+.......ooooooooo
+........ooooooo.
+.........ooooo..
+..........ooo...
+................
 """
 
-REEL = """
-##.##.#
-.##.##.
-#######
-#.....#
-#.....#
-#.....#
-#######
+STRIP = """
+################
+#..##..##..##..#
+#..##..##..##..#
+################
+##oooooooooooo##
+##oooooooooooo##
+##oooooooooooo##
+##oooooooooooo##
+##oooooooooooo##
+##oooooooooooo##
+##oooooooooooo##
+################
+#..##..##..##..#
+#..##..##..##..#
+################
+................
 """
 
+# [art, y on the first page]. The ticket is 12 tall, so it sits lower.
 ICON = {
-    "MUSIC": NOTE,
-    "SPORTS": BALL,
-    "ARTS & THEATRE": MASK,
-    "FILM": REEL,
+    "MUSIC": [NOTE, 0],
+    "SPORTS": [TROPHY, 0],
+    "ARTS & THEATRE": [MASKS, 0],
+    "FILM": [STRIP, 0],
 }
 
 # ------------------------------------------------------------- text tools
@@ -263,29 +330,59 @@ def pad4(n):
     return s
 
 # ------------------------------------------------------------- the chrome
-def rail(c, col):
-    c.rect(0, 0, 1, 31, fill = col)
+# The panel is a ticket. A black stub in the left of the safe zone (x
+# 10..33) carries the picture, lit in the segment colour, and the date; a
+# perforated tear line runs down x 36; the body, x 39..181, carries the
+# words. Nothing is filled: on an LED panel a lit stroke on black reads
+# across a room where a hole punched out of a bright block does not.
+STUB_X = 10
+STUB_W = 24
+TEAR_X = 36
+CX = 39
+RX = 181
+CW = RX - CX + 1
+TEAR = "#3B4758"
+
+def ink_on(col):
+    """Black on a bright fill, white on a dark one."""
+    h = col.lstrip("#")
+    if len(h) != 6:
+        return "black"
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return "black" if (r * 299 + g * 587 + b * 114) // 1000 > 130 else "white"
+
+def frame(c):
+    c.fill("black")
+    for y in range(1, 31, 2):
+        c.rect(TEAR_X, y, TEAR_X, y, fill = TEAR)
+
+def centred(c, text, font, y, col):
+    """Text centred across the stub."""
+    x = STUB_X + (STUB_W - c.text_width(text, font)) // 2
+    c.text(text, x, y, font = font, color = col)
+
+def stub_art(c, art, col, y):
+    c.sprite(art, STUB_X + (STUB_W - 16) // 2, y, legend = {"#": col, "o": INK})
 
 def pill(c, text, col, x, y):
     w = c.text_width(text, "4x5") + 4
     c.rect(x, y, x + w - 1, y + 6, fill = col)
-    c.text(text, x + 2, y + 1, font = "4x5", color = "black")
+    c.text(text, x + 2, y + 1, font = "4x5", color = ink_on(col))
     return w
 
 def notice(c, art, col, head, subs):
     """subs is longest first: the line steps down to a shorter whole phrase
     rather than being cut off in the middle of one."""
-    c.fill("black")
-    rail(c, col)
-    c.sprite(art, 12, 9, legend = {"#": col}, scale = 2)
-    hf = fit(c, head, ["9x12", "8x10", "6x8", "5x7"], 150)
-    c.text(hf[1], 32, 7, font = hf[0], color = col)
+    frame(c)
+    stub_art(c, art, col, 10)
+    hf = fit(c, head, ["9x12", "8x10", "6x8", "5x7"], CW)
+    c.text(hf[1], CX, 7, font = hf[0], color = col)
     for f in ["5x7", "4x5"]:
-        s = pick(c, subs, f, 150)
+        s = pick(c, subs, f, CW)
         if s != "":
-            c.text(s, 32, 23, font = f, color = DIM)
+            c.text(s, CX, 23, font = f, color = DIM)
             return
-    c.text(fit_text(c, subs[len(subs) - 1], "4x5", 150), 32, 23,
+    c.text(fit_text(c, subs[len(subs) - 1], "4x5", CW), CX, 23,
            font = "4x5", color = DIM)
 
 # ---------------------------------------------------------------- dates
@@ -355,11 +452,15 @@ def fmt_time(mins):
 def fmt_date(dnum, m, d):
     return DOW[(dnum + 4) % 7] + " " + MON[m - 1] + " " + str(d)
 
-def relative(delta, mins):
+def relative(delta, mins, dnum):
+    """How far off, the way a person says it. Inside the week the weekday
+    is the useful word; the stub carries the date itself."""
     if delta <= 0:
         return "TONIGHT" if mins >= 1020 else "TODAY"
     if delta == 1:
         return "TOMORROW"
+    if delta <= 6:
+        return "THIS " + DOW[(dnum + 4) % 7]
     if delta <= 13:
         return "IN " + str(delta) + " DAYS"
     if delta <= 20:
@@ -369,6 +470,51 @@ def relative(delta, mins):
     return "IN " + str(delta // 30) + " MONTHS" if delta >= 60 else "IN A MONTH"
 
 # ------------------------------------------------------------------ feed
+B32 = "0123456789bcdefghjkmnpqrstuvwxyz"
+
+def geohash(lat, lon, n):
+    """The point as an n-character geohash, which is what Ticketmaster's
+    geoPoint filter takes. 7 characters is about 150 m, plenty for a ZIP."""
+    lat0, lat1 = -90.0, 90.0
+    lon0, lon1 = -180.0, 180.0
+    out, ch, bits, even = "", 0, 0, True
+    for _ in range(n * 5):
+        if even:
+            mid = (lon0 + lon1) / 2
+            if lon >= mid:
+                ch, lon0 = ch * 2 + 1, mid
+            else:
+                ch, lon1 = ch * 2, mid
+        else:
+            mid = (lat0 + lat1) / 2
+            if lat >= mid:
+                ch, lat0 = ch * 2 + 1, mid
+            else:
+                ch, lat1 = ch * 2, mid
+        even = not even
+        bits += 1
+        if bits == 5:
+            out += B32[ch]
+            ch, bits = 0, 0
+    return out
+
+def geocode(zipc):
+    """[lat, lon, PLACE ST] for a US ZIP, or the status code that stopped
+    it. ZIPs do not move, so a day in cache is conservative."""
+    g = http.get(GEO + zipc, ttl_seconds = 86400)
+    st = g["status_code"]
+    if st != 200:
+        return [None, st]
+    p = dig(g["json"], ["places", 0], {})
+    lat, lon = dig(p, ["latitude"], ""), dig(p, ["longitude"], "")
+    if type(p) != "dict" or lat == "" or lon == "":
+        return [None, 404]
+    place = clean(dig(p, ["place name"], ""))
+    st2 = clean(dig(p, ["state abbreviation"], ""))
+    if st2 != "":
+        place = (place + " " + st2).strip()
+    return [[float(lat), float(lon), place], 200]
+
 def dig(o, path, dflt):
     cur = o
     for k in path:
@@ -415,8 +561,19 @@ def fetch(ctx):
                     subs = ["THE PANEL LOOKS FOR EVENTS AROUND IT",
                             "EVENTS ARE FOUND AROUND IT"])
 
-    params = {"apikey": key, "postalCode": zipc, "radius": rad,
-              "unit": "miles", "countryCode": "US", "size": "20",
+    geo = geocode(zipc)
+    if geo[0] == None:
+        if geo[1] == 0:
+            return dict(base, ok = False, offline = True,
+                        head = "ZIP LOOKUP OFFLINE", subs = ["RETRY IN 30 MIN"])
+        return dict(base, ok = False, setup = True, head = "ZIP NOT FOUND",
+                    subs = [zipc + " IS NOT A US ZIP CODE - CHECK THE SETTING",
+                            zipc + " IS NOT A US ZIP CODE",
+                            "CHECK THE ZIP CODE"])
+    base["place"] = geo[0][2]
+
+    params = {"apikey": key, "geoPoint": geohash(geo[0][0], geo[0][1], 7),
+              "radius": rad, "unit": "miles", "countryCode": "US", "size": "20",
               "sort": "date,asc",
               "startDateTime": iso_midnight(ctx.now.year, ctx.now.month, ctx.now.day)}
     if CATS[catin] != "":
@@ -479,6 +636,11 @@ def fetch(ctx):
             continue
         seen[tag] = True
         seg = clean(dig(row, ["classifications", 0, "segment", "name"], ""))
+        # College fixtures and the like arrive as segment UNDEFINED even
+        # inside a Sports search. When the viewer chose the kind, that is
+        # the kind it is.
+        if seg not in SEG and CATS[catin] != "":
+            seg = clean(CATS[catin])
         ven = dig(row, ["_embedded", "venues", 0], {})
         evs.append({
             "name": name,
@@ -495,11 +657,14 @@ def fetch(ctx):
         })
 
     if len(evs) == 0:
+        near = base["place"] if base["place"] != "" else zipc
+        what = "NO " + CAT_SHORT[catin] + " WITHIN " + radin + " OF " + near
         return dict(base, ok = False, empty = True, total = total,
                     head = "NOTHING LISTED",
-                    subs = ["NO " + ("EVENTS" if catin == "ALL" else catin) +
-                            " NEAR " + zipc + " " + winin,
-                            "NOTHING NEAR " + zipc + " " + winin,
+                    subs = [what + " IN THE " + winin,
+                            what + " IN " + WIN_SHORT[winin],
+                            what,
+                            "NO " + CAT_SHORT[catin] + " NEAR " + near,
                             "NOTHING NEAR " + zipc])
     return dict(base, ok = True, evs = evs, total = total)
 
@@ -513,29 +678,36 @@ def fail(c, d):
     else:
         notice(c, TICKET, BAD, d["head"], d["subs"])
 
+def split_two(c, name, font):
+    """The most even two-line break where both halves fit, or -1."""
+    parts = name.split(" ")
+    best, score = -1, -999999
+    for n in range(1, len(parts)):
+        wa = c.text_width(" ".join(parts[:n]), font)
+        wb = c.text_width(" ".join(parts[n:]), font)
+        if wa <= CW and wb <= CW:
+            s = -(wa - wb) if wa > wb else -(wb - wa)
+            if s > score:
+                best, score = n, s
+    return best
+
 def draw_name(c, name):
-    """The name band is y8..19. A name that fits goes on one line, centred
-    in the band; one that does not wraps to two rows rather than losing its
-    second half, which is what the opponent in a fixture lives in."""
-    for opt in [["9x12", 8], ["8x10", 9], ["6x8", 10], ["5x7", 10]]:
-        if c.text_width(name, opt[0]) <= 172:
-            c.text(name, 10, opt[1], font = opt[0], color = INK)
+    """The hero. The name band is y8..22. A name that fits goes on one line
+    in the biggest face that holds it; one that does not wraps to two rows
+    rather than losing its second half, which is where the opponent in a
+    fixture lives."""
+    for opt in [["9x12", 9], ["8x10", 10], ["6x8", 11]]:
+        if c.text_width(name, opt[0]) <= CW:
+            c.text(name, CX, opt[1], font = opt[0], color = INK)
             return
     parts = name.split(" ")
-    if len(parts) > 1:
-        best, score = -1, -999999
-        for n in range(1, len(parts)):
-            wa = c.text_width(" ".join(parts[:n]), "4x5")
-            wb = c.text_width(" ".join(parts[n:]), "4x5")
-            if wa <= 172 and wb <= 172:
-                s = -(wa - wb) if wa > wb else -(wb - wa)
-                if s > score:
-                    best, score = n, s
-        if best > 0:
-            c.text(" ".join(parts[:best]), 10, 8, font = "4x5", color = INK)
-            c.text(" ".join(parts[best:]), 10, 14, font = "4x5", color = INK)
+    for opt in [["5x7", 8, 16], ["4x7", 8, 16], ["4x5", 9, 15]]:
+        n = split_two(c, name, opt[0])
+        if n > 0:
+            c.text(" ".join(parts[:n]), CX, opt[1], font = opt[0], color = INK)
+            c.text(" ".join(parts[n:]), CX, opt[2], font = opt[0], color = INK)
             return
-    c.text(fit_text(c, name, "4x5", 172), 10, 11, font = "4x5", color = INK)
+    c.text(fit_text(c, name, "5x7", CW), CX, 12, font = "5x7", color = INK)
 
 # ------------------------------------------------------------ page: next
 def next(c, ctx):
@@ -545,37 +717,43 @@ def next(c, ctx):
         return
     e = d["evs"][0]
     col = e["col"]
-    c.fill("black")
-    rail(c, col)
+    frame(c)
 
-    # Bands: chips 0..6, name 8..19, date 21..25, venue 27..31.
-    c.sprite(ICON.get(e["seg"], TICKET), 10, 0, legend = {"#": col})
-    x = 19
+    # The stub: the picture of what kind of thing it is, lit in its colour,
+    # then the date as a calendar leaf: month small, day big and white.
+    art = ICON.get(e["seg"], [TICKET, 2])
+    stub_art(c, art[0], col, art[1])
+    centred(c, MON[e["mon"] - 1], "4x5", 16, DIM)
+    centred(c, str(e["day"]), "8x10", 22, INK)
+
+    # Chip row y0..6: segment chip, a status chip only when the event is
+    # not simply on sale, and the place right-aligned.
+    x = CX
     x += pill(c, SEG_LABEL.get(e["seg"], e["seg"] if e["seg"] != "" else "EVENT"),
               col, x, 0) + 2
     stat = STATUS.get(e["status"], ["", OK])
     if stat[0] != "":
         x += pill(c, stat[0], stat[1], x, 0) + 2
-
-    rel = relative(e["dnum"] - d["today"], e["mins"])
-    if c.text_width(rel, "4x5") <= 181 - x - 2:
-        c.text(rel, 181, 1, font = "4x5", color = DIM, align = "right")
+    where = e["city"] + (" " + e["state"] if e["state"] != "" else "")
+    if where == "":
+        where = d.get("place", "") if d.get("place", "") != "" else d["zip"]
+    where = fit_text(c, where, "4x5", RX - x - 2)
+    if where != "":
+        c.text(where, RX, 1, font = "4x5", color = INK, align = "right")
 
     draw_name(c, e["name"])
 
-    when = fmt_date(e["dnum"], e["mon"], e["day"])
-    c.text(when, 10, 21, font = "4x5", color = INK)
-    c.text(fmt_time(e["mins"]), 10 + c.text_width(when, "4x5") + 6, 21,
-           font = "4x5", color = col)
-
-    # The city is measured first so the venue gives up room, not the place.
-    where = e["city"] + (" " + e["state"] if e["state"] != "" else "")
-    ww = c.text_width(where, "4x5")
-    if where != "":
-        c.text(where, 181, 27, font = "4x5", color = DIM, align = "right")
+    # Bottom row y24..30: the time in the segment colour, how far off it is
+    # on the right, and the venue in whatever room is left between them.
+    when = fmt_time(e["mins"])
+    c.text(when, CX, 24, font = "5x7", color = col)
+    rel = relative(e["dnum"] - d["today"], e["mins"], e["dnum"])
+    rw = c.text_width(rel, "4x5")
+    c.text(rel, RX, 25, font = "4x5", color = DIM, align = "right")
+    vx = CX + c.text_width(when, "5x7") + 4
     if e["venue"] != "":
-        c.text(fit_text(c, e["venue"], "4x5", 171 - ww - 4), 10, 27,
-               font = "4x5", color = DIM)
+        c.text(fit_text(c, e["venue"], "4x7", RX - rw - 4 - vx), vx, 24,
+               font = "4x7", color = DIM)
 
 # -------------------------------------------------------- page: upcoming
 def upcoming(c, ctx):
@@ -585,25 +763,38 @@ def upcoming(c, ctx):
         return
     evs = d["evs"]
     col = evs[0]["col"]
-    c.fill("black")
-    rail(c, col)
+    frame(c)
 
-    w = pill(c, "WHATS ON", col, 10, 0)
-    x = 10 + w + 3
-    right = d["zip"] + "  " + str(d["total"]) + " NEARBY"
-    c.text(right, 181, 1, font = "4x5", color = DIM, align = "right")
-    c.text(pick(c, ["WITHIN " + d["radlabel"], d["radlabel"], ""], "4x5",
-                181 - c.text_width(right, "4x5") - 5 - x + 1),
-           x, 1, font = "4x5", color = INK)
+    # The stub: a ticket, how many are on, and the place they are near.
+    stub_art(c, TICKET, col, 1)
+    total = d["total"] if d["total"] > len(evs) else len(evs)
+    n = str(total) if total < 10000 else "9999"
+    for opt in [["8x10", 15], ["6x8", 16], ["5x7", 17], ["4x5", 18]]:
+        if c.text_width(n, opt[0]) <= STUB_W:
+            centred(c, n, opt[0], opt[1], INK)
+            break
+    centred(c, d["zip"], "4x5", 27, DIM)
 
-    # Four rows on a 6 px pitch. The date wears the segment colour, the same
-    # colour the chip on the first page carries. Where the time would go, a
-    # troubled event says so instead: cancelled must not look ordinary.
-    shown = evs[:4]
+    # Header y0..6: the page name, and the search on the right.
+    c.text("UPCOMING", CX, 1, font = "4x5", color = INK)
+    hx = CX + c.text_width("UPCOMING", "4x5") + 4
+    c.text(pick(c, ["WITHIN " + d["radlabel"] + " - " + d["win"],
+                    d["rad"] + " MI - " + d["win"],
+                    d["rad"] + " MI - " + WIN_SHORT[d["win"]],
+                    d["radlabel"], ""],
+                "4x5", RX - hx + 1),
+           RX, 1, font = "4x5", color = DIM, align = "right")
+
+    # Three rows on an 8 px pitch, the ones after the event on the first
+    # page. The date wears the segment colour, the same colour the chip on
+    # the first page carries. Where the time would go, a troubled event says
+    # so instead: cancelled must not look ordinary.
+    shown = evs[1:4] if len(evs) > 1 else evs[:1]
+    nx = CX + c.text_width("SEP 30", "4x5") + 3
     for i in range(len(shown)):
         e = shown[i]
-        y = 8 + i * 6
-        c.text(MON[e["mon"] - 1] + " " + str(e["day"]), 10, y,
+        y = 8 + i * 8
+        c.text(MON[e["mon"] - 1] + " " + str(e["day"]), CX, y + 1,
                font = "4x5", color = e["col"])
         note = STATUS_SHORT.get(e["status"], "")
         if note != "":
@@ -612,6 +803,6 @@ def upcoming(c, ctx):
             note = fmt_time(e["mins"]) if e["mins"] >= 0 else "TBA"
             tcol = DIM
         tw = c.text_width(note, "4x5")
-        c.text(note, 181, y, font = "4x5", color = tcol, align = "right")
-        c.text(fit_text(c, e["name"], "4x5", 177 - tw - 40), 40, y,
-               font = "4x5", color = INK)
+        c.text(note, RX, y + 1, font = "4x5", color = tcol, align = "right")
+        c.text(fit_text(c, e["name"], "4x7", RX - tw - 3 - nx), nx, y,
+               font = "4x7", color = INK)
