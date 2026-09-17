@@ -22,7 +22,8 @@
 # request: fifty states would be fifty requests against a budget of eight.
 #
 # DESIGN. The map is the app. It is a real Albers projection of the lower
-# 48 rasterised to 52 x 32 - the panel's full height - where every state is
+# 48 rasterised to 76 x 32, with a dark hairline between neighbours so two
+# states of a similar shade never merge into one blob, and every state is
 # its own character in one sprite, so a single legend recolours the whole
 # country each render. Alaska and Hawaii cannot be drawn at this size
 # without reading as part of the mainland, so they sit beside the map as
@@ -46,47 +47,49 @@ NR = "#1C2230"          # no rate published
 BRAND = "#5CC8F0"
 OFFLINE = "#3C4043"
 # cold to hot, five bands
-RAMP = ["#2A4A7A", "#2E9BA8", "#E8C15A", "#F07B2A", "#FF3B3B"]
+RAMP = ["#1B4FD8", "#00C2C7", "#8FD130", "#FFC219", "#FF3B21"]
+EDGE = "#0A0D14"        # the hairline between neighbours
 
 # --------------------------------------------------------------- the map
 # Albers equal-area conic, lower 48 plus DC, one character per state.
-# Rhode Island and DC are a single cell each: at 52 px wide they lose every
-# cell to their neighbours, so each is placed at its own centroid.
+# A state too small to spare a cell keeps all of them and goes unbordered;
+# Rhode Island and DC are placed at their centroids when the raster loses
+# them to a larger neighbour entirely.
 USA = """
-......................ppp..................II.......
-......................ppp.................III.......
-.....................ppppp...............IIII.......
-.....................ppppppp............IIII........
-.................ppppppppppppQQQQQ......IIII........
-................pppppppppppppQQQQQWA.IIIIII.........
-................pppppppppppppQQWWWWAIIIIIII.........
-...........Bdd.ppppppppppppppQQWWWAAAAJJJJ..........
-........BBBBBddddddppppppppppQQWWWAAAAJJJJJ.........
-.......BBBBBBddddddpppppppppCCCWWWAAAJJJJJmm........
-....DDDBBBBBBddddddppppiiiiiCCCCWWAAAJJJJmmm........
-....DDDBBBBBBddddddpppiiiiiiCCCCWWAAAJJJmmmmf.......
-...DDDDDBBBBBddddddpppiiiiiiCCCCooooooofmmfffff.....
-.DDDDDDaBBBBBdddddddiiiiiiiiXXXXXooooooofffffff.....
-.DDDDDDaBBBBBddEEEEEOOOOOOOOXXXXXPPPPPPssffffff.....
-.DDDDDaaaqqqqqEEEEEEEOOOOOOOXXXXLLMPPPPPusssssf.....
-DDDDDaaaaqqqqqEEEEEEEOOOOOOOXXXXLLMMMPPuuusssss.....
-DDDDDaaaaqqqqqEEEEEEEOOOOOOXXXXLLLMMMhhhuuussSS.....
-DDDDaaaaaqqqqqEEEEEEEZZZZZZXXXNLLLMMMhhhhuuuHSG.....
-DDDDaaaaaqqqqqEEEwwZZZZZZZNNNNNLLLMMMhhhhkkkkkc.....
-DDDDaaaaaaqqwwwwwwwZZZZZZZNNNNNNLLMUUhhhhkkkkkce....
-DDDDaaaaaaqKwwwwwwwZZZZZnnNNNNNvvv.UUUU.kkkkkkeee...
-DDDDaajKKKKKKwwwwwwnnnnnnnVVVVvvvvUUUUU..eeeeeeFlT..
-DDDjjjjjKKKKKwwwwwwnnnnnnnVVVvvvvvUUUUU..eeeeeeTTTT.
-jjjjjjjjKKKKKwwwwYYnnnnnnnVVVvvvvvvUUU.....eeeerbR..
-jjjjjjjjKKKYYYYYYYYYggggggVVVvvvvUUUUU......eerrbR..
-.jjjjjjjjKYYYYYYYYYgggggggVVVVvUUUUUU.......eerrRRR.
-.jjjjjjtKKYYYYYYYYYYggggggVVVVVVUU.............bRRRR
-..jttttttKYYYYYYYYYYgggggVVVVVV.U...............RRRR
-..tttttttKYYYYYYYYYYggg....V....................RRR.
-..tttttttKYYY...................................RRR.
-..ttttttt...........................................
+.................................pppp..........................III..........
+.................................pppp........................IIIII..........
+................................pppppp......................IIIIII..........
+...............................pppppppppp...................IIIII...........
+.........................pppp.ppppppppppp-QQQQQQQ--.........IIII............
+........................ppppppppppppppppp--QQQQQ-W-A-.IIIIIIIIII............
+.......................ppppppppppppppppppp-QQQ--WW------------I.............
+................B--d..------ppppppppppppp-QQQ-WWWW-AAAA-JJJJJJ..............
+............BBBBBB-dddddddd-ppppppppppppp-----WWWW-AAAA-JJJJJ--.............
+..........BBBBBBBB-dddddddd-pppppp--------CCC--WWW-AAA-JJJJJ-mmm............
+......DDD--BBBBBBB-dddddddd-ppppp-iiiiii-CCCCC-WWW-AAA-JJJ--mmmmm...........
+......DDDD-BBBBBBB-dddddddd-pppp-iiiiiii-CCCCC-------------mmm---ff.........
+....DDDDDD-BBBBBBB--ddddddd--p---iiiiiii---------ooooooo------ffffff........
+..DDDDDDDD--BBBBBBB-ddd------------------XXXXXXX------------fffffffff.......
+..DDDDDDD-a------------EEEEEE-OOOOOOOOOO-XXXXXX-L---PPPPP-----------f.......
+.DDDDDDD-aaa-qqqqqq-EEEEEEEEE-OOOOOOOOOO-XXXXX-LL-----PPPP-u--sssss--.......
+.DDDDDD-aaaa-qqqqqq--EEEEEEEE-OOOOOOOOOO-XXXX--LLL-MM------uu--sss---.......
+.DDDDD-aaaaa--qqqqqq-EEEEEEEE--------------X-LLLLL-MM-hhhh--uu----SSS.......
+DDDDD-aaaaaaa-qqqqqq-EEE------ZZZZZZZZ-NNN----LLLL-MM-hhhhh-----SHSGc.......
+DDDD--aaaaaaa-qqqq------www-ZZZZZZZZZZ-NNNNNN--LL-----hhhhh-kkkkkk-ccc......
+DDDDD-aaaaaaa-qqq-wwwwwwwww-ZZZZZZZ---NNNNNNN------UU----hh-kkkkkkk-ce......
+DDDDD-aaa----------wwwwwwww--------nn--------vvvvv.UUUUUU..-k-------e---....
+DDDD-----j-KKKKKKK-wwwwwwww-nnnnnnnnn-VVVVV--vvvvv.UUUUUU....eeeeeee-FFlTT..
+D---jjjjjj-KKKKKKK-wwwwww---nnnnnnnnn-VVVV-vvvvvvv-UUUUUU....eeeeeee-----T..
+.jjjjjjjjj--KKKK---------YY-----------VVVV-vvvvv---UUUUU........eeee-rbbR...
+.jjjjjjjjjj--KK-YYYYYYYYYYYY-gggggggg-VVVV---v--UUUUUUUU........eee-rrbbRR..
+..jjjjjjjj---K-YYYYYYYYYYYYY-gggggggg-VVVVVV---UUUUUUU............e-rrbRRRRR
+..jjj-----t--K-YYYYYYYYYYYYY-gggggggg-VVVVVVVV-UU.....................RRRRRR
+...--ttttttt-K-YYYYYYYYYYYYY-ggggggg-VVVVVVV.V.UU......................RRRRR
+...ttttttttt--YYYYYYYYYYYYYY-ggggg.....VV..............................RRRR.
+...ttttttttt--YYYYYY...................................................RRR..
+...tttttttttt...............................................................
 """
-MAP_W = 52
+MAP_W = 76
 CELL = {"A": "AL", "B": "AZ", "C": "AR", "D": "CA", "E": "CO", "F": "CT", "G": "DE", "H": "DC",
         "I": "FL", "J": "GA", "K": "ID", "L": "IL", "M": "IN", "N": "IA", "O": "KS", "P": "KY",
         "Q": "LA", "R": "ME", "S": "MD", "T": "MA", "U": "MI", "V": "MN", "W": "MS", "X": "MO",
@@ -292,7 +295,7 @@ def window_text(window):
 def draw_map(c, d, solo):
     """The whole country in one sprite: the legend carries a colour per
     state, so 49 shapes cost one draw. `solo` lights a single state."""
-    leg = {}
+    leg = {"-": EDGE}
     for ch in CELL:
         ab = CELL[ch]
         if solo != "":
@@ -313,14 +316,14 @@ def swatch(c, x, y, ab, d, wide):
 def fail_screen(c, d):
     c.fill("black")
     rail(c, OFFLINE)
-    leg = {}
+    leg = {"-": EDGE}
     for ch in CELL:
         leg[ch] = FAINT
     c.sprite(USA, 10, 0, legend = leg)
-    hf = fit(c, d["head"], ["6x8", "5x7", "4x5"], 112)
-    c.text(hf[1], 124, 10, font = hf[0], color = "amber", align = "center")
-    sf = fit(c, d["sub"], ["4x5", "picopixel"], 112)
-    c.text(sf[1], 124, 22, font = sf[0], color = DIM, align = "center")
+    hf = fit(c, d["head"], ["5x7", "4x5"], 90)
+    c.text(hf[1], 136, 10, font = hf[0], color = "amber", align = "center")
+    sf = fit(c, d["sub"], ["4x5", "picopixel"], 90)
+    c.text(sf[1], 136, 22, font = sf[0], color = DIM, align = "center")
 
 # ------------------------------------------------------------ page: map
 def heatmap(c, ctx):
@@ -333,25 +336,27 @@ def heatmap(c, ctx):
 
     # Text column x 66..181. The map owns the full height at the left, so
     # the chip row starts here rather than at x 10.
-    tx = 66
+    tx = 90
     w = pill(c, d["metric"], BRAND, tx, 0)
     c.text("PER 100K", tx + w + 3, 1, font = "4x5", color = DIM)
-    c.text(clip(c, window_text(d["window"]), "picopixel", 116), tx, 8, font = "picopixel", color = FAINT)
+    c.text(clip(c, window_text(d["window"]), "picopixel", 92), tx, 8, font = "picopixel", color = FAINT)
 
     # The ramp, drawn as it is used, with the two numbers that anchor it.
     for i in range(5):
-        c.rect(tx + i * 13, 14, tx + i * 13 + 11, 18, fill = RAMP[i])
+        c.rect(tx + i * 11, 14, tx + i * 11 + 9, 18, fill = RAMP[i])
     c.text(rate_text(d["lo"]), tx, 20, font = "picopixel", color = DIM)
-    c.text(rate_text(d["hi"]), tx + 64, 20, font = "picopixel", color = DIM, align = "right")
+    c.text(rate_text(d["hi"]), tx + 54, 20, font = "picopixel", color = DIM, align = "right")
 
     if d["natl"] != None:
-        c.text("US", tx + 74, 14, font = "4x5", color = DIM)
-        c.text(rate_text(d["natl"]), tx + 74, 20, font = "5x7", color = INK)
+        # 4x5 and not 5x7: a 7-row face here would reach y 26 and land on
+        # the Alaska and Hawaii swatches below.
+        c.text("US", tx + 62, 14, font = "4x5", color = DIM)
+        c.text(rate_text(d["natl"]), tx + 62, 20, font = "4x5", color = INK)
 
     # Alaska and Hawaii live beside the map, labelled, because at 52 px
     # wide they would read as part of the mainland.
     swatch(c, tx, 26, "AK", d, True)
-    swatch(c, tx + 40, 26, "HI", d, True)
+    swatch(c, tx + 48, 26, "HI", d, True)
 
 # --------------------------------------------------------- page: top list
 def toplist(c, ctx):
@@ -413,15 +418,20 @@ def mystate(c, ctx):
     mine = d["rates"].get(ab, None)
     draw_map(c, d, ab)
 
-    tx = 66
+    tx = 90
     w = pill(c, ab, BRAND, tx, 0)
     nx = 182
     if d["natl"] != None:
         us = "US " + rate_text(d["natl"])
         c.text(us, 181, 1, font = "4x5", color = DIM, align = "right")
         nx = 181 - c.text_width(us, "4x5") - 5
-    c.text(clip(c, SHORT.get(d["home"], d["home"]), "4x5", nx - (tx + w + 3)), tx + w + 3, 1,
-           font = "4x5", color = INK)
+    nm = SHORT.get(d["home"], d["home"])
+    room = nx - (tx + w + 3)
+    # CALIFORNIA cut to CALIFORNI is a typo on a wall; the abbreviation is
+    # not, so a name that will not fit steps down to it.
+    if c.text_width(nm, "4x5") > room:
+        nm = ab
+    c.text(clip(c, nm, "4x5", room), tx + w + 3, 1, font = "4x5", color = INK)
 
     if mine == None:
         c.text("NOT REPORTED", tx, 12, font = "6x8", color = DIM)
@@ -449,5 +459,5 @@ def mystate(c, ctx):
         yr = signed_text(ch) + " VS 2024"
         c.text(yr, 181, 26, font = "4x5", color = RAMP[4] if ch > 0 else RAMP[1], align = "right")
         edge = 181 - c.text_width(yr, "4x5") - 5
-    line = ("RANK " + str(rank) + " OF " + str(len(d["ranked"]))) if rank > 0 else "UNRANKED"
+    line = ("RANK #" + str(rank) + "/" + str(len(d["ranked"]))) if rank > 0 else "UNRANKED"
     c.text(clip(c, line, "4x5", edge - tx + 1), tx, 26, font = "4x5", color = INK)
