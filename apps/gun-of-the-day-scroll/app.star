@@ -1,68 +1,78 @@
-# Gun of the Day - a different historically significant firearm each day,
-# written like a museum placard.
+# Arsenal Facts - a different piece of significant military engineering
+# every five minutes, written like a museum placard.
 #
-# ROSTER. Curated, 71 pieces from the flintlock era to the polymer one. It
-# is curated rather than queried because the live sources are not good
+# FOUR SUBJECTS. Guns, aircraft, vehicles and ships, each a curated roster.
+# The SUBJECT setting picks one, or ALL cycles the subject as the piece
+# changes, so a panel left on ALL shows a rifle, then a fighter, then a
+# tank, then a ship.
+#
+# ROSTER. Curated rather than queried, because the live sources are not good
 # enough to place on a wall:
 #
-#   - Wikidata has no inception date at all for 41 of these 71, and no
-#     country of origin for a single one of them. Several dates it does
-#     carry are the wrong thing: 1675 for the Charleville musket is when
-#     the armoury was founded, not when the 1717 pattern appeared, and its
-#     dates for the M1 carbine, the MP 40 and the M2 Browning are all a
-#     predecessor model rather than the piece named.
+#   - Wikidata has no inception date at all for 41 of the 71 original
+#     firearms, and no country of origin for a single one of them. Several
+#     dates it does carry are the wrong thing: 1675 for the Charleville
+#     musket is when the armoury was founded, not when the 1717 pattern
+#     appeared, and its dates for the M1 carbine, the MP 40 and the M2
+#     Browning are all a predecessor model rather than the piece named.
 #   - Wikipedia's own short descriptions run from excellent to the single
 #     word "Revolver".
 #
 # So the placard facts are curated and checked against the prose of the
-# Wikipedia articles, and the years are the commonly cited year a design
-# appeared or was adopted. Sources disagree by a year or two on plenty of
-# these; the README says so.
+# Wikipedia articles. Years are the commonly cited year a design appeared,
+# was adopted or was commissioned. Sources disagree by a year or two on
+# plenty of these; the README says so.
 #
-# LIVE. Only the STORY page goes to the network, for one line of Wikipedia
-# summary. TODAY and SPECS are pure curated data and cannot fail, so the
-# panel keeps working with the network down.
+# NO NETWORK. Every page is curated data, so no page of this app can fail
+# and the panel needs no connection at all. An earlier version put one line
+# of live Wikipedia summary at the foot of the story page; that line was
+# dropped so the curated text could have a third line instead, which is a
+# better use of the same 32 pixels.
 #
-# Two title traps, both found by probing: "Winchester Model 1873" silently
-# redirects to the generic article "Winchester rifle", so the curated name
-# is always displayed rather than whatever the API normalises to; and an
-# ampersand in a title has to be percent-encoded by hand.
+# The last field of each entry is the Wikipedia article the placard facts
+# were checked against. It is provenance, not a fetch.
 #
-# ART. The silhouettes are drawn from rectangles, triangles and circles
-# rather than character art, which keeps them editable and lets each shape
-# take its own natural width: a derringer really is drawn short next to a
-# musket.
-
-REST = "https://en.wikipedia.org/api/rest_v1/page/summary/"
-UA = {"User-Agent": "glance-gun-of-the-day (glance-led.dev)"}
+# ART. Every silhouette is a c.sprite string in a five tone legend, so the
+# host can recolour it per era. One sprite call costs one draw op no matter
+# how many pixels it lights, which is what makes per-pixel art affordable
+# here at all. Widths differ on purpose: relative size is part of the story,
+# so a derringer is drawn short beside a musket and a destroyer short beside
+# a carrier.
 
 INK = "#FFFFFF"
-DIM = "#7C8BA1"
-FAINT = "#222B3A"
+DIM = "#6E7A94"
 STEEL = "#C3CEDC"
-DARK = "#8A94A6"
 
-# The furniture colour moves with the era, so consecutive days look
-# different at a glance: brass, copper, olive, then steel blue.
+# The furniture colour moves with the era, so consecutive pieces look
+# different at a glance: bone, copper, olive, teal, then steel blue.
+#
+# Two constraints set these values. The name chip draws BLACK text on the
+# accent, so every one of them has to clear roughly 150 brightness or the
+# chip goes muddy - the old copper sat at 132 and was visibly the worst of
+# the five. And none of them may land on the error amber #E8B04A, or a
+# viewer cannot tell "this piece is pre-1850" from "this app is set up
+# wrong"; the old brass #E0A32E was 13 luma away from it.
 ERAS = [
-    [1850, "#E0A32E", "BEFORE 1850"],
-    [1900, "#C87137", "1850 TO 1899"],
-    [1946, "#93A85C", "WORLD WARS"],
-    [9999, "#7FA8D4", "MODERN"],
+    [1850, "#D9C58F", "BEFORE 1850"],
+    [1900, "#DD8B4B", "1850 TO 1899"],
+    [1946, "#A3B86C", "1900 TO 1945"],
+    [1990, "#6FC3B1", "1946 TO 1989"],
+    [9999, "#7FA8D4", "1990 ONWARD"],
 ]
 
-# name, kind, category, year, country, designer, why it mattered, shape,
-# wikipedia title
-ROSTER = [
+# Entry layout, shared by all four rosters:
+# 0 name  1 kind  2 category  3 year  4 origin  5 designer  6 why it mattered
+# 7 shape key  8 wikipedia title
+GUNS = [
     ["BLUNDERBUSS", "FLARED MUZZLE GUN", "SHOTGUNS", 1650, "EUROPE", "",
      "A FLARED MUZZLE FOR CLOSE QUARTERS AT SEA AND ON COACHES", "BLUNDER",
      "Blunderbuss"],
-    ["PUCKLE GUN", "CRANK REPEATER", "MACHINE GUNS", 1718, "BRITAIN", "JAMES PUCKLE",
-     "PATENTED 1718, AN EARLY TRY AT A RAPID FIRING CREW WEAPON", "GATLING",
-     "Puckle gun"],
     ["CHARLEVILLE MUSKET", "FLINTLOCK MUSKET", "RIFLES", 1717, "FRANCE", "CHARLEVILLE ARMOURY",
      "ARMED THE FRENCH LINE AND THE AMERICAN REVOLUTION", "MUSKET",
      "Charleville musket"],
+    ["PUCKLE GUN", "CRANK REPEATER", "MACHINE GUNS", 1718, "BRITAIN", "JAMES PUCKLE",
+     "PATENTED 1718, AN EARLY TRY AT A RAPID FIRING CREW WEAPON", "GATLING",
+     "Puckle gun"],
     ["BROWN BESS", "FLINTLOCK MUSKET", "RIFLES", 1722, "BRITAIN", "",
      "THE BRITISH LAND PATTERN MUSKET, IN SERVICE OVER A CENTURY", "MUSKET",
      "Brown Bess"],
@@ -135,7 +145,7 @@ ROSTER = [
      "THE TRAPDOOR, FIRST STANDARD ISSUE US BREECH LOADER", "BOLT",
      "Springfield Model 1873"],
     ["MAXIM GUN", "MACHINE GUN", "MACHINE GUNS", 1884, "BRITAIN", "HIRAM MAXIM",
-     "THE FIRST FULLY AUTOMATIC MACHINE GUN", "MG",
+     "THE FIRST FULLY AUTOMATIC MACHINE GUN", "MAXIM",
      "Maxim gun"],
     ["LEBEL 1886", "BOLT ACTION RIFLE", "RIFLES", 1886, "FRANCE", "NICOLAS LEBEL",
      "FIRST SERVICE RIFLE TO USE SMOKELESS POWDER", "BOLT",
@@ -183,13 +193,13 @@ ROSTER = [
      "THE LONG JAPANESE SERVICE RIFLE OF BOTH WORLD WARS", "BOLT",
      "Type 38 rifle"],
     ["LEWIS GUN", "LIGHT MACHINE GUN", "MACHINE GUNS", 1911, "USA", "ISAAC LEWIS",
-     "DRUM FED, WITH A FAT COOLING SHROUD AROUND THE BARREL", "MG",
+     "DRUM FED, WITH A FAT COOLING SHROUD AROUND THE BARREL", "LEWIS",
      "Lewis gun"],
     ["M1911 PISTOL", "SELF LOADING PISTOL", "PISTOLS", 1911, "USA", "JOHN BROWNING",
      "THE US SIDEARM FOR MORE THAN SEVENTY YEARS", "PISTOL",
      "M1911 pistol"],
     ["VICKERS GUN", "MACHINE GUN", "MACHINE GUNS", 1912, "BRITAIN", "VICKERS LIMITED",
-     "WATER COOLED, AND FAMOUS FOR FIRING FOR DAYS ON END", "MG",
+     "WATER COOLED, AND FAMOUS FOR FIRING FOR DAYS ON END", "MAXIM",
      "Vickers machine gun"],
     ["THOMPSON", "SUBMACHINE GUN", "MACHINE GUNS", 1918, "USA", "JOHN T THOMPSON",
      "MEANT AS A TRENCH BROOM, REMEMBERED AS THE TOMMY GUN", "SMG",
@@ -201,10 +211,10 @@ ROSTER = [
      "DOUBLE ACTION BLOWBACK POCKET PISTOL", "PISTOL",
      "Walther PP"],
     ["M2 BROWNING", "HEAVY MACHINE GUN", "MACHINE GUNS", 1933, "USA", "JOHN BROWNING",
-     "FIFTY CALIBRE HEAVY GUN STILL IN SERVICE NINETY YEARS ON", "MG",
+     "FIFTY CALIBRE HEAVY GUN STILL IN SERVICE NINETY YEARS ON", "HMG",
      "M2 Browning"],
     ["BREN GUN", "LIGHT MACHINE GUN", "MACHINE GUNS", 1935, "BRITAIN", "VACLAV HOLEK",
-     "A CZECH DESIGN IN BRITISH SERVICE, MAGAZINE ON TOP", "MG",
+     "A CZECH DESIGN IN BRITISH SERVICE, MAGAZINE ON TOP", "LMG",
      "Bren light machine gun"],
     ["KARABINER 98K", "BOLT ACTION RIFLE", "RIFLES", 1935, "GERMANY", "MAUSER",
      "STANDARD GERMAN SERVICE RIFLE OF THE SECOND WORLD WAR", "BOLT",
@@ -231,7 +241,7 @@ ROSTER = [
      "AN AUTOMATIC RIFLE BUILT FOR PARATROOPERS", "RIFLE",
      "FG 42"],
     ["MG 42", "MACHINE GUN", "MACHINE GUNS", 1942, "GERMANY", "WERNER GRUNER",
-     "A RATE OF FIRE SO HIGH IT IS STILL COPIED TODAY", "MG",
+     "A RATE OF FIRE SO HIGH IT IS STILL COPIED TODAY", "GPMG",
      "MG 42"],
     ["STG 44", "ASSAULT RIFLE", "RIFLES", 1944, "GERMANY", "HUGO SCHMEISSER",
      "THE FIRST TRUE ASSAULT RIFLE, AND THE PATTERN FOR ALL AFTER", "RIFLE",
@@ -255,55 +265,2014 @@ ROSTER = [
      "THE FORTY FOUR MAGNUM REVOLVER", "REVOLVER",
      "Smith & Wesson Model 29"],
     ["M60 MACHINE GUN", "MACHINE GUN", "MACHINE GUNS", 1957, "USA", "SPRINGFIELD ARMORY",
-     "THE GENERAL PURPOSE MACHINE GUN OF VIETNAM", "MG",
+     "THE GENERAL PURPOSE MACHINE GUN OF VIETNAM", "GPMG",
      "M60 machine gun"],
     ["H&K G3", "BATTLE RIFLE", "RIFLES", 1959, "GERMANY", "HECKLER & KOCH",
      "ROLLER DELAYED ACTION, TAKEN UP BY SOME FIFTY ARMIES", "RIFLE",
      "Heckler & Koch G3"],
+    ["M14 RIFLE", "BATTLE RIFLE", "RIFLES", 1959, "USA", "SPRINGFIELD ARMORY",
+     "THE LAST AMERICAN SERVICE RIFLE WITH A WOODEN STOCK", "RIFLE",
+     "M14 rifle"],
+    ["MOSSBERG 500", "PUMP SHOTGUN", "SHOTGUNS", 1960, "USA", "MOSSBERG",
+     "A TANG SAFETY AND A LOW PRICE, MADE IN THE MILLIONS", "SHOTGUN",
+     "Mossberg 500"],
+    ["PKM", "MACHINE GUN", "MACHINE GUNS", 1961, "USSR", "MIKHAIL KALASHNIKOV",
+     "THE KALASHNIKOV ACTION SCALED UP AND TURNED UPSIDE DOWN", "GPMG",
+     "PK machine gun"],
     ["REMINGTON 700", "BOLT ACTION RIFLE", "RIFLES", 1962, "USA", "REMINGTON",
      "THE BOLT ACTION BEHIND COUNTLESS SPORTING AND TARGET RIFLES", "BOLT",
      "Remington Model 700"],
+    ["SVD DRAGUNOV", "SNIPER RIFLE", "RIFLES", 1963, "USSR", "YEVGENY DRAGUNOV",
+     "A MARKSMANS RIFLE ISSUED DOWN AT SQUAD LEVEL", "SNIPER",
+     "SVD (rifle)"],
     ["M16 RIFLE", "ASSAULT RIFLE", "RIFLES", 1964, "USA", "EUGENE STONER",
      "ALUMINIUM AND PLASTIC, LIGHT, AND A SMALL FAST BULLET", "RIFLE",
      "M16 rifle"],
+    ["H&K MP5", "SUBMACHINE GUN", "MACHINE GUNS", 1966, "GERMANY", "HECKLER & KOCH",
+     "ROLLER DELAYED AND SO SMOOTH IT BECAME THE POLICE STANDARD", "PDW",
+     "Heckler & Koch MP5"],
+    ["AK-74", "ASSAULT RIFLE", "RIFLES", 1974, "USSR", "MIKHAIL KALASHNIKOV",
+     "THE KALASHNIKOV RECUT FOR A SMALL FAST BULLET", "RIFLE",
+     "AK-74"],
+    ["BERETTA 92", "SELF LOADING PISTOL", "PISTOLS", 1975, "ITALY", "BERETTA",
+     "THE OPEN SLIDE PISTOL THAT REPLACED THE M1911 IN US SERVICE", "PISTOL",
+     "Beretta 92"],
+    ["M240", "MACHINE GUN", "MACHINE GUNS", 1977, "BELGIUM", "FN HERSTAL",
+     "THE FN MAG, BOUGHT BY EIGHTY ARMIES AND RENAMED BY EACH", "GPMG",
+     "M240 machine gun"],
+    ["STEYR AUG", "BULLPUP RIFLE", "RIFLES", 1978, "AUSTRIA", "STEYR MANNLICHER",
+     "GREEN POLYMER AND A BULLPUP LAYOUT, IN 1978", "BULLPUP",
+     "Steyr AUG"],
     ["GLOCK 17", "SELF LOADING PISTOL", "PISTOLS", 1982, "AUSTRIA", "GASTON GLOCK",
-     "A POLYMER FRAME THAT CHANGED THE WHOLE HANDGUN TRADE", "PISTOL",
+     "A POLYMER FRAME THAT CHANGED THE WHOLE HANDGUN TRADE", "MODPISTOL",
      "Glock"],
+    ["BARRETT M82", "ANTI MATERIEL RIFLE", "RIFLES", 1982, "USA", "RONNIE BARRETT",
+     "A FIFTY CALIBRE RIFLE ONE PERSON CAN CARRY AND FIRE", "SNIPER",
+     "Barrett M82"],
+    ["ACCURACY INTL AW", "SNIPER RIFLE", "RIFLES", 1982, "BRITAIN", "MALCOLM COOPER",
+     "AN ALUMINIUM CHASSIS IN PLACE OF A WOODEN STOCK", "SNIPER",
+     "Accuracy International Arctic Warfare"],
+    ["DESERT EAGLE", "SELF LOADING PISTOL", "PISTOLS", 1983, "ISRAEL", "MAGNUM RESEARCH",
+     "A GAS OPERATED MAGNUM PISTOL, HUGE AND UNMISTAKABLE", "MODPISTOL",
+     "Desert Eagle"],
+    ["M249 SAW", "LIGHT MACHINE GUN", "MACHINE GUNS", 1984, "BELGIUM", "FN HERSTAL",
+     "BELT FED FIREPOWER CARRIED INSIDE THE RIFLE SQUAD", "SAW",
+     "M249 light machine gun"],
+    ["SIG P226", "SELF LOADING PISTOL", "PISTOLS", 1984, "GERMANY", "SIG SAUER",
+     "THE PISTOL THAT LOST AN ARMY TRIAL AND WON THE NAVY SEALS", "PISTOL",
+     "SIG Sauer P226"],
+    ["FN P90", "PERSONAL DEFENCE WEAPON", "MACHINE GUNS", 1990, "BELGIUM", "FN HERSTAL",
+     "A MAGAZINE LYING FLAT ALONG THE TOP AND A NEW CARTRIDGE", "BULLPUP",
+     "FN P90"],
+    ["M4 CARBINE", "CARBINE", "RIFLES", 1994, "USA", "COLT",
+     "THE SHORT M16 THAT BECAME THE STANDARD US RIFLE", "CARBINE",
+     "M4 carbine"],
+    ["QBZ-95", "BULLPUP RIFLE", "RIFLES", 1995, "CHINA", "NORINCO",
+     "CHINAS BULLPUP SERVICE RIFLE IN ITS OWN 5.8MM CARTRIDGE", "BULLPUP",
+     "QBZ-95"],
+    ["H&K G36", "ASSAULT RIFLE", "RIFLES", 1997, "GERMANY", "HECKLER & KOCH",
+     "A POLYMER RECEIVER AND A CARRY HANDLE WITH THE SIGHT BUILT IN", "CARBINE",
+     "Heckler & Koch G36"],
+    ["BENELLI M4", "SEMI AUTO SHOTGUN", "SHOTGUNS", 1999, "ITALY", "BENELLI",
+     "A GAS SYSTEM RELIABLE ENOUGH FOR THE US MARINES", "MODSHOTGUN",
+     "Benelli M4"],
+    ["IWI TAVOR", "BULLPUP RIFLE", "RIFLES", 2001, "ISRAEL", "ISRAEL WEAPON INDUSTRIES",
+     "A BULLPUP BUILT AROUND GETTING IN AND OUT OF VEHICLES", "BULLPUP",
+     "IWI Tavor"],
+    ["H&K MP7", "PERSONAL DEFENCE WEAPON", "MACHINE GUNS", 2001, "GERMANY", "HECKLER & KOCH",
+     "PISTOL SIZED, FIRING A ROUND THAT DEFEATS BODY ARMOUR", "PDW",
+     "Heckler & Koch MP7"],
+    ["FN SCAR", "ASSAULT RIFLE", "RIFLES", 2004, "BELGIUM", "FN HERSTAL",
+     "ONE RIFLE THAT CHANGES CALIBRE BY CHANGING THE BARREL", "CARBINE",
+     "FN SCAR"],
+    ["HK416", "ASSAULT RIFLE", "RIFLES", 2004, "GERMANY", "HECKLER & KOCH",
+     "A SHORT STROKE PISTON FITTED TO THE AR PATTERN", "CARBINE",
+     "Heckler & Koch HK416"],
+    ["KRISS VECTOR", "SUBMACHINE GUN", "MACHINE GUNS", 2009, "USA", "KRISS USA",
+     "THE BOLT DIVES DOWNWARD TO PULL THE MUZZLE BACK DOWN", "PDW",
+     "KRISS Vector"],
+    ["KEL-TEC KSG", "BULLPUP SHOTGUN", "SHOTGUNS", 2011, "USA", "KEL-TEC",
+     "TWO MAGAZINE TUBES IN A BULLPUP SHOTGUN", "MODSHOTGUN",
+     "Kel-Tec KSG"],
+    ["SIG SAUER P320", "SELF LOADING PISTOL", "PISTOLS", 2014, "USA", "SIG SAUER",
+     "THE SERIALISED PART IS A CHASSIS, SO THE PISTOL RESIZES", "MODPISTOL",
+     "SIG Sauer P320"],
+    ["SIG MCX", "ASSAULT RIFLE", "RIFLES", 2015, "USA", "SIG SAUER",
+     "BUILT TO RUN SHORT AND QUIET WITH A SUPPRESSOR FITTED", "CARBINE",
+     "SIG MCX"],
+    ["CZ BREN 2", "ASSAULT RIFLE", "RIFLES", 2015, "CZECHIA", "CESKA ZBROJOVKA",
+     "LIGHT AND MODULAR, AND IT TOOK THE OLD BREN NAME BACK", "CARBINE",
+     "CZ 805 BREN"],
+    ["AK-12", "ASSAULT RIFLE", "RIFLES", 2018, "RUSSIA", "KALASHNIKOV CONCERN",
+     "THE KALASHNIKOV GIVEN RAILS AND AN ADJUSTABLE STOCK", "CARBINE",
+     "AK-12"],
+    ["QBZ-191", "ASSAULT RIFLE", "RIFLES", 2019, "CHINA", "NORINCO",
+     "CHINA LEFT THE BULLPUP AND WENT BACK TO A CONVENTIONAL RIFLE", "CARBINE",
+     "QBZ-191"],
+    ["FN EVOLYS", "LIGHT MACHINE GUN", "MACHINE GUNS", 2021, "BELGIUM", "FN HERSTAL",
+     "A BELT FED MACHINE GUN LIGHT ENOUGH TO FIRE ONE HANDED", "SAW",
+     "FN Evolys"],
+    ["SIG XM7", "ASSAULT RIFLE", "RIFLES", 2022, "USA", "SIG SAUER",
+     "THE US ARMY LEFT THE 5.56 CARTRIDGE AFTER SIXTY YEARS", "CARBINE",
+     "SIG MCX Spear"],
 ]
+AIRCRAFT = [
+    ["BF 109", "FIGHTER", "FIGHTERS", 1937, "GERMANY", "WILLY MESSERSCHMITT",
+     "THE MOST PRODUCED FIGHTER IN HISTORY, NEARLY 34000 BUILT", "PROPFIGHTER",
+     "Messerschmitt Bf 109"],
+    ["SPITFIRE", "FIGHTER", "FIGHTERS", 1938, "BRITAIN", "R J MITCHELL",
+     "THE ELLIPTICAL WING THAT DEFENDED BRITAIN IN 1940", "PROPFIGHTER",
+     "Supermarine Spitfire"],
+    ["B-17 FLYING FORTRESS", "HEAVY BOMBER", "BOMBERS", 1938, "USA", "BOEING",
+     "DAYLIGHT BOMBING, WITH THIRTEEN GUNS TO DEFEND ITSELF", "HEAVYPROP",
+     "Boeing B-17 Flying Fortress"],
+    ["A6M ZERO", "CARRIER FIGHTER", "FIGHTERS", 1940, "JAPAN", "JIRO HORIKOSHI",
+     "RANGE AND AGILITY THAT RULED THE EARLY PACIFIC WAR", "PROPFIGHTER",
+     "Mitsubishi A6M Zero"],
+    ["P-51 MUSTANG", "ESCORT FIGHTER", "FIGHTERS", 1942, "USA", "NORTH AMERICAN AVIATION",
+     "THE ESCORT THAT COULD FINALLY GO ALL THE WAY TO BERLIN", "PROPFIGHTER",
+     "North American P-51 Mustang"],
+    ["F4U CORSAIR", "CARRIER FIGHTER", "FIGHTERS", 1942, "USA", "REX BEISEL",
+     "THE BENT GULL WING MADE ROOM FOR AN ENORMOUS PROPELLER", "PROPFIGHTER",
+     "Vought F4U Corsair"],
+    ["AVRO LANCASTER", "HEAVY BOMBER", "BOMBERS", 1942, "BRITAIN", "ROY CHADWICK",
+     "A NIGHT BOMBER WITH A BOMB BAY NOTHING ELSE COULD MATCH", "HEAVYPROP",
+     "Avro Lancaster"],
+    ["B-29 SUPERFORTRESS", "HEAVY BOMBER", "BOMBERS", 1944, "USA", "BOEING",
+     "PRESSURISED, WITH REMOTE CONTROLLED GUNS, A GENERATION AHEAD", "HEAVYPROP",
+     "Boeing B-29 Superfortress"],
+    ["F-86 SABRE", "JET FIGHTER", "FIGHTERS", 1949, "USA", "NORTH AMERICAN AVIATION",
+     "THE SWEPT WING JET THAT MET THE MIG-15 OVER KOREA", "JET_SWEPT",
+     "North American F-86 Sabre"],
+    ["B-52 STRATOFORTRESS", "STRATEGIC BOMBER", "BOMBERS", 1955, "USA", "BOEING",
+     "STILL FLYING SEVENTY YEARS ON, AND PLANNED INTO THE 2050S", "BOMBER_BIG",
+     "Boeing B-52 Stratofortress"],
+    ["C-130 HERCULES", "TRANSPORT", "SUPPORT", 1956, "USA", "LOCKHEED",
+     "A TACTICAL TRANSPORT STILL IN PRODUCTION AFTER SEVENTY YEARS", "TRANSPORT",
+     "Lockheed C-130 Hercules"],
+    ["TU-95 BEAR", "STRATEGIC BOMBER", "BOMBERS", 1956, "USSR", "TUPOLEV",
+     "SWEPT WINGS AND CONTRA ROTATING PROPELLERS, LOUD ENOUGH TO TRACK", "BOMBER_BIG",
+     "Tupolev Tu-95"],
+    ["UH-1 HUEY", "UTILITY HELICOPTER", "HELICOPTERS", 1959, "USA", "BELL HELICOPTER",
+     "THE SOUND OF VIETNAM, AND THE FIRST AIR MOBILE WAR", "HELO_UTILITY",
+     "Bell UH-1 Iroquois"],
+    ["MIG-21", "JET FIGHTER", "FIGHTERS", 1959, "USSR", "MIKOYAN-GUREVICH",
+     "THE MOST PRODUCED SUPERSONIC AIRCRAFT EVER BUILT", "JET_SWEPT",
+     "Mikoyan-Gurevich MiG-21"],
+    ["F-4 PHANTOM II", "FIGHTER BOMBER", "FIGHTERS", 1960, "USA", "MCDONNELL DOUGLAS",
+     "A HEAVY TWIN FLOWN BY THE NAVY, THE AIR FORCE AND THE MARINES", "JET_SWEPT",
+     "McDonnell Douglas F-4 Phantom II"],
+    ["CH-47 CHINOOK", "TRANSPORT HELICOPTER", "HELICOPTERS", 1962, "USA", "BOEING VERTOL",
+     "TWO ROTORS, NO TAIL ROTOR, AND SIXTY YEARS OF SERVICE", "HELO_TANDEM",
+     "Boeing CH-47 Chinook"],
+    ["AH-1 COBRA", "ATTACK HELICOPTER", "HELICOPTERS", 1967, "USA", "BELL HELICOPTER",
+     "THE FIRST HELICOPTER BUILT ONLY TO ATTACK", "HELO_ATTACK",
+     "Bell AH-1 Cobra"],
+    ["AC-130 GUNSHIP", "GUNSHIP", "SUPPORT", 1968, "USA", "LOCKHEED",
+     "A TRANSPORT WITH ARTILLERY FIRING OUT OF ITS LEFT SIDE", "TRANSPORT",
+     "Lockheed AC-130"],
+    ["HARRIER", "VTOL ATTACK", "FIGHTERS", 1969, "BRITAIN", "HAWKER SIDDELEY",
+     "VECTORED THRUST LET IT TAKE OFF WITHOUT A RUNWAY", "JET_SWEPT",
+     "Hawker Siddeley Harrier"],
+    ["C-5 GALAXY", "TRANSPORT", "SUPPORT", 1970, "USA", "LOCKHEED",
+     "NOSE AND TAIL BOTH OPEN, AND IT SWALLOWS TANKS WHOLE", "TRANSPORT",
+     "Lockheed C-5 Galaxy"],
+    ["MI-24 HIND", "ATTACK HELICOPTER", "HELICOPTERS", 1972, "USSR", "MIL",
+     "A GUNSHIP THAT ALSO CARRIED EIGHT TROOPS IN THE BACK", "HELO_ATTACK",
+     "Mil Mi-24"],
+    ["F-14 TOMCAT", "CARRIER FIGHTER", "FIGHTERS", 1974, "USA", "GRUMMAN",
+     "SWING WINGS, AND A MISSILE THAT REACHED A HUNDRED MILES", "JET_TWINTAIL",
+     "Grumman F-14 Tomcat"],
+    ["F-15 EAGLE", "AIR SUPERIORITY FIGHTER", "FIGHTERS", 1976, "USA", "MCDONNELL DOUGLAS",
+     "AN AIR COMBAT RECORD OF MORE THAN A HUNDRED TO NONE", "JET_TWINTAIL",
+     "McDonnell Douglas F-15 Eagle"],
+    ["A-10 THUNDERBOLT II", "ATTACK AIRCRAFT", "FIGHTERS", 1977, "USA", "FAIRCHILD REPUBLIC",
+     "AN AIRFRAME BUILT AROUND A THIRTY MILLIMETRE CANNON", "ATTACKJET",
+     "Fairchild Republic A-10 Thunderbolt II"],
+    ["F-16 FIGHTING FALCON", "MULTIROLE FIGHTER", "FIGHTERS", 1978, "USA", "GENERAL DYNAMICS",
+     "FLY BY WIRE AND A BUBBLE CANOPY, BUILT BY THE THOUSAND", "JET_SWEPT",
+     "General Dynamics F-16 Fighting Falcon"],
+    ["UH-60 BLACK HAWK", "UTILITY HELICOPTER", "HELICOPTERS", 1979, "USA", "SIKORSKY",
+     "BUILT TO SURVIVE HITS THAT WOULD HAVE DOWNED THE HUEY", "HELO_UTILITY",
+     "Sikorsky UH-60 Black Hawk"],
+    ["F/A-18 HORNET", "CARRIER FIGHTER", "FIGHTERS", 1983, "USA", "MCDONNELL DOUGLAS",
+     "ONE AIRFRAME FOR BOTH THE FIGHTER AND THE ATTACK MISSION", "JET_TWINTAIL",
+     "McDonnell Douglas F/A-18 Hornet"],
+    ["MIG-29 FULCRUM", "JET FIGHTER", "FIGHTERS", 1983, "USSR", "MIKOYAN",
+     "AN AGILE TWIN TAIL FIGHTER BUILT AROUND A HELMET SIGHT", "JET_TWINTAIL",
+     "Mikoyan MiG-29"],
+    ["F-117 NIGHTHAWK", "STEALTH ATTACK", "FIGHTERS", 1983, "USA", "LOCKHEED SKUNK WORKS",
+     "FACETED TO SCATTER RADAR, THE FIRST STEALTH AIRCRAFT", "FACETED",
+     "Lockheed F-117 Nighthawk"],
+    ["SU-27 FLANKER", "AIR SUPERIORITY FIGHTER", "FIGHTERS", 1985, "USSR", "SUKHOI",
+     "HUGE RANGE, AND THE COBRA MANOEUVRE THAT MADE IT FAMOUS", "JET_TWINTAIL",
+     "Sukhoi Su-27"],
+    ["B-1B LANCER", "STRATEGIC BOMBER", "BOMBERS", 1986, "USA", "ROCKWELL",
+     "SWING WINGS FOR A SUPERSONIC DASH AT LOW LEVEL", "BOMBER_SWEPT",
+     "Rockwell B-1 Lancer"],
+    ["AH-64 APACHE", "ATTACK HELICOPTER", "HELICOPTERS", 1986, "USA", "HUGHES HELICOPTERS",
+     "A MAST SIGHT AND HELLFIRE MISSILES, THE MODERN GUNSHIP", "HELO_ATTACK",
+     "Boeing AH-64 Apache"],
+    ["TU-160 BLACKJACK", "STRATEGIC BOMBER", "BOMBERS", 1987, "USSR", "TUPOLEV",
+     "THE LARGEST AND HEAVIEST COMBAT AIRCRAFT EVER BUILT", "BOMBER_SWEPT",
+     "Tupolev Tu-160"],
+    ["C-17 GLOBEMASTER III", "TRANSPORT", "SUPPORT", 1995, "USA", "MCDONNELL DOUGLAS",
+     "OUTSIZE CARGO INTO SHORT AND ROUGH STRIPS", "TRANSPORT",
+     "Boeing C-17 Globemaster III"],
+    ["SAAB GRIPEN", "MULTIROLE FIGHTER", "FIGHTERS", 1996, "SWEDEN", "SAAB",
+     "DESIGNED TO FLY FROM A PUBLIC ROAD AND TURN AROUND FAST", "JET_DELTA",
+     "Saab JAS 39 Gripen"],
+    ["B-2 SPIRIT", "STEALTH BOMBER", "BOMBERS", 1997, "USA", "NORTHROP GRUMMAN",
+     "A FLYING WING WITH NO TAIL AND ALMOST NO RADAR RETURN", "FLYINGWING",
+     "Northrop Grumman B-2 Spirit"],
+    ["KA-52 ALLIGATOR", "ATTACK HELICOPTER", "HELICOPTERS", 1997, "RUSSIA", "KAMOV",
+     "COAXIAL ROTORS MEAN NO TAIL ROTOR TO SHOOT OFF", "HELO_ATTACK",
+     "Kamov Ka-52"],
+    ["DASSAULT RAFALE", "MULTIROLE FIGHTER", "FIGHTERS", 2001, "FRANCE", "DASSAULT AVIATION",
+     "FRANCE WENT ITS OWN WAY AND BUILT THE WHOLE JET ALONE", "JET_DELTA",
+     "Dassault Rafale"],
+    ["EUROFIGHTER TYPHOON", "MULTIROLE FIGHTER", "FIGHTERS", 2003, "EUROPE", "EUROFIGHTER GMBH",
+     "A CANARD DELTA BUILT BY FOUR NATIONS TOGETHER", "JET_DELTA",
+     "Eurofighter Typhoon"],
+    ["F-22 RAPTOR", "STEALTH FIGHTER", "FIGHTERS", 2005, "USA", "LOCKHEED MARTIN",
+     "STEALTH AND SUPERCRUISE IN ONE AIRFRAME", "JET_STEALTH",
+     "Lockheed Martin F-22 Raptor"],
+    ["V-22 OSPREY", "TILTROTOR", "HELICOPTERS", 2007, "USA", "BELL BOEING",
+     "TAKES OFF LIKE A HELICOPTER AND CRUISES LIKE A TURBOPROP", "TILTROTOR",
+     "Bell Boeing V-22 Osprey"],
+    ["F-35 LIGHTNING II", "STEALTH FIGHTER", "FIGHTERS", 2015, "USA", "LOCKHEED MARTIN",
+     "ONE STEALTH DESIGN IN THREE VERSIONS FOR THREE SERVICES", "JET_STEALTH",
+     "Lockheed Martin F-35 Lightning II"],
+    ["CHENGDU J-20", "STEALTH FIGHTER", "FIGHTERS", 2017, "CHINA", "CHENGDU AEROSPACE",
+     "A LONG RANGE STEALTH FIGHTER WITH CANARD FOREPLANES", "JET_STEALTH",
+     "Chengdu J-20"],
+    ["SU-57 FELON", "STEALTH FIGHTER", "FIGHTERS", 2020, "RUSSIA", "SUKHOI",
+     "RUSSIAS FIRST STEALTH FIGHTER TO ENTER SERVICE", "JET_STEALTH",
+     "Sukhoi Su-57"],
+    ["B-21 RAIDER", "STEALTH BOMBER", "BOMBERS", 2023, "USA", "NORTHROP GRUMMAN",
+     "THE FIRST NEW AMERICAN BOMBER IN OVER THIRTY YEARS", "FLYINGWING",
+     "Northrop Grumman B-21 Raider"],
+]
+VEHICLES = [
+    ["MARK I", "TANK", "TANKS", 1916, "BRITAIN", "TRITTON AND WILSON",
+     "THE FIRST TANK IN BATTLE, SHAPED TO CROSS A TRENCH", "TANK_EARLY",
+     "Mark I tank"],
+    ["RENAULT FT", "LIGHT TANK", "TANKS", 1917, "FRANCE", "LOUIS RENAULT",
+     "THE FIRST TANK WITH A FULLY ROTATING TURRET ON TOP", "TANK_ROUND",
+     "Renault FT"],
+    ["T-34", "MEDIUM TANK", "TANKS", 1940, "USSR", "MIKHAIL KOSHKIN",
+     "SLOPED ARMOUR AND WIDE TRACKS, BUILT IN ENORMOUS NUMBERS", "TANK_SLOPED",
+     "T-34"],
+    ["M3 HALF-TRACK", "ARMOURED CARRIER", "ARMOUR", 1941, "USA", "AUTOCAR COMPANY",
+     "WHEELS IN FRONT AND TRACKS BEHIND, IT CARRIED THE INFANTRY", "HALFTRACK",
+     "M3 half-track"],
+    ["M4 SHERMAN", "MEDIUM TANK", "TANKS", 1942, "USA", "US ORDNANCE DEPARTMENT",
+     "RELIABLE AND EVERYWHERE, IT WON ON NUMBERS AND UPKEEP", "TANK_ROUND",
+     "M4 Sherman"],
+    ["TIGER I", "HEAVY TANK", "TANKS", 1942, "GERMANY", "HENSCHEL",
+     "AN EIGHTY EIGHT MILLIMETRE GUN BEHIND THICK FLAT ARMOUR", "TANK_BOXY",
+     "Tiger I"],
+    ["PANTHER", "MEDIUM TANK", "TANKS", 1943, "GERMANY", "MAN",
+     "SLOPED ARMOUR LEARNED DIRECTLY FROM THE T-34", "TANK_ROUND",
+     "Panther tank"],
+    ["IS-2", "HEAVY TANK", "TANKS", 1944, "USSR", "ZHOZEF KOTIN",
+     "A HUNDRED AND TWENTY TWO MILLIMETRE GUN FOR BREAKING CITIES", "TANK_SLOPED",
+     "IS-2"],
+    ["CENTURION", "MAIN BATTLE TANK", "TANKS", 1945, "BRITAIN", "AEC",
+     "THE FIRST MAIN BATTLE TANK, GOOD ENOUGH TO SERVE FOR DECADES", "TANK_ROUND",
+     "Centurion (tank)"],
+    ["M60 PATTON", "MAIN BATTLE TANK", "TANKS", 1960, "USA", "CHRYSLER",
+     "THE AMERICAN COLD WAR TANK BEFORE THE ABRAMS", "TANK_ROUND",
+     "M60 tank"],
+    ["M113", "ARMOURED CARRIER", "ARMOUR", 1960, "USA", "FMC CORPORATION",
+     "AN ALUMINIUM BOX ON TRACKS, BUILT IN THE TENS OF THOUSANDS", "APC_TRACK",
+     "M113 armored personnel carrier"],
+    ["BM-21 GRAD", "ROCKET ARTILLERY", "ARTILLERY", 1963, "USSR", "SPLAV",
+     "FORTY ROCKETS IN TWENTY SECONDS FROM THE BACK OF A TRUCK", "MLRS",
+     "BM-21 Grad"],
+    ["M109 PALADIN", "SELF PROPELLED HOWITZER", "ARTILLERY", 1963, "USA", "UNITED DEFENSE",
+     "THE WESTERN SELF PROPELLED HOWITZER FOR SIXTY YEARS", "SPG",
+     "M109 howitzer"],
+    ["BMP-1", "INFANTRY FIGHTING VEHICLE", "ARMOUR", 1966, "USSR", "CHELYABINSK TRACTOR PLANT",
+     "THE FIRST IFV, ARMED TO FIGHT RATHER THAN ONLY CARRY", "IFV",
+     "BMP-1"],
+    ["T-72", "MAIN BATTLE TANK", "TANKS", 1973, "USSR", "URALVAGONZAVOD",
+     "AN AUTOLOADER DROPPED IT TO THREE CREW AND LET IT SIT LOW", "TANK_SLOPED",
+     "T-72"],
+    ["LEOPARD 2", "MAIN BATTLE TANK", "TANKS", 1979, "GERMANY", "KRAUSS-MAFFEI",
+     "THE GUN AND ARMOUR MUCH OF EUROPE STANDARDISED ON", "TANK_MODERN",
+     "Leopard 2"],
+    ["MERKAVA", "MAIN BATTLE TANK", "TANKS", 1979, "ISRAEL", "ISRAEL TAL",
+     "THE ENGINE SITS IN FRONT OF THE CREW, BECAUSE THE CREW COMES FIRST", "TANK_MODERN",
+     "Merkava"],
+    ["M1 ABRAMS", "MAIN BATTLE TANK", "TANKS", 1980, "USA", "CHRYSLER DEFENSE",
+     "A GAS TURBINE AND COMPOSITE ARMOUR, FAST AND VERY HEAVY", "TANK_MODERN",
+     "M1 Abrams"],
+    ["M2 BRADLEY", "INFANTRY FIGHTING VEHICLE", "ARMOUR", 1981, "USA", "FMC CORPORATION",
+     "A CHAIN GUN, MISSILES, AND SIX RIFLEMEN IN THE BACK", "IFV",
+     "M2 Bradley"],
+    ["HUMVEE", "UTILITY TRUCK", "ARMOUR", 1984, "USA", "AM GENERAL",
+     "A WIDE LOW FRAME THAT REPLACED THE JEEP ENTIRELY", "TRUCK",
+     "Humvee"],
+    ["WARRIOR", "INFANTRY FIGHTING VEHICLE", "ARMOUR", 1984, "BRITAIN", "GKN SANKEY",
+     "FAST ENOUGH TO KEEP UP WITH CHALLENGER ACROSS COUNTRY", "IFV",
+     "Warrior tracked armoured vehicle"],
+    ["T-90", "MAIN BATTLE TANK", "TANKS", 1992, "RUSSIA", "URALVAGONZAVOD",
+     "REACTIVE ARMOUR BLOCKS AND A DAZZLER TO BREAK MISSILE AIM", "TANK_SLOPED",
+     "T-90"],
+    ["LECLERC", "MAIN BATTLE TANK", "TANKS", 1992, "FRANCE", "GIAT INDUSTRIES",
+     "AN AUTOLOADER IN A WESTERN TANK, LIGHT AND VERY FAST", "TANK_MODERN",
+     "Leclerc tank"],
+    ["CV90", "INFANTRY FIGHTING VEHICLE", "ARMOUR", 1993, "SWEDEN", "HAGGLUNDS",
+     "BUILT FOR DEEP SNOW AND SOFT GROUND, THEN SOLD EVERYWHERE", "IFV",
+     "Combat Vehicle 90"],
+    ["CHALLENGER 2", "MAIN BATTLE TANK", "TANKS", 1998, "BRITAIN", "VICKERS DEFENCE",
+     "A RIFLED GUN WHEN EVERYONE ELSE HAD GONE SMOOTHBORE", "TANK_MODERN",
+     "Challenger 2"],
+    ["PZH 2000", "SELF PROPELLED HOWITZER", "ARTILLERY", 1998, "GERMANY", "KRAUSS-MAFFEI WEGMANN",
+     "IT CAN PUT THREE SHELLS IN THE AIR AT ONCE ON ONE TARGET", "SPG",
+     "Panzerhaubitze 2000"],
+    ["STRYKER", "ARMOURED CARRIER", "ARMOUR", 2002, "USA", "GENERAL DYNAMICS",
+     "EIGHT WHEELS, QUIET AND FAST ON ROADS, AND FLOWN IN BY C-130", "APC_WHEEL",
+     "Stryker"],
+    ["HIMARS", "ROCKET ARTILLERY", "ARTILLERY", 2005, "USA", "LOCKHEED MARTIN",
+     "SHOOT AND SCOOT, GONE BEFORE THE ROCKETS LAND", "MLRS",
+     "M142 HIMARS"],
+    ["PUMA", "INFANTRY FIGHTING VEHICLE", "ARMOUR", 2010, "GERMANY", "PSM GMBH",
+     "ARMOUR THAT BOLTS ON, SO IT CAN STILL BE AIRLIFTED", "IFV",
+     "Puma (IFV)"],
+    ["TYPE 10", "MAIN BATTLE TANK", "TANKS", 2012, "JAPAN", "MITSUBISHI HEAVY INDUSTRIES",
+     "LIGHT ENOUGH FOR JAPANESE BRIDGES AND COUNTRY ROADS", "TANK_MODERN",
+     "Type 10"],
+    ["K2 BLACK PANTHER", "MAIN BATTLE TANK", "TANKS", 2014, "SOUTH KOREA", "HYUNDAI ROTEM",
+     "SUSPENSION THAT KNEELS AND LEANS TO AIM ON A SLOPE", "TANK_MODERN",
+     "K2 Black Panther"],
+    ["JLTV", "UTILITY TRUCK", "ARMOUR", 2015, "USA", "OSHKOSH DEFENSE",
+     "BUILT AFTER IRAQ TO SURVIVE A MINE UNDER THE FLOOR", "TRUCK",
+     "Oshkosh L-ATV"],
+    ["T-14 ARMATA", "MAIN BATTLE TANK", "TANKS", 2015, "RUSSIA", "URALVAGONZAVOD",
+     "AN UNMANNED TURRET, WITH THE CREW IN AN ARMOURED CAPSULE", "TANK_MODERN",
+     "T-14 Armata"],
+]
+SHIPS = [
+    ["HMS VICTORY", "SHIP OF THE LINE", "WARSHIPS", 1765, "BRITAIN", "THOMAS SLADE",
+     "A HUNDRED GUNS, AND NELSONS FLAGSHIP AT TRAFALGAR", "SAILING",
+     "HMS Victory"],
+    ["USS CONSTITUTION", "FRIGATE", "WARSHIPS", 1797, "USA", "JOSHUA HUMPHREYS",
+     "OLD IRONSIDES, STILL COMMISSIONED AFTER TWO CENTURIES", "SAILING",
+     "USS Constitution"],
+    ["USS MONITOR", "IRONCLAD", "WARSHIPS", 1862, "USA", "JOHN ERICSSON",
+     "A CHEESEBOX ON A RAFT, AND THE FIRST ROTATING GUN TURRET", "IRONCLAD",
+     "USS Monitor"],
+    ["HMS DREADNOUGHT", "BATTLESHIP", "WARSHIPS", 1906, "BRITAIN", "ROYAL NAVY",
+     "ALL BIG GUNS AND TURBINES, IT MADE EVERY NAVY OBSOLETE", "DREADNOUGHT",
+     "HMS Dreadnought (1906)"],
+    ["TYPE VII U-BOAT", "SUBMARINE", "SUBMARINES", 1936, "GERMANY", "KRIEGSMARINE",
+     "THE MOST PRODUCED SUBMARINE CLASS IN HISTORY", "SUB_WWII",
+     "German Type VII submarine"],
+    ["BISMARCK", "BATTLESHIP", "WARSHIPS", 1940, "GERMANY", "BLOHM UND VOSS",
+     "SANK THE HOOD IN MINUTES, AND WAS HUNTED DOWN IN DAYS", "BATTLESHIP",
+     "German battleship Bismarck"],
+    ["YAMATO", "BATTLESHIP", "WARSHIPS", 1941, "JAPAN", "KURE NAVAL ARSENAL",
+     "THE HEAVIEST BATTLESHIP EVER BUILT, WITH EIGHTEEN INCH GUNS", "BATTLESHIP",
+     "Japanese battleship Yamato"],
+    ["USS IOWA", "BATTLESHIP", "WARSHIPS", 1943, "USA", "NEW YORK NAVAL SHIPYARD",
+     "FAST ENOUGH TO ESCORT CARRIERS AND STILL CARRY NINE BIG GUNS", "BATTLESHIP",
+     "USS Iowa (BB-61)"],
+    ["USS NAUTILUS", "SUBMARINE", "SUBMARINES", 1954, "USA", "ELECTRIC BOAT",
+     "THE FIRST NUCLEAR SUBMARINE, AND THE FIRST UNDER THE POLE", "SUB_MODERN",
+     "USS Nautilus (SSN-571)"],
+    ["USS ENTERPRISE", "AIRCRAFT CARRIER", "CARRIERS", 1961, "USA", "NEWPORT NEWS",
+     "THE FIRST NUCLEAR POWERED CARRIER, WITH EIGHT REACTORS", "CARRIER",
+     "USS Enterprise (CVN-65)"],
+    ["USS NIMITZ", "AIRCRAFT CARRIER", "CARRIERS", 1975, "USA", "NEWPORT NEWS",
+     "A FLOATING AIRFIELD FOR NINETY AIRCRAFT AND FIVE THOUSAND CREW", "CARRIER",
+     "USS Nimitz"],
+    ["LOS ANGELES CLASS", "ATTACK SUBMARINE", "SUBMARINES", 1976, "USA", "ELECTRIC BOAT",
+     "SIXTY TWO BOATS, THE BACKBONE OF THE COLD WAR FLEET", "SUB_MODERN",
+     "Los Angeles-class submarine"],
+    ["KIROV CLASS", "BATTLECRUISER", "WARSHIPS", 1980, "USSR", "BALTIC SHIPYARD",
+     "NUCLEAR POWERED, AND BRISTLING WITH MISSILE TUBES", "CRUISER",
+     "Kirov-class battlecruiser"],
+    ["OHIO CLASS", "MISSILE SUBMARINE", "SUBMARINES", 1981, "USA", "ELECTRIC BOAT",
+     "TWENTY FOUR MISSILE TUBES, ON PATROL FOR MONTHS UNSEEN", "SUB_MODERN",
+     "Ohio-class submarine"],
+    ["TYPHOON CLASS", "MISSILE SUBMARINE", "SUBMARINES", 1981, "USSR", "SEVMASH",
+     "THE LARGEST SUBMARINE EVER BUILT, TWO HULLS SIDE BY SIDE", "SUB_MODERN",
+     "Typhoon-class submarine"],
+    ["TICONDEROGA CLASS", "CRUISER", "WARSHIPS", 1983, "USA", "INGALLS SHIPBUILDING",
+     "THE FIRST AEGIS SHIP, TRACKING A HUNDRED TARGETS AT ONCE", "CRUISER",
+     "Ticonderoga-class cruiser"],
+    ["ADMIRAL KUZNETSOV", "AIRCRAFT CARRIER", "CARRIERS", 1991, "USSR", "CHERNOMORSKY SHIPYARD",
+     "A SKI JUMP BOW, AND HEAVY MISSILES ON A CARRIER DECK", "CARRIER_SKI",
+     "Russian aircraft carrier Admiral Kuznetsov"],
+    ["ARLEIGH BURKE CLASS", "DESTROYER", "WARSHIPS", 1991, "USA", "BATH IRON WORKS",
+     "THE MOST BUILT LARGE WARSHIP SINCE THE SECOND WORLD WAR", "DESTROYER",
+     "Arleigh Burke-class destroyer"],
+    ["SEAWOLF CLASS", "ATTACK SUBMARINE", "SUBMARINES", 1997, "USA", "ELECTRIC BOAT",
+     "THE QUIETEST AND MOST EXPENSIVE ATTACK BOAT EVER BUILT", "SUB_MODERN",
+     "Seawolf-class submarine"],
+    ["VIRGINIA CLASS", "ATTACK SUBMARINE", "SUBMARINES", 2004, "USA", "ELECTRIC BOAT",
+     "PHOTONIC MASTS REPLACED THE PERISCOPE THROUGH THE HULL", "SUB_MODERN",
+     "Virginia-class submarine"],
+    ["TYPE 45 DARING", "DESTROYER", "WARSHIPS", 2009, "BRITAIN", "BAE SYSTEMS",
+     "AIR DEFENCE RADAR THAT CAN SEE A CRICKET BALL AT RANGE", "DESTROYER",
+     "Type 45 destroyer"],
+    ["ASTUTE CLASS", "ATTACK SUBMARINE", "SUBMARINES", 2010, "BRITAIN", "BAE SYSTEMS",
+     "A REACTOR THAT NEVER NEEDS REFUELLING IN THE BOATS LIFETIME", "SUB_MODERN",
+     "Astute-class submarine"],
+    ["USS ZUMWALT", "DESTROYER", "WARSHIPS", 2016, "USA", "BATH IRON WORKS",
+     "A TUMBLEHOME HULL WITH THE RADAR SIGNATURE OF A FISHING BOAT", "STEALTH_SHIP",
+     "USS Zumwalt"],
+    ["HMS QUEEN ELIZABETH", "AIRCRAFT CARRIER", "CARRIERS", 2017, "BRITAIN", "AIRCRAFT CARRIER ALLIANCE",
+     "TWO ISLANDS AND A SKI JUMP INSTEAD OF CATAPULTS", "CARRIER_SKI",
+     "HMS Queen Elizabeth (R08)"],
+    ["USS GERALD R FORD", "AIRCRAFT CARRIER", "CARRIERS", 2017, "USA", "NEWPORT NEWS",
+     "ELECTROMAGNETIC CATAPULTS REPLACED A CENTURY OF STEAM", "CARRIER",
+     "USS Gerald R. Ford"],
+]
+# Silhouettes. Each is a c.sprite string in the five tone legend
+# (H highlight, M mid, D dark, A era accent, G glass). One sprite
+# call costs one draw op however many pixels it lights.
 
-# ------------------------------------------------------------- text tools
-# Every glyph the fonts actually carry.
-ALLOWED = " !#$%&()*+,-./0123456789:?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+BLUNDER = """
+...................................................................................................H
+..................................................DD..........................................HHHHHD
+.................................................DM.D...M.................................HHHHMMMMDD
+................................................D..D...MM............................HHHHHMMMMMMMMDD
+......................................HHHHHHHHHHDHHHHHHDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMDD
+MD....................................MMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD
+MDAAAAAAAAAAAAAAAA....................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.MHHHHHHHHHHHHHM.....................A......DDDDDMMMMMMMMDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMAAAAAAAAAAAAAAAAAAAAAA...........DDDDMMMMDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.MMMMMMMMMMMMMMM.....................................DDDDDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.DDDDDDDDDDDDDDD..........................................D
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDD..D....M......D............................................
+MDAAAAAAAAAAAAAAAAAAAAAADDDDD...............DDDDDDDDDDD.............................................
+MDAAAAAAAAAAAAAAAADDDDDD............................................................................
+MDAAAAAAAAAADDDDDD..................................................................................
+MDAAAAADDDDD........................................................................................
+MDDDDDD.............................................................................................
+MD..................................................................................................
+"""
 
-SUBS = {
-    "\u00d7": "X", "\u2013": "-", "\u2014": "-", "\u2212": "-",
-    "\u2018": "", "\u2019": "", "\u201c": "", "\u201d": "",
-    "\u00c1": "A", "\u00c0": "A", "\u00c2": "A", "\u00c4": "A",
-    "\u00c3": "A", "\u00c5": "A", "\u00c6": "AE",
-    "\u00c9": "E", "\u00c8": "E", "\u00ca": "E", "\u00cb": "E",
-    "\u00cd": "I", "\u00cc": "I", "\u00ce": "I", "\u00cf": "I",
-    "\u00d3": "O", "\u00d2": "O", "\u00d4": "O", "\u00d6": "O",
-    "\u00d5": "O", "\u00d8": "O",
-    "\u00da": "U", "\u00d9": "U", "\u00db": "U", "\u00dc": "U",
-    "\u00d1": "N", "\u00c7": "C", "\u00dd": "Y", "\u00df": "SS",
+MUSKET = """
+............................................................DD............................................................................................................
+...........................................................DM.D...M.......................................................................................................
+..........................................................D..D...MM...................................................................................................M...
+MD..............................................HHHHHHHHHMDHHHHHHDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+MDAAAAAAAAAAAAAA................................MMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAA..................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.MHHHHHHHHHHHHHHHM.................................................................................A...................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.MMMMMMMMMMMMMMMMM...D...............................D...............................D.............D.D.................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.DDDDDDDDDDDDDDDDDMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMDMMMMMMH..........
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDD..D....M........D......................................................................................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDD..................DDDDDDDDDDDDD.......................................................................................................
+MDAAAAAAAAAAAAAAAAADDDDDDDD...............................................................................................................................................
+MDAAAAAAAADDDDDDDDD.......................................................................................................................................................
+MDDDDDDDDD................................................................................................................................................................
+MD........................................................................................................................................................................
+"""
+
+GATLING = """
+............................................DHHHHHHHD..........................................................................................HHHD
+....................................HHHHHHHHHHHHHHHHHHHHHHHHDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMD
+....................................MMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMD
+....................................MMAAAAAAAAAAAAAAAAAAAAAMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD
+....................................MMAAAAAAAAAAAAAAAAAAAAAMDMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMD
+....................................MMAAAAAAAAAAAAAAAAAAAAAMDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD
+....................................MMDDDDDDDDDDDDDDDDDDDDDMDDDDDDDMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMD
+....................................MMMMMMMMHHHHHHHMMMMMMMMMD......MD..........................................................................DDDD
+....................................DDDDDDDMM..M..MMDDDDDDDDD......MD..............................................................................
+......................................HHHHM....M....MHHHH..........MD..............................................................................
+......................................DDDM.M...M...M.MDDD..........MDMMMMMH........................................................................
+.........................................M..M..M..M..M.............DDDDDDDM........................................................................
+.....................................HHHM....M.M.M....M...................D........................................................................
+................................HHHHHMMMM.....MDM.....M............................................................................................
+...........................HHHHHMMMMMDDDDMMMMMDHDMMMMMH............................................................................................
+......................HHHHHMMMMMDDDDD...M.....MDM.....M............................................................................................
+.................HHHHHMMMMMDDDDD........M....M.M.M....M............................................................................................
+............HHHHHMMMMMDDDDD..............M..M..M..M..M.............................................................................................
+.......HHHHHMMMMMDDDDD...................M.M...M...M.M.............................................................................................
+HHHHHHHMMMMMDDDDD.........................M....M....M..............................................................................................
+MMMMMMMDDDDD...............................MM..M..MM...............................................................................................
+DDDDDDD.....................................DDDDDDD................................................................................................
+"""
+
+REVOLVER = """
+...DHH...........................................
+....D.M..........................................
+.....D.M.......HHHHHHHHHHH.......................
+......D.MHHHHHDMMMMMMMMMMMDHH....................
+.......HHMMMMMDMMDMMDMMDMMDMM.................MH.
+.......MMMMMMMDMMDMMDMMDMMDHHHHHHHHHHHHHHHHHHHHHH
+.......MMMMMMMDMMDMMDMMDMMDMMMMMMMMMMMMMMMMMMMMMM
+.......MMMMMMMDMMDMMDMMDMMDMMMMMMMMMMMMMMDDDDDDDD
+.......MMMMMMMDMMDMMDMMDMMDDDDDDDDDDDDDDD........
+.......MMMMMMMDMMDMMDMMDMMD.MMMMMMMMMMMMMMMD.....
+.......MMMMMMMDMMDMMDMMDMMD.MDDDDDDDDDDDDDDD.....
+.......MMMMMMMDMMDMMDMMDMMD.M....................
+.......DDDDDDDDMMDMMDMMDMMDMM....................
+.....DDDDDDDDDDDMMMMMMMMMMDMM....................
+...DDAAAAAAAAAHDDDDDDDDDDD.DD....................
+..DAAAAAAAAAAAHDHM...D....MH.....................
+.DAAAAAAAAAAAHD.MM...D....MM.....................
+DAAAAAAAAAAAAHD.MM....D...MM.....................
+DAAAAAAAAAAAHD..DDMMMMMMMMDD.....................
+.DAAAAAAAAAAHD....DDDDDDDD.......................
+.DAAAAAAAAHDD....................................
+..DDDDDDDDD......................................
+"""
+
+BOLT = """
+....................................................................................MMMMMMMMMMM....................................................................DMD...
+MD......................................................HHHHHHHHHHHHHHHHHHHHHHHHDAAADAAAAAAAAADAAAAAAAAAAAAAAAD.....................................................M....
+MDAAAAAAAAAAA........................................HMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+MDAAAAAAAAAAAAAAAAAAAAAA.............................MMMMMDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA..................DMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD............................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDMDDDDD.............................D..........................................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMMAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD..........................................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA................DHHH.............................D..........................................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.................MMD........................................................................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.................DDD........................................................................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDD.M........D.................................................................................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDD....................DDDDDDDDDDDDD..................................................................................................
+MDAAAAAAAAAAAAAAAAADDDDDDDDDD............................................................................................................................................
+MDAAAAAAAADDDDDDDDD......................................................................................................................................................
+MDDDDDDDDD...............................................................................................................................................................
+MD.......................................................................................................................................................................
+"""
+
+DERRINGER = """
+...DHM.......................MH.
+....D.MHHHHHHHHHHHHHHHHHHHHHHHHD
+.....DMMMMMMMMMMMMMMMMMMMMMMMMMD
+......MMMMMMDDDDDDDDDDDDDDDDDDDD
+......MMMMMMMMDMMMMMMMMMMMMMMMMD
+......MMMMMMMMMMMMMMMMMMMMMMMMMD
+......MMMMMMDDDDDDDDDDDDDDDDDDDD
+......MMMMMMMMM.................
+..DDDDDDDDDDDDDHMDMH............
+.DAAAAAAAAAAAHDMMDMM............
+DAAAAAAAAAAAHD.DDMDD............
+.DAAAAAAAAAHD....D..............
+.DAAAAAAAAHD....................
+..DDDDDDDDD.....................
+"""
+
+LEVER = """
+................................................DD....................................................................................................
+...............................................D..D...................................................................................................
+MD..............................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHH...M...................................................................M.
+MDAAAAAAAAAA....................................MMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+MDAAAAAAAAAAAAAAAAAAAAA.........................MMMMMMMMMMDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA..............MMMMMMMMMMDMMMMMMMMMMMMMDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMDDDDDDDDDDDDDDDMMMMMADDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.....
+DDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.....
+DDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.AAAAAAAAAAAAAAAAAAAAAAAAAAD.............................................
+DDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.D.........................D.............................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.........................................................................
+MDAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDD..................DDDDDDDDDDDDDDDDDDDDDDD...........................................................................
+MDAAAAAAAAAADDDDDDDDDDD..............................MMM..D...........D...............................................................................
+MDDDDDDDDDDD..........................................D...D..........D................................................................................
+MD....................................................D.............D.................................................................................
+.......................................................D...........D..................................................................................
+........................................................DDDDDDDDDDD...................................................................................
+"""
+
+MAXIM = """
+..........................HMMMMMMMMMMMMMMMMMH............................................................................................
+......................HHHHHHHHHHHHHHHHHHHHHHHHHHHHH......................................................................................
+............HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH................
+............DDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMHMMMDMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMMMDHHHHHHHHHH......
+.....................DMMDDDDDDDDDDDDDDDDDDDDDDDDDMDMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMMMDMMMMMMMMMDHHHHHH
+...................D.DMMMMMMMMMMMMMMMMMMMMMMMMHMMMDMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMMMDMMMMMMMMMDMMMMMM
+.....................DMMMMMMMMMMMMMMMMMMMMMMMMMDDMDMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMMMDMMMMMMMMMDDDDDDD
+............HMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDHMMDMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMDMMMMMMMMMDDDDDDDDDDD......
+............DDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMDDMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD................
+......................MMMMMMMMMMMMMMMMMMMMMMMMMMHMM......................................................................................
+......................DDDDDDDDDDDDDDDDDDDDDDDDDDDDD......................................................................................
+............................HHHHHHHHHHHHHHH.....HM.......................................................................................
+............................DDDDDDDDDDDDDDD......DD......................................................................................
+..................................MMM............HM......................................................................................
+................................MMMMMMM..........DD......................................................................................
+............................MMMMDDDMDDDMMMM.......HM.....................................................................................
+.......................MMMMMDDDD...M...DDDDMMMMM..DD.....................................................................................
+..................MMMMMDDDDD.......M.......DDDDDMMMMM....................................................................................
+..............MMMMDDDDD............M............DDDDDMMMM................................................................................
+.........MMMMMDDDD.................M............HHHHHDDDDMMMMM...........................................................................
+.....MMMMDDDDD.....................M............MMMMMMMMMDDDDDMMMM.......................................................................
+DDDDDDDDD........................DDDDD..........DDDDDDDDD.....DDDDDDDDD..................................................................
+"""
+
+PISTOL = """
+...........HHM.HHM..........................
+........DM.MMDDMMD..........................
+........HHHHHHHHHHH.........................
+........MMMMMMMMMMMHHHHHD................MH.
+........MMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHH
+........MMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMM
+........MMDDDDDDDDDDDDDMDMMMMMMMMMMMDDDDDDDD
+........MMMMMMMMMMMMMMMMDDDDDDDDDDDD........
+........MMMMMMMMMMMMMMMMD...................
+........DDDDDDDDDDDDDDDDD...................
+........DDDDDDDDDDDM..D...MH................
+.......DAAAAAAAAAHDM..D...MM................
+......DAAAAAAAAAHDMM...D..MM................
+.....DAAAAAAAAAHD.DDMMMMMMDD................
+....DAAAAAAAAAAHD...DDDDDD..................
+...DAAAAAAAAAAHD............................
+..DAAAAAAAAAAHD.............................
+.DAAAAAAAAAAHD..............................
+DAAAAAAAAAAAHD..............................
+DAAAAAAAAAAHD...............................
+DMMMMMMMMMMD................................
+"""
+
+SHOTGUN = """
+................................................DD....................................................................................................
+...............................................D..D...................................................................................................
+................................................HHHHHHHHHHHHHHHHHHHHHHHHHHH.........................................................................H.
+MD..............................................MMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+MDAAAAAAAAAAAAAA................................MMMMMMMMDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAA..................MMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMDAADAAADAAADAAADAAADAAADAAAADMMMMMMMMMMMMMMMMMMMM...............
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDAADAAADAAADAAADAAADAAADAAAADDDDDDDDDDDDDDDDDDDDD...............
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMM...........DAADAAADAAADAAADAAADAAADAAAAD...................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDD...........DDDDDDDDDDDDDDDDDDDDDDDDDDDDD...................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDAAA..D......M..........D..............................................................................
+MDAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDD....................DDDDDDDDDDDDDDDDD...............................................................................
+MDAAAAAAAAAADDDDDDDDDDD...............................................................................................................................
+MDDDDDDDDDDD..........................................................................................................................................
+MD....................................................................................................................................................
+"""
+
+LEWIS = """
+......................................DHHHHHHHHHHHHHHHHHHHHHHHHHD..............................................................................................
+......................................DMMMMMMMMMMMMMMMMMMMMMMMMMD..............................................................................................
+......................................DMDDDDDDDDDDDDDDDDDDDDDDDMD..............................................................................................
+.................................DM...DDDDDDDDDDDDDDDDDDDDDDDDDDD..............................................................................................
+..................................M...............DDD.......HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH..........
+....................................HHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD..........
+MD..................................MMMMMMMMMMMMMMMMMMMMMMMMDMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMD..........
+MDAAAAAAAAAAAAAA....................MMMMMMMMMMMMMMMMMMMMMMMMDMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDHHHHHHHHHH
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMDDDDMMMMMMMMMMMMDMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMM
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMDDDDMMMMMMMMMMMMDMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDDDDDDDDDDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMDMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMD..........
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD..........
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..........
+MDAAAAAAAAAAAAAADDDDDDDDDDDDDDD...........A.......A.D...............................................................................MMM........................
+MDDDDDDDDDDDDDDD..........................AAAAAAAAA.D...............................................................................MDM........................
+MD........................................AAAAAAAA...D.............................................................................MD.DM.......................
+..........................................AAAAAAAA................................................................................MD...DM......................
+.........................................AAAAAAAAD...............................................................................MD.....DM.....................
+.........................................ADDDDDDD...............................................................................MD.......DM....................
+.........................................DDDDDDDD..............................................................................MD.........DM...................
+..............................................................................................................................MD...........DM..................
+"""
+
+SMG = """
+.........................................D...D..........HMMMM................................................................
+........................................MMMMMMM.........MMMMD................................................................
+..................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...................................HHDDDDDHH
+..................................MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.D..D..D..D..D..D..D..D............MMMMDMMMM
+..................................MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+MD................................MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMM
+MDAAAAAAAAAAAAA...................MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.D..D..D.AD..D.AD..D..D............MMMMDMMMM
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.........AAAAAAA...................DDDDDDDDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.........AAAAAAA............................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.........DAAAAAA............................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.......A.......A.D..........HHHHHHH...................AAAAAAA...........................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDAAA.......AAAAAAAAA.D.........DMMMMMMMD..................DDDDDDA...........................
+MDAAAAAAAAAAAAADDDDDDDDDDDDDD...............AAAAAAAA...D.......DMMMMMMMMMD.................DDDDDDD...........................
+MDDDDDDDDDDDDDD.............................AAAAAAAA...........DMMMMDMMMMD...................................................
+MD.........................................AAAAAAAAD...........DMMMDHDMMMD...................................................
+...........................................ADDDDDDD............DMMMMDMMMMD...................................................
+...........................................DDDDDDDD............DMMMMMMMMMD...................................................
+................................................................DMMMMMMMD....................................................
+.................................................................DMMMMMD.....................................................
+..................................................................DDDDD......................................................
+"""
+
+RIFLE = """
+....................................................................................................................HHHHHH...........HMDMH....
+...........................................................D......................................AAAAAAAAAAAAAAAAAAMMMMMM...........MMHMM....
+........................................................DMMMMMM...................................AAAAAAAAAAAAAAAAAAMMMMMM...........MMMMM....
+..............................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDMMMMM...........DDDDD.HMM
+MD............................................MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMA...................MMMMMMMMMMMMMMMMMMMMMMMMMM
+MDAAAAAAAAAAAAAAAAAA..........................MMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDMMM
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAAAAAAAAAAAAAAAAAAAAAA....................DDD
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMADDDDDDDDDDDDDDDDDDDAAA.......................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD.....................D.......................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDM.............................................
+MDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDAAA...........D.......A....M........DDDDDDDDDDD.................................................
+MDAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDD....................DAAAAAAAAD....M.....D.DMMMMMMMMMD..................................................
+MDAAAAAAAAAAAADDDDDDDDDDDD.................................DAAAAAAAA.DDDDDDDDDD..DMMMMMMMMMD..................................................
+MDDDDDDDDDDDDD............................................DAAAAAAAD.............DHHHHHHHHHD...................................................
+MD.......................................................DAAAAAAAD.............DMMMMMMMMMD....................................................
+........................................................DAAAAAAAA.............DMMMMMMMMMD.....................................................
+........................................................DADDDDDDD............DHHHHHHHHHD......................................................
+.......................................................DDDDDDDDD............DMMMMMMMMDD.......................................................
+..........................................................................DHMMMMMMMMD.........................................................
+.........................................................................DHHHHHHHHHD..........................................................
+........................................................................DDDDDDDDDDD...........................................................
+"""
+
+HMG = """
+......................................................................................................................................................
+................HDH...................................................................................................................................
+................DDD...................................................................................................................................
+................DDD...........................................................HD......................................................................
+..............HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...........................DD......................................................................
+HHH......DDHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHH...................DD......................................................................
+DAAHHHHHHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHH...................................................................
+DAAMMMMMMDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMM.............................................................HHHHHH
+DAA......DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDMDMDMDMDMDMDMDMDMDMDMDMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMM
+DAA...DD.DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD
+DAA...DD.DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMDMDMDMDMDMDMDMDMDMDMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMM
+DAA......DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMM.............................................................DDDDDD
+DAAMMMMMMDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDD...................................................................
+DAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...........................................................................................
+DDD............................DDDDD............DDDDDDDDD.............................................................................................
+................................MDM.............DDDDDDDDD.............................................................................................
+................................MDM...............MMMMM...............................................................................................
+................................MDM.............DDDDDDDDD.............................................................................................
+................................MDM........DDDDDDM....MDDDD...........................................................................................
+...............................DDDDDDDDDDDDM..............MDDDDDD.....................................................................................
+.....................DDDDDDDDDDDM...............................MDDDDDDD..............................................................................
+............DDDDDDDDDM.................................................MDDDDDDD.......................................................................
+"""
+
+LMG = """
+.....................................DHHHHHHHHHHHHH.....................................................................................
+.......................................DMMMMMMMMMMMDD...................................................................................
+.........................................DMMMMMMMMMMMMD.................................................................................
+..........................................DMMDDDDDDDDDDD............HHHHHHHHHHHHHHH.....................................................
+..............................HHHH.........DMMMMMMMMMMMMD...........MMMMMMMMMMMMMMM.....................................................
+..............................DDDD..........DMMMMMMMMMMMMD...........DD.........DD......................................................
+HHD...........................DDDD.........DDDDDDDDDDDDDDDD..........DD.........DD....................................HD................
+MMD......................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDHHHH.....DD....................................DD............HHHH
+MMDHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDMMMM.....DD....................................DD........HHHHMMMD
+MMDAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMD
+MMDAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD
+MMDAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMD
+MMDAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.......................DDDDMMMD
+MMDAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMDMDDDMD...........................DDDD
+MMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...............................
+MMD............................DAAAAM....D....D...................................................DDDDDDD...............................
+DDD...........................DAAAAM.....D....D...................................................DM..MD................................
+..............................DAAAAM..DDDDDDDDD.................................................DDM....MDD..............................
+.............................DAAAAM............................................................DM........MD.............................
+.............................DAAAAM...........................................................DM..........MD............................
+............................DAAAAM..........................................................DDM............MDD..........................
+............................DAAAAM.......................................................DDDD................DDDD.......................
+"""
+
+GPMG = """
+......................................................................................................................................................................
+....................................................HHHHHHHHHHHHHHHHHHHHHHH...........................................................................................
+....................................................MMMMMMMMMMMMMMMMMMMMMMM...........................................................................................
+..............................HHHH...................DD.................DD............................................................................................
+..............................DMMD...................DD.................DD............................................................................................
+HHHD....................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH....................................................................HD.................
+MMMD......................HHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHH..............................................................DD.................
+MMMDHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHH..........................................DD........HHHHHHHHH
+MMMDAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAAHMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMM
+MMMDAADDDDDDDDDDDDDDDDDDAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMDMDMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMDMDMDM
+MMMDAAD................DAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDAAAAAHDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMM
+MMMDAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMDMDMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM......................DDDDDDDDD
+MMMDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAAHMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...............................
+DDDD......................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMDMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD........................DDDDDD...............................
+.....................................DAAAAAM...D......D...........DAAAAAH........................................................DM.MD................................
+....................................DAAAAAM....D......D...........DMDMD.........................................................DM...MD...............................
+....................................DAAAAAM.DDDDDDDDDDD..........DAAAAAH......................................................DDM.....MDD.............................
+...................................DAAAAAM.......................DMDMD.......................................................DM.........MD............................
+...................................DAAAAAM.....................DAAAAAH......................................................DM...........MD...........................
+..................................DAAAAAM......................DMDMD......................................................DDM.............MDD.........................
+...............................DDDDDDDAAM...................DAAAAAH......................................................DM.................MD........................
+...........................................................DMDMD......................................................DDDD...................DDDD.....................
+"""
+
+SNIPER = """
+..........................................HHHHH...................DDDD................HHHHHHHHHH............................................................................
+..........................................GMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMGG............................................................................
+..........................................GMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMGG............................................................................
+..........................................GMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMGG............................................................................
+..........................................GMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMGG............................................................................
+..........................................DDDDD.....DDDD........................DDDD..DDDDDDDDDD............................................................................
+HHHD................................................DDDD........................DDDD........................................................................................
+MMMD................HDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDH...........................................................HHH.....
+MMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...................................................HHHHHHHH
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMDMMDMD
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMDMD
+MMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMMMMMMDMMDMD
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMDMMDMD
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM...................................................DDDDDDDD
+MMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...................................................DDD.....
+MMMD......DDD...............................................DAAAAM....D...D...DMMMMMMMMMMMMMD...........DDDDDDD.............................................................
+DDDD......DMD..............................................DAAAAM.....D...D...DMMMMMMMMMMMMMD...........DDDDDDD.............................................................
+..........DDD..............................................DAAAAM..DDDDDDDD...DMMMMMMMMMMMMMD...........DM..MD..............................................................
+..........DMD.............................................DAAAAM..............DMDDDDDDDDDDDMD.........DDM....MDD............................................................
+..........DDD.............................................DAAAAM..............DMMMMMMMMMMMMMD.......DDM........MDD..........................................................
+..........DDD............................................DAAAAM...............DMMMMMMMMMMMMMD.....DDM............MDD........................................................
+.........................................................DAAAAM...............DDDDDDDDDDDDDDD..DDDD................DDDD.....................................................
+"""
+
+PDW = """
+........................................................................................................
+........................................................................................................
+........................................................................................................
+..................HHHHH........................................................DHHHHHD..................
+..................DMMMD........................................................D.....D..................
+..................DDDDD.....................................DDDD...............D.....D..................
+HHHD..........DHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHD..D..D..................
+MMMD..........DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD..D..D..................
+MMMDHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDD..D..D..................
+MMMDMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDD....DDDDDDD.............HHHHH
+MMMD..........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDAAAAAAAAAAAAAAAAAAA....HHHHHHHHHHHHHHHHHHHHMMMMM
+MMMDMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAAAAAAAAAAAAAAAA....MMMMMMMMMMMMMMMMMMMMMMMMM
+MMMDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAAAAAAAAAAAAAAAA....DDDDDDDDDDDDDDDDDDDDMMMMM
+MMMD..........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDAAAAAAAAAAAAAAAAAAA........................DDDDD
+DDDD..........................DAAAAM....D..D..DMMMMMD..DDDDDDDDDDDDDDDDDDDD.............................
+.............................DAAAAM.....D..D..DMMMMMD...........DAAAM...................................
+.............................DAAAAM..DDDDDDD...DMMMMMD..........DAAAA...................................
+............................DAAAAM.............DMMMMMD..........DAAAA...................................
+............................DAAAAM..............DMMMMMD.........DAAAA...................................
+...........................DAAAAM...............DMMMMMD.........DAAAA...................................
+...........................DAAAAM................DMMMMMD........DAAAA...................................
+..........................DDDDDD.................DDDDDDDD.......DDDDD...................................
+"""
+
+BULLPUP = """
+..................................................................................................................................
+...........................HHH..........................HHHH......................................................................
+...........................MMMHHHHHHHHHHHHHHHHHHHHHHHHHHMMGG......................................................................
+...........................GMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMGG......................................................................
+...........................GMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMGG......................................................................
+...........................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD......................................................................
+HHHD...........................DDD...................DDD..........................................................................
+MMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.....................................................................
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHH......................................HHHHHHHHH
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMM
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMDMDMDM
+MMMDMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMM
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD.....................................DDDDDDDDD
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDD...............................................
+MMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.....DAAM...........................................................
+DDDD................DGGGGGGD................DAAAM.D...........D....DAAA...........................................................
+....................DGGGGGGD...............DAAAM..D...........D....DAAA...........................................................
+....................DGGGGGGD...............DAAAM..............D....DAAA...........................................................
+....................DGGGGGGD..............DAAAM...............D....DAAA...........................................................
+.....................DGGGGGGD.............DAAAM...............D....DAAA...........................................................
+.....................DGGGGGGD............DDDDDDDDDDDDDDDDDDDDDD....DDDD...........................................................
+.....................DDDDDDDD.....................................................................................................
+"""
+
+MODPISTOL = """
+...........DDD...........................................D..
+........HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+........MMMMDMDMDMDMMMMMMMMMMMMMMMMMMMMMDDDDDDDDMMMMMMMMMMMM
+........MMMMDMDMDMDMMMMMMMMMMMMMMMMMMMMMDDDDDDDDMMMMMMMMMMMM
+........MMMMDMDMDMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD
+........MMMMDMDMDMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD
+........MMMMDMDMDMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+....MMMMMAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD
+.......DAAAAAAAAAAAAM.MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD
+.......DAAAAAAAAAAAAM.DDDDDDDDDDDDDDDDDDDDDDDDDMDMDMDMDMDMDD
+......DAAAAAAAAAAAAM......DD.....D..........................
+......DAAAAAAAAAAAAM......DD.....D..........................
+.....DAAAAADAAAAAAM.......DD.....D..........................
+.....DAAAAAAAAAAAAM..............D..........................
+....DAAAAAAAAAAAAM.DD............D..........................
+....DAAAAADAAAAAAM..DDDDDDDDDDDDDD..........................
+...DAAAAAAAAAAAAM...........................................
+...DAAAAAAAAAAAAM...........................................
+..DAAAAADAAAAAAM............................................
+..DAAAAAAAAAAAAM............................................
+.DDDDDDDDDDDDDDDD...........................................
+"""
+
+SAW = """
+............................................................................................................................................
+..........................................HHHHHHHHHHHHHHHHHHH...............................................................................
+..........................................MMMMMMMMMMMMMMMMMMM...............................................................................
+............................HHH............DD.............DD................................................................................
+............................DDD............DD.............DD................................................................................
+HHHD..............................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.........................................................HD................
+MMMD.....................HHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHH...................................................DD................
+MMMDHHHHHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHH.................................DD.......HHHHHHHHH
+MMMDAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMM
+MMMDAAAADDDDDDDDDDDDDAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMDMDMDM
+MMMDAAAADDDDDDDDDDDDDAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMM
+MMMDAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMDMDDMDMMMMMMMMM..................DDDDDDDDD
+MMMDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDD...........................
+MMMD.....................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.........DDDDDD....................................
+DDDD..............................DAAAAM....D...D.DHHHHHHHHHHHHHHHHHHHHD..........................DM.MD.....................................
+.................................DAAAAM.....D...D.DAAAAAAAAAAAAAAAAAAAAD.........................DM...MD....................................
+.................................DAAAAM..DDDDDDDD.DAAAAAAAAAAAAAAAAAAAAD........................DM.....MD...................................
+................................DAAAAM............DADDDDDDDDDDDDDDDDDDAD.......................DM.......MD..................................
+................................DAAAAM............DAAAAAAAAAAAAAAAAAAAAD.....................DDM.........MDD................................
+...............................DAAAAM.............DAAAAAAAAAAAAAAAAAAAAD....................DM.............MD...............................
+.............................DDDDDDAM.............DAAAAAAAAAAAAAAAAAAAAD...................DM...............MD..............................
+..................................................DDDDDDDDDDDDDDDDDDDDDD................DDDD.................DDDD...........................
+"""
+
+CARBINE = """
+......................................................................................................................................................
+...............................................HHHHHHHHHHHHHHH........................................................................................
+...............................................GMMMMMMMMMMMMGG........................................................................................
+...............................................GMMMMMMMMMMMMGG.............................................HD.........................................
+...............................................DDDDDDDDDDDDDDD.............................................DD.........................................
+................................................DDDDDDDDDDDDD..............................................DD.........................................
+DHHH...........................DDDDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHD..DD.........................................
+DMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.HHHH........................................
+DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMD................................HHHHHHH
+DMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMM
+DMMMAAAAAAAAAAAAAAAAAD...........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMDMDMDMDMDMDMDMDMDMDMDMDMDMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMDMDM
+DMMMAAAAAAAAAAAAAAAAAD...........DDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMM
+DMMMAAAAAAAAADDDDDDDDD...........DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDD................................DDDDDDD
+DMMMDDDDDDDDDDDDDDDDD............DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.............................................
+DMMM.............................DDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMDDDDDD.............................................................................
+DDDD.....................................DAAAAM....D....D.DAAAAAAD....................................................................................
+........................................DAAAAM..DDDDDDDDD.DAAAAAAD....................................................................................
+........................................DAAAAM............DAAAAAAD....................................................................................
+.......................................DAAAAM..............DAAAAAAD...................................................................................
+.......................................DAAAAM..............DAAAAAAD...................................................................................
+......................................DAAAAM...............DAAAAAAD...................................................................................
+......................................DAAAAM................DDDDDDDD..................................................................................
+"""
+
+MODSHOTGUN = """
+.....................................DHHHHD.................................................................................................
+.....................................D....D.................................................................................................
+.....................................D....D.................................................................................................
+.....................................D....D......................................................................................HD.........
+.....................................DDMMDD......................................................................................DD.........
+HHHD.............................HDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHDHD..........................................................DD......HHH
+MMMD...........................DHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH..........................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMM
+MMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM..........................MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+MMMDAAAAAAAAAAAAAAAAAAAAAAAAAAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMM
+MMMDAAAADDDDDDDDDDDDDDDAAAAAAAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAAAAAAAAAAAAAAAAAAAAAAMMMM........................MMM.....DDD
+MMMDAAAAD.............DAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDADAADAADAADAADAADAADAADAAMMMM..................HHHH..DDD........
+MMMDAAAADDDDDDDDDDDDDDDAAAAAAAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDADAADAADAADAADAADAADAADAAHHHHHHHHHHHHHHHHHHHHHHMMMM.............
+MMMDAAAAAAAAAAAAAAAAAAAAAAAAAAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDADAADAADAADAADAADAADAADAAMMMMMMMMMMMMMMMMMMMMMMMMMM.............
+MMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDADAADAADAADAADAADAADAADAADDDDDDDDDDDDDDDDDDDDDDMMMM.............
+MMMD...........................DDDDDDDDDDDDDDDDDDDDDDDDDAAAAAAAAAAAAAAADDDDDDDDDDDDDDDDDDDDDDDDDDDDDD......................DDDD.............
+DDDD.................................DAAAAM....D....D.......................................................................................
+....................................DAAAAM.....D....D.......................................................................................
+....................................DAAAAM..DDDDDDDDD.......................................................................................
+...................................DAAAAM...................................................................................................
+...................................DAAAAM...................................................................................................
+..................................DAAAAM....................................................................................................
+..................................DAAAAM....................................................................................................
+"""
+
+PROPFIGHTER = """
+...........................................................................................
+..............................................................................HHHHHHH......
+.............................................................................HMMMMMMMH.....
+H.................................HHHHHHHHHHHHHHHHHH.......................HHMMMMMMMMMH....
+H................................HGGGGGGGGGGGGGGGGGMHHH...................HMMMMMMMMMMMMH...
+H..............................HHMGGGGGGGGGGGGGGGGGMMMMHH................HMMMMMMMMMMMMMMH..
+H..........HHHHHHHHHHHHHHHHHHHMDDDDDDDDDDDDDDDDDDDDDDDDDDMM............DDDDDDDDDDDDDDDMMMH.
+H.....HHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDD
+H...HHMMMMMMAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHH
+HAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+HAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDD
+HAAAAAMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMDDDDDDDD.....
+H.DDMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMDDDDDDD....DDD......
+H...DDDDMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMDDDDDDD...........DDD......
+H.......DDDDDDDDDDDDDDDDDMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...........................
+H........................DDDDDDDDDHHHHHHHHHHHHHHHHHHHHH....................................
+H.............................DDDDMMMMMMMMMMMMMMMMMMMMM....................................
+H.............................DDDDDDDDDDDDDDDDDDDDDDDDD....................................
+..............................DDDD.........................................................
+...........................................................................................
+...........................................................................................
+"""
+
+HEAVYPROP = """
+..............................................................................................................................HHHHHHHHHHHHHHH..........
+..........................................................................................................................HHHHMMMMMMMMMMMMMMMH.........
+.....................................................................................................................HHHHHMMMMMMMMMMMMMMMMMMMMH........
+................HHHHHHHHHHHHHH..................................................................................HHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMH.......
+...............HGGGGGGGGGGGMMMHH............................................................................HHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH......
+.............HHMGGGGGGGGGGGMMMMMHH....AAAAA............................................................DDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMH.....
+..........HHMDDDDDDDDDDDDDDDDDDDDDMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDDDM....
+.....HHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHMMMMMHMMMMMHMMMMMHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHH..........
+GGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHMMMMMHMMMMMHMMMMMHMMMMMMMMMMMMMMMMMMMMMGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHH
+GGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHMDDDDHDDDDDHDDDDDHDDDDMMMMMMMMMMMMMMMMMGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+GGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHDHHHHHHHHDDHDDDDDHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDD
+GGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHDMMMMHMMDHHHHHHHHHHHHHHHHHHHHHHHDHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDD.....
+DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHDMMMMHMMDMMHMMMMMHMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDD...............
+..DDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHDDDDDHDDDMMHMMMMMHMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMDDDDDDDD......................
+.....DDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHMDDDDHDDDDDHDDDDDHDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDD..............................
+..........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDHDDDDDHDDDDDHDDDDDHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.....................................
+........................................H.....H.....H...DDDD....................DDDDD..................................................................
+..............................................H.........DDDD...........................................................................................
+........................................................DDDD...........................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+"""
+
+JET_SWEPT = """
+......................................................................................................HHHHHHHHHHHHH..........................
+.....................................................................................................HMMMMMMMMMMMMMH.........................
+....................................................................................................HMMMMMMMMMMMMMMMHH.......................
+....................................HHHHHHHHHHHH....................................................MMMMMMMMMMMMMMMMMMH......................
+........................HHHHHHHHHHHHMMMMMMMMMMMMHH.................................................HMMMMMMMMMMMMMMMMMMMH.....................
+......................HHGGGGGGGGGGGGGGGGGGGGGGGGGMHHH.............................................HMMMMMMMMMMMMMMMMMMMMMH....................
+.....................HMMGGGGGGGGGGGGGGGGGGGGGGGGGMMMMHH..........................................DDDDDDDDDDDDDDMMMMMMMMMMH...................
+...................HHMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDD.................
+..................MDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHH...........
+............HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHH..
+.......HHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAAA
+...HHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAAA
+HHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMAAAA
+DDDDMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDMMMMMMMMMMMMMDDDD.
+....DDDDDDDDDDDDMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMDMMMMMMDDDDDDDDDDM
+................DDDDDDDDDDAAAAMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...........
+..........................AAAAMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD......................
+..........................AAAADDDDDDDDDDDDDDDDDDD...................................................DDDDDDDDDDDDD............................
+.............................................................................................................................................
+.............................................................................................................................................
+.............................................................................................................................................
+"""
+
+BOMBER_BIG = """
+.....................................................................................................................................HHHHHHHHHHHHHHH........................
+...................................................................................................................................HHMMMMMMMMMMMMMMMHH......................
+................................................................................................................................HHHMMMMMMMMMMMMMMMMMMMHH....................
+.............................................................................................................................HHHMMMMMMMMMMMMMMMMMMMMMMMMHH..................
+...........................................................................................................................HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHH................
+........................................................................................................................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDHH..............
+.......HGGGGGGGHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDD.............
+....HHHMGGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHH......
+..HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHH
+.HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHDMMMMMMDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDD
+DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAMMMMMMMMMMMMMMDMMMMMDHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDD...
+.DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAMMMMMMMMMMMMMMDMMMMMDAAAMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDD........
+...DDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDMMMMMDAAAMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDD................
+........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..........................
+.....................................................................................................................DDD....................................................
+............................................................................................................................................................................
+............................................................................................................................................................................
+............................................................................................................................................................................
+............................................................................................................................................................................
+............................................................................................................................................................................
+"""
+
+TRANSPORT = """
+...........................................................................................................................HHHHHHHHHHHHHHHHHH..........
+.......................................................................................................................HHHHMMMMMMMMMMMMMMMMMMHH........
+........................................H...........H..............................................................HHHHMMMMMMMMMMMMMMMMMMMMMMMMHH......
+........................................H.....H.....H.....H....................................................DDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMH.....
+......GGGGGGGGGHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDHDDDDDHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDMMMMMMMMMMMMMMMMMMHH...
+......GGGGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMHMDDDDHDDDDDHDDDDDHDDDDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHDDDDDDDDDDDDMMMMMMMMHH.
+....HHGGGGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMHDHHHHHHHHDDHDDDDDHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHH......DDDDDDDDDDD
+..HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHDAAMMHMMDHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHH
+.HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHDAAMMHMMDAAHMMMMMHMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+.MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHDDDDDHDDDAAHMMMMMHMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDD
+HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHMDDDDHDDDDDHDDDDDHDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDD..........
+DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHMMMMMHMMMDDHDDDDDHDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDD.......................
+.DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHMMMMMHMMMMMHMMMMMHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDD............................
+..DMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDHDDDDDDDDDDDHDDMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMDDDDDD..................................
+...DDDMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHDMMMMDDDDD........................................
+......DDDMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMDDDDD.............................................
+.........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+"""
+
+HELO_UTILITY = """
+...................................................................................................
+HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH....................H.
+.................................MMM......................................................HHHHHHHH.
+......................HHHHHHHHHHHDDDHHHHHHHHAAA..........................................HMMMMMMMH.
+...........HHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDAAAD........................................HMMMMMMMMH.
+...GGGGGGGHMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDMHH.....................................HMMMMMMMMMD.
+...GGGGGGGMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMHH..................................HMMMMMMMMMMH.
+..HGGGGGGGMMMMMMMMDMGGGGGGGMMMDMMMMMMMMMMMMMMMMMMMMMHHDDHHHHHHHHHHHH.................DDMMMMMMMMMMH.
+.HMGGGGGGGMMMMMMMMDMGGGGGGGMMMDMMMMMMMMMMMMMMMMMMMMMMMHHDMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHDDDDDDDDDDH.
+.MMMMMMMMMMMMMMMMMDMGGGGGGGMMMDMMMMMMMMMMMMMMMMMMMMMMMMMHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHH
+HMMMMMMMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDD
+DMMMMMMMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMDDDDDDDDDDDDDDDDDDD............
+.DMMMMMMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDD..........DDD..................
+..DMMMMMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMDDD......................DDD..................
+...DDDDMMMMMMMMMMMDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMDDDDD..............................................
+.......DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...................................................
+............DDDD...................................................................................
+............DDDD...................................................................................
+...................................................................................................
+...................................................................................................
+...................................................................................................
+"""
+
+HELO_TANDEM = """
+......................................................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDHHHHHHHHHHHHHHH
+...............................................................................................................HHH...............
+HHHHHHHHHHHHHHHHHHHHHDDDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH....................................................DDD...............
+.....................HHH................................................................................HHHHHHHDDDHHHHH..........
+.....................MMM...............................................................................HMMMMMMMMMMMMMMM..........
+.....................DDD.............................................................................HHMMMAAAAAAAAAAAMMH.........
+.....HHHHHHHHHHHHHHHHDDDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMAAAAAAAAAAAMMM.........
+..GGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHH.......
+.HGGGGGGGMMMMMMMGGMMMMMMGGMMMMMMGGMMMMMMGGMMMMMMGGMMMMMMGGMMMMMMGGMMMMMMGGMMMMMMGGMMMMMMGGMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDH.....
+.MGGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH....
+HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD....
+DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD.....
+.DMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMD......
+..DMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMDDDDD.......
+...DDMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMDDDDDDDD............
+.....DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD....................
+............DDDD............................................................................DDDD.................................
+............DDDD............................................................................DDDD.................................
+.................................................................................................................................
+.................................................................................................................................
+.................................................................................................................................
+"""
+
+HELO_ATTACK = """
+...........................................................................................
+HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH....................
+...............................HHH.........................................................
+...............................DDD..............................................HHHHHHH...H
+...................HHHHHHHHHHHHDD...............................................MMMMMMM...H
+...............HGGGGGGGGMMMMMMMMMHHHHHHHH.......................................MMMMMMMH..H
+..............HMGGGGGGGGMMMMMMMMMMMMMMMMMHAAAAAH................................MMMMMMMM..H
+...........HHHMMGGGGGGGGMMMMMMMMMMMMMMMMMMAAAAAMHH..............................DDDDDMMMH.H
+......GGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMM.D
+.....HGGGGGGGMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDMMMMMMMMHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDD.H
+...HHMGGGGGGGMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHDMMMMMMMMHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHH
+.HHMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDMMMMMMMMMDMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDH
+HMMMMMMMMMMMMMMMMMMMMMMMMMDDHHHHHHHHHHHDDDDMMMMMMMDDDDDDDDDDDDDDD.........DDD.............H
+DDDDDDDDDDDDMMMMMMMMMMMMMMMDDDDDDDDDDDDDMMDDDDDDDD........................DDD.............H
+....HHHHHH..DDDDDDDDDDDDDDDDDAAAAAAAAADDDD.................................................
+DDDDDMMMMM......DDDD.......................................................................
+....DDDDDD......DDDD.......................................................................
+...........................................................................................
+...........................................................................................
+...........................................................................................
+...........................................................................................
+"""
+
+JET_TWINTAIL = """
+........................................................................................................................HHHHHHHHHHHHHHHDDDDD.........................
+.......................................................................................................................HMMMMMMMMMMMMMMMHDDDDD........................
+.......................................................................................................................MMMMMMMMMMMMMMMMMHHDDDDD......................
+......................................................................................................................HMMMMMMMMMMMMMMMMMMMHDDDDD.....................
+.............................HHHHHHHHHHHHHHHHHHHHHHHHHH...............................................................MMMMMMMMMMMMMMMMMMMMMHDDDDD....................
+..........................GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGHH..........................................................HMMMMMMMMMMMMMMMMMMMMMMHDDDDD...................
+........................HHGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGDDMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDMHDDDDD..................
+....................HHMMDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDD................
+..............HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHH......
+.........HHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAAAA....
+......HHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMAAAAA....
+..HHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDMMMMMMMMMMMMMMMMMMMMMMMDDDDD....
+HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMDMMMMMMMMMMMMMMMMMMMMMMAAAAA....
+DDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMDDAAAAAHH..
+.......DDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMDAAAAMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDMM
+......................DDDDDDDDDDDDDDDMMMMDAAAAMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDD....................
+.....................................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.............................
+.....................................................................................................................................................................
+.....................................................................................................................................................................
+.....................................................................................................................................................................
+.....................................................................................................................................................................
+"""
+
+ATTACKJET = """
+.......................................................................................................................................................
+..................................................................................................................................HHHHHHHHHHHHHHHHHDDDD
+........................................................................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.....MMMMMMMMMMMMMMMMMDDDD
+..................HHHHHHHHHHHHHHHHHH....................................................AAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAA.....MMMMMMMMMMMMMMMMMDDDD
+................GGGGGGGGGGGGGGGGGGGGGHH.................................................AAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAA.....MMMMMMMMMMMMMMMMMDDDD
+..............HHGGGGGGGGGGGGGGGGGGGGGMMHH...............................................AAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAA.....MMMMMMMMMMMMMMMMMDDDD
+............MMDDDDDDDDDDDDDDDDDDDDDDDDDDDMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.....DDMMMMMMMMMMMMMMMDDDD
+.........HHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDHHHHHHHDDDDDDDDDDDDDDDDDDD
+......HHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHH
+.....HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+.....MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+....HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+.....DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDD
+.......DDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDD................
+............DDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDD.........................
+....................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+"""
+
+FACETED = """
+...............................................................
+...........................................HHHHHHHHHHHHHH......
+.....................................HHHHHHMMMMMMMMMMMMMD......
+...............................HHHHHHMMMMMMMMMMMMMMMMMMD.......
+.........................HHHHHHMMMMMMMMMMMMMMMMMMMMMMMD........
+...................HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.........
+.............HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHH.......
+.......HHHHHHMMMMMMHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMHHH....
+...HHHHHHHHHHHHHHHAAAAAAAMMMMMMMMMMMHHHHHHHHHHMMMMMHHHHHMMHH...
+.HHMHHGGGGGGGGGMMMAAAAAAAMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHMMMMHH.
+MMMHMMGGGGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+.DMMMMGGGGGGGGGMMMAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMHHHMMMMMMMMMDD.
+..DDDMMMMMMMMMMMMMAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHMMDD...
+......DDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHH....
+............DDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD.......
+..................DDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.........
+.........................DDDDDDMMMMMMMMMMMMMMMMMMMMMMM.........
+...............................DDDDDDMMMMMMMMMMMMMMMMMH........
+.....................................DDDDDDMMMMMMMMMMMMH.......
+...........................................DDDDDDDDDDDDDM......
+...............................................................
+"""
+
+BOMBER_SWEPT = """
+.......................................................................................................................................HHHHHHHHHHHH...................
+.....................................................................................................................................HHMMMMMMMMMMMMHH.................
+...................................................................................................................................HHMMMMMMMMMMMMMMMMHH...............
+.................................................................................................................................HHMMMMMMMMMMMMMMMMMMMMHH.............
+..............................................................................................................................HHHMMMMMMMMMMMMMMMMMDDDDDDDD............
+............................................................................................................................HHMMMMMMMMMMMMMMMMMMMDMHHHHHHHHHHHHHHHHHHH
+..........................................................................................................................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+.........................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDD.......
+................GGGGGGGGGGGHHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHH.
+................GGGGGGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.
+..........HHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.
+....HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDHHHHHHHHHHDDMMMMMMMMMMMMMMMMMMMMMMMMMDDD.
+HHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDMMDMMMMMMMMMMMMMMMMMDDDDDDD....
+DDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDAAAAMMMMMMMMMMMMMMMMMMMMMMAAADDDDDDDDDDDDMMMMMMMMMMMDDDDDDD...........
+...DDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAAMMMMMMMMMMMMMMMMMMMMMMAAADMMMMMMMMMMMMMMMDDDDDDD..................
+........DDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAAADDDDDDDDDDDDDDDDDDDDDDAAADMMMMMMMMDDDDDDD.........................
+....................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD................................
+......................................................................................................................................................................
+......................................................................................................................................................................
+......................................................................................................................................................................
+......................................................................................................................................................................
+"""
+
+JET_DELTA = """
+................................................................................................................HHHHHHHHHHHHH.........................
+...............................................................................................................HMMMMMMMMMMMMMHH.......................
+..............................................................................................................HMMMMMMMMMMMMMMMMHH.....................
+............................................................................................................HHMMMMMMMMMMMMMMMMMMMH....................
+..............................HHHHHHHHHHHHHHHHHHHHHHHH.....................................................HMMMMMMMMMMMMMMMMMMMMMMHH..................
+............................HHGGGGGGGGGGGGGGGGGGGGGGGMHHH.................................................HMMMMMMMMMMMMMMMMMMMMMMMMMH.................
+..........................HHMMGGGGGGGGGGGGGGGGGGGGGGGMMMMHH..............................................DDDDDDDDDDDDDDDDMMMMMMMMMMMMHH...............
+.....................HHHMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDD.............
+..............HHHHHHHMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHH..........
+.........HHHHHMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHH.
+......HHHMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAAA
+..HHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMAAAA
+HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDAAAA
+DDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMDD.
+.....DDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD....
+.................DDDDDDDDDDDDDDDMMMMMMMDAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDD..........
+................................DDDDDDDDAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.....................
+........................................AAAADDDDDDDDDDDDDDDDDDDDDDDDDDD...............................................................................
+......................................................................................................................................................
+......................................................................................................................................................
+......................................................................................................................................................
+"""
+
+FLYINGWING = """
+...........................................HHHHHHHHHHHHHHHM......
+.....................................HHHHHHMMMMMMMMMMMMMDD.......
+...............................HHHHHHMMMMMMMMMMMMMMMMMMM.........
+.........................HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMHH.......
+...................HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHH.....
+.............HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM....
+.......HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD.....
+...HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMM......
+..HMMHMMMMMMMMMMMMMMMMAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMHHHHHM......
+.HMHHGGGGGGGGMMMMMMMMMAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHH..
+MMMMMGGGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHMM
+.DMMMGGGGGGGGMMMMMMMMMAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM..
+..DMMMMMMMMMMMMMMMMMMMAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD......
+...DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.......
+......DDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHH.....
+............DDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM....
+..................DDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD.....
+.........................DDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMDD.......
+...............................DDDDDDMMMMMMMMMMMMMMMMMMM.........
+.....................................DDDDDDMMMMMMMMMMMMMH........
+...........................................DDDDDDDDDDDDDDMM......
+"""
+
+JET_STEALTH = """
+..............................................................................................................HHHHHHHHHHHHHHHDDDDD.....................
+.............................................................................................................HMMMMMMMMMMMMMMMHDDDDD....................
+............................................................................................................HMMMMMMMMMMMMMMMMMHHDDDDD..................
+.................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHH.............................................HMMMMMMMMMMMMMMMMMMMMHDDDDD.................
+..............................HHHMGGGGGGGGGGGGGGGGGGGGGGGGGGGMHHHH........................................HMMMMMMMMMMMMMMMMMMMMMMHDDDDD................
+..........................HHHHMMMMGGGGGGGGGGGGGGGGGGGGGGGGGGGMMMMMHHH....................................DDDDDDDDDDMMMMMMMMMMMMMMMHDDDDD...............
+........................MMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDDDDDDD..............
+..................HHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHDDDD............
+............HHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHH..
+.......HHHHHMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAAA.
+.....HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAAA.
+..HHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMAAAAMMMMMMHDMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMAAAA.
+HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMAAAAMMMMMMMHDMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDMMMMMMMMMMMMMMMMMAAAA.
+DDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMAAAAMMMMMMMMDMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMDMMMMMMMMMMMMMMMMMDDD.
+...DDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMDMAAAAMMMMMMMMHDMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMDDDDDDDDM
+........DDDDDDDDDDDDMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDD.........
+....................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.....................
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+"""
+
+TILTROTOR = """
+.........................................................................................
+......HHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDHHHHHHHHHHHHHHHHHHHHHHHHHHHH........................
+..............................HHHDMMMDHHH.........................................HHHHHHH
+..............................MMMMDDDMMMM.........................................MMMMMMM
+..............................MMMMMMMMMMM.........................................MMMMMMM
+..............................MMMMMMMMMMM.........................................DDDDDDD
+..............................MMMMMMMMMMM...............................DDDDDDDDDHHHHHHHH
+........................HHHHHDMMMMMMMMMMMDHHHHHHH..................HHHHHHHHHHHHHHDDDDDDDD
+.....HHHHHHHHHHHHHHHHHHDDDDDDDMMMMMMMMMMMDDDDDDDDDHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMM........
+..HGGGGGGGMMMMMMMMMMMMMMDDDDDDDDAAAAAAADDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD........
+.HMGGGGGGGMMMMGGGGMMMMMMMMMMMMDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDD..........
+.MMGGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDD..............
+HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDD..................
+DMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMDDDD.....................
+.DMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMDDD.........................
+..DDDDMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDD............................
+......DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...............................
+........DDD...............DDDD...........................................................
+........DDD...............DDDD...........................................................
+.........................................................................................
+.........................................................................................
+"""
+
+TANK_EARLY = """
+                                    DHHHHHHHHHHHHHHHHHHHHHHHD                                                                                                               
+                                    DMMMMMMMMMMMMMMMMMMMMMMMD                                                                                                               
+                                    DMGGGGGMMMMMMMMMMMMMMMMMD                                                                                                               
+               A                    DMMMMMMMMMMMMMMMMMMMMMMMD                                                                                                               
+           AAAAAAAAAAAAAAADA  D     DMMMMMMMMMMMMMMMMMMMMMMMD                                                                                                               
+         AAAAADMDAAAAAAAAAAAAAAAAADADDDDDDDDDDDDDDDDDDDDDDDDD                                                                                                               
+        AAAADMMMHHHHHHHHHHDAAAAAAAAAAAAAAAAAAADAAADA  D                                                                                                                     
+        AAADMMMMMMMMMMMMMMMMHHHHHHHHHHDAAAAAAAAAAAAAAAAAAADAAADA  D                                                                                                         
+       AAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHDAAAAAAAAAAAAAAAAAAADAAAD   D                                                                                             
+       AAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHDAAAAAAAAAAAAAAAAAAADAAAD   D                                                                                 
+      AAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDAAAAAAADAAAD   D                                                                     
+      AAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDAAAAAAAAAAAAAAAAAAADAAAD   D                                                         
+      AAADMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHDAAAAAAAAAAAAAAAAAAAADAAAD   D                                             
+      AAADMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMDHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMHHHHHHHHHHDAAAAAAAAAAAAAAAAAAAADAAAA                          DDHDD      
+      AAADMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHDAAAAAAAAAAAAAAAA DDDDDDDDD            DDMMMDD     
+       AAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHDAAAA          DDDDDDDDD  DDMMMMMDD    
+       AAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAA                    DMMMMMMMD    
+        AAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAAA                    DMMMDMMMD    
+        AAAADMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDAADDDDDDDDDDDDDDDDDDD  DMMMMMMMD    
+         AAAAAAADMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMDAAAA                     DDMMMMMDD    
+           AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                      DDMMMDD     
+               AAAAAAAAAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAADAAAA                          DDDDD      
+"""
+
+TANK_ROUND = """
+                                                            MMMMMMMMMMMMM                                                       
+                                                          HHHHHHHHHHHHHHHHH                                                     
+                                                    HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH                                           
+HHHH                                    HHHHH   DMMMMMMMMMGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                       
+MMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMM DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                     
+MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                    
+MMMMDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                   
+DDDD                    DDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                   
+                                        DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD                                   
+                          DHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHD 
+                          DDMGGGGGMDMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD 
+                          DDMMMMMMMDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD 
+                          DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD 
+                          DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD 
+                          DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD 
+                          DMMMMMAAAAAAAAAAAAAAAAMMAAAAAAAAAAAAAAAAAAAAAAAAMMAAAAAAAAAAAAAAAAAAAAAAAAMMAAAAAAAAAAAAAAAAAAAAA     
+                           DDADAMMMADDDDDDDDDHHHHHHHDDDDDDDDDDDDDDDDDDDHHHHHHHDDDDDDDDDDDDDDDDDDDHHHHHHHDDDDDDDDDDDDDDDDDDD     
+                             AAMMMMMA      DDDMMMMMDDD               DDDMMMMMDDD               DDDMMMMMDDD              AAA A   
+                             AAMMDMMA     DMMMD   DMMMD             DMMMD   DMMMD             DMMMD   DMMMD            AMMMAA   
+                             AAMMMMMA     DMDMD   DMDMD             DMDMD   DMDMD             DMDMD   DMDMD            AMDMAA   
+                             A AMMMA      DMMMD   DMMMD             DMMMD   DMMMD             DMMMD   DMMMD            AMMMAA   
+                              AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA    
+"""
+
+TANK_SLOPED = """
+                                                                                            HHHHHHHHH                                                                 
+                                                        HHHHHHH                             DMGMGMGMD                                                                 
+                                                        GMMMMMD                 HHHHHHHHHHHHHHHHHHH                                                                   
+                            HHHHHHHHH                       HHHHHH        DMMMGMMMMMMMMMMMMMMMMMMMMMMMMMDDD                                                           
+HHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHDMMMMM   DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDD                                                       
+MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDD                                                  
+DDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD  DDDD                                              
+                            DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD     DDD                                           
+                                                            DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD                                                   
+                                                            MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHD         
+                                                          HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDHHHHDHHHD
+                                                   HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDMMMMDMMMD
+                                           HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDMMMMDMMMD
+                                    HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDD
+                            HHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD         
+                                      AAAAAAAAAAAAADDDAAAAAAAAAAAAADDDAAAAAAAAAAAAADDDAAAAAAAAAAAAADDDAAAAAAAAAAAAADDDAAAAAAAAAAAAADDDAAAAAAAAAAAAA   DDDDDDDDD       
+                                   A AMMMA        DMMMD           DMMMD           DMMMD           DMMMD           DMMMD           DMMMD        AMMMA A                
+                                   AAMMMMMA      DMMMMMD         DMMMMMD         DMMMMMD         DMMMMMD         DMMMMMD         DMMMMMD      AMMMMMAA                
+                                   AAMMDMMA      DMMDMMD         DMMDMMD         DMMDMMD         DMMDMMD         DMMDMMD         DMMDMMD      AMMDMMAA                
+                                   AAMMMMMA      DMMMMMD         DMMMMMD         DMMMMMD         DMMMMMD         DMMMMMD         DMMMMMD      AMMMMMAA                
+                                   A AMMMA        DMMMD           DMMMD           DMMMD           DMMMD           DMMMD           DMMMD        AMMMA A                
+                                    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                 
+"""
+
+HALFTRACK = """
+                                  MMMMMM      HHHHHHHHHHH                                                     
+                                        MMMMMMDMMMMMMMMMD                                                     
+                                            HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH     
+                                            MMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD     
+                                        DHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+                                        DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+                                        DGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+                                        DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+          DHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+    DDD   DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMM   MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+   DMMMD  DDDDDDDMMMMMMMMMMMMMMMMMMMMMMMM   MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+   DMMMDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMM   MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+   DMMMD  DDDDDDDMMMMMMMMMMMMMMMMMMMMMMMM   MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+    DDD   DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD   DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD     
+          DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD     
+                       DDD                                  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         
+                      DMMMD                                AAMMMA   DDDDDDDDDDDDDDDDDDDDDDDDD   AMMMAA        
+                     DMMMMMD                               AMMMMMA  MMMMMMMMMMMMMMMMMMMMMMMMM  AMMMMMA        
+                     DMMDMMD                               AMMDMMA                             AMMDMMA        
+                     DMMMMMD                               AMMMMMA    DDD   DDD   DDD   DDD    AMMMMMA        
+                      DMMMD                                AAMMMA     DMD   DMD   DMD   DMD     AMMMAA        
+                       DDD                                  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         
+"""
+
+TANK_BOXY = """
+                                                                                              HHHHHHHHH                                               
+                                                                                              DMGMGMGMD                                               
+                                                    HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH                                     
+HHHHHH                                        HHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD                                     
+MMMDMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDHHHHHHD                              
+MMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDMMMMMMD                   H    H     
+MMMDMMDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDMMMMMMD                   MD   MD    
+DDDDDD                      DDDDDDDDDDDDDDDDDDDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDMMMMMMD                   MD   MD    
+                                              DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD                   MD   MD    
+                                      DHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHD  
+                                      DDMGGGGGMDMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD  
+                                      DDMMMMMMMDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD  
+                                 HHHHHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD  
+                                 DMMMMDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD  
+                                 DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD  
+                                        AAAAAAAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAADDDAAAAAAAAAAA   
+                                       A AMMMA  DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD    AMMMA A  
+                                       AAMMMMMADDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDD  AMMMMMAA  
+                                       AAMMDMMADDDDDDDMMDMMDDDDDDDMMDMMDDDDDDDMMDMMDDDDDDDMMDMMDDDDDDDMMDMMDDDDDDDMMDMMDDDDDDDMMDMMDDDDDDD  AMMDMMAA  
+                                       AAMMMMMADDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDDMMMMMDDDDDDD  AMMMMMAA  
+                                       A AMMMA  DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD DMMMD DDDDD    AMMMA A  
+                                        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   
+"""
+
+APC_TRACK = """
+                            MMMMMMMMMMMMMHHHHHHHHHHHH                                               
+                            DDDDDDDDDDDDDMMGMMGMMGMMD       MMMMMMMMMMMMMMMMMMM                     
+                              HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHD   
+                             HMGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD   
+                            HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD   
+                          HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDD   
+                         HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD   
+                        HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD   
+                       HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD   
+                      HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD   
+                     HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD   
+                    HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD   
+                  HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDD   
+                DHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD   
+                DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD   
+                       AAA         DDD         DDD         DDD         DDD         DDD   AAA        
+                    A AMMMA       DMMMD       DMMMD       DMMMD       DMMMD       DMMMD AMMMA A     
+                    AAMMMMMA     DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMAMMMMMAA     
+                    AAMMDMMA     DMMDMMD     DMMDMMD     DMMDMMD     DMMDMMD     DMMDMMAMMDMMAA     
+                    AAMMMMMA     DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMAMMMMMAA     
+                    A AMMMA       DMMMD       DMMMD       DMMMD       DMMMD       DMMMD AMMMA A     
+                     AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA      
+"""
+
+MLRS = """
+                  HHHHHHHHHHHHHHHHHHHHHHHHHHHHH                                                                              HHHHHHD    
+                  DMMMMMMMMMMMMMMMMMMMMMMMMMMDD                                                                  HHHHHHHHHHHHMMMMMDD    
+                  MMGGGGGMMMMMGGGGGGGGGMMMMMMDD                                                     HHHHHHHHHHHHHMMMMMMMMMMMMDMMDMDD    
+                  MGGGGGMMMMMMGGGGGGGGGMMMMMMDD                                         HHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD    
+                  GGGGGMMMMMMMGGGGGGGGGMMMMMMDD                            HHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMDMDD    
+                  DMMMMMMMMMMMMMMMMMMMMMMMMMMDD                HHHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD    
+      DHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMDD         DHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMDDDDDDD    
+      DDMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMDD         DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDMMMMMMMMMDDDDDDDDDDDD           
+      DDMDDDDDDDMMDMMMMMMMMMMMMMMMMMMMMMMMMMMDD         DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDD                       
+      DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD         DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDD                                    
+      DDMDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD         DMMMMMMMMMMMMMMMMMMDDDDDDDDDDDDD        DD                                      
+      DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMDMMMMMMDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD   
+      DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD   
+                     DDD                DDDDDDDDDDDDDDDDDDDDDDDDDDD                                DDD               DDD                
+                    DMMMD               DDDDDDDDDDDDDDDDDDDDDDDDDDD                               DMMMD             DMMMD               
+                   DMMMMMD                                                                       DMMMMMD           DMMMMMD              
+                   DMMDMMD                                                                       DMMDMMD           DMMDMMD              
+                   DMMMMMD                                                                       DMMMMMD           DMMMMMD              
+                    DMMMD                                                                         DMMMD             DMMMD               
+                     DDD                                                                           DDD               DDD                
+"""
+
+SPG = """
+                                                                                            MMMMMMMMHHHHHHHHHHHHH                                                       
+                                                                                                    DMMGMMGMMGMMD                                                       
+HHHHHHHHHH              HHHHHHHHHHH                                                 HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+MMMMDDMMMMHHHHHHHHHHHHHHMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMDD
+MMMMDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMDD
+MMMMDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDMDMMMMMDD
+MMMMDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMDD
+MMMMDDMMMMDDDDDDDDDDDDDDMMMMMMMMMMMDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMDD
+DDDDDDDDDD              DDDDDDDDDDD               DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+                                                            HHHHGGGGGHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM       
+                                                      HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD       
+                                                HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD       
+                                          HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD       
+                                    HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDD   
+                              DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMD   
+                                       AAAAAAAAAAAADDDAAAAAAAAAAAADDDAAAAAAAAAAAADDDAAAAAAAAAAAADDDAAAAAAAAAAAADDDAAAAAAAAAAAADDDAAAAAAAAAAAADDDAAAAAAAAAA    DDDDDDD   
+                                    A AMMMA       DMMMD          DMMMD          DMMMD          DMMMD          DMMMD          DMMMD          DMMMD     AMMMA A DDDDDDD   
+                                    AAMMMMMA     DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD   AMMMMMAA           
+                                    AAMMDMMA     DMMDMMD        DMMDMMD        DMMDMMD        DMMDMMD        DMMDMMD        DMMDMMD        DMMDMMD   AMMDMMAA           
+                                    AAMMMMMA     DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD   AMMMMMAA           
+                                    A AMMMA       DMMMD          DMMMD          DMMMD          DMMMD          DMMMD          DMMMD          DMMMD     AMMMA A           
+                                     AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA            
+"""
+
+IFV = """
+                                                                  HHHHHHHHHHHHHHHHHHHHHHHHHHH                                   
+                                                         MMMGMMMM DMMMMMMMMMMMMMMMMMMMMMMMMMD                                   
+                                                        HHHHHHHHHHDDMDMMMMMMMMMMMMMMMMMMMMMMD                                   
+                                                HHHHHHHHDMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMD                                   
+                      DHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMDMMGMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDD                                   
+                      DMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                           
+                      DDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                           
+                                                DMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                           
+                                                        DDDDDDDDDDDDDDDDDDDDDDDDDDDDD                                           
+                                            HHGGGGGHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHD     
+                                        HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDMMDD     
+                                   HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+                              HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMDD     
+                          DHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMDD     
+                          DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD     
+                                AAA        DDD         DDD         DDD         DDD         DDD         DDD        AAA           
+                             A AMMMA      DMMMD       DMMMD       DMMMD       DMMMD       DMMMD       DMMMD      AMMMA A        
+                             AAMMMMMA    DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMD    AMMMMMAA        
+                             AAMMDMMA    DMMDMMD     DMMDMMD     DMMDMMD     DMMDMMD     DMMDMMD     DMMDMMD    AMMDMMAA        
+                             AAMMMMMA    DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMD     DMMMMMD    AMMMMMAA        
+                             A AMMMA      DMMMD       DMMMD       DMMMD       DMMMD       DMMMD       DMMMD      AMMMA A        
+                              AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         
+"""
+
+TANK_MODERN = """
+                                                                                           MMMMMMMMMHHHHHHHHHHH                                                             
+                                                                            MGGMMMM                 DMGMGMGMGMD   MMMMMMM                                                   
+                                                                        HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH                                               
+              HHHHHHHHH                             HHHHHH         DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD                                               
+HHHHHHHHHHHHHHMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMM    DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHHHHHHD                               
+MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMDMMDMMDMMDMMD                               
+DDDDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMDMMDMMDMMDMMD                               
+              DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMDMMDMMDMMDMMD                               
+                                                    DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD                               
+                                                    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHD 
+                                                        HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD 
+                                                 HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD 
+                                           HHDDMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDMMMMDMMMMMMMDMMMDD 
+                                    HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMDMMMMDDDDDDDDDMMMDD 
+                              DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD 
+                                         AAA          DDD            DDD            DDD            DDD            DDD            DDD            DDD          AAA            
+                                      A AMMMA        DMMMD          DMMMD          DMMMD          DMMMD          DMMMD          DMMMD          DMMMD        AMMMA A         
+                                      AAMMMMMA      DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD      AMMMMMAA         
+                                      AAMMDMMA      DMMDMMD        DMMDMMD        DMMDMMD        DMMDMMD        DMMDMMD        DMMDMMD        DMMDMMD      AMMDMMAA         
+                                      AAMMMMMA      DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD        DMMMMMD      AMMMMMAA         
+                                      A AMMMA        DMMMD          DMMMD          DMMMD          DMMMD          DMMMD          DMMMD          DMMMD        AMMMA A         
+                                       AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA          
+"""
+
+TRUCK = """
+                                  MMMMMMMMMMMMMHHHHHHHHHHHH                           
+                                  DDDDDDDDDDD DMMMMMMMMMMMD                           
+                                      HHHHHHHHHHHHHHHHHHHHHHHHHHHHH                   
+                                    MGGMMMMMMMMMMDMMMMMMMMMMMMMMMMD                   
+                                  MGG MMMMMMMMMMMDMMMMMMMMMMMMMMMMD                   
+                                MGG   MMGGGGGGGGMDMGGGGGGGGGGMMMMMD                   
+                              MGG     MMGGGGGGGGMDMGGGGGGGGGGMMMMMHHHHHHHHHHHHHHD     
+                              MMMMMMMMMMGGGGGGGGMDMGGGGGGGGGGMMMMMMMMMMMMMMMMMMDD     
+      DHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+   D  DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+   D  DDGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+   D  DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+   D  DDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD     
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD     
+      DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD     
+               DDD    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    DDD              
+              DMMMD   DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD   DMMMD             
+             DMMMMMD                                               DMMMMMD            
+             DMMDMMD                                               DMMDMMD            
+             DMMMMMD                                               DMMMMMD            
+              DMMMD                                                 DMMMD             
+               DDD                                                   DDD              
+"""
+
+APC_WHEEL = """
+                                            MMMMMMMMMMMMMMMHHHHHHHHHH                                                                 
+                                            DDDDDDDDDDDDD DMGMMMMMMMD         MMMMMMMMMMMMM     MMMMMMMMMMMMM                         
+                                        HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHD         
+                                       HMMGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD         
+                                     HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDD         
+                                    HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD         
+                                  HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD         
+                                 HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD         
+                               HHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD         
+                              HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD         
+                            HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD         
+                         HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDMMMMMMMMDD         
+                      HHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDD         
+                    DHDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDD         
+                    DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD         
+                                 DDD                   DDD        DMMMMMMMMMMMMMMMD        DDD                   DDD    DDDDD         
+                                DMMMD                 DMMMD       DDDDDDDDDDDDDDDDD       DMMMD                 DMMMD                 
+                               DMMMMMD               DMMMMMD                             DMMMMMD               DMMMMMD                
+                               DMMDMMD               DMMDMMD                             DMMDMMD               DMMDMMD                
+                               DMMMMMD               DMMMMMD                             DMMMMMD               DMMMMMD                
+                                DMMMD                 DMMMD                               DMMMD                 DMMMD                 
+                                 DDD                   DDD                                 DDD                   DDD                  
+"""
+
+SAILING = """
+................................................H.......................DDDDDDDDDDDDD.....................H........................................
+...........................................DDDDDDDDDDD...................DMMMMMMMMMH................DDDDDDDDDDDDD..................................
+............................................DMMMMMMMH.........................D......................DMMMMMMMMMH...................................
+................................................D....................DDDDDDDDDDDDDDDDDDD..................D........................................
+.........................................DDDDDDDDDDDDDDD..............DMMMMMMMMMMMMMMMH...........DDDDDDDDDDDDDDDDD............................HHHH
+..........................................DMDDDDMMMMMMH...............DMMMMMMMMMMMMMMMH.............DMMMMMMMMMMMH..........................HHHHMM..
+........................................DDDDMMMMMMMMMMH.......................D....................DMMMMMMMMMMMMMH..............MMMMMMMMMMMMDMM....
+.........................................DMMMMMMD.................DDDDDDDDDDDDDDDDDDDDDDDDD...............D.....................MMMMMMMMMMD........
+.......................................DDDDMMMMMDDDDDDDDDD..........DMMMMMMMMMMMMMMMMMMMH.......DDDDDDDDDDDDDDDDDDDDD...........MMMMMMMMD..........
+.........................................DMDMMMMMMMMMMMH............DMMMMMMMMMMMMMMMMMMMH.........DMMMMMMMMMMMMMMMH..........HHHMMMMMMD............
+........................DHH.............DMMMDMMMMMMMMMMMH..........DMMMMMMMMMMMMMMMMMMMMMH.......DMMMMMMMMMMMMMMMMMH.......HHMHMMMMMD..............
+........................DGGGGGGGG.......DMMMMMMMMMMMMMMMH..........DMMMMMMMMMMMMMMMMMMMMMH.......DMMMMMMMMMMMMMMMMMH.......MM.H.MMD................
+........................DMMMMMMMMHHHHH........................................D...................................HHHHHHHHHHHHH....................
+........................DMMMMMMMMMMMMMHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHMMMMMMMMMMMMM....................
+........................DMMMMAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAAMMMMMM....................
+........................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM....................
+........................DMMMMAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAADAAAAMMMMMM....................
+........................AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA....................
+.........................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.....................
+..........................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.......................
+...........................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.........................
+...................................................................................................................................................
+"""
+
+IRONCLAD = """
+...........................................................................................................................
+...........................................................................................................................
+...........................................................................................................................
+...........................................................................................................................
+...........................................................................................................................
+...........................................................................................................................
+...........................................................................................................................
+...........................................................................................................................
+...........................................................................................................................
+.........................................................HHHHHHHHHHHHHH....................................................
+........................................................DMMMMMMMMMMMMMMM...................................................
+........................................................DMMMMMMMMMMMMMMM...................................................
+......H...............................DDD...............DDDDDDDDDDDDDDDDMDDDD..............................................
+......D...............................DMM...............DMMMMMMMMMMMMMMM........................HHHHH......................
+......D.......................HHHHH...DMM...............DMMMMMMMMMMMMMMMMDDDD...................DGGGG......................
+.....HDHHHHHHHHHHHHHHHHHHHHHHHDMMMMHHHDMMHHHHHHHHHHHHHHHDDDDDDDDDDDDDDDDHHHHHHHHHHHHHHHHHHHHHHHHDMMMMHHHHHHHHHHHHHHHHHHHHH.
+....DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH
+....AAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...........
+...................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.............
+.....................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...............
+...........................................................................................................................
+"""
+
+DREADNOUGHT = """
+..................................................................H...........................................................................
+..................................................................D...........................................................................
+........................................H.........................D...DDDD....................................................................
+........................................D...........DDDD........HHHHH.DHHH....................................................................
+.....................................DDDDDDD........DHHH........DMMMM.DMMM....................................................................
+........................................D...........DMMM......DDDDDDDDDMMM....................................................................
+........................................D...........DMMM..........D...DMMM..............HHHHHH................................................
+........................................D...........DMMM.........DDD..DMMM..............DMMMMM................................................
+........................................D...........DMMM.........DDD..DMMM..........HHHHHHHHHHHHH.............................................
+........................................D...........DMMM........D.D.D.DMMM..........DMGGGGDGGGGGM.............................................
+.................HHHHHH..........HHHHHH.D...........DMMM........D.D.D.DMMM.HHHHHH...DMMMMMMMMMMMM........HHHHHH...............................
+.....DDDDDDMMMMMDMMMMMMDDDDMMMMMDMMMMMMDD...........DMMM..MMMMMMM.D..DDMMMDMMMMMMDMMMMMDDDDDDMMMM.......DMMMMMMDMMMMMDDDDDD...................
+.......DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...........DMMM.......D..D..DDMMMDDDDDDDDDDDDDDDDDMMMMMM.......DDDDDDDDDDDDDDDDD...AAAAAAAAAAAAAAH...
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMH...
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
+..DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+...DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.
+....DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..
+..............................................................................................................................................
+"""
+
+SUB_WWII = """
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................................................................................................
+.......................................................................H...............................................................................
+.......................................................................D..H............................................................................
+.......................................................................D..D............................................................................
+.......................................................................D..D............................................................................
+...................................................................DDDDDDDDDDDDDDDD....................................................................
+..................................................................HD.D.D.D.D.D.D.D.....................................................................
+............................................................DDDD..HHHHHHHHDDDDDDDDD....................................................................
+..............................................................D...DMMMMMMMMMMMMMMMM....................................................................
+............................................................HHHHHHDMMMMMMMMMMMMMMMM...............HHHHHMDDDDDD......................................H..
+............................................................DMMMMMDMMMMMMMMMMMMMMMM...............DMMMM.............................................D..
+............................................................DMMMMMDMMMMMMMMMMMMMMMM...............DMMMM..................AAAAAAAAAAAAAAAAAAAAAAAAAAAAAH
+..............AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH
+....AAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH
+....AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+....DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...
+...............DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD......
+.......................................................................................................................................................
+"""
+
+BATTLESHIP = """
+...................................................................................................H........................................................................
+..................................................................H..........................HHHHHHHHHHHHH..................................................................
+...............................................................HHHHHHH........................HHHHHHHHHHH...................................................................
+..................................................................D...........................DMGGGGGGGGM...................................................................
+.................................................................DDD..DDDDDD..................DMMMMMMMMMM...................................................................
+..........................................................DDDDDD.DDD..DHHHHM............HHHHHHHHHHHHHHHHHHHHHHH.............................................................
+..........................................................DHHHHMD.D.D.DMMMMM....HHHH..HHHHMGGGGGDGGGGGDGGGGGGGM.............................................................
+..................................................HHHHHHH.DMMMMMD.D.D.DMMMMM....DMMM..DMMMMMMMMMMMMMMMMMMMMMMMM.............................................................
+...............................................HHHHHHHHH......................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...HHHHHHHHH.........................................
+..............................H.DDDDDDDMMMMMMMDMMMMMMMMMD.....................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM..DMMMMMMMMMDMMMMMMMDDDDDDD..........................
+..............................D........DDDDDDDDDDDDDDDDDD.....................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM..DDDDDDDDDDDDDDDDDDMMMMMMMDMMMMMMMDDDDDDD...........
+..............................D.............HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...DMMMMMMMMMDDDDDDDD...........AAAAAAA
+..............MMMMMMMMMMMMMMMMM.............DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMD...DDDDDDDDDDD.....AAAAAAAAAAAAAMMMMMH.
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMH..
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH.....
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH......
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.......
+...DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD........
+....DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..........
+.....DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.............
+............................................................................................................................................................................
+"""
+
+SUB_MODERN = """
+.................................................................................................................................................................
+.................................................................................................................................................................
+.................................................................................................................................................................
+.................................................................................................................H...............................................
+.................................................................................................................D..H............................................
+.............................................................................................................H...D..D............................................
+.............................................................................................................D...D..D............................................
+.........................................................................................................HHHHHHHHHHHHHHHH........................................
+........................................................................................................DMMMMGGGMMMMMMMMMM.......................................
+........................................................................................................DMMMMMMMMMMMMMMMMM.......................................
+........................................................................................................DMHHHHHHHHHHHHHHHHH......................................
+........................................................................................................DDDDDDDDDDDDDDDDDDD......................................
+........................................................................................................DMMMMMMMMMMMMMMMMM.......................................
+........HHH.............................................................................................DMMMMMMMMMMMMMMMMM.......................................
+........DMM.............................................................................................DMMMMMMMMMMMMMMMMM.......................................
+........DMM............HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH......
+........DMM.HHHHHHHHHHHMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMHHHH..
+......AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+......DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+.........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..
+................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD......
+.........................DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..........
+"""
+
+CARRIER = """
+........................................................................H........HHH........................................................................................
+......................................................................HHHHH.......D.....D...................................................................................
+........................................................................D.......DDDDD.HHHH..................................................................................
+................................................................HHHHHHHHHHHHHHHHHHHHHHHHHHH.................................................................................
+................................................................DMGGGDGGGGGDGGGGGDGGGGGDGGG.................................................................................
+................................................................DDDDDDDDDDDDDDDDDDDDDDDDDDM.................................................................................
+................................................................DMMMGGGGGDGGGGGDGGGGGDGGGMM.................................................................................
+................................................................DDDDDDDDDDDDDDDDDDDDDDDDDDM.................................................................................
+...................H.......H.......H............................DMMMMMMMMMMMMMMMMMMMMMMMMMM..........H.........H.............................H.........H.......H............
+..................DDDDM...DDDDM...DDDDM.........................DMMMMMMMMMMMMMMMMMMMMMMMMMM.........DDDDM.....DDDDM.........................DDDDM.....DDDDM...DDDDM.........
+.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+..DDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDD.
+............MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+............MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH....
+............MMMMMMMMDDDDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDDDDDDDDDDDMMMMMMMMMMMMMMMH.....
+............MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH......
+............MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH.......
+............AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA........
+.............DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.........
+..............DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...........
+...............DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD..............
+............................................................................................................................................................................
+"""
+
+CRUISER = """
+..............................................................................................................HHHHH.......................................................
+....................................H...................................................................HHHHHHHHHHHHHHHHHHHHHHHHHHH.......................................
+..................................DDDDD...DDDDD...DDDDD.......................DDDDD...DDDDD.............DMMGGGGDDDGGGGGGDGGGGGDGGGM.......................................
+.................................HHHHHHH..DMMMM...DMMMM.......................DMMMM...DMMMM.............DMMMMDDMMMDDMMMMMMMMMMMMMMM.......................................
+..............................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.............HHHHHHHHHHHHHHH.HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...............................
+..............................DMMMMMMMMMMMMMMMMMMMMMDGGGGGMMMMM.............DMMMMMMMMMMMMMM.DMMMDGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM...............................
+..............................DMMMMMMMMMMMMMMMMMMMMMGGGGGGMMMMM.............DMMMMMMMMMMMMMM.DMMMGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM...............................
+..............................DMMMMMMMMMMMMMMMMMMMMMGGGGGGMMMMM.............DMMMMMMMMMMMMMM.DMMMGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM...............................
+..............................DMMMMMMMMMMMMMMMMMMMMMGGGGGDMMMMM.............DMMMMMMMMMMMMMM.DMMMGGGGGDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM...............................
+..............................DMDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMM.HHHHHHHHHHH.DMMMMMMMMMMMMMM.DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM..................HHHH.........
+..........HHHH....HHHHHHHHHH..DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.MMMMMMMMMMM.DMMMMMMMMMMMMMM.DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.HHHHHHHHHHHHHH..DMMMMDMMDDDDDD
+..DDDDDMMDMMMMD.....DH..DH....DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.............DMMMMMMMMMMMMMM.DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMAAADHAADHAADHAAAAMMMMMMDDMMMH..
+..AAAAADDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH....
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH....
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH.....
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH......
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.......
+..DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD........
+..DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.........
+..DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD............
+..........................................................................................................................................................................
+"""
+
+CARRIER_SKI = """
+........................................................HHHHH...........................................H..................................................
+..........................................................D...........................................HHHHH................................................
+.......................................................DDDDDDD..........................................D..................................................
+..................................................HHHHHHHHHHHHHHHHH.............................HHHHHHHHHHHHHHHHH..........................................
+..................................................DMMMMMMMMMMMMMMMM.............................DMMMMMMMMMMMMMMMM..........................................
+..................................................DDDDDDDDDDDDDDDDM.............................DMMGGGGDGGGDGGGGM..........................................
+..................................................DMGGGGDGGGDGGGGGM.............................DDDDDDDDDDDDDDDDM........................................AA
+..................................................DMMMMMMMMMMMMMMMM.............................DMMMMMMMMMMMMMMMM......................................AAMH
+...............H.......H.......H..................DMMMMMMMMMMMMMMMM............H.......H........DMMMMMMMMMMMMMMMM............H......................AAAMMMH
+..............DDDDM...DDDDM...DDDDM...............DMMMMMMMMMMMMMMMM...........DDDDM...DDDDM.....DMMMMMMMMMMMMMMMM...........DDDDM...............AAAAMMMMMMH
+.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMH
+..DDDDDDDDDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMDHHHHHHHHHDMMMMMMMMMMMMMMMMMMMMMMMDDDD
+..........MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH.
+..........MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH..
+..........MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH..
+..........MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..........MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH....
+..........AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA....
+...........DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.....
+............DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD......
+.............DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.........
+...........................................................................................................................................................
+"""
+
+DESTROYER = """
+..........................................................................................HHHHH......................................................................
+............................................................................................D...HHHHHHHHHHHHHHHHHHHHH................................................
+......................................................................DDDDDD....DDDDDD..HHHHHHHHHMMGGGGGDGGGGGDGGGGGM................................................
+......................................................................DMMMMM....DMMMMM...DDDDDDDDMMMMMMMMMMMMMMMMMMMM................................................
+................................................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.............................................
+................................................................DMMMDGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMDGGGGGMMMMMMMMMMMMMMH............................................
+................................................................DMMMGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMGGGGGGMMMMMMMMMMMMMMH............................................
+............................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.DMMMGGGGGGMMMMMMMMMMMMMMMMMMMMMMMMMMGGGGGGMMMMMMMMMMMMMMMH...........................................
+............................DMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMM.DMMMGGGGGDMMMMMMMMMMMMMMMMMMMMMMMMMMGGGGGDMMMMMMMMMMMMMMMH...........................................
+............................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH........................HHHH..............
+........HHHHHHHHHHHHHHHHHH..DMDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMM.DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...HHHHHHHHHHHHHHHHHH..DMMMMDMMDDDDDDAAAAA
+..........DH..DH..DH..DH....DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH....DH.ADHAADHAADHAAAAAAAAAADDMMMMMMMMMH.
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH..
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH....
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH.....
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA......
+..DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.......
+..DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD........
+..DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...........
+.....................................................................................................................................................................
+"""
+
+STEALTH_SHIP = """
+................................................................................................HHHHH...................................................................
+................................................................................................DMMMM...................................................................
+..................................................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...................................................
+.................................................................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM..................................................
+...............................................................DMMMMMMGGGGGGGGDGGGGGGGGGDGGGGGGGGGDGGGGGGGDGGGGGGMMMMMMM................................................
+..............................................................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM...............................................
+.............................................................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM..............................................
+...........................................................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM............................................
+..........................................................DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM...........................................
+........................................HHHHHHHHHHHHHH...DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDM............HHHHH..MMMDDHHHHH..MMMDDDD....
+........................................DMMMMMMMMMMMMM.DMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.........DMMMMMM.....DMMMMMM............
+......HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDMMMMMMMMMMMMMDMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.......DMMMMMMMM...DMMMMMMMM...........
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA........
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH......
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH.....
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH...
+..MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMH..
+..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH
+..DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD.
+...DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...DDDD....
+....DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD................
+........................................................................................................................................................................
+"""
+
+SHAPES = {
+    "BLUNDER": BLUNDER,
+    "MUSKET": MUSKET,
+    "GATLING": GATLING,
+    "REVOLVER": REVOLVER,
+    "BOLT": BOLT,
+    "DERRINGER": DERRINGER,
+    "LEVER": LEVER,
+    "MAXIM": MAXIM,
+    "PISTOL": PISTOL,
+    "SHOTGUN": SHOTGUN,
+    "LEWIS": LEWIS,
+    "SMG": SMG,
+    "RIFLE": RIFLE,
+    "HMG": HMG,
+    "LMG": LMG,
+    "GPMG": GPMG,
+    "SNIPER": SNIPER,
+    "PDW": PDW,
+    "BULLPUP": BULLPUP,
+    "MODPISTOL": MODPISTOL,
+    "SAW": SAW,
+    "CARBINE": CARBINE,
+    "MODSHOTGUN": MODSHOTGUN,
+    "PROPFIGHTER": PROPFIGHTER,
+    "HEAVYPROP": HEAVYPROP,
+    "JET_SWEPT": JET_SWEPT,
+    "BOMBER_BIG": BOMBER_BIG,
+    "TRANSPORT": TRANSPORT,
+    "HELO_UTILITY": HELO_UTILITY,
+    "HELO_TANDEM": HELO_TANDEM,
+    "HELO_ATTACK": HELO_ATTACK,
+    "JET_TWINTAIL": JET_TWINTAIL,
+    "ATTACKJET": ATTACKJET,
+    "FACETED": FACETED,
+    "BOMBER_SWEPT": BOMBER_SWEPT,
+    "JET_DELTA": JET_DELTA,
+    "FLYINGWING": FLYINGWING,
+    "JET_STEALTH": JET_STEALTH,
+    "TILTROTOR": TILTROTOR,
+    "TANK_EARLY": TANK_EARLY,
+    "TANK_ROUND": TANK_ROUND,
+    "TANK_SLOPED": TANK_SLOPED,
+    "HALFTRACK": HALFTRACK,
+    "TANK_BOXY": TANK_BOXY,
+    "APC_TRACK": APC_TRACK,
+    "MLRS": MLRS,
+    "SPG": SPG,
+    "IFV": IFV,
+    "TANK_MODERN": TANK_MODERN,
+    "TRUCK": TRUCK,
+    "APC_WHEEL": APC_WHEEL,
+    "SAILING": SAILING,
+    "IRONCLAD": IRONCLAD,
+    "DREADNOUGHT": DREADNOUGHT,
+    "SUB_WWII": SUB_WWII,
+    "BATTLESHIP": BATTLESHIP,
+    "SUB_MODERN": SUB_MODERN,
+    "CARRIER": CARRIER,
+    "CRUISER": CRUISER,
+    "CARRIER_SKI": CARRIER_SKI,
+    "DESTROYER": DESTROYER,
+    "STEALTH_SHIP": STEALTH_SHIP,
 }
 
-def safe(s):
-    """Filter live text to glyphs that exist. An unsupported character
-    becomes a space rather than vanishing: dropping the multiplication sign
-    turns 7.62x39MM into 7.6239MM, which is a different and wrong number."""
-    t = str(s).upper()
-    out = ""
-    for ch in t.elems():
-        if ch in ALLOWED:
-            out += ch
-        elif ch in SUBS:
-            out += SUBS[ch]
-        else:
-            out += " "
-    for _ in range(4):
-        out = out.replace("  ", " ")
-    return out.strip()
+# The four rosters, in the order ALL cycles them.
+SUBJECTS = [
+    ["GUNS", GUNS],
+    ["AIRCRAFT", AIRCRAFT],
+    ["VEHICLES", VEHICLES],
+    ["SHIPS", SHIPS],
+]
+
+# Which Kind values belong to which subject. Used only to write an empty
+# screen that names the setting actually in the way, rather than a shrug.
+KIND_HOME = {
+    "PISTOLS": "GUNS", "RIFLES": "GUNS", "SHOTGUNS": "GUNS",
+    "MACHINE GUNS": "GUNS",
+    "FIGHTERS": "AIRCRAFT", "BOMBERS": "AIRCRAFT",
+    "HELICOPTERS": "AIRCRAFT", "SUPPORT": "AIRCRAFT",
+    "TANKS": "VEHICLES", "ARMOUR": "VEHICLES", "ARTILLERY": "VEHICLES",
+    "CARRIERS": "SHIPS", "WARSHIPS": "SHIPS", "SUBMARINES": "SHIPS",
+}
+
+# ------------------------------------------------------------- text tools
+# Starlark has no font-metrics call, so the heights travel with the app.
+FONTH = {"16x20": 20, "10x16": 16, "10x15": 15, "6x8": 8, "5x7": 7, "4x5": 5}
 
 def clip(c, text, font, maxw):
     t = str(text)
@@ -312,6 +2281,20 @@ def clip(c, text, font, maxw):
     for i in range(len(t), 0, -1):
         if c.text_width(t[:i], font) <= maxw:
             return t[:i]
+    return ""
+
+def clip_ell(c, text, font, maxw):
+    """Clip, and mark the cut with '..' so it reads as deliberate rather
+    than as a string that simply stopped. The longest designer in the
+    roster, MITSUBISHI HEAVY INDUSTRIES, is 124px in 4x5 and genuinely
+    does not fit beside the DESIGNED BY prefix."""
+    t = str(text)
+    if c.text_width(t, font) <= maxw:
+        return t
+    ew = c.text_width("..", font)
+    for i in range(len(t), 0, -1):
+        if c.text_width(t[:i], font) + ew <= maxw:
+            return t[:i].rstrip() + ".."
     return ""
 
 def clip_words(c, text, font, maxw):
@@ -332,23 +2315,44 @@ def fit(c, text, fonts, maxw):
     last = fonts[len(fonts) - 1]
     return [last, clip_words(c, text, last, maxw)]
 
-def wrap2(c, text, font, maxw):
-    """Two lines, split on the word boundary that evens them up best. A
-    placard line that will not fit should not simply lose its ending."""
-    if c.text_width(text, font) <= maxw:
-        return [text, ""]
-    parts = text.split(" ")
-    best, score = -1, -999999
-    for n in range(1, len(parts)):
-        wa = c.text_width(" ".join(parts[:n]), font)
-        wb = c.text_width(" ".join(parts[n:]), font)
-        if wa <= maxw and wb <= maxw:
-            s = -(wa - wb) if wa > wb else -(wb - wa)
-            if s > score:
-                best, score = n, s
-    if best < 0:
-        return [clip_words(c, text, font, maxw), ""]
-    return [" ".join(parts[:best]), " ".join(parts[best:])]
+def wrapn(c, text, font, maxw, n):
+    """Greedy word wrap into at most n lines. If the text will not fit, the
+    last line ends in '..' so the cut reads as deliberate rather than as a
+    sentence that simply stopped."""
+    words = text.split(" ")
+    lines = []
+    cur = ""
+    placed = 0
+    for w in words:
+        trial = w if cur == "" else cur + " " + w
+        if c.text_width(trial, font) <= maxw:
+            cur = trial
+            placed += 1
+        elif len(lines) + 1 < n:
+            lines.append(cur)
+            cur = w
+            placed += 1
+        else:
+            break
+    if cur != "":
+        lines.append(cur)
+    out = []
+    for ln in lines:
+        out.append(clip_ell(c, ln, font, maxw))
+    if placed < len(words) and len(out) > 0:
+        last = len(out) - 1
+        out[last] = clip_ell(c, out[last] + " ..", font, maxw)
+    return out
+
+def wrapn_fit(c, text, fonts, maxw, n):
+    """The biggest face that takes the whole line in n without losing a
+    word. Returns [font, lines]."""
+    for f in fonts:
+        lines = wrapn(c, text, f, maxw, n)
+        if " ".join(lines) == text:
+            return [f, lines]
+    last = fonts[len(fonts) - 1]
+    return [last, wrapn(c, text, last, maxw, n)]
 
 def rail(c, col):
     c.rect(0, 0, 1, 31, fill = col)
@@ -360,201 +2364,65 @@ def pill(c, text, col, x, y):
     return w
 
 # ---------------------------------------------------------- the silhouettes
-# Each draws into a 22 px band from (x, y). The widths differ on purpose:
-# relative size is part of the story. A handgun still has to read as a
-# handgun rather than as a short rifle, so it gets a deep grip, a tall
-# fluted cylinder and a barrel that stays short.
-WIDTHS = {
-    "MUSKET": 176, "BLUNDER": 140, "BOLT": 172, "LEVER": 164, "RIFLE": 168,
-    "SHOTGUN": 164, "SMG": 140, "MG": 160, "GATLING": 150, "REVOLVER": 110,
-    "PISTOL": 100, "DERRINGER": 64,
-}
+# Each shape is a sprite string in the five tone legend. One c.sprite call
+# costs one draw op however many pixels it lights, which is what makes this
+# level of detail affordable at all.
+#
+# Tones: H highlight, M mid body, D dark, A accent, G glass.
+# The accent moves with the era, so consecutive days look different.
 
-def _stock(c, x, y, butt, wrist, wood):
-    """Butt plate, comb along the top, belly tapering into the wrist."""
-    c.rect(x, y + 6, x + 4, y + 19, fill = wood)
-    c.rect(x + 4, y + 7, x + butt, y + 11, fill = wood)
-    c.rect(x + 4, y + 12, x + butt - 10, y + 18, fill = wood)
-    c.fill_triangle(x + butt - 10, y + 12, x + butt - 10, y + 18,
-                    x + wrist, y + 12, wood)
-    c.rect(x + butt, y + 9, x + wrist, y + 14, fill = wood)
+def sprite_box(art):
+    """Measure a sprite the way c.sprite reads it: leading and trailing
+    blank rows are ignored, and the width is the longest row."""
+    rows = art.split("\n")
+    first, last = 0, len(rows) - 1
+    for i in range(len(rows)):
+        if rows[i].strip() != "":
+            first = i
+            break
+    for i in range(len(rows)):
+        j = len(rows) - 1 - i
+        if rows[j].strip() != "":
+            last = j
+            break
+    rows = rows[first:last + 1]
+    w = 0
+    for r in rows:
+        n = len(r.rstrip())
+        if n > w:
+            w = n
+    return [w, len(rows)]
 
-def _guard(c, x0, y0, x1, y1, metal):
-    """An open trigger guard: two uprights and a bottom bar."""
-    c.rect(x0, y0, x0 + 1, y1, fill = metal)
-    c.rect(x1 - 1, y0, x1, y1, fill = metal)
-    c.rect(x0, y1 - 1, x1, y1, fill = metal)
+# Guns and aircraft read best centred in the art band; vehicles and ships
+# want to sit on their tracks and their waterline, so they drop to the
+# bottom of it.
+SIT_LOW = {"VEHICLES": True, "SHIPS": True}
 
-def draw_musket(c, x, y, metal, wood):
-    _stock(c, x, y, 40, 50, wood)
-    c.rect(x + 50, y + 9, x + 66, y + 15, fill = metal)       # lock plate
-    c.rect(x + 55, y + 4, x + 60, y + 9, fill = metal)        # cock
-    c.rect(x + 62, y + 4, x + 65, y + 9, fill = metal)        # frizzen
-    _guard(c, x + 48, y + 15, x + 62, y + 20, metal)
-    c.rect(x + 66, y + 11, x + 142, y + 14, fill = wood)      # forestock
-    c.rect(x + 66, y + 5, x + 172, y + 9, fill = metal)       # barrel
-    c.rect(x + 166, y + 3, x + 172, y + 11, fill = metal)     # muzzle
-    c.rect(x + 70, y + 15, x + 150, y + 16, fill = metal)     # ramrod
-
-def draw_blunder(c, x, y, metal, wood):
-    _stock(c, x, y, 36, 44, wood)
-    c.rect(x + 44, y + 9, x + 58, y + 15, fill = metal)       # lock plate
-    c.rect(x + 48, y + 4, x + 53, y + 9, fill = metal)        # cock
-    _guard(c, x + 42, y + 15, x + 56, y + 20, metal)
-    c.rect(x + 58, y + 8, x + 104, y + 13, fill = metal)      # barrel
-    c.rect(x + 104, y + 6, x + 118, y + 15, fill = metal)
-    c.fill_triangle(x + 118, y + 10, x + 136, y + 2, x + 136, y + 19, metal)
-    c.rect(x + 132, y + 2, x + 138, y + 19, fill = metal)     # the bell mouth
-
-def draw_bolt(c, x, y, metal, wood):
-    _stock(c, x, y, 42, 50, wood)
-    c.rect(x + 50, y + 6, x + 84, y + 14, fill = metal)       # receiver
-    c.rect(x + 84, y + 4, x + 89, y + 7, fill = metal)        # rear sight
-    c.rect(x + 70, y + 14, x + 76, y + 18, fill = metal)      # bolt handle
-    c.fill_circle(x + 73, y + 19, 3, metal)                   # bolt knob
-    c.rect(x + 54, y + 14, x + 68, y + 19, fill = metal)      # magazine
-    _guard(c, x + 46, y + 15, x + 60, y + 20, metal)
-    c.rect(x + 84, y + 10, x + 130, y + 15, fill = wood)      # forend
-    c.rect(x + 130, y + 8, x + 168, y + 12, fill = metal)     # barrel
-    c.rect(x + 162, y + 5, x + 165, y + 9, fill = metal)      # front sight
-
-def draw_lever(c, x, y, metal, wood):
-    _stock(c, x, y, 40, 48, wood)
-    c.rect(x + 48, y + 7, x + 80, y + 15, fill = metal)       # receiver
-    c.rect(x + 44, y + 4, x + 50, y + 8, fill = metal)        # hammer spur
-    # The finger loop, the one feature that says lever action at a glance.
-    c.rect(x + 50, y + 16, x + 52, y + 21, fill = metal)
-    c.rect(x + 74, y + 16, x + 76, y + 21, fill = metal)
-    c.rect(x + 50, y + 19, x + 76, y + 21, fill = metal)
-    c.rect(x + 80, y + 11, x + 118, y + 15, fill = wood)      # forend
-    c.rect(x + 80, y + 15, x + 152, y + 17, fill = metal)     # magazine tube
-    c.rect(x + 118, y + 8, x + 160, y + 13, fill = metal)     # barrel
-    c.rect(x + 154, y + 5, x + 157, y + 9, fill = metal)      # front sight
-
-def draw_shotgun(c, x, y, metal, wood):
-    _stock(c, x, y, 42, 50, wood)
-    c.rect(x + 50, y + 6, x + 78, y + 15, fill = metal)       # receiver
-    _guard(c, x + 48, y + 15, x + 62, y + 20, metal)
-    c.rect(x + 78, y + 5, x + 160, y + 10, fill = metal)      # barrel
-    c.rect(x + 78, y + 11, x + 142, y + 14, fill = metal)     # magazine tube
-    c.rect(x + 96, y + 10, x + 128, y + 17, fill = wood)      # pump forend
-    c.rect(x + 155, y + 3, x + 157, y + 5, fill = metal)      # bead
-
-def draw_rifle(c, x, y, metal, wood):
-    c.rect(x, y + 7, x + 30, y + 14, fill = wood)             # straight stock
-    c.rect(x + 30, y + 6, x + 80, y + 14, fill = metal)       # receiver
-    c.rect(x + 72, y + 3, x + 77, y + 6, fill = metal)        # rear sight
-    c.rect(x + 44, y + 14, x + 56, y + 21, fill = wood)       # pistol grip
-    c.rect(x + 60, y + 14, x + 76, y + 21, fill = metal)      # magazine
-    c.fill_triangle(x + 60, y + 21, x + 76, y + 21, x + 76, y + 15, metal)
-    c.rect(x + 80, y + 6, x + 122, y + 9, fill = metal)       # gas tube
-    c.rect(x + 80, y + 10, x + 122, y + 15, fill = wood)      # handguard
-    c.rect(x + 122, y + 9, x + 162, y + 13, fill = metal)     # barrel
-    c.rect(x + 150, y + 3, x + 155, y + 10, fill = metal)     # front post
-
-def draw_smg(c, x, y, metal, wood):
-    c.rect(x, y + 7, x + 5, y + 16, fill = metal)             # butt plate
-    c.rect(x + 5, y + 10, x + 30, y + 13, fill = metal)       # wire stock
-    c.rect(x + 30, y + 5, x + 96, y + 14, fill = metal)       # receiver tube
-    c.rect(x + 64, y + 2, x + 70, y + 5, fill = metal)        # bolt handle
-    c.rect(x + 34, y + 14, x + 46, y + 21, fill = wood)       # pistol grip
-    c.rect(x + 54, y + 14, x + 66, y + 21, fill = metal)      # magazine
-    c.rect(x + 78, y + 14, x + 90, y + 20, fill = wood)       # foregrip
-    c.rect(x + 96, y + 7, x + 126, y + 12, fill = metal)      # barrel
-    c.rect(x + 118, y + 5, x + 130, y + 14, fill = metal)     # compensator
-
-def draw_mg(c, x, y, metal, wood):
-    c.rect(x, y + 3, x + 14, y + 16, fill = metal)            # spade grips
-    c.rect(x + 14, y + 5, x + 52, y + 15, fill = metal)       # receiver
-    c.rect(x + 52, y + 5, x + 126, y + 15, fill = metal)      # water jacket
-    for i in range(8):
-        c.rect(x + 58 + i * 8, y + 5, x + 59 + i * 8, y + 15, fill = wood)
-    c.rect(x + 126, y + 8, x + 144, y + 13, fill = metal)     # muzzle
-    c.rect(x + 24, y + 15, x + 50, y + 19, fill = wood)       # ammunition belt
-    c.rect(x + 84, y + 15, x + 88, y + 18, fill = metal)      # tripod head
-    c.line(x + 86, y + 17, x + 62, y + 21, metal)
-    c.line(x + 86, y + 17, x + 110, y + 21, metal)
-    c.rect(x + 58, y + 20, x + 114, y + 21, fill = metal)
-
-def draw_gatling(c, x, y, metal, wood):
-    c.rect(x + 52, y, x + 70, y + 4, fill = wood)             # feed hopper
-    c.fill_circle(x + 22, y + 10, 8, metal)                   # crank wheel
-    c.rect(x + 28, y + 9, x + 42, y + 12, fill = metal)
-    c.rect(x + 40, y + 4, x + 68, y + 16, fill = metal)       # receiver
-    c.rect(x + 68, y + 4, x + 134, y + 6, fill = metal)       # barrel cluster
-    c.rect(x + 68, y + 7, x + 134, y + 9, fill = metal)
-    c.rect(x + 68, y + 10, x + 134, y + 12, fill = metal)
-    c.rect(x + 68, y + 13, x + 134, y + 15, fill = metal)
-    c.rect(x + 130, y + 3, x + 140, y + 16, fill = metal)     # muzzle plate
-    c.fill_circle(x + 52, y + 19, 2, wood)                    # carriage wheel
-    c.rect(x + 8, y + 18, x + 50, y + 20, fill = wood)        # trail
-
-def draw_revolver(c, x, y, metal, wood):
-    c.fill_triangle(x, y + 21, x + 6, y + 7, x + 26, y + 21, wood)
-    c.rect(x + 6, y + 7, x + 26, y + 18, fill = wood)         # grip
-    c.rect(x + 20, y + 5, x + 26, y + 10, fill = metal)       # backstrap
-    c.rect(x + 18, y + 2, x + 28, y + 7, fill = metal)        # hammer
-    c.rect(x + 24, y + 6, x + 46, y + 10, fill = metal)       # frame
-    c.rect(x + 38, y + 5, x + 62, y + 17, fill = metal)       # cylinder
-    c.rect(x + 44, y + 7, x + 46, y + 15, fill = wood)        # flutes
-    c.rect(x + 52, y + 7, x + 54, y + 15, fill = wood)
-    _guard(c, x + 24, y + 15, x + 40, y + 21, metal)
-    c.rect(x + 30, y + 15, x + 32, y + 18, fill = metal)      # trigger
-    c.rect(x + 62, y + 7, x + 100, y + 13, fill = metal)      # barrel
-    c.rect(x + 62, y + 14, x + 92, y + 16, fill = metal)      # ejector rod
-    c.rect(x + 94, y + 4, x + 98, y + 7, fill = metal)        # front sight
-
-def draw_pistol(c, x, y, metal, wood):
-    c.fill_triangle(x, y + 21, x + 8, y + 9, x + 24, y + 21, wood)
-    c.rect(x + 8, y + 9, x + 24, y + 21, fill = wood)         # grip
-    c.rect(x + 10, y + 10, x + 56, y + 15, fill = metal)      # frame
-    c.rect(x + 10, y + 3, x + 92, y + 10, fill = metal)       # slide
-    c.rect(x + 14, y + 4, x + 16, y + 8, fill = wood)         # serrations
-    c.rect(x + 19, y + 4, x + 21, y + 8, fill = wood)
-    c.rect(x + 50, y + 5, x + 64, y + 7, fill = wood)         # ejection port
-    c.rect(x + 88, y + 4, x + 94, y + 9, fill = metal)        # muzzle
-    _guard(c, x + 24, y + 15, x + 40, y + 20, metal)
-    c.rect(x + 29, y + 15, x + 31, y + 18, fill = metal)      # trigger
-    c.rect(x + 86, y + 1, x + 90, y + 3, fill = metal)        # front sight
-    c.rect(x + 12, y + 1, x + 16, y + 3, fill = metal)        # rear sight
-
-def draw_derringer(c, x, y, metal, wood):
-    c.fill_triangle(x, y + 21, x + 4, y + 9, x + 20, y + 21, wood)
-    c.rect(x + 4, y + 9, x + 20, y + 21, fill = wood)         # grip
-    c.rect(x + 14, y + 4, x + 22, y + 9, fill = metal)        # hammer
-    c.rect(x + 16, y + 8, x + 34, y + 15, fill = metal)       # frame
-    c.rect(x + 22, y + 15, x + 24, y + 18, fill = metal)      # trigger
-    c.rect(x + 34, y + 6, x + 60, y + 10, fill = metal)       # upper barrel
-    c.rect(x + 34, y + 11, x + 60, y + 15, fill = metal)      # lower barrel
-
-def silhouette(c, shape, y, metal, wood):
-    """Centre whatever shape this piece uses inside the safe zone."""
-    w = WIDTHS.get(shape, 140)
-    x = 10 + (172 - w) // 2
-    if shape == "MUSKET":
-        draw_musket(c, x, y, metal, wood)
-    elif shape == "BLUNDER":
-        draw_blunder(c, x, y, metal, wood)
-    elif shape == "BOLT":
-        draw_bolt(c, x, y, metal, wood)
-    elif shape == "LEVER":
-        draw_lever(c, x, y, metal, wood)
-    elif shape == "SHOTGUN":
-        draw_shotgun(c, x, y, metal, wood)
-    elif shape == "RIFLE":
-        draw_rifle(c, x, y, metal, wood)
-    elif shape == "SMG":
-        draw_smg(c, x, y, metal, wood)
-    elif shape == "MG":
-        draw_mg(c, x, y, metal, wood)
-    elif shape == "GATLING":
-        draw_gatling(c, x, y, metal, wood)
-    elif shape == "REVOLVER":
-        draw_revolver(c, x, y, metal, wood)
-    elif shape == "PISTOL":
-        draw_pistol(c, x, y, metal, wood)
+def silhouette(c, subject, shape, accent):
+    """Place one shape inside the safe zone, in the era's accent."""
+    art = SHAPES.get(shape, "")
+    if art == "":
+        return
+    box = sprite_box(art)
+    # The renderer clips at the glass edge, not at the safe zone, so an
+    # oversized sprite would silently push past x181 or close the buffer
+    # above the name row. Drop it instead: a missing shape is visible in
+    # preview, a one-pixel overlap is not.
+    if box[0] > 172 or box[1] > 22:
+        return
+    x = 10 + (172 - box[0]) // 2
+    if x < 10:
+        x = 10
+    if SIT_LOW.get(subject, False):
+        y = 22 - box[1]
     else:
-        draw_derringer(c, x, y, metal, wood)
+        y = (22 - box[1]) // 2
+    if y < 0:
+        y = 0
+    c.sprite(art, x, y, legend = {
+        "H": "#EEF3FA", "M": STEEL, "D": "#5A6678", "A": accent,
+        "G": "#9FD4FF",
+    })
 
 # ------------------------------------------------------------------ pick
 def era_of(year):
@@ -564,47 +2432,94 @@ def era_of(year):
     return ERAS[len(ERAS) - 1]
 
 def in_era(year, want):
-    if want == "BEFORE 1850":
-        return year < 1850
-    if want == "1850 TO 1899":
-        return year >= 1850 and year < 1900
-    if want == "WORLD WARS":
-        return year >= 1900 and year < 1946
-    if want == "MODERN":
-        return year >= 1946
+    """Each era runs from the previous band's bound up to its own."""
+    lo = 0
+    for e in ERAS:
+        if e[2] == want:
+            return year >= lo and year < e[0]
+        lo = e[0]
     return True
 
-def choose(ctx):
+def pools(ctx):
+    """Every roster that still has something in it after the settings are
+    applied, in subject order."""
+    want_sub = str(ctx.inputs.get("subject", "ALL")).strip().upper()
     era = str(ctx.inputs.get("era", "ALL ERAS")).strip().upper()
     kind = str(ctx.inputs.get("category", "ALL KINDS")).strip().upper()
-    pool = []
-    for g in ROSTER:
-        if era != "ALL ERAS" and not in_era(g[3], era):
+    out = []
+    for s in SUBJECTS:
+        if want_sub != "ALL" and s[0] != want_sub:
             continue
-        if kind != "ALL KINDS" and g[2] != kind:
-            continue
-        pool.append(g)
-    if len(pool) == 0:
-        return None
-    # One piece a day, the year shifting where the sequence starts so the
-    # same date does not land on the same gun every year.
-    idx = (ctx.now.yday - 1 + ctx.now.year * 3) % len(pool)
-    return pool[idx]
+        pool = []
+        for g in s[1]:
+            if era != "ALL ERAS" and not in_era(g[3], era):
+                continue
+            if kind != "ALL KINDS" and g[2] != kind:
+                continue
+            pool.append(g)
+        if len(pool) > 0:
+            out.append([s[0], pool])
+    return out
 
-def empty(c):
+# TICK MUST EQUAL refresh IN manifest.yaml. They are two halves of one
+# decision. Raise refresh to 600 without raising this and the tick advances
+# two at a time, which on SUBJECT=ALL means groups 0, 2, 0, 2 - aircraft and
+# ships would never appear again, silently.
+TICK = 300
+
+def choose(ctx):
+    """A new piece every five minutes, which is also the refresh rate, so
+    the panel turns over as often as it redraws. With SUBJECT on ALL the
+    subject turns over with it, so you get a rifle, then a fighter, then a
+    tank, then a ship, rather than a hundred guns before the first aircraft.
+
+    Dividing the tick by the group count means each roster advances by one
+    every time its turn comes round, so every piece is eventually shown."""
+    groups = pools(ctx)
+    if len(groups) == 0:
+        return None
+    tick = ctx.now.unix // TICK
+    g = groups[tick % len(groups)]
+    pool = g[1]
+    return [g[0], pool[(tick // len(groups)) % len(pool)]]
+
+def empty(c, ctx):
+    """Name the setting that is actually in the way. A wall panel should
+    say what to change, not shrug."""
+    want_sub = str(ctx.inputs.get("subject", "ALL")).strip().upper()
+    kind = str(ctx.inputs.get("category", "ALL KINDS")).strip().upper()
+    era = str(ctx.inputs.get("era", "ALL ERAS")).strip().upper()
+    home = KIND_HOME.get(kind, "")
+
+    head, sub = "NOTHING TO SHOW", "WIDEN A SETTING"
+    if home != "" and want_sub != "ALL" and home != want_sub:
+        head = kind + " ARE NOT " + want_sub
+        sub = "SET SUBJECT TO " + home + " OR ALL"
+    elif era != "ALL ERAS":
+        head = "NOTHING FROM " + era
+        sub = "SET ERA TO ALL ERAS"
+    elif kind != "ALL KINDS":
+        head = "NO " + kind + " IN THE ROSTER"
+        sub = "SET KIND TO ALL KINDS"
+
     c.fill("black")
-    rail(c, "#C87137")
-    c.text("NOTHING IN THAT PERIOD", 96, 8, font = "6x8", color = "#C87137",
-           align = "center")
-    c.text("TRY ANOTHER ERA OR KIND", 96, 20, font = "4x5", color = DIM,
-           align = "center")
+    rail(c, "#E8B04A")
+    # The error title is exactly the thing that has to read across a room,
+    # so it starts at the hero face and the pair is centred as one block.
+    hf = fit(c, head, ["10x16", "6x8", "5x7", "4x5"], 172)
+    hh = FONTH.get(hf[0], 5)
+    top = (32 - (hh + 3 + 5)) // 2
+    c.text(hf[1], 96, top, font = hf[0], color = "#E8B04A", align = "center")
+    c.text(clip(c, sub, "4x5", 172), 96, top + hh + 3, font = "4x5",
+           color = DIM, align = "center")
 
 # ----------------------------------------------------------- page: today
 def today(c, ctx):
-    g = choose(ctx)
-    if g == None:
-        empty(c)
+    pick = choose(ctx)
+    if pick == None:
+        empty(c, ctx)
         return
+    subject, g = pick[0], pick[1]
     era = era_of(g[3])
     c.fill("black")
     rail(c, era[1])
@@ -612,7 +2527,7 @@ def today(c, ctx):
     # The hero page gives its whole top to the piece: art 0..21, then the
     # name and year on one row at 23..30. What kind it is and where it came
     # from are on the specs page, which is what that page is for.
-    silhouette(c, g[7], 0, STEEL, era[1])
+    silhouette(c, subject, g[7], era[1])
 
     year = str(g[3])
     yw = c.text_width(year, "4x5")
@@ -622,60 +2537,70 @@ def today(c, ctx):
 
 # ----------------------------------------------------------- page: story
 def story(c, ctx):
-    g = choose(ctx)
-    if g == None:
-        empty(c)
+    pick = choose(ctx)
+    if pick == None:
+        empty(c, ctx)
         return
+    g = pick[1]
     era = era_of(g[3])
     c.fill("black")
     rail(c, era[1])
 
-    x = 10 + pill(c, clip(c, g[0], "4x5", 96), era[1], 10, 0) + 3
+    # The name is the hero here too. A page drawn entirely in 4x5 gives the
+    # eye nowhere to land at ten to thirty feet, which is the viewing
+    # distance these panels are for. The designer is not repeated here; it
+    # has its own row on the specs page.
+    #
+    # Nothing on this page goes to the network. The Wikipedia summary line
+    # that used to sit at the foot of it has been dropped in favour of
+    # giving the curated text a third line, which means no page of this app
+    # can fail, and the panel needs no network at all.
     year = str(g[3])
-    c.text(year, 181, 1, font = "4x5", color = INK, align = "right")
+    yw = c.text_width(year, "4x5")
+    c.text(year, 181, 2, font = "4x5", color = era[1], align = "right")
+    nf = fit(c, g[0], ["6x8", "5x7", "4x5"], 172 - yw - 6)
+    c.text(nf[1], 10, 0, font = nf[0], color = INK)
 
-    two = wrap2(c, g[6], "4x5", 172)
-    c.text(two[0], 10, 8, font = "4x5", color = INK)
-    if two[1] != "":
-        c.text(two[1], 10, 14, font = "4x5", color = INK)
-
-    if g[5] != "":
-        c.text(clip(c, "DESIGNED BY " + g[5], "4x5", 172), 10, 20,
-               font = "4x5", color = DIM)
-
-    # The only line that goes to the network. If it is not there, the
-    # placard simply ends after the curated text.
-    r = http.get(REST + g[8].replace(" ", "_").replace("&", "%26"),
-                 headers = UA, ttl_seconds = 3600)
-    if r["status_code"] == 200:
-        js = r["json"]
-        if type(js) == "dict":
-            d = safe(js.get("description", ""))
-            if d != "":
-                c.text(clip_words(c, "WIKIPEDIA: " + d, "4x5", 172), 10, 26,
-                       font = "4x5", color = DARK)
+    # Three lines of body in the 23px below the name, centred so a short
+    # story does not leave a hole at the bottom. Three lines of 5x7 carry
+    # about 84 characters, which is more than the longest entry needs.
+    wf = wrapn_fit(c, g[6], ["5x7", "4x5"], 172, 3)
+    fh = FONTH.get(wf[0], 5)
+    lines = wf[1]
+    block = len(lines) * (fh + 1) - 1
+    y = 9 + (23 - block) // 2
+    for i in range(len(lines)):
+        c.text(lines[i], 10, y + i * (fh + 1), font = wf[0], color = INK)
 
 # ----------------------------------------------------------- page: specs
 def specs(c, ctx):
-    g = choose(ctx)
-    if g == None:
-        empty(c)
+    pick = choose(ctx)
+    if pick == None:
+        empty(c, ctx)
         return
+    g = pick[1]
     era = era_of(g[3])
     c.fill("black")
     rail(c, era[1])
 
-    pill(c, clip(c, g[0], "4x5", 110), era[1], 10, 0)
-    c.text(era[2], 181, 1, font = "4x5", color = DIM, align = "right")
+    nf = fit(c, g[0], ["6x8", "5x7", "4x5"], 172)
+    c.text(nf[1], 10, 0, font = nf[0], color = INK)
 
+    # TYPE, not KIND. Kind is the name of the setting, and it filters on a
+    # different field: with Kind set to MACHINE GUNS this row would have
+    # read "KIND SUBMACHINE GUN", telling the viewer something other than
+    # what they asked for under the same word.
     rows = [
         ["ORIGIN", g[4]],
         ["APPEARED", str(g[3])],
         ["DESIGNER", g[5] if g[5] != "" else "NO SINGLE DESIGNER"],
-        ["KIND", g[1]],
+        ["TYPE", g[1]],
     ]
+    # The widest label, APPEARED, is 39px and starts at x10, so the value
+    # has 126px to the right edge - not the 110 it used to be given, which
+    # was clipping ten entries that would otherwise have fitted whole.
     for i in range(len(rows)):
         y = 9 + i * 6
         c.text(rows[i][0], 10, y, font = "4x5", color = DIM)
-        c.text(clip(c, rows[i][1], "4x5", 110), 181, y, font = "4x5",
+        c.text(clip_ell(c, rows[i][1], "4x5", 126), 181, y, font = "4x5",
                color = INK, align = "right")
