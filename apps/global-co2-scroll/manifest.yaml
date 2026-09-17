@@ -11,7 +11,7 @@ width: 192
 height: 32
 # NOAA extends the daily global file once a day. An hour keeps the panel
 # honest without asking for a file that has not changed.
-refresh: 3600
+refresh: 21600
 
 pages: [now, rise, season]
 
