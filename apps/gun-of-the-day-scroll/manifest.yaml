@@ -1,0 +1,42 @@
+gdn: 1
+id: gun-of-the-day-scroll
+version: 0.1.0
+name: Gun of the Day
+author: glance-led-dev
+description: A different historically significant firearm every day, told like a museum placard - what it is, who designed it, when it appeared and why it mattered. Curated roster with live detail from Wikipedia.
+category: Education
+entry: app.star
+
+width: 192
+height: 32
+# The piece changes once a day. An hour keeps the live line from Wikipedia
+# current without asking for a page that has not changed.
+refresh: 3600
+
+pages: [today, story, specs]
+
+inputs:
+  - key: era
+    type: choice
+    app_input_type: dropdown
+    label: Era
+    default: "ALL ERAS"
+    help: Narrow the roster to one period of firearms history. Dates are the commonly cited year a design appeared or was adopted.
+    choices:
+      - "ALL ERAS"
+      - "BEFORE 1850"
+      - "1850 TO 1899"
+      - "WORLD WARS"
+      - "MODERN"
+  - key: category
+    type: choice
+    app_input_type: dropdown
+    label: Kind
+    default: "ALL KINDS"
+    help: Narrow the roster to one kind of firearm.
+    choices:
+      - "ALL KINDS"
+      - "PISTOLS"
+      - "RIFLES"
+      - "SHOTGUNS"
+      - "MACHINE GUNS"
