@@ -2,10 +2,9 @@
 
 A NOW SHOWING board for a home theater, built for SCROLL 384x32.
 
-Driven by a public **Letterboxd** account, or by nothing at all — the bundled
-`CANON` source needs no account and makes no requests. *Now Showing* is your most
-recently logged film, drawn large. A mode-driven *Showcase* then scrolls a
-**compressed strip** of three film tiles from one of four sources. Big card or
+Everything is driven by a public **Letterboxd** account. *Now Showing* is always
+your most recently logged film, drawn large. A mode-driven *Showcase* then scrolls
+a **compressed strip** of three film tiles from one of three sources. Big card or
 tile, every film shows the same content — poster, title, `year · runtime ·
 director`, and the owner's star rating. Films in the curated pack carry a bundled
 poster (and, where known, runtime + director); anything else rides the filmstrip
@@ -16,9 +15,9 @@ reel with whatever the feed gives.
 | Input | What it does |
 |---|---|
 | **Cinema name** | The name on the marquee banner. Shown in caps; scales to fit. Every basement names its cinema differently. |
-| **Letterboxd username** | Your public Letterboxd account. Takes the bare handle (`abartos27`) or a pasted profile link — both work. The newest entry in `letterboxd.com/<user>/rss/` is *Now Showing*. Ignored entirely in `CANON` mode. |
-| **Feature source** | What the *Showcase* scrolls: `RECENT` = your diary, newest first; `WATCHLIST` = what you have queued up; `LISTS` = every list you have made, a different one each hour; `LIST` = one specific list; `CANON` = the bundled pack, needing no account. |
-| **Letterboxd list** | Used only in `LIST` mode — `LISTS` finds them all by itself. Paste the list's link or just its trailing name, e.g. `letterboxd.com/abartos27/list/top-10/` or `top-10`. |
+| **Letterboxd username** | Your public Letterboxd account, e.g. `abartos27`. The newest entry in `letterboxd.com/<user>/rss/` is *Now Showing*. Leave blank to run on the pack alone. |
+| **Feature source** | What the *Showcase* scrolls: `RECENT` = your diary, newest first; `FAVORITES` = the four films pinned on your Letterboxd profile; `LIST` = a public Letterboxd list. |
+| **List slug** | Used only in `LIST` mode: the last path segment of a list URL, e.g. `letterboxd.com/abartos27/list/top-10/` → `top-10`. The list is shown under its own name. |
 
 No API key is needed. Each source is public and read once every 15 minutes.
 
@@ -29,34 +28,16 @@ No API key is needed. Each source is public and read once every 15 minutes.
   red banner.
 - **Now Showing** — your most recently logged film, drawn as the large highlight.
 - **Showcase** — a compressed scroll of three rich film tiles from the chosen
-  source, the window advancing by the minute so the whole set comes around: your
-  `WATCHLIST`, all your `LISTS` or one specific `LIST` in rank order, the
-  `RECENT` diary newest-first, or the `CANON`. `LISTS` spends its first slot on a
-  placard naming the list and runs two films behind it — the set rotates hourly,
-  so without the name a changing strip of films is just films.
+  source, the window advancing by the minute so the whole set comes around:
+  `FAVORITES` (your profile's pinned four), a public `LIST` in rank order (shown
+  under its name), or the `RECENT` diary newest-first.
 - **No data** — the rail goes dim and a pack pick takes the slot. A marquee
   should never go dark, so this is a graceful fallback rather than an error card.
 - **Bad username** — the one failure a viewer can actually fix, so it gets a
   card that says so.
 
-`CANON` is the one source that touches no network at all and ignores the username
-entirely, so the app runs with no Letterboxd account. Its window steps one film a
-day, so the whole pack comes around.
-
-**Why `LISTS` is not a dropdown.** It would be the obvious control, and it can't
-exist: `choices:` is a static literal in `manifest.yaml`, baked at publish time
-and shipped identically to every installer, and the setup form is built on the
-phone before the app runs and before it knows the username. Nothing there can ask
-Letterboxd what lists you own. Read at *render* time it is easy —
-`letterboxd.com/<user>/lists/` gives every list's slug and the name you typed —
-which is why the panel does the picking instead of the form, and why it stays
-right when you add a list without touching your Glance settings.
-
-**No favourites source.** The pinned four live only on the profile root, and
-`letterboxd.com/<user>/` answers 403 to a GDN fetch with and without a browser
-User-Agent — as do `/likes/films/` and `/films/by/rating/`. `/films/` is
-reachable but carries no favourites section. `/rss/`, `/list/<slug>/` and
-`/watchlist/` are the routes that work, so those are the ones offered.
+`FAVORITES` reads the `#favourites` grid on `letterboxd.com/<user>/`; change your
+pinned favorites on Letterboxd and the strip follows.
 
 ## Poster art
 

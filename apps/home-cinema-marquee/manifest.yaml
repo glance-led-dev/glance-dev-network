@@ -9,7 +9,7 @@ entry: app.star
 
 width: 384
 height: 32
-refresh: 900
+refresh: 60
 
 pages: [marquee, now_showing, showcase]
 
@@ -17,20 +17,47 @@ pages: [marquee, now_showing, showcase]
 # app.star - the renderer rejects an undeclared asset, and Starlark cannot check
 # whether a file exists.
 assets:
-  - interstellar.png
+  - my-neighbor-totoro.png
+  - juno.png
+  - the-40-year-old-virgin.png
+  - knocked-up.png
   - good-will-hunting.png
+  - fly-away-home.png
+  - gosford-park.png
+  - pocahontas.png
+  - the-way-way-back.png
+  - remember-the-titans.png
+  - us-2019.png
+  - goodfellas.png
+  - smart-house.png
+  - the-guardian-2006.png
+  - angels-in-the-outfield-1994.png
+  - sideways.png
+  - rudy.png
+  - glengarry-glen-ross.png
+  - the-usual-suspects.png
+  - charade.png
+  - the-town.png
+  - the-menu-2022.png
+  - friday-night-lights.png
+  - the-shawshank-redemption.png
+  - the-twilight-saga-new-moon.png
+  - twilight-2008.png
+  - almost-famous.png
+  - baby-driver.png
+  - the-green-mile.png
+  - the-graduate.png
+  - interstellar.png
   - knives-out-2019.png
   - its-a-wonderful-life.png
   - searching-for-bobby-fischer.png
   - the-princess-bride.png
   - the-nightmare-before-christmas.png
   - before-sunrise.png
-  - the-shawshank-redemption.png
   - big-night.png
   - apollo-13.png
   - that-thing-you-do.png
   - notting-hill.png
-  - almost-famous.png
   - o-brother-where-art-thou.png
   - the-lord-of-the-rings-the-fellowship-of-the-ring.png
   - wedding-crashers.png
@@ -51,10 +78,8 @@ assets:
   - do-the-right-thing.png
   - 12-angry-men.png
   - dog-day-afternoon.png
-  - sideways.png
   - shutter-island.png
   - se7en.png
-  - twilight-2008.png
   - amelie.png
   - about-time.png
   - the-big-sick.png
@@ -114,7 +139,6 @@ assets:
   - ghostbusters.png
   - hocus-pocus.png
   - its-the-great-pumpkin-charlie-brown.png
-  - us-2019.png
   - it-2017.png
   - alien.png
   - aliens.png
@@ -139,7 +163,6 @@ assets:
   - its-complicated.png
   - no-reservations.png
   - jiro-dreams-of-sushi.png
-  - the-menu-2022.png
   - feast-of-the-seven-fishes.png
   - a-few-good-men.png
   - runaway-jury.png
@@ -179,7 +202,6 @@ assets:
   - spotlight.png
   - the-boondock-saints.png
   - the-departed.png
-  - the-town.png
   - patriots-day.png
   - sweet-home-alabama.png
   - hitch-2005.png
@@ -188,7 +210,6 @@ assets:
   - fargo.png
   - frozen-2.png
   - everest-2015.png
-  - the-way-way-back.png
   - in-the-heights.png
   - the-sandlot.png
   - the-peanut-butter-falcon.png
@@ -202,7 +223,6 @@ assets:
   - the-princess-and-the-frog.png
   - october-sky.png
   - clue.png
-  - fly-away-home.png
   - dead-poets-society.png
   - side-effects-2013.png
   - toy-story.png
@@ -216,7 +236,6 @@ assets:
   - the-natural.png
   - major-league.png
   - bull-durham.png
-  - angels-in-the-outfield-1994.png
   - 61.png
   - the-rookie-2002.png
   - reservoir-dogs.png
@@ -231,18 +250,285 @@ assets:
   - jaws.png
   - national-treasure.png
   - national-treasure-book-of-secrets.png
-  - remember-the-titans.png
-  - friday-night-lights.png
   - varsity-blues.png
-  - rudy.png
-  - knives-out.png
-  - juno.png
-  - goodfellas.png
-  - gosford-park.png
-  - pocahontas.png
-  - knocked-up.png
-  - the-40-year-old-virgin.png
-  - smart-house.png
+  - 310-to-yuma.png
+  - 8-mile.png
+  - 21.png
+  - 25th-hour.png
+  - 127-hours.png
+  - 2001-a-space-odyssey.png
+  - adaptation.png
+  - aftersun-2022.png
+  - airplane.png
+  - all-the-presidents-men.png
+  - american-animals.png
+  - american-history-x.png
+  - the-american-president.png
+  - anora-2024.png
+  - antz.png
+  - the-apprentice-2024.png
+  - the-assassination-of-jesse-james-by-the-coward-robert-ford.png
+  - avatar.png
+  - avatar-fire-and-ash.png
+  - avatar-the-way-of-water.png
+  - babylon-2022.png
+  - back-to-the-future-part-ii.png
+  - back-to-the-future-part-iii.png
+  - backrooms-2026.png
+  - bad-times-at-the-el-royale.png
+  - the-ballad-of-buster-scruggs.png
+  - the-ballad-of-wallis-island.png
+  - the-banshees-of-inisherin.png
+  - barbie-2023-4.png
+  - the-batman.png
+  - batman-begins.png
+  - beerfest.png
+  - before-midnight.png
+  - before-sunset.png
+  - the-big-lebowski.png
+  - the-big-short.png
+  - blackberry-2023.png
+  - blade-runner-1982.png
+  - blade-runner-2049.png
+  - blood-simple.png
+  - bohemian-rhapsody.png
+  - boogie-nights.png
+  - das-boot.png
+  - the-brutalist.png
+  - bugonia.png
+  - casino-royale-2006.png
+  - challengers-2024.png
+  - chinatown.png
+  - cinderella-man.png
+  - collateral-2004.png
+  - the-color-of-money.png
+  - a-complete-unknown.png
+  - conclave-2024.png
+  - contact-1997.png
+  - crimson-tide.png
+  - dances-with-wolves.png
+  - the-dark-knight.png
+  - the-dark-knight-rises.png
+  - darkest-hour.png
+  - the-devil-wears-prada-2.png
+  - disclosure-day.png
+  - dodgeball-a-true-underdog-story.png
+  - dont-look-up-2021.png
+  - doubt.png
+  - downfall-2004.png
+  - the-drama-2026.png
+  - drive-2011.png
+  - dune-part-one.png
+  - dune-part-two.png
+  - dunkirk.png
+  - e-t-1982.png
+  - eephus.png
+  - everything-everywhere-all-at-once.png
+  - f1-the-movie.png
+  - the-fabelmans.png
+  - fantastic-beasts-and-where-to-find-them.png
+  - the-fast-and-the-furious.png
+  - fight-club.png
+  - finding-nemo.png
+  - first-man.png
+  - flight.png
+  - flow-2024-1.png
+  - ford-v-ferrari.png
+  - frankenstein-2025.png
+  - free-solo.png
+  - glass-onion-2022.png
+  - godzilla-minus-one.png
+  - gone-girl.png
+  - goon.png
+  - the-grand-budapest-hotel.png
+  - grave-of-the-fireflies.png
+  - green-street-hooligans.png
+  - hadestown-the-musical-2026.png
+  - hamnet.png
+  - hard-eight.png
+  - harry-potter-and-the-chamber-of-secrets.png
+  - harry-potter-and-the-deathly-hallows-part-1.png
+  - harry-potter-and-the-deathly-hallows-part-2.png
+  - harry-potter-and-the-goblet-of-fire.png
+  - harry-potter-and-the-half-blood-prince.png
+  - harry-potter-and-the-order-of-the-phoenix.png
+  - harry-potter-and-the-prisoner-of-azkaban.png
+  - heat.png
+  - her.png
+  - the-hobbit-an-unexpected-journey.png
+  - the-hobbit-the-battle-of-the-five-armies.png
+  - the-hobbit-the-desolation-of-smaug.png
+  - hoosiers.png
+  - hoppers-2026-1.png
+  - house-of-gucci.png
+  - the-hunger-games.png
+  - the-hunger-games-catching-fire.png
+  - the-hunger-games-mockingjay-part-1.png
+  - the-hunger-games-mockingjay-part-2.png
+  - i-love-you-man.png
+  - the-imitation-game.png
+  - in-bruges.png
+  - indiana-jones-and-the-last-crusade.png
+  - indiana-jones-and-the-temple-of-doom.png
+  - inglourious-basterds.png
+  - insomnia.png
+  - into-the-wild.png
+  - the-invite-2026.png
+  - the-iron-claw-2023.png
+  - the-iron-giant.png
+  - is-this-thing-on-2025.png
+  - isle-of-dogs.png
+  - jojo-rabbit.png
+  - joker-2019.png
+  - kikis-delivery-service.png
+  - kill-bill-vol-1.png
+  - kill-bill-vol-2.png
+  - king-richard.png
+  - the-kings-speech.png
+  - kingsman-the-golden-circle.png
+  - kingsman-the-secret-service.png
+  - l-a-confidential.png
+  - la-la-land.png
+  - the-lighthouse-2019.png
+  - lincoln.png
+  - the-lobster.png
+  - the-long-walk.png
+  - the-lord-of-the-rings-the-return-of-the-king.png
+  - the-lord-of-the-rings-the-two-towers.png
+  - lucky-number-slevin.png
+  - mad-max-fury-road.png
+  - magnolia.png
+  - manchester-by-the-sea.png
+  - margin-call.png
+  - marty-supreme-2025.png
+  - the-master-2012.png
+  - master-and-commander-the-far-side-of-the-world.png
+  - the-matrix.png
+  - the-matrix-reloaded.png
+  - me-myself-and-irene.png
+  - meet-the-robinsons.png
+  - memento-2000.png
+  - men-in-black.png
+  - michael-clayton.png
+  - midnight-in-paris.png
+  - mollys-game.png
+  - my-big-fat-greek-wedding.png
+  - my-old-ass-2024.png
+  - mystic-river.png
+  - nebraska.png
+  - network.png
+  - newsies.png
+  - night-at-the-museum.png
+  - nightcrawler.png
+  - no-country-for-old-men.png
+  - nomadland.png
+  - nope-2022.png
+  - nosferatu-2024.png
+  - oceans-eleven.png
+  - once-upon-a-time-in-hollywood.png
+  - one-battle-after-another.png
+  - one-flew-over-the-cuckoos-nest.png
+  - oppenheimer-2023-1.png
+  - osmosis-jones.png
+  - paddington.png
+  - paddington-2.png
+  - palm-springs-2020.png
+  - parasite-2019.png
+  - the-patriot.png
+  - pearl-harbor.png
+  - the-perfect-storm.png
+  - phantom-thread.png
+  - pineapple-express.png
+  - pirates-of-the-caribbean-at-worlds-end.png
+  - pirates-of-the-caribbean-dead-mans-chest.png
+  - planes-trains-and-automobiles.png
+  - poor-things-2023.png
+  - pride-and-prejudice.png
+  - prisoners.png
+  - project-hail-mary.png
+  - pulp-fiction.png
+  - the-pursuit-of-happyness.png
+  - raiders-of-the-lost-ark.png
+  - ralph-breaks-the-internet.png
+  - ready-player-one.png
+  - a-real-pain-2024.png
+  - the-right-stuff.png
+  - romeo-juliet-1996.png
+  - rounders.png
+  - saving-private-ryan.png
+  - schindlers-list.png
+  - scott-pilgrim-vs-the-world.png
+  - seabiscuit.png
+  - the-secret-life-of-walter-mitty-2013.png
+  - sentimental-value-2025.png
+  - the-sheep-detectives.png
+  - sherlock-holmes.png
+  - sherlock-holmes-a-game-of-shadows.png
+  - shrek.png
+  - shrek-2.png
+  - sicario-2015.png
+  - the-silence-of-the-lambs.png
+  - sin-city.png
+  - sing-street.png
+  - skyfall.png
+  - the-social-network.png
+  - song-sung-blue-2025.png
+  - the-sound-of-music.png
+  - spider-man.png
+  - spirited-away.png
+  - star-trek.png
+  - star-wars-episode-vii-the-force-awakens.png
+  - star-wars-episode-viii-the-last-jedi.png
+  - star-wars-the-rise-of-skywalker.png
+  - step-brothers.png
+  - steve-jobs.png
+  - the-straight-story.png
+  - superbad.png
+  - swiss-army-man.png
+  - synecdoche-new-york.png
+  - talk-to-me-2022-2.png
+  - the-ten-commandments.png
+  - tenet.png
+  - thank-you-for-smoking.png
+  - they-cloned-tyrone.png
+  - three-billboards-outside-ebbing-missouri.png
+  - tin-cup.png
+  - tinker-tailor-soldier-spy.png
+  - titanic-1997.png
+  - top-gun.png
+  - toy-story-2.png
+  - toy-story-3.png
+  - toy-story-4.png
+  - toy-story-5-2026.png
+  - train-dreams.png
+  - triangle-of-sadness.png
+  - true-romance.png
+  - uncorked-2020.png
+  - united-93.png
+  - up-in-the-air.png
+  - wag-the-dog.png
+  - wake-up-dead-man.png
+  - wall-street.png
+  - walle.png
+  - watchmen.png
+  - whale-rider.png
+  - wicked-2024.png
+  - wicked-for-good.png
+  - wild.png
+  - the-wild-robot-2024.png
+  - willy-wonka-and-the-chocolate-factory.png
+  - the-wolf-of-wall-street.png
+  - wonder-boys.png
+  - wonka.png
+  - the-worlds-end.png
+  - wreck-it-ralph.png
+  - the-wrestler.png
+  - yesterday-2019.png
+  - zero-dark-thirty.png
+  - zodiac.png
+  - the-zone-of-interest.png
+  - zootopia.png
+  - zootopia-2-2025-2.png
 
 inputs:
   - key: cinema
@@ -256,22 +542,17 @@ inputs:
     app_input_type: free-text
     label: Letterboxd username
     default: "abartos27"
-    help: Your handle, or paste your profile link - both work (abartos27, or letterboxd.com/abartos27). The newest logged film becomes tonight's feature. Ignored entirely when Feature source is CANON, which is how you run this with no Letterboxd account at all.
-  # The option list is spelled two ways on purpose: the published guide documents
-  # `choices`, while Studio emits `options` and the review tooling reads it. They
-  # are kept identical so the picker fills in under either reader - drop whichever
-  # one turns out to be dead.
+    help: Public Letterboxd account; the newest logged film becomes tonight's feature. Leave blank to run on the curated canon only.
   - key: mode
     type: choice
     app_input_type: dropdown
-    label: Feature source
-    default: recent
-    choices: [recent, watchlist, lists, list, canon]
-    options: [recent, watchlist, lists, list, canon]
-    help: What the showcase scrolls through. RECENT = your diary, newest first. WATCHLIST = the films you have queued up. LISTS = every list you have made, a different one each hour, each under its own name - no typing needed. LIST = one specific list, named below. CANON = the app's own shelf of 200-plus films, needing no account. Now Showing is always your latest watch, whichever you pick.
+    label: Showcase
+    default: recent watches
+    options: [recent watches, favorites, custom list]
+    help: What the three-up strip plays. RECENT WATCHES follows your Letterboxd diary, newest first. FAVORITES is the four films pinned on your profile. CUSTOM LIST plays a public list - set the slug below. Now Showing always plays your latest watch, whichever you pick.
   - key: lblist
     type: string
     app_input_type: free-text
-    label: Letterboxd list
+    label: List slug (custom list only)
     default: "top-10"
-    help: Only read when Feature source is LIST - every other source ignores it. Paste the list's link, or just its name from the end of that link - letterboxd.com/abartos27/list/top-10/ and top-10 both work.
+    help: Used only when the source is LIST. The last path segment of a public list URL, e.g. letterboxd.com/abartos27/list/TOP-10/ -> top-10.
