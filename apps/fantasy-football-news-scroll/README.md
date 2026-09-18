@@ -11,6 +11,9 @@ wire's hottest pickups. No key or account needed. Built for scroll panels
 | **News for** | `ALL NFL` (default) shows the latest player updates league-wide from RotoWire. Pick a team to see only that team's fantasy players (QB, RB, WR, TE, K) from ESPN, with their position, injury status, body part and expected return. |
 | **Waiver wire** | `ADDS` shows who managers are grabbing most on Sleeper in the last 24 hours; `DROPS` shows who they are cutting. |
 | **Waiver wire position** | `ALL`, or one of `QB` `RB` `WR` `TE` `K` `DEF` to narrow the waiver page. The news page is not filtered by this. |
+| **Sleeper username** | Your Sleeper account username, used with the league ID to identify your roster for `MY SLEEPER TEAM` news. The fantasy team display name is not needed. |
+| **Sleeper league ID** | The numeric ID from your Sleeper league URL. |
+| **Show only players available in my league** | Exclude players on any roster, reserve or taxi squad from trending waiver players. Requires a league ID. |
 
 ## What the pages show
 
@@ -70,112 +73,56 @@ headline for those phrases.
 
 ---
 
-# Local Sleeper V1
+# Sleeper personalization V1
 
-The community manifest remains unchanged: **60-second rotation**, ALL NFL and
-NFL-team news, plus Sleeper trending adds/drops. The source retains **9x12**.
-Sleeper supplies roster membership and player metadata; RotoWire supplies news.
+Choose `MY SLEEPER TEAM` under News for, then enter your Sleeper username and
+league ID. The app resolves your user ID, finds the roster owned by that user,
+and shows matching RotoWire stories. The team display name is not needed.
+The optional league-wire checkbox excludes players on any league roster,
+reserve or taxi squad from trending adds and drops. `AVAILABLE IN LEAGUE` means
+absent from cached rosters; it does not account for waiver locks or timing.
+With no Sleeper settings, ALL NFL/team news and the global waiver page remain
+available.
 
-## Local test setup
+The app still rotates every minute (`refresh: 60`). News is cached for 600
+seconds, trending for 1800, user resolution and individual player records for
+21,600, and league rosters for 600. A cold run of both personalized pages uses
+six requests, or at most eight if player fallbacks are needed.
 
-From the repository root, run:
+Sleeper's full player catalog is about 14 MB, above GDN's 2 MB HTTP response
+limit. This app bundles a compact public snapshot of player ID, name, position
+and team (about 0.8 MB) for name matching. The local setup helper can regenerate
+a test copy using a fresh catalog; the committed snapshot needs seasonal
+maintenance or replacement with an approved compact endpoint. Matching uses
+normalized full names, so nicknames, renamed players and ambiguous names can
+be missed. RotoWire only supplies stories still in its current RSS response.
+To refresh the committed catalog, run `python3
+apps/fantasy-football-news-scroll/prepare_local.py --update-source-catalog`
+and review the resulting public-data diff before submitting it.
+
+For a prefilled local Studio preview, run:
 
 ```sh
 python3 apps/fantasy-football-news-scroll/prepare_local.py --username YOUR_USERNAME --league-id YOUR_LEAGUE_ID --league-wire
 gdn studio apps/fantasy-football-news-scroll/.gdn/fantasy-football-news-scroll
 ```
 
-Use a Sleeper username, not the fantasy team's display name. Omit `--league-wire`
-to keep global trending players. With it, both ADDS and DROPS exclude every
-rostered, reserve, and taxi player in the league, including unowned teams.
-`AVAILABLE IN LEAGUE` means absent from the cached rosters, not immediately
-claimable: waiver timing, locks and eligibility are not checked. In this mode
-that label replaces the bottom-row global add/drop count and ownership percentage.
-The global mode retains those numbers.
+The generated `.gdn/` copy is git-ignored and must not be submitted. It embeds
+a 24-hour player snapshot, prepopulates the Studio settings and substitutes
+`8x12` for local rendering. The source retains the merged app's `9x12` face;
+the local GDN build rejects it when a headline selects that font.
 
-Setup creates a **git-ignored `.gdn/` copy** with personal values, a compact player
-catalog, `MY SLEEPER TEAM` in the dropdown (selected by default), and the local
-`8x12` substitution. Never submit that generated copy. The source constants stay
-blank; the community manifest does not expose a nonworking setting. Editing the
-source requires rerunning setup to update the copy. Existing HTTP caches can be
-reused, but player metadata must be regenerated daily. Run the same setup command
-again when the panel requests a refreshed snapshot.
-
-Sleeper's full player catalog is downloaded by the setup helper at most once per
-24 hours and cached under `.gdn/players.json`. It is currently about 14 MB, larger
-than GDN's 2,000,000-byte HTTP response cap. The helper embeds only ID, full name,
-position and team in the ignored copy (about 0.8 MB); renders never fetch the full
-catalog. The snapshot expires after 24 hours to avoid silently stale news matching.
-
-## Request budget and caching
-
-GDN permits eight uncached requests per run. The budget here covers both pages
-together, even though validation and the production renderer can run pages
-separately. Identical roster requests on both pages reuse the host cache.
-
-| Data | TTL | Requests on a cold run |
-| --- | --- | --- |
-| RotoWire news OR ESPN team feed | 600 seconds | 1 |
-| Sleeper username resolution, personal news only | 21,600 seconds | 1 |
-| League rosters, shared by personal news and league wire | 600 seconds | 1 |
-| Trending adds OR drops | 1,800 seconds | 1 |
-| NFL state | 3,600 seconds | 1 |
-| Research/ownership percentages, when week is valid | 3,600 seconds | 1 |
-| Individual player fallback records | 21,600 seconds | At most 2 personalized / 4 global |
-
-A complete local snapshot normally needs **6 cold requests** for both personalized
-pages; the maximum is **8** with fallback player lookups. Global mode uses at most
-**8** (one news + three waiver support + four player lookups). Previously, the
-five-player lookup budget allowed nine requests when both pages ran together.
-Fully warm requests do not count toward the ceiling. A fresh roster can take up
-to ten minutes to appear; the panel still rotates each minute.
-
-## Matching and failure behavior
-
-- Personal news scans up to 100 items actually present in the current RSS response;
-  it cannot recover older stories that RotoWire no longer supplies. ALL NFL keeps
-  the existing 12-item behavior; ESPN team news is unchanged.
-- Match normalized full names, ignoring capitalization, punctuation, spaces,
-  hyphens and trailing Jr/Sr/II/III/IV/V. No last-name-only or fuzzy matching.
-- Catalog name collisions are omitted conservatively. Nicknames, initials versus
-  full first names, non-ASCII spelling differences, and renamed players can miss.
-  There is no cross-source player ID in the RSS feed. Team defenses generally do
-  not have individual-player RotoWire stories.
-- Ownership uses `owner_id`; co-owners are not resolved in V1. IR/taxi count as
-  rostered. Missing user/owner, malformed/offline roster data, missing player IDs,
-  and expired metadata produce explicit messages instead of global news fallback.
-- The waiver page examines the top 25 trending entries and displays up to three
-  matching players. A position filter or exhausted fallback budget can yield no
-  match; that does not mean the league has no available players.
-- No opponent or transaction features were added.
-
-## Verification
+Verify with:
 
 ```sh
 python3 apps/fantasy-football-news-scroll/test_sleeper.py
 gdn check apps/fantasy-football-news-scroll
-gdn validate apps/fantasy-football-news-scroll
-gdn check apps/fantasy-football-news-scroll/.gdn/fantasy-football-news-scroll
 gdn validate apps/fantasy-football-news-scroll/.gdn/fantasy-football-news-scroll
 ```
 
-The fixtures execute real Starlark and render both pages, including name
-normalization/collisions, IR/taxi exclusion, empty/invalid/unavailable rosters,
-missing owners, incomplete/expired player snapshots, ADDS/DROPS, team/global
-regression paths, and cold-request ceilings. Source validation may only exercise
-fonts selected by that day's feed; a pass does not establish local `9x12` support
-for every possible headline. Use the generated `8x12` copy for local previews.
-
-## Before a community PR
-
-This is a local V1, not a completed production settings integration. Agree with
-GLANCE on a supported mechanism for user/league identifiers without free-text
-inputs forcing refresh to 300. Do not add those inputs or slow rotation yet.
-Also agree on a compact, maintained Sleeper metadata source (for example an
-approved cached service) that fits the response and request budgets; a manually
-regenerated developer snapshot is not a production solution. Re-run cold-cache,
-error-path and render validation with that design. Keep personal values, generated
-catalogs and `8x12` out of the diff, and retain `9x12` unless review requires a
-separate font change.
-
-Sleeper API reference: <https://docs.sleeper.com/>.
+For GLANCE review: the two free-text Sleeper settings coexist with
+`refresh: 60` to preserve one-minute story rotation. The reviewer can decide
+whether to keep this or use another supported input mechanism. The player
+snapshot maintenance plan also needs review. Personal values stay out of the
+source and the PR. Local source validation currently fails on unsupported
+`9x12`; ask GLANCE whether their submission renderer supports the merged font.

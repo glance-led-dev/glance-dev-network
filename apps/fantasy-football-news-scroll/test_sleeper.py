@@ -150,6 +150,23 @@ class SleeperTests(unittest.TestCase):
         self.run_app({'follow': 'MY SLEEPER TEAM', 'position': 'TE'})
         self.assertLessEqual(len(set(u for u, _ in self.calls)), 8)
 
+    def test_sleeper_settings_override_local_defaults(self):
+        self.run_app({'follow': 'MY SLEEPER TEAM', 'sleeperusername': 'different',
+                      'sleeperleagueid': '456', 'leaguewire': True})
+        self.assertIn(('https://api.sleeper.app/v1/user/different', 21600), self.calls)
+        self.assertIn(('https://api.sleeper.app/v1/league/456/rosters', 600), self.calls)
+
+    def test_league_wire_can_be_disabled_with_settings(self):
+        self.league_wire = False
+        text = self.run_app({'follow': 'ALL NFL', 'sleeperleagueid': '456', 'leaguewire': False})
+        self.assertNotIn('AVAILABLE IN LEAGUE', text)
+        self.assertFalse(any('/rosters' in url for url, _ in self.calls))
+
+    def test_league_wire_rejects_invalid_league_id(self):
+        text = self.run_app({'follow': 'ALL NFL', 'sleeperleagueid': 'wrong', 'leaguewire': True})
+        self.assertIn('INVALID LEAGUE ID', text)
+        self.assertFalse(any('/rosters' in url for url, _ in self.calls))
+
 
 if __name__ == '__main__':
     unittest.main()

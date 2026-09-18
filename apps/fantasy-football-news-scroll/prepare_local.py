@@ -13,7 +13,7 @@ APP = Path(__file__).resolve().parent
 LOCAL = APP / '.gdn'
 
 
-def prepare(username='', league_id='', league_wire=False, catalog=None):
+def prepare(username='', league_id='', league_wire=False, catalog=None, update_source_catalog=False):
     LOCAL.mkdir(exist_ok=True)
     cache = LOCAL / 'players.json'
     if catalog is None:
@@ -41,6 +41,13 @@ def prepare(username='', league_id='', league_wire=False, catalog=None):
         team = player.get('team') or ''
         team = {'WAS': 'WSH', 'JAC': 'JAX', 'LA': 'LAR'}.get(team, team)
         players[str(pid)] = {'name': name, 'position': player.get('position') or '', 'team': team}
+    if update_source_catalog:
+        source_file = APP / 'app.star'
+        source = source_file.read_text()
+        source = re.sub(r'^LOCAL_PLAYERS = .*$',
+                        lambda m: 'LOCAL_PLAYERS = ' + json.dumps(players, ensure_ascii=True),
+                        source, count=1, flags=re.M)
+        source_file.write_text(source)
     target = LOCAL / APP.name
     target.mkdir(exist_ok=True)
     shutil.copytree(APP / 'assets', target / 'assets', dirs_exist_ok=True)
@@ -53,10 +60,13 @@ def prepare(username='', league_id='', league_wire=False, catalog=None):
         src = re.sub(r'^' + key + r' = .*$', lambda m: key + ' = ' + literal, src, flags=re.M)
     (target / 'app.star').write_text(src.replace('9x12', '8x12'))
     manifest = yaml.safe_load((APP / 'manifest.yaml').read_text())
-    follow = next(i for i in manifest['inputs'] if i['key'] == 'follow')
-    follow['choices'].insert(1, 'MY SLEEPER TEAM')
+    settings = {i['key']: i for i in manifest['inputs']}
+    follow = settings['follow']
     if username and league_id:
         follow['default'] = 'MY SLEEPER TEAM'
+    settings['sleeperusername']['default'] = username
+    settings['sleeperleagueid']['default'] = league_id
+    settings['leaguewire']['default'] = league_wire
     (target / 'manifest.yaml').write_text(yaml.safe_dump(manifest, sort_keys=False))
     return target
 
@@ -66,6 +76,8 @@ if __name__ == '__main__':
     parser.add_argument('--username', default='')
     parser.add_argument('--league-id', default='')
     parser.add_argument('--league-wire', action='store_true')
+    parser.add_argument('--update-source-catalog', action='store_true',
+                        help='refresh the public compact player snapshot in source app.star')
     args = parser.parse_args()
     if args.username and not re.fullmatch(r'[A-Za-z0-9_]+', args.username):
         parser.error('username must contain letters, digits or underscores')
@@ -75,4 +87,5 @@ if __name__ == '__main__':
         parser.error('provide both username and league ID')
     if args.league_wire and not args.league_id:
         parser.error('--league-wire requires a league ID')
-    print(prepare(args.username, args.league_id, args.league_wire))
+    print(prepare(args.username, args.league_id, args.league_wire,
+                  update_source_catalog=args.update_source_catalog))
