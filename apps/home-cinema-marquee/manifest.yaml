@@ -9,7 +9,7 @@ entry: app.star
 
 width: 384
 height: 32
-refresh: 900
+refresh: 60
 
 pages: [marquee, now_showing, showcase]
 
@@ -17,20 +17,47 @@ pages: [marquee, now_showing, showcase]
 # app.star - the renderer rejects an undeclared asset, and Starlark cannot check
 # whether a file exists.
 assets:
-  - interstellar.png
+  - my-neighbor-totoro.png
+  - juno.png
+  - the-40-year-old-virgin.png
+  - knocked-up.png
   - good-will-hunting.png
+  - fly-away-home.png
+  - gosford-park.png
+  - pocahontas.png
+  - the-way-way-back.png
+  - remember-the-titans.png
+  - us-2019.png
+  - goodfellas.png
+  - smart-house.png
+  - the-guardian-2006.png
+  - angels-in-the-outfield-1994.png
+  - sideways.png
+  - rudy.png
+  - glengarry-glen-ross.png
+  - the-usual-suspects.png
+  - charade.png
+  - the-town.png
+  - the-menu-2022.png
+  - friday-night-lights.png
+  - the-shawshank-redemption.png
+  - the-twilight-saga-new-moon.png
+  - twilight-2008.png
+  - almost-famous.png
+  - baby-driver.png
+  - the-green-mile.png
+  - the-graduate.png
+  - interstellar.png
   - knives-out-2019.png
   - its-a-wonderful-life.png
   - searching-for-bobby-fischer.png
   - the-princess-bride.png
   - the-nightmare-before-christmas.png
   - before-sunrise.png
-  - the-shawshank-redemption.png
   - big-night.png
   - apollo-13.png
   - that-thing-you-do.png
   - notting-hill.png
-  - almost-famous.png
   - o-brother-where-art-thou.png
   - the-lord-of-the-rings-the-fellowship-of-the-ring.png
   - wedding-crashers.png
@@ -51,10 +78,8 @@ assets:
   - do-the-right-thing.png
   - 12-angry-men.png
   - dog-day-afternoon.png
-  - sideways.png
   - shutter-island.png
   - se7en.png
-  - twilight-2008.png
   - amelie.png
   - about-time.png
   - the-big-sick.png
@@ -114,7 +139,6 @@ assets:
   - ghostbusters.png
   - hocus-pocus.png
   - its-the-great-pumpkin-charlie-brown.png
-  - us-2019.png
   - it-2017.png
   - alien.png
   - aliens.png
@@ -139,7 +163,6 @@ assets:
   - its-complicated.png
   - no-reservations.png
   - jiro-dreams-of-sushi.png
-  - the-menu-2022.png
   - feast-of-the-seven-fishes.png
   - a-few-good-men.png
   - runaway-jury.png
@@ -179,7 +202,6 @@ assets:
   - spotlight.png
   - the-boondock-saints.png
   - the-departed.png
-  - the-town.png
   - patriots-day.png
   - sweet-home-alabama.png
   - hitch-2005.png
@@ -188,7 +210,6 @@ assets:
   - fargo.png
   - frozen-2.png
   - everest-2015.png
-  - the-way-way-back.png
   - in-the-heights.png
   - the-sandlot.png
   - the-peanut-butter-falcon.png
@@ -202,7 +223,6 @@ assets:
   - the-princess-and-the-frog.png
   - october-sky.png
   - clue.png
-  - fly-away-home.png
   - dead-poets-society.png
   - side-effects-2013.png
   - toy-story.png
@@ -216,7 +236,6 @@ assets:
   - the-natural.png
   - major-league.png
   - bull-durham.png
-  - angels-in-the-outfield-1994.png
   - 61.png
   - the-rookie-2002.png
   - reservoir-dogs.png
@@ -231,18 +250,7 @@ assets:
   - jaws.png
   - national-treasure.png
   - national-treasure-book-of-secrets.png
-  - remember-the-titans.png
-  - friday-night-lights.png
   - varsity-blues.png
-  - rudy.png
-  - knives-out.png
-  - juno.png
-  - goodfellas.png
-  - gosford-park.png
-  - pocahontas.png
-  - knocked-up.png
-  - the-40-year-old-virgin.png
-  - smart-house.png
 
 inputs:
   - key: cinema
@@ -256,22 +264,17 @@ inputs:
     app_input_type: free-text
     label: Letterboxd username
     default: "abartos27"
-    help: Your handle, or paste your profile link - both work (abartos27, or letterboxd.com/abartos27). The newest logged film becomes tonight's feature. Ignored entirely when Feature source is CANON, which is how you run this with no Letterboxd account at all.
-  # The option list is spelled two ways on purpose: the published guide documents
-  # `choices`, while Studio emits `options` and the review tooling reads it. They
-  # are kept identical so the picker fills in under either reader - drop whichever
-  # one turns out to be dead.
+    help: Public Letterboxd account; the newest logged film becomes tonight's feature. Leave blank to run on the curated canon only.
   - key: mode
     type: choice
     app_input_type: dropdown
-    label: Feature source
-    default: recent
-    choices: [recent, watchlist, lists, list, canon]
-    options: [recent, watchlist, lists, list, canon]
-    help: What the showcase scrolls through. RECENT = your diary, newest first. WATCHLIST = the films you have queued up. LISTS = every list you have made, a different one each hour, each under its own name - no typing needed. LIST = one specific list, named below. CANON = the app's own shelf of 200-plus films, needing no account. Now Showing is always your latest watch, whichever you pick.
+    label: Showcase
+    default: recent watches
+    options: [recent watches, favorites, custom list]
+    help: What the three-up strip plays. RECENT WATCHES follows your Letterboxd diary, newest first. FAVORITES is the four films pinned on your profile. CUSTOM LIST plays a public list - set the slug below. Now Showing always plays your latest watch, whichever you pick.
   - key: lblist
     type: string
     app_input_type: free-text
-    label: Letterboxd list
+    label: List slug (custom list only)
     default: "top-10"
-    help: Only read when Feature source is LIST - every other source ignores it. Paste the list's link, or just its name from the end of that link - letterboxd.com/abartos27/list/top-10/ and top-10 both work.
+    help: Used only when the source is LIST. The last path segment of a public list URL, e.g. letterboxd.com/abartos27/list/TOP-10/ -> top-10.
