@@ -1,7 +1,7 @@
 gdn: 1
 
 id: tempest-wx
-version: 2
+version: 3
 name: Tempest Compact
 author: Ben
 description: Show live data direct from your WeatherFlow Tempest plus a forecast and any weather advisories active at your station's location.
@@ -10,7 +10,7 @@ category: Weather
 entry: app.star
 width: 64
 height: 32
-refresh: 1800
+refresh: 120
 
 pages: [now, outlook, alerts]
 
