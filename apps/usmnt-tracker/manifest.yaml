@@ -1,0 +1,41 @@
+gdn: 1
+id: usmnt-tracker
+version: 0.1.0
+name: "USMNT Tracker"
+author: "Tim McCabe"
+description: Follow the United States Men's National Team live matches, upcoming fixtures, and recent results across competitions.
+category: Sports
+entry: app.star
+
+width: 128
+height: 32
+refresh: 300
+
+pages:
+  - live_match
+  - next_match
+  - last_match
+
+inputs:
+  - key: timezone
+    app_input_type: dropdown
+    type: choice
+    label: Time zone
+    default: pacific
+    choices:
+      - pacific
+      - mountain
+      - central
+      - eastern
+      - alaska
+      - hawaii
+      - utc
+      - uk
+      - central_europe
+      - eastern_europe
+      - turkey
+      - iceland
+    help: Select your local time zone.
+
+assets:
+  - USA-logo.png
