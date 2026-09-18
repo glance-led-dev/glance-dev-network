@@ -16,24 +16,54 @@ network.
 
 - **Food** - the food drawn large on the left, then four rows: what the
   nutrient is, a bar showing the share of a day's reference intake, and the
-  amount in grams with that share as a percentage.
-- **Detail** - six figures in a grid. In the micronutrient view that is all
-  six micros at once. In the macronutrient view it is energy and the four
-  macros, and the sixth cell names the micronutrient this food is actually
-  notable for, which is how the two views connect.
+  amount in grams with that share as a percentage. The header names the
+  serving, such as `1 OZ 28G`.
+- **Detail** - six figures in a grid under the same serving header. In the
+  micronutrient view that is all six micros at once, with energy in the
+  header. In the macronutrient view it is energy and the four macros, and
+  the sixth cell names the micronutrient this food is actually notable for,
+  which is how the two views connect.
 
 In the micronutrient view the four rows are **the four this food delivers
 most of, ranked**, not a fixed four. The question the app answers is which
 foods get you to a goal, and a fixed list would bury the reason an oyster
 or a piece of liver is worth knowing about.
 
-## Everything is per 100 grams
+## Everything is per serving
 
-Raw, unless noted. That is the standard basis for comparing foods and it is
-the only way a panel like this can be honest, because a portion is not a
-fixed thing. Cooking changes it: driving off water concentrates everything,
-so 100 g of cooked chicken carries noticeably more protein than 100 g of
-raw chicken.
+The table is kept per 100 g, the standard basis it was checked on, and
+every figure on the panel is scaled to one serving of that food. 100 g is
+a fair basis for comparing foods but not what anyone eats: 100 g of
+cheddar is 403 kcal, while a 1 oz serving is 113.
+
+Serving sizes follow US label conventions:
+
+| food | serving |
+|---|---|
+| cheese, nuts, seeds, prosciutto | 1 oz, 28 g |
+| butter, olive oil | 1 tbsp, 14 g |
+| peanut butter | 2 tbsp, 32 g |
+| milk | 1 cup, 244 g |
+| Greek yogurt | 1 pot, 170 g |
+| cottage cheese | 1/2 cup, 113 g |
+| egg, egg white | 1 large egg, 50 g and 33 g |
+| whey protein | 1 scoop, 30 g |
+| meat, poultry, fish, shellfish | 4 oz raw, 113 g, about 3 oz cooked |
+| bacon | 2 slices raw, 50 g |
+| pork sausage | 2 links, 55 g |
+| ham | 2 slices, 56 g |
+| sardines | 1 tin drained, 92 g |
+| lentils, chickpeas, black beans, quinoa | 1/4 cup dry, 43 to 50 g |
+| oats | 1/2 cup dry, 40 g |
+| tofu, tempeh | 3 oz, 85 g |
+| edamame | 1/2 cup, 78 g |
+| spinach, kale, broccoli | 1 cup raw, 30 g, 67 g and 91 g |
+| sweet potato | 1 medium, 130 g |
+| avocado | 1/3 fruit, 50 g |
+
+Raw, unless noted, and dry goods are weighed dry. Cooking changes things:
+driving off water concentrates everything, and bacon renders out much of
+its fat, so 2 slices of cooked bacon carry far less than the raw figure.
 
 Real foods vary anyway. A chicken breast changes with trim and feed, a
 steak with cut and grade, a fillet with whether the fish was farmed. Treat
@@ -58,9 +88,9 @@ not a verdict.** This panel is not qualified to tell anyone that fat is bad
 or that protein is good; that depends entirely on the person eating it.
 
 The one judgement it does make is factual: the bar and the figure turn
-green when a single 100 g serving meets the whole reference intake on its
-own. Over 100 per cent the bar stays full and the real percentage is still
-printed, so beef liver reads 2471 per cent of a day's B12 rather than
+green when a single serving meets the whole reference intake on its own.
+Over 100 per cent the bar stays full and the real percentage is still
+printed, so beef liver reads 2792 per cent of a day's B12 rather than
 quietly clamping to a full bar and hiding it.
 
 ## Where the numbers come from

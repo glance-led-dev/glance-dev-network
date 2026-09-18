@@ -1,6 +1,9 @@
 # Nutrition at a Glance - one food at a time, and what it actually gives you.
 #
 # DATA. Curated, 69 foods, per 100 g, raw unless the README says otherwise.
+# The table stays per 100 g because that is the basis it was checked on;
+# every figure drawn is scaled to one serving from SERVINGS, because 403
+# KCAL for cheddar is a 100 g block nobody eats in one go.
 # Composition does not change, so this app makes NO network calls at all and
 # cannot fail on a feed. The ten minute refresh turns the food over, it does
 # not fetch anything.
@@ -24,7 +27,7 @@
 # THE BARS. Length is the share of the reference intake. Colour is the
 # food's own, not a verdict: this panel is not qualified to tell anyone that
 # fat is bad or that protein is good. The one judgement it does make is
-# factual - the bar turns green when a single 100 g serving meets the whole
+# factual - the bar turns green when a single serving meets the whole
 # reference intake.
 #
 # SCREENS. The design guide asks for live, error, empty and demo. With no
@@ -250,6 +253,61 @@ FOODS = [
     ["CLAM", "SEAFOOD", "SHELL", "oyster", 86, 14.7, 1.0, 3.0, 0.0,
      49.4, 0.09, 1.4, 14.0, 24.3, 9, "REF"],
 ]
+
+# One serving of each food: grams, and what that looks like. Sizes follow
+# US label conventions: 1 oz of cheese or nuts, 1 tbsp of fat, 1 cup of
+# milk, and 4 oz raw for meat and fish, which cooks down to about 3 oz.
+# A natural unit is used where there is one. Dry goods are weighed dry,
+# because that is what the table holds.
+MEAT_SERVING = [113, "4 OZ RAW"]
+SERVINGS = {
+    "EGG": [50, "1 EGG"],
+    "EGG WHITE": [33, "1 EGG"],
+    "WHOLE MILK": [244, "1 CUP"],
+    "GREEK YOGURT": [170, "1 POT"],
+    "COTTAGE CHEESE": [113, "1/2 CUP"],
+    "CHEDDAR": [28, "1 OZ"],
+    "MOZZARELLA": [28, "1 OZ"],
+    "PARMESAN": [28, "1 OZ"],
+    "BUTTER": [14, "1 TBSP"],
+    "WHEY PROTEIN": [30, "1 SCOOP"],
+    "BACON": [50, "2 SLICES RAW"],
+    "PORK SAUSAGE": [55, "2 LINKS"],
+    "HAM": [56, "2 SLICES"],
+    "PROSCIUTTO": [28, "1 OZ"],
+    "SARDINES": [92, "1 TIN"],
+    "ALMONDS": [28, "1 OZ"],
+    "WALNUTS": [28, "1 OZ"],
+    "PUMPKIN SEEDS": [28, "1 OZ"],
+    "PEANUT BUTTER": [32, "2 TBSP"],
+    "LENTILS": [48, "1/4 CUP DRY"],
+    "CHICKPEAS": [50, "1/4 CUP DRY"],
+    "BLACK BEANS": [48, "1/4 CUP DRY"],
+    "TOFU": [85, "3 OZ"],
+    "TEMPEH": [85, "3 OZ"],
+    "EDAMAME": [78, "1/2 CUP"],
+    "QUINOA": [43, "1/4 CUP DRY"],
+    "OATS": [40, "1/2 CUP DRY"],
+    "SPINACH": [30, "1 CUP"],
+    "KALE": [67, "1 CUP"],
+    "BROCCOLI": [91, "1 CUP"],
+    "SWEET POTATO": [130, "1 MEDIUM"],
+    "AVOCADO": [50, "1/3 AVOCADO"],
+    "OLIVE OIL": [14, "1 TBSP"],
+}
+
+def serving(f):
+    """Grams and label for one serving. Meat, poultry and seafood not
+    listed above share the 4 oz raw portion."""
+    if f[0] in SERVINGS:
+        return SERVINGS[f[0]]
+    if f[1] in ["MEAT", "POULTRY", "SEAFOOD"]:
+        return MEAT_SERVING
+    return [100, "PER"]
+
+def per(f, i):
+    """Column i of a food row, scaled from per 100 g to one serving."""
+    return f[i] * serving(f)[0] / 100.0
 
 # One sprite per shape, recoloured per food from the palette.
 # 44 columns and 26 rows at most, drawn at x=10, y=3.
@@ -1206,8 +1264,17 @@ def food(c, ctx):
     draw_food(c, f)
 
     # The text column starts clear of the 44 px art box at x 10..53.
+    # The header names the serving the rows are for, as "1 OZ 28G" where it
+    # fits beside the name and the label alone where it does not. There is
+    # room for the serving or for energy beside CHICKEN DRUMSTICK, not both,
+    # so energy is on the detail page instead.
     tx = 58
-    right = whole(f[4]) + " KCAL"
+    grams, label = serving(f)
+    gl = whole(grams) + "G"
+    right = pick(c, [label + " " + gl, label, gl], "4x5",
+                 117 - c.text_width(f[0], "4x5"))
+    if right == "":
+        right = gl
     rw = c.text_width(right, "4x5")
     c.text(right, 181, 1, font = "4x5", color = DIM, align = "right")
     nm = clip(c, f[0], "4x5", 181 - rw - 3 - tx - 3)
@@ -1219,7 +1286,7 @@ def food(c, ctx):
     for i in range(len(rows)):
         r = rows[i]
         y = 8 + i * 6
-        amount = f[r[1]]
+        amount = per(f, r[1])
         target = TARGETS[r[3]]
         pctv = int(amount / target * 100 + 0.5)
 
@@ -1257,10 +1324,24 @@ def detail(c, ctx):
     c.fill("black")
     rail(c, accent)
 
-    w = pill(c, clip(c, f[0], "4x5", 92), accent, 10, 0)
-    tag = "PER 100G " + ("RAW" if f[15] == "USDA" else "")
-    c.text(clip(c, f[1], "4x5", 80), 181, 1, font = "4x5", color = DIM,
-           align = "right")
+    nm = clip(c, f[0], "4x5", 92)
+    pill(c, nm, accent, 10, 0)
+
+    # The serving again, in place of the food group. The macro view carries
+    # energy in its grid; the micro view has no cell for it, so it rides
+    # in the header there.
+    grams, label = serving(f)
+    gl = whole(grams) + "G"
+    kcal = whole(per(f, 4)) + " KCAL"
+    if view == "MICRONUTRIENTS":
+        opts = [label + " " + gl + " " + kcal, label + " " + kcal,
+                gl + " " + kcal]
+    else:
+        opts = [label + " " + gl, label, gl]
+    basis = pick(c, opts, "4x5", 164 - c.text_width(nm, "4x5"))
+    if basis == "":
+        basis = opts[len(opts) - 1]
+    c.text(basis, 181, 1, font = "4x5", color = DIM, align = "right")
 
     # Six cells, two columns by three rows. Macro view spends its sixth on
     # the micronutrient this food is actually notable for, which ties the
@@ -1268,16 +1349,16 @@ def detail(c, ctx):
     cells = []
     if view == "MICRONUTRIENTS":
         for m in MICROS:
-            pctv = int(f[m[1]] / TARGETS[m[3]] * 100 + 0.5)
-            cells.append([m[0], one(f[m[1]]) + m[2], pctv])
+            pctv = int(per(f, m[1]) / TARGETS[m[3]] * 100 + 0.5)
+            cells.append([m[0], one(per(f, m[1])) + m[2], pctv])
     else:
-        cells.append(["ENERGY", whole(f[4]) + "KCAL", -1])
+        cells.append(["ENERGY", whole(per(f, 4)) + "KCAL", -1])
         for m in MACROS:
-            pctv = int(f[m[1]] / TARGETS[m[3]] * 100 + 0.5)
-            cells.append([m[0], one(f[m[1]]) + m[2], pctv])
+            pctv = int(per(f, m[1]) / TARGETS[m[3]] * 100 + 0.5)
+            cells.append([m[0], one(per(f, m[1])) + m[2], pctv])
         best, bestpct = MICROS[0], -1
         for m in MICROS:
-            p = int(f[m[1]] / TARGETS[m[3]] * 100 + 0.5)
+            p = int(per(f, m[1]) / TARGETS[m[3]] * 100 + 0.5)
             if p > bestpct:
                 best, bestpct = m, p
         # The nutrient name lives in the value, because "BEST MAGNESIUM" as

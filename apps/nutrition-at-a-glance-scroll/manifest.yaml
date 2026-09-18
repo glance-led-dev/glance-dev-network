@@ -3,7 +3,7 @@ id: nutrition-at-a-glance-scroll
 version: 0.1.0
 name: Nutrition at a Glance
 author: glance-led-dev
-description: One food at a time, with what it actually gives you - protein, fat and carbohydrate, or the micronutrients like B12, B6, zinc, iron and selenium. Everything per 100 grams, with a bar against the reference intake.
+description: One food at a time, with what it actually gives you - protein, fat and carbohydrate, or the micronutrients like B12, B6, zinc, iron and selenium. Everything per serving, with a bar against the reference intake.
 category: Lifestyle
 entry: app.star
 
