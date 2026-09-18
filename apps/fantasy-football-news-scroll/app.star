@@ -49,6 +49,17 @@ TREND_TTL = 1800
 STATE_TTL = 3600
 RESEARCH_TTL = 3600
 PLAYER_TTL = 21600
+ROSTER_TTL = 600
+USER_TTL = 21600
+
+# Filled ONLY in the ignored test copy by prepare_local.py. No personal values
+# or full player-catalog HTTP requests belong in the community app.
+LOCAL_USERNAME = ""
+LOCAL_LEAGUE_ID = ""
+LOCAL_PLAYERS = {}
+LOCAL_PLAYERS_UNTIL = 0
+LOCAL_LEAGUE_WIRE = False
+
 
 # ------------------------------------------------------------------ layout
 # 192 wide. Logo x 6..45 (40 x 24 at y 4), team bar x 48..49, text x
@@ -914,10 +925,10 @@ def tag_text(chunk, tag):
             t = t[:len(t) - 3]
     return t
 
-def parse_rotowire(body):
+def parse_rotowire(body, limit = 12):
     items = []
     pos = 0
-    for k in range(12):
+    for k in range(limit):
         s = body.find("<item>", pos)
         if s < 0:
             break
@@ -1005,6 +1016,81 @@ def parse_espn(j, abbr):
                       "pos": pos, "team": clean(team), "mins": parse_iso(get(row, "date", ""))})
     return items
 
+def sleeper_error(head, sub = "CHECK LOCAL SLEEPER SETUP"):
+    return {"ok": False, "head": head, "sub": sub}
+
+def sleeper_rosters():
+    if LOCAL_LEAGUE_ID == "":
+        return sleeper_error("SET SLEEPER LEAGUE")
+    r = http.get(SLEEPER + "league/" + LOCAL_LEAGUE_ID + "/rosters",
+                 headers = HEADERS, ttl_seconds = ROSTER_TTL)
+    if r["status_code"] != 200 or type(r["json"]) != "list" or len(r["json"]) == 0:
+        return sleeper_error("ROSTERS UNAVAILABLE", "RETRY SOON - NO AVAILABILITY DATA")
+    occupied = {}
+    for row in r["json"]:
+        if type(row) != "dict" or "players" not in row:
+            return sleeper_error("INVALID ROSTER DATA")
+        for key in ["players", "reserve", "taxi"]:
+            ids = get(row, key, [])
+            if type(ids) != "list":
+                return sleeper_error("INVALID ROSTER DATA")
+            for pid in ids:
+                occupied[str(pid)] = True
+    return {"ok": True, "rosters": r["json"], "occupied": occupied}
+
+def player_key(name):
+    # Exact full-name matching after punctuation/suffix normalization. Never
+    # match by last name or a substring: unrelated players must not leak in.
+    words = clean(name).replace(".", "").replace("-", " ").split(" ")
+    words = [w for w in words if w != ""]
+    if len(words) > 1 and words[-1] in ["JR", "SR", "II", "III", "IV", "V"]:
+        words = words[:-1]
+    return "".join(words)
+
+def sleeper_news(ctx, items):
+    if LOCAL_USERNAME == "" or LOCAL_LEAGUE_ID == "":
+        return sleeper_error("SET UP MY SLEEPER TEAM")
+    if not LOCAL_PLAYERS or ctx.now.unix >= LOCAL_PLAYERS_UNTIL:
+        return sleeper_error("REFRESH PLAYER SNAPSHOT", "RUN LOCAL SETUP AGAIN")
+    u = http.get(SLEEPER + "user/" + LOCAL_USERNAME, headers = HEADERS, ttl_seconds = USER_TTL)
+    uid = str(get(u["json"], "user_id", ""))
+    if u["status_code"] != 200 or uid == "":
+        return sleeper_error("SLEEPER USER NOT FOUND")
+    league = sleeper_rosters()
+    if not league["ok"]:
+        return league
+    mine = None
+    for row in league["rosters"]:
+        if str(get(row, "owner_id", "")) == uid:
+            if mine != None:
+                return sleeper_error("MULTIPLE OWNED ROSTERS")
+            mine = row
+    if mine == None:
+        return sleeper_error("NO OWNED ROSTER", "CHECK USERNAME AND LEAGUE")
+    ids = {}
+    for key in ["players", "reserve", "taxi"]:
+        for pid in get(mine, key, []):
+            ids[str(pid)] = True
+    # Detect normalized-name collisions across the entire catalog, not merely
+    # this roster. Ambiguous names are omitted rather than guessed.
+    names = {}
+    for pid in LOCAL_PLAYERS:
+        p = LOCAL_PLAYERS[pid]
+        key = player_key(p["name"])
+        if key != "":
+            names[key] = "" if key in names else pid
+    for pid in ids:
+        if num(pid) >= 0 and pid not in LOCAL_PLAYERS:
+            return sleeper_error("PLAYER SNAPSHOT INCOMPLETE", "RUN LOCAL SETUP AGAIN")
+    matched = []
+    for it in items:
+        pid = names.get(player_key(it["name"]), "")
+        if pid != "" and pid in ids:
+            p = LOCAL_PLAYERS[pid]
+            team = p["team"]
+            matched.append(dict(it, pos = p["position"], team = team if team != "" else it["team"]))
+    return {"ok": True, "items": matched, "scope": "MY SLEEPER TEAM"}
+
 def fetch_news(ctx):
     follow = str(ctx.inputs.get("follow", "ALL NFL")).strip().upper()
     if follow in TEAMS:
@@ -1020,6 +1106,8 @@ def fetch_news(ctx):
         return {"ok": False, "head": "NEWS FEED OFFLINE", "sub": "RETRY IN 10 MIN"}
     if r["status_code"] != 200:
         return {"ok": False, "head": "NEWS FEED ERROR", "sub": "HTTP " + str(r["status_code"]) + " - RETRY SOON"}
+    if follow == "MY SLEEPER TEAM":
+        return sleeper_news(ctx, parse_rotowire(r["body"], 100))
     return {"ok": True, "items": parse_rotowire(r["body"]), "scope": "NFL"}
 
 def fetch_wire(ctx):
@@ -1027,7 +1115,13 @@ def fetch_wire(ctx):
     want = str(ctx.inputs.get("position", "ALL")).strip().upper()
     if want not in ["QB", "RB", "WR", "TE", "K", "DEF"]:
         want = "ALL"
-    base = {"kind": kind, "want": want}
+    base = {"kind": kind, "want": want, "available": LOCAL_LEAGUE_WIRE}
+    occupied = {}
+    if LOCAL_LEAGUE_WIRE:
+        league = sleeper_rosters()
+        if not league["ok"]:
+            return dict(base, **league)
+        occupied = league["occupied"]
 
     tr = http.get(SLEEPER + "players/nfl/trending/" + ("add" if kind == "ADDS" else "drop"),
                   params = {"lookback_hours": "24", "limit": "25"}, headers = HEADERS,
@@ -1051,15 +1145,19 @@ def fetch_wire(ctx):
             if rs["status_code"] == 200 and type(rs["json"]) == "dict":
                 owned = rs["json"]
 
-    # Budget: trending + state + research = 3, so at most 5 player lookups
-    # keeps the render inside the 8-request ceiling. Team defenses need none.
+    # Budget across BOTH pages: news + user + rosters + trending + state +
+    # research = 6. Reserve two lookups when personalized; otherwise four
+    # (news + trending + state + research = 4). Cache hits only lower this.
+    personalized = LOCAL_LEAGUE_WIRE or str(ctx.inputs.get("follow", "")).strip().upper() == "MY SLEEPER TEAM"
+    lookup_limit = 2 if personalized else 4
+    snapshot_ok = ctx.now.unix < LOCAL_PLAYERS_UNTIL
     players = []
     lookups = 0
     for t in tr["json"]:
         if len(players) == 3:
             break
         pid = str(get(t, "player_id", ""))
-        if pid == "":
+        if pid == "" or pid in occupied:
             continue
         count = num(get(t, "count", ""), 0)
         pct = get(get(owned, pid, {}), "owned", None)
@@ -1072,13 +1170,17 @@ def fetch_wire(ctx):
             players.append({"forms": [nick + " D/ST", nick + " D/ST", nick, nick], "pos": "DEF",
                             "team": abbr, "count": count, "pct": pct})
             continue
-        if lookups == 5:
-            break
-        lookups += 1
-        r = http.get(SLEEPER + "players/nfl/" + pid, headers = HEADERS, ttl_seconds = PLAYER_TTL)
-        if r["status_code"] != 200 or type(r["json"]) != "dict":
-            continue
-        p = r["json"]
+        p = LOCAL_PLAYERS.get(pid, None) if snapshot_ok else None
+        if p != None:
+            p = dict(p, first_name = p["name"], last_name = "")
+        else:
+            if lookups == lookup_limit:
+                continue
+            lookups += 1
+            r = http.get(SLEEPER + "players/nfl/" + pid, headers = HEADERS, ttl_seconds = PLAYER_TTL)
+            if r["status_code"] != 200 or type(r["json"]) != "dict":
+                continue
+            p = r["json"]
         ppos = str(get(p, "position", ""))
         if want != "ALL" and ppos != want:
             continue
@@ -1238,7 +1340,7 @@ def wire(c, ctx):
     ps = d["players"]
     if len(ps) == 0:
         pos = "" if d["want"] == "ALL" else d["want"] + " "
-        quiet_screen(c, "WIRE IS QUIET", "NO TRENDING " + pos + d["kind"] + " IN THE LAST 24H")
+        quiet_screen(c, "NO AVAILABLE TRENDING" if d["available"] else "WIRE IS QUIET", "NO MATCH IN TOP 25 " + pos + d["kind"])
         return
     idx = (ctx.now.unix // 60) % len(ps)
     p = ps[idx]
@@ -1264,6 +1366,10 @@ def wire(c, ctx):
     # Bottom row y 25..31: the count left, owned % right, in the longest
     # wording that leaves 4 px between them - "% OWNED", then "% OWN".
     cnt = ("+" if adds else "") + compact(p["count"]) + " " + d["kind"]
+    if d["available"]:
+        # Dedicated line: availability must survive chip-row space shedding.
+        c.text("AVAILABLE IN LEAGUE", TX, 26, font = "4x5", color = GOOD)
+        return
     c.text(cnt, TX, 26, font = "4x5", color = color_k)
     if p["pct"] >= 0:
         room = TR - (TX + c.text_width(cnt, "4x5") + 4) + 1
