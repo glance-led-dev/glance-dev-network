@@ -6,7 +6,7 @@ Displays one high school's current sports matchup on a 192x32 Glance display. Th
 
 1. **Choose a sport.** Select Football, Boys Basketball, Girls Basketball, Baseball, Softball, Girls Volleyball, Boys Soccer, or Girls Soccer.
 2. **Add the MaxPreps school URL.** Open the school's main MaxPreps page and copy its URL. Use a URL like `https://www.maxpreps.com/nc/charlotte/myers-park-mustangs/`. Do not use a sport schedule, matchup, recap, or individual game URL.
-3. **Connect Parse.** Create a [Parse account](https://parse.bot), then [subscribe to the public MaxPreps API](https://parse.bot/marketplace/1d510b08-d5bf-481d-aa00-82f8b510e6dd/maxpreps-com-api). Do not fork, merge, or edit the scraper. Copy your personal Parse API key into the app's encrypted **Parse API key** setting. Each user's requests and credits remain on their own Parse account; the app never includes, shares, or falls back to someone else's key.
+3. **Add Parse.** Create an account at [parse.bot](https://parse.bot), add the public `maxpreps.com API`, and copy your personal API key into the encrypted **Parse API key** setting. The app does not include, share, or fall back to someone else's key.
 4. **Choose the display time zone.** The school timezone is detected automatically from its MaxPreps location. Display time zone controls the time shown on your Glance.
 5. **Choose a live frequency.** The default is every 30 minutes. Select **No live pulls** when you only want upcoming and final results, or select a faster interval while actively following a game.
 6. **Optional for baseball and softball:** enter the short GameChanger team ID to supplement live information without using Parse credits. MaxPreps and Parse are still required for the complete schedule, matchup, branding, and fallback data.
@@ -72,24 +72,11 @@ For live baseball and softball, the diamond shows occupied bases in the batting 
 - Only Scoretracker repeats during a football game, at the frequency selected in settings.
 - The app pauses sport-specific schedule calls during that sport's offseason.
 
-Parse pricing and endpoint costs can change; check the [usage page](https://parse.bot/settings?tab=usage) in your own Parse account. Never post your API key on GitHub or share it with another user.
-
-## Refresh and final-verification policy
-
-- A timezone-less scheduled time returned by MaxPreps or Parse is interpreted in the school's local timezone first, then converted to the display timezone selected in the app. The source timezone normally comes from the required MaxPreps school URL; a game URL must use its state as a fallback rather than silently defaulting to Eastern.
-- On game day, Scoretracker checks begin at the scheduled start time and use the selected live frequency for no more than four hours. Selecting **No live pulls** disables these recurring checks.
-- Every successful response is cached. Normal Scroll image refreshes read the cache and do not spend Parse credits or restart the live-check window.
-- Every Final first reported on game night is provisional. Regular live checks stop, the app checks it again 30 minutes later and once more at the one-hour mark, and it locks the Final only after both confirmation pulls.
-- If an early Final conflicts with either confirmation, the last trusted score remains cached, the result is shown as pending, and normal checks may continue through the four-hour window.
-- If no trusted Final exists when the four-hour window ends, frequent checks stop and the app makes one additional check at the five-hour mark.
-- At 11:00 a.m. in the school's local timezone on the following day, the app always performs exactly one audit, even when a Final was accepted earlier. A conflicting audit flags the result without automatically replacing the last trusted score.
-- After the next-day audit, checks stop permanently for that matchup. A newly discovered matchup starts a new, separately cached refresh cycle.
-- A transient football `Final 0-0` response cannot replace a previously available real score or become the trusted Final.
+Parse pricing and endpoint costs can change; check the usage page in your own Parse account.
 
 ## Common messages
 
 - **KEY ERROR:** the Parse key is missing, invalid, or connected to the wrong Parse account/API.
-- **NO CREDITS:** the connected Parse account has no credits remaining.
 - **URL ERROR:** the MaxPreps URL is not a valid main school page.
 - **FEED ERROR:** the source could not be reached. The app waits briefly before retrying so repeated previews do not create a request burst.
 - **NO GAME / NO UPCOMING:** MaxPreps does not currently list a usable matchup for the selected sport.

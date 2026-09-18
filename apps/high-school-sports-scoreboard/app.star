@@ -12,9 +12,8 @@
 # a real example: corner-coordinate args, dedicated outline= keyword
 # for an unfilled border, corner_radius=0 for square corners.
 
-PARSE_BASE = "https://api.parse.bot/scraper/e0a033cc-4c08-49d5-8417-81682c9b3dbf"
-PARSE_LIVE_BASE = "https://api.parse.bot/scraper/e0a033cc-4c08-49d5-8417-81682c9b3dbf"
-PARSE_SNAPSHOT_VERSION = "15"
+PARSE_BASE = "https://api.parse.bot/scraper/43ba21c8-8bd2-4dde-927b-75681f9251f3"
+PARSE_LIVE_BASE = "https://api.parse.bot/scraper/43ba21c8-8bd2-4dde-927b-75681f9251f3"
 GAMECHANGER_TEAM_BASE = "https://api.team-manager.gc.com/public/teams/"
 
 SMALL_FONT = "4x5"   # defaults used when creating each box below
@@ -24,9 +23,7 @@ VALUE_FONT = "7x12"  # of these constants to tune one box at a time
 FILL_COLOR = "darkgray"
 STATUS_BAR_FILL = "darkgray"
 STATUS_BAR_TEXT = "white"
-BOX_COLOR = "black"  # internal divider color; outer edge is removed below
-STAT_FILL_COLOR = "black"
-STAT_DIVIDER_COLOR = "darkgray"
+BOX_COLOR = "black"  # outline color
 # Last-resort sample/error fallback. Real games first resolve both schools'
 # colors below; this is deliberately a neutral gold instead of cyan.
 TEAM_COLOR_FALLBACK = "#d8b04a"
@@ -10079,7 +10076,6 @@ def schedule_request_adaptive(api_key, path, sport_path, season, cache_bucket):
         PARSE_BASE + "/get_team_schedule",
         headers = {
             "X-API-Key": api_key,
-            "API-Snapshot-Version": PARSE_SNAPSHOT_VERSION,
             # GDN includes headers in its cache key. Parse ignores this
             # label, while it lets each planned refresh have one entry.
             "X-Glance-Refresh": cache_bucket,
@@ -10092,14 +10088,6 @@ def response_auth_error(resp):
     if resp == None:
         return False
     return resp.get("status_code") == 401 or resp.get("status_code") == 403
-
-def response_credit_error(resp):
-    if resp == None:
-        return False
-    if resp.get("status_code") == 402:
-        return True
-    body = str(resp.get("body", "")).lower()
-    return "credit" in body and ("insufficient" in body or "no credit" in body or "out of credit" in body)
 
 def parsed_schedule_data(resp):
     if resp == None or resp.get("status_code") != 200:
@@ -10252,8 +10240,6 @@ def normalized_contest_adaptive(contest, sport, slot, tracked_school, team_data,
         "homeName": home_name,
         "awaySchoolId": away_school_id,
         "homeSchoolId": home_school_id,
-        "awaySchoolUrl": team_stat(away_side, ["school_url", "schoolUrl", "url"]),
-        "homeSchoolUrl": team_stat(home_side, ["school_url", "schoolUrl", "url"]),
         "awayColor": away_color,
         "awayColor2": away_color2,
         "awayColor3": away_color3,
@@ -10384,33 +10370,6 @@ def normalized_contest_adaptive(contest, sport, slot, tracked_school, team_data,
     base["hasLiveScore"] = has_live_score
     return base
 
-def schedule_streak(data):
-    if type(data) != "dict":
-        return None
-    streak_result = None
-    streak_count = 0
-    # MaxPreps schedules are chronological. Skipping unfinished entries lets
-    # the latest consecutive completed results determine the current streak.
-    for contest in data.get("contests", []):
-        result = str(contest.get("result", "")).strip().upper()
-        result_type = None
-        if result.startswith("W"):
-            result_type = "W"
-        elif result.startswith("L"):
-            result_type = "L"
-        elif result == "T" or result.startswith("T "):
-            result_type = "T"
-        if result_type == None:
-            continue
-        if result_type == streak_result:
-            streak_count += 1
-        else:
-            streak_result = result_type
-            streak_count = 1
-    if streak_result == None:
-        return None
-    return streak_result + str(streak_count)
-
 def games_from_schedule(resp, sport, slot, school_name, source_timezone, display_timezone, now_unix):
     if not valid_schedule(resp):
         return []
@@ -10428,7 +10387,6 @@ def games_from_schedule(resp, sport, slot, school_name, source_timezone, display
         elif result == "T" or result.startswith("T "):
             ties += 1
     calculated_record = str(wins) + "-" + str(losses) + (("-" + str(ties)) if ties > 0 else "")
-    calculated_streak = schedule_streak(data)
     tracked_name = team_data.get("school_name", team_data.get("schoolName", team_data.get("name", school_name)))
     final_game = None
     next_game = None
@@ -10447,10 +10405,8 @@ def games_from_schedule(resp, sport, slot, school_name, source_timezone, display
             continue
         if game.get("trackedIsHome", False):
             game["homeRecord"] = calculated_record
-            game["homeStreak"] = calculated_streak
         else:
             game["awayRecord"] = calculated_record
-            game["awayStreak"] = calculated_streak
         # Scoretracker does not include team records, and the tracked-team
         # schedule can omit the opponent's record. For an opening-game final,
         # safely derive the opponent's 1-game record instead of leaving 0-0.
@@ -10514,7 +10470,6 @@ def scoretracker_request_adaptive(api_key, qwix_id, game_url, cache_bucket):
         PARSE_LIVE_BASE + endpoint,
         headers = {
             "X-API-Key": api_key,
-            "API-Snapshot-Version": PARSE_SNAPSHOT_VERSION,
             "X-Glance-Refresh": cache_bucket,
         },
         params = params,
@@ -10528,7 +10483,6 @@ def matchup_request_adaptive(api_key, game_url, cache_bucket):
         PARSE_BASE + "/get_matchup",
         headers = {
             "X-API-Key": api_key,
-            "API-Snapshot-Version": PARSE_SNAPSHOT_VERSION,
             # The game-specific label makes one pregame call and one separate
             # post-final call. The dynamic page reuses the cached response.
             "X-Glance-Refresh": cache_bucket,
@@ -10738,35 +10692,6 @@ def enrich_game_with_matchup(api_key, game, force_final = False):
     data = matchup_data(response)
     return merge_matchup_game(game, data) if data != None else game
 
-def enrich_game_with_opponent_streak(ctx, api_key, game, sport, season, source_timezone):
-    if type(game) != "dict":
-        return game
-    opponent_side = "away" if game.get("trackedIsHome", False) else "home"
-    streak_key = opponent_side + "Streak"
-    existing = game.get(streak_key)
-    if existing != None and str(existing).strip() not in ["", "-"]:
-        return game
-    opponent_path = maxpreps_school_path(game.get(opponent_side + "SchoolUrl"))
-    if opponent_path == None:
-        return game
-    # Cache one opponent schedule per week. The normal five-minute image
-    # refresh therefore reuses this response instead of spending more credits.
-    response = event_schedule(
-        ctx,
-        api_key,
-        opponent_path,
-        sport["path"],
-        season,
-        "opponent-streak",
-        source_timezone,
-        sport["check_minutes"],
-    )
-    data = parsed_schedule_data(response)
-    streak = schedule_streak(data)
-    if streak != None:
-        game[streak_key] = streak
-    return game
-
 def normalized_scoretracker_game(data):
     if type(data) != "dict":
         return None
@@ -10803,15 +10728,15 @@ def normalized_live_clock(value):
         return ""
     text = str(value).strip().upper()
     # MaxPreps frequently reports approximate prose such as "~5 mins to go".
-    # Keep the approximation mark while compacting the clock for the display.
-    approximate = text.startswith("~")
-    if approximate:
+    # The detail box needs the compact clock form, and the approximation mark
+    # does not add useful scoreboard information.
+    if text.startswith("~"):
         text = text[1:].strip()
     if "MIN" in text:
         first = text.split(" ")[0]
         if first.isdigit():
-            text = first + ":00"
-    return ("~" if approximate else "") + text
+            return first + ":00"
+    return text
 
 def scoretracker_game_in(value, depth = 0):
     if depth > 6:
@@ -10937,17 +10862,6 @@ def period_scores_count(side, count):
         scores.append("-")
     return scores[:count]
 
-def suspicious_empty_football_final(base, status, away_score, home_score):
-    # The MaxPreps Scoretracker can briefly publish `final` with placeholder
-    # zeroes even when a real live score was previously available. A scoreless
-    # football final is not accepted from that transient payload. The caller
-    # can retain its scheduled/final totals or fall back to the schedule feed.
-    if str(base.get("sport", "")).upper() != "FB" or status != "final":
-        return False
-    away_text = str(away_score).strip() if away_score != None else ""
-    home_text = str(home_score).strip() if home_score != None else ""
-    return away_text in ["0", "0.0", "00"] and home_text in ["0", "0.0", "00"]
-
 def merge_live_game(base, live_game, ctx, display_timezone):
     away_side = live_game.get("away_team", {})
     home_side = live_game.get("home_team", {})
@@ -10983,7 +10897,6 @@ def merge_live_game(base, live_game, ctx, display_timezone):
     home_score = home_side.get("score")
     has_score = away_score != None and home_score != None
     status = str(live_game.get("status", "live")).lower()
-    rejected_empty_final = suspicious_empty_football_final(base, status, away_score, home_score)
 
     base["awayName"] = away_name
     base["homeName"] = home_name
@@ -11004,9 +10917,6 @@ def merge_live_game(base, live_game, ctx, display_timezone):
                 base[side_name + suffix] = live_color
     base["awayRecord"] = team_record(away_side, base.get("awayRecord", "0-0"))
     base["homeRecord"] = team_record(home_side, base.get("homeRecord", "0-0"))
-    if rejected_empty_final:
-        base["rejectedEmptyFinal"] = True
-        return base
     # Never erase a previously usable schedule/live score because a later
     # Scoretracker payload contains status/clock but omits its score fields.
     if has_score:
@@ -11178,21 +11088,15 @@ def fetch_game_adaptive(ctx, kind, slot):
                 "when": "",
             }
             exact_game = merge_live_game(exact_base, live_game, ctx, display_timezone)
-            if exact_game.get("rejectedEmptyFinal", False):
-                exact_game = None
-            if exact_game == None:
-                # Ignore the transient Final/0-0 Scoretracker shell and use
-                # the schedule result below instead of displaying it.
-                pass
-            elif exact_game.get("type") != "final" and exact_game.get("status") != "final":
+            if exact_game.get("type") != "final" and exact_game.get("status") != "final":
                 exact_game = overlay_gamechanger_live(exact_game, gc_live, display_timezone)
-            if exact_game != None and kind == "dynamic":
+            if kind == "dynamic":
                 return exact_game
-            if exact_game != None and kind == "final":
+            if kind == "final":
                 return exact_game if exact_game.get("type") == "final" else {"displayState": "no_final"}
-            if exact_game != None and kind == "live":
+            if kind == "live":
                 return exact_game if exact_game.get("status") == "live" else {"displayState": "no_live"}
-            if exact_game != None and exact_game.get("status") == "live":
+            if exact_game.get("status") == "live":
                 return exact_game
 
     season = current_season(ctx, source_timezone)
@@ -11217,18 +11121,10 @@ def fetch_game_adaptive(ctx, kind, slot):
     )
     if response_auth_error(schedule):
         return {"displayState": "key_error"}
-    if response_credit_error(schedule):
-        return {"displayState": "no_credits"}
     if not valid_schedule(schedule):
         fallback = gamechanger_fallback_game(gc_live, sport["code"], slot, ctx, display_timezone)
         if fallback != None:
             return fallback
-        # Parse can briefly return HTTP 200 before its successful result has
-        # been decoded into the documented schedule shape.  That is not a
-        # feed failure and must not become a separate red error page while
-        # Studio (or a device) is settling on the usable cached response.
-        if schedule != None and schedule.get("status_code") == 200:
-            return {"displayState": "no_game"}
         return {"displayState": "feed_error"}
 
     schedule_data = parsed_schedule_data(schedule)
@@ -11274,7 +11170,6 @@ def fetch_game_adaptive(ctx, kind, slot):
     # and season averages exactly once.
     matchup_was_final = game.get("type") == "final" or game.get("status") == "final"
     game = enrich_game_with_matchup(api_key, game, matchup_was_final)
-    game = enrich_game_with_opponent_streak(ctx, api_key, game, sport, season, source_timezone)
     if game.get("type") != "final" and game.get("status") != "final":
         game = overlay_gamechanger_live(game, gc_live, display_timezone)
 
@@ -15138,9 +15033,46 @@ STATE_75_LOGOS_BY_ID_15 = {
 
 STATE_75_LOGO_MAPS = [STATE_75_LOGOS_BY_ID_1, STATE_75_LOGOS_BY_ID_2, STATE_75_LOGOS_BY_ID_3, STATE_75_LOGOS_BY_ID_4, STATE_75_LOGOS_BY_ID_5, STATE_75_LOGOS_BY_ID_6, STATE_75_LOGOS_BY_ID_7, STATE_75_LOGOS_BY_ID_8, STATE_75_LOGOS_BY_ID_9, STATE_75_LOGOS_BY_ID_10, STATE_75_LOGOS_BY_ID_11, STATE_75_LOGOS_BY_ID_12, STATE_75_LOGOS_BY_ID_13, STATE_75_LOGOS_BY_ID_14, STATE_75_LOGOS_BY_ID_15]
 
-def team_logo(code, game, side):
+# Exact school IDs for logos added while reconciling the owner's 500-school list.
+VERIFIED_500_LOGOS_BY_ID = {
+    "00da9582-599b-4727-b80f-1af2187e4c35": "ilfull-hinsdale-central-school-led.png",
+    "4b731f39-bb94-4a4f-9a29-360908c3f94b": "txfull-lake-highlands-maxpreps-led.png",
+    "256b8260-d19b-4eac-8dd8-f84699f70f8f": "txfull-yates-maxpreps-led.png",
+    "ab1e8a19-8ecf-4bde-8057-cb74c141a990": "gafull-etowah-maxpreps-led.png",
+    "83e1c4c2-e47f-4bd5-a5a5-0ac0438fc2f2": "tnfull-memphis-east-maxpreps-led.png",
+    "ced6f619-aeea-47a5-8c4a-6dec39a6c1b2": "ncfull-northside-christian-academy-maxpreps-led.png",
+    "3d5da0b2-36c5-48c2-b9c7-993affe24617": "ohfull-st-vincent-st-mary-maxpreps-led.png",
+    "0df91f3d-4443-4f92-aa90-d16c8690a261": "gafull-loganville-school-led.png",
+    "ec153e52-8afe-46b5-9d75-7f8d5b699ec0": "ilfull-limestone-user-supplied-led.png",
+    "eb9891a7-b1a1-4a32-b361-5e2912e8696d": "txfull-katy-maxpreps-led.png",
+    "dbe44b91-13a1-4d0d-8f57-09791381aaca": "txfull-tomball-maxpreps-led.png",
+    "1a6caeca-efbf-491d-8f50-b5f7bdc30870": "txfull-lancaster-maxpreps-led.png",
+    "fb32d076-498e-4353-bcf3-6e384a1b6091": "txfull-kimball-maxpreps-led.png",
+    "33698666-bc11-4091-8af6-4cd3c6c944cf": "txfull-calallen-maxpreps-led.png",
+    "761e1afd-d386-4edd-a4ef-5e4f79d1fbf0": "txfull-lovejoy-maxpreps-led.png",
+    "63481374-863b-454b-90b9-aaa97ae8cc1d": "txfull-keller-maxpreps-led.png",
+    "6089f6a4-f1e9-46cc-b64f-c5302d41e69d": "cafull-long-beach-poly-maxpreps-led.png",
+    "d39c723c-ce7f-410e-95ae-35c156df0211": "cafull-roosevelt-eastvale-maxpreps-led.png",
+    "9dc04c54-8c9d-4b30-a1d2-fcc167363342": "cafull-harvard-westlake-maxpreps-led.png",
+    "5ce85d4b-4ce3-48ca-8b24-2a304bba4853": "flfull-columbus-miami-maxpreps-led.png",
+    "2c67d12e-92be-4e2e-a1c0-e6809c4f22b3": "flfull-stoneman-douglas-maxpreps-led.png",
+    "790979ae-7c7d-4157-8395-0af421a22466": "tnfull-bartlett-maxpreps-led.png",
+    "c4fafe04-319c-4460-8ca6-13309eb4b797": "azfull-millennium-maxpreps-led.png",
+    "e6db1bc3-d49a-4c73-9bf8-67ad4dcbb916": "azfull-sunnyslope-maxpreps-led.png",
+    "487dccbc-735b-4777-92de-acfee4ebaf84": "mifull-belleville-maxpreps-led.png",
+    "9972b565-cfd6-46c4-9ad7-e21ab7f3aef4": "mofull-logan-rogersville-maxpreps-led.png",
+    "3e867fc9-cdfe-47a5-89b5-bea3a9868740": "ncfull-southern-durham-maxpreps-led.png",
+    "d1ded3d1-2ebc-4b4b-94f2-e397086569eb": "wafull-rainier-beach-maxpreps-led.png",
+}
+
+def _team_logo_all(code, game, side):
     name = str(code).upper()
     if game != None:
+        school_id = game.get(side + "SchoolId")
+        if school_id != None:
+            verified_logo = VERIFIED_500_LOGOS_BY_ID.get(str(school_id).lower())
+            if verified_logo != None:
+                return verified_logo
         live_name = game.get(side + "Name")
         if live_name != None:
             name = str(live_name).upper()
@@ -15335,14 +15267,1041 @@ def team_logo(code, game, side):
         return "south-mecklenburg-maxpreps-led.png"
     return None
 
+BUNDLED_LOGOS = {
+    "ilfull-antioch-7ff53afc-maxpreps-led.png": True,
+    "ilfull-saint-viator-c2ba6739-maxpreps-led.png": True,
+    "ilfull-marmion-3bf80241-maxpreps-led.png": True,
+    "ilfull-limestone-user-supplied-led.png": True,
+    "ilfull-belvidere-9cb9cb74-maxpreps-led.png": True,
+    "ilfull-belvidere-north-9d4fb9a4-maxpreps-led.png": True,
+    "ilfull-fenton-87fbf781-maxpreps-led.png": True,
+    "ilfull-bloomington-b345b839-maxpreps-led.png": True,
+    "ilfull-central-ddbd1c40-maxpreps-led.png": True,
+    "ilfull-cahokia-b3bad078-maxpreps-led.png": True,
+    "ilfull-carbondale-99ab42d7-maxpreps-led.png": True,
+    "ilfull-cary-grove-c1acfdcc-maxpreps-led.png": True,
+    "ilrank-centralia-maxpreps-led.png": True,
+    "ilfull-centennial-49b51b6e-maxpreps-led.png": True,
+    "shgsp-champaign-central-maxpreps-led.png": True,
+    "ilfull-charleston-f81b142f-maxpreps-led.png": True,
+    "ilfull-glenwood-24fcbf1d-maxpreps-led.png": True,
+    "ilfull-amundsen-9e494581-maxpreps-led.png": True,
+    "ilfull-brooks-f737e3fc-maxpreps-led.png": True,
+    "ilfull-de-la-salle-599a14a0-maxpreps-led.png": True,
+    "ilfull-goode-stem-academy-b927284c-maxpreps-led.png": True,
+    "ilrank26-hyde-park-maxpreps-led.png": True,
+    "ilfull-kelly-0273eead-maxpreps-led.png": True,
+    "ilfull-kennedy-d64cce4c-maxpreps-led.png": True,
+    "ilfull-king-c478a343-maxpreps-led.png": True,
+    "ilfull-lake-view-eb5169e2-maxpreps-led.png": True,
+    "ilfull-leo-fc21b1c1-maxpreps-led.png": True,
+    "ilfull-little-village-98be3499-maxpreps-led.png": True,
+    "ilfull-morgan-park-a9b44a61-maxpreps-led.png": True,
+    "ilfull-north-lawndale-45102f34-maxpreps-led.png": True,
+    "ilfbrank26-st-rita-maxpreps-led.png": True,
+    "ilfull-chicago-sullivan-b13712a5-maxpreps-led.png": True,
+    "ilfull-chicago-washington-41a964d5-maxpreps-led.png": True,
+    "ilfull-westinghouse-af2fbe68-maxpreps-led.png": True,
+    "ilfull-marian-catholic-1ac2215a-maxpreps-led.png": True,
+    "ilfull-hillcrest-5e84e16a-maxpreps-led.png": True,
+    "ilfull-crete-monee-b0259eee-maxpreps-led.png": True,
+    "ilfull-crystal-lake-central-0853a341-maxpreps-led.png": True,
+    "ilfull-prairie-ridge-b0dc77aa-maxpreps-led.png": True,
+    "ilfull-crystal-lake-south-81461e2c-maxpreps-led.png": True,
+    "shgbb-danville-maxpreps-led.png": True,
+    "ilfull-hinsdale-south-89177ac0-maxpreps-led.png": True,
+    "shgbb-decatur-eisenhower-maxpreps-led.png": True,
+    "shgsp-macarthur-maxpreps-led.png": True,
+    "ilfull-deerfield-f32d5118-maxpreps-led.png": True,
+    "ilfull-dixon-50316e53-maxpreps-led.png": True,
+    "ilfull-thornridge-8e73932d-maxpreps-led.png": True,
+    "ilfull-dunlap-2c0b1910-maxpreps-led.png": True,
+    "ilrank26-east-peoria-maxpreps-led.png": True,
+    "top25-east-st-louis-maxpreps-led.png": True,
+    "ilfull-elmwood-park-2ad06528-maxpreps-led.png": True,
+    "ilfull-evergreen-park-7d8b2403-maxpreps-led.png": True,
+    "ilfull-freeport-9d874b8c-maxpreps-led.png": True,
+    "ilfull-galesburg-ad9b8809-maxpreps-led.png": True,
+    "ilfull-geneseo-d024c9ee-maxpreps-led.png": True,
+    "ilfull-glenbard-south-e2961dab-maxpreps-led.png": True,
+    "ilfull-grayslake-central-cdb0ecd6-maxpreps-led.png": True,
+    "ilfull-grayslake-north-9462aedb-maxpreps-led.png": True,
+    "ilfull-harvard-c5db9360-maxpreps-led.png": True,
+    "ilfull-thornton-faeba65a-maxpreps-led.png": True,
+    "ilfull-highland-2f0bd05d-maxpreps-led.png": True,
+    "jacksonville-maxpreps-led.png": True,
+    "ilfull-jersey-12956dd1-maxpreps-led.png": True,
+    "joliet-catholic-maxpreps-led.png": True,
+    "ilrank26-kankakee-maxpreps-led.png": True,
+    "ilfbrank26-nazareth-academy-maxpreps-led.png": True,
+    "ilfull-lake-forest-be8d3639-maxpreps-led.png": True,
+    "ilfull-lakes-172f1c96-maxpreps-led.png": True,
+    "ilfull-lasalle-peru-d94ada9c-maxpreps-led.png": True,
+    "ilfull-lemont-0d6219b6-maxpreps-led.png": True,
+    "shgbb-lincoln-maxpreps-led.png": True,
+    "ilfull-montini-catholic-7bfa4c4f-maxpreps-led.png": True,
+    "shgsp-mahomet-seymour-maxpreps-led.png": True,
+    "ilrank26-kaneland-maxpreps-led.png": True,
+    "edwbb-marion-maxpreps-led.png": True,
+    "edwbb-mascoutah-maxpreps-led.png": True,
+    "ilfull-mattoon-fcb7761e-maxpreps-led.png": True,
+    "ilfull-metamora-a432e8ec-maxpreps-led.png": True,
+    "ilfull-bremen-5575f67f-maxpreps-led.png": True,
+    "ilfull-morris-a34c7367-maxpreps-led.png": True,
+    "shgsp-morton-maxpreps-led.png": True,
+    "ilfull-mt-vernon-3b3f527d-maxpreps-led.png": True,
+    "shgsp-mt-zion-maxpreps-led.png": True,
+    "ilfbrank26-carmel-maxpreps-led.png": True,
+    "ilfbrank26-providence-catholic-maxpreps-led.png": True,
+    "ilfull-normal-west-ebbf7267-maxpreps-led.png": True,
+    "shgbb-normal-university-maxpreps-led.png": True,
+    "ilfull-ridgewood-f21ab906-maxpreps-led.png": True,
+    "ilfull-north-chicago-af03f9b8-maxpreps-led.png": True,
+    "ilfull-oak-forest-5271dbb1-maxpreps-led.png": True,
+    "ilfbrank26-fenwick-maxpreps-led.png": True,
+    "ilfull-ottawa-bc6fc1ae-maxpreps-led.png": True,
+    "ilfull-peoria-0d9710f4-maxpreps-led.png": True,
+    "ilfull-plano-667706cf-maxpreps-led.png": True,
+    "ilfull-rantoul-377eb05a-maxpreps-led.png": True,
+    "ilfull-rochelle-07220875-maxpreps-led.png": True,
+    "ilfull-boylan-catholic-29e70a18-maxpreps-led.png": True,
+    "ilfull-rockford-east-bda13774-maxpreps-led.png": True,
+    "ilfull-salem-3fba7f04-maxpreps-led.png": True,
+    "springfield-maxpreps-led.png": True,
+    "lanphier-maxpreps-led.png": True,
+    "ilfull-sacred-heart-griffin-19b7b05d-maxpreps-led.png": True,
+    "springfield-southeast-maxpreps-led.png": True,
+    "ilfull-sterling-fa5b36ae-maxpreps-led.png": True,
+    "ilfull-streator-c27d77eb-maxpreps-led.png": True,
+    "ilfull-sycamore-29f9938c-maxpreps-led.png": True,
+    "ilfull-taylorville-48a8cbe8-maxpreps-led.png": True,
+    "ilfull-tinley-park-e66da994-maxpreps-led.png": True,
+    "shgsp-triad-maxpreps-led.png": True,
+    "ilfull-urbana-27476550-maxpreps-led.png": True,
+    "ilfull-vernon-hills-529b52b7-maxpreps-led.png": True,
+    "ilfull-washington-5d95dceb-maxpreps-led.png": True,
+    "ilfull-waterloo-823895e1-maxpreps-led.png": True,
+    "ilfull-wheaton-academy-b50965a7-maxpreps-led.png": True,
+    "ilfbrank26-st-francis-maxpreps-led.png": True,
+    "ilfull-wheeling-8e91dd4a-maxpreps-led.png": True,
+    "ilfull-woodstock-851a4721-maxpreps-led.png": True,
+    "ilfull-woodstock-north-3dcd0652-maxpreps-led.png": True,
+    "ilfull-addison-trail-e298cc8c-maxpreps-led.png": True,
+    "ilfull-jacobs-cc8e379e-maxpreps-led.png": True,
+    "shgbb-alton-maxpreps-led.png": True,
+    "shgsp-hersey-maxpreps-led.png": True,
+    "ilfull-aurora-east-5e2f7d8c-maxpreps-led.png": True,
+    "ilfull-metea-valley-df9b4a57-maxpreps-led.png": True,
+    "ilrank-waubonsie-valley-maxpreps-led.png": True,
+    "ilfull-west-aurora-d40e7b97-maxpreps-led.png": True,
+    "ilfbrank26-batavia-maxpreps-led.png": True,
+    "edwbb-belleville-east-maxpreps-led.png": True,
+    "edwbb-belleville-west-maxpreps-led.png": True,
+    "ilfull-berwyn-cicero-morton-52538f0d-maxpreps-led.png": True,
+    "ilrank-bolingbrook-maxpreps-led.png": True,
+    "ilfull-bradley-bourbonnais-36b2de45-maxpreps-led.png": True,
+    "ilfull-buffalo-grove-b4a29512-maxpreps-led.png": True,
+    "ilrank-st-laurence-maxpreps-led.png": True,
+    "ilfull-glenbard-north-f48fee58-maxpreps-led.png": True,
+    "ilrank-brother-rice-maxpreps-led.png": True,
+    "ilrank-curie-maxpreps-led.png": True,
+    "ilrank-depaul-college-prep-maxpreps-led.png": True,
+    "ilrank-kenwood-maxpreps-led.png": True,
+    "ilfull-lane-tech-c2e2a726-maxpreps-led.png": True,
+    "ilfull-lincoln-park-53e6a716-maxpreps-led.png": True,
+    "ilrank-marist-maxpreps-led.png": True,
+    "ilrank-chicago-mt-carmel-maxpreps-led.png": True,
+    "ilfull-prosser-d3b01030-maxpreps-led.png": True,
+    "ilrank-simeon-maxpreps-led.png": True,
+    "ilrank26-saint-ignatius-college-prep-maxpreps-led.png": True,
+    "ilrank-st-patrick-maxpreps-led.png": True,
+    "ilfull-taft-c3396b7b-maxpreps-led.png": True,
+    "ilfull-whitney-young-83124358-maxpreps-led.png": True,
+    "ilfull-bloom-c536a972-maxpreps-led.png": True,
+    "edwbb-collinsville-maxpreps-led.png": True,
+    "ilfull-dekalb-68d866eb-maxpreps-led.png": True,
+    "ilfull-maine-west-d8a4a95c-maxpreps-led.png": True,
+    "ilfbrank26-downers-grove-north-maxpreps-led.png": True,
+    "ilfull-downers-grove-south-612c1123-maxpreps-led.png": True,
+    "ilfull-east-moline-united-f1b401aa-maxpreps-led.png": True,
+    "shgsp-edwardsville-maxpreps-led.png": True,
+    "ilfull-elgin-8cbeff8c-maxpreps-led.png": True,
+    "ilfull-larkin-15fc96af-maxpreps-led.png": True,
+    "ilfull-elk-grove-bd67d83b-maxpreps-led.png": True,
+    "ilfbrank26-york-maxpreps-led.png": True,
+    "ilrank-evanston-maxpreps-led.png": True,
+    "ilrank-homewood-flossmoor-maxpreps-led.png": True,
+    "ilfull-grant-community-84721f3e-maxpreps-led.png": True,
+    "ilfbrank26-lincoln-way-east-maxpreps-led.png": True,
+    "ilfull-geneva-7b97d18c-maxpreps-led.png": True,
+    "ilfbrank26-glenbard-west-maxpreps-led.png": True,
+    "ilfull-glenbrook-south-5cae2bb6-maxpreps-led.png": True,
+    "edwbb-granite-city-maxpreps-led.png": True,
+    "ilfull-warren-80e9399e-maxpreps-led.png": True,
+    "ilfull-highland-park-92d41d93-maxpreps-led.png": True,
+    "ilfull-proviso-west-2590837b-maxpreps-led.png": True,
+    "ilfull-hinsdale-central-school-led.png": True,
+    "ilfull-joliet-central-84977e1b-maxpreps-led.png": True,
+    "ilfull-joliet-west-4e56b8fe-maxpreps-led.png": True,
+    "ilfbrank26-lyons-maxpreps-led.png": True,
+    "ilfull-lake-zurich-ba768ffa-maxpreps-led.png": True,
+    "ilfull-libertyville-d6853cda-maxpreps-led.png": True,
+    "ilfull-stevenson-46942266-maxpreps-led.png": True,
+    "ilrank-benet-academy-maxpreps-led.png": True,
+    "ilfull-lockport-2401e390-maxpreps-led.png": True,
+    "ilfull-glenbard-east-85cd1235-maxpreps-led.png": True,
+    "ilfull-proviso-east-e92bec43-maxpreps-led.png": True,
+    "ilfull-moline-31c841cb-maxpreps-led.png": True,
+    "ilfull-prospect-aaf1f1ef-maxpreps-led.png": True,
+    "ilfull-mundelein-f0201d4a-maxpreps-led.png": True,
+    "ilfull-naperville-central-7abb4172-maxpreps-led.png": True,
+    "ilrank-neuqua-valley-maxpreps-led.png": True,
+    "ilfull-naperville-north-cad47593-maxpreps-led.png": True,
+    "ilfull-lincoln-way-central-262f0d55-maxpreps-led.png": True,
+    "ilfull-lincoln-way-west-384d368d-maxpreps-led.png": True,
+    "ilfull-niles-notre-dame-6bb3fa46-maxpreps-led.png": True,
+    "ilfull-normal-community-3f921a1e-maxpreps-led.png": True,
+    "ilfull-glenbrook-north-501efb7c-maxpreps-led.png": True,
+    "ilfull-oak-lawn-5ff0778d-maxpreps-led.png": True,
+    "ilfull-richards-c701cb2b-maxpreps-led.png": True,
+    "ilfull-oak-park-river-forest-7b9e512a-maxpreps-led.png": True,
+    "shgsp-ofallon-maxpreps-led.png": True,
+    "ilfbrank26-sandburg-maxpreps-led.png": True,
+    "ilfull-oswego-east-5e10cf45-maxpreps-led.png": True,
+    "ilfull-oswego-0757d01c-maxpreps-led.png": True,
+    "ilrank26-fremd-maxpreps-led.png": True,
+    "ilrank26-palatine-maxpreps-led.png": True,
+    "ilfull-shepard-5e84bad1-maxpreps-led.png": True,
+    "ilfull-stagg-e87990d5-maxpreps-led.png": True,
+    "ilfull-maine-east-bf4fb1c0-maxpreps-led.png": True,
+    "ilfbrank26-maine-south-maxpreps-led.png": True,
+    "ilfull-pekin-2ccb12f9-maxpreps-led.png": True,
+    "ilrank26-richwoods-maxpreps-led.png": True,
+    "ilfull-plainfield-central-028be2d2-maxpreps-led.png": True,
+    "ilfull-plainfield-east-c4d434ff-maxpreps-led.png": True,
+    "ilfull-plainfield-north-c5cfcc02-maxpreps-led.png": True,
+    "ilfull-plainfield-south-6c12a137-maxpreps-led.png": True,
+    "shgsp-quincy-maxpreps-led.png": True,
+    "ilrank-rich-township-maxpreps-led.png": True,
+    "ilfull-riverside-brookfield-df873a7d-maxpreps-led.png": True,
+    "ilfull-rock-island-719a8e7e-maxpreps-led.png": True,
+    "ilfull-rockford-auburn-59db1511-maxpreps-led.png": True,
+    "ilfull-guilford-7d5005f0-maxpreps-led.png": True,
+    "ilfull-jefferson-bb06b35d-maxpreps-led.png": True,
+    "ilrank-rolling-meadows-maxpreps-led.png": True,
+    "ilfull-romeoville-94435866-maxpreps-led.png": True,
+    "ilfull-lake-park-7a85b4ed-maxpreps-led.png": True,
+    "ilfull-schaumburg-016df29f-maxpreps-led.png": True,
+    "ilfull-niles-north-203fbd7d-maxpreps-led.png": True,
+    "ilfull-niles-west-d9010791-maxpreps-led.png": True,
+    "ilfull-south-elgin-c8ed91a6-maxpreps-led.png": True,
+    "ilfull-thornwood-59c4c53c-maxpreps-led.png": True,
+    "ilfull-st-charles-east-a29d7edb-maxpreps-led.png": True,
+    "ilfbrank26-st-charles-north-maxpreps-led.png": True,
+    "ilfull-andrew-35c2bd6b-maxpreps-led.png": True,
+    "ilfull-willowbrook-be68ef07-maxpreps-led.png": True,
+    "ilfull-waukegan-9cb9d8f7-maxpreps-led.png": True,
+    "ilfull-wheaton-north-2d6eb90a-maxpreps-led.png": True,
+    "ilfbrank26-wheaton-warrenville-south-maxpreps-led.png": True,
+    "ilrank26-loyola-academy-maxpreps-led.png": True,
+    "ilfull-new-trier-427d5559-maxpreps-led.png": True,
+    "ilfull-yorkville-c32883e8-maxpreps-led.png": True,
+    "ilfull-zion-benton-cb6b4306-maxpreps-led.png": True,
+    "quincy-notre-dame-maxpreps-led.png": True,
+    "rochester-maxpreps-led.png": True,
+    "ncfull-a-l-brown-0bcf1628-maxpreps-led.png": True,
+    "mp-ballantyne-ridge-maxpreps-led.png": True,
+    "ncfull-cape-fear-8fed129c-maxpreps-led.png": True,
+    "ncrank26-cardinal-gibbons-maxpreps-led.png": True,
+    "ncfull-cary-9789c368-maxpreps-led.png": True,
+    "ncfull-chapel-hill-4d0f5866-maxpreps-led.png": True,
+    "ncfbrank26-clayton-maxpreps-led.png": True,
+    "ncfbrank26-cleveland-maxpreps-led.png": True,
+    "ncfull-cox-mill-3cdbaa1f-maxpreps-led.png": True,
+    "ncfull-cuthbertson-12ad99c6-maxpreps-led.png": True,
+    "ncfull-d-h-conley-b3da7611-maxpreps-led.png": True,
+    "mp-butler-maxpreps-led.png": True,
+    "ncfull-davie-county-b6bb9bc2-maxpreps-led.png": True,
+    "mp-east-forsyth-maxpreps-led.png": True,
+    "ncfull-east-wake-abdcda6c-maxpreps-led.png": True,
+    "ncfull-ashley-64442dc4-maxpreps-led.png": True,
+    "ncfull-fuquay-varina-fb1617a8-maxpreps-led.png": True,
+    "ncfbrank26-garner-maxpreps-led.png": True,
+    "ncfbrank26-grimsley-maxpreps-led.png": True,
+    "ncfull-heritage-be182157-maxpreps-led.png": True,
+    "mp-hickory-ridge-maxpreps-led.png": True,
+    "ncfull-hillside-8c19425f-maxpreps-led.png": True,
+    "ncfull-holly-springs-8b01e3ef-maxpreps-led.png": True,
+    "ncfull-hopewell-532bc502-maxpreps-led.png": True,
+    "mp-independence-maxpreps-led.png": True,
+    "ncfull-jack-britt-741f03f2-maxpreps-led.png": True,
+    "ncfull-knightdale-5fbd4229-maxpreps-led.png": True,
+    "mp-lake-norman-maxpreps-led.png": True,
+    "ncfull-lumberton-d1d449ab-maxpreps-led.png": True,
+    "mp-marvin-ridge-maxpreps-led.png": True,
+    "ncfull-mcdowell-0188cc04-maxpreps-led.png": True,
+    "ncrank26-mooresville-maxpreps-led.png": True,
+    "ncfull-new-bern-440003bb-maxpreps-led.png": True,
+    "ncrank25-new-hanover-maxpreps-led.png": True,
+    "ncfull-north-brunswick-0c15293d-maxpreps-led.png": True,
+    "ncrank26-north-mecklenburg-maxpreps-led.png": True,
+    "ncfull-overhills-8007b519-maxpreps-led.png": True,
+    "ncfbrank26-page-maxpreps-led.png": True,
+    "ncfull-parkland-1a1e5832-maxpreps-led.png": True,
+    "ncfull-pine-forest-a1b21390-maxpreps-led.png": True,
+    "ncfull-porter-ridge-6686f743-maxpreps-led.png": True,
+    "ncfull-purnell-swett-ef8e07f3-maxpreps-led.png": True,
+    "mp-rj-reynolds-maxpreps-led.png": True,
+    "ncfbrank26-richmond-senior-maxpreps-led.png": True,
+    "ncfull-riverside-durham-cedf40bb-maxpreps-led.png": True,
+    "ncfull-rocky-river-7b4c2591-maxpreps-led.png": True,
+    "ncfbrank26-reagan-maxpreps-led.png": True,
+    "ncrank25-sanderson-maxpreps-led.png": True,
+    "ncfull-smithfield-selma-43d005ac-maxpreps-led.png": True,
+    "ncfull-south-central-b4357b09-maxpreps-led.png": True,
+    "ncfull-south-garner-9eb8cb65-maxpreps-led.png": True,
+    "ncfull-south-iredell-05345f85-maxpreps-led.png": True,
+    "ncfull-southeast-raleigh-1d408244-maxpreps-led.png": True,
+    "ncfull-southern-durham-maxpreps-led.png": True,
+    "ncfull-southwest-guilford-5d832abf-maxpreps-led.png": True,
+    "ncfull-topsail-eaaa9926-maxpreps-led.png": True,
+    "ncfull-wake-forest-4d12efd2-maxpreps-led.png": True,
+    "weddington-maxpreps-led.png": True,
+    "ncfull-west-cabarrus-e48b52c8-maxpreps-led.png": True,
+    "west-mecklenburg-maxpreps-led.png": True,
+    "mp-apex-friendship-maxpreps-led.png": True,
+    "ncfull-apex-828209a5-maxpreps-led.png": True,
+    "mp-ardrey-kell-maxpreps-led.png": True,
+    "ncfull-athens-drive-223aaa5d-maxpreps-led.png": True,
+    "ncfull-jordan-0532cbec-maxpreps-led.png": True,
+    "ncfull-corinth-holders-c0064df5-maxpreps-led.png": True,
+    "mpbb-east-mecklenburg-maxpreps-led.png": True,
+    "ncfull-laney-71fccbdd-maxpreps-led.png": True,
+    "ncfull-garinger-b2b06935-maxpreps-led.png": True,
+    "ncfull-green-hope-43734a55-maxpreps-led.png": True,
+    "ncrank25-green-level-maxpreps-led.png": True,
+    "ncfull-hoke-county-99ac3ebb-maxpreps-led.png": True,
+    "mp-hoggard-maxpreps-led.png": True,
+    "ncrank25-chambers-maxpreps-led.png": True,
+    "mpbb-leesville-road-maxpreps-led.png": True,
+    "ncfbrank26-mallard-creek-maxpreps-led.png": True,
+    "ncfbrank26-millbrook-maxpreps-led.png": True,
+    "ncfbrank26-myers-park-maxpreps-led.png": True,
+    "ncfull-broughton-a4b43083-maxpreps-led.png": True,
+    "ncfull-northwest-guilford-063ae18b-maxpreps-led.png": True,
+    "mp-palisades-maxpreps-led.png": True,
+    "ncfull-panther-creek-a385d9cd-maxpreps-led.png": True,
+    "ncfull-pinecrest-d65760f0-maxpreps-led.png": True,
+    "providence-maxpreps-led.png": True,
+    "ncfbrank26-rolesville-maxpreps-led.png": True,
+    "south-mecklenburg-maxpreps-led.png": True,
+    "ncfull-wakefield-69a6061d-maxpreps-led.png": True,
+    "ncrank26-west-charlotte-maxpreps-led.png": True,
+    "mp-west-forsyth-maxpreps-led.png": True,
+    "hough-maxpreps-led.png": True,
+    "ncfull-enloe-01383b0a-maxpreps-led.png": True,
+    "ncfull-willow-spring-f89f8688-maxpreps-led.png": True,
+    "ncfull-cannon-9e946929-maxpreps-led.png": True,
+    "ncfbrank26-charlotte-christian-maxpreps-led.png": True,
+    "charlotte-country-day-maxpreps-led.png": True,
+    "ncrank26-davidson-day-maxpreps-led.png": True,
+    "ncfull-forest-hills-bf53da99-maxpreps-led.png": True,
+    "ncrank26-greensboro-day-school-maxpreps-led.png": True,
+    "mpbb-greenfield-maxpreps-led.png": True,
+    "ncfull-northside-christian-academy-maxpreps-led.png": True,
+    "ncfull-olympic-b17693a6-maxpreps-led.png": True,
+    "providence-day-maxpreps-led.png": True,
+    "top25-duncanville-maxpreps-led.png": True,
+    "top25-allen-maxpreps-led.png": True,
+    "allrank26-tx-football-north-shore-maxpreps-led.png": True,
+    "allrank26-tx-football-southlake-carroll-maxpreps-led.png": True,
+    "allrank26-tx-football-desoto-maxpreps-led.png": True,
+    "natrank26-north-crowley-maxpreps-led.png": True,
+    "allrank26-tx-football-westlake-maxpreps-led.png": True,
+    "allrank26-tx-football-lake-travis-maxpreps-led.png": True,
+    "txfull-katy-maxpreps-led.png": True,
+    "allrank26-tx-football-atascocita-maxpreps-led.png": True,
+    "allrank26-tx-football-guyer-maxpreps-led.png": True,
+    "state75-tx-vandegrift-bfe64fc4.png": True,
+    "allrank26-tx-football-aledo-maxpreps-led.png": True,
+    "allrank26-tx-football-south-oak-cliff-maxpreps-led.png": True,
+    "txfull-lake-highlands-maxpreps-led.png": True,
+    "txfull-lancaster-maxpreps-led.png": True,
+    "allrank26-tx-basketball-oak-cliff-faith-family-academy-maxpreps-led.png": True,
+    "allrank26-tx-basketball-dynamic-prep-maxpreps-led.png": True,
+    "txfull-kimball-maxpreps-led.png": True,
+    "txfull-yates-maxpreps-led.png": True,
+    "txfull-tomball-maxpreps-led.png": True,
+    "txfull-calallen-maxpreps-led.png": True,
+    "txfull-keller-maxpreps-led.png": True,
+    "txfull-lovejoy-maxpreps-led.png": True,
+    "allrank26-tx-basketball-second-baptist-maxpreps-led.png": True,
+    "top25-st-john-bosco-maxpreps-led.png": True,
+    "top25-mater-dei-maxpreps-led.png": True,
+    "top25-santa-margarita-maxpreps-led.png": True,
+    "top25-centennial-maxpreps-led.png": True,
+    "top25-sierra-canyon-maxpreps-led.png": True,
+    "cafbrank26-mission-viejo-maxpreps-led.png": True,
+    "carank26-folsom-maxpreps-led.png": True,
+    "cafbrank26-de-la-salle-maxpreps-led.png": True,
+    "state75-ca-serra-d063f9a6.png": True,
+    "cafbrank26-servite-maxpreps-led.png": True,
+    "cafbrank26-orange-lutheran-maxpreps-led.png": True,
+    "cafull-long-beach-poly-maxpreps-led.png": True,
+    "cafbrank26-pittsburg-maxpreps-led.png": True,
+    "cafull-harvard-westlake-maxpreps-led.png": True,
+    "carank26-notre-dame-so-maxpreps-led.png": True,
+    "cafull-roosevelt-eastvale-maxpreps-led.png": True,
+    "carank26-archbishop-riordan-maxpreps-led.png": True,
+    "carank26-salesian-college-preparatory-maxpreps-led.png": True,
+    "state75-ca-norco-30567007.png": True,
+    "top25-st-thomas-aquinas-maxpreps-led.png": True,
+    "top25-img-academy-maxpreps-led.png": True,
+    "flfbrank26-american-heritage-maxpreps-led.png": True,
+    "top25-chaminade-madonna-maxpreps-led.png": True,
+    "flfbrank26-central-maxpreps-led.png": True,
+    "flfull-columbus-miami-maxpreps-led.png": True,
+    "flfbrank26-lakeland-maxpreps-led.png": True,
+    "flfbrank26-venice-maxpreps-led.png": True,
+    "top25-carol-city-maxpreps-led.png": True,
+    "flfbrank26-northwestern-maxpreps-led.png": True,
+    "flfbrank26-cocoa-maxpreps-led.png": True,
+    "flrank26-montverde-academy-maxpreps-led.png": True,
+    "flrank26-oak-ridge-maxpreps-led.png": True,
+    "flfull-stoneman-douglas-maxpreps-led.png": True,
+    "state75-fl-jesuit-c5eec975.png": True,
+    "state75-fl-trinity-christian-academy-8cd736bc.png": True,
+    "top25-west-boca-raton-maxpreps-led.png": True,
+    "natrank26-calvary-christian-academy-maxpreps-led.png": True,
+    "top25-buford-maxpreps-led.png": True,
+    "garank26-grayson-maxpreps-led.png": True,
+    "top25-carrollton-maxpreps-led.png": True,
+    "gafbrank26-creekside-maxpreps-led.png": True,
+    "garank26-milton-maxpreps-led.png": True,
+    "gafbrank26-valdosta-maxpreps-led.png": True,
+    "gafbrank26-lowndes-maxpreps-led.png": True,
+    "gafbrank26-colquitt-county-maxpreps-led.png": True,
+    "garank26-mceachern-maxpreps-led.png": True,
+    "natrank26-wheeler-maxpreps-led.png": True,
+    "gafbrank26-newton-maxpreps-led.png": True,
+    "gafull-etowah-maxpreps-led.png": True,
+    "gafull-loganville-school-led.png": True,
+    "gafbrank26-thomas-county-central-maxpreps-led.png": True,
+    "gafbrank26-lee-county-maxpreps-led.png": True,
+    "garank26-woodward-academy-maxpreps-led.png": True,
+    "ohrank26-washington-maxpreps-led.png": True,
+    "ohfbrank26-archbishop-hoban-maxpreps-led.png": True,
+    "ohrank26-st-edward-maxpreps-led.png": True,
+    "ohrank26-st-ignatius-maxpreps-led.png": True,
+    "ohrank26-lakota-west-maxpreps-led.png": True,
+    "ohfbrank26-archbishop-moeller-maxpreps-led.png": True,
+    "ohfbrank26-pickerington-central-maxpreps-led.png": True,
+    "ohfull-st-vincent-st-mary-maxpreps-led.png": True,
+    "ohrank26-princeton-maxpreps-led.png": True,
+    "top25-baylor-maxpreps-led.png": True,
+    "tnfull-bartlett-maxpreps-led.png": True,
+    "allrank26-tn-football-lipscomb-academy-maxpreps-led.png": True,
+    "allrank26-tn-football-mccallie-maxpreps-led.png": True,
+    "top25-brentwood-academy-maxpreps-led.png": True,
+    "allrank26-tn-football-oakland-maxpreps-led.png": True,
+    "tnfull-memphis-east-maxpreps-led.png": True,
+    "top25-brownsburg-maxpreps-led.png": True,
+    "infbrank26-center-grove-maxpreps-led.png": True,
+    "inrank26-carmel-maxpreps-led.png": True,
+    "inrank26-cathedral-maxpreps-led.png": True,
+    "inrank26-ben-davis-maxpreps-led.png": True,
+    "inrank26-pike-maxpreps-led.png": True,
+    "inrank26-lawrence-north-maxpreps-led.png": True,
+    "inrank26-fishers-maxpreps-led.png": True,
+    "njrank26-bergen-catholic-maxpreps-led.png": True,
+    "njrank26-don-bosco-prep-maxpreps-led.png": True,
+    "njfbrank26-st-joseph-regional-maxpreps-led.png": True,
+    "njfbrank26-depaul-catholic-maxpreps-led.png": True,
+    "njrank26-st-peter-s-prep-maxpreps-led.png": True,
+    "njfbrank26-camden-maxpreps-led.png": True,
+    "njrank26-roselle-catholic-maxpreps-led.png": True,
+    "pafbrank26-st-joseph-s-prep-maxpreps-led.png": True,
+    "parank26-imhotep-charter-maxpreps-led.png": True,
+    "parank26-roman-catholic-maxpreps-led.png": True,
+    "parank26-archbishop-wood-maxpreps-led.png": True,
+    "parank26-central-catholic-maxpreps-led.png": True,
+    "pafbrank26-la-salle-college-maxpreps-led.png": True,
+    "top25-thompson-maxpreps-led.png": True,
+    "state75-al-central-3fb8daa8.png": True,
+    "alrank26-hoover-maxpreps-led.png": True,
+    "alfbrank26-auburn-maxpreps-led.png": True,
+    "alfbrank26-saraland-maxpreps-led.png": True,
+    "top25-basha-maxpreps-led.png": True,
+    "top25-chandler-maxpreps-led.png": True,
+    "top25-hamilton-maxpreps-led.png": True,
+    "azfbrank26-saguaro-maxpreps-led.png": True,
+    "azfull-millennium-maxpreps-led.png": True,
+    "azfull-sunnyslope-maxpreps-led.png": True,
+    "scrank26-dutch-fork-maxpreps-led.png": True,
+    "scfbrank26-south-pointe-maxpreps-led.png": True,
+    "scrank26-dorman-maxpreps-led.png": True,
+    "scrank26-gray-collegiate-academy-maxpreps-led.png": True,
+    "scrank26-ridge-view-maxpreps-led.png": True,
+    "varank26-oak-hill-academy-maxpreps-led.png": True,
+    "vafbrank26-maury-maxpreps-led.png": True,
+    "vafbrank26-oscar-smith-maxpreps-led.png": True,
+    "vafbrank26-highland-springs-maxpreps-led.png": True,
+    "natrank26-paul-vi-maxpreps-led.png": True,
+    "top25-st-frances-academy-maxpreps-led.png": True,
+    "allrank26-md-football-dematha-maxpreps-led.png": True,
+    "allrank26-md-football-bishop-mcnamara-maxpreps-led.png": True,
+    "allrank26-md-football-archbishop-spalding-maxpreps-led.png": True,
+    "mifull-belleville-maxpreps-led.png": True,
+    "allrank26-mi-football-cass-tech-maxpreps-led.png": True,
+    "allrank26-mi-football-st-mary-s-prep-maxpreps-led.png": True,
+    "allrank26-mi-football-de-la-salle-collegiate-maxpreps-led.png": True,
+    "allrank26-la-football-catholic-maxpreps-led.png": True,
+    "allrank26-la-football-edna-karr-maxpreps-led.png": True,
+    "allrank26-la-football-john-curtis-christian-maxpreps-led.png": True,
+    "state75-la-barbe-9705cdda.png": True,
+    "allrank26-la-basketball-peabody-maxpreps-led.png": True,
+    "top25-bishop-gorman-maxpreps-led.png": True,
+    "wafull-rainier-beach-maxpreps-led.png": True,
+    "allrank26-wa-football-eastside-catholic-maxpreps-led.png": True,
+    "natrank26-wisconsin-lutheran-maxpreps-led.png": True,
+    "mofull-logan-rogersville-maxpreps-led.png": True,
+    "natrank26-principia-maxpreps-led.png": True,
+    "dcrank26-st-john-s-maxpreps-led.png": True,
+    "allrank26-ky-basketball-george-rogers-clark-maxpreps-led.png": True,
+}
+
+BUNDLED_LOGOS_BY_ID = {
+    "001aabf6-309f-4083-9e31-074b68b97a81": "allrank26-tx-football-westlake-maxpreps-led.png",
+    "00da9582-599b-4727-b80f-1af2187e4c35": "ilfull-hinsdale-central-school-led.png",
+    "01383b0a-c1b9-4e38-a0ef-c9456b720899": "ncfull-enloe-01383b0a-maxpreps-led.png",
+    "014d60da-2d0c-42fa-8971-324e4d74e09d": "mpbb-east-mecklenburg-maxpreps-led.png",
+    "016df29f-5052-43ce-849c-35a01db18ddf": "ilfull-schaumburg-016df29f-maxpreps-led.png",
+    "0188cc04-f7fe-4192-91ba-fc8673913c04": "ncfull-mcdowell-0188cc04-maxpreps-led.png",
+    "0273eead-ebfe-4a66-bfa5-dce9bc4846fc": "ilfull-kelly-0273eead-maxpreps-led.png",
+    "028be2d2-0006-4c09-926e-32cdfb74eaf0": "ilfull-plainfield-central-028be2d2-maxpreps-led.png",
+    "02a38114-cfef-4831-a5a1-be6db0b5f59e": "ohfbrank26-archbishop-moeller-maxpreps-led.png",
+    "03c125d3-5255-4e5d-8991-5e543fe741d2": "top25-bishop-gorman-maxpreps-led.png",
+    "045008c9-a67e-410b-bbcd-8fde1af24c51": "flrank26-oak-ridge-maxpreps-led.png",
+    "0532cbec-3e03-44b2-b11e-4aea2a3db3a0": "ncfull-jordan-0532cbec-maxpreps-led.png",
+    "05345f85-a5c2-49d2-8d30-ec03a1e51daf": "ncfull-south-iredell-05345f85-maxpreps-led.png",
+    "063ae18b-ff42-4329-b0d8-cb1be30b9778": "ncfull-northwest-guilford-063ae18b-maxpreps-led.png",
+    "0720961e-babb-43b3-b0da-d20a40bd7606": "ilrank-simeon-maxpreps-led.png",
+    "07220875-ddc3-4c4e-83ec-9351bd4a4614": "ilfull-rochelle-07220875-maxpreps-led.png",
+    "0757d01c-dfee-447a-8b6e-89cd0a09be95": "ilfull-oswego-0757d01c-maxpreps-led.png",
+    "07f945a2-4cfa-4e82-b79e-5cf247e20794": "scrank26-gray-collegiate-academy-maxpreps-led.png",
+    "07fe21a9-692c-46b6-baaa-539ec7e07873": "ilfbrank26-st-francis-maxpreps-led.png",
+    "083c8408-e3df-40e7-9672-bd62bf183f4c": "ilfbrank26-providence-catholic-maxpreps-led.png",
+    "0853a341-2610-4651-9b6c-6554ae3e39e2": "ilfull-crystal-lake-central-0853a341-maxpreps-led.png",
+    "08641db6-a56e-49e9-992d-8b41fd17fc5a": "azfbrank26-saguaro-maxpreps-led.png",
+    "087d9f01-76b6-4271-a573-5f9641d77cba": "vafbrank26-highland-springs-maxpreps-led.png",
+    "098e1491-1717-4088-b7a0-55e47c8e1d17": "cafbrank26-orange-lutheran-maxpreps-led.png",
+    "0bad373d-33a2-45b6-b1d4-6c55e876344c": "top25-allen-maxpreps-led.png",
+    "0bcb98b4-30ea-4f0c-aaf5-c35f45870f53": "allrank26-tx-football-north-shore-maxpreps-led.png",
+    "0bcf1628-5525-479f-980b-4ea973c12a8a": "ncfull-a-l-brown-0bcf1628-maxpreps-led.png",
+    "0c15293d-a1b1-4eca-83b6-4e88b894be11": "ncfull-north-brunswick-0c15293d-maxpreps-led.png",
+    "0c8af225-15d4-4c25-8f3b-c304c4982ec8": "scfbrank26-south-pointe-maxpreps-led.png",
+    "0d6219b6-40d1-41b1-85f9-3ae8787448aa": "ilfull-lemont-0d6219b6-maxpreps-led.png",
+    "0d751fd7-c04a-428c-b0a8-0c5bccb21493": "jacksonville-maxpreps-led.png",
+    "0d9710f4-d50a-447a-9d2f-f40608279b8f": "ilfull-peoria-0d9710f4-maxpreps-led.png",
+    "0dd2b22e-22e4-4330-a71f-e0586da8214f": "edwbb-granite-city-maxpreps-led.png",
+    "0df91f3d-4443-4f92-aa90-d16c8690a261": "gafull-loganville-school-led.png",
+    "1220daa6-610c-4600-a8e8-974d00f12ff3": "inrank26-cathedral-maxpreps-led.png",
+    "128d3f4e-6e8c-411f-9de6-f5cbf1bef55b": "ilrank-centralia-maxpreps-led.png",
+    "128d50e8-0ae6-4b71-8506-85fdac103bf3": "top25-chaminade-madonna-maxpreps-led.png",
+    "12956dd1-0750-4012-a099-bd193d38e5f3": "ilfull-jersey-12956dd1-maxpreps-led.png",
+    "12ad99c6-6d2e-4f9b-be0a-0edc15a64533": "ncfull-cuthbertson-12ad99c6-maxpreps-led.png",
+    "12b5c67e-addf-42c1-acf4-b1cf4a5e6bcc": "mp-hoggard-maxpreps-led.png",
+    "15fc96af-e1e6-4c51-8a7d-946941c08f1b": "ilfull-larkin-15fc96af-maxpreps-led.png",
+    "16c148b2-6e16-43fc-9d8e-fca6cd8ec0b9": "shgsp-mahomet-seymour-maxpreps-led.png",
+    "172f1c96-8b5e-4079-ac1c-e03ecaa6f3ad": "ilfull-lakes-172f1c96-maxpreps-led.png",
+    "19196fd3-b432-4f7f-a07a-b3d86b582771": "infbrank26-center-grove-maxpreps-led.png",
+    "19b7b05d-5646-4d16-8646-16988bf7b7ef": "ilfull-sacred-heart-griffin-19b7b05d-maxpreps-led.png",
+    "1a1e5832-35d4-4aec-a467-38069e7336f1": "ncfull-parkland-1a1e5832-maxpreps-led.png",
+    "1a3ba4f2-3892-4a2a-99b4-3c798001ffb3": "njrank26-bergen-catholic-maxpreps-led.png",
+    "1a6caeca-efbf-491d-8f50-b5f7bdc30870": "txfull-lancaster-maxpreps-led.png",
+    "1ac2215a-482e-454a-9bcd-11d5f4e4c3bb": "ilfull-marian-catholic-1ac2215a-maxpreps-led.png",
+    "1c3ccc31-4ddf-40e7-8700-070f311148b4": "natrank26-paul-vi-maxpreps-led.png",
+    "1ca1eec6-40e3-4d04-9831-04fe92760ad0": "top25-brentwood-academy-maxpreps-led.png",
+    "1d408244-3dc6-4164-aeed-4c3d74f0ff46": "ncfull-southeast-raleigh-1d408244-maxpreps-led.png",
+    "1d6e9c6d-44a0-4e67-932e-789d27de9a90": "flfbrank26-venice-maxpreps-led.png",
+    "1f5a3ce2-ec4c-4b93-a015-818959106032": "carank26-salesian-college-preparatory-maxpreps-led.png",
+    "1fac7e26-19aa-4835-affb-f311d5ea7014": "ohfbrank26-pickerington-central-maxpreps-led.png",
+    "1fdebc3b-a70a-4777-8374-38fa2ce7f05b": "shgsp-edwardsville-maxpreps-led.png",
+    "203fbd7d-ab72-431a-815e-d5c90e87bc69": "ilfull-niles-north-203fbd7d-maxpreps-led.png",
+    "20566e9a-3d1d-4f98-bf92-a0d083c06d63": "ilfbrank26-st-rita-maxpreps-led.png",
+    "223aaa5d-74a5-4684-ad66-26cee5ad60ef": "ncfull-athens-drive-223aaa5d-maxpreps-led.png",
+    "2259a5d8-90dd-4049-a3cf-1f7a4cea455b": "allrank26-md-football-bishop-mcnamara-maxpreps-led.png",
+    "2286cead-ad0a-44c8-b83f-a6824ad7f823": "ilrank26-hyde-park-maxpreps-led.png",
+    "229cf8e5-737c-418e-8f4e-f3ac3d566af4": "top25-st-john-bosco-maxpreps-led.png",
+    "22ca1fcb-bec9-4ca0-8c85-ee67efe1e705": "parank26-central-catholic-maxpreps-led.png",
+    "2401e390-d7a6-4fe0-9652-dbf8e3efabd0": "ilfull-lockport-2401e390-maxpreps-led.png",
+    "24fcbf1d-b604-4c48-8479-33fd112a5020": "ilfull-glenwood-24fcbf1d-maxpreps-led.png",
+    "2556953b-acd8-4a89-9763-d0fab04e1aac": "allrank26-tx-football-atascocita-maxpreps-led.png",
+    "256b8260-d19b-4eac-8dd8-f84699f70f8f": "txfull-yates-maxpreps-led.png",
+    "2590837b-3232-4833-a3ad-6df751beb9a2": "ilfull-proviso-west-2590837b-maxpreps-led.png",
+    "262f0d55-4f92-47e3-b221-c182a4901c94": "ilfull-lincoln-way-central-262f0d55-maxpreps-led.png",
+    "26c735e1-c2cd-4b4c-8b16-278db92540f4": "mp-lake-norman-maxpreps-led.png",
+    "27476550-5ef2-4185-ad25-85bee6665b5a": "ilfull-urbana-27476550-maxpreps-led.png",
+    "28400089-de11-4297-80b0-0ca774dfd361": "mp-independence-maxpreps-led.png",
+    "29c6c6bc-5dc0-4a7f-a62b-f4f1f8c642fc": "allrank26-tn-football-oakland-maxpreps-led.png",
+    "29d7fd4d-4068-4916-8433-7dd8bcd9f5de": "natrank26-wisconsin-lutheran-maxpreps-led.png",
+    "29e70a18-918f-47a3-abf8-40395ae772dc": "ilfull-boylan-catholic-29e70a18-maxpreps-led.png",
+    "29f9938c-50c5-4080-b158-915966d4e144": "ilfull-sycamore-29f9938c-maxpreps-led.png",
+    "2a0563b4-b528-4c0e-bc2a-f39f34fd7c7a": "allrank26-tx-basketball-dynamic-prep-maxpreps-led.png",
+    "2a403437-3749-4b23-8291-2dc1048417ea": "mp-east-forsyth-maxpreps-led.png",
+    "2ad06528-833d-4f2c-b7c7-cd16bc5cc8e6": "ilfull-elmwood-park-2ad06528-maxpreps-led.png",
+    "2b6b45d3-4465-4750-ba48-a273b674e37c": "top25-mater-dei-maxpreps-led.png",
+    "2c0b1910-606e-42d9-b210-4d6603f07856": "ilfull-dunlap-2c0b1910-maxpreps-led.png",
+    "2c66e977-fcec-48c5-9f86-062a506b700c": "top25-carrollton-maxpreps-led.png",
+    "2c67d12e-92be-4e2e-a1c0-e6809c4f22b3": "flfull-stoneman-douglas-maxpreps-led.png",
+    "2ccb12f9-61a8-4d4a-aa35-db0158cc4324": "ilfull-pekin-2ccb12f9-maxpreps-led.png",
+    "2d6eb90a-dad4-482f-afd7-d753855a1891": "ilfull-wheaton-north-2d6eb90a-maxpreps-led.png",
+    "2f0bd05d-a8ca-44f0-a962-a7f7dc713fe1": "ilfull-highland-2f0bd05d-maxpreps-led.png",
+    "2f510683-5829-4d1e-9a93-703a82f12a58": "ohrank26-st-edward-maxpreps-led.png",
+    "30567007-444c-4b5f-95d0-5b3aa7512b86": "state75-ca-norco-30567007.png",
+    "3194b554-0eab-4faf-a5a8-80c03f342e7f": "ncfbrank26-cleveland-maxpreps-led.png",
+    "31c841cb-d012-4380-aeee-05886a3ac63a": "ilfull-moline-31c841cb-maxpreps-led.png",
+    "327115b3-501d-4047-aee8-ff08e6b35bd9": "ncfbrank26-myers-park-maxpreps-led.png",
+    "328f7292-bd41-4019-9d13-4490f088adac": "parank26-archbishop-wood-maxpreps-led.png",
+    "331ffa71-c3f0-4fa7-84f6-cb9e7e563868": "flfbrank26-lakeland-maxpreps-led.png",
+    "33698666-bc11-4091-8af6-4cd3c6c944cf": "txfull-calallen-maxpreps-led.png",
+    "339dc507-7687-4236-933d-646e48189d0f": "ilfbrank26-sandburg-maxpreps-led.png",
+    "33f89275-c0ac-43ec-a96f-4d3de2f72bbb": "flfbrank26-cocoa-maxpreps-led.png",
+    "34394634-0bb0-41ca-84e5-c7b5f49d0072": "gafbrank26-valdosta-maxpreps-led.png",
+    "35c2bd6b-d2a8-4954-aa9a-8f5cd28c139d": "ilfull-andrew-35c2bd6b-maxpreps-led.png",
+    "36b2de45-1d77-40d0-a9f6-4af30db9f4b0": "ilfull-bradley-bourbonnais-36b2de45-maxpreps-led.png",
+    "377eb05a-c371-4a38-8a77-13bba930719b": "ilfull-rantoul-377eb05a-maxpreps-led.png",
+    "3796b07e-1bb2-4e53-a943-e0f340979f6d": "natrank26-calvary-christian-academy-maxpreps-led.png",
+    "3797b87e-6c59-4035-9e62-9a1231211658": "ohrank26-washington-maxpreps-led.png",
+    "384d368d-51fa-43ae-8ed9-cee8c90036a0": "ilfull-lincoln-way-west-384d368d-maxpreps-led.png",
+    "39b02d34-7275-4c2c-94fa-5ddb715ca758": "natrank26-principia-maxpreps-led.png",
+    "3b3f527d-71cd-4060-b02a-2761412f5dc6": "ilfull-mt-vernon-3b3f527d-maxpreps-led.png",
+    "3b53c708-b303-4b43-ab41-22ed869f3eee": "allrank26-mi-football-st-mary-s-prep-maxpreps-led.png",
+    "3b7147d3-95c9-459d-9bd8-48b2dd8872eb": "shgbb-normal-university-maxpreps-led.png",
+    "3bf80241-7db0-4869-b22a-44ce3229b5ac": "ilfull-marmion-3bf80241-maxpreps-led.png",
+    "3cdbaa1f-eb68-4734-ba5d-0c20524101cd": "ncfull-cox-mill-3cdbaa1f-maxpreps-led.png",
+    "3d5da0b2-36c5-48c2-b9c7-993affe24617": "ohfull-st-vincent-st-mary-maxpreps-led.png",
+    "3d826abe-7d55-4a8e-a911-c11f4990aa07": "cafbrank26-mission-viejo-maxpreps-led.png",
+    "3dbf5a43-de1f-4696-b9a6-cf3fee0ab234": "allrank26-la-football-edna-karr-maxpreps-led.png",
+    "3dcd0652-5833-4c0d-9e39-d01371e8b65e": "ilfull-woodstock-north-3dcd0652-maxpreps-led.png",
+    "3e31f213-f6f4-441f-a423-23876e626d7a": "mpbb-leesville-road-maxpreps-led.png",
+    "3e6d32d9-9a21-4391-aba1-d59804bf82e6": "top25-sierra-canyon-maxpreps-led.png",
+    "3e867fc9-cdfe-47a5-89b5-bea3a9868740": "ncfull-southern-durham-maxpreps-led.png",
+    "3f921a1e-ec82-4888-b587-16d9cc9d4910": "ilfull-normal-community-3f921a1e-maxpreps-led.png",
+    "3fb8daa8-3706-4755-a2f2-39220a3ef333": "state75-al-central-3fb8daa8.png",
+    "3fba7f04-2c1e-4a2f-829b-a2e1eaee565d": "ilfull-salem-3fba7f04-maxpreps-led.png",
+    "41a964d5-92ce-4f5a-b632-3a3106825d49": "ilfull-chicago-washington-41a964d5-maxpreps-led.png",
+    "427d5559-778a-4acb-90e5-6d4ffda43322": "ilfull-new-trier-427d5559-maxpreps-led.png",
+    "4299ce26-f7f8-44b6-950e-6c4e01096cfc": "ilfbrank26-downers-grove-north-maxpreps-led.png",
+    "42c8f52e-1f83-41ae-a268-178b0cca90d4": "mp-hickory-ridge-maxpreps-led.png",
+    "43734a55-5f0f-4153-89c6-eee8f6f2d386": "ncfull-green-hope-43734a55-maxpreps-led.png",
+    "43d005ac-89e9-4f39-b4c5-742d745cb9c9": "ncfull-smithfield-selma-43d005ac-maxpreps-led.png",
+    "440003bb-9609-4522-8837-ea2518c07fbd": "ncfull-new-bern-440003bb-maxpreps-led.png",
+    "442300ee-6a7b-4835-86c3-8f7043d1dc70": "ncfbrank26-charlotte-christian-maxpreps-led.png",
+    "45102f34-d17b-4a6c-8fea-01036e93b747": "ilfull-north-lawndale-45102f34-maxpreps-led.png",
+    "46942266-3ad9-41b9-b43a-24f576e2169f": "ilfull-stevenson-46942266-maxpreps-led.png",
+    "487dccbc-735b-4777-92de-acfee4ebaf84": "mifull-belleville-maxpreps-led.png",
+    "48a8cbe8-70f4-4d9e-83d6-9ea398a0ec18": "ilfull-taylorville-48a8cbe8-maxpreps-led.png",
+    "49b51b6e-9e38-4a4b-b64e-6cf11a6153d1": "ilfull-centennial-49b51b6e-maxpreps-led.png",
+    "4b731f39-bb94-4a4f-9a29-360908c3f94b": "txfull-lake-highlands-maxpreps-led.png",
+    "4bd8debf-97e9-4734-bec8-150a6ad7694d": "ilfbrank26-lincoln-way-east-maxpreps-led.png",
+    "4cb80d1e-5fae-4f3f-b285-822f9203eea2": "ilrank-homewood-flossmoor-maxpreps-led.png",
+    "4ceb64a0-1272-470a-9005-c593b0592048": "garank26-mceachern-maxpreps-led.png",
+    "4d0f5866-a2d4-4c8c-bc19-75e7c7229165": "ncfull-chapel-hill-4d0f5866-maxpreps-led.png",
+    "4d12efd2-f93d-417e-84ba-4c7ecbaee8ed": "ncfull-wake-forest-4d12efd2-maxpreps-led.png",
+    "4e56b8fe-f320-41bf-9722-c657fa38f0df": "ilfull-joliet-west-4e56b8fe-maxpreps-led.png",
+    "501efb7c-bf5e-44ce-b7f5-46e47820baba": "ilfull-glenbrook-north-501efb7c-maxpreps-led.png",
+    "50316e53-752f-42b4-ab7d-e71396e1110c": "ilfull-dixon-50316e53-maxpreps-led.png",
+    "52538f0d-6e2c-441c-97df-b4f8bc1f4838": "ilfull-berwyn-cicero-morton-52538f0d-maxpreps-led.png",
+    "5271dbb1-b47b-49a8-b787-a3c6a4c93c69": "ilfull-oak-forest-5271dbb1-maxpreps-led.png",
+    "529b52b7-6576-42c9-a800-1250f3db00c2": "ilfull-vernon-hills-529b52b7-maxpreps-led.png",
+    "52d89642-6d2d-4bbb-b0a3-d0484800936c": "gafbrank26-lee-county-maxpreps-led.png",
+    "531ae86b-4388-4888-89d7-e369c997ce15": "mpbb-leesville-road-maxpreps-led.png",
+    "532bc502-7380-4f0c-bf0d-a39ad1e17c4f": "ncfull-hopewell-532bc502-maxpreps-led.png",
+    "53e6a716-e4e2-426b-8bac-cdbcf128a6ee": "ilfull-lincoln-park-53e6a716-maxpreps-led.png",
+    "542c5117-d53f-4aa6-9b78-69a2f7612e2c": "ilrank-curie-maxpreps-led.png",
+    "556cde7f-6469-4bd0-934c-fe78b5949f68": "top25-duncanville-maxpreps-led.png",
+    "5575f67f-674e-4dd2-b78f-893b1720ce75": "ilfull-bremen-5575f67f-maxpreps-led.png",
+    "55ffd0af-8543-4eda-866b-a38703f079f3": "ncrank25-new-hanover-maxpreps-led.png",
+    "56d98abd-343e-4f12-b510-666a90501fac": "dcrank26-st-john-s-maxpreps-led.png",
+    "572f77b0-2243-4b17-8434-2116d9e68234": "mpbb-greenfield-maxpreps-led.png",
+    "577deee1-d079-4936-97db-a6fb1d854913": "ilfbrank26-nazareth-academy-maxpreps-led.png",
+    "57f5f799-f2e4-40f0-b4b6-acfc1385bae5": "ilfbrank26-st-charles-north-maxpreps-led.png",
+    "583c5a88-20b9-43cb-be65-4ff8eda079b5": "natrank26-wheeler-maxpreps-led.png",
+    "599a14a0-0b52-45b7-bdbe-f87cd818ed69": "ilfull-de-la-salle-599a14a0-maxpreps-led.png",
+    "59c4c53c-dbc8-49ef-aacf-5480dcffe24a": "ilfull-thornwood-59c4c53c-maxpreps-led.png",
+    "59db1511-bdf0-44f3-8f5c-5a8d5fbe2f22": "ilfull-rockford-auburn-59db1511-maxpreps-led.png",
+    "5b5c1ce0-3470-469e-ac87-cde59ba7407e": "edwbb-belleville-east-maxpreps-led.png",
+    "5b63a62f-d0af-4aac-a7ba-84abf91c5e4d": "ncfbrank26-rolesville-maxpreps-led.png",
+    "5beee603-280d-457c-9a44-170dd5f903da": "ncrank26-greensboro-day-school-maxpreps-led.png",
+    "5cae2bb6-4da0-4e5a-be11-8dfbcc5e5a6c": "ilfull-glenbrook-south-5cae2bb6-maxpreps-led.png",
+    "5ce85d4b-4ce3-48ca-8b24-2a304bba4853": "flfull-columbus-miami-maxpreps-led.png",
+    "5cfafd38-713e-4126-bac4-42a8e6e0bafa": "ilrank-st-patrick-maxpreps-led.png",
+    "5d19172b-b4db-44cc-93ba-ed573c338696": "inrank26-pike-maxpreps-led.png",
+    "5d832abf-df7b-498c-b299-7a64cde4a1ee": "ncfull-southwest-guilford-5d832abf-maxpreps-led.png",
+    "5d95dceb-84cc-4e6d-ad80-e76aa60c0408": "ilfull-washington-5d95dceb-maxpreps-led.png",
+    "5e10cf45-f1aa-4d33-b821-4df10b076a01": "ilfull-oswego-east-5e10cf45-maxpreps-led.png",
+    "5e2f7d8c-875d-47e3-922a-916b67c5f8ae": "ilfull-aurora-east-5e2f7d8c-maxpreps-led.png",
+    "5e84bad1-bf8c-4ea7-ba81-6016954f486a": "ilfull-shepard-5e84bad1-maxpreps-led.png",
+    "5e84e16a-82c5-49ef-ba55-a64f8b2b73e8": "ilfull-hillcrest-5e84e16a-maxpreps-led.png",
+    "5f2d9046-3d33-4dfc-8628-1abcfb96d21a": "top25-baylor-maxpreps-led.png",
+    "5fbd4229-9050-4ea2-91f7-346125ba0488": "ncfull-knightdale-5fbd4229-maxpreps-led.png",
+    "5ff0778d-5c7b-49d1-a93c-210fce226b0f": "ilfull-oak-lawn-5ff0778d-maxpreps-led.png",
+    "6073daeb-d348-4a35-a953-8a6862e1a666": "mp-palisades-maxpreps-led.png",
+    "6089f6a4-f1e9-46cc-b64f-c5302d41e69d": "cafull-long-beach-poly-maxpreps-led.png",
+    "612c1123-e8ef-4ec6-a4ae-843e5103b261": "ilfull-downers-grove-south-612c1123-maxpreps-led.png",
+    "616abd7a-0e54-4529-b3cd-c75d50c5c88c": "parank26-imhotep-charter-maxpreps-led.png",
+    "61becb2c-6174-49b2-a4cc-585c807e8544": "mpbb-east-mecklenburg-maxpreps-led.png",
+    "61c2d3cc-a129-4f41-81f9-8ca1af19d8c9": "ilfbrank26-lyons-maxpreps-led.png",
+    "61e7f820-0e7a-4d69-92e0-4ba9e4c0fb15": "ilrank-evanston-maxpreps-led.png",
+    "62584673-2d74-4b03-bf26-c4d59ec76121": "shgsp-triad-maxpreps-led.png",
+    "63481374-863b-454b-90b9-aaa97ae8cc1d": "txfull-keller-maxpreps-led.png",
+    "64442dc4-6723-43f8-96ac-963b034ae03c": "ncfull-ashley-64442dc4-maxpreps-led.png",
+    "650ca96b-3f68-4032-a7db-186e1f969836": "ilrank-rich-township-maxpreps-led.png",
+    "667706cf-7558-4dbd-b0ce-cf92dec79194": "ilfull-plano-667706cf-maxpreps-led.png",
+    "6686f743-8354-4edb-8785-34c17b87d1ce": "ncfull-porter-ridge-6686f743-maxpreps-led.png",
+    "67b2f6cd-5c9c-4915-8a43-56dbbd682187": "flfbrank26-northwestern-maxpreps-led.png",
+    "68d866eb-e104-4f0d-a0a8-a8eb7c5aa034": "ilfull-dekalb-68d866eb-maxpreps-led.png",
+    "69a6061d-665a-4672-bbc9-5788f1499c3c": "ncfull-wakefield-69a6061d-maxpreps-led.png",
+    "69ea9f6b-1c1d-486d-b022-085ccecbfca3": "ncrank26-cardinal-gibbons-maxpreps-led.png",
+    "6bb3fa46-52b6-49a5-a61b-645916993621": "ilfull-niles-notre-dame-6bb3fa46-maxpreps-led.png",
+    "6c12a137-db5d-471b-8e6c-292039315e0a": "ilfull-plainfield-south-6c12a137-maxpreps-led.png",
+    "6d00b044-607e-4dee-aa9b-e1fc2c6a87bc": "top25-buford-maxpreps-led.png",
+    "6f8cc5c2-545f-4169-83e7-8052a196a762": "shgsp-champaign-central-maxpreps-led.png",
+    "706583f6-05ef-4771-bd91-4b0e41fe8b17": "ilrank-waubonsie-valley-maxpreps-led.png",
+    "719a8e7e-1bab-44c0-865e-290a6d743079": "ilfull-rock-island-719a8e7e-maxpreps-led.png",
+    "71fccbdd-2c49-4c3a-82e9-101ed692d651": "ncfull-laney-71fccbdd-maxpreps-led.png",
+    "725a64a4-9298-4080-933e-ad5b3ebf3cc2": "mp-rj-reynolds-maxpreps-led.png",
+    "72de608b-d5df-47d7-bbb7-774cfe19db96": "ncrank25-green-level-maxpreps-led.png",
+    "72f3e8c8-ccb0-4efb-9af5-1afa08aad27d": "ilrank-chicago-mt-carmel-maxpreps-led.png",
+    "733e6d66-a97f-44c5-a3b4-7329cca376ec": "vafbrank26-maury-maxpreps-led.png",
+    "741f03f2-f2ca-4943-a743-b4086654c9df": "ncfull-jack-britt-741f03f2-maxpreps-led.png",
+    "744c3571-3a4a-4b97-b6dd-dbd086aea9f1": "mp-ballantyne-ridge-maxpreps-led.png",
+    "74afeaea-d417-41b7-8d0a-9bcb0466e29e": "edwbb-marion-maxpreps-led.png",
+    "761e1afd-d386-4edd-a4ef-5e4f79d1fbf0": "txfull-lovejoy-maxpreps-led.png",
+    "76f9f256-1de4-42a1-ae30-1cb122f0c2a6": "allrank26-tx-basketball-oak-cliff-faith-family-academy-maxpreps-led.png",
+    "773627bf-68b2-4c1b-8e1f-d4a6d2513905": "mp-marvin-ridge-maxpreps-led.png",
+    "7737fd46-4279-442d-a19a-fa8519f99804": "mp-butler-maxpreps-led.png",
+    "787e6e97-5dea-4b0a-995e-6b3529275fe8": "shgsp-hersey-maxpreps-led.png",
+    "790979ae-7c7d-4157-8395-0af421a22466": "tnfull-bartlett-maxpreps-led.png",
+    "7a5b2cce-0458-457f-b5bf-7350259896c9": "allrank26-tx-basketball-second-baptist-maxpreps-led.png",
+    "7a85b4ed-b11d-401d-ad1f-1420972a2b4b": "ilfull-lake-park-7a85b4ed-maxpreps-led.png",
+    "7abb4172-c81b-43a0-9857-b30c07b0de16": "ilfull-naperville-central-7abb4172-maxpreps-led.png",
+    "7b322329-68da-4b44-b561-ae1e6d5c8e8f": "springfield-maxpreps-led.png",
+    "7b4c2591-96c8-4eb1-9338-53cddb73b478": "ncfull-rocky-river-7b4c2591-maxpreps-led.png",
+    "7b97d18c-91a1-455c-ad1b-fc0117d450a3": "ilfull-geneva-7b97d18c-maxpreps-led.png",
+    "7b9e512a-ca78-41f9-8ffd-dfedced2c091": "ilfull-oak-park-river-forest-7b9e512a-maxpreps-led.png",
+    "7bdbc005-84f6-4fc8-983f-85de66066b51": "shgsp-quincy-maxpreps-led.png",
+    "7bdc339f-7cbf-4728-b0c8-ed898929cf68": "top25-img-academy-maxpreps-led.png",
+    "7bfa4c4f-d672-451c-b4e2-2a32dd0e6668": "ilfull-montini-catholic-7bfa4c4f-maxpreps-led.png",
+    "7cb7e6a9-f837-4204-8c37-f9cb9dd17ce8": "allrank26-tx-football-south-oak-cliff-maxpreps-led.png",
+    "7d5005f0-8831-4a1b-851f-34fd4b86b45c": "ilfull-guilford-7d5005f0-maxpreps-led.png",
+    "7d59a228-f925-46d0-8deb-a25b5d189d09": "ilrank26-east-peoria-maxpreps-led.png",
+    "7d8b2403-9b65-4c04-a74c-3c291c3e3771": "ilfull-evergreen-park-7d8b2403-maxpreps-led.png",
+    "7f79a046-d5c4-465f-b1c4-41fe50ed8ea8": "carank26-notre-dame-so-maxpreps-led.png",
+    "7ff53afc-3de4-49ea-b6e1-378399ec6e28": "ilfull-antioch-7ff53afc-maxpreps-led.png",
+    "8007b519-328f-4ef9-a1db-4eae61f3561f": "ncfull-overhills-8007b519-maxpreps-led.png",
+    "80e9399e-c7c0-4a32-a4e0-20e702ef0c7a": "ilfull-warren-80e9399e-maxpreps-led.png",
+    "81461e2c-f220-4128-8011-b268335c407c": "ilfull-crystal-lake-south-81461e2c-maxpreps-led.png",
+    "81727b1f-781a-4de6-815a-d05858b295d9": "mp-west-forsyth-maxpreps-led.png",
+    "823895e1-6389-4adc-afe3-b47cc99e26e1": "ilfull-waterloo-823895e1-maxpreps-led.png",
+    "827f16df-20c0-4157-99da-c39633b66ae9": "gafbrank26-creekside-maxpreps-led.png",
+    "828209a5-a9b7-4499-a694-2dc1766bfe4e": "ncfull-apex-828209a5-maxpreps-led.png",
+    "83124358-4214-40e1-8edd-7cac3657352c": "ilfull-whitney-young-83124358-maxpreps-led.png",
+    "831cad1c-da6a-498a-bc60-4c58a769f4c8": "allrank26-wa-football-eastside-catholic-maxpreps-led.png",
+    "83e1c4c2-e47f-4bd5-a5a5-0ac0438fc2f2": "tnfull-memphis-east-maxpreps-led.png",
+    "84721f3e-210a-4033-aba0-4c56dfa9ad0e": "ilfull-grant-community-84721f3e-maxpreps-led.png",
+    "84977e1b-3425-4349-bbdd-e531a85d61d8": "ilfull-joliet-central-84977e1b-maxpreps-led.png",
+    "851a4721-05ca-40b4-b4a7-a3f521ae7367": "ilfull-woodstock-851a4721-maxpreps-led.png",
+    "85cd1235-ce6b-4f6b-9c49-5eba231d2dc7": "ilfull-glenbard-east-85cd1235-maxpreps-led.png",
+    "8657bdef-b6f8-4d41-888e-1828a851cb8e": "ilrank26-saint-ignatius-college-prep-maxpreps-led.png",
+    "86cd69cb-275e-450e-82b6-e3c0a3746382": "ncfbrank26-grimsley-maxpreps-led.png",
+    "87bdd13c-c072-49c6-a529-a41c844cd509": "ilfbrank26-fenwick-maxpreps-led.png",
+    "87fbf781-1159-4f46-b3f4-38ba08629452": "ilfull-fenton-87fbf781-maxpreps-led.png",
+    "888bb079-f60d-47d3-8d3c-2b94ad897a98": "shgbb-decatur-eisenhower-maxpreps-led.png",
+    "89177ac0-3980-4d3d-9aa6-dc43c731393a": "ilfull-hinsdale-south-89177ac0-maxpreps-led.png",
+    "89863c74-98ba-48b6-a3d1-574ae1f3d6d6": "scrank26-dorman-maxpreps-led.png",
+    "89b7ac14-6417-4a78-8e6f-94e7ca0501cf": "ncrank25-chambers-maxpreps-led.png",
+    "89c8c400-33ec-4613-9e37-c26761bd97f3": "shgsp-mt-zion-maxpreps-led.png",
+    "8a814a0b-eb04-4568-b6ad-c699a0bc1c86": "allrank26-ky-basketball-george-rogers-clark-maxpreps-led.png",
+    "8ab7f7a1-f11c-48ca-90ba-807a29f0ae2e": "ncfbrank26-reagan-maxpreps-led.png",
+    "8b01e3ef-fc95-4f9e-8ab8-5424348e4767": "ncfull-holly-springs-8b01e3ef-maxpreps-led.png",
+    "8c19425f-ca0f-45a4-b6e3-3ab94562da08": "ncfull-hillside-8c19425f-maxpreps-led.png",
+    "8cbeff8c-84d3-48ad-b5f9-7ea608b2e310": "ilfull-elgin-8cbeff8c-maxpreps-led.png",
+    "8cd736bc-e2f1-467d-9779-428b31e8445b": "state75-fl-trinity-christian-academy-8cd736bc.png",
+    "8d5b979e-4379-4113-8818-549f355573e5": "ilrank26-palatine-maxpreps-led.png",
+    "8e73932d-22a0-4f91-a051-42d8970ad5f9": "ilfull-thornridge-8e73932d-maxpreps-led.png",
+    "8e91dd4a-3f98-4e1c-8744-b4b290580427": "ilfull-wheeling-8e91dd4a-maxpreps-led.png",
+    "8f1c2304-abad-447f-89c6-6113edc26b6a": "ilrank-st-laurence-maxpreps-led.png",
+    "8fed129c-f781-4844-a5b1-2a4b8ba14b8b": "ncfull-cape-fear-8fed129c-maxpreps-led.png",
+    "92d41d93-5fe7-44ed-962a-da73960d0dc2": "ilfull-highland-park-92d41d93-maxpreps-led.png",
+    "92f72c68-4c47-44c4-a4c0-b93ae7b404fb": "njfbrank26-depaul-catholic-maxpreps-led.png",
+    "94435866-7de8-4b34-bf40-012bb368abab": "ilfull-romeoville-94435866-maxpreps-led.png",
+    "945858d1-7582-4007-aca5-c43cd331ce49": "quincy-notre-dame-maxpreps-led.png",
+    "9462aedb-638f-4d03-b935-0ab1ad530f02": "ilfull-grayslake-north-9462aedb-maxpreps-led.png",
+    "951860ab-d82d-476e-b355-80a8dbad705e": "inrank26-fishers-maxpreps-led.png",
+    "96ef6983-d533-4398-807f-f0fe51088378": "top25-hamilton-maxpreps-led.png",
+    "9705cdda-c8bb-432c-b1dc-746666250d0c": "state75-la-barbe-9705cdda.png",
+    "9712142f-7675-4990-8d8f-e7467a50c787": "allrank26-tn-football-lipscomb-academy-maxpreps-led.png",
+    "975ddb35-e538-4744-a341-af3ce262e04c": "ilrank-rolling-meadows-maxpreps-led.png",
+    "9789c368-7416-48af-b2ae-21dcd34ac582": "ncfull-cary-9789c368-maxpreps-led.png",
+    "98be3499-644a-4f81-873d-17698c8cf89c": "ilfull-little-village-98be3499-maxpreps-led.png",
+    "98d1e24d-2707-43f8-bf5c-97e1857c420c": "ncfbrank26-garner-maxpreps-led.png",
+    "9972b565-cfd6-46c4-9ad7-e21ab7f3aef4": "mofull-logan-rogersville-maxpreps-led.png",
+    "99ab42d7-0efa-4754-8046-a2fd99fa54f2": "ilfull-carbondale-99ab42d7-maxpreps-led.png",
+    "99ac3ebb-dab4-47d4-a0ca-e3fafa3ac11e": "ncfull-hoke-county-99ac3ebb-maxpreps-led.png",
+    "99c6b24f-f3d1-4539-822c-e9ea907947ef": "allrank26-mi-football-de-la-salle-collegiate-maxpreps-led.png",
+    "9a075e03-96fb-4f90-9768-1541d5385443": "allrank26-tx-football-desoto-maxpreps-led.png",
+    "9a4201ef-e671-48fb-86cb-6694885e1aba": "inrank26-ben-davis-maxpreps-led.png",
+    "9a4b4269-4192-427d-8ec3-fc1759871d3c": "scrank26-ridge-view-maxpreps-led.png",
+    "9b33ec1c-c687-437c-8d05-950885fb3c83": "springfield-southeast-maxpreps-led.png",
+    "9c259289-a8cc-494d-aa7b-7c959ddef1d3": "pafbrank26-la-salle-college-maxpreps-led.png",
+    "9cb9cb74-b18e-49dd-857f-194c522259ec": "ilfull-belvidere-9cb9cb74-maxpreps-led.png",
+    "9cb9d8f7-94fe-4750-b03f-aa0a5d213bc1": "ilfull-waukegan-9cb9d8f7-maxpreps-led.png",
+    "9d4fb9a4-ca4d-4227-ba09-92963950349a": "ilfull-belvidere-north-9d4fb9a4-maxpreps-led.png",
+    "9d874b8c-e644-449d-9bd2-ca2a7400ad9f": "ilfull-freeport-9d874b8c-maxpreps-led.png",
+    "9d8b368e-4ab9-4e18-a99f-90077f8df5ea": "ilrank26-loyola-academy-maxpreps-led.png",
+    "9dc04c54-8c9d-4b30-a1d2-fcc167363342": "cafull-harvard-westlake-maxpreps-led.png",
+    "9e494581-4315-4e55-b424-861ae44d9381": "ilfull-amundsen-9e494581-maxpreps-led.png",
+    "9e946929-1ef0-4c41-a017-fde9178ff624": "ncfull-cannon-9e946929-maxpreps-led.png",
+    "9eb8cb65-e402-4d83-8a7a-5c3d5f39aa30": "ncfull-south-garner-9eb8cb65-maxpreps-led.png",
+    "9fade2f5-ee29-4330-86b1-bcbbb4ea655d": "ohrank26-st-ignatius-maxpreps-led.png",
+    "a1aa221b-0f61-400d-96e2-92ca7e597a02": "ncfbrank26-richmond-senior-maxpreps-led.png",
+    "a1b21390-605e-41be-b6c1-3d1f4953a3aa": "ncfull-pine-forest-a1b21390-maxpreps-led.png",
+    "a1e2c327-af82-4ad9-91de-526012f44118": "shgbb-lincoln-maxpreps-led.png",
+    "a1ebf8be-9abc-48be-a64f-f29630826189": "gafbrank26-thomas-county-central-maxpreps-led.png",
+    "a206cb82-325c-4ba1-b2f0-18800f5fe4d2": "allrank26-la-basketball-peabody-maxpreps-led.png",
+    "a29d7edb-cf0d-474f-ae0f-651827b37611": "ilfull-st-charles-east-a29d7edb-maxpreps-led.png",
+    "a34c7367-38e1-4480-aa4a-ac86cb7a7044": "ilfull-morris-a34c7367-maxpreps-led.png",
+    "a37a6b43-1250-473c-b73c-54f00dbbd299": "ncfbrank26-clayton-maxpreps-led.png",
+    "a385d9cd-55ea-43bf-a219-e87eac853901": "ncfull-panther-creek-a385d9cd-maxpreps-led.png",
+    "a432e8ec-e8c4-477c-9834-768b47352c59": "ilfull-metamora-a432e8ec-maxpreps-led.png",
+    "a443abbf-ff3e-40d5-8acd-00a75c96ad3a": "ilfbrank26-wheaton-warrenville-south-maxpreps-led.png",
+    "a4b43083-5e8e-482b-ab25-4c72e63a2d87": "ncfull-broughton-a4b43083-maxpreps-led.png",
+    "a53ca03e-8631-42bb-8ff5-e4cb709e2d7b": "hough-maxpreps-led.png",
+    "a5c08b77-f0fe-46da-b089-dde8c4e963c4": "edwbb-collinsville-maxpreps-led.png",
+    "a8d7c333-2ea0-4dbb-ad43-aacaede104be": "ncfbrank26-millbrook-maxpreps-led.png",
+    "a9439e73-249d-4e8c-872b-f8f4ffe9252a": "top25-basha-maxpreps-led.png",
+    "a9b44a61-199f-46c4-93e0-46683c8294b4": "ilfull-morgan-park-a9b44a61-maxpreps-led.png",
+    "aaf1f1ef-0ede-4ee5-af94-94ded99a196b": "ilfull-prospect-aaf1f1ef-maxpreps-led.png",
+    "ab08ac13-2cd9-4c3e-b391-9b4cb70c1eb1": "mp-ardrey-kell-maxpreps-led.png",
+    "ab1e8a19-8ecf-4bde-8057-cb74c141a990": "gafull-etowah-maxpreps-led.png",
+    "ab82e785-9fc9-4b9d-ae46-c4256bb56f34": "inrank26-carmel-maxpreps-led.png",
+    "abdcda6c-e554-4f09-81b5-0e504676456e": "ncfull-east-wake-abdcda6c-maxpreps-led.png",
+    "ad97398a-490c-4047-9b0c-54320ed9abed": "ncrank26-mooresville-maxpreps-led.png",
+    "ad9b8809-61a1-40b1-a508-f5354e206da3": "ilfull-galesburg-ad9b8809-maxpreps-led.png",
+    "ae4b4150-f34d-40d0-a40f-c647968bf2f3": "ohrank26-lakota-west-maxpreps-led.png",
+    "af03f9b8-dd6a-486b-a195-6c339be03f81": "ilfull-north-chicago-af03f9b8-maxpreps-led.png",
+    "af2fbe68-86a3-4c1b-bfa4-6c9ec7fdeed6": "ilfull-westinghouse-af2fbe68-maxpreps-led.png",
+    "af3babf8-6b92-43ec-9d72-6a442b512c92": "allrank26-tx-football-guyer-maxpreps-led.png",
+    "afb7ff8f-16d6-48de-b6e2-cdca241eb7a9": "edwbb-belleville-west-maxpreps-led.png",
+    "b0259eee-cc6f-4b4f-a758-ac38a4bdd9dd": "ilfull-crete-monee-b0259eee-maxpreps-led.png",
+    "b0dc77aa-3f92-4d26-9b0c-9b3f870fe328": "ilfull-prairie-ridge-b0dc77aa-maxpreps-led.png",
+    "b13712a5-b40f-49d3-af66-2f4b5e73b153": "ilfull-chicago-sullivan-b13712a5-maxpreps-led.png",
+    "b17693a6-97a4-4f3c-9e9f-3ec1c45ac66f": "ncfull-olympic-b17693a6-maxpreps-led.png",
+    "b17e201f-955a-499f-af0a-74f8616522b3": "shgsp-morton-maxpreps-led.png",
+    "b2b06935-82a0-44d2-a06f-1055ba6df263": "ncfull-garinger-b2b06935-maxpreps-led.png",
+    "b345b839-da68-47d8-9638-2e5532d4abea": "ilfull-bloomington-b345b839-maxpreps-led.png",
+    "b37776a7-3c03-4dec-959e-a6da95fb761f": "allrank26-mi-football-cass-tech-maxpreps-led.png",
+    "b3bad078-4ca2-4a12-be43-8aa362352a0b": "ilfull-cahokia-b3bad078-maxpreps-led.png",
+    "b3da7611-9d59-4082-a790-59576784fc1e": "ncfull-d-h-conley-b3da7611-maxpreps-led.png",
+    "b4357b09-b831-4331-a1ef-b76d2fefac3b": "ncfull-south-central-b4357b09-maxpreps-led.png",
+    "b4a0e88e-6c78-402f-9b7f-258a2811bf99": "ilfbrank26-york-maxpreps-led.png",
+    "b4a29512-5c4b-45f4-8d79-3a07ecaeef36": "ilfull-buffalo-grove-b4a29512-maxpreps-led.png",
+    "b50965a7-57a2-48ff-9bed-65c735ea9738": "ilfull-wheaton-academy-b50965a7-maxpreps-led.png",
+    "b6bb9bc2-60c2-4708-82ea-0c0b6cb21e7c": "ncfull-davie-county-b6bb9bc2-maxpreps-led.png",
+    "b6cf97bc-a324-4c1a-90e5-0e75f34eb7d7": "vafbrank26-oscar-smith-maxpreps-led.png",
+    "b700374b-e564-4aee-a01b-f5d363d642b9": "top25-centennial-maxpreps-led.png",
+    "b879339a-783b-417d-bd49-7003804db500": "shgsp-ofallon-maxpreps-led.png",
+    "b8bd16cd-4a67-4633-aa6c-807ea396a622": "ilfbrank26-batavia-maxpreps-led.png",
+    "b927284c-c3c1-404d-a70c-3ca493d2e7c2": "ilfull-goode-stem-academy-b927284c-maxpreps-led.png",
+    "ba3124de-7ecf-4013-b2ab-83f99f50f577": "ilrank-bolingbrook-maxpreps-led.png",
+    "ba768ffa-7973-4b8e-b729-c5f8b338dc76": "ilfull-lake-zurich-ba768ffa-maxpreps-led.png",
+    "bb06b35d-916b-4c4b-b218-18975dffa94c": "ilfull-jefferson-bb06b35d-maxpreps-led.png",
+    "bb694921-d3fe-43ae-95b9-2e8d83844fd4": "flfbrank26-central-maxpreps-led.png",
+    "bc6fc1ae-3d64-41ff-af39-f97d4c3c4e7e": "ilfull-ottawa-bc6fc1ae-maxpreps-led.png",
+    "bced8483-534e-4589-8690-b1eeb6b9aeed": "shgbb-danville-maxpreps-led.png",
+    "bd12f619-3d60-413e-a9ef-5742cd4a21bb": "top25-st-thomas-aquinas-maxpreps-led.png",
+    "bd67d83b-601a-4c90-a3a3-c3c56103cd0d": "ilfull-elk-grove-bd67d83b-maxpreps-led.png",
+    "bda13774-cd07-4feb-9f26-0841ebee1fb4": "ilfull-rockford-east-bda13774-maxpreps-led.png",
+    "be182157-43fe-46f2-8cb3-99e1a6cbff44": "ncfull-heritage-be182157-maxpreps-led.png",
+    "be68ef07-3c43-425e-9522-94c82c9f5112": "ilfull-willowbrook-be68ef07-maxpreps-led.png",
+    "be8d3639-2ed5-44c2-a99c-a2a3f3bb6cf7": "ilfull-lake-forest-be8d3639-maxpreps-led.png",
+    "bf4fb1c0-b301-4bee-b7a9-c0581cfe2d95": "ilfull-maine-east-bf4fb1c0-maxpreps-led.png",
+    "bf53da99-a304-461c-bd9e-8c76ab66ca37": "ncfull-forest-hills-bf53da99-maxpreps-led.png",
+    "bfe64fc4-dead-4387-8f23-1ba9c3badf45": "state75-tx-vandegrift-bfe64fc4.png",
+    "c0064df5-3ca6-45ab-9f05-0396c00de748": "ncfull-corinth-holders-c0064df5-maxpreps-led.png",
+    "c012507d-edac-46bd-93c2-7661a61b96b2": "cafbrank26-servite-maxpreps-led.png",
+    "c0f6e73e-72de-4855-bc93-b49762549765": "west-mecklenburg-maxpreps-led.png",
+    "c124993f-cb4a-4bcc-96b6-55f913376606": "njfbrank26-st-joseph-regional-maxpreps-led.png",
+    "c151cc16-bbaa-4aec-b175-f379ece07416": "joliet-catholic-maxpreps-led.png",
+    "c15c495c-1bd9-495e-a009-54be686d3de9": "ncrank26-west-charlotte-maxpreps-led.png",
+    "c1783fb0-c965-42a0-abe3-41fbe7641303": "top25-st-frances-academy-maxpreps-led.png",
+    "c1acfdcc-da16-458a-8074-a1f5bdf280bc": "ilfull-cary-grove-c1acfdcc-maxpreps-led.png",
+    "c1c0d9df-39db-4937-98ca-ae4b3080f22d": "ilrank-marist-maxpreps-led.png",
+    "c1e9d084-4084-48d3-9c1e-566aebd07966": "mpbb-greenfield-maxpreps-led.png",
+    "c27d77eb-c339-4d93-b9a0-7da09d24dcb6": "ilfull-streator-c27d77eb-maxpreps-led.png",
+    "c2ba6739-1a80-4715-877e-330f8cff687e": "ilfull-saint-viator-c2ba6739-maxpreps-led.png",
+    "c2e2a726-f196-41eb-ba78-42f21b415cc3": "ilfull-lane-tech-c2e2a726-maxpreps-led.png",
+    "c2e8711a-25ca-4802-bf2c-7edad087024c": "scrank26-dutch-fork-maxpreps-led.png",
+    "c32883e8-8c23-41a7-ba1f-443d77476e52": "ilfull-yorkville-c32883e8-maxpreps-led.png",
+    "c3396b7b-1ca4-49a4-9b74-42635789b349": "ilfull-taft-c3396b7b-maxpreps-led.png",
+    "c3a1fb79-6a09-43b5-bb3e-3816765071ba": "ilrank-benet-academy-maxpreps-led.png",
+    "c478a343-26b3-4f05-a455-561f502fc555": "ilfull-king-c478a343-maxpreps-led.png",
+    "c4d434ff-0d7d-418d-9aa4-d5d01b27904c": "ilfull-plainfield-east-c4d434ff-maxpreps-led.png",
+    "c4fafe04-319c-4460-8ca6-13309eb4b797": "azfull-millennium-maxpreps-led.png",
+    "c510b298-3a73-4bcf-8855-96c998d8e26e": "cafbrank26-de-la-salle-maxpreps-led.png",
+    "c536a972-5365-4c80-ab29-2ce91a9394ef": "ilfull-bloom-c536a972-maxpreps-led.png",
+    "c5a22c7b-ff61-416b-be5d-f18948147988": "alrank26-hoover-maxpreps-led.png",
+    "c5cfcc02-c426-4b72-bd90-59778fbc5cb9": "ilfull-plainfield-north-c5cfcc02-maxpreps-led.png",
+    "c5db9360-c048-47d4-932e-7b3e4527c58d": "ilfull-harvard-c5db9360-maxpreps-led.png",
+    "c5eec975-6440-4d2b-90b6-0f95f30e660f": "state75-fl-jesuit-c5eec975.png",
+    "c701cb2b-db0d-4a3f-9978-15204047e02a": "ilfull-richards-c701cb2b-maxpreps-led.png",
+    "c8ed91a6-ea6b-493b-9dae-d38a923813e3": "ilfull-south-elgin-c8ed91a6-maxpreps-led.png",
+    "ca0b0d42-79fb-497f-9390-f455841aba2b": "allrank26-tn-football-mccallie-maxpreps-led.png",
+    "ca1351c9-d4b1-457c-8455-dda31db02068": "ilrank-depaul-college-prep-maxpreps-led.png",
+    "cad47593-7fa7-43d8-a44f-6630c45c7e85": "ilfull-naperville-north-cad47593-maxpreps-led.png",
+    "cb3e2346-78ff-4642-9bdb-ff0eb37c96d9": "alfbrank26-saraland-maxpreps-led.png",
+    "cb6b4306-0c19-4e46-83be-2988ac41839c": "ilfull-zion-benton-cb6b4306-maxpreps-led.png",
+    "cc8e379e-b7ff-4e3c-88e2-b14a1fab15dc": "ilfull-jacobs-cc8e379e-maxpreps-led.png",
+    "cd1220cf-675d-4f28-ae3d-48b1b7b46b52": "ilrank-kenwood-maxpreps-led.png",
+    "cdb0ecd6-a58d-46b4-ab90-9519c57fa11a": "ilfull-grayslake-central-cdb0ecd6-maxpreps-led.png",
+    "ce6bf9a5-533a-42e7-a81d-a972528facfb": "ilrank26-kankakee-maxpreps-led.png",
+    "ce761b2f-028c-481a-97af-35c7fd539fd5": "ilrank-brother-rice-maxpreps-led.png",
+    "cea9671e-4023-4b39-8c55-1a7b7750f5bb": "allrank26-la-football-catholic-maxpreps-led.png",
+    "ceae31e6-bcbb-4762-8063-3f569621e5b2": "cafbrank26-pittsburg-maxpreps-led.png",
+    "ced6f619-aeea-47a5-8c4a-6dec39a6c1b2": "ncfull-northside-christian-academy-maxpreps-led.png",
+    "cedf40bb-c2d1-481d-b054-1ff44916f569": "ncfull-riverside-durham-cedf40bb-maxpreps-led.png",
+    "cfedd35b-8252-4b69-948f-3a2318cdce69": "parank26-roman-catholic-maxpreps-led.png",
+    "d024c9ee-9aa0-4d9c-9d57-9c3256a4d448": "ilfull-geneseo-d024c9ee-maxpreps-led.png",
+    "d063f9a6-4493-436d-b1c8-0a64582ba9c3": "state75-ca-serra-d063f9a6.png",
+    "d07bd2a4-115f-40fc-852f-612c908497eb": "gafbrank26-newton-maxpreps-led.png",
+    "d0bab777-e7aa-4d71-a0ec-2d78a1a3eb9a": "ilfbrank26-maine-south-maxpreps-led.png",
+    "d0cb43d1-98fc-4f0a-8d6e-3ec2cd944ce7": "providence-day-maxpreps-led.png",
+    "d1b36908-99b6-476b-9324-6cd4a2873dbf": "ncfbrank26-mallard-creek-maxpreps-led.png",
+    "d1d449ab-63d2-48a8-98cd-272ae2713678": "ncfull-lumberton-d1d449ab-maxpreps-led.png",
+    "d1ded3d1-2ebc-4b4b-94f2-e397086569eb": "wafull-rainier-beach-maxpreps-led.png",
+    "d39c723c-ce7f-410e-95ae-35c156df0211": "cafull-roosevelt-eastvale-maxpreps-led.png",
+    "d3b01030-262c-46ec-a2db-245d2a692c6e": "ilfull-prosser-d3b01030-maxpreps-led.png",
+    "d40e7b97-a22b-4d37-aa76-d9f359fb2369": "ilfull-west-aurora-d40e7b97-maxpreps-led.png",
+    "d5eafa92-8095-47bb-b8b4-b21e34ff5795": "south-mecklenburg-maxpreps-led.png",
+    "d64cce4c-1061-432a-af8c-45f36a5ac886": "ilfull-kennedy-d64cce4c-maxpreps-led.png",
+    "d653bc44-6da5-47a5-a459-3d7dfd6acec6": "shgsp-macarthur-maxpreps-led.png",
+    "d65760f0-9fc5-4b96-9d7f-07cc26c65035": "ncfull-pinecrest-d65760f0-maxpreps-led.png",
+    "d6853cda-ddec-40fe-b9f3-69a225fc226a": "ilfull-libertyville-d6853cda-maxpreps-led.png",
+    "d6f4b19b-0fa4-4567-b38e-4f19996fe38d": "njrank26-st-peter-s-prep-maxpreps-led.png",
+    "d74071bd-dfc9-418d-8fb5-a24bffcaa5fa": "flfbrank26-american-heritage-maxpreps-led.png",
+    "d8a4a95c-b21d-437d-ac0b-180404d44748": "ilfull-maine-west-d8a4a95c-maxpreps-led.png",
+    "d9010791-3f42-4626-ad97-07832288098f": "ilfull-niles-west-d9010791-maxpreps-led.png",
+    "d94ada9c-b1f8-47cd-8ad8-6c56dd34f594": "ilfull-lasalle-peru-d94ada9c-maxpreps-led.png",
+    "d99d2134-1239-44bf-ada0-a897bd1e3299": "ilrank26-fremd-maxpreps-led.png",
+    "d9a7256e-f562-4b75-b37f-388c44a41061": "ilrank26-richwoods-maxpreps-led.png",
+    "db5d3c58-497c-41c8-8e45-2f289237ba3f": "ilfbrank26-glenbard-west-maxpreps-led.png",
+    "dbe44b91-13a1-4d0d-8f57-09791381aaca": "txfull-tomball-maxpreps-led.png",
+    "ddbd1c40-0a66-4ea1-8b8b-a1e7660aa2fa": "ilfull-central-ddbd1c40-maxpreps-led.png",
+    "de6f3056-8b06-4f72-8a53-83cd06b87e47": "gafbrank26-colquitt-county-maxpreps-led.png",
+    "df873a7d-0414-494e-b494-c46ec69e19e8": "ilfull-riverside-brookfield-df873a7d-maxpreps-led.png",
+    "df9b4a57-70a5-4621-98db-b2866d6d8d0e": "ilfull-metea-valley-df9b4a57-maxpreps-led.png",
+    "dfa8c779-3d94-48eb-ad8e-138f9a88b053": "weddington-maxpreps-led.png",
+    "e095cff2-1a68-48bf-a8cb-7c85ea824e67": "allrank26-tx-football-lake-travis-maxpreps-led.png",
+    "e15ab772-fb9c-441a-ab66-8967b1d719ab": "flrank26-montverde-academy-maxpreps-led.png",
+    "e1f254b5-cab3-48d7-8fe3-e49db955b0ea": "inrank26-lawrence-north-maxpreps-led.png",
+    "e2708027-e41b-4746-8cfc-8a631ea3fd4c": "njrank26-don-bosco-prep-maxpreps-led.png",
+    "e2961dab-9926-49a8-8cfd-881ec979c694": "ilfull-glenbard-south-e2961dab-maxpreps-led.png",
+    "e298cc8c-781c-48cf-b430-31a02d6e7c81": "ilfull-addison-trail-e298cc8c-maxpreps-led.png",
+    "e29ceb1b-1a46-4a71-9921-10399f4b39a9": "rochester-maxpreps-led.png",
+    "e372bc25-b5c1-4c9a-ad82-6bac6c618767": "garank26-milton-maxpreps-led.png",
+    "e48b52c8-cccb-4f26-9e8c-c223bc02b0bb": "ncfull-west-cabarrus-e48b52c8-maxpreps-led.png",
+    "e66da994-ce62-4876-bdcf-939d2c510dfd": "ilfull-tinley-park-e66da994-maxpreps-led.png",
+    "e6ce254d-240b-4081-a66e-26e1ced9a095": "pafbrank26-st-joseph-s-prep-maxpreps-led.png",
+    "e6db1bc3-d49a-4c73-9bf8-67ad4dcbb916": "azfull-sunnyslope-maxpreps-led.png",
+    "e7903dfb-37a9-4b3b-af93-19f0569f5114": "top25-west-boca-raton-maxpreps-led.png",
+    "e7c2b64b-af69-47e7-8d2e-9652f0d558db": "shgbb-alton-maxpreps-led.png",
+    "e83d5a99-e5ca-4c28-ae36-5a1197811dc2": "garank26-woodward-academy-maxpreps-led.png",
+    "e87990d5-7d6c-41e6-a5dd-cd9c9be1871c": "ilfull-stagg-e87990d5-maxpreps-led.png",
+    "e92bec43-0399-494d-9870-544107733147": "ilfull-proviso-east-e92bec43-maxpreps-led.png",
+    "e9f17e46-e873-4c29-b0f4-9aaca0f86980": "ilrank26-kaneland-maxpreps-led.png",
+    "ea81d3e5-b4ae-4673-afda-207b10865ffe": "carank26-archbishop-riordan-maxpreps-led.png",
+    "eaaa9926-67ec-4327-a36c-62d73a8a0535": "ncfull-topsail-eaaa9926-maxpreps-led.png",
+    "eb2bf703-6a16-4895-b4c4-f623938f5976": "njfbrank26-camden-maxpreps-led.png",
+    "eb5169e2-c29d-4493-87e7-a462003a90d2": "ilfull-lake-view-eb5169e2-maxpreps-led.png",
+    "eb9891a7-b1a1-4a32-b361-5e2912e8696d": "txfull-katy-maxpreps-led.png",
+    "ebb81bec-bb5e-4806-b418-2536b760578c": "top25-east-st-louis-maxpreps-led.png",
+    "ebbf7267-e629-40cf-96c7-415f8cb1a4dd": "ilfull-normal-west-ebbf7267-maxpreps-led.png",
+    "ec00d511-6c9c-47c8-92e7-eb4fcc9fc46d": "gafbrank26-lowndes-maxpreps-led.png",
+    "ec153e52-8afe-46b5-9d75-7f8d5b699ec0": "ilfull-limestone-user-supplied-led.png",
+    "eca1cfd5-0574-4ae8-a736-58ac4768dfa5": "ilfbrank26-carmel-maxpreps-led.png",
+    "eca511c2-c388-4347-a805-a58378dd89ee": "lanphier-maxpreps-led.png",
+    "eeb9dda9-df8e-4211-9202-eeafea166655": "ncrank26-davidson-day-maxpreps-led.png",
+    "ef8e07f3-264e-4e30-bf15-49fb433bea02": "ncfull-purnell-swett-ef8e07f3-maxpreps-led.png",
+    "f0201d4a-ff3a-4cbc-88a9-b38d742b93b1": "ilfull-mundelein-f0201d4a-maxpreps-led.png",
+    "f051aa65-cc12-479d-9b7c-8ee8eadd1405": "top25-carol-city-maxpreps-led.png",
+    "f0d82e69-dabf-44e0-a131-32581fac97dc": "allrank26-md-football-dematha-maxpreps-led.png",
+    "f11e80d5-6129-4ca3-a64b-494007c79230": "ilrank-neuqua-valley-maxpreps-led.png",
+    "f1b401aa-9e9e-401f-ba6a-5e53cfae0c68": "ilfull-east-moline-united-f1b401aa-maxpreps-led.png",
+    "f1bb5b85-e938-4368-b146-6d7ae5cfd51f": "garank26-grayson-maxpreps-led.png",
+    "f21ab906-7c35-4785-975e-99f793ca49e6": "ilfull-ridgewood-f21ab906-maxpreps-led.png",
+    "f2548e90-ae2d-4833-89f8-b267d9b316fe": "natrank26-north-crowley-maxpreps-led.png",
+    "f26565c0-0ea0-4818-aa4c-c09863b7eac6": "allrank26-tx-football-aledo-maxpreps-led.png",
+    "f2817fc5-bc7b-41b4-8357-4614b74fea2b": "providence-maxpreps-led.png",
+    "f32d5118-e31c-4934-9439-7a064c64e010": "ilfull-deerfield-f32d5118-maxpreps-led.png",
+    "f48fee58-22a3-4128-b89b-b9cdfb12d563": "ilfull-glenbard-north-f48fee58-maxpreps-led.png",
+    "f539f96f-4c47-4602-850a-b10a493e4600": "mp-apex-friendship-maxpreps-led.png",
+    "f55981a3-76ac-4070-811c-2132dc209af4": "allrank26-la-football-john-curtis-christian-maxpreps-led.png",
+    "f609f271-97c9-4af9-bda1-b4250bb3f146": "carank26-folsom-maxpreps-led.png",
+    "f659f4d0-4d7d-4c22-9a00-2ff6b7a1ff5a": "charlotte-country-day-maxpreps-led.png",
+    "f737e3fc-86e4-42e0-a341-f37c870dc0fc": "ilfull-brooks-f737e3fc-maxpreps-led.png",
+    "f7f28f64-f921-47ae-a443-b8ae1016df79": "top25-chandler-maxpreps-led.png",
+    "f80db136-2ddf-4840-8835-c02f4785634d": "varank26-oak-hill-academy-maxpreps-led.png",
+    "f81b142f-c15e-4d43-95dc-2e2511852144": "ilfull-charleston-f81b142f-maxpreps-led.png",
+    "f89f8688-0fd5-42e7-ab82-ac610a72d8d2": "ncfull-willow-spring-f89f8688-maxpreps-led.png",
+    "f8b05584-4d10-4f11-98e8-b2e72f4d2e8d": "ncrank25-sanderson-maxpreps-led.png",
+    "f96cacba-88b2-419a-9b6a-80d97d42c4f4": "ohrank26-princeton-maxpreps-led.png",
+    "fa5b36ae-8c09-472b-8688-331ecffaf41f": "ilfull-sterling-fa5b36ae-maxpreps-led.png",
+    "fa67a40c-5261-46c2-9db1-631b71b38334": "allrank26-md-football-archbishop-spalding-maxpreps-led.png",
+    "fa778a49-bb64-4415-9712-7c5b243e60c4": "ncfbrank26-page-maxpreps-led.png",
+    "faeba65a-b48a-4854-aa0e-729c8811011d": "ilfull-thornton-faeba65a-maxpreps-led.png",
+    "fb1617a8-733a-4f13-823b-02504258f0e4": "ncfull-fuquay-varina-fb1617a8-maxpreps-led.png",
+    "fb32d076-498e-4353-bcf3-6e384a1b6091": "txfull-kimball-maxpreps-led.png",
+    "fbce2bd4-14b1-4d70-affe-b7d2d746a418": "allrank26-tx-football-southlake-carroll-maxpreps-led.png",
+    "fc21b1c1-3ce1-48fa-a95f-ea23c93cb2e2": "ilfull-leo-fc21b1c1-maxpreps-led.png",
+    "fc679173-a6eb-4a31-b130-f5e9d7ea2183": "ohfbrank26-archbishop-hoban-maxpreps-led.png",
+    "fcb7761e-7e74-47a1-adec-5a79026a6d8e": "ilfull-mattoon-fcb7761e-maxpreps-led.png",
+    "fcbe2ee5-0c01-409a-858e-6ccca19f49a9": "alfbrank26-auburn-maxpreps-led.png",
+    "fd85c43e-1a06-49c8-a805-b2c8fe9588ed": "top25-thompson-maxpreps-led.png",
+    "fe8fd7bf-64e4-47ea-a587-435bd50551bd": "njrank26-roselle-catholic-maxpreps-led.png",
+    "fed1227f-9b47-4a57-91d9-9aceacbddf31": "ncrank26-north-mecklenburg-maxpreps-led.png",
+    "ff01485d-657b-4d1f-be20-3e8e666d4d3e": "edwbb-mascoutah-maxpreps-led.png",
+    "ff429903-681b-4ad1-abd7-356a7492395e": "top25-santa-margarita-maxpreps-led.png",
+    "fffd75cb-8399-40ed-91b3-96f77700c51d": "top25-brownsburg-maxpreps-led.png",
+}
+
+def team_logo(code, game, side):
+    if game != None:
+        school_id = game.get(side + "SchoolId")
+        if school_id != None:
+            bundled = BUNDLED_LOGOS_BY_ID.get(str(school_id).lower())
+            if bundled != None:
+                return bundled
+    logo = _team_logo_all(code, game, side)
+    if logo in BUNDLED_LOGOS:
+        return logo
+    return None
+
 def team_logo_size(logo, large = False):
     # Every logo asset is normalized onto the same transparent canvas after
     # being cropped to its visible artwork. Rendering the complete canvas
     # preserves each mascot's natural proportions while giving wide, square,
     # and narrow marks the same available identity area.
     if logo == "shg-maxpreps-led-v5.png":
-        return [29, 23] if large else [16, 12]
-    return [40, 23] if large else [20, 11]
+        return [29, 22] if large else [16, 12]
+    if logo == "ilfull-limestone-user-supplied-led.png":
+        return [25, 22] if large else [13, 11]
+    if logo == "gafull-loganville-school-led.png":
+        return [38, 22] if large else [19, 11]
+    if logo == "ilfull-hinsdale-central-school-led.png":
+        return [19, 22] if large else [10, 11]
+    return [40, 22] if large else [20, 11]
 
 def badge_letters(code):
     value = str(code).upper()
@@ -15387,32 +16346,9 @@ def scoreboard_school(c, ctx):
         draw_empty(c, "OFFSEASON", "#d8b04a")
         return
     g = fetch_game_adaptive(ctx, "dynamic", "school")
-    # Exact-game live responses may contain scores and status but omit every
-    # schedule/date field. Preserve the configured game URL so the header can
-    # recover its M-D-YYYY path segment during Live rendering.
-    if g != None and (g.get("gameUrl") == None or str(g.get("gameUrl")).strip() == ""):
-        configured_game_url = schools.get("maxpreps_url")
-        if configured_game_url != None and str(configured_game_url).strip() != "":
-            g["gameUrl"] = configured_game_url
-    # Populate `when` here as well, before presentation begins. This avoids
-    # relying on the live payload to carry schedule metadata through each
-    # exact-game refresh.
-    if g != None and str(g.get("when", "")).strip() == "":
-        configured_game_url = str(schools.get("maxpreps_url", ""))
-        for segment in configured_game_url.split("/"):
-            pieces = segment.split("-")
-            if len(pieces) == 3 and len(pieces[2]) == 4 and pieces[0].isdigit() and pieces[1].isdigit() and pieces[2].isdigit():
-                year = int(pieces[2])
-                month = int(pieces[0])
-                day = int(pieces[1])
-                weekday = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][weekday_for_date(year, month, day)]
-                g["when"] = weekday + " " + str(month) + "/" + str(day)
-                break
     state = g.get("displayState")
     if state == "key_error":
         draw_empty(c, "KEY ERROR", "#ff3b30")
-    elif state == "no_credits":
-        draw_empty(c, "NO CREDITS", "#ff3b30")
     elif state == "url_error":
         draw_empty(c, "URL ERROR", "#ff3b30")
     elif state == "school_error":
@@ -15425,44 +16361,11 @@ def scoreboard_school(c, ctx):
         draw_final(c, g)
     else:
         draw_next(c, g)
-    # Remove the continuous outside outline while keeping every internal
-    # divider connected cleanly to the top, bottom, and sides.
-    away = team_info(g.get("away", "TBD"), g, "away")
-    home = team_info(g.get("home", "TBD"), g, "home")
-    away_logo = team_logo(g.get("away", "TBD"), g, "away")
-    home_logo = team_logo(g.get("home", "TBD"), g, "home")
-    c.hline(0, 0, 95, FILL_COLOR)
-    c.hline(95, 0, 97, STAT_FILL_COLOR)
-    if away_logo == None:
-        c.hline(0, 31, 48, away["color"])
-    if home_logo == None:
-        c.hline(48, 31, 48, home["color"])
-    c.hline(96, 31, 96, STAT_FILL_COLOR)
-    c.vline(0, 0, 32, FILL_COLOR)
-    # Close the rightmost score cells with a visible divider instead of the
-    # panel fill, which left the score box visually open on Live games.
-    c.vline(191, 0, 32, STAT_DIVIDER_COLOR)
-    c.vline(0, 9, 23, "black" if away_logo != None else away["color"])
-    c.hline(95, 16, 97, STAT_FILL_COLOR)
-    if g.get("status") != "live" and g.get("status") != "final" and g.get("type") != "final":
-        redraw_stat_labels(c, g)
-    # Restore junction pixels at the dividers that belong to the layout that
-    # was actually drawn. Reusing the Next-grid positions over a live game
-    # left stray/broken lines through its detail, abbreviation, and score
-    # columns.
-    if g.get("status") == "live":
-        divider_positions = [95, 141, 165]
-    elif g.get("type") == "final" or g.get("status") == "final":
-        divider_positions = [95, 119, 132, 145, 158, 171]
-    else:
-        divider_positions = [95, 118, 143, 168]
-    for divider_x in divider_positions:
-        c.pixel(divider_x, 16, STAT_DIVIDER_COLOR)
-        c.pixel(divider_x, 0, STAT_DIVIDER_COLOR)
-        c.pixel(divider_x, 31, STAT_DIVIDER_COLOR)
-    c.pixel(191, 15, STAT_DIVIDER_COLOR)
-    c.pixel(191, 16, STAT_DIVIDER_COLOR)
-    c.pixel(0, 8, BOX_COLOR)
+    # Logos are intentionally allowed to use their full natural footprint, but
+    # they must never paint over the scoreboard's outside frame. Restore the
+    # far-left edge last so it remains visible from the identity/logo area to
+    # the bottom in Next, Live, and Final.
+    c.line(0, 8, 0, 31, BOX_COLOR)
 
 # ---------------------------------------------------------------------------
 # Restored logo-matchup presentation (v0.13.6)
@@ -15478,8 +16381,8 @@ RESTORED_AWAY_ABBR = {"x": 141, "y": 0, "w": 24, "h": 15}
 RESTORED_AWAY_VALUE = {"x": 165, "y": 0, "w": 26, "h": 15}
 RESTORED_HOME_ABBR = {"x": 141, "y": 16, "w": 24, "h": 15}
 RESTORED_HOME_VALUE = {"x": 165, "y": 16, "w": 26, "h": 15}
-NEXT_AWAY_ABBR = {"x": 95, "y": 0, "w": 23, "h": 15}
-NEXT_HOME_ABBR = {"x": 95, "y": 16, "w": 23, "h": 15}
+NEXT_AWAY_ABBR = {"x": 95, "y": 0, "w": 24, "h": 15}
+NEXT_HOME_ABBR = {"x": 95, "y": 16, "w": 24, "h": 15}
 NEXT_AWAY_STATS = {"x": 119, "y": 0, "w": 72, "h": 15}
 NEXT_HOME_STATS = {"x": 119, "y": 16, "w": 72, "h": 15}
 FINAL_AWAY_ABBR = {"x": 95, "y": 0, "w": 24, "h": 15}
@@ -15506,32 +16409,7 @@ def restored_header(c, g):
     c.rect(1, 8, 94, 8, fill = "white")
     sport_text = SPORT_HEADER.get(g.get("sport", "FB"), g.get("sport", "FB"))
     c.text(sport_text, 2, 2, font = "4x5", color = STATUS_BAR_TEXT)
-    when = str(g.get("when", "")).strip()
-    # Some live Scoretracker responses omit the display-ready `when` field
-    # even though the scheduled date remains available. Reconstruct the
-    # header date from that preserved source so switching Next -> Live never
-    # makes the date disappear.
-    if when == "":
-        raw_date = g.get("sortDate", g.get("date"))
-        if raw_date == None or str(raw_date).strip() == "":
-            raw_date = g.get("gameDate", g.get("game_date"))
-        date_info = parse_game_date(raw_date)
-        # The live Scoretracker payload can omit all schedule date fields,
-        # while retaining the canonical MaxPreps URL. Its path contains the
-        # scheduled date as M-D-YYYY; recover that compactly for the header.
-        if date_info == None:
-            game_url = str(g.get("gameUrl", g.get("game_url", "")))
-            for segment in game_url.split("/"):
-                pieces = segment.split("-")
-                if len(pieces) == 3 and len(pieces[2]) == 4 and pieces[0].isdigit() and pieces[1].isdigit() and pieces[2].isdigit():
-                    raw_date = pieces[2] + "-" + pieces[0] + "-" + pieces[1] + " 00:00"
-                    date_info = parse_game_date(raw_date)
-                    break
-        if date_info != None:
-            weekday = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][
-                weekday_for_date(date_info["year"], date_info["month"], date_info["day"])
-            ]
-            when = weekday + " " + str(date_info["month"]) + "/" + str(date_info["day"])
+    when = str(g.get("when", ""))
     parts = when.split(" ")
     day_text = ""
     calendar_text = ""
@@ -15651,14 +16529,14 @@ def restored_identity(c, team, code, g, side, x, w):
     if logo != None:
         # Keep real logo artwork on the neutral panel background. Text-only
         # identities retain the school-color fill below.
-        c.rect(x, 9, x + w - 1, 31, fill = "black")
+        c.rect(x, 9, x + w - 1, 30, fill = FILL_COLOR)
         logo_size = team_logo_size(logo, True)
         logo_w = logo_size[0]
         logo_h = logo_size[1]
         logo_y = 9
         c.image(logo, x + (w - logo_w) // 2, logo_y, w = logo_w, h = logo_h)
         return
-    c.rect(x, 9, x + w - 1, 31, fill = team["color"])
+    c.rect(x, 9, x + w - 1, 30, fill = team["color"])
     mascot = g.get(side + "Mascot")
     mascot_style = restored_mascot_style(mascot)
     text_color = identity_text_color(team)
@@ -15708,23 +16586,22 @@ def restored_matchup(c, g):
     # Draw the header last so the full-size artwork runs underneath it and is
     # cleanly covered rather than rescaled or allowed to overlap header text.
     restored_header(c, g)
-    # Identity artwork is intentionally allowed to use the bottom row.
+    # Restore the outer bottom edge after drawing full-size logos so artwork
+    # is clipped behind the frame instead of covering its outline.
+    c.hline(31, 0, 95, BOX_COLOR)
 
 def restored_abbreviation(c, team, code, record, box):
     letters = badge_letters(code)[:3]
-    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+    draw_box(c, box["x"], box["y"], box["w"], box["h"])
     color = team["color"]
     if is_whiteish(color) or is_darkish(color):
         color = TEAM_COLOR_FALLBACK
-    # draw_box includes both edge pixels, so the visual midpoint is based on
-    # w + 1. Anchor both lines to that same exact horizontal center.
-    center_x = box["x"] + (box["w"] + 1) // 2
-    c.text(letters, center_x, box["y"] + 1, font = "6x8", color = color, align = "center")
-    c.text(record, center_x, box["y"] + 10, font = "4x5", color = "white", align = "center")
+    restored_center_text(c, letters, box["x"], box["y"] + 1, box["w"], "6x8", color)
+    restored_center_text(c, record, box["x"], box["y"] + 10, box["w"], "4x5", "white")
 
-def restored_value(c, value, box, color = "white", font = "7x12"):
-    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
-    restored_center_text(c, value, box["x"], box["y"] + 4, box["w"], font, color)
+def restored_value(c, value, box, color = "white"):
+    draw_box(c, box["x"], box["y"], box["w"], box["h"])
+    restored_center_text(c, value, box["x"], box["y"] + 4, box["w"], "7x12", color)
 
 def restored_period(period):
     if period == None:
@@ -15803,11 +16680,8 @@ def compact_unix_time(unix, display_timezone):
     return str(display_hour) + ":" + pad2(local_time["minute"]) + suffix
 
 def restored_detail(c, g):
-    draw_box(c, DETAIL_BOX["x"], DETAIL_BOX["y"], DETAIL_BOX["w"], DETAIL_BOX["h"], STAT_DIVIDER_COLOR)
+    draw_box(c, DETAIL_BOX["x"], DETAIL_BOX["y"], DETAIL_BOX["w"], DETAIL_BOX["h"])
     center = DETAIL_BOX["x"] + DETAIL_BOX["w"] // 2
-    if g.get("finalPending", False):
-        c.text("F PEN", center, 13, font = "4x5", color = "#d8b04a", align = "center")
-        return
     if g.get("type") == "final" or g.get("status") == "final":
         return
     if g.get("status") in ["delayed", "postponed", "delay", "pp"]:
@@ -15820,28 +16694,12 @@ def restored_detail(c, g):
         clock = str(g.get("liveClock", "")).strip().upper()
         if clock == "NONE" or clock == "NULL":
             clock = ""
-        approximate_clock = clock.startswith("~")
-        if approximate_clock:
-            clock = clock[1:].strip()
         if period.startswith("OT"):
             period = ""
         if period != "":
             c.text(period, center, 7, font = "4x5", color = "white", align = "center")
         if clock != "":
-            clock_y = 18 if period != "" else 13
-            if approximate_clock:
-                # The bundled pixel fonts do not contain a tilde glyph, so
-                # draw a compact one explicitly and center it with the clock.
-                clock_width = len(clock) * 5 - 1
-                group_width = clock_width + 5
-                group_x = center - group_width // 2
-                c.pixel(group_x, clock_y + 2, "white")
-                c.pixel(group_x + 1, clock_y + 1, "white")
-                c.pixel(group_x + 2, clock_y + 1, "white")
-                c.pixel(group_x + 3, clock_y + 2, "white")
-                c.text(clock, group_x + 5, clock_y, font = "4x5", color = "white")
-            else:
-                c.text(clock, center, clock_y, font = "4x5", color = "white", align = "center")
+            c.text(clock, center, 18 if period != "" else 13, font = "4x5", color = "white", align = "center")
         # Once Parse has returned an actual live score or period, the detail
         # box should stay focused on game state instead of showing a redundant
         # scorekeeper update timestamp. Keep UPDATED only as a fallback when
@@ -15917,14 +16775,12 @@ def restored_frame(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
-    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     restored_detail(c, g)
 
 def draw_final(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
-    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     away = team_info(g["away"], g, "away")
     home = team_info(g["home"], g, "home")
     restored_abbreviation(c, away, g["away"], g.get("awayRecord", "0-0"), FINAL_AWAY_ABBR)
@@ -15939,18 +16795,17 @@ def draw_final(c, g):
     else:
         restored_quarter_row(c, g.get("awayQuarters", ["-", "-", "-", "-"]), 0)
         restored_quarter_row(c, g.get("homeQuarters", ["-", "-", "-", "-"]), 16)
-        restored_value(c, str(g.get("awayScore", "-")), FINAL_AWAY_VALUE, "green" if g.get("winner") == "away" else "white", "6x8")
-        restored_value(c, str(g.get("homeScore", "-")), FINAL_HOME_VALUE, "green" if g.get("winner") == "home" else "white", "6x8")
+        restored_value(c, str(g.get("awayScore", "-")), FINAL_AWAY_VALUE, "green" if g.get("winner") == "away" else "white")
+        restored_value(c, str(g.get("homeScore", "-")), FINAL_HOME_VALUE, "green" if g.get("winner") == "home" else "white")
 
 def restored_three_stat_final(c, g, suffixes):
     for row in range(2):
         side = "away" if row == 0 else "home"
         y = 0 if row == 0 else 16
         values = [g.get(side + suffixes[0], g.get(side + "Score", "-")), g.get(side + suffixes[1], "-"), g.get(side + suffixes[2], "-")]
-        stat_boxes = [{"x": 117, "w": 24}, {"x": 143, "w": 24}, {"x": 167, "w": 24}]
         for index in range(3):
-            box = {"x": stat_boxes[index]["x"], "y": y, "w": stat_boxes[index]["w"], "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+            box = {"x": 117 if index == 0 else 143 + (index - 1) * 24, "y": y, "w": 26 if index == 0 else 24, "h": 15}
+            draw_box(c, box["x"], box["y"], box["w"], box["h"])
             color = "green" if index == 0 and g.get("winner") == side else "white"
             restored_center_text(c, values[index], box["x"] + 5, box["y"] + 4, box["w"] - 5, "5x7", color)
     labels = ["R", "H", "E"]
@@ -15964,10 +16819,10 @@ def restored_volleyball_final(c, g):
         sets = g.get(side + "Sets", ["-", "-", "-", "-", "-"])
         for index in range(5):
             box = {"x": 119 + index * 10, "y": y, "w": 10, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+            draw_box(c, box["x"], box["y"], box["w"], box["h"])
             restored_center_text(c, sets[index] if index < len(sets) else "-", box["x"], box["y"] + 5, box["w"], "3x7", "white")
         total_box = {"x": 169, "y": y, "w": 22, "h": 15}
-        draw_box(c, total_box["x"], total_box["y"], total_box["w"], total_box["h"], STAT_DIVIDER_COLOR)
+        draw_box(c, total_box["x"], total_box["y"], total_box["w"], total_box["h"])
         total = g.get(side + "SetsWon", g.get(side + "Score", "-"))
         restored_center_text(c, total, total_box["x"], total_box["y"] + 4, total_box["w"], "7x12", "green" if g.get("winner") == side else "white")
 
@@ -15978,15 +16833,15 @@ def restored_soccer_final(c, g):
         halves = g.get(side + "Halves", ["-", "-"])
         values = [halves[0] if len(halves) > 0 else "-", halves[1] if len(halves) > 1 else "-", g.get(side + "Score", "-")]
         for index in range(3):
-            box = {"x": 117 if index == 0 else 143 + (index - 1) * 24, "y": y, "w": 26 if index == 0 else 24, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+            box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
+            draw_box(c, box["x"], box["y"], box["w"], box["h"])
             color = "green" if index == 2 and g.get("winner") == side else "white"
             restored_center_text(c, str(values[index]), box["x"], box["y"] + 4, box["w"], "5x7" if index < 2 else "7x12", color)
 
 def restored_quarter_row(c, scores, y):
     for index in range(4):
         box = {"x": 119 + index * 13, "y": y, "w": 13, "h": 15}
-        draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+        draw_box(c, box["x"], box["y"], box["w"], box["h"])
         score = scores[index] if index < len(scores) else "-"
         restored_center_text(c, score, box["x"], box["y"] + 5, box["w"], "3x7", "white")
 
@@ -15995,7 +16850,6 @@ def draw_next(c, g):
         c.fill(FILL_COLOR)
         draw_box(c, 0, 0, 191, 31)
         restored_matchup(c, g)
-        c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
         away = team_info(g["away"], g, "away")
         home = team_info(g["home"], g, "home")
         restored_abbreviation(c, away, g["away"], g.get("awayRecord", "0-0"), NEXT_AWAY_ABBR)
@@ -16019,11 +16873,10 @@ def restored_volleyball_live(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
-    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     away = team_info(g["away"], g, "away")
     home = team_info(g["home"], g, "home")
     detail = {"x": 95, "y": 0, "w": 34, "h": 31}
-    draw_box(c, detail["x"], detail["y"], detail["w"], detail["h"], STAT_DIVIDER_COLOR)
+    draw_box(c, detail["x"], detail["y"], detail["w"], detail["h"])
     set_number = restored_period(g.get("livePeriod")).replace("Q", "")
     c.text("SET", 112, 5, font = "5x7", color = "white", align = "center")
     c.text(set_number if set_number != "" else "1", 112, 16, font = "7x12", color = "white", align = "center")
@@ -16041,7 +16894,7 @@ def restored_volleyball_live(c, g):
     restored_value(c, str(g.get("homeSetsWon", "0")), home_sets)
 
 def restored_small_value(c, value, box):
-    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+    draw_box(c, box["x"], box["y"], box["w"], box["h"])
     restored_center_text(c, value, box["x"], box["y"] + 5, box["w"], "5x7", "white")
 
 def restored_stats_grid(c, g):
@@ -16053,16 +16906,13 @@ def restored_stats_grid(c, g):
         y = 0 if row == 0 else 16
         values = [g.get(side + keys[0], "-"), g.get(side + keys[1], "-"), g.get(side + keys[2], "-")]
         for index in range(3):
-            stat_boxes = [{"x": 118, "w": 25}, {"x": 143, "w": 25}, {"x": 168, "w": 23}]
-            box = {"x": stat_boxes[index]["x"], "y": y, "w": stat_boxes[index]["w"], "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+            box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
+            draw_box(c, box["x"], box["y"], box["w"], box["h"])
             value_color = "green" if stat_leader(g, side, index) else "white"
             value_y = box["y"] + 4
-            # Use the approved bold, tightly spaced treatment consistently
-            # across every stat cell and both team rows.
-            restored_tight_stat_value(c, values[index] if values[index] != None else "-", box["x"] + 4, value_y, 20, value_color, index == 2, index < 2, index < 2)
+            restored_tight_stat_value(c, values[index] if values[index] != None else "-", box["x"] + 4, value_y, 20, value_color, index == 2, index < 2)
     for index in range(3):
-        border_x = [118, 143, 168][index]
+        border_x = 119 + index * 24
         label = labels[index]
         font = "3x4"
         advance = 5
@@ -16072,19 +16922,7 @@ def restored_stats_grid(c, g):
         for char_index in range(len(label)):
             c.text(label[char_index], x, y + char_index * advance, font = font, color = "#aeb8c4")
 
-def redraw_stat_labels(c, g):
-    # The perimeter/divider cleanup crosses the vertically stacked labels at
-    # y=16, so restore them last to keep PPG/PAPG/STRK (and sport variants)
-    # fully legible on the black stat panel.
-    labels = next_stat_config(g.get("sport", "FB"))[0]
-    for index in range(3):
-        x = [119, 144, 169][index]
-        label = labels[index]
-        y = (32 - len(label) * 5) // 2
-        for char_index in range(len(label)):
-            c.text(label[char_index], x, y + char_index * 5, font = "3x4", color = "#aeb8c4")
-
-def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = False, small_font = False, bold = False):
+def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = False, small_font = False):
     text = str(value)
     advances = []
     total = 0
@@ -16094,18 +16932,14 @@ def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = Fal
         if char.isdigit() and char_index + 1 < len(text) and text[char_index + 1].isdigit():
             advance += 1
         if small_font and char.isdigit() and char_index + 1 < len(text) and text[char_index + 1] == ".":
-            # The bold PPG comparison keeps one extra pixel before the
-            # decimal; the standard compact values retain their tight fit.
-            advance += 1 if bold else -1
-        if streak_spacing and char_index == 0 and char_index + 1 < len(text):
-            advance += 2
+            advance -= 1
+        if streak_spacing and char_index + 1 < len(text):
+            advance += 1
         advances.append(advance)
         total += advance
-    start = x + (width - total - (1 if bold else 0)) // 2
+    start = x + (width - total) // 2
     if small_font:
         start += 1
-    if bold:
-        start -= 1
     cursor = start
     font = "4x7" if small_font else "5x7"
     decimal_index = -1
@@ -16115,21 +16949,7 @@ def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = Fal
             break
     for index in range(len(text)):
         draw_x = cursor + (1 if small_font and decimal_index >= 0 and index < decimal_index else 0)
-        if bold and decimal_index >= 0:
-            if index < decimal_index:
-                draw_x += 1
-            elif index == decimal_index:
-                draw_x += 2
-        if bold and text[index] == ".":
-            # Keep the decimal crisp instead of thickening it with the digits.
-            c.pixel(draw_x, y + 6, color)
-        else:
-            is_streak_letter = streak_spacing and index == 0 and text[index] in ["W", "L"]
-            c.text(text[index], draw_x, y, font = font, color = color)
-            # W/L glyphs lose their shape when horizontally doubled. Keep
-            # the streak letter native while retaining bold streak numbers.
-            if bold and not is_streak_letter:
-                c.text(text[index], draw_x + 1, y, font = font, color = color)
+        c.text(text[index], draw_x, y, font = font, color = color)
         cursor += advances[index]
 
 def next_stat_config(sport):
