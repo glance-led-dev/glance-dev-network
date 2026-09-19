@@ -11,7 +11,7 @@ width: 192
 height: 32
 # The entry changes once a day and nothing else on the panel moves, so a day
 # is as often as this can possibly say something new.
-refresh: 86400
+refresh: 300
 
 pages: [headline, scene, legacy]
 
