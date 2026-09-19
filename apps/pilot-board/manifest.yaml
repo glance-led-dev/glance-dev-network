@@ -1,0 +1,12 @@
+gdn: 1
+id: pilot-board
+version: 0.1.0
+name: "Pilot Board"
+author: "Patrick O'Toole"
+description: Live aviation weather and runway wind information for KTKI and KADS.
+category: Lifestyle
+entry: app.star
+width: 128
+height: 32
+refresh: 300
+pages: [main, ktki_wx, ktki_rwy, kads_wx, kads_rwy]
