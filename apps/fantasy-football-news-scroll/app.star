@@ -729,7 +729,7 @@ def wrap(c, text, font, maxw, maxlines):
     return lines
 
 # Lit rows per face, top-aligned (10x16 draws its capitals in rows 0-14).
-INKH = {"10x16": 15, "9x12": 12, "8x10": 10, "6x8": 8, "5x7": 7, "4x5": 5, "picopixel": 5}
+INKH = {"10x16": 15, "8x12": 12, "8x10": 10, "6x8": 8, "5x7": 7, "4x5": 5, "picopixel": 5}
 
 SUFFIX = ["JR.", "JR", "SR.", "SR", "II", "III", "IV", "V"]
 PARTICLE = ["ST.", "ST", "DE", "DI", "DA", "DU", "LA", "LE", "VAN", "VON", "DEL", "DOS"]
@@ -754,9 +754,9 @@ def name_forms(full, abbreviate):
 
 def pick_name(c, forms, maxw, allow_big):
     """The biggest face first: in a 108 px zone the last name alone in 10x16
-    reads further than the full name in 9x12."""
+    reads further than the full name in 8x12."""
     order = [[0, "10x16"], [1, "10x16"], [2, "10x16"]] if allow_big else []
-    order = order + [[0, "9x12"], [1, "9x12"], [2, "9x12"], [0, "8x10"], [1, "8x10"], [2, "8x10"],
+    order = order + [[0, "8x12"], [1, "8x12"], [2, "8x12"], [0, "8x10"], [1, "8x10"], [2, "8x10"],
                      [0, "6x8"], [1, "6x8"], [2, "6x8"], [2, "5x7"], [2, "4x5"]]
     for o in order:
         if c.text_width(forms[o[0]], o[1]) <= maxw:
@@ -1317,7 +1317,7 @@ def news(c, ctx):
         icon_centered(c, k[3], k[2], POS_CX, 20)
 
     # Text zone x 53..160 (108 px). A headline that fits one 5x7 line lets
-    # the name use 10x16; a longer one gets two 4x5 lines under a 9x12-or-
+    # the name use 10x16; a longer one gets two 4x5 lines under an 8x12-or-
     # smaller name.
     if it["name"] == "":
         lines = wrap(c, it["head"], "5x7", TW, 3)

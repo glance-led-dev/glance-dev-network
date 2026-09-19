@@ -58,7 +58,7 @@ def prepare(username='', league_id='', league_wire=False, catalog=None, update_s
     for key, value in values.items():
         literal = repr(value) if isinstance(value, bool) else json.dumps(value, ensure_ascii=True)
         src = re.sub(r'^' + key + r' = .*$', lambda m: key + ' = ' + literal, src, flags=re.M)
-    (target / 'app.star').write_text(src.replace('9x12', '8x12'))
+    (target / 'app.star').write_text(src)
     manifest = yaml.safe_load((APP / 'manifest.yaml').read_text())
     settings = {i['key']: i for i in manifest['inputs']}
     follow = settings['follow']

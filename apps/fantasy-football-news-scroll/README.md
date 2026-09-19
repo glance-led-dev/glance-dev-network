@@ -108,21 +108,19 @@ gdn studio apps/fantasy-football-news-scroll/.gdn/fantasy-football-news-scroll
 ```
 
 The generated `.gdn/` copy is git-ignored and must not be submitted. It embeds
-a 24-hour player snapshot, prepopulates the Studio settings and substitutes
-`8x12` for local rendering. The source retains the merged app's `9x12` face;
-the local GDN build rejects it when a headline selects that font.
+a 24-hour player snapshot and prepopulates the Studio settings. The submitted
+source uses the GDN-supported `8x12` face so the app passes source validation.
 
 Verify with:
 
 ```sh
 python3 apps/fantasy-football-news-scroll/test_sleeper.py
 gdn check apps/fantasy-football-news-scroll
-gdn validate apps/fantasy-football-news-scroll/.gdn/fantasy-football-news-scroll
+gdn validate apps/fantasy-football-news-scroll
 ```
 
 For GLANCE review: the two free-text Sleeper settings coexist with
 `refresh: 60` to preserve one-minute story rotation. The reviewer can decide
 whether to keep this or use another supported input mechanism. The player
 snapshot maintenance plan also needs review. Personal values stay out of the
-source and the PR. Local source validation currently fails on unsupported
-`9x12`; ask GLANCE whether their submission renderer supports the merged font.
+source and the PR.
