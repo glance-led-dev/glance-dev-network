@@ -1,0 +1,31 @@
+gdn: 1
+id: keg-fund
+version: 1.0.0
+name: Keg Fund
+author: nosTroll
+description: Track donations toward the next keg. Beer fills the bar, washes away, then shows how much is left.
+category: Lifestyle
+entry: app.star
+width: 128
+height: 32
+refresh: 300
+pages: [pour1, pour2, pour3, pour4, wash1, wash2, funds]
+inputs:
+  - key: donated
+    type: string
+    app_input_type: free-text
+    label: Donated so far ($)
+    default: "0"
+    help: Total cash already in the keg jar. Edit this whenever someone chips in.
+  - key: goal
+    type: string
+    app_input_type: free-text
+    label: Next keg cost ($)
+    default: "120"
+    help: Price of the next keg you are saving for.
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Keg name
+    default: "NEXT KEG"
+    help: Shown on the funds screen. Keep it short.
