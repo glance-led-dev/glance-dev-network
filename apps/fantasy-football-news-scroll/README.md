@@ -11,6 +11,9 @@ wire's hottest pickups. No key or account needed. Built for scroll panels
 | **News for** | `ALL NFL` (default) shows the latest player updates league-wide from RotoWire. Pick a team to see only that team's fantasy players (QB, RB, WR, TE, K) from ESPN, with their position, injury status, body part and expected return. |
 | **Waiver wire** | `ADDS` shows who managers are grabbing most on Sleeper in the last 24 hours; `DROPS` shows who they are cutting. |
 | **Waiver wire position** | `ALL`, or one of `QB` `RB` `WR` `TE` `K` `DEF` to narrow the waiver page. The news page is not filtered by this. |
+| **Sleeper username** | Your Sleeper account username, used with the league ID to identify your roster for `MY SLEEPER TEAM` news. The fantasy team display name is not needed. |
+| **Sleeper league ID** | The numeric ID from your Sleeper league URL. |
+| **Show only players available in my league** | Exclude players on any roster, reserve or taxi squad from trending waiver players. Requires a league ID. |
 
 ## What the pages show
 
@@ -67,3 +70,57 @@ headline for those phrases.
 - Nothing new to show is not an error: the page says `ALL QUIET` in green.
 - Team logos are 40x24 pixel art, one per club plus the NFL shield, shipped
   in `assets/`.
+
+---
+
+# Sleeper personalization V1
+
+Choose `MY SLEEPER TEAM` under News for, then enter your Sleeper username and
+league ID. The app resolves your user ID, finds the roster owned by that user,
+and shows matching RotoWire stories. The team display name is not needed.
+The optional league-wire checkbox excludes players on any league roster,
+reserve or taxi squad from trending adds and drops. `AVAILABLE IN LEAGUE` means
+absent from cached rosters; it does not account for waiver locks or timing.
+With no Sleeper settings, ALL NFL/team news and the global waiver page remain
+available.
+
+The app still rotates every minute (`refresh: 60`). News is cached for 600
+seconds, trending for 1800, user resolution and individual player records for
+21,600, and league rosters for 600. A cold run of both personalized pages uses
+six requests, or at most eight if player fallbacks are needed.
+
+Sleeper's full player catalog is about 14 MB, above GDN's 2 MB HTTP response
+limit. This app bundles a compact public snapshot of player ID, name, position
+and team (about 0.8 MB) for name matching. The local setup helper can regenerate
+a test copy using a fresh catalog; the committed snapshot needs seasonal
+maintenance or replacement with an approved compact endpoint. Matching uses
+normalized full names, so nicknames, renamed players and ambiguous names can
+be missed. RotoWire only supplies stories still in its current RSS response.
+To refresh the committed catalog, run `python3
+apps/fantasy-football-news-scroll/prepare_local.py --update-source-catalog`
+and review the resulting public-data diff before submitting it.
+
+For a prefilled local Studio preview, run:
+
+```sh
+python3 apps/fantasy-football-news-scroll/prepare_local.py --username YOUR_USERNAME --league-id YOUR_LEAGUE_ID --league-wire
+gdn studio apps/fantasy-football-news-scroll/.gdn/fantasy-football-news-scroll
+```
+
+The generated `.gdn/` copy is git-ignored and must not be submitted. It embeds
+a 24-hour player snapshot and prepopulates the Studio settings. The submitted
+source uses the GDN-supported `8x12` face so the app passes source validation.
+
+Verify with:
+
+```sh
+python3 apps/fantasy-football-news-scroll/test_sleeper.py
+gdn check apps/fantasy-football-news-scroll
+gdn validate apps/fantasy-football-news-scroll
+```
+
+For GLANCE review: the two free-text Sleeper settings coexist with
+`refresh: 60` to preserve one-minute story rotation. The reviewer can decide
+whether to keep this or use another supported input mechanism. The player
+snapshot maintenance plan also needs review. Personal values stay out of the
+source and the PR.
