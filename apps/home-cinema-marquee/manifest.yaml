@@ -1,15 +1,15 @@
 gdn: 1
 id: home-cinema-marquee
-version: 0.1.0
+version: 0.2.0
 name: The Basement Cinema
 author: abartos27
-description: "A NOW SHOWING marquee for a home theater: tonight's feature from Letterboxd - a recent watch, a curated Top 4, or any public list - with hand-drawn poster art."
+description: "A NOW SHOWING marquee for any home theater. Your latest Letterboxd watch is the feature; a showcase strip plays your recent watches, profile favorites or any public list. 500+ films carry bundled poster art, runtime, director and MPAA rating."
 category: Entertainment
 entry: app.star
 
 width: 384
 height: 32
-refresh: 60
+refresh: 900
 
 pages: [marquee, now_showing, showcase]
 
@@ -541,8 +541,8 @@ inputs:
     type: string
     app_input_type: free-text
     label: Letterboxd username
-    default: "abartos27"
-    help: Public Letterboxd account; the newest logged film becomes tonight's feature. Leave blank to run on the curated canon only.
+    default: ""
+    help: Your public Letterboxd username. Your newest logged film becomes tonight's feature. Leave blank and the marquee runs on its built-in film library.
   - key: mode
     type: choice
     app_input_type: dropdown
@@ -555,4 +555,4 @@ inputs:
     app_input_type: free-text
     label: List slug (custom list only)
     default: "top-10"
-    help: Used only when the source is LIST. The last path segment of a public list URL, e.g. letterboxd.com/abartos27/list/TOP-10/ -> top-10.
+    help: Used only when Showcase is CUSTOM LIST. The last path segment of a public list URL, e.g. letterboxd.com/<username>/list/top-10/ -> top-10.

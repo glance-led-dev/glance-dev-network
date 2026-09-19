@@ -1,123 +1,82 @@
-# Basement Marquee
+# The Basement Cinema
 
-A NOW SHOWING board for a home theater, built for SCROLL 384x32.
+A **NOW SHOWING** marquee for any home theater, built for SCROLL 384×32.
 
-Everything is driven by a public **Letterboxd** account. *Now Showing* is always
-your most recently logged film, drawn large. A mode-driven *Showcase* then scrolls
-a **compressed strip** of three film tiles from one of three sources. Big card or
-tile, every film shows the same content — poster, title, `year · runtime ·
-director`, and the owner's star rating. Films in the curated pack carry a bundled
-poster (and, where known, runtime + director); anything else rides the filmstrip
-reel with whatever the feed gives.
-
-## Settings
-
-| Input | What it does |
-|---|---|
-| **Cinema name** | The name on the marquee banner. Shown in caps; scales to fit. Every basement names its cinema differently. |
-| **Letterboxd username** | Your public Letterboxd account, e.g. `abartos27`. The newest entry in `letterboxd.com/<user>/rss/` is *Now Showing*. Leave blank to run on the pack alone. |
-| **Feature source** | What the *Showcase* scrolls: `RECENT` = your diary, newest first; `FAVORITES` = the four films pinned on your Letterboxd profile; `LIST` = a public Letterboxd list. |
-| **List slug** | Used only in `LIST` mode: the last path segment of a list URL, e.g. `letterboxd.com/abartos27/list/top-10/` → `top-10`. The list is shown under its own name. |
-
-No API key is needed. Each source is public and read once every 15 minutes.
+Point it at your public **Letterboxd** account and the panel becomes your
+theater's marquee: the last film you logged is tonight's feature, and a
+showcase strip plays your recent watches, your profile favorites, or any public
+list. No Letterboxd account? It runs on its built-in library of 512 films.
 
 ## Screens
 
-- **Marquee** — the house splash: a lit-bulb frame, a striped popcorn tub (with
-  a sparkle burst) at each wing, and the (configurable) cinema name centered on a
-  red banner.
-- **Now Showing** — your most recently logged film, drawn as the large highlight.
-- **Showcase** — a compressed scroll of three rich film tiles from the chosen
-  source, the window advancing by the minute so the whole set comes around:
-  `FAVORITES` (your profile's pinned four), a public `LIST` in rank order (shown
-  under its name), or the `RECENT` diary newest-first.
-- **No data** — the rail goes dim and a pack pick takes the slot. A marquee
-  should never go dark, so this is a graceful fallback rather than an error card.
-- **Bad username** — the one failure a viewer can actually fix, so it gets a
-  card that says so.
+The app plays three pages in order.
 
-`FAVORITES` reads the `#favourites` grid on `letterboxd.com/<user>/`; change your
-pinned favorites on Letterboxd and the strip follows.
+| Page | What it shows |
+|---|---|
+| **Marquee** | The house sign: a lit-bulb frame, popcorn tubs at each wing, and *your* cinema name on a red banner. |
+| **Now Showing** | Tonight's feature, drawn large: poster, title, MPAA certificate, director, year, runtime and your star rating. This is always your most recently logged Letterboxd film. |
+| **Showcase** | A three-up strip of film tiles from the source you pick below. It shows the next three films every refresh, so a long set comes all the way around. |
 
-## Poster art
+### Showcase options
 
-Each film in `CANON` has a **bundled 21x32 poster PNG**. A drawn fallback tile
-is resolved separately via `art_for(slug)` (`ART_BY_SLUG` in `app.star`); if the
-poster file is missing, that tile renders instead, so a half-finished pack never
-breaks a render. Films without bespoke art fall back to the filmstrip reel.
+| Option | Plays |
+|---|---|
+| **Recent watches** *(default)* | Your Letterboxd diary, newest first — up to 24 films. |
+| **Favorites** | The four films pinned to your Letterboxd profile. Change them on Letterboxd and the strip follows. |
+| **Custom list** | Any public Letterboxd list, in rank order, shown under the list's own name. |
 
-This is the pattern the official `now-playing` app uses. GDN draws **bundled**
-PNGs — there is no render-time image fetch — so a poster pack is a snapshot you
-refresh periodically, not a live lookup.
+## Make it yours
 
-Posters are the film's **portrait theatrical poster**, taken from the JSON-LD
-`image` on its Letterboxd page (*not* the `og:image`, which is a landscape
-share card — baking that made posters look like screenshots). The tool bumps the
-source to a large crop, steps the LANCZOS downscale down in halves, and lifts
-contrast/saturation/sharpness so a 21×32 tile still reads as a poster.
+| Setting | What it does |
+|---|---|
+| **Cinema name** | The name on the marquee banner — *THE BASEMENT CINEMA*, *THE BIJOU*, *THE REC ROOM ROXY*. Shown in caps and scaled to fit. |
+| **Letterboxd username** | Your public Letterboxd username. Drives *Now Showing* and the *Showcase*. Leave it blank to run on the built-in library. |
+| **Showcase** | Recent watches, Favorites or Custom list (above). |
+| **List slug** | Custom list only: the last part of the list's URL. `letterboxd.com/<username>/list/top-10/` → `top-10`. |
 
-### Refreshing the pack
+No API key, no sign-in. Everything read is a public Letterboxd page.
 
-`tools/refresh_pack.py` builds the pack for you: it reads a public Letterboxd
-diary, crops each film's poster to 21x32, and rewrites the pack data (`CANON` /
-`CANON_ORDER` / `BY_TITLE` / `POSTERS`, between the `# >>> PACK` markers in
-`app.star`) plus the manifest `assets:` list.
+## What every film shows
 
-**No API key needed** — the Letterboxd RSS carries each film's poster image URL
-inline, so the pack is built straight from the diary:
+| Attribute | Source |
+|---|---|
+| Poster | Bundled 21×32 art, conditioned for the panel |
+| Title and year | Letterboxd (live) or the library |
+| Runtime | TMDB, via the library |
+| Director | TMDB, via the library |
+| MPAA certificate (G · PG · PG-13 · R · NC-17 · NR) | TMDB US theatrical release |
+| Your star rating | Your Letterboxd diary, half-star precision |
 
-```bash
-source .venv/bin/activate          # Pillow + requests live here
-python3 tools/refresh_pack.py apps/home-cinema-marquee --user abartos27
-gdn validate apps/home-cinema-marquee
-```
+## The film library
 
-With **no `--user` and no key**, it re-pulls every canon film's portrait poster
-from its Letterboxd page — the way to re-bake the whole pack's art after a
-pipeline change, without touching the film set or their runtime/director:
+**512 well-known films, 1944 to 2026** — from *It's a Wonderful Life*,
+*Rear Window* and *The Godfather* through the 80s and 90s canon to this year's
+releases, with the 2000s and 2010s most heavily represented. Every film carries a poster, runtime and director; 508 of
+512 carry an MPAA certificate (the rest never had a US theatrical release).
 
-```bash
-python3 tools/refresh_pack.py apps/home-cinema-marquee
-```
+A film you log that *isn't* in the library still shows: it plays on a film-reel
+tile with its live title and year. The library is what gives a film its poster
+and full metadata.
 
-Recent films get *added* to the curated canon; `--replace` rebuilds it purely
-from recent watches, `--limit N` caps how many to pull (default 30, so a full
-list bakes without being cut off), `--no-overwrite` keeps existing PNGs,
-`--dry-run` reports without writing. A keyless re-bake keeps any runtime/director
-a film already had in the pack, so baking a list won't wipe curated metadata.
+## Refresh and network use
 
-**Baking a list.** `--list <slug>` (with `--user`) bakes a public list in rank
-order instead of the diary — the ranked films land at the front of `CANON_ORDER`,
-so the Canon's top 4 becomes the list's top 4:
+`refresh: 900` — the panel re-renders every **15 minutes**, in line with the
+Glance team's guidance for data that doesn't change minute to minute. A
+Letterboxd diary changes a few times a week at most.
 
-```bash
-python3 tools/refresh_pack.py apps/home-cinema-marquee --user abartos27 --list top-10
-```
+Each render makes at most two Letterboxd requests, each cached for 15 minutes.
+Posters are bundled, so there is no image fetching at render time.
 
-Lists have no RSS, so the tool reads the list page (each film carries a
-`data-item-slug`) and pulls each film's poster from its page's OpenGraph tags. It
-sends a browser User-Agent and paces the requests, since Letterboxd rate-limits
-(HTTP 429) a rapid bare-`requests` crawl. Keyless, this bakes poster + year;
-runtime + director need the TMDB key below.
+## When something's missing
 
-**Optional TMDB enrichment.** Set `TMDB_API_KEY` (free at
-themoviedb.org/settings/api) and the tool also fills in each film's **runtime**
-and **director** — which turns the *now showing* hero from a star rating into a
-runtime. The RSS carries the TMDB id, so no search is needed. With no `--user`
-*and* a key set, it re-fetches posters for the films already in the canon. The
-key is read from the environment only and never written to disk. This product
-uses the TMDB API but is not endorsed or certified by TMDB.
+- **No username** — the marquee runs on the library: a different feature each
+  day and the library's opening four in the showcase, with the rail dimmed.
+- **Letterboxd unreachable** — same fallback. A marquee should never go dark.
+- **Username not found** — the one problem a viewer can fix, so it gets a card
+  that says so.
 
-### Adding a film or poster by hand
+## Credits
 
-The `# >>> PACK` block is plain literals — edit it directly. A film is a `CANON`
-entry keyed by its Letterboxd slug (the last segment of the film's
-`letterboxd.com/<user>/film/<slug>/` URL) with `[title, year, runtime, director,
-poster.png, rating10]` (`rating10` is a 0–10 half-star scale, `0` = unrated);
-add the same slug to `CANON_ORDER` and the poster filename to both
-`POSTERS` and the manifest `assets:` list (the renderer rejects an undeclared
-asset, and Starlark cannot check whether a file exists). For bespoke pixel art,
-add a drawn tile and map it in `ART_BY_SLUG`.
-
-The drawn tiles that ship here are original pixel art, one motif per film — they
-are not reproductions of the films' posters, logos or characters.
+Film metadata: this product uses the TMDB API but is not endorsed or certified
+by TMDB. Not affiliated with Letterboxd. The drawn fallback tiles are original
+pixel art, not reproductions of any film's poster, logo or characters.
