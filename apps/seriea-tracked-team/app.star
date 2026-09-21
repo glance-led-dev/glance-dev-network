@@ -499,7 +499,7 @@ def read_schedule_events(ctx):
         BASE +
         "site/v2/sports/soccer/ita.1/teams/" +
         team_id +
-        "/schedule"
+        "/schedule?fixture=true"
     )
 
     response = http.get(url, ttl_seconds = 60)
@@ -702,28 +702,59 @@ def find_next_match(ctx, team):
         return ("0" + str(n)) if n < 10 else str(n)
 
     # Glance allows at most 8 uncached HTTP requests per render.
-    # Scan today through the next 6 days (7 requests maximum).
-    for offset in range(0, 7):
-        parts = civil_from_days(now_days + offset)
+    # Search 7 weekly windows = up to 49 days ahead,
+    # using only 7 HTTP requests maximum.
+    for week in range(0, 7):
+        start_offset = week * 7
+        end_offset = start_offset + 6
 
-        date_key = (
-            str(parts[0]) +
-            pad2(parts[1]) +
-            pad2(parts[2])
+        start_parts = civil_from_days(
+            now_days + start_offset
+        )
+        end_parts = civil_from_days(
+            now_days + end_offset
         )
 
+        start_key = (
+            str(start_parts[0]) +
+            pad2(start_parts[1]) +
+            pad2(start_parts[2])
+        )
+
+        end_key = (
+            str(end_parts[0]) +
+            pad2(end_parts[1]) +
+            pad2(end_parts[2])
+        )
+
+        date_range = start_key + "-" + end_key
+
         response = http.get(
-            SCORES + "?dates=" + date_key,
+            SCORES + "?dates=" + date_range,
             ttl_seconds = 300
         )
 
-        if response["status_code"] != 200 or response["json"] == None:
+        if (
+            response["status_code"] != 200 or
+            response["json"] == None
+        ):
             continue
 
-        for event in get(response["json"], "events", []):
-            comps = get(event, "competitions", [])
+        for event in get(
+            response["json"],
+            "events",
+            []
+        ):
+            comps = get(
+                event,
+                "competitions",
+                []
+            )
 
-            if type(comps) != "list" or len(comps) == 0:
+            if (
+                type(comps) != "list" or
+                len(comps) == 0
+            ):
                 continue
 
             comp = comps[0]
@@ -731,15 +762,37 @@ def find_next_match(ctx, team):
             home = None
             away = None
 
-            for competitor in get(comp, "competitors", []):
-                team_obj = get(competitor, "team", {})
+            for competitor in get(
+                comp,
+                "competitors",
+                []
+            ):
+                team_obj = get(
+                    competitor,
+                    "team",
+                    {}
+                )
 
                 side = {
-                    "abbr": internal_team_from_info(team_obj),
-                    "score": num(get(competitor, "score", 0)),
+                    "abbr": internal_team_from_info(
+                        team_obj
+                    ),
+                    "score": num(
+                        get(
+                            competitor,
+                            "score",
+                            0
+                        )
+                    ),
                 }
 
-                if str(get(competitor, "homeAway", "")) == "home":
+                if str(
+                    get(
+                        competitor,
+                        "homeAway",
+                        ""
+                    )
+                ) == "home":
                     home = side
                 else:
                     away = side
@@ -754,7 +807,15 @@ def find_next_match(ctx, team):
                 continue
 
             state = str(
-                dig(event, ["status", "type", "state"], "")
+                dig(
+                    event,
+                    [
+                        "status",
+                        "type",
+                        "state",
+                    ],
+                    "",
+                )
             ).lower()
 
             if state != "pre":
@@ -765,16 +826,29 @@ def find_next_match(ctx, team):
                 "away": away,
                 "state": state,
                 "clock": str(
-                    dig(event, ["status", "type", "detail"], "")
+                    dig(
+                        event,
+                        [
+                            "status",
+                            "type",
+                            "detail",
+                        ],
+                        "",
+                    )
                 ).upper(),
                 "start": parse_iso(
-                    str(get(event, "date", "")),
+                    str(
+                        get(
+                            event,
+                            "date",
+                            "",
+                        )
+                    ),
                     zone_offset(ctx),
                 ),
             }
 
     return None
-
 
 def read_events(ctx):
     return read_schedule_events(ctx)
@@ -1109,28 +1183,68 @@ def next_match(c, ctx):
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 4, 6, 25, 25)
+        c.image(
+            crest,
+            4,
+            6,
+            25,
+            25
+        )
 
-    match = find_next_match(ctx, team)
+    # Pull the selected team's full Serie A schedule
+    # and choose the nearest upcoming fixture.
+    events = read_schedule_events(ctx)
+
+    if events == None:
+        match = None
+    else:
+        match = upcoming_match(
+            events,
+            team
+        )
 
     if match == None:
-        c.text_center("NO MATCH FOUND", 13, font = "5x7", color = DIM)
+        c.text(
+            "NO MATCH FOUND",
+            76,
+            13,
+            font = "5x7",
+            color = DIM,
+            align = "center"
+        )
         return
 
     home = match["home"]
     away = match["away"]
-    opponent = opponent_of(match, team)
+    opponent = opponent_of(
+        match,
+        team
+    )
 
     # Opponent crest on the right.
-    opponent_crest = team_crest(opponent["abbr"])
+    opponent_crest = team_crest(
+        opponent["abbr"]
+    )
+
     if opponent_crest != "":
-        c.image(opponent_crest, 101, 6, 25, 25)
+        c.image(
+            opponent_crest,
+            101,
+            6,
+            25,
+            25
+        )
 
     # Header.
-    c.text("NEXT", 5, 1, font = "3x4", color = accent)
+    c.text(
+        "NEXT",
+        5,
+        1,
+        font = "3x4",
+        color = accent
+    )
 
-
-    # Home/away label and opponent.
+    # Home / away indicator.
     if home["abbr"] == team:
         prefix = "VS"
     else:
@@ -1144,16 +1258,25 @@ def next_match(c, ctx):
         color = DIM
     )
 
+    # Opponent name.
     c.text(
-        display_team(opponent["abbr"]),
+        display_team(
+            opponent["abbr"]
+        ),
         59,
         9,
         font = "6x8",
-        color = team_color(opponent["abbr"])
+        color = team_color(
+            opponent["abbr"]
+        )
     )
 
     # Date and kickoff time.
-    when = date_text(match["start"]) + "  " + time_text(match["start"])
+    when = (
+        date_text(match["start"])
+        + "  "
+        + time_text(match["start"])
+    )
 
     c.text(
         when,
