@@ -1,6 +1,6 @@
 gdn: 1
 id: liverpool-fc-tracker
-version: 0.1.0
+version: 0.2.1
 name: "Liverpool FC Tracker"
 author: "Tim McCabe"
 description: Follow Liverpool FC live matches, upcoming fixtures, recent results, Premier League standings, and Champions League standings.

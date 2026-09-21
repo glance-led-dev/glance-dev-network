@@ -16,6 +16,21 @@ UCL_STANDINGS_URL = (
     "https://site.api.espn.com/apis/v2/sports/soccer/uefa.champions/standings"
 )
 
+LIVERPOOL_TEAM_ID = "364"
+LIVERPOOL_SCHEDULE_URL = (
+    "https://site.web.api.espn.com/apis/site/v2/sports/soccer/all/teams/"
+    + LIVERPOOL_TEAM_ID
+    + "/schedule"
+)
+
+ALL_SOCCER_SCOREBOARD_URL = (
+    "https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard"
+)
+
+ALL_SOCCER_SUMMARY_URL = (
+    "https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary"
+)
+
 LIVERPOOL_RED = "#C8102E"
 WHITE = "white"
 BLACK = "black"
@@ -56,11 +71,60 @@ TEAM_DISPLAY_NAMES = {
     "NEW": "Newcastle",
     "BRI": "Brighton",
     "BOU": "Bournemouth",
+    "CRY": "Crystal Palace",
+    "COV": "Coventry",
+    "IPS": "Ipswich",
+    "LEE": "Leeds",
+    "HUL": "Hull City",
 }
 
 
+TEAM_NAME_KEYS = {
+    "arsenal": "ARS", "aston villa": "AVL",
+    "afc bournemouth": "BOU", "bournemouth": "BOU",
+    "brentford": "BRE", "brighton": "BRI",
+    "brighton & hove albion": "BRI", "brighton and hove albion": "BRI",
+    "chelsea": "CFC", "coventry city": "COV",
+    "crystal palace": "CRY", "everton": "EVE", "fulham": "FUL",
+    "hull city": "HUL", "ipswich town": "IPS",
+    "leeds united": "LEE", "liverpool": "LIV",
+    "liverpool fc": "LIV", "manchester city": "MCI",
+    "manchester united": "MUN", "newcastle united": "NEW",
+    "nottingham forest": "NFO", "sunderland": "SUN",
+    "tottenham hotspur": "TOT", "tottenham": "TOT",
+}
+
+SHORT_TEAM_NAMES = {
+    "paris saint-germain": "PSG",
+    "paris saint germain": "PSG",
+    "borussia dortmund": "Dortmund",
+    "borussia monchengladbach": "M'gladbach",
+    "bayer leverkusen": "Leverkusen",
+    "atletico madrid": "Atletico",
+    "atlético madrid": "Atletico",
+    "sporting clube de portugal": "Sporting CP",
+    "sporting lisbon": "Sporting CP",
+    "wolverhampton wanderers": "Wolves",
+    "west ham united": "West Ham",
+    "sheffield united": "Sheff United",
+    "sheffield wednesday": "Sheff Wed",
+    "queens park rangers": "QPR",
+    "red bull salzburg": "RB Salzburg",
+    "eintracht frankfurt": "Frankfurt",
+}
+
+
+def opponent_key(opponent):
+    name = str(get(opponent, "name", "")).strip().lower()
+    if name in TEAM_NAME_KEYS:
+        return TEAM_NAME_KEYS[name]
+    abbr = str(get(opponent, "abbr", "")).strip().upper()
+    aliases = {"CHE": "CFC", "BHA": "BRI", "B&H": "BRI", "NOT": "NFO", "LFC": "LIV"}
+    return aliases.get(abbr, abbr)
+
+
 def opponent_crest(opponent):
-    abbr = opponent["abbr"]
+    abbr = opponent_key(opponent)
 
     if abbr in EPL_CRESTS:
         return EPL_CRESTS[abbr]
@@ -68,23 +132,60 @@ def opponent_crest(opponent):
     return ""
 
 
-def display_team_name(opponent):
-    abbr = opponent["abbr"]
+def draw_opponent_crest(c, opponent, x, y, size):
+    crest = opponent_crest(opponent)
+    if crest == "":
+        return
+    # These navy crests lose their outlines against the panel's black background.
+    if opponent_key(opponent) in ["TOT", "EVE"]:
+        c.rect(x, y, x + size - 1, y + size - 1, fill=WHITE)
+    c.image(crest, x, y, size, size)
 
+
+def display_team_name(opponent):
+    abbr = opponent_key(opponent)
     if abbr in TEAM_DISPLAY_NAMES:
         return TEAM_DISPLAY_NAMES[abbr]
-
-    return opponent["name"]
+    name = str(get(opponent, "name", "")).strip()
+    if name == "":
+        return abbr[:14] if abbr != "" else "OPPONENT"
+    if len(name) <= 14:
+        return name
+    short = SHORT_TEAM_NAMES.get(name.lower(), "")
+    if short != "":
+        return short
+    # ESPN short names are useful for unfamiliar cup/European opponents.
+    short = str(get(opponent, "short_name", "")).strip()
+    if short != "" and len(short) <= 14:
+        return short
+    if abbr != "" and len(abbr) <= 14:
+        return abbr
+    return name[:11].rstrip() + "..."
 
 
 def get(obj, key, fallback=None):
-    if obj == None:
+    if type(obj) != "dict":
         return fallback
+    value = obj.get(key, fallback)
+    return fallback if value == None else value
 
-    if key in obj:
-        return obj[key]
 
-    return fallback
+def list_value(value):
+    return value if type(value) == "list" else []
+
+
+def score_text(value):
+    if type(value) == "dict":
+        value = get(value, "displayValue", get(value, "value", ""))
+    if type(value) == "float":
+        return str(int(value))
+    text = str(value).strip() if value != None else ""
+    if text == "":
+        return "-"
+    for ch in text.elems():
+        if ch < "0" or ch > "9":
+            return "-"
+    return text
 
 
 def pad2(n):
@@ -246,19 +347,225 @@ def local_match_datetime(iso, offset):
     return [date_text, time_text]
 
 
+def competition_name_from_text(text, fallback=""):
+    combined = text.lower()
+
+    if "premier league" in combined or "eng.1" in combined:
+        return "PREMIER LEAGUE"
+
+    if "champions" in combined:
+        return "CHAMPIONS LEAGUE"
+
+    if "fa cup" in combined or "eng.fa" in combined:
+        return "FA CUP"
+
+    if (
+        "league cup" in combined
+        or "carabao" in combined
+        or "eng.league_cup" in combined
+    ):
+        return "EFL CUP"
+
+    return fallback
+
+
+def competition_name_from_event(data, event, fallback=""):
+    # ESPN's all-soccer scoreboard does not consistently put league
+    # metadata directly on each event. Build a broad metadata string
+    # from the event/competition first, then match the event UID against
+    # the response-level league list when necessary.
+    league = get(event, "league", {})
+    competition_list = list_value(get(event, "competitions", []))
+    competition = {}
+
+    if len(competition_list) > 0:
+        competition = competition_list[0]
+
+    competition_type = get(competition, "type", {})
+    season = get(event, "season", {})
+
+    metadata = (
+        get(league, "name", "")
+        + " "
+        + get(league, "slug", "")
+        + " "
+        + get(league, "abbreviation", "")
+        + " "
+        + get(event, "name", "")
+        + " "
+        + get(event, "shortName", "")
+        + " "
+        + get(competition, "name", "")
+        + " "
+        + get(competition, "description", "")
+        + " "
+        + get(competition_type, "text", "")
+        + " "
+        + get(competition_type, "abbreviation", "")
+        + " "
+        + get(season, "slug", "")
+    )
+
+    detected = competition_name_from_text(
+        metadata,
+        "",
+    )
+
+    if detected != "":
+        return detected
+
+    event_uid = get(event, "uid", "")
+    leagues = list_value(get(data, "leagues", []))
+
+    for response_league in leagues:
+        league_uid = get(response_league, "uid", "")
+
+        if (
+            event_uid != ""
+            and league_uid != ""
+            and league_uid in event_uid
+        ):
+            league_text = (
+                get(response_league, "name", "")
+                + " "
+                + get(response_league, "slug", "")
+                + " "
+                + get(response_league, "abbreviation", "")
+            )
+
+            detected = competition_name_from_text(
+                league_text,
+                "",
+            )
+
+            if detected != "":
+                return detected
+
+            league_name = get(
+                response_league,
+                "name",
+                "",
+            )
+
+            if league_name != "":
+                return league_name.upper()
+
+    if fallback != "":
+        return fallback
+
+    league_name = get(league, "name", "")
+
+    if league_name != "":
+        return league_name.upper()
+
+    return "MATCH"
+
+
+def competition_name_from_summary(data, fallback=""):
+    # Match-summary responses normally expose richer league metadata
+    # than the broad all-soccer scoreboard. Prefer header.league, then
+    # inspect the header competition/season text as a fallback.
+    header = get(data, "header", {})
+    league = get(header, "league", {})
+    competitions = list_value(get(header, "competitions", []))
+    competition = {}
+
+    if len(competitions) > 0:
+        competition = competitions[0]
+
+    competition_type = get(competition, "type", {})
+    season = get(header, "season", {})
+
+    metadata = (
+        get(league, "name", "")
+        + " "
+        + get(league, "slug", "")
+        + " "
+        + get(league, "abbreviation", "")
+        + " "
+        + get(header, "name", "")
+        + " "
+        + get(header, "shortName", "")
+        + " "
+        + get(competition, "name", "")
+        + " "
+        + get(competition, "description", "")
+        + " "
+        + get(competition_type, "text", "")
+        + " "
+        + get(competition_type, "abbreviation", "")
+        + " "
+        + get(season, "slug", "")
+    )
+
+    detected = competition_name_from_text(
+        metadata,
+        "",
+    )
+
+    if detected != "":
+        return detected
+
+    league_name = get(league, "name", "")
+
+    if league_name != "":
+        return league_name.upper()
+
+    return fallback
+
+
+def is_liverpool_team(team):
+    abbr = get(team, "abbr", "").upper()
+    name = get(team, "name", "").lower()
+
+    return (
+        str(get(team, "id", "")) == LIVERPOOL_TEAM_ID
+        or abbr == "LIV"
+        or abbr == "LFC"
+        or "liverpool" in name
+    )
+
+
+def live_detail(match):
+    detail = str(get(match, "detail", "")).upper()
+    period = get(match, "period", 0)
+    if "PEN" in detail or "SHOOTOUT" in detail:
+        return "PENS"
+    if "EXTRA" in detail and "HALF" in detail:
+        return "ET HT"
+    if detail in ["HT", "HALFTIME", "HALF TIME"]:
+        return "HT"
+    minute = detail.replace("'", "").replace("’", "").strip()
+    valid = minute != ""
+    for ch in minute.elems():
+        if (ch < "0" or ch > "9") and ch != "+":
+            valid = False
+    if valid:
+        phase = {1: " H1", 2: " H2", 3: " ET1", 4: " ET2"}.get(period, "")
+        return minute + " MIN" + phase
+    return "LIVE"
+
+
+def draw_opponent_name(c, opponent, x, y, font, max_width, prefix=""):
+    text = prefix + display_team_name(opponent).upper()
+    if c.text_width(text, font) > max_width:
+        font = "3x4"
+    c.text(text, x, y, font=font, color=WHITE, align="center")
+
+
 def normalize_events(data, competition_name):
     matches = []
 
-    events = get(data, "events", [])
+    events = list_value(get(data, "events", []))
 
     for event in events:
-        competitions = get(event, "competitions", [])
+        competitions = list_value(get(event, "competitions", []))
 
         if len(competitions) == 0:
             continue
 
         competition = competitions[0]
-        competitors = get(competition, "competitors", [])
+        competitors = list_value(get(competition, "competitors", []))
 
         home = None
         away = None
@@ -268,9 +575,11 @@ def normalize_events(data, competition_name):
             team = get(competitor, "team", {})
 
             normalized = {
+                "id": str(get(team, "id", "")),
                 "abbr": get(team, "abbreviation", ""),
                 "name": get(team, "displayName", ""),
-                "score": get(competitor, "score", ""),
+                "short_name": get(team, "shortDisplayName", ""),
+                "score": score_text(get(competitor, "score", "")),
                 "logo": get(team, "logo", ""),
             }
 
@@ -283,7 +592,7 @@ def normalize_events(data, competition_name):
         if home == None or away == None:
             continue
 
-        status = get(event, "status", {})
+        status = get(competition, "status", get(event, "status", {}))
         status_type = get(status, "type", {})
 
         state = get(
@@ -303,77 +612,53 @@ def normalize_events(data, competition_name):
         )
 
         matches.append({
+            "id": get(event, "id", ""),
             "home": home,
             "away": away,
             "state": state,
             "detail": detail,
-            "date": get(event, "date", ""),
-            "competition": competition_name,
+            "period": get(status, "period", 0),
+            "date": get(event, "date", get(competition, "date", "")),
+            "competition": competition_name_from_event(
+                data,
+                event,
+                competition_name,
+            ),
         })
 
     return matches
 
 
+def days_from_civil(year, month, day):
+    year = year - 1 if month <= 2 else year
+    era = year // 400
+    yoe = year - era * 400
+    mp = month - 3 if month > 2 else month + 9
+    doy = (153 * mp + 2) // 5 + day - 1
+    return era * 146097 + yoe * 365 + yoe // 4 - yoe // 100 + doy - 719468
+
+
 def minutes_until_match(iso, now):
-    if iso == None or len(iso) < 16:
+    if type(iso) != "string" or len(iso) < 16:
         return None
-
-    match_year = int(iso[0:4])
-    match_month = int(iso[5:7])
-    match_day = int(iso[8:10])
-    match_hour = int(iso[11:13])
-    match_minute = int(iso[14:16])
-
-    day_difference = None
-
-    for i in range(366):
-        check = add_days(
-            now.year,
-            now.month,
-            now.day,
-            i,
-        )
-
-        if (
-            check[0] == match_year
-            and check[1] == match_month
-            and check[2] == match_day
-        ):
-            day_difference = i
-            break
-
-    if day_difference == None:
-        for i in range(1, 366):
-            check = subtract_days(
-                now.year,
-                now.month,
-                now.day,
-                i,
-            )
-
-            if (
-                check[0] == match_year
-                and check[1] == match_month
-                and check[2] == match_day
-            ):
-                day_difference = 0 - i
-                break
-
-    if day_difference == None:
+    digits = iso[0:4] + iso[5:7] + iso[8:10] + iso[11:13] + iso[14:16]
+    for ch in digits.elems():
+        if ch < "0" or ch > "9":
+            return None
+    year = int(iso[0:4])
+    month = int(iso[5:7])
+    day = int(iso[8:10])
+    hour = int(iso[11:13])
+    minute = int(iso[14:16])
+    if month < 1 or month > 12 or hour > 23 or minute > 59:
         return None
-
-    current_minutes = (
-        now.hour * 60
-        + now.minute
-    )
-
-    match_minutes = (
-        day_difference * 1440
-        + match_hour * 60
-        + match_minute
-    )
-
-    return match_minutes - current_minutes
+    if day < 1 or day > days_in_month(year, month):
+        return None
+    # ESPN's event dates are UTC (Z). Explicit zero offsets are equivalent.
+    if not (iso.endswith("Z") or iso.endswith("+00:00")):
+        return None
+    match_minutes = days_from_civil(year, month, day) * 1440 + hour * 60 + minute
+    return match_minutes - now.unix // 60
 
 
 def find_next_liverpool_match(matches, now):
@@ -381,8 +666,8 @@ def find_next_liverpool_match(matches, now):
 
     for match in matches:
         is_liverpool = (
-            match["home"]["abbr"] == "LIV"
-            or match["away"]["abbr"] == "LIV"
+            is_liverpool_team(match["home"])
+            or is_liverpool_team(match["away"])
         )
 
         if not is_liverpool:
@@ -415,8 +700,8 @@ def find_next_liverpool_match(matches, now):
 def find_live_liverpool_match(matches, now):
     for match in matches:
         is_liverpool = (
-            match["home"]["abbr"] == "LIV"
-            or match["away"]["abbr"] == "LIV"
+            is_liverpool_team(match["home"])
+            or is_liverpool_team(match["away"])
         )
 
         if not is_liverpool:
@@ -426,18 +711,6 @@ def find_live_liverpool_match(matches, now):
             continue
 
         if match["state"] == "in":
-            return match
-
-        minutes = minutes_until_match(
-            match["date"],
-            now,
-        )
-
-        if (
-            minutes != None
-            and minutes <= 0
-            and minutes > -180
-        ):
             return match
 
     return None
@@ -451,8 +724,8 @@ def find_last_liverpool_match(matches):
             continue
 
         is_liverpool = (
-            match["home"]["abbr"] == "LIV"
-            or match["away"]["abbr"] == "LIV"
+            is_liverpool_team(match["home"])
+            or is_liverpool_team(match["away"])
         )
 
         if not is_liverpool:
@@ -469,20 +742,22 @@ def find_last_liverpool_match(matches):
 
 
 def liverpool_score(match):
-    if match["home"]["abbr"] == "LIV":
+    if is_liverpool_team(match["home"]):
         return match["home"]["score"]
 
     return match["away"]["score"]
 
 
 def opponent_score(match):
-    if match["home"]["abbr"] == "LIV":
+    if is_liverpool_team(match["home"]):
         return match["away"]["score"]
 
     return match["home"]["score"]
 
 
 def match_result(match):
+    if liverpool_score(match) == "-" or opponent_score(match) == "-":
+        return "FINAL"
     liverpool = int(liverpool_score(match))
     opponent = int(opponent_score(match))
 
@@ -496,14 +771,14 @@ def match_result(match):
 
 
 def opponent_of(match):
-    if match["home"]["abbr"] == "LIV":
+    if is_liverpool_team(match["home"]):
         return match["away"]
 
     return match["home"]
 
 
 def match_symbol(match):
-    if match["home"]["abbr"] == "LIV":
+    if is_liverpool_team(match["home"]):
         return "VS"
 
     return "@"
@@ -535,114 +810,133 @@ def draw_branding(c):
     )
 
 
-def get_liverpool_matches(ctx):
+def get_live_liverpool_matches(ctx):
     now = ctx.now
 
-    year = now.year
-    month = now.month
-    day = now.day
-
-    past = subtract_days(
-        year,
-        month,
-        day,
-        30,
-    )
-
-    future = add_days(
-        year,
-        month,
-        day,
-        30,
-    )
-
-    start_date = (
-        str(past[0])
-        + pad2(past[1])
-        + pad2(past[2])
-    )
-
-    end_date = (
-        str(future[0])
-        + pad2(future[1])
-        + pad2(future[2])
-    )
-
-    date_query = (
-        "?dates="
-        + start_date
-        + "-"
-        + end_date
-        + "&limit=100"
+    today_date = (
+        str(now.year)
+        + pad2(now.month)
+        + pad2(now.day)
     )
 
     matches = []
 
-    epl_resp = http.get(
-        EPL_URL + date_query,
+    # LIVE: single-day all-soccer scoreboard only.
+    resp = http.get(
+        ALL_SOCCER_SCOREBOARD_URL
+        + "?dates="
+        + today_date,
         ttl_seconds=60,
     )
 
-    matches = matches + normalize_events(
-        epl_resp["json"],
-        "PREMIER LEAGUE",
-    )
+    data = get(resp, "json", None)
 
-    ucl_resp = http.get(
-        UCL_URL + date_query,
-        ttl_seconds=60,
-    )
+    if data != None:
+        matches = matches + normalize_events(
+            data,
+            "",
+        )
 
-    matches = matches + normalize_events(
-        ucl_resp["json"],
-        "CHAMPIONS LEAGUE",
-    )
+    return matches
 
-    fa_resp = http.get(
-        FA_CUP_URL + date_query,
-        ttl_seconds=60,
-    )
 
-    matches = matches + normalize_events(
-        fa_resp["json"],
-        "FA CUP",
-    )
+def get_next_liverpool_matches(ctx):
+    matches = []
 
-    # Single-day EFL request for freshest live state.
-    today_date = (
-        str(year)
-        + pad2(month)
-        + pad2(day)
-    )
-
-    efl_today_query = (
-        "?dates="
-        + today_date
-        + "&limit=100"
-    )
-
-    efl_today_resp = http.get(
-        EFL_CUP_URL + efl_today_query,
-        ttl_seconds=60,
-    )
-
-    matches = matches + normalize_events(
-        efl_today_resp["json"],
-        "EFL CUP",
-    )
-
-    # Broad EFL request keeps past and future cup fixtures available.
-    efl_range_resp = http.get(
-        EFL_CUP_URL + date_query,
+    # NEXT: Liverpool's all-competitions team schedule.
+    resp = http.get(
+        LIVERPOOL_SCHEDULE_URL
+        + "?fixture=true",
         ttl_seconds=300,
     )
 
-    matches = matches + normalize_events(
-        efl_range_resp["json"],
-        "EFL CUP",
-    )
+    data = get(resp, "json", None)
+
+    if data != None:
+        matches = matches + normalize_events(
+            data,
+            "",
+        )
 
     return matches
+
+
+def get_last_liverpool_match(ctx):
+    now = ctx.now
+
+    # Search one calendar day at a time, newest first. As soon as a
+    # completed Liverpool match is found, stop searching older days.
+    # Then use one event-summary request to recover the competition name.
+    # Worst case: 7 scoreboard requests + 1 summary request = 8 total.
+    for days_back in range(7):
+        check_date = subtract_days(
+            now.year,
+            now.month,
+            now.day,
+            days_back,
+        )
+
+        date_text = (
+            str(check_date[0])
+            + pad2(check_date[1])
+            + pad2(check_date[2])
+        )
+
+        resp = http.get(
+            ALL_SOCCER_SCOREBOARD_URL
+            + "?dates="
+            + date_text,
+            ttl_seconds=300,
+        )
+
+        data = get(resp, "json", None)
+
+        if data == None:
+            continue
+
+        matches = normalize_events(
+            data,
+            "",
+        )
+
+        last_game = find_last_liverpool_match(
+            matches
+        )
+
+        if last_game == None:
+            continue
+
+        event_id = get(
+            last_game,
+            "id",
+            "",
+        )
+
+        if event_id != "":
+            summary_resp = http.get(
+                ALL_SOCCER_SUMMARY_URL
+                + "?event="
+                + event_id,
+                ttl_seconds=300,
+            )
+
+            summary_data = get(
+                summary_resp,
+                "json",
+                None,
+            )
+
+            if summary_data != None:
+                last_game["competition"] = (
+                    competition_name_from_summary(
+                        summary_data,
+                        last_game["competition"],
+                    )
+                )
+
+        return last_game
+
+    return None
 
 
 def timezone_offset(ctx):
@@ -801,7 +1095,7 @@ def live_match(c, ctx):
     tzoffset = timezone_offset(ctx)
     now = ctx.now
 
-    matches = get_liverpool_matches(ctx)
+    matches = get_live_liverpool_matches(ctx)
 
     live_game = find_live_liverpool_match(
         matches,
@@ -832,25 +1126,11 @@ def live_match(c, ctx):
             align="center",
         )
 
-        if crest != "":
-            c.image(
-                crest,
-                103,
-                5,
-                22,
-                22,
-            )
+        draw_opponent_crest(c, opponent, 103, 5, 22)
 
-        c.text(
-            match_symbol(live_game)
-            + " "
-            + display_team_name(opponent).upper(),
-            78,
-            8,
-            font="3x4",
-            color=WHITE,
-            align="center",
-        )
+        draw_opponent_name(c, opponent, 66 if crest != "" else 78,
+                           8, "3x4", 70 if crest != "" else 96,
+                           match_symbol(live_game) + " ")
 
         c.text(
             score,
@@ -861,134 +1141,7 @@ def live_match(c, ctx):
             align="center",
         )
 
-        detail = live_game["detail"]
-        upper_detail = detail.upper()
-
-        minutes = minutes_until_match(
-            live_game["date"],
-            now,
-        )
-
-        elapsed = None
-
-        if minutes != None and minutes <= 0:
-            elapsed = 0 - minutes
-
-        # -------------------------
-        # PENALTY SHOOTOUT
-        # -------------------------
-
-        if (
-            "PEN" in upper_detail
-            or "SHOOTOUT" in upper_detail
-        ):
-            detail = "PENS"
-
-        # -------------------------
-        # EXTRA TIME BREAK
-        # -------------------------
-
-        elif (
-            "EXTRA" in upper_detail
-            and "HALF" in upper_detail
-        ):
-            detail = "ET HT"
-
-        # -------------------------
-        # NORMAL HALFTIME
-        # -------------------------
-
-        elif (
-            upper_detail == "HT"
-            or upper_detail == "HALFTIME"
-            or upper_detail == "HALF TIME"
-        ):
-            detail = "HT"
-
-        # -------------------------
-        # ESPN LIVE MINUTE
-        # Examples:
-        # 42'
-        # 45+3'
-        # 90'
-        # 105+1'
-        # -------------------------
-
-        elif (
-            detail != ""
-            and "'" in detail
-        ):
-            minute_text = detail.replace(
-                "'",
-                "",
-            )
-
-            if elapsed == None:
-                detail = (
-                    minute_text
-                    + " MIN"
-                )
-
-            elif elapsed < 60:
-                detail = (
-                    minute_text
-                    + " MIN H1"
-                )
-
-            elif elapsed < 115:
-                detail = (
-                    minute_text
-                    + " MIN H2"
-                )
-
-            elif elapsed < 135:
-                detail = (
-                    minute_text
-                    + " MIN ET1"
-                )
-
-            else:
-                detail = (
-                    minute_text
-                    + " MIN ET2"
-                )
-
-        # -------------------------
-        # FALLBACK
-        # Only used if ESPN does
-        # not provide a minute.
-        # -------------------------
-
-        elif elapsed != None:
-            if elapsed <= 45:
-                detail = (
-                    str(elapsed)
-                    + " MIN H1"
-                )
-
-            elif elapsed < 60:
-                detail = "HT"
-
-            elif elapsed < 115:
-                detail = (
-                    str(elapsed - 15)
-                    + " MIN H2"
-                )
-
-            elif elapsed < 135:
-                detail = "ET1"
-
-            elif elapsed < 140:
-                detail = "ET HT"
-
-            elif elapsed < 165:
-                detail = "ET2"
-
-            else:
-                detail = "LIVE"
-
-        else:
-            detail = "LIVE"
+        detail = live_detail(live_game)
 
         c.text(
             detail,
@@ -1001,8 +1154,10 @@ def live_match(c, ctx):
 
         return
 
+    next_matches = get_next_liverpool_matches(ctx)
+
     next_game = find_next_liverpool_match(
-        matches,
+        next_matches,
         now,
     )
 
@@ -1072,7 +1227,7 @@ def next_match(c, ctx):
     tzoffset = timezone_offset(ctx)
     now = ctx.now
 
-    matches = get_liverpool_matches(ctx)
+    matches = get_next_liverpool_matches(ctx)
 
     next_game = find_next_liverpool_match(
         matches,
@@ -1126,35 +1281,21 @@ def next_match(c, ctx):
 
     c.text(
         symbol,
-        52,
+        55,
         11,
         font="4x5",
         color=LIVERPOOL_RED,
     )
 
-    if crest != "":
-        c.image(
-            crest,
-            31,
-            8,
-            22,
-            22,
-        )
+    draw_opponent_crest(c, opponent, 31, 7, 22)
 
-    c.text(
-        display_team_name(opponent).upper(),
-        87,
-        11,
-        font="4x5",
-        color=WHITE,
-        align="center",
-    )
+    draw_opponent_name(c, opponent, 90, 11, "4x5", 64)
 
     c.text(
         local_time[0] + " " + local_time[1],
-        82,
+        80,
         22,
-        font="4x5",
+        font="3x4",
         color=WHITE,
         align="center",
     )
@@ -1164,9 +1305,7 @@ def last_match(c, ctx):
     c.clear()
     draw_branding(c)
 
-    matches = get_liverpool_matches(ctx)
-
-    last_game = find_last_liverpool_match(matches)
+    last_game = get_last_liverpool_match(ctx)
 
     if last_game == None:
         c.text(
@@ -1214,23 +1353,10 @@ def last_match(c, ctx):
         align="center",
     )
 
-    if crest != "":
-        c.image(
-            crest,
-            33,
-            9,
-            20,
-            20,
-        )
+    draw_opponent_crest(c, opponent, 102, 8, 20)
 
-    c.text(
-        display_team_name(opponent).upper(),
-        78,
-        8,
-        font="3x4",
-        color=WHITE,
-        align="center",
-    )
+    draw_opponent_name(c, opponent, 78 if crest != "" else 78,
+                       8, "3x4", 70 if crest != "" else 96)
 
     c.text(
         score,
@@ -1243,7 +1369,7 @@ def last_match(c, ctx):
 
     c.text(
         result,
-        109,
+        46,
         16,
         font="4x5",
         color=LIVERPOOL_RED,
@@ -1268,18 +1394,76 @@ def standing_stat(stats, name, fallback=0):
     return fallback
 
 
+def signed_stat_number(value):
+    if type(value) == "int":
+        return value
+    if type(value) == "float":
+        return int(value) if value == int(value) else None
+    if type(value) != "string":
+        return None
+    text = value.strip().replace("−", "-")
+    if text == "":
+        return None
+    digits = text[1:] if text[0] in ["+", "-"] else text
+    if digits == "":
+        return None
+    for ch in digits.elems():
+        if ch < "0" or ch > "9":
+            return None
+    return int(text)
+
+
+def named_standing_number(stats, names, abbreviation=""):
+    for name in names:
+        for stat in list_value(stats):
+            if get(stat, "name", "") == name:
+                value = signed_stat_number(get(stat, "value", None))
+                if value == None:
+                    value = signed_stat_number(get(stat, "displayValue", None))
+                if value != None:
+                    return value
+    if abbreviation != "":
+        for stat in list_value(stats):
+            if str(get(stat, "abbreviation", "")).upper() == abbreviation:
+                value = signed_stat_number(get(stat, "value", None))
+                if value == None:
+                    value = signed_stat_number(get(stat, "displayValue", None))
+                if value != None:
+                    return value
+    return None
+
+
+def standing_goal_difference(stats):
+    gd = named_standing_number(
+        stats, ["pointDifferential", "goalDifference", "goalDifferential"], "GD",
+    )
+    if gd != None:
+        return gd
+    goals_for = named_standing_number(stats, ["pointsFor", "goalsFor"], "GF")
+    goals_against = named_standing_number(stats, ["pointsAgainst", "goalsAgainst"], "GA")
+    if goals_for != None and goals_against != None:
+        return goals_for - goals_against
+    return None
+
+
+def goal_difference_text(value):
+    if value == None:
+        return "--"
+    return ("+" if value > 0 else "") + str(value)
+
+
 def find_liverpool_standing(data):
-    groups = get(data, "children", [])
+    groups = list_value(get(data, "children", []))
 
     for group in groups:
         standings = get(group, "standings", {})
-        entries = get(standings, "entries", [])
+        entries = list_value(get(standings, "entries", []))
 
         for entry in entries:
             team = get(entry, "team", {})
 
             if get(team, "abbreviation", "") == "LIV":
-                stats = get(entry, "stats", [])
+                stats = list_value(get(entry, "stats", []))
 
                 return {
                     "rank": int(
@@ -1317,13 +1501,7 @@ def find_liverpool_standing(data):
                             0,
                         )
                     ),
-                    "gd": int(
-                        standing_stat(
-                            stats,
-                            "goalDifference",
-                            0,
-                        )
-                    ),
+                    "gd": standing_goal_difference(stats),
                     "points": int(
                         standing_stat(
                             stats,
@@ -1337,16 +1515,12 @@ def find_liverpool_standing(data):
 
 
 def ordinal_place(number):
-    if number == 1:
-        return "1ST"
-
-    if number == 2:
-        return "2ND"
-
-    if number == 3:
-        return "3RD"
-
-    return str(number) + "TH"
+    if number <= 0:
+        return "--"
+    suffix = "TH"
+    if number % 100 not in [11, 12, 13]:
+        suffix = {1: "ST", 2: "ND", 3: "RD"}.get(number % 10, "TH")
+    return str(number) + suffix
 
 
 def premier_league_table(c, ctx):
@@ -1391,10 +1565,7 @@ def premier_league_table(c, ctx):
         + str(standing["losses"])
     )
 
-    gd = str(standing["gd"])
-
-    if standing["gd"] > 0:
-        gd = "+" + gd
+    gd = goal_difference_text(standing["gd"])
 
     c.text(
         "PREMIER LEAGUE",
@@ -1487,10 +1658,7 @@ def champions_league_table(c, ctx):
         + str(standing["losses"])
     )
 
-    gd = str(standing["gd"])
-
-    if standing["gd"] > 0:
-        gd = "+" + gd
+    gd = goal_difference_text(standing["gd"])
 
     c.text(
         "CHAMPIONS LEAGUE",
