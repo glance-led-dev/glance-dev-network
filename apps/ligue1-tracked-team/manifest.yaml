@@ -1,0 +1,76 @@
+gdn: 1
+id: ligue1-tracked-team
+version: 0.1.1
+name: "Ligue 1 Tracked Team"
+author: "Tim McCabe"
+description: Track a Ligue 1 club's most recent match, next fixture, live game and league standing.
+category: Sports
+entry: app.star
+
+width: 128
+height: 32
+refresh: 300
+
+pages: [title, live_match, last_match, next_match, standing]
+
+assets:
+  - ligue1.png
+  - france_marseille_64x64.football-logos.cc.png
+  - france_paris-saint-germain_64x64.football-logos.cc.png
+  - france_as-monaco_64x64.football-logos.cc.png
+  - france_lyon_64x64.football-logos.cc.png
+  - france_lille_64x64.football-logos.cc.png
+  - france_rennes_64x64.football-logos.cc.png
+  - france_nice_64x64.football-logos.cc.png
+  - france_rc-strasbourg-alsace_64x64.football-logos.cc.png
+  - france_rc-lens_64x64.football-logos.cc.png
+  - france_brest_64x64.football-logos.cc.png
+  - france_auxerre_64x64.football-logos.cc.png
+  - france_angers_64x64.football-logos.cc.png
+  - france_toulouse_64x64.football-logos.cc.png
+  - france_le-havre-ac_64x64.football-logos.cc.png
+  - france_lorient_64x64.football-logos.cc.png
+  - france_paris-fc_64x64.football-logos.cc.png
+  - france_troyes_64x64.football-logos.cc.png
+  - france_le-mans_64x64.football-logos.cc.png
+
+inputs:
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Your club
+    default: "OLM"
+    choices:
+      - "OLM"
+      - "PSG"
+      - "MON"
+      - "LYON"
+      - "LILL"
+      - "REN"
+      - "NICE"
+      - "STR"
+      - "RCL"
+      - "BRE"
+      - "AUX"
+      - "ANG"
+      - "TOU"
+      - "HAC"
+      - "LOR"
+      - "PAR"
+      - "TRY"
+      - "MNS"
+    help: Choose the Ligue 1 club you want to track.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/Los_Angeles"
+    choices:
+      - "America/Los_Angeles"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/New_York"
+      - "UTC"
+      - "Europe/Paris"
+    help: Used to display kickoff times in your local time.
