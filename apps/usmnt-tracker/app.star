@@ -5,6 +5,7 @@ BASE = "https://site.api.espn.com/apis/"
 
 
 USMNT_TEAM_ID = "660"
+RECENT_MATCH_DAYS = 90
 USMNT_SCHEDULE_URL = (
     "https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/"
     + USMNT_TEAM_ID
@@ -61,22 +62,23 @@ def opponent_crest(opponent):
 
 
 def display_team_name(opponent):
-    abbr = opponent["abbr"]
-
-    if abbr in TEAM_DISPLAY_NAMES:
-        return TEAM_DISPLAY_NAMES[abbr]
-
-    return opponent["name"]
+    abbr = str(get(opponent, "abbr", "")).upper()
+    name = TEAM_DISPLAY_NAMES.get(abbr, str(get(opponent, "name", "")))
+    if name != "" and len(name) <= 14:
+        return name
+    short = str(get(opponent, "short_name", ""))
+    if short != "" and len(short) <= 14:
+        return short
+    if abbr != "":
+        return abbr[:14]
+    return name[:11] + "..." if name != "" else "OPPONENT"
 
 
 def get(obj, key, fallback=None):
-    if obj == None:
+    if type(obj) != "dict":
         return fallback
-
-    if key in obj:
-        return obj[key]
-
-    return fallback
+    value = obj.get(key, fallback)
+    return fallback if value == None else value
 
 
 def pad2(n):
@@ -239,7 +241,10 @@ def local_match_datetime(iso, offset):
 
 
 def competition_name_from_text(text, fallback=""):
-    combined = text.lower()
+    combined = str(text).lower()
+
+    if "fifa.worldq" in combined or "world_cup_qual" in combined:
+        return "WORLD CUP QUAL"
 
     if (
         "world cup" in combined
@@ -286,7 +291,7 @@ def competition_name_from_event(data, event, fallback=""):
     # from the event/competition first, then match the event UID against
     # the response-level league list when necessary.
     league = get(event, "league", {})
-    competition_list = get(event, "competitions", [])
+    competition_list = list_value(get(event, "competitions", []))
     competition = {}
 
     if len(competition_list) > 0:
@@ -326,7 +331,7 @@ def competition_name_from_event(data, event, fallback=""):
         return detected
 
     event_uid = get(event, "uid", "")
-    leagues = get(data, "leagues", [])
+    leagues = list_value(get(data, "leagues", []))
 
     for response_league in leagues:
         league_uid = get(response_league, "uid", "")
@@ -378,7 +383,7 @@ def competition_name_from_summary(data, fallback=""):
     # inspect the header competition/season text as a fallback.
     header = get(data, "header", {})
     league = get(header, "league", {})
-    competitions = get(header, "competitions", [])
+    competitions = list_value(get(header, "competitions", []))
     competition = {}
 
     if len(competitions) > 0:
@@ -426,29 +431,23 @@ def competition_name_from_summary(data, fallback=""):
 
 
 def is_usmnt_team(team):
-    abbr = get(team, "abbr", "").upper()
-    name = get(team, "name", "").lower()
-
-    return (
-        abbr == "USA"
-        or "united states" in name
-        or name == "usa"
-    )
+    # An explicit ID takes priority over names shared with women/youth teams.
+    return str(get(team, "id", "")) == USMNT_TEAM_ID
 
 
 def normalize_events(data, competition_name):
     matches = []
 
-    events = get(data, "events", [])
+    events = list_value(get(data, "events", []))
 
     for event in events:
-        competitions = get(event, "competitions", [])
+        competitions = list_value(get(event, "competitions", []))
 
         if len(competitions) == 0:
             continue
 
         competition = competitions[0]
-        competitors = get(competition, "competitors", [])
+        competitors = list_value(get(competition, "competitors", []))
 
         home = None
         away = None
@@ -458,9 +457,12 @@ def normalize_events(data, competition_name):
             team = get(competitor, "team", {})
 
             normalized = {
+                "id": str(get(team, "id", "")),
                 "abbr": get(team, "abbreviation", ""),
                 "name": get(team, "displayName", ""),
-                "score": get(competitor, "score", ""),
+                "short_name": get(team, "shortDisplayName", ""),
+                "winner": get(competitor, "winner", None),
+                "score": score_text(get(competitor, "score", "")),
                 "logo": get(team, "logo", ""),
             }
 
@@ -473,7 +475,7 @@ def normalize_events(data, competition_name):
         if home == None or away == None:
             continue
 
-        status = get(event, "status", {})
+        status = get(competition, "status", get(event, "status", {}))
         status_type = get(status, "type", {})
 
         state = get(
@@ -497,8 +499,10 @@ def normalize_events(data, competition_name):
             "home": home,
             "away": away,
             "state": state,
+            "status_name": str(get(status_type, "name", "")).upper(),
             "detail": detail,
-            "date": get(event, "date", ""),
+            "period": get(status, "period", 0),
+            "date": get(event, "date", get(competition, "date", "")),
             "competition": competition_name_from_event(
                 data,
                 event,
@@ -510,138 +514,58 @@ def normalize_events(data, competition_name):
 
 
 def minutes_until_match(iso, now):
-    if iso == None or len(iso) < 16:
+    if type(iso) != "string" or len(iso) < 16:
         return None
-
-    match_year = int(iso[0:4])
-    match_month = int(iso[5:7])
-    match_day = int(iso[8:10])
-    match_hour = int(iso[11:13])
-    match_minute = int(iso[14:16])
-
-    day_difference = None
-
-    for i in range(366):
-        check = add_days(
-            now.year,
-            now.month,
-            now.day,
-            i,
-        )
-
-        if (
-            check[0] == match_year
-            and check[1] == match_month
-            and check[2] == match_day
-        ):
-            day_difference = i
-            break
-
-    if day_difference == None:
-        for i in range(1, 366):
-            check = subtract_days(
-                now.year,
-                now.month,
-                now.day,
-                i,
-            )
-
-            if (
-                check[0] == match_year
-                and check[1] == match_month
-                and check[2] == match_day
-            ):
-                day_difference = 0 - i
-                break
-
-    if day_difference == None:
+    digits = iso[0:4] + iso[5:7] + iso[8:10] + iso[11:13] + iso[14:16]
+    for ch in digits.elems():
+        if ch < "0" or ch > "9":
+            return None
+    year = int(iso[0:4])
+    month = int(iso[5:7])
+    day = int(iso[8:10])
+    hour = int(iso[11:13])
+    minute = int(iso[14:16])
+    if month < 1 or month > 12 or hour > 23 or minute > 59:
         return None
-
-    current_minutes = (
-        now.hour * 60
-        + now.minute
-    )
-
-    match_minutes = (
-        day_difference * 1440
-        + match_hour * 60
-        + match_minute
-    )
-
-    return match_minutes - current_minutes
+    if day < 1 or day > days_in_month(year, month):
+        return None
+    # ESPN's event dates are UTC (Z). Explicit zero offsets are equivalent.
+    if not (iso.endswith("Z") or iso.endswith("+00:00")):
+        return None
+    match_minutes = days_from_civil(year, month, day) * 1440 + hour * 60 + minute
+    return match_minutes - now.unix // 60
 
 
 def find_next_usmnt_match(matches, now):
-    next_match = None
-
-    for match in matches:
-        is_usmnt = (
-            is_usmnt_team(match["home"])
-            or is_usmnt_team(match["away"])
-        )
-
-        if not is_usmnt:
+    best = None
+    best_minutes = None
+    for match in list_value(matches):
+        if not (is_usmnt_team(match["home"]) or is_usmnt_team(match["away"])):
             continue
-
-        if match["state"] == "post":
+        if match["state"] not in ["", "pre"]:
             continue
-
-        if match["state"] == "in":
+        if match["status_name"] in ["STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_CANCELLED", "STATUS_SUSPENDED", "STATUS_ABANDONED"]:
             continue
-
-        minutes = minutes_until_match(
-            match["date"],
-            now,
-        )
-
+        minutes = minutes_until_match(match["date"], now)
         if minutes == None or minutes <= 0:
             continue
-
-        if next_match == None:
-            next_match = match
-            continue
-
-        if match["date"] < next_match["date"]:
-            next_match = match
-
-    return next_match
+        if best == None or minutes < best_minutes:
+            best = match
+            best_minutes = minutes
+    return best
 
 
 def find_live_usmnt_match(matches, now):
-    for match in matches:
-        is_usmnt = (
-            is_usmnt_team(match["home"])
-            or is_usmnt_team(match["away"])
-        )
-
-        if not is_usmnt:
-            continue
-
-        if match["state"] == "post":
-            continue
-
-        if match["state"] == "in":
+    for match in list_value(matches):
+        if (is_usmnt_team(match["home"]) or is_usmnt_team(match["away"])) and match["state"] == "in":
             return match
-
-        minutes = minutes_until_match(
-            match["date"],
-            now,
-        )
-
-        if (
-            minutes != None
-            and minutes <= 0
-            and minutes > -180
-        ):
-            return match
-
     return None
 
 
 def find_last_usmnt_match(matches):
     last_match = None
 
-    for match in matches:
+    for match in list_value(matches):
         if match["state"] != "post":
             continue
 
@@ -678,15 +602,19 @@ def opponent_score(match):
 
 
 def match_result(match):
-    usmnt = int(usmnt_score(match))
-    opponent = int(opponent_score(match))
-
-    if usmnt > opponent:
+    usa = match["home"] if is_usmnt_team(match["home"]) else match["away"]
+    opponent = opponent_of(match)
+    if usa["score"] == "-" or opponent["score"] == "-":
+        return "FINAL"
+    if int(usa["score"]) > int(opponent["score"]):
         return "WIN"
-
-    if usmnt < opponent:
+    if int(usa["score"]) < int(opponent["score"]):
         return "LOSS"
-
+    # A tied match can have a winner after a penalty shootout.
+    if get(usa, "winner", None) == True:
+        return "WIN"
+    if get(opponent, "winner", None) == True:
+        return "LOSS"
     return "DRAW"
 
 
@@ -731,54 +659,26 @@ def draw_branding(c):
 
 
 def get_live_usmnt_matches(ctx):
-    now = ctx.now
-
-    today_date = (
-        str(now.year)
-        + pad2(now.month)
-        + pad2(now.day)
-    )
-
     matches = []
-
-    # LIVE: single-day all-soccer scoreboard only.
-    resp = http.get(
-        ALL_SOCCER_SCOREBOARD_URL
-        + "?dates="
-        + today_date,
-        ttl_seconds=60,
-    )
-
-    data = get(resp, "json", None)
-
-    if data != None:
-        matches = matches + normalize_events(
-            data,
-            "",
-        )
-
-    return matches
+    successes = 0
+    # Yesterday's UTC fixture can still be in progress after midnight.
+    for days_back in range(2):
+        day = subtract_days(ctx.now.year, ctx.now.month, ctx.now.day, days_back)
+        key = str(day[0]) + pad2(day[1]) + pad2(day[2])
+        resp = http.get(ALL_SOCCER_SCOREBOARD_URL + "?dates=" + key, ttl_seconds=60)
+        data = get(resp, "json", None)
+        if get(resp, "status_code", 0) == 200 and type(get(data, "events", None)) == "list":
+            successes += 1
+            matches += normalize_events(data, "")
+    return matches if successes > 0 else None
 
 
 def get_usmnt_schedule(ctx):
-    matches = []
-
-    # NEXT: USMNT all-competitions team schedule.
-    resp = http.get(
-        USMNT_SCHEDULE_URL
-        + "?fixture=true",
-        ttl_seconds=300,
-    )
-
+    resp = http.get(USMNT_SCHEDULE_URL + "?fixture=true", ttl_seconds=300)
     data = get(resp, "json", None)
-
-    if data != None:
-        matches = matches + normalize_events(
-            data,
-            "",
-        )
-
-    return matches
+    if get(resp, "status_code", 0) != 200 or type(get(data, "events", None)) != "list":
+        return None
+    return normalize_events(data, "")
 
 
 def get_last_usmnt_match(ctx):
@@ -796,16 +696,22 @@ def get_last_usmnt_match(ctx):
 
     data = get(resp, "json", None)
 
-    if data == None:
-        return None
+    if get(resp, "status_code", 0) != 200 or type(get(data, "events", None)) != "list":
+        return {"offline": True}
 
     matches = normalize_events(
         data,
         "",
     )
 
+    recent = []
+    for match in matches:
+        age = minutes_until_match(match["date"], ctx.now)
+        if age != None and age <= 0 and age >= -RECENT_MATCH_DAYS * 1440:
+            recent.append(match)
+
     last_game = find_last_usmnt_match(
-        matches
+        recent
     )
 
     if last_game == None:
@@ -869,99 +775,11 @@ def timezone_offset(ctx):
 
 
 def days_until_match(iso, offset, now):
-    if iso == None or len(iso) < 16:
+    minutes = minutes_until_match(iso, now)
+    if minutes == None:
         return None
-
-    match_year = int(iso[0:4])
-    match_month = int(iso[5:7])
-    match_day = int(iso[8:10])
-    match_hour = int(iso[11:13])
-
-    match_hour = match_hour + offset
-
-    if match_hour < 0:
-        match_hour = match_hour + 24
-        match_day = match_day - 1
-
-        if match_day < 1:
-            match_month = match_month - 1
-
-            if match_month < 1:
-                match_month = 12
-                match_year = match_year - 1
-
-            match_day = days_in_month(
-                match_year,
-                match_month,
-            )
-
-    elif match_hour >= 24:
-        match_hour = match_hour - 24
-        match_day = match_day + 1
-
-        if match_day > days_in_month(
-            match_year,
-            match_month,
-        ):
-            match_day = 1
-            match_month = match_month + 1
-
-            if match_month > 12:
-                match_month = 1
-                match_year = match_year + 1
-
-    local_year = now.year
-    local_month = now.month
-    local_day = now.day
-    local_hour = now.hour + offset
-
-    if local_hour < 0:
-        local_hour = local_hour + 24
-        local_day = local_day - 1
-
-        if local_day < 1:
-            local_month = local_month - 1
-
-            if local_month < 1:
-                local_month = 12
-                local_year = local_year - 1
-
-            local_day = days_in_month(
-                local_year,
-                local_month,
-            )
-
-    elif local_hour >= 24:
-        local_hour = local_hour - 24
-        local_day = local_day + 1
-
-        if local_day > days_in_month(
-            local_year,
-            local_month,
-        ):
-            local_day = 1
-            local_month = local_month + 1
-
-            if local_month > 12:
-                local_month = 1
-                local_year = local_year + 1
-
-    for i in range(366):
-        check = add_days(
-            local_year,
-            local_month,
-            local_day,
-            i,
-        )
-
-        if (
-            check[0] == match_year
-            and check[1] == match_month
-            and check[2] == match_day
-        ):
-            return i
-
-    return None
+    local_now = now.unix // 60 + offset * 60
+    return (local_now + minutes) // 1440 - local_now // 1440
 
 
 def match_countdown_text(minutes):
@@ -1057,134 +875,7 @@ def live_match(c, ctx):
             align="center",
         )
 
-        detail = live_game["detail"]
-        upper_detail = detail.upper()
-
-        minutes = minutes_until_match(
-            live_game["date"],
-            now,
-        )
-
-        elapsed = None
-
-        if minutes != None and minutes <= 0:
-            elapsed = 0 - minutes
-
-        # -------------------------
-        # PENALTY SHOOTOUT
-        # -------------------------
-
-        if (
-            "PEN" in upper_detail
-            or "SHOOTOUT" in upper_detail
-        ):
-            detail = "PENS"
-
-        # -------------------------
-        # EXTRA TIME BREAK
-        # -------------------------
-
-        elif (
-            "EXTRA" in upper_detail
-            and "HALF" in upper_detail
-        ):
-            detail = "ET HT"
-
-        # -------------------------
-        # NORMAL HALFTIME
-        # -------------------------
-
-        elif (
-            upper_detail == "HT"
-            or upper_detail == "HALFTIME"
-            or upper_detail == "HALF TIME"
-        ):
-            detail = "HT"
-
-        # -------------------------
-        # ESPN LIVE MINUTE
-        # Examples:
-        # 42'
-        # 45+3'
-        # 90'
-        # 105+1'
-        # -------------------------
-
-        elif (
-            detail != ""
-            and "'" in detail
-        ):
-            minute_text = detail.replace(
-                "'",
-                "",
-            )
-
-            if elapsed == None:
-                detail = (
-                    minute_text
-                    + " MIN"
-                )
-
-            elif elapsed < 60:
-                detail = (
-                    minute_text
-                    + " MIN H1"
-                )
-
-            elif elapsed < 115:
-                detail = (
-                    minute_text
-                    + " MIN H2"
-                )
-
-            elif elapsed < 135:
-                detail = (
-                    minute_text
-                    + " MIN ET1"
-                )
-
-            else:
-                detail = (
-                    minute_text
-                    + " MIN ET2"
-                )
-
-        # -------------------------
-        # FALLBACK
-        # Only used if ESPN does
-        # not provide a minute.
-        # -------------------------
-
-        elif elapsed != None:
-            if elapsed <= 45:
-                detail = (
-                    str(elapsed)
-                    + " MIN H1"
-                )
-
-            elif elapsed < 60:
-                detail = "HT"
-
-            elif elapsed < 115:
-                detail = (
-                    str(elapsed - 15)
-                    + " MIN H2"
-                )
-
-            elif elapsed < 135:
-                detail = "ET1"
-
-            elif elapsed < 140:
-                detail = "ET HT"
-
-            elif elapsed < 165:
-                detail = "ET2"
-
-            else:
-                detail = "LIVE"
-
-        else:
-            detail = "LIVE"
+        detail = live_detail(live_game)
 
         c.text(
             detail,
@@ -1205,7 +896,7 @@ def live_match(c, ctx):
     )
 
     c.text(
-        "NO LIVE MATCH",
+        "DATA OFFLINE" if matches == None else "NO LIVE MATCH",
         78,
         4,
         font="4x5",
@@ -1215,7 +906,7 @@ def live_match(c, ctx):
 
     if next_game == None:
         c.text(
-            "NO UPCOMING",
+            "DATA OFFLINE" if next_matches == None else "NO UPCOMING",
             78,
             17,
             font="4x5",
@@ -1288,7 +979,7 @@ def next_match(c, ctx):
         )
 
         c.text(
-            "NO FIXTURE",
+            "DATA OFFLINE" if matches == None else "NO FIXTURE",
             78,
             18,
             font="4x5",
@@ -1341,7 +1032,7 @@ def next_match(c, ctx):
 
     c.text(
         display_team_name(opponent).upper(),
-        87,
+        92,
         11,
         font="4x5",
         color=WHITE,
@@ -1364,7 +1055,7 @@ def last_match(c, ctx):
 
     last_game = get_last_usmnt_match(ctx)
 
-    if last_game == None:
+    if last_game == None or get(last_game, "offline", False):
         c.text(
             "LAST MATCH",
             78,
@@ -1375,7 +1066,7 @@ def last_match(c, ctx):
         )
 
         c.text(
-            "NO RECENT MATCH",
+            "DATA OFFLINE" if get(last_game, "offline", False) else "NO RECENT MATCH",
             78,
             18,
             font="4x5",
@@ -1454,3 +1145,47 @@ def last_match(c, ctx):
         color=WHITE,
         align="center",
     )
+
+
+def list_value(value):
+    return value if type(value) == "list" else []
+
+def score_text(value):
+    if type(value) == "dict":
+        value = get(value, "displayValue", get(value, "value", ""))
+    if type(value) == "float":
+        return str(int(value))
+    text = str(value).strip() if value != None else ""
+    if text == "":
+        return "-"
+    for ch in text.elems():
+        if ch < "0" or ch > "9":
+            return "-"
+    return text
+
+def days_from_civil(year, month, day):
+    year = year - 1 if month <= 2 else year
+    era = year // 400
+    yoe = year - era * 400
+    mp = month - 3 if month > 2 else month + 9
+    doy = (153 * mp + 2) // 5 + day - 1
+    return era * 146097 + yoe * 365 + yoe // 4 - yoe // 100 + doy - 719468
+
+def live_detail(match):
+    detail = str(get(match, "detail", "")).upper()
+    period = get(match, "period", 0)
+    if "PEN" in detail or "SHOOTOUT" in detail:
+        return "PENS"
+    if "EXTRA" in detail and "HALF" in detail:
+        return "ET HT"
+    if detail in ["HT", "HALFTIME", "HALF TIME"]:
+        return "HT"
+    minute = detail.replace("'", "").replace("’", "").strip()
+    valid = minute != ""
+    for ch in minute.elems():
+        if (ch < "0" or ch > "9") and ch != "+":
+            valid = False
+    if valid:
+        phase = {1: " H1", 2: " H2", 3: " ET1", 4: " ET2"}.get(period, "")
+        return minute + " MIN" + phase
+    return "LIVE"

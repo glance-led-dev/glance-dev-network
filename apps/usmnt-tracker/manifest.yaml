@@ -1,6 +1,6 @@
 gdn: 1
 id: usmnt-tracker
-version: 0.1.0
+version: 0.1.1
 name: "USMNT Tracker"
 author: "Tim McCabe"
 description: Follow the United States Men's National Team live matches, upcoming fixtures, and recent results across competitions.
