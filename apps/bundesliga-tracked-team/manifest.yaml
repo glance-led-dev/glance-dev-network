@@ -1,6 +1,6 @@
 gdn: 1
 id: bundesliga-tracked-team
-version: 0.1.0
+version: 0.2.1
 name: "Bundesliga Tracked Team"
 author: "Tim McCabe"
 description: Track a Bundesliga club's most recent match, next fixture, and league standing.
