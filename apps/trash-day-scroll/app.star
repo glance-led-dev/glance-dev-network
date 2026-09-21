@@ -2,8 +2,25 @@
 #
 # No network at all — a weekly schedule plus an alternating-week
 # rule, which is how nearly every kerbside collection actually
-# works. The alternation is anchored to the ISO week number so it
-# stays correct across a year boundary rather than drifting.
+# works.
+#
+# Each item (garbage, recycling, yard waste) is EVERY WEEK, NEVER, or
+# alternating. An alternating item needs an anchor -- which of the two
+# possible weeks is the "on" week -- and there's no way to derive that
+# from the calendar alone: a fixed rule (e.g. "even ISO weeks") matches
+# perhaps half of everyone's real schedule and is silently wrong, with
+# no way to fix it, for the other half. So each alternating item gets
+# its own THIS WEEK / NEXT WEEK setting instead of a fixed rule: pick
+# one, then check whether the live preview's upcoming pickup matches
+# your real bin schedule, and flip it to the other option if it
+# doesn't. That's a one-time correction, not a recurring chore --
+# because the app's week counter and a real fortnightly schedule both
+# advance in the same 7-day steps, once the two agree they stay in
+# lockstep forever. THIS WEEK / NEXT WEEK isn't reinterpreted against
+# "today" on every render (an input can't know when it was last
+# changed, so that would silently drift); it just names which of the
+# two fixed alternating patterns the item follows, checked once against
+# reality.
 #
 # The evening before is what matters, so the panel flips to
 # TONIGHT after 4pm on the day before collection.
@@ -94,10 +111,14 @@ def local_parts(ctx):
 
 
 def wanted(mode, week):
+    """THIS WEEK and NEXT WEEK are the two fixed alternating patterns (see
+    the DESIGN note above for why there isn't a single correct default)."""
     if mode == "EVERY WEEK":
         return True
-    if mode == "ALTERNATE WEEKS":
+    if mode == "THIS WEEK":
         return week % 2 == 0
+    if mode == "NEXT WEEK":
+        return week % 2 == 1
     return False
 
 
@@ -123,13 +144,13 @@ def bins(c, ctx):
     else:
         when = "IN " + str(ahead) + " DAYS"
 
-    show = [["BINTRASH", True]]
+    target_week = week + (1 if ahead > 0 else 0)
+    show = [["BINTRASH",
+             wanted(str(ctx.inputs.get("garbage", "EVERY WEEK")).upper(), target_week)]]
     show.append(["BINRECYCLE",
-                 wanted(str(ctx.inputs.get("recycling", "NEVER")).upper(),
-                        week + (1 if ahead > 0 else 0))])
+                 wanted(str(ctx.inputs.get("recycling", "NEVER")).upper(), target_week)])
     show.append(["BINYARD",
-                 wanted(str(ctx.inputs.get("yard", "NEVER")).upper(),
-                        week + (1 if ahead > 0 else 0))])
+                 wanted(str(ctx.inputs.get("yard", "NEVER")).upper(), target_week)])
 
     live = []
     for s in show:
