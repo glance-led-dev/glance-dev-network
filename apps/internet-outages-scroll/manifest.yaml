@@ -1,0 +1,37 @@
+gdn: 1
+id: internet-outages-scroll
+version: 0.1.0
+name: Internet Outages
+author: glance-led-dev
+description: Where the internet is down right now - a world map with the affected countries lit, and the worst outages ranked by severity. From Georgia Tech's IODA project, no key.
+category: Science
+entry: app.star
+
+width: 192
+height: 32
+# IODA scores in near real time; a quarter hour is honest for a map of it.
+refresh: 3600
+
+pages: [worldmap, worst]
+
+inputs:
+  - key: window
+    type: choice
+    app_input_type: dropdown
+    label: Look back
+    default: "24 HOURS"
+    help: How far back to count outages. A shorter window shows what is broken right now; a longer one catches outages that have already recovered.
+    choices:
+      - "6 HOURS"
+      - "24 HOURS"
+      - "3 DAYS"
+      - "7 DAYS"
+  - key: scope
+    type: choice
+    app_input_type: dropdown
+    label: Show
+    default: "COUNTRIES"
+    help: COUNTRIES ranks whole nations. REGIONS ranks states and provinces instead, which surfaces smaller outages inside a big country.
+    choices:
+      - "COUNTRIES"
+      - "REGIONS"

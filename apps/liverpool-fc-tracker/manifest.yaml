@@ -1,0 +1,63 @@
+gdn: 1
+id: liverpool-fc-tracker
+version: 0.1.0
+name: "Liverpool FC Tracker"
+author: "Tim McCabe"
+description: Follow Liverpool FC live matches, upcoming fixtures, recent results, Premier League standings, and Champions League standings.
+category: Sports
+entry: app.star
+
+width: 128
+height: 32
+refresh: 300
+
+pages:
+  - live_match
+  - next_match
+  - last_match
+  - premier_league_table
+  - champions_league_table
+
+inputs:
+  - key: timezone
+    app_input_type: dropdown
+    type: choice
+    label: Time zone
+    default: pacific
+    choices:
+      - pacific
+      - mountain
+      - central
+      - eastern
+      - alaska
+      - hawaii
+      - utc
+      - uk
+      - central_europe
+      - eastern_europe
+      - turkey
+      - iceland
+    help: Select your local time zone.
+
+assets:
+  - Liverpool-logo.png
+  - ARS22.png
+  - AVL22.png
+  - BOU22.png
+  - BRE22.png
+  - BRI22.png
+  - CFC22.png
+  - COV22.png
+  - CRY22.png
+  - EVE22.png
+  - FUL22.png
+  - HUL22.png
+  - IPS22.png
+  - LEE22.png
+  - LFC22.png
+  - MCI22.png
+  - MUN22.png
+  - NEW22.png
+  - NFO22.png
+  - SUN22.png
+  - TOT22.png

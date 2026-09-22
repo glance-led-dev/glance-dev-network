@@ -1,0 +1,38 @@
+gdn: 1
+id: global-co2-scroll
+version: 0.1.0
+name: Carbon in the Air
+author: glance-led-dev
+description: What burning fossil fuel leaves behind - the global CO2 concentration measured today, the rise since 1979, and the yearly breathing cycle of the planet. From NOAA, no key.
+category: Science
+entry: app.star
+
+width: 192
+height: 32
+# NOAA extends the daily global file once a day. An hour keeps the panel
+# honest without asking for a file that has not changed.
+refresh: 21600
+
+pages: [now, rise, season]
+
+inputs:
+  - key: compare
+    type: choice
+    app_input_type: dropdown
+    label: Compare against
+    default: "A YEAR AGO"
+    help: What the headline number is measured against. PRE-INDUSTRIAL uses 280 ppm, the level held for thousands of years before coal, and is the comparison the climate targets are written against.
+    choices:
+      - "A YEAR AGO"
+      - "PRE-INDUSTRIAL"
+      - "1979"
+  - key: span
+    type: choice
+    app_input_type: dropdown
+    label: Chart span
+    default: "SINCE 1979"
+    help: How far back the rise chart reaches. NOAA's global annual record starts in 1979.
+    choices:
+      - "SINCE 1979"
+      - "LAST 20 YEARS"
+      - "LAST 10 YEARS"

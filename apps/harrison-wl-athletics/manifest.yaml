@@ -1,0 +1,46 @@
+gdn: 1
+id: harrison-wl-athletics
+version: 1.0.0
+name: "Harrison WL Athletics"
+author: "Harrison Raiders - Thomas Taylor"
+description: Live daily athletic events for Harrison High School.
+category: Sports
+entry: app.star
+width: 384
+height: 32
+refresh: 21600
+pages: [main]
+
+assets:
+  - harrison-logo.png.png
+  - pike-logo-28.png.png
+  - zionsville-logo-28.png.png
+  - roncalli-logo-28.png.png
+  - mccutcheon-logo-28.png.png
+  - lafayette-jeff-logo-28.png.png
+  - west-lafayette-logo-28.png.png
+  - lebanon-logo-28.png.png
+  - danville-logo-28.png.png
+  - crawfordsville-logo-28.png.png
+  - kokomo-logo-28.png.png
+  - logansport-logo-28.png.png
+  - brownsburg-logo-28.png.png
+  - fishers-logo-28.png.png
+  - hse-logo-28.png.png
+  - noblesville-logo-28.png.png
+  - avon-logo-28.png.png
+  - bishop-chatard-logo-28.png.png
+  - plainfield-logo-28.png.png
+  - westfield-logo-28.png.png
+  - carmel-logo-28.png.png
+  - terre-haute-south-logo-28.png.png
+  - terre-haute-north-logo-28.png.png
+  - lcc-logo-28.png.png
+  - benton-central-logo-28.png.png
+  - brebeuf-logo-28.png.png
+  - north-central-logo-28.png.png
+  - western-boone-logo-28.png.png
+  - twin-lakes-logo-28.png.png
+  - north-montgomery-logo-28.png.png
+  - michigan-city-logo-28.png.png
+  - ihsaa-logo-28.png.png

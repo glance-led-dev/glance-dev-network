@@ -1,0 +1,34 @@
+gdn: 1
+id: wikipedia-most-read-scroll
+version: 0.1.0
+name: Wikipedia Most Read
+author: glance-led-dev
+description: What the world looked up yesterday - the five most-read Wikipedia articles with their view counts, one at a time and as a chart. Keyless.
+category: News
+entry: app.star
+
+width: 192
+height: 32
+# The list is a finished daily count; the fetch itself is cached six hours.
+refresh: 3600
+
+pages: [article, toplist]
+
+inputs:
+  - key: language
+    type: choice
+    app_input_type: dropdown
+    label: Wikipedia edition
+    default: "ENGLISH"
+    help: Which language Wikipedia to read the list from. Each edition has its own most-read list, so the Spanish or Japanese one shows what those readers looked up.
+    choices:
+      - "ENGLISH"
+      - "SPANISH"
+      - "GERMAN"
+      - "FRENCH"
+      - "JAPANESE"
+      - "RUSSIAN"
+      - "PORTUGUESE"
+      - "ITALIAN"
+      - "DUTCH"
+      - "POLISH"

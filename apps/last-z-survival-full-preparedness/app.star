@@ -284,18 +284,260 @@ HERO_ART = """
 # bottom edge; the helmet floats, so it centres in the band instead.
 ART_Y = {"SHELTER": 11, "SCIENCE": 9, "VEHICLE": 13, "HERO": 9, "ARMY": 11}
 
-def _draw_art(c, theme):
+# The Z from the game's logo, drawn rather than typed: the logo's red-orange,
+# lit along its top edges and darkened along the bottom, with a scatter of its
+# splatter. The title card sets it after LAST the way the logo does.
+LOGO_W = 24
+# The Z's bottom bar ends on its row 18; y3 lands that on LAST's bottom (y21).
+# It stands taller than LAST, like the logo, where the Z dwarfs the word.
+LOGO_TOP = 3
+LOGO_GAP = 2
+LOGO_LEG = {"R": "#E23B24", "O": "#FF7B3A", "D": "#8A1C12", "s": "#B02818"}
+LOGO_ART = """
+.......s....s...........
+.......s.............s..
+...OOOOOOOOOOOOOOOOOOO.s
+..sRRRRRRRRRRRRRRRRRRRs.
+ss.RRRRRRRRRRRRRRRRRRR..
+...DDDDDDDDDDDDRRRRRRR..
+...............ORRRRRD..
+..............ORRRRRD...
+.....s......ORRRRRD.....
+....s......ORRRRRD......
+.........ORRRRRD........
+........ORRRRRD....s....
+......ORRRRRD.......s...
+.....ORRRRRD............
+...ORRRRRD..............
+...OOOOOOOOOOOOOOOOOOO..
+..sRRRRRRRRRRRRRRRRRRRs.
+.s.RRRRRRRRRRRRRRRRRRR.s
+...DDDDDDDDDDDDDDDDDDD..
+.........s.......s......
+.................s......
+"""
+
+# The gold Zombie chest, in a three-quarter view: the lid's top face recedes
+# up and to the right with the side face in shadow, two gunmetal bands wrap
+# over the lid and down the front, and a square lock plate in the bands'
+# gunmetal sits centred across the lid seam, with a 1px keyhole - the front is
+# 25px wide so both can centre. A rounded gold plate hanging below the seam
+# read as a tongue poking out of a mouth. The chest's claw emblem is left off:
+# at this size its strokes merge into a checkerboard smudge. It stands on a
+# floor row, bottom-aligned to y31 in the right slot.
+CHEST_Y = 11
+CHEST_LEG = {
+    "Y": "#FFE48A", "G": "#F2BE45", "g": "#C88A22", "o": "#9A6516",
+    "d": "#5C3C0E", "B": "#9AA0AA", "b": "#6A6F78", "n": "#474B52",
+    "K": "#3A2508", "z": "#5A4520",
+}
+CHEST_ART = """
+......GGGGBBbGGGGGGGGGGGBBbGGGG.
+.....YYYYBBbYYYYYYYYYYYBBbYYYYo.
+....YYYYBBbYYYYYYYYYYYBBbYYYYoo.
+...YYYYBBbYYYYYYYYYYYBBbYYYYooo.
+..YYYYBBbYYYYYYYYYYYBBbYYYYoooo.
+.YYYYBbnYYYYYYYYYYYBbnYYYgooood.
+.YGGGBbnGGGGGGGGGGGBbnGGGgooodo.
+.YGGGBbnGGGGGGGGGGGBbnGGGgoodoo.
+.YGGGBbnGGGBBBBbGGGBbnGGGgodooo.
+.YGGGBbnGGGBbbbnGGGBbnGGGgdoooo.
+.ddddddddddBbKbnddddddddddooooo.
+.YGGGBbnGGGBbbbnGGGBbnGGGgooooo.
+.YGGGBbnGGGbnnnnGGGBbnGGGgooooo.
+.YGGGBbnGGGGGGGGGGGBbnGGGgooooo.
+.YGGGBbnGGGGGGGGGGGBbnGGGgooooo.
+.YGGGBbnGGGGGGGGGGGBbnGGGgoooo..
+.YGGGBbnGGGGGGGGGGGBbnGGGgooo...
+.YGGGBbnGGGGGGGGGGGBbnGGGgoo....
+.YGGGBbnGGGGGGGGGGGBbnGGGgo.....
+.ggggBbngggggggggggBbngggg......
+.zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.
+"""
+
+# The title card has room the block page doesn't, so its pictures are drawn
+# about a quarter bigger than the block page's 26px art: TITLE_W wide, the
+# live block's at ARTX and the chest at TITLE_XR, both bottom-aligned to y31.
+TITLE_W = 32
+TITLE_XR = RZ_R - TITLE_W + 1
+
+# The block page's tank redrawn at title-card size, with the same parts and
+# palette: dome, turret and barrel, hull with its headlight, treads, ground.
+TANK_BIG_ART = """
+.............EEEEEEEEEEEE.......
+............EHHHHHHHHHHHHE......
+...........EHHHHHHHHHHHHHHE.....
+..........EBBBBBBBBBBBBBBBBE....
+EEEEEEEEEEEBBBBBBBBBBBBBBBBE....
+EHHHHHHHHHEBBBBBBBBBBBBBBBBE....
+EBBBBBBBBBEBBBBBBBBBBBBBBBBE....
+EEEEEEEEEEEBDDDDDDDDDDDDDDDE....
+..........EEEEEEEEEEEEEEEEEE....
+..EEEEEEEEEEEEEEEEEEEEEEEEEEEE..
+.EHHHHHHHHHHHHHHHHHHHHHHHHHHHHE.
+.EBBBBBBBBBBBBBBBBBBBBBBBBBBBRE.
+.EBBBBBBBBBBBBBBBBBBBBBBBBBBBBE.
+.EBBBBBBBBBBBBBBBBBBBBBBBBBBBBE.
+.EDDDDDDDDDDDDDDDDDDDDDDDDDDDDE.
+.EEEEEEEEEEEEEEEEEEEEEEEEEEEEEE.
+.TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT.
+.TTWWTTWWTTWWTTWWTTWWTTWWTTWWTT.
+.TTWWTTWWTTWWTTWWTTWWTTWWTTWWTT.
+.TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT.
+.tttttttttttttttttttttttttttttt.
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+"""
+
+def _draw_art(c, theme, x = ARTX):
     y = ART_Y[theme]
     if theme == "SHELTER":
-        c.sprite(SHELTER_ART, ARTX, y, legend = SHELTER_LEG)
+        c.sprite(SHELTER_ART, x, y, legend = SHELTER_LEG)
     elif theme == "SCIENCE":
-        _art_science(c, ARTX, y)
+        _art_science(c, x, y)
     elif theme == "VEHICLE":
-        c.sprite(TANK_ART, ARTX, y, legend = TANK_LEG)
+        c.sprite(TANK_ART, x, y, legend = TANK_LEG)
     elif theme == "HERO":
-        c.sprite(HERO_ART, ARTX, y, legend = HERO_LEG)
+        c.sprite(HERO_ART, x, y, legend = HERO_LEG)
     else:
-        _art_army(c, ARTX, y)
+        _art_army(c, x, y)
+
+# The flask and the helmet at title-card size: the block page's profiles
+# stretched a quarter bigger and stamped the same way, so they keep the same
+# edges, glass, liquid line and camo as the smaller pair.
+def _art_science_big(c, ox, oy):
+    cx = ox + 15
+    prof = [3, 3, 3, 3, 3, 3] + [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 13, 13, 13, 13] + [13]
+    top = oy + 3
+    span(c, cx, top, prof, BK_EDGE)
+    span(c, cx, top + 1, inset(prof, 1), BK_GLASS)
+    span(c, cx, top + 2, inset(prof, 2), "black")
+    hollow = inset(prof, 2)
+    surface = 8
+    for i in range(len(hollow)):
+        if i >= surface:
+            col = BK_LIQ
+            if i == surface:
+                col = BK_LIQ_HI
+            elif i >= len(hollow) - 2:
+                col = BK_LIQ_LO
+            half = hollow[i]
+            c.hline(cx - half, top + 2 + i, half * 2 + 1, col)
+    c.rect(cx - 4, oy, cx + 4, oy + 2, fill = BK_CORK)
+    c.hline(cx - 4, oy + 2, 9, BK_CORK_D)
+    c.pixel(cx - 5, oy + 17, BK_BUB)
+    c.pixel(cx + 4, oy + 20, BK_BUB)
+    c.pixel(cx - 1, oy + 22, BK_BUB)
+    c.hline(ox, oy + 25, 32, BK_BENCH)
+
+CAMO_BIG = [
+    [8, 4, 5, 0], [16, 2, 6, 0], [5, 8, 6, 0],
+    [17, 8, 6, 0], [10, 13, 6, 0],
+    [12, 6, 4, 1], [21, 6, 4, 1], [6, 14, 5, 1],
+]
+
+def _art_army_big(c, ox, oy):
+    cx = ox + 15
+    prof = [4, 6, 8, 9, 10, 11, 11, 12, 12, 13, 13, 13, 13, 13, 13, 13, 13] + [14, 15, 15]
+    span(c, cx, oy, prof, HM_EDGE)
+    body = inset(prof, 1)
+    span(c, cx, oy + 1, body, HM_BODY)
+    for i in range(len(body)):
+        half = body[i]
+        if i < 5:
+            c.hline(cx - half, oy + 1 + i, half * 2 + 1, HM_HI)
+        elif i >= len(body) - 3:
+            c.hline(cx - half, oy + 1 + i, half * 2 + 1, HM_LO)
+    lip = len(body) - 3
+    c.hline(cx - body[lip], oy + 1 + lip, body[lip] * 2 + 1, HM_BODY)
+    for i in range(len(CAMO_BIG)):
+        p = CAMO_BIG[i]
+        col = HM_HI2 if p[3] == 1 else HM_LO
+        c.hline(ox + p[0], oy + p[1], p[2], col)
+        c.hline(ox + p[0] + 1, oy + p[1] + 1, max(1, p[2] - 1), col)
+
+# The base at title-card size, redrawn a quarter bigger with the same parts:
+# the watchtower and its antenna light, the stepped roof, 4x3 lit windows, the
+# door, the sandbag line and the ground row.
+SHELTER_BIG_ART = """
+.........................X......
+.........................A......
+.........................A......
+.....................RRRRRRRRR..
+....................rrrrrrrrrrr.
+.....................WWWWWWwwww.
+.....................WLLLLWwwww.
+.....................WLLLLWwwww.
+.........RRRRRRRRR...WLLLLWwwww.
+........RRRRRRRRRRR..WWWWWWwwww.
+.......RRRRRRRRRRRRR.WWWWWWwwww.
+......RRRRRRRRRRRRRRRWWWWWWwwww.
+.....rrrrrrrrrrrrrrrrWLLLLWwwww.
+.....WWWWWWWWWWWWWWwwWLLLLWwwww.
+.....WLLLLWWWWLLLLWwwWLLLLWwwww.
+.....WLLLLWWWWLLLLWwwWWWWWWwwww.
+.....WLLLLWWWWLLLLWwwWWWWWWwwww.
+.....WWWWWWWWWWWWWWwwWWWWWWwwww.
+.....rrrrrrrrrrrrrrrrWWWWWWwwww.
+.....WWWWWWWWWWWWWWwwWWWWWWwwww.
+.....WWWWWDDDDDWWWWwwWWWWWWwwww.
+.....WWWWWDDDDDWWWWwwWWWWWWwwww.
+.....WWWWWDDDDDWWWWwwWWWWWWwwww.
+.....WWWWWDDDDDWWWWwwWWWWWWwwww.
+....SSSSSSSSSSSSSSSSSSSSSSSSSss.
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+"""
+
+# The commander at title-card size. A face goes wrong fast when it is redrawn,
+# so this is the block page's bust stretched instead: six flat columns (the
+# braid, the hair, and the face outside each eye) and six flat rows (cap, brow,
+# cheeks, chin, tunic) are doubled, and every feature keeps its exact pixels.
+HERO_BIG_ART = """
+...........PPPPPPPPP............
+.........PPPPPPPPPPPPpp.........
+.........PPPPPPPPPPPPpp.........
+.........PPPPPYYPPPPPpp.........
+.......PPPPPPPYYPPPPPPPp........
+.......PPPPPPPYYPPPPPPPp........
+......pppppppppppppppppp........
+.......YYYYYYYYYYYYYYYYy........
+.......HHHHSSSSSSSSshhh.........
+......HHHSSSSSSSSSSsshhh........
+......HHHSSSSSSSSSSsshhh........
+......HHHSSESSSSESSsshhh........
+......HHHSSESSSSESSsshhh........
+......HHHSSSSSSSSSSsshhh........
+......HHHSSSSSSSSSSsshhh........
+......HHHHHSSSLLSSSshhhh........
+......HHHHHSSSSSSSSshhhh........
+......HHHHHSSSSSSSSshhhh........
+......HHHHHHSSSSSsshhhhh........
+......HHHHHHUssssUUhhhhh........
+.......HHHHHYSSSSYYhhhh.........
+.....UUHHHHHUYSSYUUhhhhUUu......
+..YYYYUHHHHUUUYYUUUUhhhUYYYYu...
+.YYYYYYUUHHUUUUUUUUUhUUYYYYYYu..
+.yyyyYyUUUUUUUUUUUUUUUUyYyyyyu..
+...UUUUUUUUUUUUUUUUUUUUUUUuu....
+...UUUUUUUUUUUUUUUUUUUUUUUuu....
+...UUUUUUUUUUUUUUUUUUUUUUUuu....
+"""
+
+# Title-card rows, like ART_Y: bottom-aligned to y31 except the helmet, which
+# floats centred on y19 as it does on the block page.
+TITLE_Y = {"SHELTER": 6, "SCIENCE": 6, "VEHICLE": 10, "HERO": 4, "ARMY": 9}
+
+def _draw_title_art(c, theme):
+    y = TITLE_Y[theme]
+    if theme == "SHELTER":
+        c.sprite(SHELTER_BIG_ART, ARTX, y, legend = SHELTER_LEG)
+    elif theme == "SCIENCE":
+        _art_science_big(c, ARTX, y)
+    elif theme == "VEHICLE":
+        c.sprite(TANK_BIG_ART, ARTX, y, legend = TANK_LEG)
+    elif theme == "HERO":
+        c.sprite(HERO_BIG_ART, ARTX, y, legend = HERO_LEG)
+    else:
+        _art_army_big(c, ARTX, y)
 
 # ---- calendar ---------------------------------------------------------------
 def _is_leap_year(year):
@@ -384,21 +626,22 @@ def title(c, ctx):
     live block's art and color so the two pages read as one app."""
     theme = _now_theme(ctx)
     c.fill("black")
-    _draw_art(c, theme)
-    # 11x14, not 10x16: the 10x16 S hooks at the bottom-left but not the
-    # top-right, so its top half reads as a C. LAST and Z are drawn apart
-    # because the font's space is a full letter wide - it left 12px between
-    # T and Z against 1px between every other pair. Both lines centre in the
-    # text zone so the wider card doesn't leave them stranded at the left.
-    zone = RZ_R - TX + 1
+    _draw_title_art(c, theme)
+    # The name is set the way the game's own logo sets it: LAST in white, then
+    # the Z drawn large in the logo's red-orange instead of typed, with LAST's
+    # bottom lined up on the Z's lower bar. LAST stays 11x14 - the 10x16 S
+    # hooks at the bottom-left but not the top-right, so its top half reads as
+    # a C. The pair centres in the gap between the two pictures.
+    zl = ARTX + TITLE_W
+    zone = TITLE_XR - zl
     lw = c.text_width("LAST", "11x14")
-    zw = c.text_width("Z", "11x14")
-    tx = TX + (zone - (lw + 6 + zw)) // 2
-    c.text("LAST", tx, 6, font = "11x14", color = INK)
-    c.text("Z", tx + lw + 6, 6, font = "11x14", color = INK)
+    tx = zl + (zone - (lw + LOGO_GAP + LOGO_W)) // 2
+    c.text("LAST", tx, 8, font = "11x14", color = INK)
+    c.sprite(LOGO_ART, tx + lw + LOGO_GAP, LOGO_TOP, legend = LOGO_LEG)
+    c.sprite(CHEST_ART, TITLE_XR, CHEST_Y, legend = CHEST_LEG)
     sub = "FULL PREPAREDNESS"
-    sx = TX + (zone - c.text_width(sub, "4x5")) // 2
-    c.text(sub, sx, 23, font = "4x5", color = COLOR[theme])
+    sx = zl + (zone - c.text_width(sub, "4x5")) // 2
+    c.text(sub, sx, 25, font = "4x5", color = COLOR[theme])
 
 def main(c, ctx):
     at = _apocalypse(ctx.now)

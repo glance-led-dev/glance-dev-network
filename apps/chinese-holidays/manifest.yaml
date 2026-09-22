@@ -1,0 +1,56 @@
+gdn: 1
+id: chinese-holidays
+version: 0.1.0
+name: Chinese Holidays
+author: ShulinZhou
+description: Days until the next Chinese holiday with a greeting on the day. Lunar dates run from 2026 to 2045.
+category: Lifestyle
+entry: app.star
+
+width: 192
+height: 32
+# The count only changes at midnight, so twice a day is plenty. The date is
+# worked out in the chosen time zone, so the roll-over lands on a real night.
+refresh: 43200
+
+pages: [countdown]
+
+# The red 福 for New Year's Day, 32x32.
+assets:
+  - fu.png
+
+inputs:
+  - key: holiday
+    type: choice
+    app_input_type: dropdown
+    label: Holiday
+    default: Next holiday
+    help: Count down to one holiday all year, or to whichever comes next.
+    choices:
+      - Next holiday
+      - New Year (Jan 1)
+      - Chinese New Year
+      - Qingming
+      - Labour Day
+      - Dragon Boat
+      - Mid Autumn
+      - National Day
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time Zone
+    default: "New York (−5)"
+    help: Pick the city in your time zone so the count rolls over at your midnight. Offsets are standard time; daylight saving is applied automatically.
+    choices:
+      - "San Francisco (−8)"
+      - "Denver (−7)"
+      - "Chicago (−6)"
+      - "New York (−5)"
+      - "Rio de Janeiro (−3)"
+      - "London (0)"
+      - "Paris (+1)"
+      - "Moscow (+3)"
+      - "Bangkok (+7)"
+      - "Beijing (+8)"
+      - "Tokyo (+9)"
+      - "Sydney (+10)"
