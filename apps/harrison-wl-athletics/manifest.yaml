@@ -1,15 +1,15 @@
 gdn: 1
 id: harrison-wl-athletics
-version: 1.0.0
+version: 2.0.0
 name: "Harrison WL Athletics"
-author: "Harrison Raiders - Thomas Taylor"
-description: Live daily athletic events for Harrison High School.
+author: "SportBoards-TT"
+description: Recent results, today's events, and upcoming Harrison athletics.
 category: Sports
 entry: app.star
 width: 384
 height: 32
 refresh: 21600
-pages: [main]
+pages: [page_1, page_2, page_3, page_4, page_5, page_6, page_7, page_8]
 
 assets:
   - harrison-logo.png.png

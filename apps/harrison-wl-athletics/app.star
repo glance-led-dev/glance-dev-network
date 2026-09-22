@@ -974,11 +974,13 @@ def draw_event(c, block, offset):
         color = "orange",
     )
 
+    opponent_display = fit_card_text(opponent)
+
     c.text(
-        opponent,
-        center_x(opponent, text_center),
+        opponent_display["text"],
+        center_card_text(opponent_display["text"], text_center, opponent_display["font"]),
         12,
-        font = "5x7",
+        font = opponent_display["font"],
         color = "white",
     )
 
@@ -1001,52 +1003,614 @@ def draw_event(c, block, offset):
     )
 
 
-def main(c, ctx):
+
+# ============================================================
+# V2 TWO-PAGE PROOF
+# Page 1: newest two legitimate structured results
+# Page 2: first two of today's events
+# ============================================================
+
+CACHE_SECONDS = 21600
+
+RESULT_TEAMS = [
+    {
+        "team": "VARSITY VOLLEY",
+        "url": "https://www.harrisonathletics.com/Team/4b009075-965e-4607-93bb-dee0ddb5d54a/VB%20Girls%20V",
+    },
+    {
+        "team": "BOYS VAR SOCCER",
+        "url": "https://www.harrisonathletics.com/Team/08cdd129-fbf6-4e1f-a78f-eb72b855d496/SO%20Boys%20V",
+    },
+    {
+        "team": "GIRLS VAR SOCCER",
+        "url": "https://www.harrisonathletics.com/Team/cdf8fa21-502f-4345-8f17-feca2f0ab0dc/SO%20Girls%20V",
+    },
+    {
+        "team": "BOYS TENNIS",
+        "url": "https://www.harrisonathletics.com/Team/f0768982-3c08-41ed-9ccf-1827e7c3b7b8/TE%20Boys",
+    },
+    {
+        "team": "GIRLS GOLF",
+        "url": "https://www.harrisonathletics.com/Team/6eb1d39e-85a0-4292-951f-3471cf723d4d/GO%20Girls",
+    },
+    {
+        "team": "JV FOOTBALL",
+        "url": "https://www.harrisonathletics.com/Team/cbb297c3-9400-44b2-bedd-0e622f1c8b75/FB%20Boys%20JV",
+    },
+    {
+        "team": "FRESHMAN FOOTBALL",
+        "url": "https://www.harrisonathletics.com/Team/01a0774c-f53e-482d-95cc-258d65f29fd2/FB%20Boys%20FR",
+    },
+]
+
+
+def month_number(name):
+    name = name.upper()
+
+    if name == "JAN":
+        return 1
+    if name == "FEB":
+        return 2
+    if name == "MAR":
+        return 3
+    if name == "APR":
+        return 4
+    if name == "MAY":
+        return 5
+    if name == "JUN":
+        return 6
+    if name == "JUL":
+        return 7
+    if name == "AUG":
+        return 8
+    if name == "SEP":
+        return 9
+    if name == "OCT":
+        return 10
+    if name == "NOV":
+        return 11
+    if name == "DEC":
+        return 12
+
+    return 0
+
+
+def date_value(year, month, day):
+    return year * 372 + month * 31 + day
+
+
+def parse_date_value(text):
+    visible = clean_text(text)
+    comma = visible.find(",")
+
+    if comma == -1:
+        return 0
+
+    rest = visible[comma + 1:].strip()
+    first_space = rest.find(" ")
+
+    if first_space == -1:
+        return 0
+
+    month_text = rest[:first_space].replace(".", "")
+    month = month_number(month_text)
+
+    if month == 0:
+        return 0
+
+    rest = rest[first_space + 1:].strip()
+    second_space = rest.find(" ")
+
+    if second_space == -1:
+        return 0
+
+    day = int(rest[:second_space])
+    rest = rest[second_space + 1:].strip()
+    third_space = rest.find(" ")
+
+    if third_space == -1:
+        year = int(rest)
+    else:
+        year = int(rest[:third_space])
+
+    return date_value(year, month, day)
+
+
+def table_rows(body):
+    upper = body.upper()
+    marker = upper.find("SEASON SCORES")
+
+    if marker == -1:
+        return []
+
+    table_start = upper.find("<TABLE", marker)
+
+    if table_start == -1:
+        return []
+
+    table_end = upper.find("</TABLE>", table_start)
+
+    if table_end == -1:
+        return []
+
+    table = body[table_start:table_end]
+    table_upper = table.upper()
+    rows = []
+    cursor = 0
+
+    for i in range(80):
+        start = table_upper.find("<TR", cursor)
+
+        if start == -1:
+            break
+
+        open_end = table.find(">", start)
+        end = table_upper.find("</TR>", open_end)
+
+        if open_end == -1 or end == -1:
+            break
+
+        rows.append(table[open_end + 1:end])
+        cursor = end + 5
+
+    return rows
+
+
+def row_cells(row):
+    cells = []
+    cursor = 0
+    upper = row.upper()
+
+    for i in range(6):
+        td = upper.find("<TD", cursor)
+
+        if td == -1:
+            break
+
+        open_end = row.find(">", td)
+        end = upper.find("</TD>", open_end)
+
+        if open_end == -1 or end == -1:
+            break
+
+        cells.append(strip_tags(row[open_end + 1:end]))
+        cursor = end + 5
+
+    return cells
+
+
+def result_outcome(score):
+    # Harrison's site publishes score and outcome from Harrison's
+    # perspective regardless of home/away. Do not reverse anything.
+    upper = clean_text(score).upper()
+
+    if upper.find("(WIN)") != -1:
+        return "W"
+
+    if upper.find("(LOSS)") != -1:
+        return "L"
+
+    if upper.find("(TIE)") != -1:
+        return "T"
+
+    return ""
+
+
+def clean_result_score(score):
+    text = clean_text(score)
+
+    positions = [
+        text.upper().find("(WIN)"),
+        text.upper().find("(LOSS)"),
+        text.upper().find("(TIE)"),
+    ]
+
+    cut = -1
+
+    for pos in positions:
+        if pos != -1:
+            if cut == -1 or pos < cut:
+                cut = pos
+
+    if cut != -1:
+        text = text[:cut].strip()
+
+    return text
+
+
+def result_opponent(event_text):
+    text = clean_text(event_text)
+
+    if text.upper().startswith("CANCELED:"):
+        return ""
+
+    home = text.find("(H)")
+    away = text.find("(A)")
+    cut = -1
+
+    if home != -1:
+        cut = home
+
+    if away != -1:
+        if cut == -1 or away < cut:
+            cut = away
+
+    if cut != -1:
+        text = text[:cut].strip()
+
+    return pretty_opponent(text)
+
+
+def insert_result(results, item):
+    placed = False
+
+    for i in range(len(results)):
+        if item["date"] > results[i]["date"]:
+            results.insert(i, item)
+            placed = True
+            break
+
+    if not placed:
+        results.append(item)
+
+    if len(results) > 10:
+        results.pop()
+
+
+def collect_recent_results(ctx):
+    results = []
+    today = date_value(ctx.now.year, ctx.now.month, ctx.now.day)
+    oldest = today - 8
+
+    for source in RESULT_TEAMS:
+        response = http.get(
+            source["url"],
+            ttl_seconds = CACHE_SECONDS,
+        )
+
+        if response["status_code"] != 200:
+            continue
+
+        rows = table_rows(response["body"])
+
+        for row in rows:
+            cells = row_cells(row)
+
+            if len(cells) < 3:
+                continue
+
+            outcome = result_outcome(cells[2])
+
+            if outcome == "":
+                continue
+
+            dv = parse_date_value(cells[1])
+
+            if dv < oldest or dv > today:
+                continue
+
+            opponent = result_opponent(cells[0])
+
+            if opponent == "":
+                continue
+
+            insert_result(
+                results,
+                {
+                    "team": source["team"],
+                    "opponent": opponent,
+                    "score": clean_result_score(cells[2]),
+                    "outcome": outcome,
+                    "date": dv,
+                },
+            )
+
+    return results
+
+
+def fit_card_text(text):
+    if len(text) <= 18:
+        return {"text": text, "font": "5x7"}
+    if len(text) <= 23:
+        return {"text": text, "font": "4x5"}
+    return {"text": text[:22], "font": "4x5"}
+
+
+def center_card_text(text, center, font):
+    # Existing center_x() is tuned for 5x7. 4x5 characters are
+    # narrower, so use their actual 5-pixel advance here.
+    if font == "4x5":
+        return center - ((len(text) * 5) // 2)
+
+    return center_x(text, center)
+
+
+def draw_result(c, result, offset):
+    team = result["team"]
+    opponent = result["opponent"]
+    bottom = result["outcome"] + "  " + result["score"]
+    text_center = offset + 90
+
+    c.image(
+        "harrison-logo.png.png",
+        offset + 2,
+        2,
+        w = 28,
+        h = 28,
+    )
+
+    c.text(
+        team,
+        center_x(team, text_center),
+        2,
+        font = "5x7",
+        color = "orange",
+    )
+
+    opponent_display = fit_card_text(opponent)
+
+    c.text(
+        opponent_display["text"],
+        center_card_text(opponent_display["text"], text_center, opponent_display["font"]),
+        12,
+        font = opponent_display["font"],
+        color = "white",
+    )
+
+    c.text(
+        bottom,
+        center_x(bottom, text_center) + 2,
+        22,
+        font = "5x7",
+        color = "orange",
+    )
+
+    c.image(
+        get_opponent_logo(opponent),
+        offset + 150,
+        2,
+        w = 28,
+        h = 28,
+    )
+
+
+def pad2(value):
+    text = str(value)
+    if len(text) == 1:
+        return "0" + text
+    return text
+
+
+def days_in_month(year, month):
+    if month == 2:
+        if year % 400 == 0:
+            return 29
+        if year % 100 == 0:
+            return 28
+        if year % 4 == 0:
+            return 29
+        return 28
+    if month == 4 or month == 6 or month == 9 or month == 11:
+        return 30
+    return 31
+
+
+def shift_date(year, month, day, amount):
+    y = year
+    m = month
+    d = day
+
+    for i in range(amount):
+        d = d + 1
+        if d > days_in_month(y, m):
+            d = 1
+            m = m + 1
+            if m > 12:
+                m = 1
+                y = y + 1
+
+    return str(y) + "-" + pad2(m) + "-" + pad2(d)
+
+
+def get_schedule_for_date(date_text):
+    response = http.get(
+        URL,
+        params = {"from": date_text, "to": date_text},
+        ttl_seconds = CACHE_SECONDS,
+    )
+
+    if response["status_code"] != 200:
+        return ""
+
+    return response["body"]
+
+
+def collect_upcoming_events(ctx):
+    events = []
+
+    # Search future dates in order and collect enough real events to fill
+    # any open dynamic page slots.
+    for day_offset in range(1, 8):
+        date_text = shift_date(
+            ctx.now.year,
+            ctx.now.month,
+            ctx.now.day,
+            day_offset,
+        )
+
+        body = get_schedule_for_date(date_text)
+        if body != "":
+            blocks = find_event_blocks(body)
+
+            for block in blocks:
+                if len(events) < 16:
+                    events.append({
+                        "block": block,
+                        "date": str(ctx.now.month) + "/" + str(ctx.now.day),
+                        "date_text": date_text,
+                    })
+
+    return events
+
+
+def compact_date(date_text):
+    # Input is YYYY-MM-DD.
+    month = date_text[5:7]
+    day = date_text[8:10]
+
+    if month[0:1] == "0":
+        month = month[1:2]
+
+    if day[0:1] == "0":
+        day = day[1:2]
+
+    return month + "/" + day
+
+
+def draw_upcoming_event(c, block, date_text, offset):
+    raw_team = get_team(block)
+    team = pretty_team(raw_team)
+    opponent = pretty_opponent(find_opponent(block, raw_team))
+    time_text = find_time(block)
+    home_away = find_home_away(block)
+    date_text = compact_date(date_text)
+    text_center = offset + 90
+    opponent_display = fit_card_text(opponent)
+
+    c.image("harrison-logo.png.png", offset + 2, 2, w = 28, h = 28)
+
+    c.text(
+        team,
+        center_x(team, text_center),
+        2,
+        font = "5x7",
+        color = "orange",
+    )
+
+    c.text(
+        opponent_display["text"],
+        center_card_text(opponent_display["text"], text_center, opponent_display["font"]),
+        12,
+        font = opponent_display["font"],
+        color = "white",
+    )
+
+    bottom = date_text + "  " + time_text
+    if home_away != "":
+        bottom = bottom + " " + home_away
+
+    c.text(
+        bottom,
+        center_x(bottom, text_center) + 2,
+        22,
+        font = "5x7",
+        color = "orange",
+    )
+
+    c.image(get_opponent_logo(opponent), offset + 150, 2, w = 28, h = 28)
+
+
+def collect_today_events(ctx):
     body = get_schedule(ctx)
-
     if body == "":
-        draw_error(c)
-        return
+        return []
+    return find_event_blocks(body)
 
-    blocks = find_event_blocks(body)
 
-    if len(blocks) == 0:
-        draw_no_events(c)
-        return
+def draw_dynamic_page(c, ctx, page_number):
+    # Fill the fixed physical page slots from one protected logical stream:
+    # recent finals -> today's events -> upcoming events.
+    # A later section can never displace an earlier real item.
+    # Fetches are intentionally short-circuited so early pages do not
+    # request future schedules until they are actually needed.
+    first = page_number * 2
+    second = first + 1
+
+    results = collect_recent_results(ctx)
 
     c.clear()
 
-    pair_count = (len(blocks) + 1) // 2
-    pair_number = (ctx.now.unix // 60) % pair_count
+    # If this page is fully inside Recent Results, draw it and stop.
+    if second < len(results):
+        draw_result(c, results[first], 0)
+        draw_result(c, results[second], 180)
+        c.line(179, 1, 179, 30, color = "white")
+        c.line(359, 1, 359, 30, color = "white")
+        return
 
-    first_event = pair_number * 2
-    second_event = first_event + 1
+    today = collect_today_events(ctx)
+    result_count = len(results)
+    today_count = len(today)
 
-    draw_event(
-        c,
-        blocks[first_event],
-        0,
-    )
+    # Only collect future events when this page reaches beyond Results + Today.
+    upcoming = []
+    if second >= result_count + today_count:
+        upcoming = collect_upcoming_events(ctx)
 
-    if second_event < len(blocks):
-        draw_event(
-            c,
-            blocks[second_event],
-            180,
-        )
+    for side in range(2):
+        index = first + side
+        offset = side * 180
 
-    c.line(
-        179,
-        1,
-        179,
-        30,
-        color = "white",
-    )
+        if index < result_count:
+            draw_result(c, results[index], offset)
+        elif index < result_count + today_count:
+            draw_event(c, today[index - result_count], offset)
+        else:
+            future_index = index - result_count - today_count
+            if future_index < len(upcoming):
+                item = upcoming[future_index]
+                draw_upcoming_event(c, item["block"], item["date_text"], offset)
+            else:
+                # Never repeat an event just to fill a slot.
+                # If the real data stream is exhausted, show a neutral
+                # Harrison card rather than a misleading duplicate.
+                c.image("harrison-logo.png.png", offset + 2, 2, w = 28, h = 28)
+                c.text(
+                    "HARRISON ATHLETICS",
+                    center_x("HARRISON ATHLETICS", offset + 105),
+                    7,
+                    font = "5x7",
+                    color = "orange",
+                )
+                c.text(
+                    "RAIDER UP",
+                    center_x("RAIDER UP", offset + 105),
+                    17,
+                    font = "5x7",
+                    color = "white",
+                )
 
-    c.line(
-        359,
-        1,
-        359,
-        30,
-        color = "white",
-    )
+    c.line(179, 1, 179, 30, color = "white")
+    c.line(359, 1, 359, 30, color = "white")
+
+
+def page_1(c, ctx):
+    draw_dynamic_page(c, ctx, 0)
+
+
+def page_2(c, ctx):
+    draw_dynamic_page(c, ctx, 1)
+
+
+def page_3(c, ctx):
+    draw_dynamic_page(c, ctx, 2)
+
+
+def page_4(c, ctx):
+    draw_dynamic_page(c, ctx, 3)
+
+
+def page_5(c, ctx):
+    draw_dynamic_page(c, ctx, 4)
+
+
+def page_6(c, ctx):
+    draw_dynamic_page(c, ctx, 5)
+
+
+def page_7(c, ctx):
+    draw_dynamic_page(c, ctx, 6)
+
+
+def page_8(c, ctx):
+    draw_dynamic_page(c, ctx, 7)
