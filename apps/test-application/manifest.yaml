@@ -1,0 +1,28 @@
+id: event-showcase
+name: Event Showcase Banner
+width: 384
+height: 32
+refresh: 300
+pages:
+  - main_screen
+  - demo_screen
+  - empty_screen
+  - error_screen
+inputs:
+  - key: theme
+    label: Theme Color
+    app_input_type: dropdown
+    default: skyblue
+    options:
+      - key: skyblue
+        label: Sky Blue
+        value: skyblue
+      - key: amber
+        label: Amber
+        value: amber
+      - key: green
+        label: Green
+        value: green
+      - key: purple
+        label: Purple
+        value: purple
