@@ -3,7 +3,7 @@ id: fantasy-football-news-scroll
 version: 0.1.0
 name: Fantasy Football News
 author: glance-led-dev
-description: Live NFL player news sorted at a glance - OUT, QUESTIONABLE, CLEARED, SIGNED, BOOM, BUST - with team logos and pixel-art players by position, plus the waiver wire's hottest adds or drops with rostered percentage. No key needed.
+description: Live NFL player news for all teams, one NFL team, or your Sleeper roster, plus trending waiver adds and drops with optional league availability. No key needed.
 category: Sports
 entry: app.star
 
@@ -59,9 +59,10 @@ inputs:
     app_input_type: dropdown
     label: News for
     default: "ALL NFL"
-    help: ALL NFL shows the latest player updates league-wide from RotoWire. Pick a team to follow only that team's fantasy players (QB, RB, WR, TE, K), with their injury status, from ESPN.
+    help: ALL NFL shows RotoWire news league-wide. Pick an NFL team for its ESPN player updates, or MY SLEEPER TEAM for news about your Sleeper roster (requires username and league ID).
     choices:
       - "ALL NFL"
+      - "MY SLEEPER TEAM"
       - "ARIZONA CARDINALS"
       - "ATLANTA FALCONS"
       - "BALTIMORE RAVENS"
@@ -94,6 +95,24 @@ inputs:
       - "TAMPA BAY BUCCANEERS"
       - "TENNESSEE TITANS"
       - "WASHINGTON COMMANDERS"
+  - key: sleeperusername
+    type: string
+    app_input_type: free-text
+    label: Sleeper username
+    default: ""
+    help: Your Sleeper account username; used to find your roster when News for is MY SLEEPER TEAM.
+  - key: sleeperleagueid
+    type: string
+    app_input_type: free-text
+    label: Sleeper league ID
+    default: ""
+    help: The numeric ID from your Sleeper league URL.
+  - key: leaguewire
+    type: string
+    app_input_type: checkbox
+    label: Show only players available in my league
+    default: false
+    help: Filter trending waiver players against every roster in your Sleeper league. Requires a league ID.
   - key: wire
     type: choice
     app_input_type: dropdown
