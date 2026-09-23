@@ -1,0 +1,43 @@
+gdn: 1
+id: bambu-print-status
+version: 0.3.0
+name: Bambu Print Status
+author: Bambu Print Status contributors
+description: Branded v2 Bambu printer dashboard with local completion times, filament colors, AMS 2 Pro and single-slot AMS HT views.
+category: Productivity
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [main]
+inputs:
+  - key: endpoint
+    type: string
+    app_input_type: free-text
+    label: Status endpoint URL
+    default: ""
+    required: true
+    help: "Enter the full HTTPS /status URL from your Bambu Glance bridge, for example: https://your-worker.your-subdomain.workers.dev/status"
+  - key: readkey
+    type: string
+    app_input_type: api-key
+    label: Bambu status read API key
+    default: ""
+    required: true
+    help: Enter your own bridge READ_KEY. Glance stores it encrypted. Select a demo scenario to preview without an endpoint or key.
+  - key: viewmode
+    type: string
+    app_input_type: dropdown
+    label: View mode
+    default: Auto
+    choices: [Auto, AMS, AMS 2 Pro, AMS HT, Summary, Diagnostics]
+  - key: demo
+    type: string
+    app_input_type: dropdown
+    label: Studio demo scenario
+    default: Live
+    choices: [Live, BOTH IDLE, P2S PRINTING, X2D PRINTING, BOTH PRINTING, MULTICOLOR CHANGE, PRINT STARTED, PRINT FINISHED, PAUSED, OFFLINE, ERROR, COOLING, STALE DATA, AMS INVENTORY, DIAGNOSTICS, PREPARING, PAUSED + PRINTING, ERROR + PRINTING, OFFLINE + PRINTING, IDLE ZERO, LONG JOB, DARK FILAMENT, BRIGHT FILAMENT, LAYERS, MISSING ETA, EXPIRED EVENT, LONG DUAL JOBS, SPLASH, AMS 2 PRO, AMS HT, AMS HT EMPTY, DAILY SUMMARY, AMS HT LOADED]
+    help: Live uses your authenticated bridge. All other choices use sample data without network requests.
+
+
+assets: [bambu-symbol.png, bambu-logo.png, bambu-logo-large.png, p2s.png, x2d.png, p2s-mini.png, x2d-mini.png, p2s-wordmark.png, x2d-wordmark.png, ams-2-pro.png, ams-ht.png, ams-2-pro-wordmark.png, ams-ht-wordmark.png]

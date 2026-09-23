@@ -40,7 +40,11 @@ EPL_CRESTS = {
     "LEE": "LEE22.png",
     "LIV": "LFC22.png",
     "MCI": "MCI22.png",
+    "MNC": "MCI22.png",
     "MUN": "MUN22.png",
+    "MAN": "MUN22.png",
+    "BHA": "BRI22.png",
+    "CHE": "CFC22.png",
     "NEW": "NEW22.png",
     "NFO": "NFO22.png",
     "SUN": "SUN22.png",
@@ -48,13 +52,19 @@ EPL_CRESTS = {
 }
 
 
+# ESPN renamed Man City MCI -> MNC, Man United MUN -> MAN, Brighton BRI -> BHA
+# and Chelsea CFC -> CHE for 2026-27. Both spellings are kept so the crest and
+# the short name resolve whichever one the feed sends.
 TEAM_DISPLAY_NAMES = {
     "TOT": "Tottenham",
     "MUN": "Man United",
+    "MAN": "Man United",
     "MCI": "Man City",
+    "MNC": "Man City",
     "NFO": "Nott'm Forest",
     "NEW": "Newcastle",
     "BRI": "Brighton",
+    "BHA": "Brighton",
     "BOU": "Bournemouth",
 }
 
@@ -75,6 +85,35 @@ def display_team_name(opponent):
         return TEAM_DISPLAY_NAMES[abbr]
 
     return opponent["name"]
+
+
+def fitted_team_name(c, opponent, font, max_width, prefix=""):
+    # "MANCHESTER CITY" centred over a 66px slot ran straight through the VS
+    # beside it, and a Champions League opponent has no crest or short name
+    # in the tables above at all. So the label is chosen by measuring: the
+    # first of the short name, ESPN's short name, the full name and the
+    # abbreviation that fits the slot is the one drawn.
+    abbr = opponent["abbr"]
+
+    candidates = []
+
+    if abbr in TEAM_DISPLAY_NAMES:
+        candidates.append(TEAM_DISPLAY_NAMES[abbr])
+
+    candidates.append(opponent.get("short", ""))
+    candidates.append(opponent["name"])
+    candidates.append(abbr)
+
+    for name in candidates:
+        if name == "":
+            continue
+
+        label = (prefix + name).upper()
+
+        if c.text_width(label, font) <= max_width:
+            return label
+
+    return (prefix + abbr).upper()
 
 
 def get(obj, key, fallback=None):
@@ -270,6 +309,7 @@ def normalize_events(data, competition_name):
             normalized = {
                 "abbr": get(team, "abbreviation", ""),
                 "name": get(team, "displayName", ""),
+                "short": get(team, "shortDisplayName", ""),
                 "score": get(competitor, "score", ""),
                 "logo": get(team, "logo", ""),
             }
@@ -535,112 +575,67 @@ def draw_branding(c):
     )
 
 
+def month_query(year, month):
+    return "?dates=" + str(year) + pad2(month) + "&limit=100"
+
+
 def get_liverpool_matches(ctx):
+    # ESPN's soccer scoreboard stopped accepting a "dates=START-END" range
+    # (it now answers 400 "Failed to get events endpoint"), which emptied the
+    # live, next and last pages while the standings pages kept working. A
+    # whole month ("dates=YYYYMM") is still accepted, so months are fetched
+    # instead: the current one always, plus the previous month early in the
+    # month and the next month late in it. That keeps at least two weeks in
+    # view either side of today (Liverpool never go longer than that without
+    # a match) within the sandbox cap of 8 requests per render: four
+    # competitions x two months.
     now = ctx.now
 
     year = now.year
     month = now.month
-    day = now.day
 
-    past = subtract_days(
-        year,
-        month,
-        day,
-        30,
-    )
+    if now.day < 16:
+        other_year = year
+        other_month = month - 1
+        if other_month < 1:
+            other_month = 12
+            other_year = year - 1
+    else:
+        other_year = year
+        other_month = month + 1
+        if other_month > 12:
+            other_month = 1
+            other_year = year + 1
 
-    future = add_days(
-        year,
-        month,
-        day,
-        30,
-    )
+    # The current month carries the live match, so it refreshes fastest.
+    months = [
+        [year, month, 60],
+        [other_year, other_month, 300],
+    ]
 
-    start_date = (
-        str(past[0])
-        + pad2(past[1])
-        + pad2(past[2])
-    )
-
-    end_date = (
-        str(future[0])
-        + pad2(future[1])
-        + pad2(future[2])
-    )
-
-    date_query = (
-        "?dates="
-        + start_date
-        + "-"
-        + end_date
-        + "&limit=100"
-    )
+    competitions = [
+        [EPL_URL, "PREMIER LEAGUE"],
+        [UCL_URL, "CHAMPIONS LEAGUE"],
+        [FA_CUP_URL, "FA CUP"],
+        [EFL_CUP_URL, "EFL CUP"],
+    ]
 
     matches = []
 
-    epl_resp = http.get(
-        EPL_URL + date_query,
-        ttl_seconds=60,
-    )
+    for comp in competitions:
+        for m in months:
+            resp = http.get(
+                comp[0] + month_query(m[0], m[1]),
+                ttl_seconds=m[2],
+            )
 
-    matches = matches + normalize_events(
-        epl_resp["json"],
-        "PREMIER LEAGUE",
-    )
+            if resp["status_code"] != 200:
+                continue
 
-    ucl_resp = http.get(
-        UCL_URL + date_query,
-        ttl_seconds=60,
-    )
-
-    matches = matches + normalize_events(
-        ucl_resp["json"],
-        "CHAMPIONS LEAGUE",
-    )
-
-    fa_resp = http.get(
-        FA_CUP_URL + date_query,
-        ttl_seconds=60,
-    )
-
-    matches = matches + normalize_events(
-        fa_resp["json"],
-        "FA CUP",
-    )
-
-    # Single-day EFL request for freshest live state.
-    today_date = (
-        str(year)
-        + pad2(month)
-        + pad2(day)
-    )
-
-    efl_today_query = (
-        "?dates="
-        + today_date
-        + "&limit=100"
-    )
-
-    efl_today_resp = http.get(
-        EFL_CUP_URL + efl_today_query,
-        ttl_seconds=60,
-    )
-
-    matches = matches + normalize_events(
-        efl_today_resp["json"],
-        "EFL CUP",
-    )
-
-    # Broad EFL request keeps past and future cup fixtures available.
-    efl_range_resp = http.get(
-        EFL_CUP_URL + date_query,
-        ttl_seconds=300,
-    )
-
-    matches = matches + normalize_events(
-        efl_range_resp["json"],
-        "EFL CUP",
-    )
+            matches = matches + normalize_events(
+                resp["json"],
+                comp[1],
+            )
 
     return matches
 
@@ -842,10 +837,14 @@ def live_match(c, ctx):
             )
 
         c.text(
-            match_symbol(live_game)
-            + " "
-            + display_team_name(opponent).upper(),
-            78,
+            fitted_team_name(
+                c,
+                opponent,
+                "3x4",
+                74 if crest != "" else 100,
+                match_symbol(live_game) + " ",
+            ),
+            65 if crest != "" else 78,
             8,
             font="3x4",
             color=WHITE,
@@ -1124,9 +1123,11 @@ def next_match(c, ctx):
         align="center",
     )
 
+    # The crest ends at x=52; the VS/@ sits three pixels clear of it, and the
+    # name and the date line both start to its right so neither can touch it.
     c.text(
         symbol,
-        52,
+        56,
         11,
         font="4x5",
         color=LIVERPOOL_RED,
@@ -1142,8 +1143,8 @@ def next_match(c, ctx):
         )
 
     c.text(
-        display_team_name(opponent).upper(),
-        87,
+        fitted_team_name(c, opponent, "4x5", 62),
+        97,
         11,
         font="4x5",
         color=WHITE,
@@ -1152,7 +1153,7 @@ def next_match(c, ctx):
 
     c.text(
         local_time[0] + " " + local_time[1],
-        82,
+        90,
         22,
         font="4x5",
         color=WHITE,
@@ -1224,8 +1225,13 @@ def last_match(c, ctx):
         )
 
     c.text(
-        display_team_name(opponent).upper(),
-        78,
+        fitted_team_name(
+            c,
+            opponent,
+            "3x4",
+            74 if crest != "" else 100,
+        ),
+        91 if crest != "" else 78,
         8,
         font="3x4",
         color=WHITE,

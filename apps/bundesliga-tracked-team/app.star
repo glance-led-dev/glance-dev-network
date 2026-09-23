@@ -130,6 +130,140 @@ TEAMS = {
 # Basic helpers
 # ------------------------------------------------------------
 
+TEAM_ALIASES = {
+    "DOR": ["borussia dortmund", "dortmund", "bvb"],
+    "MUN": ["bayern munich", "bayern münchen", "bayern munchen", "bayern muenchen", "fc bayern münchen", "fc bayern munich", "bayern", "fcb", "bay"],
+    "B04": ["bayer leverkusen", "bayer 04 leverkusen", "leverkusen", "lev"],
+    "RBL": ["rb leipzig", "rasenballsport leipzig", "leipzig"],
+    "VFB": ["vfb stuttgart", "stuttgart", "stu"],
+    "SGE": ["eintracht frankfurt", "frankfurt", "fra"],
+    "SCF": ["sc freiburg", "freiburg", "fre"],
+    "TSG": ["tsg hoffenheim", "tsg 1899 hoffenheim", "1899 hoffenheim", "hoffenheim", "hof"],
+    "BMG": ["borussia monchengladbach", "borussia mönchengladbach", "borussia moenchengladbach", "borussia m'gladbach", "mönchengladbach", "gladbach"],
+    "M05": ["mainz", "mainz 05", "1. fsv mainz 05", "fsv mainz 05", "mai"],
+    "FCU": ["union berlin", "1. fc union berlin", "fc union berlin", "uni", "unb"],
+    "SVW": ["werder bremen", "sv werder bremen", "bremen", "bre"],
+    "FCA": ["fc augsburg", "augsburg", "aug"],
+    "KOE": ["fc cologne", "cologne", "fc köln", "1. fc köln", "1. fc koln", "fc koln", "köln", "koln", "kol"],
+    "HSV": ["hamburg sv", "hamburger sv", "hamburg", "ham"],
+    "S04": ["schalke 04", "fc schalke 04", "schalke", "sch"],
+    "SCP": ["sc paderborn 07", "sc paderborn", "paderborn", "paderborn 07", "pad"],
+    "ELV": ["sv elversberg", "sv 07 elversberg", "elversberg"],
+}
+
+
+def list_value(value):
+    return value if type(value) == "list" else []
+
+
+def internal_team_from_info(info):
+    name = str(get(info, "displayName", get(info, "name", ""))).strip().lower()
+    abbr = str(get(info, "abbreviation", "?")).strip().upper()
+    for key in TEAM_ALIASES:
+        if name in TEAM_ALIASES[key]:
+            return key
+    if abbr in TEAMS:
+        return abbr
+    for key in TEAM_ALIASES:
+        if abbr.lower() in TEAM_ALIASES[key] or abbr == TEAMS[key]["display"]:
+            return key
+    return abbr
+
+
+def read_match_events(data, ctx, fixtures=False):
+    raw = get(data, "events", None)
+    if type(raw) != "list":
+        return None
+    events = []
+    now_local = ctx.now.unix // 60 + zone_offset(ctx)
+    for event in raw:
+        comps = list_value(get(event, "competitions", []))
+        if len(comps) == 0:
+            continue
+        comp = comps[0]
+        parsed = parse_competition(comp, ctx)
+        if parsed == None:
+            continue
+        event_start = parse_iso(get(event, "date", ""), zone_offset(ctx))
+        if event_start != None:
+            parsed["start"] = event_start
+        status = get(comp, "status", get(event, "status", {}))
+        status_type = get(status, "type", {})
+        state = str(get(status_type, "state", "")).lower()
+        status_name = str(get(status_type, "name", "")).upper()
+        # A dated fixture without status may be upcoming, never assumed final.
+        if state == "" and status_name == "" and fixtures and parsed["start"] != None and parsed["start"] > now_local:
+            state = "pre"
+        if status_name in ["STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_CANCELLED", "STATUS_SUSPENDED", "STATUS_ABANDONED"]:
+            state = "unavailable"
+        if state == "pre" and (parsed["start"] == None or parsed["start"] <= now_local):
+            continue
+        if state == "post" and parsed["start"] == None:
+            continue
+        parsed["state"] = state
+        parsed["clock"] = str(get(status_type, "shortDetail", get(status_type, "detail", get(status, "displayClock", ""))))
+        events.append(parsed)
+    return events
+
+
+def signed_stat_number(value):
+    if type(value) == "int":
+        return value
+    if type(value) == "float":
+        return int(value) if value == int(value) else None
+    if type(value) != "string":
+        return None
+    text = value.strip().replace("−", "-")
+    if text == "":
+        return None
+    digits = text[1:] if text[0] in ["+", "-"] else text
+    if digits == "":
+        return None
+    for ch in digits.elems():
+        if ch < "0" or ch > "9":
+            return None
+    return int(text)
+
+
+def named_standing_number(stats, names, abbreviation=""):
+    for name in names:
+        for stat in list_value(stats):
+            if get(stat, "name", "") == name:
+                value = signed_stat_number(get(stat, "value", None))
+                if value == None:
+                    value = signed_stat_number(get(stat, "displayValue", None))
+                if value != None:
+                    return value
+    if abbreviation != "":
+        for stat in list_value(stats):
+            if str(get(stat, "abbreviation", "")).upper() == abbreviation:
+                value = signed_stat_number(get(stat, "value", None))
+                if value == None:
+                    value = signed_stat_number(get(stat, "displayValue", None))
+                if value != None:
+                    return value
+    return None
+
+
+def standing_goal_difference(stats):
+    gd = named_standing_number(
+        stats, ["pointDifferential", "goalDifference", "goalDifferential"], "GD",
+    )
+    if gd != None:
+        return gd
+    goals_for = named_standing_number(stats, ["pointsFor", "goalsFor"], "GF")
+    goals_against = named_standing_number(stats, ["pointsAgainst", "goalsAgainst"], "GA")
+    if goals_for != None and goals_against != None:
+        return goals_for - goals_against
+    return None
+
+
+def goal_difference_text(value):
+    if value == None:
+        return "--"
+    return ("+" if value > 0 else "") + str(value)
+
+
 def get(obj, key, fallback = None):
     if obj == None or type(obj) != "dict":
         return fallback
@@ -194,22 +328,17 @@ def opponent_of(match, team):
 
 def live_minute(match):
     detail = str(match.get("clock", "")).upper()
-
-    if detail.find("HALFTIME") >= 0 or detail == "HT":
+    if "PEN" in detail or "SHOOTOUT" in detail:
+        return "PENS"
+    if "HALFTIME" in detail or "HALF TIME" in detail or detail == "HT":
         return "HT"
-
     digits = ""
-
     for ch in detail.elems():
-        if ch >= "0" and ch <= "9":
+        if (ch >= "0" and ch <= "9") or (ch == "+" and digits != ""):
             digits += ch
         elif digits != "":
             break
-
-    if digits != "":
-        return digits + "'"
-
-    return "LIVE"
+    return digits + "'" if digits != "" else "LIVE"
 
 def draw_team_rail(c, team):
     c.rect(0, 0, 1, 31, fill = team_color(team))
@@ -264,22 +393,29 @@ def parse_iso(value, offset_minutes):
     if len(text) < 16:
         return None
 
-    y = num(text[0:4], -1)
-    mo = num(text[5:7], -1)
-    d = num(text[8:10], -1)
-    hh = num(text[11:13], -1)
-    mm = num(text[14:16], -1)
+    digits = text[0:4] + text[5:7] + text[8:10] + text[11:13] + text[14:16]
+    for ch in digits.elems():
+        if ch < "0" or ch > "9":
+            return None
+    y = int(text[0:4])
+    mo = int(text[5:7])
+    d = int(text[8:10])
+    hh = int(text[11:13])
+    mm = int(text[14:16])
 
-    if y < 1970 or mo < 1 or d < 1 or hh < 0 or mm < 0:
+    if y < 1970 or mo < 1 or mo > 12 or d < 1 or hh > 23 or mm > 59:
+        return None
+    leap = y % 400 == 0 or (y % 4 == 0 and y % 100 != 0)
+    month_days = [31, 29 if leap else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    if d > month_days[mo - 1]:
         return None
 
     mins = days_from_civil(y, mo, d) * 1440
     mins += hh * 60 + mm
 
-    if text.endswith("Z"):
-        mins += offset_minutes
-
-    return mins
+    if not (text.endswith("Z") or text.endswith("+00:00")):
+        return None
+    return mins + offset_minutes
 
 
 def date_text(mins):
@@ -338,88 +474,81 @@ def zone_offset(ctx):
 # ESPN match data
 # ------------------------------------------------------------
 
-def read_events(ctx):
-    #
-    # ESPN accepts a date range on the scoreboard endpoint.
-    # We ask for a broad range surrounding now so we can find
-    # both the previous and upcoming match.
-    #
-
-    now_days = ctx.now.unix // 86400
-
-    past = civil_from_days(now_days - 21)
-    future = civil_from_days(now_days + 35)
-
-    def pad2(n):
-        return ("0" + str(n)) if n < 10 else str(n)
+def score_value(competitor):
+    raw = get(competitor, "score", None)
+    if type(raw) == "dict":
+        raw = get(raw, "displayValue", get(raw, "value", None))
+    value = signed_stat_number(raw)
+    return value if value != None and value >= 0 else "-"
 
 
-    start = (
-        str(past[0]) +
-        pad2(past[1]) +
-        pad2(past[2])
-    )
-
-    end = (
-        str(future[0]) +
-        pad2(future[1]) +
-        pad2(future[2])
-    )
-
-    url = SCORES + "?dates=" + start + "-" + end
-
-    response = http.get(url, ttl_seconds = 60)
-
-    if response["status_code"] != 200 or response["json"] == None:
+def espn_team_id(team):
+    response = http.get(BASE + "site/v2/sports/soccer/ger.1/teams", ttl_seconds=86400)
+    if get(response, "status_code", 0) != 200:
         return None
+    sports = list_value(get(get(response, "json", {}), "sports", []))
+    if len(sports) == 0:
+        return None
+    leagues = list_value(get(sports[0], "leagues", []))
+    if len(leagues) == 0:
+        return None
+    for item in list_value(get(leagues[0], "teams", [])):
+        info = get(item, "team", {})
+        if internal_team_from_info(info) == team:
+            return str(get(info, "id", ""))
+    return None
 
-    events = []
 
-    for event in get(response["json"], "events", []):
-        comps = get(event, "competitions", [])
+def parse_competition(comp, ctx):
+    home = None
+    away = None
+    for competitor in list_value(get(comp, "competitors", [])):
+        side = {
+            "abbr": internal_team_from_info(get(competitor, "team", {})),
+            "score": score_value(competitor),
+        }
+        location = get(competitor, "homeAway", "")
+        if location == "home":
+            home = side
+        elif location == "away":
+            away = side
+    if home == None or away == None:
+        return None
+    return {"home": home, "away": away,
+            "start": parse_iso(get(comp, "date", ""), zone_offset(ctx))}
 
-        if type(comps) != "list" or len(comps) == 0:
-            continue
 
-        comp = comps[0]
+def read_schedule_events(ctx, fixtures=False):
+    team_id = espn_team_id(team_selected(ctx))
+    if team_id == None or team_id == "":
+        return None
+    url = BASE + "site/v2/sports/soccer/ger.1/teams/" + team_id + "/schedule"
+    if fixtures:
+        url += "?fixture=true"
+    response = http.get(url, ttl_seconds=300)
+    if get(response, "status_code", 0) != 200:
+        return None
+    return read_match_events(get(response, "json", {}), ctx, fixtures)
 
-        home = None
-        away = None
 
-        for competitor in get(comp, "competitors", []):
-            side = {
-                "abbr": str(
-                    dig(competitor, ["team", "abbreviation"], "?")
-                ).upper(),
-                "score": num(get(competitor, "score", 0)),
-            }
+def read_live_events(ctx):
+    today = civil_from_days(ctx.now.unix // 86400)
+    date_key = str(today[0]) + ("0" + str(today[1]))[-2:] + ("0" + str(today[2]))[-2:]
+    response = http.get(SCORES + "?dates=" + date_key, ttl_seconds=30)
+    if get(response, "status_code", 0) != 200:
+        return None
+    return read_match_events(get(response, "json", {}), ctx)
 
-            if str(get(competitor, "homeAway", "")) == "home":
-                home = side
-            else:
-                away = side
 
-        if home == None or away == None:
-            continue
+def find_next_match(ctx, team):
+    events = read_schedule_events(ctx, fixtures=True)
+    if events == None:
+        return None
+    return upcoming_match(events, team)
 
-        state = str(
-            dig(event, ["status", "type", "state"], "")
-        ).lower()
 
-        events.append({
-            "home": home,
-            "away": away,
-            "state": state,
-            "clock": str(
-                dig(event, ["status", "type", "detail"], "")
-            ).upper(),
-            "start": parse_iso(
-                str(get(event, "date", "")),
-                zone_offset(ctx),
-            ),
-        })
-
-    return events
+def read_events(ctx):
+    return read_schedule_events(ctx)
 
 
 def previous_match(events, team):
@@ -480,46 +609,32 @@ def live_match_for(events, team):
 # ------------------------------------------------------------
 
 def read_table():
-    response = http.get(TABLE, ttl_seconds = 1800)
-
-    if response["status_code"] != 200 or response["json"] == None:
+    response = http.get(TABLE, ttl_seconds=1800)
+    if get(response, "status_code", 0) != 200 or get(response, "json", None) == None:
         return None
-
     node = response["json"]
-
-    children = get(node, "children", [])
-
-    if type(children) == "list" and len(children) > 0:
-        node = children[0]
-
+    if type(node) == "list":
+        node = node[0] if len(node) > 0 else {}
+    children = list_value(get(node, "children", []))
+    nodes = children if len(children) > 0 else [node]
     rows = []
-
-    for entry in dig(node, ["standings", "entries"], []):
-        stats = {}
-
-        for stat in get(entry, "stats", []):
-            stats[str(get(stat, "name", ""))] = str(
-                get(stat, "displayValue", "")
-            )
-
-        rows.append({
-            "abbr": str(
-                dig(entry, ["team", "abbreviation"], "?")
-            ).upper(),
-
-            "name": str(
-                dig(entry, ["team", "displayName"], "")
-            ).upper(),
-
-            "points": num(stats.get("points", "0")),
-            "wins": num(stats.get("wins", "0")),
-            "draws": num(stats.get("ties", "0")),
-            "losses": num(stats.get("losses", "0")),
-            "gd": stats.get("pointDifferential", "0"),
-        })
-
-    rows = sorted(rows, key = lambda row: -row["points"])
-
+    for group in nodes:
+        for entry in list_value(dig(group, ["standings", "entries"], [])):
+            stats = list_value(get(entry, "stats", []))
+            def stat_text(names):
+                value = named_standing_number(stats, names)
+                return value if value != None else "--"
+            rank = named_standing_number(stats, ["rank"])
+            rows.append({
+                "abbr": internal_team_from_info(get(entry, "team", {})),
+                "name": str(dig(entry, ["team", "displayName"], "")).upper(),
+                "rank": rank if rank != None and rank > 0 else len(rows) + 1,
+                "points": stat_text(["points"]),
+                "wins": stat_text(["wins"]),
+                "draws": stat_text(["ties", "draws"]),
+                "losses": stat_text(["losses"]),
+                "gd": goal_difference_text(standing_goal_difference(stats)),
+            })
     return rows
 
 # ------------------------------------------------------------
@@ -536,12 +651,12 @@ def title(c, ctx):
     draw_team_rail(c, team)
 
     # Bundesliga logo on the left.
-    c.image("BUNDESLIGA.png", 5, 6, 22, 22)
+    c.image("BUNDESLIGA.png", 4, 2)
 
     # Tracked team crest on the right.
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 101, 4, 22, 22)
+        c.image(crest.replace("22.png", "28.png"), 96, 2)
 
     # Smaller title text in the middle.
     c.text(
@@ -571,7 +686,7 @@ def live_match(c, ctx):
     accent = team_color(team)
     draw_team_rail(c, team)
 
-    events = read_events(ctx)
+    events = read_live_events(ctx)
 
     if events == None:
         c.text_center("DATA OFFLINE", 13, font = "5x7", color = "red")
@@ -610,11 +725,11 @@ def live_match(c, ctx):
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 4, 8, 22, 22)
+        c.image(crest, 4, 8)
 
     opponent_crest = team_crest(opponent["abbr"])
     if opponent_crest != "":
-        c.image(opponent_crest, 103, 8, 22, 22)
+        c.image(opponent_crest, 102, 8)
 
     c.text("LIVE", 5, 1, font = "4x5", color = "green")
 
@@ -693,12 +808,12 @@ def last_match(c, ctx):
     # Tracked team crest on the left.
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 4, 8, 22, 22)
+        c.image(crest, 4, 8)
 
     # Opponent crest on the far right.
     opponent_crest = team_crest(opponent["abbr"])
     if opponent_crest != "":
-        c.image(opponent_crest, 103, 8, 22, 22)
+        c.image(opponent_crest, 102, 8)
 
     # Header.
     c.text("LAST", 5, 1, font = "4x5", color = accent)
@@ -767,18 +882,13 @@ def next_match(c, ctx):
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 4, 8, 22, 22)
+        c.image(crest, 4, 8)
 
-    events = read_events(ctx)
-
-    if events == None:
-        c.text_center("DATA OFFLINE", 13, font = "5x7", color = "red")
-        return
-
-    match = upcoming_match(events, team)
+    events = read_schedule_events(ctx, fixtures=True)
+    match = upcoming_match(events, team) if events != None else None
 
     if match == None:
-        c.text_center("NO MATCH FOUND", 13, font = "5x7", color = DIM)
+        c.text_center("DATA OFFLINE" if events == None else "NO MATCH FOUND", 13, font = "5x7", color = DIM)
         return
 
     home = match["home"]
@@ -788,7 +898,7 @@ def next_match(c, ctx):
     # Opponent crest on the right.
     opponent_crest = team_crest(opponent["abbr"])
     if opponent_crest != "":
-        c.image(opponent_crest, 103, 8, 22, 22)
+        c.image(opponent_crest, 102, 8)
 
     # Header.
     c.text("NEXT", 5, 1, font = "4x5", color = accent)
@@ -851,11 +961,11 @@ def standing(c, ctx):
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 12, 8, 19, 19)
+        c.image(crest, 9, 6)
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 95, 8, 19, 19)
+        c.image(crest, 97, 6)
 
     rows = read_table()
 
@@ -873,7 +983,7 @@ def standing(c, ctx):
     for i in range(len(rows)):
         if rows[i]["abbr"] == team:
             club = rows[i]
-            position = i + 1
+            position = rows[i]["rank"]
             break
 
     if club == None:

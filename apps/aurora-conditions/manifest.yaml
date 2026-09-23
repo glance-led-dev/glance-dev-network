@@ -1,0 +1,23 @@
+gdn: 1
+id: aurora-conditions
+version: 1
+name: Aurora Conditions
+author: Ben
+description: Live solar wind from NOAA - Bz, Bt, speed and density, colour coded with trend arrows - plus tonight's Kp forecast at 8pm, 11pm, 2am and 5am against the Kp your own ZIP actually needs, and the one answer that matters - whether the storm reaches you and the moon and cloud let you see it.
+category: Science
+entry: app.star
+
+width: 64
+height: 32
+
+refresh: 600
+
+pages: [wind, kp, visibility]
+
+inputs:
+  - key: zip
+    app_input_type: free-text
+    type: string
+    label: ZIP code
+    help: Your 5-digit US ZIP code, e.g. 06001. Sets how far south the aurora has to reach to find you, plus your cloud cover, moon and local forecast hours. Leave it blank and the solar wind page still works.
+    default: ""
