@@ -651,12 +651,12 @@ def title(c, ctx):
     draw_team_rail(c, team)
 
     # Bundesliga logo on the left.
-    c.image("BUNDESLIGA.png", 4, 4, 29, 29)
+    c.image("BUNDESLIGA.png", 4, 2)
 
     # Tracked team crest on the right.
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 96, 2, 28, 28)
+        c.image(crest.replace("22.png", "28.png"), 96, 2)
 
     # Smaller title text in the middle.
     c.text(
@@ -725,11 +725,11 @@ def live_match(c, ctx):
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 4, 8, 22, 22)
+        c.image(crest, 4, 8)
 
     opponent_crest = team_crest(opponent["abbr"])
     if opponent_crest != "":
-        c.image(opponent_crest, 103, 8, 22, 22)
+        c.image(opponent_crest, 102, 8)
 
     c.text("LIVE", 5, 1, font = "4x5", color = "green")
 
@@ -808,12 +808,12 @@ def last_match(c, ctx):
     # Tracked team crest on the left.
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 4, 8, 22, 22)
+        c.image(crest, 4, 8)
 
     # Opponent crest on the far right.
     opponent_crest = team_crest(opponent["abbr"])
     if opponent_crest != "":
-        c.image(opponent_crest, 103, 8, 22, 22)
+        c.image(opponent_crest, 102, 8)
 
     # Header.
     c.text("LAST", 5, 1, font = "4x5", color = accent)
@@ -882,7 +882,7 @@ def next_match(c, ctx):
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 4, 8, 22, 22)
+        c.image(crest, 4, 8)
 
     events = read_schedule_events(ctx, fixtures=True)
     match = upcoming_match(events, team) if events != None else None
@@ -898,7 +898,7 @@ def next_match(c, ctx):
     # Opponent crest on the right.
     opponent_crest = team_crest(opponent["abbr"])
     if opponent_crest != "":
-        c.image(opponent_crest, 103, 8, 22, 22)
+        c.image(opponent_crest, 102, 8)
 
     # Header.
     c.text("NEXT", 5, 1, font = "4x5", color = accent)
@@ -961,11 +961,11 @@ def standing(c, ctx):
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 12, 8, 19, 19)
+        c.image(crest, 9, 6)
 
     crest = team_crest(team)
     if crest != "":
-        c.image(crest, 95, 8, 19, 19)
+        c.image(crest, 97, 6)
 
     rows = read_table()
 
