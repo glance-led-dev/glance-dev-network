@@ -35,32 +35,17 @@ def strip_tags(text):
     return clean_text(result)
 
 
+def today_text(ctx):
+    return str(ctx.now.year) + "-" + pad2(ctx.now.month) + "-" + pad2(ctx.now.day)
+
+
 def get_schedule(ctx):
-    year = str(ctx.now.year)
-
-    month = str(ctx.now.month)
-    if len(month) == 1:
-        month = "0" + month
-
-    day = str(ctx.now.day)
-    if len(day) == 1:
-        day = "0" + day
-
-    date = year + "-" + month + "-" + day
-
-    response = http.get(
-        URL,
-        params = {
-            "from": date,
-            "to": date,
-        },
-        ttl_seconds = 60,
+    # Today and the next 7 days in one request. Today's cards and the
+    # upcoming cards both read this body, so the second call is a cache hit.
+    return get_schedule_for_range(
+        today_text(ctx),
+        shift_date(ctx.now.year, ctx.now.month, ctx.now.day, 7),
     )
-
-    if response["status_code"] != 200:
-        return ""
-
-    return response["body"]
 
 
 def find_event_blocks(body):
@@ -1412,11 +1397,11 @@ def shift_date(year, month, day, amount):
     return str(y) + "-" + pad2(m) + "-" + pad2(d)
 
 
-def get_schedule_for_date(date_text):
+def get_schedule_for_range(from_text, to_text):
     response = http.get(
         URL,
-        params = {"from": date_text, "to": date_text},
-        ttl_seconds = CACHE_SECONDS,
+        params = {"from": from_text, "to": to_text},
+        ttl_seconds = 60,
     )
 
     if response["status_code"] != 200:
@@ -1425,30 +1410,55 @@ def get_schedule_for_date(date_text):
     return response["body"]
 
 
+def block_date_text(block, fallback):
+    # Each event row carries its date as "Thu, Sep. 24 2026".
+    # Returns YYYY-MM-DD, or fallback if the row can't be read.
+    marker = '<p class="m-0">'
+    start = block.find(marker)
+
+    if start == -1:
+        return fallback
+
+    start = start + len(marker)
+    end = block.find("</p>", start)
+
+    if end == -1:
+        return fallback
+
+    value = parse_date_value(block[start:end])
+
+    if value == 0:
+        return fallback
+
+    parts = clean_text(block[start:end]).replace(",", " ").replace(".", " ").split()
+
+    if len(parts) < 4:
+        return fallback
+
+    month = month_number(parts[1])
+
+    if month == 0:
+        return fallback
+
+    return parts[3] + "-" + pad2(month) + "-" + pad2(int(parts[2]))
+
+
 def collect_upcoming_events(ctx):
     events = []
+    today = today_text(ctx)
 
-    # Search future dates in order and collect enough real events to fill
-    # any open dynamic page slots.
-    for day_offset in range(1, 8):
-        date_text = shift_date(
-            ctx.now.year,
-            ctx.now.month,
-            ctx.now.day,
-            day_offset,
-        )
+    body = get_schedule(ctx)
+    if body == "":
+        return events
 
-        body = get_schedule_for_date(date_text)
-        if body != "":
-            blocks = find_event_blocks(body)
-
-            for block in blocks:
-                if len(events) < 16:
-                    events.append({
-                        "block": block,
-                        "date": str(ctx.now.month) + "/" + str(ctx.now.day),
-                        "date_text": date_text,
-                    })
+    for block in find_event_blocks(body):
+        date_text = block_date_text(block, today)
+        if date_text > today and len(events) < 16:
+            events.append({
+                "block": block,
+                "date": str(ctx.now.month) + "/" + str(ctx.now.day),
+                "date_text": date_text,
+            })
 
     return events
 
@@ -1511,10 +1521,11 @@ def draw_upcoming_event(c, block, date_text, offset):
 
 
 def collect_today_events(ctx):
+    today = today_text(ctx)
     body = get_schedule(ctx)
     if body == "":
         return []
-    return find_event_blocks(body)
+    return [b for b in find_event_blocks(body) if block_date_text(b, today) == today]
 
 
 def draw_dynamic_page(c, ctx, page_number):
