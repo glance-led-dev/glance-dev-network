@@ -17,7 +17,7 @@ height: 32
 
 # One fixed interval for the whole app. 2 minutes matches what's wanted while
 # live; the off-season cards just re-fetch on the same timer.
-refresh: 120
+refresh: 300
 
 # The panel rotates through these pages in order, one render request per page.
 # app.star defines a function per name. Each page has one fixed job; order1-5
@@ -84,9 +84,3 @@ inputs:
       - "America/Anchorage"
       - "Pacific/Honolulu"
     help: Race dates and times are shown in this zone. NASCAR's schedule is published in US Eastern.
-
-  - key: datecolor
-    type: string
-    app_input_type: color
-    label: Next-race date/time color
-    default: "#FFD166"

@@ -31,6 +31,5 @@ NASCAR's feed has no race-control / penalty message stream the way F1's does.
 - **Series** — Cup, O'Reilly (Xfinity), or Trucks.
 - **Time zone** — race dates/times are shown in this zone (NASCAR publishes its
   schedule in US Eastern).
-- **Next-race date/time color** — color of the date/time text on the cards.
 
 Built for the [GLANCE Developer Network](https://github.com/glance-led-dev/glance-dev-network).
