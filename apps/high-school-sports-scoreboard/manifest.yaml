@@ -1,14 +1,14 @@
 gdn: 1
 id: high-school-sports-scoreboard
-version: 0.15.125
+version: 0.16.0
 name: High School Sports
 description: Recent scores and upcoming games for one high school and sport per app instance.
 author: Jacob
 category: Sports
 entry: app.star
 width: 192
-height: 32               # height is always 32 per GDN spec
-refresh: 300              # 5 min during live testing; schedule data remains week-cached
+height: 32
+refresh: 300
 # Production exposes one page only. `scoreboard_school` chooses the current
 # state (Next, Live, or Final); the design-preview functions in app.star are
 # intentionally not registered and therefore never enter the Glance scroll.
@@ -524,19 +524,22 @@ inputs:
     choices: [Football, Boys Basketball, Girls Basketball, Baseball, Softball, Girls Volleyball, Boys Soccer, Girls Soccer]
     help: Select the sport to display.
   - key: maxprepsurl
+    required: true
     app_input_type: free-text
     type: string
     label: MaxPreps school URL
     help: Required. Paste the main school page, not a game URL.
   - key: parsekey
+    required: true
     app_input_type: api-key
     type: string
     label: Parse API key
-    help: Required. Enter your personal Parse API key.
+    help: "Required. Subscribe to the MaxPreps API at https://parse.bot/marketplace/1d510b08-d5bf-481d-aa00-82f8b510e6dd/maxpreps-com-api"
   - key: gamechangerteamid
     app_input_type: free-text
     type: string
     label: GameChanger Team ID (Optional)
+    default: ""
     help: Optional for baseball and softball.
   - key: displaytimezone
     app_input_type: dropdown

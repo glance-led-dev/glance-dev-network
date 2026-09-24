@@ -16,7 +16,7 @@ Displays one high school's current sports matchup on a 192x32 Glance display. Th
 - **Next:** opponent, records, scheduled date and time, and available season averages.
 - **Live:** current score and the sport-specific period, set, half, inning, clock, bases, or outs when the source provides them.
 - **Final:** final score and the available quarter, half, set, or line-score breakdown.
-- Football remains on its latest final through Sunday and changes to the next matchup on Monday.
+- Football remains on its latest final until Tuesday at 8:00 AM in the selected school's local time, when it changes to the next matchup.
 - When usable live data is temporarily unavailable, the display retains the matchup and shows the most recent check time instead of presenting stale information as current.
 
 ## Display abbreviations and statuses
@@ -66,9 +66,11 @@ For live baseball and softball, the diamond shows occupied bases in the batting 
 - Each successful live Scoretracker request currently costs one Parse credit. The frequency selector shows the corresponding hourly rate.
 - The default 30-minute frequency uses at most two live Scoretracker credits per hour.
 - **No live pulls** uses zero in-game Scoretracker credits. Schedule, matchup, upcoming-game, and final-result updates continue normally; one completed-game request may still retrieve the final quarter breakdown.
-- A new school/game normally uses two credits for its schedule and one for its matchup. Football uses one additional Scoretracker credit after the game starts.
+- At Tuesday's 8:00 AM football rollover, the app refreshes both teams' schedules: two credits for the selected school and two for its opponent. The opponent schedule supplies the opposing streak when available.
+- On a football game day, one `get_live_and_upcoming_games` request after 8:00 AM local confirms that the Tuesday matchup is still correct. It costs one credit and is cached for the entire date.
+- The matchup request normally costs one additional credit. Football Scoretracker then costs one credit per selected live update after the game starts.
 - Successful schedule and matchup responses are cached. Reopening the same matchup should not repeat those charges.
-- Schedule refreshes are limited to the weekly rollover (normally Monday), the day before a game, game day, and one postgame/final check—normally eight schedule credits in a full week.
+- Football schedule refreshes are limited to the Tuesday 8:00 AM local rollover. The game-day confirmation avoids another full schedule request if the matchup changed after Tuesday.
 - Only Scoretracker repeats during a football game, at the frequency selected in settings.
 - The app pauses sport-specific schedule calls during that sport's offseason.
 

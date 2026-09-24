@@ -12,8 +12,9 @@
 # a real example: corner-coordinate args, dedicated outline= keyword
 # for an unfilled border, corner_radius=0 for square corners.
 
-PARSE_BASE = "https://api.parse.bot/scraper/43ba21c8-8bd2-4dde-927b-75681f9251f3"
-PARSE_LIVE_BASE = "https://api.parse.bot/scraper/43ba21c8-8bd2-4dde-927b-75681f9251f3"
+PARSE_BASE = "https://api.parse.bot/scraper/e0a033cc-4c08-49d5-8417-81682c9b3dbf"
+PARSE_LIVE_BASE = "https://api.parse.bot/scraper/e0a033cc-4c08-49d5-8417-81682c9b3dbf"
+PARSE_SNAPSHOT_VERSION = "15"
 GAMECHANGER_TEAM_BASE = "https://api.team-manager.gc.com/public/teams/"
 
 SMALL_FONT = "4x5"   # defaults used when creating each box below
@@ -23,7 +24,9 @@ VALUE_FONT = "7x12"  # of these constants to tune one box at a time
 FILL_COLOR = "darkgray"
 STATUS_BAR_FILL = "darkgray"
 STATUS_BAR_TEXT = "white"
-BOX_COLOR = "black"  # outline color
+BOX_COLOR = "black"
+STAT_FILL_COLOR = "black"
+STAT_DIVIDER_COLOR = "darkgray"
 # Last-resort sample/error fallback. Real games first resolve both schools'
 # colors below; this is deliberately a neutral gold instead of cyan.
 TEAM_COLOR_FALLBACK = "#d8b04a"
@@ -10026,11 +10029,27 @@ def local_now(ctx, timezone):
     offset = timezone_offset_for_unix(timezone, ctx.now.unix)
     local_unix = ctx.now.unix + offset * 3600
     local_day = local_unix // 86400
+    seconds = local_unix - local_day * 86400
     return {
         "day": local_day,
         "week": (local_unix - 345600) // 604800,  # rolls over Monday
         "weekday": (local_day + 4) % 7,  # Sunday=0, Wednesday=3
+        "hour": seconds // 3600,
+        "minute": (seconds % 3600) // 60,
     }
+
+def tuesday_schedule_cycle_for_unix(unix, timezone):
+    # Football changes to its new matchup Tuesday at 8:00 AM in the
+    # school's timezone. Monday and early Tuesday remain in the prior cycle.
+    offset = timezone_offset_for_unix(timezone, unix)
+    local_unix = unix + offset * 3600
+    monday_week = (local_unix - 345600) // 604800
+    local_day = local_unix // 86400
+    weekday = (local_day + 4) % 7
+    seconds = local_unix - local_day * 86400
+    if weekday == 1 or (weekday == 2 and seconds < 8 * 3600):
+        return monday_week - 1
+    return monday_week
 
 def local_week_for_unix(unix, timezone):
     offset = timezone_offset_for_unix(timezone, unix)
@@ -10076,6 +10095,7 @@ def schedule_request_adaptive(api_key, path, sport_path, season, cache_bucket):
         PARSE_BASE + "/get_team_schedule",
         headers = {
             "X-API-Key": api_key,
+            "API-Snapshot-Version": PARSE_SNAPSHOT_VERSION,
             # GDN includes headers in its cache key. Parse ignores this
             # label, while it lets each planned refresh have one entry.
             "X-Glance-Refresh": cache_bucket,
@@ -10088,6 +10108,14 @@ def response_auth_error(resp):
     if resp == None:
         return False
     return resp.get("status_code") == 401 or resp.get("status_code") == 403
+
+def response_credit_error(resp):
+    if resp == None:
+        return False
+    if resp.get("status_code") == 402:
+        return True
+    body = str(resp.get("body", "")).lower()
+    return "credit" in body and ("insufficient" in body or "no credit" in body or "out of credit" in body)
 
 def parsed_schedule_data(resp):
     if resp == None or resp.get("status_code") != 200:
@@ -10156,12 +10184,15 @@ def event_schedule(ctx, api_key, path, sport_path, season, slot, timezone, check
     # frames at once, and walking refresh phases here previously turned one
     # user action into several paid Parse calls. The HTTP cache and its lock
     # make this one weekly request reusable by every frame in the render.
+    cycle = local["week"]
+    if sport_path == "football/":
+        cycle = tuesday_schedule_cycle_for_unix(ctx.now.unix, timezone)
     return schedule_request_adaptive(
         api_key,
         path,
         sport_path,
         season,
-        identity + "-week-" + str(local["week"]),
+        identity + "-week-" + str(cycle),
     )
 
 def normalized_contest_adaptive(contest, sport, slot, tracked_school, team_data, source_timezone, display_timezone):
@@ -10240,6 +10271,8 @@ def normalized_contest_adaptive(contest, sport, slot, tracked_school, team_data,
         "homeName": home_name,
         "awaySchoolId": away_school_id,
         "homeSchoolId": home_school_id,
+        "awaySchoolUrl": team_stat(away_side, ["school_url", "schoolUrl", "url"]),
+        "homeSchoolUrl": team_stat(home_side, ["school_url", "schoolUrl", "url"]),
         "awayColor": away_color,
         "awayColor2": away_color2,
         "awayColor3": away_color3,
@@ -10370,6 +10403,29 @@ def normalized_contest_adaptive(contest, sport, slot, tracked_school, team_data,
     base["hasLiveScore"] = has_live_score
     return base
 
+def schedule_streak(data):
+    if type(data) != "dict":
+        return None
+    streak_result = None
+    streak_count = 0
+    for contest in data.get("contests", []):
+        result = str(contest.get("result", "")).strip().upper()
+        result_type = None
+        if result.startswith("W"):
+            result_type = "W"
+        elif result.startswith("L"):
+            result_type = "L"
+        elif result == "T" or result.startswith("T "):
+            result_type = "T"
+        if result_type == None:
+            continue
+        if result_type == streak_result:
+            streak_count += 1
+        else:
+            streak_result = result_type
+            streak_count = 1
+    return None if streak_result == None else streak_result + str(streak_count)
+
 def games_from_schedule(resp, sport, slot, school_name, source_timezone, display_timezone, now_unix):
     if not valid_schedule(resp):
         return []
@@ -10387,6 +10443,7 @@ def games_from_schedule(resp, sport, slot, school_name, source_timezone, display
         elif result == "T" or result.startswith("T "):
             ties += 1
     calculated_record = str(wins) + "-" + str(losses) + (("-" + str(ties)) if ties > 0 else "")
+    calculated_streak = schedule_streak(data)
     tracked_name = team_data.get("school_name", team_data.get("schoolName", team_data.get("name", school_name)))
     final_game = None
     next_game = None
@@ -10405,8 +10462,10 @@ def games_from_schedule(resp, sport, slot, school_name, source_timezone, display
             continue
         if game.get("trackedIsHome", False):
             game["homeRecord"] = calculated_record
+            game["homeStreak"] = calculated_streak
         else:
             game["awayRecord"] = calculated_record
+            game["awayStreak"] = calculated_streak
         # Scoretracker does not include team records, and the tracked-team
         # schedule can omit the opponent's record. For an opening-game final,
         # safely derive the opponent's 1-game record instead of leaving 0-0.
@@ -10470,6 +10529,7 @@ def scoretracker_request_adaptive(api_key, qwix_id, game_url, cache_bucket):
         PARSE_LIVE_BASE + endpoint,
         headers = {
             "X-API-Key": api_key,
+            "API-Snapshot-Version": PARSE_SNAPSHOT_VERSION,
             "X-Glance-Refresh": cache_bucket,
         },
         params = params,
@@ -10483,6 +10543,7 @@ def matchup_request_adaptive(api_key, game_url, cache_bucket):
         PARSE_BASE + "/get_matchup",
         headers = {
             "X-API-Key": api_key,
+            "API-Snapshot-Version": PARSE_SNAPSHOT_VERSION,
             # The game-specific label makes one pregame call and one separate
             # post-final call. The dynamic page reuses the cached response.
             "X-Glance-Refresh": cache_bucket,
@@ -10490,6 +10551,102 @@ def matchup_request_adaptive(api_key, game_url, cache_bucket):
         params = {"game_url": game_url},
         ttl_seconds = 31536000,
     )
+
+def game_day_confirmation_request(api_key, school_url, sport, game_date, school_name, cache_bucket):
+    path = maxpreps_school_path(school_url)
+    if path == None or game_date == None or str(game_date).strip() == "":
+        return None
+    pieces = [piece for piece in path.split("/") if piece != ""]
+    if len(pieces) < 1:
+        return None
+    params = {
+        "state": pieces[0].upper(),
+        "sport": sport.get("live_sport", "football"),
+        "date": str(game_date)[:10],
+    }
+    if school_name != "":
+        params["school"] = school_name
+    if sport.get("gender") != None:
+        params["gender"] = sport.get("gender")
+    return http.get(
+        PARSE_BASE + "/get_live_and_upcoming_games",
+        headers = {
+            "X-API-Key": api_key,
+            "API-Snapshot-Version": PARSE_SNAPSHOT_VERSION,
+            "X-Glance-Refresh": cache_bucket,
+        },
+        params = params,
+        ttl_seconds = 31536000,
+    )
+
+def game_day_confirmation_games(resp):
+    if resp == None or resp.get("status_code") != 200:
+        return []
+    value = resp.get("json")
+    for unused in range(4):
+        if type(value) == "list":
+            return value
+        if type(value) != "dict":
+            return []
+        found = None
+        for key in ["games", "events", "contests", "data", "result", "response"]:
+            candidate = value.get(key)
+            if type(candidate) == "list" or type(candidate) == "dict":
+                found = candidate
+                break
+        if found == None:
+            return []
+        value = found
+    return value if type(value) == "list" else []
+
+def confirm_game_day_matchup(ctx, api_key, game, sport, school_url, timezone):
+    # Confirm the cached Tuesday football matchup once on game day after
+    # 8:00 AM local without spending another two-credit schedule request.
+    if type(game) != "dict" or sport.get("code") != "FB":
+        return game
+    start_unix = game.get("startUnix")
+    if start_unix == None:
+        return game
+    now_local = date_info_in_timezone(ctx.now.unix, timezone)
+    game_local = date_info_in_timezone(start_unix, timezone)
+    if now_local["year"] != game_local["year"] or now_local["month"] != game_local["month"] or now_local["day"] != game_local["day"] or now_local["hour"] < 8:
+        return game
+    tracked_side = "home" if game.get("trackedIsHome", False) else "away"
+    school_name = str(game.get(tracked_side + "Name", "")).strip()
+    game_date = str(game_local["year"]) + "-" + pad2(game_local["month"]) + "-" + pad2(game_local["day"])
+    response = game_day_confirmation_request(
+        api_key,
+        school_url,
+        sport,
+        game_date,
+        school_name,
+        "game-day-confirm-v1-" + game_date + "-" + matchup_identity(school_url),
+    )
+    tracked_id = str(game.get(tracked_side + "SchoolId", "")).strip().lower()
+    tracked_name = matchup_identity(school_name)
+    for candidate in game_day_confirmation_games(response):
+        if type(candidate) != "dict":
+            continue
+        away = candidate.get("away_team", candidate.get("awayTeam", candidate.get("away", {})))
+        home = candidate.get("home_team", candidate.get("homeTeam", candidate.get("home", {})))
+        away_id_value = team_stat(away, ["school_id", "schoolId", "id"])
+        home_id_value = team_stat(home, ["school_id", "schoolId", "id"])
+        away_id = "" if away_id_value == None else str(away_id_value).strip().lower()
+        home_id = "" if home_id_value == None else str(home_id_value).strip().lower()
+        away_name = matchup_identity(side_school_name(away, ""))
+        home_name = matchup_identity(side_school_name(home, ""))
+        matches = (tracked_id != "" and tracked_id in [away_id, home_id]) or (tracked_name != "" and tracked_name in [away_name, home_name])
+        if not matches:
+            continue
+        game_url = contest_metadata_value(candidate, ["game_url", "gameUrl", "contest_url", "contestUrl", "url", "href"])
+        normalized_url = maxpreps_game_url(game_url)
+        if normalized_url != None:
+            game["gameUrl"] = normalized_url
+            contest_id = contest_metadata_value(candidate, ["contest_id", "contestId", "game_id", "gameId", "id"])
+            if contest_id != None and str(contest_id).strip() != "":
+                game["contestId"] = contest_id
+        return game
+    return game
 
 def gamechanger_live_request(team_id, cache_bucket):
     team_id = str(team_id).strip() if team_id != None else ""
@@ -10692,6 +10849,20 @@ def enrich_game_with_matchup(api_key, game, force_final = False):
     data = matchup_data(response)
     return merge_matchup_game(game, data) if data != None else game
 
+def enrich_game_with_opponent_streak(ctx, api_key, game, sport, season, source_timezone):
+    if type(game) != "dict":
+        return game
+    opponent_side = "away" if game.get("trackedIsHome", False) else "home"
+    streak_key = opponent_side + "Streak"
+    opponent_path = maxpreps_school_path(game.get(opponent_side + "SchoolUrl"))
+    if opponent_path == None:
+        return game
+    response = event_schedule(ctx, api_key, opponent_path, sport["path"], season, "opponent-streak", source_timezone, sport["check_minutes"])
+    streak = schedule_streak(parsed_schedule_data(response))
+    if streak != None:
+        game[streak_key] = streak
+    return game
+
 def normalized_scoretracker_game(data):
     if type(data) != "dict":
         return None
@@ -10728,15 +10899,15 @@ def normalized_live_clock(value):
         return ""
     text = str(value).strip().upper()
     # MaxPreps frequently reports approximate prose such as "~5 mins to go".
-    # The detail box needs the compact clock form, and the approximation mark
-    # does not add useful scoreboard information.
-    if text.startswith("~"):
+    # Keep the approximation mark while compacting the clock for the display.
+    approximate = text.startswith("~")
+    if approximate:
         text = text[1:].strip()
     if "MIN" in text:
         first = text.split(" ")[0]
         if first.isdigit():
-            return first + ":00"
-    return text
+            text = first + ":00"
+    return ("~" if approximate else "") + text
 
 def scoretracker_game_in(value, depth = 0):
     if depth > 6:
@@ -10862,6 +11033,13 @@ def period_scores_count(side, count):
         scores.append("-")
     return scores[:count]
 
+def suspicious_empty_football_final(base, status, away_score, home_score):
+    if str(base.get("sport", "")).upper() != "FB" or status != "final":
+        return False
+    away_text = str(away_score).strip() if away_score != None else ""
+    home_text = str(home_score).strip() if home_score != None else ""
+    return away_text in ["0", "0.0", "00"] and home_text in ["0", "0.0", "00"]
+
 def merge_live_game(base, live_game, ctx, display_timezone):
     away_side = live_game.get("away_team", {})
     home_side = live_game.get("home_team", {})
@@ -10897,6 +11075,7 @@ def merge_live_game(base, live_game, ctx, display_timezone):
     home_score = home_side.get("score")
     has_score = away_score != None and home_score != None
     status = str(live_game.get("status", "live")).lower()
+    rejected_empty_final = suspicious_empty_football_final(base, status, away_score, home_score)
 
     base["awayName"] = away_name
     base["homeName"] = home_name
@@ -10917,6 +11096,9 @@ def merge_live_game(base, live_game, ctx, display_timezone):
                 base[side_name + suffix] = live_color
     base["awayRecord"] = team_record(away_side, base.get("awayRecord", "0-0"))
     base["homeRecord"] = team_record(home_side, base.get("homeRecord", "0-0"))
+    if rejected_empty_final:
+        base["rejectedEmptyFinal"] = True
+        return base
     # Never erase a previously usable schedule/live score because a later
     # Scoretracker payload contains status/clock but omits its score fields.
     if has_score:
@@ -11088,15 +11270,19 @@ def fetch_game_adaptive(ctx, kind, slot):
                 "when": "",
             }
             exact_game = merge_live_game(exact_base, live_game, ctx, display_timezone)
-            if exact_game.get("type") != "final" and exact_game.get("status") != "final":
+            if exact_game.get("rejectedEmptyFinal", False):
+                exact_game = None
+            if exact_game == None:
+                pass
+            elif exact_game.get("type") != "final" and exact_game.get("status") != "final":
                 exact_game = overlay_gamechanger_live(exact_game, gc_live, display_timezone)
-            if kind == "dynamic":
+            if exact_game != None and kind == "dynamic":
                 return exact_game
-            if kind == "final":
+            if exact_game != None and kind == "final":
                 return exact_game if exact_game.get("type") == "final" else {"displayState": "no_final"}
-            if kind == "live":
+            if exact_game != None and kind == "live":
                 return exact_game if exact_game.get("status") == "live" else {"displayState": "no_live"}
-            if exact_game.get("status") == "live":
+            if exact_game != None and exact_game.get("status") == "live":
                 return exact_game
 
     season = current_season(ctx, source_timezone)
@@ -11121,10 +11307,14 @@ def fetch_game_adaptive(ctx, kind, slot):
     )
     if response_auth_error(schedule):
         return {"displayState": "key_error"}
+    if response_credit_error(schedule):
+        return {"displayState": "no_credits"}
     if not valid_schedule(schedule):
         fallback = gamechanger_fallback_game(gc_live, sport["code"], slot, ctx, display_timezone)
         if fallback != None:
             return fallback
+        if schedule != None and schedule.get("status_code") == 200:
+            return {"displayState": "no_game"}
         return {"displayState": "feed_error"}
 
     schedule_data = parsed_schedule_data(schedule)
@@ -11150,9 +11340,9 @@ def fetch_game_adaptive(ctx, kind, slot):
             final_is_current = ctx.now.unix - final_game.get("startUnix") <= 64800
             if sport["code"] == "FB":
                 # Football normally plays once a week. Keep the completed
-                # matchup on the main page through Sunday, then switch to the
-                # next game at Monday midnight in the school's timezone.
-                final_is_current = local_week_for_unix(final_game.get("startUnix"), source_timezone) == local_now(ctx, source_timezone)["week"]
+                # matchup until Tuesday at 8:00 AM local, then switch the
+                # page and both schedule caches to the next matchup.
+                final_is_current = tuesday_schedule_cycle_for_unix(final_game.get("startUnix"), source_timezone) == tuesday_schedule_cycle_for_unix(ctx.now.unix, source_timezone)
             game = final_game if final_is_current or next_game == None else next_game
         elif next_game != None:
             game = next_game
@@ -11165,11 +11355,21 @@ def fetch_game_adaptive(ctx, kind, slot):
             "displayState": "no_final" if kind == "final" else ("no_live" if kind == "live" else "no_upcoming"),
         }
 
+    game = confirm_game_day_matchup(
+        ctx,
+        api_key,
+        game,
+        sport,
+        schools.get("maxpreps_url", ""),
+        source_timezone,
+    )
+
     # One pregame Matchup response is shared by every page. Once Scoretracker
     # reports Final, a separate final cache key refreshes both teams' records
     # and season averages exactly once.
     matchup_was_final = game.get("type") == "final" or game.get("status") == "final"
     game = enrich_game_with_matchup(api_key, game, matchup_was_final)
+    game = enrich_game_with_opponent_streak(ctx, api_key, game, sport, season, source_timezone)
     if game.get("type") != "final" and game.get("status") != "final":
         game = overlay_gamechanger_live(game, gc_live, display_timezone)
 
@@ -16346,9 +16546,26 @@ def scoreboard_school(c, ctx):
         draw_empty(c, "OFFSEASON", "#d8b04a")
         return
     g = fetch_game_adaptive(ctx, "dynamic", "school")
+    if g != None and (g.get("gameUrl") == None or str(g.get("gameUrl")).strip() == ""):
+        configured_game_url = schools.get("maxpreps_url")
+        if configured_game_url != None and str(configured_game_url).strip() != "":
+            g["gameUrl"] = configured_game_url
+    if g != None and str(g.get("when", "")).strip() == "":
+        configured_game_url = str(schools.get("maxpreps_url", ""))
+        for segment in configured_game_url.split("/"):
+            pieces = segment.split("-")
+            if len(pieces) == 3 and len(pieces[2]) == 4 and pieces[0].isdigit() and pieces[1].isdigit() and pieces[2].isdigit():
+                year = int(pieces[2])
+                month = int(pieces[0])
+                day = int(pieces[1])
+                weekday = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][weekday_for_date(year, month, day)]
+                g["when"] = weekday + " " + str(month) + "/" + str(day)
+                break
     state = g.get("displayState")
     if state == "key_error":
         draw_empty(c, "KEY ERROR", "#ff3b30")
+    elif state == "no_credits":
+        draw_empty(c, "NO CREDITS", "#ff3b30")
     elif state == "url_error":
         draw_empty(c, "URL ERROR", "#ff3b30")
     elif state == "school_error":
@@ -16361,11 +16578,36 @@ def scoreboard_school(c, ctx):
         draw_final(c, g)
     else:
         draw_next(c, g)
-    # Logos are intentionally allowed to use their full natural footprint, but
-    # they must never paint over the scoreboard's outside frame. Restore the
-    # far-left edge last so it remains visible from the identity/logo area to
-    # the bottom in Next, Live, and Final.
-    c.line(0, 8, 0, 31, BOX_COLOR)
+    away = team_info(g.get("away", "TBD"), g, "away")
+    home = team_info(g.get("home", "TBD"), g, "home")
+    away_logo = team_logo(g.get("away", "TBD"), g, "away")
+    home_logo = team_logo(g.get("home", "TBD"), g, "home")
+    c.hline(0, 0, 95, FILL_COLOR)
+    c.hline(95, 0, 97, STAT_FILL_COLOR)
+    if away_logo == None:
+        c.hline(0, 31, 48, away["color"])
+    if home_logo == None:
+        c.hline(48, 31, 48, home["color"])
+    c.hline(96, 31, 96, STAT_FILL_COLOR)
+    c.vline(0, 0, 32, FILL_COLOR)
+    c.vline(191, 0, 32, STAT_DIVIDER_COLOR)
+    c.vline(0, 9, 23, "black" if away_logo != None else away["color"])
+    c.hline(95, 16, 97, STAT_FILL_COLOR)
+    if g.get("status") != "live" and g.get("status") != "final" and g.get("type") != "final":
+        redraw_stat_labels(c, g)
+    if g.get("status") == "live":
+        divider_positions = [95, 141, 165]
+    elif g.get("type") == "final" or g.get("status") == "final":
+        divider_positions = [95, 119, 132, 145, 158, 171]
+    else:
+        divider_positions = [95, 118, 143, 168]
+    for divider_x in divider_positions:
+        c.pixel(divider_x, 16, STAT_DIVIDER_COLOR)
+        c.pixel(divider_x, 0, STAT_DIVIDER_COLOR)
+        c.pixel(divider_x, 31, STAT_DIVIDER_COLOR)
+    c.pixel(191, 15, STAT_DIVIDER_COLOR)
+    c.pixel(191, 16, STAT_DIVIDER_COLOR)
+    c.pixel(0, 8, BOX_COLOR)
 
 # ---------------------------------------------------------------------------
 # Restored logo-matchup presentation (v0.13.6)
@@ -16381,8 +16623,8 @@ RESTORED_AWAY_ABBR = {"x": 141, "y": 0, "w": 24, "h": 15}
 RESTORED_AWAY_VALUE = {"x": 165, "y": 0, "w": 26, "h": 15}
 RESTORED_HOME_ABBR = {"x": 141, "y": 16, "w": 24, "h": 15}
 RESTORED_HOME_VALUE = {"x": 165, "y": 16, "w": 26, "h": 15}
-NEXT_AWAY_ABBR = {"x": 95, "y": 0, "w": 24, "h": 15}
-NEXT_HOME_ABBR = {"x": 95, "y": 16, "w": 24, "h": 15}
+NEXT_AWAY_ABBR = {"x": 95, "y": 0, "w": 23, "h": 15}
+NEXT_HOME_ABBR = {"x": 95, "y": 16, "w": 23, "h": 15}
 NEXT_AWAY_STATS = {"x": 119, "y": 0, "w": 72, "h": 15}
 NEXT_HOME_STATS = {"x": 119, "y": 16, "w": 72, "h": 15}
 FINAL_AWAY_ABBR = {"x": 95, "y": 0, "w": 24, "h": 15}
@@ -16409,7 +16651,23 @@ def restored_header(c, g):
     c.rect(1, 8, 94, 8, fill = "white")
     sport_text = SPORT_HEADER.get(g.get("sport", "FB"), g.get("sport", "FB"))
     c.text(sport_text, 2, 2, font = "4x5", color = STATUS_BAR_TEXT)
-    when = str(g.get("when", ""))
+    when = str(g.get("when", "")).strip()
+    if when == "":
+        raw_date = g.get("sortDate", g.get("date"))
+        if raw_date == None or str(raw_date).strip() == "":
+            raw_date = g.get("gameDate", g.get("game_date"))
+        date_info = parse_game_date(raw_date)
+        if date_info == None:
+            game_url = str(g.get("gameUrl", g.get("game_url", "")))
+            for segment in game_url.split("/"):
+                pieces = segment.split("-")
+                if len(pieces) == 3 and len(pieces[2]) == 4 and pieces[0].isdigit() and pieces[1].isdigit() and pieces[2].isdigit():
+                    raw_date = pieces[2] + "-" + pieces[0] + "-" + pieces[1] + " 00:00"
+                    date_info = parse_game_date(raw_date)
+                    break
+        if date_info != None:
+            weekday = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][weekday_for_date(date_info["year"], date_info["month"], date_info["day"])]
+            when = weekday + " " + str(date_info["month"]) + "/" + str(date_info["day"])
     parts = when.split(" ")
     day_text = ""
     calendar_text = ""
@@ -16529,14 +16787,14 @@ def restored_identity(c, team, code, g, side, x, w):
     if logo != None:
         # Keep real logo artwork on the neutral panel background. Text-only
         # identities retain the school-color fill below.
-        c.rect(x, 9, x + w - 1, 30, fill = FILL_COLOR)
+        c.rect(x, 9, x + w - 1, 31, fill = "black")
         logo_size = team_logo_size(logo, True)
         logo_w = logo_size[0]
         logo_h = logo_size[1]
         logo_y = 9
         c.image(logo, x + (w - logo_w) // 2, logo_y, w = logo_w, h = logo_h)
         return
-    c.rect(x, 9, x + w - 1, 30, fill = team["color"])
+    c.rect(x, 9, x + w - 1, 31, fill = team["color"])
     mascot = g.get(side + "Mascot")
     mascot_style = restored_mascot_style(mascot)
     text_color = identity_text_color(team)
@@ -16586,22 +16844,21 @@ def restored_matchup(c, g):
     # Draw the header last so the full-size artwork runs underneath it and is
     # cleanly covered rather than rescaled or allowed to overlap header text.
     restored_header(c, g)
-    # Restore the outer bottom edge after drawing full-size logos so artwork
-    # is clipped behind the frame instead of covering its outline.
-    c.hline(31, 0, 95, BOX_COLOR)
+    # Identity artwork is intentionally allowed to use the bottom row.
 
 def restored_abbreviation(c, team, code, record, box):
     letters = badge_letters(code)[:3]
-    draw_box(c, box["x"], box["y"], box["w"], box["h"])
+    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
     color = team["color"]
     if is_whiteish(color) or is_darkish(color):
         color = TEAM_COLOR_FALLBACK
-    restored_center_text(c, letters, box["x"], box["y"] + 1, box["w"], "6x8", color)
-    restored_center_text(c, record, box["x"], box["y"] + 10, box["w"], "4x5", "white")
+    center_x = box["x"] + (box["w"] + 1) // 2
+    c.text(letters, center_x, box["y"] + 1, font = "6x8", color = color, align = "center")
+    c.text(record, center_x, box["y"] + 10, font = "4x5", color = "white", align = "center")
 
-def restored_value(c, value, box, color = "white"):
-    draw_box(c, box["x"], box["y"], box["w"], box["h"])
-    restored_center_text(c, value, box["x"], box["y"] + 4, box["w"], "7x12", color)
+def restored_value(c, value, box, color = "white", font = "7x12"):
+    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+    restored_center_text(c, value, box["x"], box["y"] + 4, box["w"], font, color)
 
 def restored_period(period):
     if period == None:
@@ -16680,7 +16937,7 @@ def compact_unix_time(unix, display_timezone):
     return str(display_hour) + ":" + pad2(local_time["minute"]) + suffix
 
 def restored_detail(c, g):
-    draw_box(c, DETAIL_BOX["x"], DETAIL_BOX["y"], DETAIL_BOX["w"], DETAIL_BOX["h"])
+    draw_box(c, DETAIL_BOX["x"], DETAIL_BOX["y"], DETAIL_BOX["w"], DETAIL_BOX["h"], STAT_DIVIDER_COLOR)
     center = DETAIL_BOX["x"] + DETAIL_BOX["w"] // 2
     if g.get("type") == "final" or g.get("status") == "final":
         return
@@ -16694,12 +16951,26 @@ def restored_detail(c, g):
         clock = str(g.get("liveClock", "")).strip().upper()
         if clock == "NONE" or clock == "NULL":
             clock = ""
+        approximate_clock = clock.startswith("~")
+        if approximate_clock:
+            clock = clock[1:].strip()
         if period.startswith("OT"):
             period = ""
         if period != "":
             c.text(period, center, 7, font = "4x5", color = "white", align = "center")
         if clock != "":
-            c.text(clock, center, 18 if period != "" else 13, font = "4x5", color = "white", align = "center")
+            clock_y = 18 if period != "" else 13
+            if approximate_clock:
+                clock_width = len(clock) * 5 - 1
+                group_width = clock_width + 5
+                group_x = center - group_width // 2
+                c.pixel(group_x, clock_y + 2, "white")
+                c.pixel(group_x + 1, clock_y + 1, "white")
+                c.pixel(group_x + 2, clock_y + 1, "white")
+                c.pixel(group_x + 3, clock_y + 2, "white")
+                c.text(clock, group_x + 5, clock_y, font = "4x5", color = "white")
+            else:
+                c.text(clock, center, clock_y, font = "4x5", color = "white", align = "center")
         # Once Parse has returned an actual live score or period, the detail
         # box should stay focused on game state instead of showing a redundant
         # scorekeeper update timestamp. Keep UPDATED only as a fallback when
@@ -16775,12 +17046,14 @@ def restored_frame(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
+    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     restored_detail(c, g)
 
 def draw_final(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
+    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     away = team_info(g["away"], g, "away")
     home = team_info(g["home"], g, "home")
     restored_abbreviation(c, away, g["away"], g.get("awayRecord", "0-0"), FINAL_AWAY_ABBR)
@@ -16803,9 +17076,10 @@ def restored_three_stat_final(c, g, suffixes):
         side = "away" if row == 0 else "home"
         y = 0 if row == 0 else 16
         values = [g.get(side + suffixes[0], g.get(side + "Score", "-")), g.get(side + suffixes[1], "-"), g.get(side + suffixes[2], "-")]
+        stat_boxes = [{"x": 117, "w": 24}, {"x": 143, "w": 24}, {"x": 167, "w": 24}]
         for index in range(3):
-            box = {"x": 117 if index == 0 else 143 + (index - 1) * 24, "y": y, "w": 26 if index == 0 else 24, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"])
+            box = {"x": stat_boxes[index]["x"], "y": y, "w": stat_boxes[index]["w"], "h": 15}
+            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             color = "green" if index == 0 and g.get("winner") == side else "white"
             restored_center_text(c, values[index], box["x"] + 5, box["y"] + 4, box["w"] - 5, "5x7", color)
     labels = ["R", "H", "E"]
@@ -16819,10 +17093,10 @@ def restored_volleyball_final(c, g):
         sets = g.get(side + "Sets", ["-", "-", "-", "-", "-"])
         for index in range(5):
             box = {"x": 119 + index * 10, "y": y, "w": 10, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"])
+            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             restored_center_text(c, sets[index] if index < len(sets) else "-", box["x"], box["y"] + 5, box["w"], "3x7", "white")
         total_box = {"x": 169, "y": y, "w": 22, "h": 15}
-        draw_box(c, total_box["x"], total_box["y"], total_box["w"], total_box["h"])
+        draw_box(c, total_box["x"], total_box["y"], total_box["w"], total_box["h"], STAT_DIVIDER_COLOR)
         total = g.get(side + "SetsWon", g.get(side + "Score", "-"))
         restored_center_text(c, total, total_box["x"], total_box["y"] + 4, total_box["w"], "7x12", "green" if g.get("winner") == side else "white")
 
@@ -16833,15 +17107,15 @@ def restored_soccer_final(c, g):
         halves = g.get(side + "Halves", ["-", "-"])
         values = [halves[0] if len(halves) > 0 else "-", halves[1] if len(halves) > 1 else "-", g.get(side + "Score", "-")]
         for index in range(3):
-            box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"])
+            box = {"x": 117 if index == 0 else 143 + (index - 1) * 24, "y": y, "w": 26 if index == 0 else 24, "h": 15}
+            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             color = "green" if index == 2 and g.get("winner") == side else "white"
             restored_center_text(c, str(values[index]), box["x"], box["y"] + 4, box["w"], "5x7" if index < 2 else "7x12", color)
 
 def restored_quarter_row(c, scores, y):
     for index in range(4):
         box = {"x": 119 + index * 13, "y": y, "w": 13, "h": 15}
-        draw_box(c, box["x"], box["y"], box["w"], box["h"])
+        draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
         score = scores[index] if index < len(scores) else "-"
         restored_center_text(c, score, box["x"], box["y"] + 5, box["w"], "3x7", "white")
 
@@ -16850,6 +17124,7 @@ def draw_next(c, g):
         c.fill(FILL_COLOR)
         draw_box(c, 0, 0, 191, 31)
         restored_matchup(c, g)
+        c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
         away = team_info(g["away"], g, "away")
         home = team_info(g["home"], g, "home")
         restored_abbreviation(c, away, g["away"], g.get("awayRecord", "0-0"), NEXT_AWAY_ABBR)
@@ -16873,10 +17148,11 @@ def restored_volleyball_live(c, g):
     c.fill(FILL_COLOR)
     draw_box(c, 0, 0, 191, 31)
     restored_matchup(c, g)
+    c.rect(95, 0, 191, 31, fill = STAT_FILL_COLOR)
     away = team_info(g["away"], g, "away")
     home = team_info(g["home"], g, "home")
     detail = {"x": 95, "y": 0, "w": 34, "h": 31}
-    draw_box(c, detail["x"], detail["y"], detail["w"], detail["h"])
+    draw_box(c, detail["x"], detail["y"], detail["w"], detail["h"], STAT_DIVIDER_COLOR)
     set_number = restored_period(g.get("livePeriod")).replace("Q", "")
     c.text("SET", 112, 5, font = "5x7", color = "white", align = "center")
     c.text(set_number if set_number != "" else "1", 112, 16, font = "7x12", color = "white", align = "center")
@@ -16894,7 +17170,7 @@ def restored_volleyball_live(c, g):
     restored_value(c, str(g.get("homeSetsWon", "0")), home_sets)
 
 def restored_small_value(c, value, box):
-    draw_box(c, box["x"], box["y"], box["w"], box["h"])
+    draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
     restored_center_text(c, value, box["x"], box["y"] + 5, box["w"], "5x7", "white")
 
 def restored_stats_grid(c, g):
@@ -16906,13 +17182,14 @@ def restored_stats_grid(c, g):
         y = 0 if row == 0 else 16
         values = [g.get(side + keys[0], "-"), g.get(side + keys[1], "-"), g.get(side + keys[2], "-")]
         for index in range(3):
-            box = {"x": 119 + index * 24, "y": y, "w": 24, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"])
+            stat_boxes = [{"x": 118, "w": 25}, {"x": 143, "w": 25}, {"x": 168, "w": 23}]
+            box = {"x": stat_boxes[index]["x"], "y": y, "w": stat_boxes[index]["w"], "h": 15}
+            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             value_color = "green" if stat_leader(g, side, index) else "white"
             value_y = box["y"] + 4
-            restored_tight_stat_value(c, values[index] if values[index] != None else "-", box["x"] + 4, value_y, 20, value_color, index == 2, index < 2)
+            restored_tight_stat_value(c, values[index] if values[index] != None else "-", box["x"] + 4, value_y, 20, value_color, index == 2, index < 2, index < 2)
     for index in range(3):
-        border_x = 119 + index * 24
+        border_x = [118, 143, 168][index]
         label = labels[index]
         font = "3x4"
         advance = 5
@@ -16922,7 +17199,16 @@ def restored_stats_grid(c, g):
         for char_index in range(len(label)):
             c.text(label[char_index], x, y + char_index * advance, font = font, color = "#aeb8c4")
 
-def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = False, small_font = False):
+def redraw_stat_labels(c, g):
+    labels = next_stat_config(g.get("sport", "FB"))[0]
+    for index in range(3):
+        x = [119, 144, 169][index]
+        label = labels[index]
+        y = (32 - len(label) * 5) // 2
+        for char_index in range(len(label)):
+            c.text(label[char_index], x, y + char_index * 5, font = "3x4", color = "#aeb8c4")
+
+def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = False, small_font = False, bold = False):
     text = str(value)
     advances = []
     total = 0
@@ -16932,14 +17218,16 @@ def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = Fal
         if char.isdigit() and char_index + 1 < len(text) and text[char_index + 1].isdigit():
             advance += 1
         if small_font and char.isdigit() and char_index + 1 < len(text) and text[char_index + 1] == ".":
-            advance -= 1
-        if streak_spacing and char_index + 1 < len(text):
-            advance += 1
+            advance += 1 if bold else -1
+        if streak_spacing and char_index == 0 and char_index + 1 < len(text):
+            advance += 2
         advances.append(advance)
         total += advance
-    start = x + (width - total) // 2
+    start = x + (width - total - (1 if bold else 0)) // 2
     if small_font:
         start += 1
+    if bold:
+        start -= 1
     cursor = start
     font = "4x7" if small_font else "5x7"
     decimal_index = -1
@@ -16949,7 +17237,18 @@ def restored_tight_stat_value(c, value, x, y, width, color, streak_spacing = Fal
             break
     for index in range(len(text)):
         draw_x = cursor + (1 if small_font and decimal_index >= 0 and index < decimal_index else 0)
-        c.text(text[index], draw_x, y, font = font, color = color)
+        if bold and decimal_index >= 0:
+            if index < decimal_index:
+                draw_x += 1
+            elif index == decimal_index:
+                draw_x += 2
+        if bold and text[index] == ".":
+            c.pixel(draw_x, y + 6, color)
+        else:
+            is_streak_letter = streak_spacing and index == 0 and text[index] in ["W", "L"]
+            c.text(text[index], draw_x, y, font = font, color = color)
+            if bold and not is_streak_letter:
+                c.text(text[index], draw_x + 1, y, font = font, color = color)
         cursor += advances[index]
 
 def next_stat_config(sport):
