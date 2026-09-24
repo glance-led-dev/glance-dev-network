@@ -1,9 +1,9 @@
 gdn: 1
 id: liverpool-fc-tracker
-version: 0.2.1
-name: "Liverpool FC Tracker"
+version: 0.3.0
+name: "Soccer Club Tracker"
 author: "Tim McCabe"
-description: Follow Liverpool FC live matches, upcoming fixtures, recent results, Premier League standings, and Champions League standings.
+description: Follow any club in the world's top soccer leagues - live scores, the next fixture in your time zone, the last result, and where they sit in the table.
 category: Sports
 entry: app.star
 
@@ -12,13 +12,63 @@ height: 32
 refresh: 300
 
 pages:
-  - live_match
-  - next_match
+  - match
   - last_match
-  - premier_league_table
-  - champions_league_table
+  - table
 
 inputs:
+  - key: league
+    app_input_type: dropdown
+    type: choice
+    label: League
+    default: premier_league
+    choices:
+      - premier_league
+      - championship
+      - la_liga
+      - serie_a
+      - bundesliga
+      - ligue_1
+      - eredivisie
+      - primeira_liga
+      - scottish_premiership
+      - belgian_pro_league
+      - super_lig
+      - mls
+      - liga_mx
+      - brasileirao
+      - argentina_primera
+      - j1_league
+      - a_league
+      - womens_super_league
+      - nwsl
+    options:
+      - premier_league
+      - championship
+      - la_liga
+      - serie_a
+      - bundesliga
+      - ligue_1
+      - eredivisie
+      - primeira_liga
+      - scottish_premiership
+      - belgian_pro_league
+      - super_lig
+      - mls
+      - liga_mx
+      - brasileirao
+      - argentina_primera
+      - j1_league
+      - a_league
+      - womens_super_league
+      - nwsl
+    help: The league your club plays in. Its cup and European games show up too.
+  - key: team
+    app_input_type: free-text
+    type: string
+    label: Team
+    default: Liverpool
+    help: Club name or ESPN abbreviation, e.g. Liverpool, Real Madrid, Inter Miami or LIV.
   - key: timezone
     app_input_type: dropdown
     type: choice
@@ -37,27 +87,17 @@ inputs:
       - eastern_europe
       - turkey
       - iceland
-    help: Select your local time zone.
-
-assets:
-  - Liverpool-logo.png
-  - ARS22.png
-  - AVL22.png
-  - BOU22.png
-  - BRE22.png
-  - BRI22.png
-  - CFC22.png
-  - COV22.png
-  - CRY22.png
-  - EVE22.png
-  - FUL22.png
-  - HUL22.png
-  - IPS22.png
-  - LEE22.png
-  - LFC22.png
-  - MCI22.png
-  - MUN22.png
-  - NEW22.png
-  - NFO22.png
-  - SUN22.png
-  - TOT22.png
+    options:
+      - pacific
+      - mountain
+      - central
+      - eastern
+      - alaska
+      - hawaii
+      - utc
+      - uk
+      - central_europe
+      - eastern_europe
+      - turkey
+      - iceland
+    help: Kickoff times are shown in this zone, with daylight saving applied.
