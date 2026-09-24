@@ -3,6 +3,7 @@ id: glucose-monitor-scroll
 name: Glucose Monitor (Scroll)
 description: Live CGM Dexcom glucose reading, trend arrow, and rolling average from Nightscout that uses international consensus guidelines.
 author: jkapera
+category: Lifestyle
 width: 128
 height: 32
 refresh: 300
