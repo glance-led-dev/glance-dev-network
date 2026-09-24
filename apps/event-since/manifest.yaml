@@ -1,0 +1,89 @@
+gdn: 1
+id: event-since
+version: 0.1.0
+name: Event Since
+author: ShulinZhou
+description: Days since your wedding, birthday, graduation or other milestone, with themed pixel art and a count colour you choose.
+category: Lifestyle
+entry: app.star
+
+width: 192
+height: 32
+refresh: 21600
+
+pages: [since]
+
+inputs:
+  - key: event
+    type: string
+    app_input_type: free-text
+    label: Event name
+    default: "WEDDING"
+    help: "Completes the title: DAYS SINCE ___. Leave blank to use the theme name."
+  - key: date
+    type: string
+    app_input_type: date-past
+    label: Event date
+    default: "2012-08-05"
+    help: The day it happened - counts DAYS SINCE it, and shows TODAY on the day.
+  - key: theme
+    type: choice
+    app_input_type: dropdown
+    label: Event theme
+    default: Wedding
+    choices:
+      - Wedding
+      - Birthday
+      - Graduation
+      - House
+      - Car
+      - Bicycle
+      - Yacht
+      - Departure
+      - Arrival
+      - Tree
+      - Flower
+      - Beach
+      - Mountains
+      - "Torii Gate"
+      - Pagoda
+      - Heart
+      - Couple
+      - "Couple Blue"
+      - "Couple Pink"
+      - Girl
+      - Boy
+      - Campfire
+      - Helicopter
+      - Paraglider
+      - Fishing
+      - Running
+      - "Gold Medal"
+      - "Silver Medal"
+      - "Bronze Medal"
+      - Trophy
+      - Podium
+      - Soccer
+      - Football
+      - Basketball
+      - Badminton
+      - Volleyball
+      - Hockey
+      - Skiing
+      - Chess
+      - Golf
+  - key: numcolor
+    type: choice
+    app_input_type: dropdown
+    label: Event color
+    default: Pink
+    choices: [Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink, White]
+    help: The colour of the event's name and day count.
+
+  - key: accent
+    type: choice
+    app_input_type: dropdown
+    label: Accent color
+    default: Purple
+    choices: [Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink, White]
+    help: The edge rail.

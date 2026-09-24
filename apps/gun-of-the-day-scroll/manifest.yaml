@@ -1,0 +1,104 @@
+gdn: 1
+id: gun-of-the-day-scroll
+version: 0.2.0
+name: Arsenal Facts
+author: glance-led-dev
+description: A different piece of significant military engineering every five minutes, told like a museum placard - what it is, who designed it, when it appeared and why it mattered. Guns, aircraft, vehicles and ships, all curated.
+category: Education
+entry: app.star
+
+width: 192
+height: 32
+# The piece turns over every five minutes, and the panel redraws on the
+# same beat. app.star's TICK must be kept equal to this number. The app
+# makes no network requests, so this costs nothing but a redraw.
+#
+# 300 IS A FLOOR, NOT A DEFAULT. Below five minutes an app may declare at
+# most 100 input combinations; this one declares 5 x 6 x 15 = 450, and it
+# also reads live data, which is barred below two minutes. The local lint
+# does not check either rule, so nothing here will stop you lowering it -
+# the app would simply be rejected at review.
+refresh: 300
+
+pages: [today, story, specs]
+
+# Each dropdown carries its values twice, as `choices` (what the guide
+# documents) and as `options` (what Studio writes and the tooling reads).
+# Nothing validates either one, so the two lists must be edited together.
+inputs:
+  - key: subject
+    type: choice
+    app_input_type: dropdown
+    label: Subject
+    default: "ALL"
+    help: Which roster to draw from. ALL turns the subject over with each piece, so the panel shows a gun, then an aircraft, then a vehicle, then a ship.
+    choices:
+      - "ALL"
+      - "GUNS"
+      - "AIRCRAFT"
+      - "VEHICLES"
+      - "SHIPS"
+    options:
+      - "ALL"
+      - "GUNS"
+      - "AIRCRAFT"
+      - "VEHICLES"
+      - "SHIPS"
+  - key: era
+    type: choice
+    app_input_type: dropdown
+    label: Era
+    default: "ALL ERAS"
+    help: Narrow the roster to one period. Dates are the commonly cited year a design appeared, was adopted or was commissioned.
+    choices:
+      - "ALL ERAS"
+      - "BEFORE 1850"
+      - "1850 TO 1899"
+      - "1900 TO 1945"
+      - "1946 TO 1989"
+      - "1990 ONWARD"
+    options:
+      - "ALL ERAS"
+      - "BEFORE 1850"
+      - "1850 TO 1899"
+      - "1900 TO 1945"
+      - "1946 TO 1989"
+      - "1990 ONWARD"
+  - key: category
+    type: choice
+    app_input_type: dropdown
+    label: Kind
+    default: "ALL KINDS"
+    help: Narrow to one kind within the chosen subject. A kind that belongs to another subject says so and names the setting to change.
+    choices:
+      - "ALL KINDS"
+      - "PISTOLS"
+      - "RIFLES"
+      - "SHOTGUNS"
+      - "MACHINE GUNS"
+      - "FIGHTERS"
+      - "BOMBERS"
+      - "HELICOPTERS"
+      - "SUPPORT"
+      - "TANKS"
+      - "ARMOUR"
+      - "ARTILLERY"
+      - "CARRIERS"
+      - "WARSHIPS"
+      - "SUBMARINES"
+    options:
+      - "ALL KINDS"
+      - "PISTOLS"
+      - "RIFLES"
+      - "SHOTGUNS"
+      - "MACHINE GUNS"
+      - "FIGHTERS"
+      - "BOMBERS"
+      - "HELICOPTERS"
+      - "SUPPORT"
+      - "TANKS"
+      - "ARMOUR"
+      - "ARTILLERY"
+      - "CARRIERS"
+      - "WARSHIPS"
+      - "SUBMARINES"

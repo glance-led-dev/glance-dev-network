@@ -1,0 +1,12 @@
+id: longhorn-football-news
+name: Longhorn Football News
+width: 192
+height: 32
+refresh: 7200
+pages:
+  - splash
+  - story1
+  - story2
+  - story3
+inputs: []
+category: Sports

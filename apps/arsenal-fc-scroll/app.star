@@ -167,6 +167,11 @@ def fmt_hm12(h, m):
 def parse_iso_date(date_iso):
     return int(date_iso[0:4]), int(date_iso[5:7]), int(date_iso[8:10])
 
+def iso_ymd(y, m, d):
+    mm = str(m) if m >= 10 else "0" + str(m)
+    dd = str(d) if d >= 10 else "0" + str(d)
+    return "%d-%s-%s" % (y, mm, dd)
+
 def parse_hms(hhmmss):
     return int(hhmmss[0:2]), int(hhmmss[3:5])
 
@@ -313,7 +318,7 @@ def fetch_next_fixture(now, tz_offset):
         "time": fmt_hm12(hh, mm),
     }, "ok"
 
-def fetch_last_result():
+def fetch_last_result_sportsdb():
     resp = http.get(
         "https://www.thesportsdb.com/api/v1/json/3/eventslast.php",
         params = {"id": TEAM_ID},
@@ -340,6 +345,82 @@ def fetch_last_result():
         "european": EUROPEAN_COMPS.get(comp, False),
         "date": fmt_ymd(y, m, d),
     }, "ok"
+
+FD_BASE = "https://api.football-data.org/v4"
+
+def fd_resolve_team_id(apikey):
+    """Look up Arsenal's numeric id on football-data.org by name instead of
+    hardcoding a guessed id — cached almost indefinitely since it never
+    changes. (The free Premier League team list is one request either way.)"""
+    resp = http.get(
+        FD_BASE + "/competitions/PL/teams",
+        headers = {"X-Auth-Token": apikey},
+        ttl_seconds = 2592000,
+    )
+    if resp["status_code"] != 200:
+        return None
+    for t in resp["json"].get("teams") or []:
+        if "ARSENAL" in (t.get("name") or "").upper():
+            return t.get("id")
+    return None
+
+def fetch_last_result_fd(apikey, now):
+    team_id = fd_resolve_team_id(apikey)
+    if team_id == None:
+        return None, "offline"
+    from_y, from_m, from_d = jdn_to_ymd(ymd_to_jdn(now.year, now.month, now.day) - 10)
+    resp = http.get(
+        FD_BASE + "/teams/%d/matches" % team_id,
+        params = {
+            "status": "FINISHED",
+            "dateFrom": iso_ymd(from_y, from_m, from_d),
+            "dateTo": iso_ymd(now.year, now.month, now.day),
+        },
+        headers = {"X-Auth-Token": apikey},
+        ttl_seconds = 1800,
+    )
+    if resp["status_code"] != 200:
+        return None, "offline"
+    matches = resp["json"].get("matches") or []
+    if not matches:
+        return None, "empty"
+    # Endpoint order isn't documented, so pick the max date explicitly
+    # rather than trust matches[0] or matches[-1].
+    best = matches[0]
+    for mt in matches:
+        if (mt.get("utcDate") or "") > (best.get("utcDate") or ""):
+            best = mt
+    home = best.get("homeTeam") or {}
+    away = best.get("awayTeam") or {}
+    is_home = home.get("id") == team_id
+    ft = (best.get("score") or {}).get("fullTime") or {}
+    home_score = int(ft.get("home") or 0)
+    away_score = int(ft.get("away") or 0)
+    opponent = away.get("name") if is_home else home.get("name")
+    comp = short_comp((best.get("competition") or {}).get("name") or "")
+    y, m, d = parse_iso_date((best.get("utcDate") or "0000-01-01T00:00:00Z")[0:10])
+    return {
+        "opponent": short_club(opponent or "TBD"),
+        "home": is_home,
+        "score_for": home_score if is_home else away_score,
+        "score_against": away_score if is_home else home_score,
+        "comp": comp,
+        "european": EUROPEAN_COMPS.get(comp, False),
+        "date": fmt_ymd(y, m, d),
+    }, "ok"
+
+def fetch_last_result(now, apikey):
+    """TheSportsDB's free key can lag several days behind on this team's
+    last result (confirmed: it kept serving a week-old match while a newer
+    one had already finished). If a football-data.org key is supplied,
+    prefer it and only fall back to the free source when THAT fails —
+    "empty" from football-data.org (no finished match in the last 10 days)
+    is trusted as-is, not treated as a failure to fall back from."""
+    if apikey:
+        r, state = fetch_last_result_fd(apikey, now)
+        if state != "offline":
+            return r, state
+    return fetch_last_result_sportsdb()
 
 def fetch_table_row(now):
     resp = http.get(
@@ -466,7 +547,7 @@ def draw_next(c, fx):
     c.text(tm, zx, 22, font = tf, color = RED_LIGHT, align = "center")
 
 def result(c, ctx):
-    r, state = fetch_last_result()
+    r, state = fetch_last_result(ctx.now, ctx.inputs.get("apikey", ""))
     if state == "offline":
         nodata(c, "RESULT", "NO DATA", "TRY LATER")
         return

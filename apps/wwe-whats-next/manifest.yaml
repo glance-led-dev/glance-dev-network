@@ -1,0 +1,69 @@
+gdn: 1
+id: wwe-whats-next
+version: 0.2.0
+name: WWE What's Next
+author: reyos86
+description: Upcoming announced WWE cards from dated Fightful and F4W lineups. Native
+  192x32 pages and original championship artwork.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 1800
+pages:
+- overview
+- card1
+- card2
+- card3
+- card4
+- result1
+- result2
+- result3
+assets:
+- belts/worldwhite.png
+- belts/world.png
+- belts/icwhite.png
+- belts/ic.png
+- belts/uswhite.png
+- belts/us.png
+- belts/womentag.png
+- belts/worldtag.png
+- belts/wwetag.png
+- belts/nawhite.png
+- belts/na.png
+- belts/nxtwhite.png
+- belts/nxttag.png
+- belts/nxt.png
+- belts/women.png
+- belts/wwe.png
+inputs:
+- key: brand
+  type: choice
+  app_input_type: dropdown
+  label: Show
+  default: AUTO
+  choices:
+  - AUTO
+  - RAW
+  - SMACKDOWN
+  - NXT
+  options:
+  - AUTO
+  - RAW
+  - SMACKDOWN
+  - NXT
+  help: AUTO selects the earliest future dated WWE card in the available feed. Coverage
+    may be incomplete.
+- key: results
+  type: choice
+  app_input_type: dropdown
+  label: Show Previous Results
+  default: "ON"
+  choices:
+  - "OFF"
+  - "ON"
+  options:
+  - "OFF"
+  - "ON"
+  help: When ON, add pages for the last completed show of the selected brand. Main
+    event and championship matches only.

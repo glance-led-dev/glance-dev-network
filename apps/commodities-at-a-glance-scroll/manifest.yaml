@@ -1,0 +1,38 @@
+gdn: 1
+id: commodities-at-a-glance-scroll
+version: 0.1.0
+name: Commodities at a Glance
+author: glance-led-dev
+description: Three commodities as pixel art and a price - cattle, corn, soybeans, crude, gold, whatever you pick - with the unit and the day's move. Front-month futures, no key needed.
+category: Finance
+entry: app.star
+
+width: 192
+height: 32
+# Ten minutes, and the fetch ttl matches.
+refresh: 900
+
+pages: [pageone]
+
+inputs:
+  - key: slotone
+    type: choice
+    app_input_type: dropdown
+    label: Left tile
+    default: "LIVE CATTLE"
+    help: Which commodity fills this tile. Pick NONE to leave it empty.
+    choices: ["NONE", "LIVE CATTLE", "FEEDER CATTLE", "LEAN HOGS", "CORN", "SOYBEANS", "WHEAT", "OATS", "CRUDE OIL", "NATURAL GAS", "GOLD", "SILVER", "COPPER", "COFFEE", "SUGAR", "COTTON", "COCOA", "ORANGE JUICE"]
+  - key: slottwo
+    type: choice
+    app_input_type: dropdown
+    label: Middle tile
+    default: "CORN"
+    help: Which commodity fills this tile. Pick NONE to leave it empty.
+    choices: ["NONE", "LIVE CATTLE", "FEEDER CATTLE", "LEAN HOGS", "CORN", "SOYBEANS", "WHEAT", "OATS", "CRUDE OIL", "NATURAL GAS", "GOLD", "SILVER", "COPPER", "COFFEE", "SUGAR", "COTTON", "COCOA", "ORANGE JUICE"]
+  - key: slotthree
+    type: choice
+    app_input_type: dropdown
+    label: Right tile
+    default: "SOYBEANS"
+    help: Which commodity fills this tile. Pick NONE to leave it empty.
+    choices: ["NONE", "LIVE CATTLE", "FEEDER CATTLE", "LEAN HOGS", "CORN", "SOYBEANS", "WHEAT", "OATS", "CRUDE OIL", "NATURAL GAS", "GOLD", "SILVER", "COPPER", "COFFEE", "SUGAR", "COTTON", "COCOA", "ORANGE JUICE"]
