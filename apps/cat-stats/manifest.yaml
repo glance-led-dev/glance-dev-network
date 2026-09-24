@@ -1,0 +1,44 @@
+gdn: 1
+id: cat-stats
+version: 0.1.0
+name: Cat Stats
+author: Cat Stats contributors
+description: Feeding, multi-fountain hydration history, litter and pet status with priority alerts.
+category: Lifestyle
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [summary, feeding, hydration, fountains, litter, cycles, hopper, alerts]
+inputs:
+  - key: endpoint
+    type: string
+    app_input_type: free-text
+    label: Cat Stats HTTPS status URL
+    default: ""
+    required: true
+  - key: readkey
+    type: string
+    app_input_type: api-key
+    label: Cat Stats read key
+    default: ""
+    required: true
+  - key: petid
+    type: string
+    app_input_type: free-text
+    label: Pet ID (blank rotates pets)
+    default: ""
+  - key: units
+    type: string
+    app_input_type: dropdown
+    label: Weight unit
+    default: lb
+    choices: [lb, kg]
+  - key: demo
+    type: string
+    app_input_type: dropdown
+    label: Preview scenario
+    default: Live
+    choices: [Live, Demo, Alert, Missing, Stale, Long names]
+    help: Sample scenarios never contact Cat Stats. All sample screens are marked DEMO.
+assets: [cat-face.png, granary.png, dockstream.png, lr5-pro.png, hopper.png, petlibro.png, whisker.png]
