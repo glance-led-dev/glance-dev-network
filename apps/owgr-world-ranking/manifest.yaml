@@ -1,0 +1,32 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: owgr-world-ranking
+version: 0.1.0
+name: OWGR - World Ranking
+author: glance-led-dev
+description: The Official World Golf Ranking as a broadcast graphic. A gold No.1 medallion with the world number one, average points and lead, then the rest of the top 13 on medal and slate rank tiles with pixel flags and week-on-week movement, and a page of the week's biggest climbers and fallers inside the top 50. Filter to one region (Europe, North America, Asia...) to follow your own tour's best.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed). Built for the 192-wide scroll panel.
+width: 192
+height: 32
+
+# The ranking publishes once a week (Mondays). Hourly is plenty.
+refresh: 3600
+
+# leader = No.1 hero; board1/board2 = positions 2-7 and 8-13;
+# movers = biggest climbers and fallers in the top 50 this week.
+pages: [leader, board1, board2, movers]
+
+# What the client fills in at install time.
+inputs:
+  - key: region
+    type: choice
+    app_input_type: dropdown
+    label: Ranking
+    default: "World"
+    choices: ["World", "Europe", "North America", "Asia", "Australasia", "Japan", "Africa", "South America"]
+    options: ["World", "Europe", "North America", "Asia", "Australasia", "Japan", "Africa", "South America"]
+    help: World shows the full ranking. A region shows only players from that OWGR region, still with their world rank.
