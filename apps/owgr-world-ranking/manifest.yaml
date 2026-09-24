@@ -14,7 +14,7 @@ width: 192
 height: 32
 
 # The ranking publishes once a week (Mondays). Hourly is plenty.
-refresh: 3600
+refresh: 21600
 
 # leader = No.1 hero; board1/board2 = positions 2-7 and 8-13;
 # movers = biggest climbers and fallers in the top 50 this week.
