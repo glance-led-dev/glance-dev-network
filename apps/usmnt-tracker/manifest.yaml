@@ -1,9 +1,9 @@
 gdn: 1
 id: usmnt-tracker
-version: 0.1.1
-name: "USMNT Tracker"
+version: 0.2.0
+name: "National Team Tracker"
 author: "Tim McCabe"
-description: Follow the United States Men's National Team live matches, upcoming fixtures, and recent results across competitions.
+description: Follow any of 54 men's national soccer teams, including the USMNT, Mexico, England, Brazil and Argentina, with live scores, the next fixture and the last result across all competitions.
 category: Sports
 entry: app.star
 
@@ -17,6 +17,122 @@ pages:
   - last_match
 
 inputs:
+  - key: team
+    app_input_type: dropdown
+    type: choice
+    label: Team
+    default: USA
+    choices:
+      - USA
+      - MEX
+      - CAN
+      - CRC
+      - PAN
+      - JAM
+      - HAI
+      - CUW
+      - ARG
+      - BRA
+      - URU
+      - COL
+      - ECU
+      - PAR
+      - PER
+      - CHI
+      - ENG
+      - FRA
+      - ESP
+      - GER
+      - POR
+      - NED
+      - BEL
+      - ITA
+      - CRO
+      - SUI
+      - AUT
+      - DEN
+      - SWE
+      - NOR
+      - POL
+      - TUR
+      - SCO
+      - WAL
+      - IRL
+      - JPN
+      - KOR
+      - IRN
+      - AUS
+      - KSA
+      - QAT
+      - JOR
+      - UZB
+      - MAR
+      - SEN
+      - TUN
+      - EGY
+      - ALG
+      - GHA
+      - CIV
+      - NGA
+      - RSA
+      - CPV
+      - NZL
+    options:
+      - USA
+      - MEX
+      - CAN
+      - CRC
+      - PAN
+      - JAM
+      - HAI
+      - CUW
+      - ARG
+      - BRA
+      - URU
+      - COL
+      - ECU
+      - PAR
+      - PER
+      - CHI
+      - ENG
+      - FRA
+      - ESP
+      - GER
+      - POR
+      - NED
+      - BEL
+      - ITA
+      - CRO
+      - SUI
+      - AUT
+      - DEN
+      - SWE
+      - NOR
+      - POL
+      - TUR
+      - SCO
+      - WAL
+      - IRL
+      - JPN
+      - KOR
+      - IRN
+      - AUS
+      - KSA
+      - QAT
+      - JOR
+      - UZB
+      - MAR
+      - SEN
+      - TUN
+      - EGY
+      - ALG
+      - GHA
+      - CIV
+      - NGA
+      - RSA
+      - CPV
+      - NZL
+    help: The national team to follow.
   - key: timezone
     app_input_type: dropdown
     type: choice
@@ -35,7 +151,73 @@ inputs:
       - eastern_europe
       - turkey
       - iceland
+    options:
+      - pacific
+      - mountain
+      - central
+      - eastern
+      - alaska
+      - hawaii
+      - utc
+      - uk
+      - central_europe
+      - eastern_europe
+      - turkey
+      - iceland
     help: Select your local time zone.
 
 assets:
-  - USA-logo.png
+  - assets/USA.png
+  - assets/MEX.png
+  - assets/CAN.png
+  - assets/CRC.png
+  - assets/PAN.png
+  - assets/JAM.png
+  - assets/HAI.png
+  - assets/CUW.png
+  - assets/ARG.png
+  - assets/BRA.png
+  - assets/URU.png
+  - assets/COL.png
+  - assets/ECU.png
+  - assets/PAR.png
+  - assets/PER.png
+  - assets/CHI.png
+  - assets/ENG.png
+  - assets/FRA.png
+  - assets/ESP.png
+  - assets/GER.png
+  - assets/POR.png
+  - assets/NED.png
+  - assets/BEL.png
+  - assets/ITA.png
+  - assets/CRO.png
+  - assets/SUI.png
+  - assets/AUT.png
+  - assets/DEN.png
+  - assets/SWE.png
+  - assets/NOR.png
+  - assets/POL.png
+  - assets/TUR.png
+  - assets/SCO.png
+  - assets/WAL.png
+  - assets/IRL.png
+  - assets/JPN.png
+  - assets/KOR.png
+  - assets/IRN.png
+  - assets/AUS.png
+  - assets/KSA.png
+  - assets/QAT.png
+  - assets/JOR.png
+  - assets/UZB.png
+  - assets/MAR.png
+  - assets/SEN.png
+  - assets/TUN.png
+  - assets/EGY.png
+  - assets/ALG.png
+  - assets/GHA.png
+  - assets/CIV.png
+  - assets/NGA.png
+  - assets/RSA.png
+  - assets/CPV.png
+  - assets/NZL.png

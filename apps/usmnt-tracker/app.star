@@ -1,16 +1,8 @@
-# USMNT Tracker
+# National Team Tracker
 # 128x32 Glance app
 
-BASE = "https://site.api.espn.com/apis/"
-
-
-USMNT_TEAM_ID = "660"
 RECENT_MATCH_DAYS = 90
-USMNT_SCHEDULE_URL = (
-    "https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/"
-    + USMNT_TEAM_ID
-    + "/schedule"
-)
+TEAM_SCHEDULE_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/"
 
 ALL_SOCCER_SCOREBOARD_URL = (
     "https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard"
@@ -20,12 +12,83 @@ ALL_SOCCER_SUMMARY_URL = (
     "https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary"
 )
 
-USA_RED = "#BF0A30"
 WHITE = "white"
 BLACK = "black"
 DIM = "gray"
 
-LOGO = "USA-logo.png"
+DEFAULT_TEAM = "USA"
+
+# ESPN men's national team IDs, each with its shield badge. accent is
+# the heading color, picked to stay readable on the black panel.
+TEAMS = {
+    "USA": {"id": "660", "badge": "assets/USA.png", "name": "United States", "accent": "#d42339"},
+    "MEX": {"id": "203", "badge": "assets/MEX.png", "name": "Mexico", "accent": "#22b573"},
+    "CAN": {"id": "206", "badge": "assets/CAN.png", "name": "Canada", "accent": "#ed2224"},
+    "CRC": {"id": "214", "badge": "assets/CRC.png", "name": "Costa Rica", "accent": "#ce1126"},
+    "PAN": {"id": "2659", "badge": "assets/PAN.png", "name": "Panama", "accent": "#d21034"},
+    "JAM": {"id": "1038", "badge": "assets/JAM.png", "name": "Jamaica", "accent": "#348b42"},
+    "HAI": {"id": "2654", "badge": "assets/HAI.png", "name": "Haiti", "accent": "#3d6fe8"},
+    "CUW": {"id": "11678", "badge": "assets/CUW.png", "name": "Curacao", "accent": "#3d6fe8"},
+    "ARG": {"id": "202", "badge": "assets/ARG.png", "name": "Argentina", "accent": "#74acdf"},
+    "BRA": {"id": "205", "badge": "assets/BRA.png", "name": "Brazil", "accent": "#fee000"},
+    "URU": {"id": "212", "badge": "assets/URU.png", "name": "Uruguay", "accent": "#55b5e5"},
+    "COL": {"id": "208", "badge": "assets/COL.png", "name": "Colombia", "accent": "#fbd632"},
+    "ECU": {"id": "209", "badge": "assets/ECU.png", "name": "Ecuador", "accent": "#ffdd00"},
+    "PAR": {"id": "210", "badge": "assets/PAR.png", "name": "Paraguay", "accent": "#ea2300"},
+    "PER": {"id": "211", "badge": "assets/PER.png", "name": "Peru", "accent": "#cb292e"},
+    "CHI": {"id": "207", "badge": "assets/CHI.png", "name": "Chile", "accent": "#d3362a"},
+    "ENG": {"id": "448", "badge": "assets/ENG.png", "name": "England", "accent": "#ea1f29"},
+    "FRA": {"id": "478", "badge": "assets/FRA.png", "name": "France", "accent": "#4d6fe8"},
+    "ESP": {"id": "164", "badge": "assets/ESP.png", "name": "Spain", "accent": "#c60b1e"},
+    "GER": {"id": "481", "badge": "assets/GER.png", "name": "Germany", "accent": "#00ced1"},
+    "POR": {"id": "482", "badge": "assets/POR.png", "name": "Portugal", "accent": "#da291c"},
+    "NED": {"id": "449", "badge": "assets/NED.png", "name": "Netherlands", "accent": "#fb5d00"},
+    "BEL": {"id": "459", "badge": "assets/BEL.png", "name": "Belgium", "accent": "#e30613"},
+    "ITA": {"id": "162", "badge": "assets/ITA.png", "name": "Italy", "accent": "#4d6fe8"},
+    "CRO": {"id": "477", "badge": "assets/CRO.png", "name": "Croatia", "accent": "#ff0000"},
+    "SUI": {"id": "475", "badge": "assets/SUI.png", "name": "Switzerland", "accent": "#ff0000"},
+    "AUT": {"id": "474", "badge": "assets/AUT.png", "name": "Austria", "accent": "#d72b2c"},
+    "DEN": {"id": "479", "badge": "assets/DEN.png", "name": "Denmark", "accent": "#d02a3e"},
+    "SWE": {"id": "466", "badge": "assets/SWE.png", "name": "Sweden", "accent": "#fecb00"},
+    "NOR": {"id": "464", "badge": "assets/NOR.png", "name": "Norway", "accent": "#c8102e"},
+    "POL": {"id": "471", "badge": "assets/POL.png", "name": "Poland", "accent": "#dc143c"},
+    "TUR": {"id": "465", "badge": "assets/TUR.png", "name": "Turkiye", "accent": "#ef3340"},
+    "SCO": {"id": "580", "badge": "assets/SCO.png", "name": "Scotland", "accent": "#5577dd"},
+    "WAL": {"id": "578", "badge": "assets/WAL.png", "name": "Wales", "accent": "#e70000"},
+    "IRL": {"id": "476", "badge": "assets/IRL.png", "name": "Ireland", "accent": "#20b070"},
+    "JPN": {"id": "627", "badge": "assets/JPN.png", "name": "Japan", "accent": "#4d6fe8"},
+    "KOR": {"id": "451", "badge": "assets/KOR.png", "name": "South Korea", "accent": "#ce2028"},
+    "IRN": {"id": "469", "badge": "assets/IRN.png", "name": "Iran", "accent": "#da0000"},
+    "AUS": {"id": "628", "badge": "assets/AUS.png", "name": "Australia", "accent": "#ffcd00"},
+    "KSA": {"id": "655", "badge": "assets/KSA.png", "name": "Saudi Arabia", "accent": "#2eaa60"},
+    "QAT": {"id": "4398", "badge": "assets/QAT.png", "name": "Qatar", "accent": "#c0406f"},
+    "JOR": {"id": "2917", "badge": "assets/JOR.png", "name": "Jordan", "accent": "#e70000"},
+    "UZB": {"id": "2570", "badge": "assets/UZB.png", "name": "Uzbekistan", "accent": "#3d9be8"},
+    "MAR": {"id": "2869", "badge": "assets/MAR.png", "name": "Morocco", "accent": "#df2027"},
+    "SEN": {"id": "654", "badge": "assets/SEN.png", "name": "Senegal", "accent": "#20b060"},
+    "TUN": {"id": "659", "badge": "assets/TUN.png", "name": "Tunisia", "accent": "#d20300"},
+    "EGY": {"id": "2620", "badge": "assets/EGY.png", "name": "Egypt", "accent": "#d20300"},
+    "ALG": {"id": "624", "badge": "assets/ALG.png", "name": "Algeria", "accent": "#4f9a44"},
+    "GHA": {"id": "4469", "badge": "assets/GHA.png", "name": "Ghana", "accent": "#fbd632"},
+    "CIV": {"id": "4789", "badge": "assets/CIV.png", "name": "Ivory Coast", "accent": "#ff8200"},
+    "NGA": {"id": "657", "badge": "assets/NGA.png", "name": "Nigeria", "accent": "#20b060"},
+    "RSA": {"id": "467", "badge": "assets/RSA.png", "name": "South Africa", "accent": "#ffb81c"},
+    "CPV": {"id": "2597", "badge": "assets/CPV.png", "name": "Cape Verde", "accent": "#ef3340"},
+    "NZL": {"id": "2666", "badge": "assets/NZL.png", "name": "New Zealand", "accent": "#ffffff"},
+}
+
+
+def selected_team(ctx):
+    code = str(ctx.inputs.get("team", DEFAULT_TEAM)).upper()
+    if code not in TEAMS:
+        code = DEFAULT_TEAM
+    team = dict(TEAMS[code])
+    team["code"] = code
+    return team
+
+
+def schedule_url(team):
+    return TEAM_SCHEDULE_URL + team["id"] + "/schedule"
 
 
 NATION_FLAGS = {
@@ -430,12 +493,13 @@ def competition_name_from_summary(data, fallback=""):
     return fallback
 
 
-def is_usmnt_team(team):
-    # An explicit ID takes priority over names shared with women/youth teams.
-    return str(get(team, "id", "")) == USMNT_TEAM_ID
+def is_my_team(team):
+    # Set by normalize_events from the ESPN ID, which keeps women's and
+    # youth sides that share a name from matching.
+    return get(team, "mine", False) == True
 
 
-def normalize_events(data, competition_name):
+def normalize_events(data, competition_name, team_id):
     matches = []
 
     events = list_value(get(data, "events", []))
@@ -465,6 +529,7 @@ def normalize_events(data, competition_name):
                 "score": score_text(get(competitor, "score", "")),
                 "logo": get(team, "logo", ""),
             }
+            normalized["mine"] = normalized["id"] == team_id
 
             if side == "home":
                 home = normalized
@@ -536,11 +601,11 @@ def minutes_until_match(iso, now):
     return match_minutes - now.unix // 60
 
 
-def find_next_usmnt_match(matches, now):
+def find_next_team_match(matches, now):
     best = None
     best_minutes = None
     for match in list_value(matches):
-        if not (is_usmnt_team(match["home"]) or is_usmnt_team(match["away"])):
+        if not (is_my_team(match["home"]) or is_my_team(match["away"])):
             continue
         if match["state"] not in ["", "pre"]:
             continue
@@ -555,26 +620,26 @@ def find_next_usmnt_match(matches, now):
     return best
 
 
-def find_live_usmnt_match(matches, now):
+def find_live_team_match(matches, now):
     for match in list_value(matches):
-        if (is_usmnt_team(match["home"]) or is_usmnt_team(match["away"])) and match["state"] == "in":
+        if (is_my_team(match["home"]) or is_my_team(match["away"])) and match["state"] == "in":
             return match
     return None
 
 
-def find_last_usmnt_match(matches):
+def find_last_team_match(matches):
     last_match = None
 
     for match in list_value(matches):
         if match["state"] != "post":
             continue
 
-        is_usmnt = (
-            is_usmnt_team(match["home"])
-            or is_usmnt_team(match["away"])
+        is_team_ = (
+            is_my_team(match["home"])
+            or is_my_team(match["away"])
         )
 
-        if not is_usmnt:
+        if not is_team_:
             continue
 
         if last_match == None:
@@ -587,22 +652,22 @@ def find_last_usmnt_match(matches):
     return last_match
 
 
-def usmnt_score(match):
-    if is_usmnt_team(match["home"]):
+def team_score(match):
+    if is_my_team(match["home"]):
         return match["home"]["score"]
 
     return match["away"]["score"]
 
 
 def opponent_score(match):
-    if is_usmnt_team(match["home"]):
+    if is_my_team(match["home"]):
         return match["away"]["score"]
 
     return match["home"]["score"]
 
 
 def match_result(match):
-    usa = match["home"] if is_usmnt_team(match["home"]) else match["away"]
+    usa = match["home"] if is_my_team(match["home"]) else match["away"]
     opponent = opponent_of(match)
     if usa["score"] == "-" or opponent["score"] == "-":
         return "FINAL"
@@ -619,46 +684,25 @@ def match_result(match):
 
 
 def opponent_of(match):
-    if is_usmnt_team(match["home"]):
+    if is_my_team(match["home"]):
         return match["away"]
 
     return match["home"]
 
 
 def match_symbol(match):
-    if is_usmnt_team(match["home"]):
+    if is_my_team(match["home"]):
         return "VS"
 
     return "@"
 
 
-def draw_branding(c):
-    c.rect(
-        0,
-        0,
-        127,
-        31,
-        fill=BLACK,
-    )
-
-    c.rect(
-        0,
-        0,
-        29,
-        31,
-        fill=BLACK,
-    )
-
-    c.image(
-        LOGO,
-        -2,
-        0,
-        36,
-        33,
-    )
+def draw_branding(c, team):
+    c.rect(0, 0, 127, 31, fill=BLACK)
+    c.image(team["badge"], 1, 0, 28, 32)
 
 
-def get_live_usmnt_matches(ctx):
+def get_live_team_matches(ctx, team):
     matches = []
     successes = 0
     # Yesterday's UTC fixture can still be in progress after midnight.
@@ -669,19 +713,19 @@ def get_live_usmnt_matches(ctx):
         data = get(resp, "json", None)
         if get(resp, "status_code", 0) == 200 and type(get(data, "events", None)) == "list":
             successes += 1
-            matches += normalize_events(data, "")
+            matches += normalize_events(data, "", team["id"])
     return matches if successes > 0 else None
 
 
-def get_usmnt_schedule(ctx):
-    resp = http.get(USMNT_SCHEDULE_URL + "?fixture=true", ttl_seconds=300)
+def get_team_schedule(ctx, team):
+    resp = http.get(schedule_url(team) + "?fixture=true", ttl_seconds=300)
     data = get(resp, "json", None)
     if get(resp, "status_code", 0) != 200 or type(get(data, "events", None)) != "list":
         return None
-    return normalize_events(data, "")
+    return normalize_events(data, "", team["id"])
 
 
-def get_last_usmnt_match(ctx):
+def get_last_team_match(ctx, team):
     # ESPN's all-soccer team schedule behaves differently depending on
     # whether fixture=true is present:
     #
@@ -690,7 +734,7 @@ def get_last_usmnt_match(ctx):
     #
     # For Last Match, request the completed-match schedule directly.
     resp = http.get(
-        USMNT_SCHEDULE_URL,
+        schedule_url(team),
         ttl_seconds=300,
     )
 
@@ -702,6 +746,7 @@ def get_last_usmnt_match(ctx):
     matches = normalize_events(
         data,
         "",
+        team["id"],
     )
 
     recent = []
@@ -710,7 +755,7 @@ def get_last_usmnt_match(ctx):
         if age != None and age <= 0 and age >= -RECENT_MATCH_DAYS * 1440:
             recent.append(match)
 
-    last_game = find_last_usmnt_match(
+    last_game = find_last_team_match(
         recent
     )
 
@@ -810,14 +855,15 @@ def match_countdown_text(minutes):
 
 def live_match(c, ctx):
     c.clear()
-    draw_branding(c)
+    team = selected_team(ctx)
+    draw_branding(c, team)
 
     tzoffset = timezone_offset(ctx)
     now = ctx.now
 
-    matches = get_live_usmnt_matches(ctx)
+    matches = get_live_team_matches(ctx, team)
 
-    live_game = find_live_usmnt_match(
+    live_game = find_live_team_match(
         matches,
         now,
     )
@@ -832,7 +878,7 @@ def live_match(c, ctx):
             competition = "WORLD CUP"
 
         score = (
-            str(usmnt_score(live_game))
+            str(team_score(live_game))
             + "-"
             + str(opponent_score(live_game))
         )
@@ -842,7 +888,7 @@ def live_match(c, ctx):
             78,
             1,
             font="4x5",
-            color=USA_RED,
+            color=team["accent"],
             align="center",
         )
 
@@ -882,15 +928,15 @@ def live_match(c, ctx):
             78,
             25,
             font="4x5",
-            color=USA_RED,
+            color=team["accent"],
             align="center",
         )
 
         return
 
-    next_matches = get_usmnt_schedule(ctx)
+    next_matches = get_team_schedule(ctx, team)
 
-    next_game = find_next_usmnt_match(
+    next_game = find_next_team_match(
         next_matches,
         now,
     )
@@ -900,7 +946,7 @@ def live_match(c, ctx):
         78,
         4,
         font="4x5",
-        color=USA_RED,
+        color=team["accent"],
         align="center",
     )
 
@@ -956,14 +1002,15 @@ def live_match(c, ctx):
 
 def next_match(c, ctx):
     c.clear()
-    draw_branding(c)
+    team = selected_team(ctx)
+    draw_branding(c, team)
 
     tzoffset = timezone_offset(ctx)
     now = ctx.now
 
-    matches = get_usmnt_schedule(ctx)
+    matches = get_team_schedule(ctx, team)
 
-    next_game = find_next_usmnt_match(
+    next_game = find_next_team_match(
         matches,
         now,
     )
@@ -974,7 +1021,7 @@ def next_match(c, ctx):
             78,
             4,
             font="5x7",
-            color=USA_RED,
+            color=team["accent"],
             align="center",
         )
 
@@ -1009,7 +1056,7 @@ def next_match(c, ctx):
         78,
         1,
         font="4x5",
-        color=USA_RED,
+        color=team["accent"],
         align="center",
     )
 
@@ -1018,7 +1065,7 @@ def next_match(c, ctx):
         56,
         11,
         font="4x5",
-        color=USA_RED,
+        color=team["accent"],
     )
 
     if crest != "":
@@ -1051,9 +1098,10 @@ def next_match(c, ctx):
 
 def last_match(c, ctx):
     c.clear()
-    draw_branding(c)
+    team = selected_team(ctx)
+    draw_branding(c, team)
 
-    last_game = get_last_usmnt_match(ctx)
+    last_game = get_last_team_match(ctx, team)
 
     if last_game == None or get(last_game, "offline", False):
         c.text(
@@ -1061,7 +1109,7 @@ def last_match(c, ctx):
             78,
             4,
             font="5x7",
-            color=USA_RED,
+            color=team["accent"],
             align="center",
         )
 
@@ -1085,7 +1133,7 @@ def last_match(c, ctx):
         competition = "WORLD CUP"
 
     score = (
-        str(usmnt_score(last_game))
+        str(team_score(last_game))
         + "-"
         + str(opponent_score(last_game))
     )
@@ -1097,7 +1145,7 @@ def last_match(c, ctx):
         78,
         1,
         font="4x5",
-        color=USA_RED,
+        color=team["accent"],
         align="center",
     )
 
@@ -1133,7 +1181,7 @@ def last_match(c, ctx):
         46,
         16,
         font="4x5",
-        color=USA_RED,
+        color=team["accent"],
         align="center",
     )
 
