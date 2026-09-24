@@ -1,7 +1,7 @@
 gdn: 1
 
 id: tempest-wx
-version: 3
+version: 4
 name: Tempest Compact
 author: Ben
 description: Show live data direct from your WeatherFlow Tempest plus a forecast and any weather advisories active at your station's location.
@@ -10,7 +10,7 @@ category: Weather
 entry: app.star
 width: 64
 height: 32
-refresh: 900
+refresh: 300
 
 pages: [now, outlook, alerts]
 
@@ -23,16 +23,6 @@ inputs:
       Your personal token from tempestwx.com - Settings, then Data Authorizations,
       then Create Token. Stored encrypted. Everything else is read from your own
       station, so this is usually the only thing you need to fill in.
-
-  - key: station
-    app_input_type: dropdown
-    type: choice
-    label: Station
-    default: first
-    choices: [first, second, third, fourth]
-    help: >-
-      Which station on your account to read, in the order tempestwx.com lists
-      them. Leave it on first unless you own more than one.
 
   - key: units
     app_input_type: dropdown
