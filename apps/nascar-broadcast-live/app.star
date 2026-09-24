@@ -216,6 +216,19 @@ COLORS = {
 
 GOLD = "#FFD700"
 
+# `datecolor` dropdown -> hex; default "accent" is the amber (accent2) the
+# dates have always used. Yellow is pure #FFFF00 so it reads apart from it.
+DATE_COLORS = {
+    "accent": "#FFD166",
+    "red": "#FF0000",
+    "green": "#00DC46",
+    "blue": "#005AFF",
+    "white": "#FFFFFF",
+    "yellow": "#FFFF00",
+    "magenta": "#FF00C8",
+    "cyan": "#00DCDC",
+}
+
 # Track-shape category per venue, keyed by CF's track_name text. Hand-built
 # vector shapes by track TYPE (no licensed per-track NASCAR outline art
 # exists), used only where there is no traced asset below.
@@ -301,6 +314,10 @@ def safe_input(ctx, key, fallback):
     if value == None or value == "":
         return fallback
     return value
+
+def pick_date_color(ctx):
+    v = str(safe_input(ctx, "datecolor", "accent")).strip().lower()
+    return DATE_COLORS.get(v, DATE_COLORS["accent"])
 
 def clean_last(raw):
     name = str(raw).strip()
@@ -1200,10 +1217,11 @@ def _draw_next_card(c, ctx, st, big):
         draw_page_tab(c, "NEXT RACE", COLORS["accent"])
     c.text(fit_text(c, st["race_name"], "6x8", text_w), cx, 2, font = "6x8", color = COLORS["text"], align = "center")
     c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
-    c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = COLORS["accent2"], align = "center")
+    c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = pick_date_color(ctx), align = "center")
 
 def _draw_schedule(c, ctx, st, skip):
-    draw_page_tab(c, "SCHEDULE", COLORS["accent2"])
+    date_color = pick_date_color(ctx)
+    draw_page_tab(c, "SCHEDULE", date_color)
     up = upcoming_races(st["schedule"], st["series"])
     # up[0] is the immediate next race -- that's the `event` page.
     races = up[1 + skip:1 + skip + 3]
@@ -1215,7 +1233,7 @@ def _draw_schedule(c, ctx, st, skip):
     y = 8
     for r in races:
         dt = local_race_daydate(ctx, r.get("race_date", r.get("date_scheduled", "")))
-        c.text(dt, 4, y, font = "5x7", color = COLORS["accent2"])
+        c.text(dt, 4, y, font = "5x7", color = date_color)
         nm = short_race(r.get("race_name", "RACE")) + "  -  " + short_track(r.get("track_name", ""))
         c.text(fit_text(c, nm, "5x7", c.width - dx - 4), dx, y, font = "5x7", color = COLORS["text"])
         y += 8
