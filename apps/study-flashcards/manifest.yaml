@@ -6,11 +6,11 @@ author: jkapera
 width: 64
 height: 32
 pages: [subject, term, fullname]
-refresh: 60
+refresh: 300
 inputs:
   - key: deckurl
     type: string
     app_input_type: free-text
     label: Deck URL (no https://)
     default: ""
-    help: "Host a JSON array of {term, definition} objects anywhere public (GitHub raw works great) and paste the URL here, without https://"
+    help: 'Paste the address of a public JSON deck (a GitHub raw link works), without https://. Format: {"title": "...", "terms": [{"term": "...", "definition": "..."}]} — a bare list of terms works too, and "fullname" can stand in for "definition". Leave blank to see a demo deck. A new card shows every 5 minutes.'
