@@ -6,28 +6,401 @@ SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/"
 WEB = "https://site.web.api.espn.com/apis/site/v2/sports/soccer/all/teams/"
 STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer/"
 
-# Setting value -> [ESPN league code, name shown on the table page].
-LEAGUES = {
-    "premier_league": ["eng.1", "PREMIER LEAGUE"],
-    "championship": ["eng.2", "CHAMPIONSHIP"],
-    "la_liga": ["esp.1", "LA LIGA"],
-    "serie_a": ["ita.1", "SERIE A"],
-    "bundesliga": ["ger.1", "BUNDESLIGA"],
-    "ligue_1": ["fra.1", "LIGUE 1"],
-    "eredivisie": ["ned.1", "EREDIVISIE"],
-    "primeira_liga": ["por.1", "PRIMEIRA LIGA"],
-    "scottish_premiership": ["sco.1", "PREMIERSHIP"],
-    "belgian_pro_league": ["bel.1", "PRO LEAGUE"],
-    "super_lig": ["tur.1", "SUPER LIG"],
-    "mls": ["usa.1", "MLS"],
-    "liga_mx": ["mex.1", "LIGA MX"],
-    "brasileirao": ["bra.1", "BRASILEIRAO"],
-    "argentina_primera": ["arg.1", "LIGA PROFESIONAL"],
-    "j1_league": ["jpn.1", "J1 LEAGUE"],
-    "a_league": ["aus.1", "A-LEAGUE"],
-    "womens_super_league": ["eng.w.1", "WOMEN'S SUPER LG"],
-    "nwsl": ["usa.nwsl", "NWSL"],
+# ESPN league code -> name shown on the table page.
+LEAGUE_NAMES = {
+    "eng.1": "PREMIER LEAGUE",
+    "eng.2": "CHAMPIONSHIP",
+    "esp.1": "LA LIGA",
+    "ita.1": "SERIE A",
+    "ger.1": "BUNDESLIGA",
+    "fra.1": "LIGUE 1",
+    "ned.1": "EREDIVISIE",
+    "por.1": "PRIMEIRA LIGA",
+    "sco.1": "PREMIERSHIP",
+    "bel.1": "PRO LEAGUE",
+    "tur.1": "SUPER LIG",
+    "usa.1": "MLS",
+    "mex.1": "LIGA MX",
+    "bra.1": "BRASILEIRAO",
+    "arg.1": "LIGA PROFESIONAL",
+    "jpn.1": "J1 LEAGUE",
+    "aus.1": "A-LEAGUE",
+    "eng.w.1": "WOMEN'S SUPER LG",
+    "usa.nwsl": "NWSL",
 }
+
+DEFAULT_TEAM = "England - Liverpool (Premier League)"
+
+# Team setting -> [ESPN league code, ESPN team id]. The league is only a
+# starting point: the team's current league is read back from ESPN, so a
+# promoted or relegated club keeps working.
+TEAMS = {
+    "Argentina - Aldosivi (Liga Profesional)": ["arg.1", "9739"],
+    "Argentina - Argentinos Juniors (Liga Profesional)": ["arg.1", "3"],
+    "Argentina - Atletico Tucuman (Liga Profesional)": ["arg.1", "9785"],
+    "Argentina - Banfield (Liga Profesional)": ["arg.1", "235"],
+    "Argentina - Barracas Central (Liga Profesional)": ["arg.1", "10060"],
+    "Argentina - Belgrano (Cordoba) (Liga Profesional)": ["arg.1", "4"],
+    "Argentina - Boca Juniors (Liga Profesional)": ["arg.1", "5"],
+    "Argentina - Central Cordoba (Santiago del Estero) (Liga Profesional)": ["arg.1", "11989"],
+    "Argentina - Defensa y Justicia (Liga Profesional)": ["arg.1", "8950"],
+    "Argentina - Deportivo Riestra (Liga Profesional)": ["arg.1", "17702"],
+    "Argentina - Estudiantes de La Plata (Liga Profesional)": ["arg.1", "8"],
+    "Argentina - Estudiantes de Rio Cuarto (Liga Profesional)": ["arg.1", "19685"],
+    "Argentina - Gimnasia (Mendoza) (Liga Profesional)": ["arg.1", "11972"],
+    "Argentina - Gimnasia La Plata (Liga Profesional)": ["arg.1", "9"],
+    "Argentina - Huracan (Liga Profesional)": ["arg.1", "10"],
+    "Argentina - Independiente (Liga Profesional)": ["arg.1", "11"],
+    "Argentina - Independiente Rivadavia (Liga Profesional)": ["arg.1", "9744"],
+    "Argentina - Instituto (Cordoba) (Liga Profesional)": ["arg.1", "2975"],
+    "Argentina - Lanus (Liga Profesional)": ["arg.1", "12"],
+    "Argentina - Newell's Old Boys (Liga Profesional)": ["arg.1", "14"],
+    "Argentina - Platense (Liga Profesional)": ["arg.1", "7764"],
+    "Argentina - Racing Club (Liga Profesional)": ["arg.1", "15"],
+    "Argentina - River Plate (Liga Profesional)": ["arg.1", "16"],
+    "Argentina - Rosario Central (Liga Profesional)": ["arg.1", "17"],
+    "Argentina - San Lorenzo (Liga Profesional)": ["arg.1", "18"],
+    "Argentina - Sarmiento (Junin) (Liga Profesional)": ["arg.1", "10158"],
+    "Argentina - Talleres (Cordoba) (Liga Profesional)": ["arg.1", "19"],
+    "Argentina - Tigre (Liga Profesional)": ["arg.1", "7767"],
+    "Argentina - Union (Santa Fe) (Liga Profesional)": ["arg.1", "20"],
+    "Argentina - Velez Sarsfield (Liga Profesional)": ["arg.1", "21"],
+    "Australia - Adelaide United (A-League)": ["aus.1", "5321"],
+    "Australia - Auckland FC (A-League)": ["aus.1", "22344"],
+    "Australia - Brisbane Roar (A-League)": ["aus.1", "5326"],
+    "Australia - Central Coast Mariners (A-League)": ["aus.1", "5325"],
+    "Australia - Macarthur FC (A-League)": ["aus.1", "19340"],
+    "Australia - Melbourne City FC (A-League)": ["aus.1", "11143"],
+    "Australia - Melbourne Victory (A-League)": ["aus.1", "5328"],
+    "Australia - Newcastle Jets (A-League)": ["aus.1", "5323"],
+    "Australia - Perth Glory (A-League)": ["aus.1", "5322"],
+    "Australia - Sydney FC (A-League)": ["aus.1", "5327"],
+    "Australia - Wellington Phoenix FC (A-League)": ["aus.1", "8352"],
+    "Australia - Western Sydney Wanderers (A-League)": ["aus.1", "13696"],
+    "Belgium - Anderlecht (Pro League)": ["bel.1", "441"],
+    "Belgium - Antwerp (Pro League)": ["bel.1", "17544"],
+    "Belgium - Cercle Brugge KSV (Pro League)": ["bel.1", "3610"],
+    "Belgium - Club Brugge (Pro League)": ["bel.1", "570"],
+    "Belgium - KAA Gent (Pro League)": ["bel.1", "3611"],
+    "Belgium - KV Kortrijk (Pro League)": ["bel.1", "5786"],
+    "Belgium - KV Mechelen (Pro League)": ["bel.1", "7879"],
+    "Belgium - KVC Westerlo (Pro League)": ["bel.1", "606"],
+    "Belgium - Lommel SK (Pro League)": ["bel.1", "22269"],
+    "Belgium - OH Leuven (Pro League)": ["bel.1", "5579"],
+    "Belgium - RAAL La Louviere (Pro League)": ["bel.1", "131235"],
+    "Belgium - Racing Genk (Pro League)": ["bel.1", "938"],
+    "Belgium - Royal Charleroi SC (Pro League)": ["bel.1", "3616"],
+    "Belgium - Sint-Truidense (Pro League)": ["bel.1", "936"],
+    "Belgium - Standard Liege (Pro League)": ["bel.1", "559"],
+    "Belgium - Union St.-Gilloise (Pro League)": ["bel.1", "5807"],
+    "Belgium - Waasland-Beveren (Pro League)": ["bel.1", "13450"],
+    "Belgium - Zulte-Waregem (Pro League)": ["bel.1", "4691"],
+    "Brazil - Athletico-PR (Brasileirao)": ["bra.1", "3458"],
+    "Brazil - Atletico-MG (Brasileirao)": ["bra.1", "7632"],
+    "Brazil - Bahia (Brasileirao)": ["bra.1", "9967"],
+    "Brazil - Botafogo (Brasileirao)": ["bra.1", "6086"],
+    "Brazil - Chapecoense (Brasileirao)": ["bra.1", "9318"],
+    "Brazil - Corinthians (Brasileirao)": ["bra.1", "874"],
+    "Brazil - Coritiba (Brasileirao)": ["bra.1", "3456"],
+    "Brazil - Cruzeiro (Brasileirao)": ["bra.1", "2022"],
+    "Brazil - Flamengo (Brasileirao)": ["bra.1", "819"],
+    "Brazil - Fluminense (Brasileirao)": ["bra.1", "3445"],
+    "Brazil - Gremio (Brasileirao)": ["bra.1", "6273"],
+    "Brazil - Internacional (Brasileirao)": ["bra.1", "1936"],
+    "Brazil - Mirassol (Brasileirao)": ["bra.1", "9169"],
+    "Brazil - Palmeiras (Brasileirao)": ["bra.1", "2029"],
+    "Brazil - Red Bull Bragantino (Brasileirao)": ["bra.1", "6079"],
+    "Brazil - Remo (Brasileirao)": ["bra.1", "4936"],
+    "Brazil - Santos (Brasileirao)": ["bra.1", "2674"],
+    "Brazil - Sao Paulo (Brasileirao)": ["bra.1", "2026"],
+    "Brazil - Vasco da Gama (Brasileirao)": ["bra.1", "3454"],
+    "Brazil - Vitoria (Brasileirao)": ["bra.1", "3457"],
+    "England - AFC Bournemouth (Premier League)": ["eng.1", "349"],
+    "England - Arsenal (Premier League)": ["eng.1", "359"],
+    "England - Aston Villa (Premier League)": ["eng.1", "362"],
+    "England - Brentford (Premier League)": ["eng.1", "337"],
+    "England - Brighton & Hove Albion (Premier League)": ["eng.1", "331"],
+    "England - Chelsea (Premier League)": ["eng.1", "363"],
+    "England - Coventry City (Premier League)": ["eng.1", "388"],
+    "England - Crystal Palace (Premier League)": ["eng.1", "384"],
+    "England - Everton (Premier League)": ["eng.1", "368"],
+    "England - Fulham (Premier League)": ["eng.1", "370"],
+    "England - Hull City (Premier League)": ["eng.1", "306"],
+    "England - Ipswich Town (Premier League)": ["eng.1", "373"],
+    "England - Leeds United (Premier League)": ["eng.1", "357"],
+    "England - Liverpool (Premier League)": ["eng.1", "364"],
+    "England - Manchester City (Premier League)": ["eng.1", "382"],
+    "England - Manchester United (Premier League)": ["eng.1", "360"],
+    "England - Newcastle United (Premier League)": ["eng.1", "361"],
+    "England - Nottingham Forest (Premier League)": ["eng.1", "393"],
+    "England - Sunderland (Premier League)": ["eng.1", "366"],
+    "England - Tottenham Hotspur (Premier League)": ["eng.1", "367"],
+    "England - Birmingham City (Championship)": ["eng.2", "392"],
+    "England - Blackburn Rovers (Championship)": ["eng.2", "365"],
+    "England - Bolton Wanderers (Championship)": ["eng.2", "358"],
+    "England - Bristol City (Championship)": ["eng.2", "333"],
+    "England - Burnley (Championship)": ["eng.2", "379"],
+    "England - Cardiff City (Championship)": ["eng.2", "347"],
+    "England - Charlton Athletic (Championship)": ["eng.2", "372"],
+    "England - Derby County (Championship)": ["eng.2", "374"],
+    "England - Lincoln City (Championship)": ["eng.2", "314"],
+    "England - Middlesbrough (Championship)": ["eng.2", "369"],
+    "England - Millwall (Championship)": ["eng.2", "391"],
+    "England - Norwich City (Championship)": ["eng.2", "381"],
+    "England - Portsmouth (Championship)": ["eng.2", "385"],
+    "England - Preston North End (Championship)": ["eng.2", "394"],
+    "England - Queens Park Rangers (Championship)": ["eng.2", "334"],
+    "England - Sheffield United (Championship)": ["eng.2", "398"],
+    "England - Southampton (Championship)": ["eng.2", "376"],
+    "England - Stoke City (Championship)": ["eng.2", "336"],
+    "England - Swansea City (Championship)": ["eng.2", "318"],
+    "England - Watford (Championship)": ["eng.2", "395"],
+    "England - West Bromwich Albion (Championship)": ["eng.2", "383"],
+    "England - West Ham United (Championship)": ["eng.2", "371"],
+    "England - Wolverhampton Wanderers (Championship)": ["eng.2", "380"],
+    "England - Wrexham (Championship)": ["eng.2", "352"],
+    "England - Arsenal (Women's Super League)": ["eng.w.1", "19973"],
+    "England - Aston Villa (Women's Super League)": ["eng.w.1", "20707"],
+    "England - Birmingham City (Women's Super League)": ["eng.w.1", "19968"],
+    "England - Brighton & Hove Albion (Women's Super League)": ["eng.w.1", "19976"],
+    "England - Charlton Athletic (Women's Super League)": ["eng.w.1", "21035"],
+    "England - Chelsea (Women's Super League)": ["eng.w.1", "19970"],
+    "England - Crystal Palace (Women's Super League)": ["eng.w.1", "21037"],
+    "England - Everton (Women's Super League)": ["eng.w.1", "19972"],
+    "England - Liverpool (Women's Super League)": ["eng.w.1", "19971"],
+    "England - London City Lionesses (Women's Super League)": ["eng.w.1", "21053"],
+    "England - Manchester City (Women's Super League)": ["eng.w.1", "19257"],
+    "England - Manchester United (Women's Super League)": ["eng.w.1", "20061"],
+    "England - Tottenham Hotspur (Women's Super League)": ["eng.w.1", "20062"],
+    "England - West Ham United (Women's Super League)": ["eng.w.1", "19975"],
+    "France - AJ Auxerre (Ligue 1)": ["fra.1", "172"],
+    "France - Angers (Ligue 1)": ["fra.1", "7868"],
+    "France - AS Monaco (Ligue 1)": ["fra.1", "174"],
+    "France - Brest (Ligue 1)": ["fra.1", "6997"],
+    "France - Le Havre AC (Ligue 1)": ["fra.1", "3236"],
+    "France - Le Mans (Ligue 1)": ["fra.1", "2697"],
+    "France - Lens (Ligue 1)": ["fra.1", "175"],
+    "France - Lille (Ligue 1)": ["fra.1", "166"],
+    "France - Lorient (Ligue 1)": ["fra.1", "273"],
+    "France - Lyon (Ligue 1)": ["fra.1", "167"],
+    "France - Marseille (Ligue 1)": ["fra.1", "176"],
+    "France - Nice (Ligue 1)": ["fra.1", "2502"],
+    "France - Paris FC (Ligue 1)": ["fra.1", "6851"],
+    "France - Paris Saint-Germain (Ligue 1)": ["fra.1", "160"],
+    "France - Stade Rennais (Ligue 1)": ["fra.1", "169"],
+    "France - Strasbourg (Ligue 1)": ["fra.1", "180"],
+    "France - Toulouse (Ligue 1)": ["fra.1", "179"],
+    "France - Troyes (Ligue 1)": ["fra.1", "170"],
+    "Germany - 1. FC Union Berlin (Bundesliga)": ["ger.1", "598"],
+    "Germany - Bayer Leverkusen (Bundesliga)": ["ger.1", "131"],
+    "Germany - Bayern Munich (Bundesliga)": ["ger.1", "132"],
+    "Germany - Borussia Dortmund (Bundesliga)": ["ger.1", "124"],
+    "Germany - Borussia Monchengladbach (Bundesliga)": ["ger.1", "268"],
+    "Germany - Eintracht Frankfurt (Bundesliga)": ["ger.1", "125"],
+    "Germany - FC Augsburg (Bundesliga)": ["ger.1", "3841"],
+    "Germany - FC Cologne (Bundesliga)": ["ger.1", "122"],
+    "Germany - Hamburg SV (Bundesliga)": ["ger.1", "127"],
+    "Germany - Mainz (Bundesliga)": ["ger.1", "2950"],
+    "Germany - RB Leipzig (Bundesliga)": ["ger.1", "11420"],
+    "Germany - SC Freiburg (Bundesliga)": ["ger.1", "126"],
+    "Germany - SC Paderborn 07 (Bundesliga)": ["ger.1", "3307"],
+    "Germany - Schalke 04 (Bundesliga)": ["ger.1", "133"],
+    "Germany - SV Elversberg (Bundesliga)": ["ger.1", "10388"],
+    "Germany - TSG Hoffenheim (Bundesliga)": ["ger.1", "7911"],
+    "Germany - VfB Stuttgart (Bundesliga)": ["ger.1", "134"],
+    "Germany - Werder Bremen (Bundesliga)": ["ger.1", "137"],
+    "Italy - AC Milan (Serie A)": ["ita.1", "103"],
+    "Italy - AS Roma (Serie A)": ["ita.1", "104"],
+    "Italy - Atalanta (Serie A)": ["ita.1", "105"],
+    "Italy - Bologna (Serie A)": ["ita.1", "107"],
+    "Italy - Cagliari (Serie A)": ["ita.1", "2925"],
+    "Italy - Como (Serie A)": ["ita.1", "2572"],
+    "Italy - Fiorentina (Serie A)": ["ita.1", "109"],
+    "Italy - Frosinone (Serie A)": ["ita.1", "4057"],
+    "Italy - Genoa (Serie A)": ["ita.1", "3263"],
+    "Italy - Internazionale (Serie A)": ["ita.1", "110"],
+    "Italy - Juventus (Serie A)": ["ita.1", "111"],
+    "Italy - Lazio (Serie A)": ["ita.1", "112"],
+    "Italy - Lecce (Serie A)": ["ita.1", "113"],
+    "Italy - Monza (Serie A)": ["ita.1", "4007"],
+    "Italy - Napoli (Serie A)": ["ita.1", "114"],
+    "Italy - Parma (Serie A)": ["ita.1", "115"],
+    "Italy - Sassuolo (Serie A)": ["ita.1", "3997"],
+    "Italy - Torino (Serie A)": ["ita.1", "239"],
+    "Italy - Udinese (Serie A)": ["ita.1", "118"],
+    "Italy - Venezia (Serie A)": ["ita.1", "17530"],
+    "Japan - Avispa Fukuoka (J1 League)": ["jpn.1", "7107"],
+    "Japan - Cerezo Osaka (J1 League)": ["jpn.1", "7109"],
+    "Japan - Fagiano Okayama (J1 League)": ["jpn.1", "22522"],
+    "Japan - FC Tokyo (J1 League)": ["jpn.1", "3384"],
+    "Japan - Gamba Osaka (J1 League)": ["jpn.1", "7102"],
+    "Japan - JEF United Ichihara-Chiba (J1 League)": ["jpn.1", "7111"],
+    "Japan - Kashima Antlers (J1 League)": ["jpn.1", "7115"],
+    "Japan - Kashiwa Reysol (J1 League)": ["jpn.1", "7476"],
+    "Japan - Kawasaki Frontale (J1 League)": ["jpn.1", "7112"],
+    "Japan - Kyoto Sanga (J1 League)": ["jpn.1", "21361"],
+    "Japan - Machida Zelvia (J1 League)": ["jpn.1", "22167"],
+    "Japan - Mito Hollyhock (J1 League)": ["jpn.1", "131701"],
+    "Japan - Nagoya Grampus (J1 League)": ["jpn.1", "7108"],
+    "Japan - Sanfrecce Hiroshima (J1 League)": ["jpn.1", "7114"],
+    "Japan - Shimizu S-Pulse (J1 League)": ["jpn.1", "7104"],
+    "Japan - Tokyo Verdy 1969 (J1 League)": ["jpn.1", "3393"],
+    "Japan - Urawa Red Diamonds (J1 League)": ["jpn.1", "3385"],
+    "Japan - V-Varen Nagasaki (J1 League)": ["jpn.1", "19001"],
+    "Japan - Vissel Kobe (J1 League)": ["jpn.1", "7477"],
+    "Japan - Yokohama F. Marinos (J1 League)": ["jpn.1", "7116"],
+    "Mexico - America (Liga MX)": ["mex.1", "227"],
+    "Mexico - Atlante (Liga MX)": ["mex.1", "226"],
+    "Mexico - Atlas (Liga MX)": ["mex.1", "216"],
+    "Mexico - Atletico de San Luis (Liga MX)": ["mex.1", "15720"],
+    "Mexico - Cruz Azul (Liga MX)": ["mex.1", "218"],
+    "Mexico - FC Juarez (Liga MX)": ["mex.1", "17851"],
+    "Mexico - Guadalajara (Liga MX)": ["mex.1", "219"],
+    "Mexico - Leon (Liga MX)": ["mex.1", "228"],
+    "Mexico - Monterrey (Liga MX)": ["mex.1", "220"],
+    "Mexico - Necaxa (Liga MX)": ["mex.1", "229"],
+    "Mexico - Pachuca (Liga MX)": ["mex.1", "234"],
+    "Mexico - Puebla (Liga MX)": ["mex.1", "231"],
+    "Mexico - Pumas UNAM (Liga MX)": ["mex.1", "233"],
+    "Mexico - Queretaro (Liga MX)": ["mex.1", "222"],
+    "Mexico - Santos (Liga MX)": ["mex.1", "225"],
+    "Mexico - Tigres UANL (Liga MX)": ["mex.1", "232"],
+    "Mexico - Tijuana (Liga MX)": ["mex.1", "10125"],
+    "Mexico - Toluca (Liga MX)": ["mex.1", "223"],
+    "Netherlands - ADO Den Haag (Eredivisie)": ["ned.1", "2726"],
+    "Netherlands - Ajax Amsterdam (Eredivisie)": ["ned.1", "139"],
+    "Netherlands - AZ Alkmaar (Eredivisie)": ["ned.1", "140"],
+    "Netherlands - Excelsior (Eredivisie)": ["ned.1", "2566"],
+    "Netherlands - FC Groningen (Eredivisie)": ["ned.1", "145"],
+    "Netherlands - FC Twente (Eredivisie)": ["ned.1", "152"],
+    "Netherlands - FC Utrecht (Eredivisie)": ["ned.1", "153"],
+    "Netherlands - Feyenoord Rotterdam (Eredivisie)": ["ned.1", "142"],
+    "Netherlands - Fortuna Sittard (Eredivisie)": ["ned.1", "143"],
+    "Netherlands - Go Ahead Eagles (Eredivisie)": ["ned.1", "3706"],
+    "Netherlands - Heerenveen (Eredivisie)": ["ned.1", "146"],
+    "Netherlands - NEC Nijmegen (Eredivisie)": ["ned.1", "147"],
+    "Netherlands - PEC Zwolle (Eredivisie)": ["ned.1", "2565"],
+    "Netherlands - PSV Eindhoven (Eredivisie)": ["ned.1", "148"],
+    "Netherlands - SC Cambuur (Eredivisie)": ["ned.1", "3736"],
+    "Netherlands - Sparta Rotterdam (Eredivisie)": ["ned.1", "151"],
+    "Netherlands - Telstar (Eredivisie)": ["ned.1", "3735"],
+    "Netherlands - Willem II (Eredivisie)": ["ned.1", "156"],
+    "Portugal - Academico de Viseu (Primeira Liga)": ["por.1", "21607"],
+    "Portugal - Alverca (Primeira Liga)": ["por.1", "21613"],
+    "Portugal - Arouca (Primeira Liga)": ["por.1", "15784"],
+    "Portugal - Benfica (Primeira Liga)": ["por.1", "1929"],
+    "Portugal - Braga (Primeira Liga)": ["por.1", "2994"],
+    "Portugal - C.D. Nacional (Primeira Liga)": ["por.1", "3472"],
+    "Portugal - Casa Pia (Primeira Liga)": ["por.1", "21581"],
+    "Portugal - Estoril (Primeira Liga)": ["por.1", "12216"],
+    "Portugal - Estrela (Primeira Liga)": ["por.1", "21610"],
+    "Portugal - FC Famalicao (Primeira Liga)": ["por.1", "12698"],
+    "Portugal - FC Porto (Primeira Liga)": ["por.1", "437"],
+    "Portugal - Gil Vicente (Primeira Liga)": ["por.1", "3699"],
+    "Portugal - Maritimo (Primeira Liga)": ["por.1", "552"],
+    "Portugal - Moreirense (Primeira Liga)": ["por.1", "3696"],
+    "Portugal - Rio Ave (Primeira Liga)": ["por.1", "3822"],
+    "Portugal - Santa Clara (Primeira Liga)": ["por.1", "12215"],
+    "Portugal - Sporting CP (Primeira Liga)": ["por.1", "2250"],
+    "Portugal - Vitoria de Guimaraes (Primeira Liga)": ["por.1", "5309"],
+    "Scotland - Aberdeen (Premiership)": ["sco.1", "263"],
+    "Scotland - Celtic (Premiership)": ["sco.1", "256"],
+    "Scotland - Dundee (Premiership)": ["sco.1", "261"],
+    "Scotland - Dundee United (Premiership)": ["sco.1", "264"],
+    "Scotland - Falkirk (Premiership)": ["sco.1", "254"],
+    "Scotland - Heart of Midlothian (Premiership)": ["sco.1", "262"],
+    "Scotland - Hibernian (Premiership)": ["sco.1", "258"],
+    "Scotland - Kilmarnock (Premiership)": ["sco.1", "260"],
+    "Scotland - Motherwell (Premiership)": ["sco.1", "266"],
+    "Scotland - Rangers (Premiership)": ["sco.1", "257"],
+    "Scotland - St Johnstone (Premiership)": ["sco.1", "267"],
+    "Scotland - St Mirren (Premiership)": ["sco.1", "250"],
+    "Spain - Alaves (La Liga)": ["esp.1", "96"],
+    "Spain - Athletic Club (La Liga)": ["esp.1", "93"],
+    "Spain - Atletico Madrid (La Liga)": ["esp.1", "1068"],
+    "Spain - Barcelona (La Liga)": ["esp.1", "83"],
+    "Spain - Celta Vigo (La Liga)": ["esp.1", "85"],
+    "Spain - Deportivo (La Liga)": ["esp.1", "90"],
+    "Spain - Elche (La Liga)": ["esp.1", "3751"],
+    "Spain - Espanyol (La Liga)": ["esp.1", "88"],
+    "Spain - Getafe (La Liga)": ["esp.1", "2922"],
+    "Spain - Levante (La Liga)": ["esp.1", "1538"],
+    "Spain - Malaga (La Liga)": ["esp.1", "99"],
+    "Spain - Osasuna (La Liga)": ["esp.1", "97"],
+    "Spain - Racing Santander (La Liga)": ["esp.1", "87"],
+    "Spain - Rayo Vallecano (La Liga)": ["esp.1", "101"],
+    "Spain - Real Betis (La Liga)": ["esp.1", "244"],
+    "Spain - Real Madrid (La Liga)": ["esp.1", "86"],
+    "Spain - Real Sociedad (La Liga)": ["esp.1", "89"],
+    "Spain - Sevilla (La Liga)": ["esp.1", "243"],
+    "Spain - Valencia (La Liga)": ["esp.1", "94"],
+    "Spain - Villarreal (La Liga)": ["esp.1", "102"],
+    "Turkey - Alanyaspor (Super Lig)": ["tur.1", "9078"],
+    "Turkey - Amed SFK (Super Lig)": ["tur.1", "132335"],
+    "Turkey - Besiktas (Super Lig)": ["tur.1", "1895"],
+    "Turkey - Caykur Rizespor (Super Lig)": ["tur.1", "7656"],
+    "Turkey - Corum FK (Super Lig)": ["tur.1", "132334"],
+    "Turkey - Erzurum BB (Super Lig)": ["tur.1", "19267"],
+    "Turkey - Eyupspor (Super Lig)": ["tur.1", "20729"],
+    "Turkey - Fenerbahce (Super Lig)": ["tur.1", "436"],
+    "Turkey - Galatasaray (Super Lig)": ["tur.1", "432"],
+    "Turkey - Gaziantep FK (Super Lig)": ["tur.1", "20070"],
+    "Turkey - Genclerbirligi (Super Lig)": ["tur.1", "996"],
+    "Turkey - Goztepe (Super Lig)": ["tur.1", "789"],
+    "Turkey - Istanbul Basaksehir (Super Lig)": ["tur.1", "7914"],
+    "Turkey - Kasimpasa (Super Lig)": ["tur.1", "6870"],
+    "Turkey - Kocaelispor (Super Lig)": ["tur.1", "995"],
+    "Turkey - Konyaspor (Super Lig)": ["tur.1", "7648"],
+    "Turkey - Samsunspor (Super Lig)": ["tur.1", "11429"],
+    "Turkey - Trabzonspor (Super Lig)": ["tur.1", "997"],
+    "USA & Canada - Atlanta United FC (MLS)": ["usa.1", "18418"],
+    "USA & Canada - Austin FC (MLS)": ["usa.1", "20906"],
+    "USA & Canada - CF Montreal (MLS)": ["usa.1", "9720"],
+    "USA & Canada - Charlotte FC (MLS)": ["usa.1", "21300"],
+    "USA & Canada - Chicago Fire FC (MLS)": ["usa.1", "182"],
+    "USA & Canada - Colorado Rapids (MLS)": ["usa.1", "184"],
+    "USA & Canada - Columbus Crew (MLS)": ["usa.1", "183"],
+    "USA & Canada - D.C. United (MLS)": ["usa.1", "193"],
+    "USA & Canada - FC Cincinnati (MLS)": ["usa.1", "18267"],
+    "USA & Canada - FC Dallas (MLS)": ["usa.1", "185"],
+    "USA & Canada - Houston Dynamo FC (MLS)": ["usa.1", "6077"],
+    "USA & Canada - Inter Miami CF (MLS)": ["usa.1", "20232"],
+    "USA & Canada - LA Galaxy (MLS)": ["usa.1", "187"],
+    "USA & Canada - LAFC (MLS)": ["usa.1", "18966"],
+    "USA & Canada - Minnesota United FC (MLS)": ["usa.1", "17362"],
+    "USA & Canada - Nashville SC (MLS)": ["usa.1", "18986"],
+    "USA & Canada - New England Revolution (MLS)": ["usa.1", "189"],
+    "USA & Canada - New York City FC (MLS)": ["usa.1", "17606"],
+    "USA & Canada - Orlando City SC (MLS)": ["usa.1", "12011"],
+    "USA & Canada - Philadelphia Union (MLS)": ["usa.1", "10739"],
+    "USA & Canada - Portland Timbers (MLS)": ["usa.1", "9723"],
+    "USA & Canada - Real Salt Lake (MLS)": ["usa.1", "4771"],
+    "USA & Canada - Red Bull New York (MLS)": ["usa.1", "190"],
+    "USA & Canada - San Diego FC (MLS)": ["usa.1", "22529"],
+    "USA & Canada - San Jose Earthquakes (MLS)": ["usa.1", "191"],
+    "USA & Canada - Seattle Sounders FC (MLS)": ["usa.1", "9726"],
+    "USA & Canada - Sporting Kansas City (MLS)": ["usa.1", "186"],
+    "USA & Canada - St. Louis CITY SC (MLS)": ["usa.1", "21812"],
+    "USA & Canada - Toronto FC (MLS)": ["usa.1", "7318"],
+    "USA & Canada - Vancouver Whitecaps (MLS)": ["usa.1", "9727"],
+    "USA & Canada - Angel City FC (NWSL)": ["usa.nwsl", "21422"],
+    "USA & Canada - Bay FC (NWSL)": ["usa.nwsl", "22187"],
+    "USA & Canada - Boston Legacy FC (NWSL)": ["usa.nwsl", "131562"],
+    "USA & Canada - Chicago Stars FC (NWSL)": ["usa.nwsl", "15360"],
+    "USA & Canada - Denver Summit FC (NWSL)": ["usa.nwsl", "131563"],
+    "USA & Canada - Gotham FC (NWSL)": ["usa.nwsl", "15364"],
+    "USA & Canada - Houston Dash (NWSL)": ["usa.nwsl", "17346"],
+    "USA & Canada - Kansas City Current (NWSL)": ["usa.nwsl", "20907"],
+    "USA & Canada - North Carolina Courage (NWSL)": ["usa.nwsl", "15366"],
+    "USA & Canada - Orlando Pride (NWSL)": ["usa.nwsl", "18206"],
+    "USA & Canada - Portland Thorns FC (NWSL)": ["usa.nwsl", "15362"],
+    "USA & Canada - Racing Louisville FC (NWSL)": ["usa.nwsl", "20905"],
+    "USA & Canada - San Diego Wave FC (NWSL)": ["usa.nwsl", "21423"],
+    "USA & Canada - Seattle Reign FC (NWSL)": ["usa.nwsl", "15363"],
+    "USA & Canada - Utah Royals (NWSL)": ["usa.nwsl", "19141"],
+    "USA & Canada - Washington Spirit (NWSL)": ["usa.nwsl", "15365"],
+}
+
 
 # Standard offset in hours and the daylight-saving rule each zone follows.
 ZONES = {
@@ -86,14 +459,6 @@ def fold(text):
 def display(text):
     # Panel fonts are ASCII uppercase; fold accents so "Atlético" still draws.
     return fold(text).upper()
-
-def norm(text):
-    text = fold(text).lower()
-    out = ""
-    for ch in text.elems():
-        out += ch if (ch >= "a" and ch <= "z") or (ch >= "0" and ch <= "9") else " "
-    words = [w for w in out.split(" ") if w != "" and w not in ["fc", "afc", "cf", "sc", "the"]]
-    return " ".join(words)
 
 def score_text(value):
     if type(value) == "dict":
@@ -214,24 +579,32 @@ def date_text(p):
 
 # ---------- data ----------
 
-def find_team(league, query):
-    resp = http.get(SITE + league + "/teams", ttl_seconds = 86400)
+def team_detail(slug, tid):
+    resp = http.get(SITE + slug + "/teams/" + tid, ttl_seconds = 60)
     if resp["status_code"] != 200:
-        return None, "offline", []
-    teams = [get(e, "team", {}) for e in get(first(get(first(get(resp["json"], "sports", [])), "leagues", [])), "teams", [])]
-    if len(teams) == 0:
-        return None, "offline", []
-    q = norm(query)
-    if q == "":
-        return None, "missing", teams
-    for t in teams:
-        names = [get(t, k, "") for k in ["abbreviation", "displayName", "shortDisplayName", "name", "location", "nickname"]]
-        if q in [norm(n) for n in names]:
-            return t, "", teams
-    for t in teams:
-        if q in norm(get(t, "displayName", "")) or q in norm(get(t, "location", "")):
-            return t, "", teams
-    return None, "missing", teams
+        return None
+    team = get(resp["json"], "team", {})
+    return team if get(team, "id", "") != "" else None
+
+def load_club(ctx):
+    pick = TEAMS.get(ctx.inputs.get("team", DEFAULT_TEAM), TEAMS[DEFAULT_TEAM])
+    slug = pick[0]
+    team = team_detail(slug, pick[1])
+    if team == None:
+        return None
+    # nextEvent is only filled in under the team's current league.
+    current = get(get(team, "defaultLeague", {}), "slug", "")
+    if current != "" and current != slug:
+        moved = team_detail(current, pick[1])
+        if moved != None:
+            slug = current
+            team = moved
+    resp = http.get(SITE + slug + "/teams", ttl_seconds = 86400)
+    teams = []
+    if resp["status_code"] == 200:
+        teams = [get(e, "team", {}) for e in get(first(get(first(get(resp["json"], "sports", [])), "leagues", [])), "teams", [])]
+    name = LEAGUE_NAMES.get(slug, display(get(get(team, "defaultLeague", {}), "shortName", "LEAGUE")))
+    return {"id": str(team["id"]), "slug": slug, "league": name, "team": team, "teams": teams}
 
 def side(competitor, league_teams):
     team = get(competitor, "team", {})
@@ -274,14 +647,8 @@ def competition_name(league):
             name = name[len(prefix):]
     return name
 
-def next_or_live(team, league):
-    resp = http.get(SITE + league + "/teams/" + team["id"], ttl_seconds = 60)
-    if resp["status_code"] != 200:
-        return None, "offline"
-    return first(get(get(resp["json"], "team", {}), "nextEvent", [])), ""
-
-def last_result(team):
-    resp = http.get(WEB + team["id"] + "/schedule", ttl_seconds = 900)
+def last_result(club):
+    resp = http.get(WEB + club["id"] + "/schedule", ttl_seconds = 900)
     if resp["status_code"] != 200:
         return None, "offline"
     best = None
@@ -322,11 +689,8 @@ def message(c, top, bottom, top_color = "white"):
     c.text(top, 64, 8, font = fit(c, top, "5x7", "4x5", 116), color = top_color, align = "center")
     c.text(bottom, 64, 20, font = fit(c, bottom, "4x5", "3x4", 116), color = GREY, align = "center")
 
-def error_screen(c, reason, ctx):
-    if reason == "missing":
-        message(c, "TEAM NOT FOUND", "CHECK TEAM + LEAGUE", "red")
-    else:
-        message(c, "NO SCORES DATA", "ESPN UNAVAILABLE", "amber")
+def offline(c):
+    message(c, "NO SCORES DATA", "ESPN UNAVAILABLE", "amber")
 
 def result_of(match, team_id):
     mine = match["home"] if match["home"]["id"] == team_id else match["away"]
@@ -353,29 +717,20 @@ def draw_fixture(c, match, team_id, center, center_font, bottom, bottom_color):
 def score_line(match):
     return match["home"]["score"] + "-" + match["away"]["score"]
 
-def setup(c, ctx):
-    league = LEAGUES.get(ctx.inputs.get("league", "premier_league"), LEAGUES["premier_league"])
-    team, err, teams = find_team(league[0], ctx.inputs.get("team", "Liverpool"))
-    return league, team, err, teams
-
-
 # ---------- pages ----------
 
 def match(c, ctx):
     c.clear()
-    league, team, err, teams = setup(c, ctx)
-    if team == None:
-        error_screen(c, err, ctx)
+    club = load_club(ctx)
+    if club == None:
+        offline(c)
         return
-    event, err = next_or_live(team, league[0])
-    if err != "":
-        error_screen(c, err, ctx)
-        return
-    m = normalize(event, teams) if event else None
+    event = first(get(club["team"], "nextEvent", []))
+    m = normalize(event, club["teams"]) if event else None
     if m == None:
-        message(c, display(get(team, "shortDisplayName", "")), "NO UPCOMING MATCH")
+        message(c, display(get(club["team"], "shortDisplayName", "")), "NO UPCOMING MATCH")
         return
-    tid = str(team["id"])
+    tid = club["id"]
     zone = ctx.inputs.get("timezone", "pacific")
     if m["state"] == "in":
         detail = m["short"] if m["short"] in ["HT", "FT", "ET", "PENS"] else m["clock"]
@@ -401,19 +756,19 @@ def match(c, ctx):
 
 def last_match(c, ctx):
     c.clear()
-    league, team, err, teams = setup(c, ctx)
-    if team == None:
-        error_screen(c, err, ctx)
+    club = load_club(ctx)
+    if club == None:
+        offline(c)
         return
-    event, err = last_result(team)
+    event, err = last_result(club)
     if err != "":
-        error_screen(c, err, ctx)
+        offline(c)
         return
-    m = normalize(event, teams) if event else None
+    m = normalize(event, club["teams"]) if event else None
     if m == None:
-        message(c, display(get(team, "shortDisplayName", "")), "NO RESULTS YET")
+        message(c, display(get(club["team"], "shortDisplayName", "")), "NO RESULTS YET")
         return
-    tid = str(team["id"])
+    tid = club["id"]
     r = result_of(m, tid)
     when = date_text(local_parts(m["utc"], ctx.inputs.get("timezone", "pacific"))) if m["utc"] != None else ""
     draw_fixture(c, m, tid, score_line(m), "scoretext", r[0] + "  " + when, r[1])
@@ -439,15 +794,15 @@ def ordinal(n):
 
 def table(c, ctx):
     c.clear()
-    league, team, err, teams = setup(c, ctx)
-    if team == None:
-        error_screen(c, err, ctx)
+    club = load_club(ctx)
+    if club == None:
+        offline(c)
         return
-    resp = http.get(STANDINGS + league[0] + "/standings", ttl_seconds = 1800)
+    resp = http.get(STANDINGS + club["slug"] + "/standings", ttl_seconds = 1800)
     if resp["status_code"] != 200:
-        error_screen(c, "offline", ctx)
+        offline(c)
         return
-    tid = str(team["id"])
+    tid = club["id"]
     rows = []
     group_name = ""
     for group in get(resp["json"], "children", []):
@@ -460,14 +815,14 @@ def table(c, ctx):
         if str(get(get(e, "team", {}), "id", "")) == tid:
             idx = i
     if idx < 0:
-        message(c, league[1], "NO TABLE YET")
+        message(c, club["league"], "NO TABLE YET")
         return
 
     me = rows[idx]
-    color = team_color(team)
+    color = team_color(club["team"])
 
     # Left: position hero with points and record.
-    title = league[1]
+    title = club["league"]
     if group_name in ["EAST", "WEST"] or group_name.startswith("GROUP"):
         title = title + " " + group_name
     c.text(title, 6, 1, font = fit(c, title, "4x5", "3x4", 58), color = GREY)
