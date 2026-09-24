@@ -123,20 +123,6 @@ EDGE = 4
 # wide as the NEXT RACE tag under it (41 px in 4x5).
 LOGO_W, LOGO_H = 44, 12
 
-# `datecolor` dropdown -> hex; default yellow. "accent" is the app's amber.
-# Yellow is pure #FFFF00 rather than the palette's #FFDC50, which is too
-# close to the amber accent to tell apart on the panel.
-DATE_COLORS = {
-    "accent": "#FFD166",
-    "red": "#FF0000",
-    "green": "#00DC46",
-    "blue": "#005AFF",
-    "white": "#FFFFFF",
-    "yellow": "#FFFF00",
-    "magenta": "#FF00C8",
-    "cyan": "#00DCDC",
-}
-
 # Bitmap fonts have no accented glyphs and skip them silently -- "Hülkenberg"
 # drew as HLKENBERG. Fold to plain ASCII after upper-casing.
 ASCII_FOLD = {
@@ -295,10 +281,6 @@ def up(s):
     for k, v in ASCII_FOLD.items():
         t = t.replace(k, v)
     return t
-
-def pick_date_color(ctx):
-    v = str(safe_input(ctx, "datecolor", "yellow")).strip().lower()
-    return DATE_COLORS.get(v, DATE_COLORS["yellow"])
 
 def yiq_of(hex_color):
     h = hex_color.lstrip("#")
@@ -1059,7 +1041,7 @@ def event(c, ctx):
         c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
         when = local_dt(ctx, st["race_date"], st.get("race_time", ""))
         wf = "5x7" if c.text_width(when, "5x7") <= text_w else "4x5"
-        c.text(fit_text(c, when, wf, text_w), cx, top_for(wf, 27), font = wf, color = pick_date_color(ctx), align = "center")
+        c.text(fit_text(c, when, wf, text_w), cx, top_for(wf, 27), font = wf, color = COLORS["text"], align = "center")
         return
 
     session = st.get("session", "RACE")
@@ -1219,8 +1201,8 @@ def cal_per_page(width):
     return 6 if width >= 320 else 4
 
 def _draw_calendar(c, ctx, skip):
-    date_color = pick_date_color(ctx)
-    draw_page_tab(c, "CALENDAR", date_color)
+    date_color = COLORS["muted"]
+    draw_page_tab(c, "CALENDAR", "#E2E8F0")
     upcoming = fetch_f1_upcoming(ctx)
     per = cal_per_page(c.width)
     # up[0] is the immediate next race -- that's already the `event` page.

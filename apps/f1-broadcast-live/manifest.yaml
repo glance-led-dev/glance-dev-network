@@ -16,7 +16,7 @@ height: 32
 
 # One fixed interval for the whole app. 2 minutes keeps the OpenF1 calls light
 # while a session is live; the off-season cards re-fetch on the same timer.
-refresh: 120
+refresh: 300
 
 # The panel rotates through these pages in order, one render request per page.
 # board*/feed* are "flex" slots -- each figures out what to show from the
@@ -86,11 +86,3 @@ inputs:
       - "Australia/Sydney"
       - "Pacific/Auckland"
     help: Grand prix dates and times are shown in this zone -- F1's calendar spans every region.
-
-  - key: datecolor
-    type: choice
-    app_input_type: dropdown
-    label: Date color
-    default: "yellow"
-    choices: ["accent", "red", "green", "blue", "white", "yellow", "magenta", "cyan"]
-    help: Color of the race date/time on the next-race page and the calendar.
