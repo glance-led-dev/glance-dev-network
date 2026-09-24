@@ -83,6 +83,23 @@ F1_TEAM_COLOR = {
 def team_color(constructor_id, fallback):
     return F1_TEAM_COLOR.get(str(constructor_id).lower().strip(), fallback)
 
+# Name/gap text on the live and post-session livery rows. Keyed by a
+# lowercase substring of OpenF1's team_name (or the mock's team id).
+# Mercedes' teal sat right on the black/white cutoff and came out white;
+# Alpine gets its BWT pink on the blue, like the car. Everyone else keeps
+# the usual black-or-white-by-brightness pick.
+F1_TEAM_TEXT = {
+    "mercedes": "#000000",
+    "alpine": "#FF87BC",
+}
+
+def row_text_color(team_name, bg):
+    t = str(team_name).lower()
+    for k, v in F1_TEAM_TEXT.items():
+        if k in t:
+            return v
+    return best_text_color(bg)
+
 MONTHS_FULL = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
                "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
 
@@ -553,7 +570,7 @@ def _f1_row(dn, driver, pos, gap_str, stints):
         "acr": acr if acr != "" else nm[:3],
         "gap": gap_str,
         "bg": bg,
-        "txt_color": best_text_color(bg),
+        "txt_color": row_text_color(driver.get("team_name", ""), bg),
         "pos_bg": "#000000",
         "pos_txt": "#FFFFFF",
         "compound": compound,
@@ -808,33 +825,33 @@ def fetch_f1_upcoming(ctx):
 
 def _mock_live(ctx, mode):
     TEAMS = [
-        ("1", "M", "VERSTAPPEN", "#1E5BC6"),
-        ("4", "L", "NORRIS", "#FF8000"),
-        ("81", "O", "PIASTRI", "#FF8000"),
-        ("16", "C", "LECLERC", "#DC0000"),
-        ("44", "L", "HAMILTON", "#DC0000"),
-        ("63", "G", "RUSSELL", "#00D2BE"),
-        ("12", "A", "ANTONELLI", "#00D2BE"),
-        ("22", "Y", "TSUNODA", "#1E5BC6"),
-        ("14", "F", "ALONSO", "#006F62"),
-        ("18", "L", "STROLL", "#006F62"),
-        ("10", "P", "GASLY", "#0090FF"),
-        ("7", "J", "DOOHAN", "#0090FF"),
-        ("23", "A", "ALBON", "#005AFF"),
-        ("55", "C", "SAINZ", "#005AFF"),
-        ("27", "N", "HULKENBERG", "#C00000"),
-        ("5", "G", "BORTOLETO", "#C00000"),
-        ("30", "L", "LAWSON", "#2647D8"),
-        ("6", "I", "HADJAR", "#2647D8"),
-        ("87", "O", "BEARMAN", "#B6BABD"),
-        ("31", "E", "OCON", "#B6BABD"),
-        ("2", "S", "PEREZ", "#C8102E"),
-        ("77", "V", "BOTTAS", "#C8102E"),
+        ("1", "M", "VERSTAPPEN", "#1E5BC6", "red bull"),
+        ("4", "L", "NORRIS", "#FF8000", "mclaren"),
+        ("81", "O", "PIASTRI", "#FF8000", "mclaren"),
+        ("16", "C", "LECLERC", "#DC0000", "ferrari"),
+        ("44", "L", "HAMILTON", "#DC0000", "ferrari"),
+        ("63", "G", "RUSSELL", "#00D2BE", "mercedes"),
+        ("12", "A", "ANTONELLI", "#00D2BE", "mercedes"),
+        ("22", "Y", "TSUNODA", "#1E5BC6", "red bull"),
+        ("14", "F", "ALONSO", "#006F62", "aston martin"),
+        ("18", "L", "STROLL", "#006F62", "aston martin"),
+        ("10", "P", "GASLY", "#0090FF", "alpine"),
+        ("7", "J", "DOOHAN", "#0090FF", "alpine"),
+        ("23", "A", "ALBON", "#005AFF", "williams"),
+        ("55", "C", "SAINZ", "#005AFF", "williams"),
+        ("27", "N", "HULKENBERG", "#C00000", "sauber"),
+        ("5", "G", "BORTOLETO", "#C00000", "sauber"),
+        ("30", "L", "LAWSON", "#2647D8", "racing bulls"),
+        ("6", "I", "HADJAR", "#2647D8", "racing bulls"),
+        ("87", "O", "BEARMAN", "#B6BABD", "haas"),
+        ("31", "E", "OCON", "#B6BABD", "haas"),
+        ("2", "S", "PEREZ", "#C8102E", "cadillac"),
+        ("77", "V", "BOTTAS", "#C8102E", "cadillac"),
     ]
     comps = ["SOFT", "MEDIUM", "HARD", "MEDIUM", "SOFT"]
     rows = []
     for i in range(len(TEAMS)):
-        num, ini, name, col = TEAMS[i]
+        num, ini, name, col, team = TEAMS[i]
         if i == 0:
             gap = ""
         elif i >= 20:
@@ -847,7 +864,7 @@ def _mock_live(ctx, mode):
             "pos": i + 1, "num": num, "initial": ini, "name": name,
             "acr": name[:3],
             "gap": gap if mode == "race" else format_gap_time(0.05 + i * 0.12),
-            "bg": col, "txt_color": best_text_color(col),
+            "bg": col, "txt_color": row_text_color(team, col),
             "pos_bg": "#000000", "pos_txt": "#FFFFFF",
             "compound": comps[i % len(comps)] if mode == "race" else "SOFT",
         })

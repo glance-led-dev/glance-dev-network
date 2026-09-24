@@ -2,7 +2,7 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: f1-broadcast-live
-version: 0.2.0
+version: 0.2.1
 name: F1 - Broadcast Live
 author: jdhine02
 description: Broadcast-style live timing for Formula 1. A real page rotation - the F1 mark with the grand prix, circuit and flag/lap/air temp, then the full order a screen at a time with tyre compound and gap to the leader. Between sessions it shows the next grand prix in your local time, the rest of the calendar, and the last race's podium. Built for a 192-wide panel; the boards widen to 3 columns on 384/640.
