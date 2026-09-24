@@ -1226,6 +1226,39 @@ def result_opponent(event_text):
     return pretty_opponent(text)
 
 
+def format_result_team(raw_team):
+    text = clean_text(raw_team)
+
+    # Compact display names for common Eventlink labels.
+    if text == "G V Volleyball":
+        return "VARSITY VOLLEY"
+    if text == "B V Soccer":
+        return "BOYS VAR SOCCER"
+    if text == "G V Soccer":
+        return "GIRLS VAR SOCCER"
+
+    if text.startswith("B V "):
+        return "BOYS VAR " + text[4:].upper()
+    if text.startswith("G V "):
+        return "GIRLS VAR " + text[4:].upper()
+    if text.startswith("B JV "):
+        return "BOYS JV " + text[5:].upper()
+    if text.startswith("G JV "):
+        return "GIRLS JV " + text[5:].upper()
+    if text.startswith("B F "):
+        return "BOYS FRESH " + text[4:].upper()
+    if text.startswith("G F "):
+        return "GIRLS FRESH " + text[4:].upper()
+    if text.startswith("V "):
+        return "VARSITY " + text[2:].upper()
+    if text.startswith("JV "):
+        return "JV " + text[3:].upper()
+    if text.startswith("F "):
+        return "FRESHMAN " + text[2:].upper()
+
+    return text.upper()
+
+
 def insert_result(results, item):
     placed = False
 
@@ -1238,60 +1271,181 @@ def insert_result(results, item):
     if not placed:
         results.append(item)
 
-    if len(results) > 10:
-        results.pop()
 
 
 def collect_recent_results(ctx):
     results = []
     today = date_value(ctx.now.year, ctx.now.month, ctx.now.day)
-    oldest = today - 8
+    oldest = today - 7
 
-    for source in RESULT_TEAMS:
-        response = http.get(
-            source["url"],
-            ttl_seconds = CACHE_SECONDS,
-        )
+    # Use Harrison's Events feed instead of seven separate team-page requests.
+    body = get_schedule_for_range(
+        shift_date(ctx.now.year, ctx.now.month, ctx.now.day, -8),
+        today_text(ctx),
+    )
 
-        if response["status_code"] != 200:
+    if body == "":
+        return results
+
+    marker = 'class="score-ticker-card score-ticker-border"'
+    cursor = 0
+
+    for i in range(100):
+        start = body.find(marker, cursor)
+        if start == -1:
+            break
+
+        next_start = body.find(marker, start + len(marker))
+        if next_start == -1:
+            card = body[start:]
+            cursor = len(body)
+        else:
+            card = body[start:next_start]
+            cursor = next_start
+
+        header_marker = 'score-ticker-card-header backgroundColor col-auto">'
+        h1 = card.find(header_marker)
+        if h1 == -1:
+            continue
+        h1 = h1 + len(header_marker)
+        h2 = card.find("</span>", h1)
+        if h2 == -1:
             continue
 
-        rows = table_rows(response["body"])
+        date_text = clean_text(card[h1:h2])
+        date_parts = date_text.split()
+        if len(date_parts) < 2:
+            continue
 
-        for row in rows:
-            cells = row_cells(row)
+        month = month_number(date_parts[0][:3])
+        if month == 0:
+            continue
 
-            if len(cells) < 3:
-                continue
+        day = int(date_parts[1])
+        year = ctx.now.year
+        if ctx.now.month == 1 and month == 12:
+            year = year - 1
 
-            outcome = result_outcome(cells[2])
+        dv = date_value(year, month, day)
+        if dv > today:
+            continue
 
-            if outcome == "":
-                continue
+        h3 = card.find(header_marker, h2)
+        if h3 == -1:
+            continue
+        h3 = h3 + len(header_marker)
+        h4 = card.find("</span>", h3)
+        if h4 == -1:
+            continue
+        raw_team = clean_text(card[h3:h4])
 
-            dv = parse_date_value(cells[1])
+        participant_marker = 'score-ticker-card-participant-text text-light">'
+        p1 = card.find(participant_marker)
+        if p1 == -1:
+            continue
+        p1 = p1 + len(participant_marker)
+        p1_end = card.find("</span>", p1)
+        if p1_end == -1:
+            continue
+        name1 = clean_text(card[p1:p1_end])
 
-            if dv < oldest or dv > today:
-                continue
+        p2 = card.find(participant_marker, p1_end)
+        if p2 == -1:
+            continue
+        p2 = p2 + len(participant_marker)
+        p2_end = card.find("</span>", p2)
+        if p2_end == -1:
+            continue
+        name2 = clean_text(card[p2:p2_end])
 
-            opponent = result_opponent(cells[0])
+        score_marker = 'score-ticker-card-score-container text-light">'
+        s1 = card.find(score_marker)
+        if s1 == -1:
+            continue
+        s1 = s1 + len(score_marker)
+        s1_end = card.find("</div>", s1)
+        if s1_end == -1:
+            continue
+        score1 = clean_text(card[s1:s1_end])
 
-            if opponent == "":
-                continue
+        s2 = card.find(score_marker, s1_end)
+        if s2 == -1:
+            continue
+        s2 = s2 + len(score_marker)
+        s2_end = card.find("</div>", s2)
+        if s2_end == -1:
+            continue
+        score2 = clean_text(card[s2:s2_end])
 
-            insert_result(
-                results,
-                {
-                    "team": source["team"],
-                    "opponent": opponent,
-                    "score": clean_result_score(cells[2]),
-                    "outcome": outcome,
-                    "date": dv,
-                },
-            )
+        if score1 == "" or score2 == "":
+            continue
 
-    return results
+        if "Harrison" in name1:
+            opponent = name2
+            our_score = score1
+            their_score = score2
+        elif "Harrison" in name2:
+            opponent = name1
+            our_score = score2
+            their_score = score1
+        else:
+            continue
 
+        opponent = pretty_opponent(opponent)
+
+        our_score_num = int(our_score)
+        their_score_num = int(their_score)
+
+        if our_score_num > their_score_num:
+            outcome = "W"
+        elif our_score_num < their_score_num:
+            outcome = "L"
+        else:
+            outcome = "T"
+
+        team = format_result_team(raw_team)
+
+        duplicate = False
+        for existing in results:
+            if existing["team"] == team and existing["opponent"] == opponent and existing["date"] == dv:
+                duplicate = True
+                break
+
+        if duplicate:
+            continue
+
+        insert_result(
+            results,
+            {
+                "team": team,
+                "opponent": opponent,
+                "score": our_score + " - " + their_score,
+                "outcome": outcome,
+                "date": dv,
+            },
+        )
+
+    # Prefer a tight 3-day results window. If fewer than 4 results are
+    # available, expand backward one whole day at a time, up to 7 days.
+    # Every result on an included date is kept; no program is filtered out.
+    lookback = 3
+    for extra_day in range(12):
+        lookback = 3 + extra_day
+        cutoff = today - lookback
+        count = 0
+        for result in results:
+            if result["date"] >= cutoff:
+                count = count + 1
+        if count >= 4:
+            break
+
+    cutoff = today - lookback
+    selected = []
+    for result in results:
+        if result["date"] >= cutoff:
+            selected.append(result)
+
+    return selected
 
 def fit_card_text(text):
     if len(text) <= 18:
