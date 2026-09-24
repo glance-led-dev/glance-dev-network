@@ -1,0 +1,76 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: golf-world-tours
+version: 0.1.0
+name: Golf World Tours
+author: glance-led-dev
+description: A broadcast-style live leaderboard for the DP World Tour, PGA Tour Champions, Korn Ferry Tour and LIV Golf - each in its own colours. The tournament hero with course, round and the leader, then the top 16 two boards at a time with ties, thru and to-par in golf's red-under colours. Between events it shows the next stop, the last winner and the schedule ahead.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); built for the 192-wide scroll panel.
+width: 192
+height: 32
+
+# Five minutes: a leaderboard moves a few shots an hour, and ESPN's feed is
+# cached on the same timer.
+refresh: 300
+
+# event = tournament hero; board1/board2 = P1-8 / P9-16 while an event is on,
+# last winner + this week's facts or the schedule ahead between events.
+pages: [event, board1, board2]
+
+assets:
+  - assets/dpwt.png
+  - assets/champions.png
+  - assets/kornferry.png
+  - assets/liv.png
+
+# What the client fills in at install time.
+inputs:
+  - key: tour
+    type: choice
+    app_input_type: dropdown
+    label: Tour
+    default: "DP World Tour"
+    choices: ["DP World Tour", "PGA Tour Champions", "Korn Ferry Tour", "LIV Golf"]
+    options: ["DP World Tour", "PGA Tour Champions", "Korn Ferry Tour", "LIV Golf"]
+    help: Which tour's leaderboard to follow. PGA Tour and LPGA have their own apps.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/New_York"
+    choices:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "Pacific/Honolulu"
+      - "Europe/London"
+      - "Europe/Paris"
+      - "Africa/Johannesburg"
+      - "Asia/Dubai"
+      - "Asia/Kolkata"
+      - "Asia/Singapore"
+      - "Asia/Tokyo"
+      - "Australia/Sydney"
+    options:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "Pacific/Honolulu"
+      - "Europe/London"
+      - "Europe/Paris"
+      - "Africa/Johannesburg"
+      - "Asia/Dubai"
+      - "Asia/Kolkata"
+      - "Asia/Singapore"
+      - "Asia/Tokyo"
+      - "Australia/Sydney"
+    help: Tee times are shown in this zone.
