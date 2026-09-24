@@ -11,7 +11,7 @@ width: 192
 height: 32
 # The battle changes once a day. An hour keeps the live line from Wikipedia
 # current without asking for a page that has not changed.
-refresh: 3600
+refresh: 900
 
 pages: [battle, story, where]
 
