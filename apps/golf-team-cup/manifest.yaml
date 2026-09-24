@@ -15,7 +15,7 @@ height: 32
 
 # Two minutes: match play moves a hole every ~15 minutes per match, so this
 # catches every change while keeping the ESPN calls light.
-refresh: 120
+refresh: 300
 
 # cup    = hero scoreboard (between cups: countdown to the next cup)
 # board1 = first half of the session's matches (between cups: last result)
