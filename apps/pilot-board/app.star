@@ -1,933 +1,525 @@
 # ============================================================
 # PILOT BOARD
-# KTKI + KADS live aviation weather
 #
-# Runway true bearings:
-# KTKI 18 = 182 true / 36 = 002 true
-# KADS 16 = 160 true / 34 = 340 true
+# DESIGN. One page per airport, and the picture is the answer. On the
+# left, a 27px compass holds the field's real runways at their true
+# headings, and a skyblue arrow flies in from the direction the wind is
+# blowing from. The best-aligned runway is drawn in white, the rest dim,
+# so "which way are we landing" reads before any text does.
+#
+# On the right, four rows from loud to quiet: the airport and a filled
+# flight-category chip; the wind as the hero; the favored runway with its
+# headwind and crosswind (the crosswind turns amber near the pilot's
+# personal limit and red past it); then visibility, ceiling, altimeter
+# and temperature/dewpoint.
+#
+# Runways come from aviationweather.gov's airport feed, so any airport
+# with published runways works. No hand-coded headings.
 # ============================================================
 
 METAR_URL = "https://aviationweather.gov/api/data/metar"
+AIRPORT_URL = "https://aviationweather.gov/api/data/airport"
 
+DEG = 3.141592653589793 / 180.0
 
-# ------------------------------------------------------------
-# Helpers
-# ------------------------------------------------------------
+# Safe zone: 6px of padding at both outer edges of the 128-wide strip.
+EDGEL = 6
+EDGER = 121
 
-def safe(d, key, fallback = None):
-    if d == None or type(d) != "dict":
-        return fallback
+# Compass. A 13px ring centered at (20, 16) spans x 7-33, y 3-29.
+CX = 20
+CY = 16
+RING = 13
 
-    v = d.get(key, fallback)
+# Text column starts one ring-width plus a 4px gutter right of the compass.
+TX = 38
 
-    if v == None:
-        return fallback
+LABEL = "#6E7A94"
+RING_COL = "#2A3242"
+TICK_COL = "#6E7A94"
+RWY_DIM = "#505A6E"
+RWY_FAV = "white"
+WIND_COL = "skyblue"
 
-    return v
-
-
-def fmt_num(v):
-    if v == None:
-        return "--"
-
-    s = str(v)
-
-    if s.endswith(".0"):
-        s = s[:-2]
-
-    return s
-
-
-def pad2(v):
-    if v == None:
-        return "--"
-
-    n = int(v)
-
-    if n < 10:
-        return "0" + str(n)
-
-    return str(n)
-
-
-def pad3(v):
-    if v == None:
-        return "---"
-
-    n = int(v)
-
-    if n < 10:
-        return "00" + str(n)
-
-    if n < 100:
-        return "0" + str(n)
-
-    return str(n)
-
-
-def abs_num(v):
-    if v < 0:
-        return -v
-
-    return v
-
-
-def category_color(cat):
-    cat = str(cat).upper()
-
-    if cat == "VFR":
-        return "green"
-
-    if cat == "MVFR":
-        return "#009CFF"
-
-    if cat == "IFR":
-        return "red"
-
-    if cat == "LIFR":
-        return "#FF4FCB"
-
-    return "gray"
-
+NODATA_BG = "#0B0C12"
+NODATA_TITLE = "#E8B04A"
+NODATA_SUB = "#6A7090"
 
 # ------------------------------------------------------------
-# METAR formatting
+# Small helpers
 # ------------------------------------------------------------
 
-def wind_text(m):
-    speed = safe(m, "wspd", None)
-    gust = safe(m, "wgst", None)
-    direction = safe(m, "wdir", None)
-
-    if speed == None:
-        return "---"
-
-    if int(speed) == 0:
-        return "CALM"
-
-    if direction == None:
-        out = "VRB/" + pad2(speed)
-    else:
-        out = pad3(direction) + "/" + pad2(speed)
-
-    if gust != None:
-        out += "G" + fmt_num(gust)
-
-    return out
-
-
-def visibility_text(m):
-    vis = safe(m, "visib", None)
-
-    if vis == None:
-        return "--"
-
-    v = fmt_num(vis)
-
-    if v == "10":
-        return "10+"
-
-    return v
-
-
-def altimeter_text(m):
-    alt = safe(m, "altim", None)
-
-    if alt == None:
-        return "--.--"
-
-    a = int(float(str(alt)) * 100 + 0.5)
-    hundredths = int(a * 2953 / 100000 + 0.5)
-
-    whole = hundredths // 100
-    frac = hundredths % 100
-
-    return str(whole) + "." + pad2(frac)
-
-
-# ------------------------------------------------------------
-# Temperature / Dewpoint
-# AWC = Celsius. Display = Fahrenheit.
-# ------------------------------------------------------------
-
-def c_to_f(v):
+def num(v):
+    """A feed number, or None. The feed mixes ints, floats and strings
+    like "10+" and "VRB", so every read goes through here."""
     if v == None:
         return None
+    t = type(v)
+    if t == "int" or t == "float":
+        return float(v)
+    s = str(v).strip().replace("+", "")
+    if s == "":
+        return None
+    for ch in s.elems():
+        if not (ch.isdigit() or ch == "." or ch == "-"):
+            return None
+    return float(s)
 
-    c = float(str(v))
-    f = (c * 9.0 / 5.0) + 32.0
+def iround(v):
+    if v >= 0:
+        return int(v + 0.5)
+    return -int(-v + 0.5)
 
-    if f >= 0:
-        return int(f + 0.5)
+def pad(n, w):
+    s = str(n)
+    for _ in range(w - len(s)):
+        s = "0" + s
+    return s
 
-    return int(f - 0.5)
+def get(d, key):
+    if d == None or type(d) != "dict":
+        return None
+    return d.get(key)
 
+def bool_input(v, fallback):
+    """Checkboxes arrive as a bool from Studio and as text from the app."""
+    if v == None:
+        return fallback
+    if v == True or v == False:
+        return v
+    s = str(v).strip().lower()
+    if s in ["true", "1", "yes", "on"]:
+        return True
+    if s in ["false", "0", "no", "off"]:
+        return False
+    return fallback
 
-def temp_f_text(v):
-    f = c_to_f(v)
+def clip(c, s, font, maxw):
+    if c.text_width(s, font) <= maxw:
+        return s
+    for k in range(len(s) - 1, 0, -1):
+        if c.text_width(s[:k], font) <= maxw:
+            return s[:k]
+    return ""
 
-    if f == None:
-        return "--"
+def fit_font(c, s, fonts, maxw):
+    for f in fonts:
+        if c.text_width(s, f) <= maxw:
+            return f
+    return fonts[-1]
 
-    return str(f)
-
-
-def temp_dew_f_text(m):
-    return (
-        temp_f_text(safe(m, "temp", None))
-        + "/"
-        + temp_f_text(safe(m, "dewp", None))
-    )
-
-
-# ------------------------------------------------------------
-# Ceiling
-# ------------------------------------------------------------
-
-def ceiling_text(m):
-    clouds = safe(m, "clouds", None)
-
-    if clouds == None or type(clouds) != "list":
-        return "---"
-
-    lowest = None
-    lowest_cover = ""
-
-    for layer in clouds:
-        cover = str(safe(layer, "cover", "")).upper()
-        base = safe(layer, "base", None)
-
-        if cover == "BKN" or cover == "OVC" or cover == "VV":
-            if base != None:
-                h = int(base)
-
-                if lowest == None or h < lowest:
-                    lowest = h
-                    lowest_cover = cover
-
-    if lowest != None:
-        hundreds = int(lowest / 100)
-
-        if hundreds < 10:
-            htxt = "00" + str(hundreds)
-        elif hundreds < 100:
-            htxt = "0" + str(hundreds)
-        else:
-            htxt = str(hundreds)
-
-        return lowest_cover + htxt
-
-    for layer in clouds:
-        cover = str(safe(layer, "cover", "")).upper()
-
-        if cover == "CLR" or cover == "SKC":
-            return "CLR"
-
-    for layer in clouds:
-        cover = str(safe(layer, "cover", "")).upper()
-
-        if cover == "FEW" or cover == "SCT":
-            return "NO CIG"
-
-    return "CLR"
-
+def clean_id(raw):
+    """ICAO code from whatever the pilot typed. A bare three-letter US
+    code (TKI) gets its K, since both feeds only know the ICAO form."""
+    s = ""
+    for ch in str(raw).strip().upper().elems():
+        if ch.isalnum():
+            s += ch
+    if len(s) == 3 and s.isalpha():
+        s = "K" + s
+    return s[:4]
 
 # ------------------------------------------------------------
-# Angle helpers
+# Data
 # ------------------------------------------------------------
 
-def angle_difference(a, b):
-    d = a - b
+def airport_ids(ctx):
+    a1 = clean_id(ctx.inputs.get("airport1", "KTKI"))
+    a2 = clean_id(ctx.inputs.get("airport2", ""))
+    return [a1, a2]
 
+def fetch(ctx):
+    """One METAR call and one airport call cover both pages. The METAR
+    ttl matches refresh (300s); runways change about never, so a day."""
+    ids = [i for i in airport_ids(ctx) if len(i) >= 3]
+    out = {"state": "ok", "metar": {}, "apt": {}}
+    if len(ids) == 0:
+        out["state"] = "setup"
+        return out
+
+    q = ",".join(ids)
+    r = http.get(METAR_URL, params = {"ids": q, "format": "json"}, ttl_seconds = 300)
+    if r["status_code"] == 204:
+        return out
+    if r["status_code"] != 200 or type(r["json"]) != "list":
+        out["state"] = "offline"
+        return out
+    for m in r["json"]:
+        sid = str(get(m, "icaoId") or "").upper()
+        if sid != "":
+            out["metar"][sid] = m
+
+    a = http.get(AIRPORT_URL, params = {"ids": q, "format": "json"}, ttl_seconds = 86400)
+    if a["status_code"] == 200 and type(a["json"]) == "list":
+        for ap in a["json"]:
+            sid = str(get(ap, "icaoId") or "").upper()
+            if sid != "":
+                out["apt"][sid] = ap
+    return out
+
+def runways(ap):
+    """[{a, b, hdg}] where hdg is the true heading of end a. The feed's
+    alignment is the heading of the first-listed end ("16/34" -> 160).
+    Helipads and runways without an alignment are skipped."""
+    out = []
+    for rw in get(ap, "runways") or []:
+        rid = str(get(rw, "id") or "")
+        h = num(get(rw, "alignment"))
+        if "/" not in rid or h == None:
+            continue
+        ends = rid.split("/")
+        out.append({"a": ends[0], "b": ends[1], "hdg": h})
+    return out
+
+def angle_off(wind, hdg):
+    d = (wind - hdg) % 360.0
     if d > 180:
-        d = d - 360
-
-    if d < -180:
-        d = d + 360
-
+        d = 360.0 - d
     return d
 
+def favored(rwys, wdir):
+    """The runway end most into the wind, across every runway."""
+    best = None
+    for i, rw in enumerate(rwys):
+        for end, hdg in [(rw["a"], rw["hdg"]), (rw["b"], (rw["hdg"] + 180.0) % 360.0)]:
+            off = angle_off(wdir, hdg)
+            if best == None or off < best["off"]:
+                best = {"name": end, "hdg": hdg, "off": off, "idx": i}
+    return best
 
-def favored_runway(wind_dir, heading_a, name_a, heading_b, name_b):
-    diff_a = abs_num(angle_difference(wind_dir, heading_a))
-    diff_b = abs_num(angle_difference(wind_dir, heading_b))
-
-    if diff_a <= diff_b:
-        return {
-            "name": name_a,
-            "heading": heading_a,
-            "angle": diff_a,
-        }
-
-    return {
-        "name": name_b,
-        "heading": heading_b,
-        "angle": diff_b,
-    }
-
+def components(speed, off):
+    """Headwind and crosswind, rounded to whole knots."""
+    return [iround(speed * math.cos(off * DEG)), iround(abs(speed * math.sin(off * DEG)))]
 
 # ------------------------------------------------------------
-# Wind component approximation
+# Formatting
 # ------------------------------------------------------------
 
-def component_factors(angle):
-    a = int(angle + 0.5)
+def wind_str(m):
+    spd = num(get(m, "wspd"))
+    if spd == None:
+        return "WIND --"
+    if spd < 1:
+        return "CALM"
+    d = num(get(m, "wdir"))
+    head = "VRB" if d == None else pad(iround(d), 3)
+    s = head + "/" + pad(iround(spd), 2)
+    g = num(get(m, "wgst"))
+    if g != None and g > spd:
+        s += "G" + pad(iround(g), 2)
+    return s
 
-    if a <= 2:
-        return [100, 0]
-    if a <= 7:
-        return [100, 9]
-    if a <= 12:
-        return [98, 17]
-    if a <= 17:
-        return [97, 26]
-    if a <= 22:
-        return [94, 34]
-    if a <= 27:
-        return [91, 42]
-    if a <= 32:
-        return [87, 50]
-    if a <= 37:
-        return [82, 57]
-    if a <= 42:
-        return [77, 64]
-    if a <= 47:
-        return [71, 71]
-    if a <= 52:
-        return [64, 77]
-    if a <= 57:
-        return [57, 82]
-    if a <= 62:
-        return [50, 87]
-    if a <= 67:
-        return [42, 91]
-    if a <= 72:
-        return [34, 94]
-    if a <= 77:
-        return [26, 97]
-    if a <= 82:
-        return [17, 98]
-    if a <= 87:
-        return [9, 100]
+def vis_str(m):
+    raw = str(get(m, "visib") or "").strip()
+    v = num(raw)
+    if v == None:
+        return ""
+    # US reports cap at "10+" and write it 10SM; overseas 9999 arrives as
+    # "6+", where the plus is the only sign it means six or more.
+    if v >= 10:
+        return str(iround(v)) + "SM"
+    if raw.endswith("+"):
+        return str(iround(v)) + "+SM"
+    if v == int(v):
+        return str(int(v)) + "SM"
+    return str(v) + "SM"
 
-    return [0, 100]
+def ceiling_str(m):
+    lowest = None
+    cover = ""
+    for layer in get(m, "clouds") or []:
+        cv = str(get(layer, "cover") or "").upper()
+        b = num(get(layer, "base"))
+        if cv in ["BKN", "OVC", "VV", "OVX"] and b != None:
+            if lowest == None or b < lowest:
+                lowest = b
+                cover = "VV" if cv == "OVX" else cv
+    if lowest != None:
+        return cover + pad(int(lowest / 100), 3)
+    cv = str(get(m, "cover") or "").upper()
+    if cv in ["FEW", "SCT"]:
+        return "NO CIG"
+    if cv in ["CLR", "SKC", "CAVOK"]:
+        return cv
+    return ""
 
+def alt_str(m, units):
+    hpa = num(get(m, "altim"))
+    if hpa == None:
+        return ""
+    if units == "HPA":
+        return "Q" + str(iround(hpa))
+    inhg = iround(hpa * 2.953)
+    return "A" + pad(inhg, 4)
 
-def wind_components(speed, angle):
-    factors = component_factors(angle)
+def temp_strs(m, units):
+    """[temp/dew, temp] so the header can fall back to temperature alone."""
+    t = num(get(m, "temp"))
+    d = num(get(m, "dewp"))
+    if t == None:
+        return ["", ""]
+    if units == "F":
+        t = t * 9.0 / 5.0 + 32.0
+        d = None if d == None else d * 9.0 / 5.0 + 32.0
+    s = str(iround(t))
+    if d == None:
+        return [s + units, s + units]
+    return [s + "/" + str(iround(d)) + units, s + units]
 
-    head = int((speed * factors[0] + 50) / 100)
-    cross = int((speed * factors[1] + 50) / 100)
+def category(m):
+    """[word, fill, ink] from one table, so the chip and its word can never
+    disagree. Ink flips to black on the bright green fill."""
+    cat = str(get(m, "fltCat") or "").upper()
+    if cat == "VFR":
+        return ["VFR", "green", "black"]
+    if cat == "MVFR":
+        return ["MVFR", "#2F6FDC", "white"]
+    if cat == "IFR":
+        return ["IFR", "red", "white"]
+    if cat == "LIFR":
+        return ["LIFR", "magenta", "white"]
+    return ["", "", ""]
 
-    return {
-        "head": head,
-        "cross": cross,
-    }
-
-
-# ------------------------------------------------------------
-# Live METAR
-# ------------------------------------------------------------
-
-def read_metars(ctx):
-    result = {
-        "KTKI": None,
-        "KADS": None,
-        "state": "ok",
-    }
-
-    r = http.get(
-        METAR_URL,
-        params = {
-            "ids": "KTKI,KADS",
-            "format": "json",
-        },
-        ttl_seconds = 300,
-    )
-
-    if r["status_code"] != 200:
-        result["state"] = "offline"
-        return result
-
-    data = r["json"]
-
-    if data == None or type(data) != "list":
-        result["state"] = "offline"
-        return result
-
-    for m in data:
-        station = str(safe(m, "icaoId", "")).upper()
-
-        if station == "KTKI":
-            result["KTKI"] = m
-
-        if station == "KADS":
-            result["KADS"] = m
-
-    return result
-
+def xw_color(xw, limit):
+    if limit == None:
+        return "white"
+    if xw > limit:
+        return "red"
+    if xw >= limit - 3:
+        return "amber"
+    return "white"
 
 # ------------------------------------------------------------
-# WEATHER PAGE
+# Compass
 # ------------------------------------------------------------
 
-def weather_page(c, ctx, airport):
-    c.fill("black")
+def polar(r, bearing):
+    a = bearing * DEG
+    return [CX + r * math.sin(a), CY - r * math.cos(a)]
 
-    data = read_metars(ctx)
-    m = data[airport]
+def draw_runway(c, hdg, col, half):
+    """A 3px-wide bar through the center at a true heading, plotted pixel
+    by pixel so diagonal runways stay solid instead of combing apart."""
+    a = hdg * DEG
+    fx, fy = math.sin(a), -math.cos(a)
+    px, py = -fy, fx
+    seen = {}
+    steps = int(half * 2 * 2)
+    for i in range(steps + 1):
+        t = -half + i * 0.5
+        for k in [-1.0, 0.0, 1.0]:
+            x = iround(CX + fx * t + px * k)
+            y = iround(CY + fy * t + py * k)
+            key = x * 100 + y
+            if key not in seen:
+                seen[key] = True
+                c.pixel(x, y, col)
 
-    c.text(
-        airport,
-        2,
-        1,
-        font = "5x7",
-        color = "white",
-    )
+def draw_wind_arrow(c, wdir):
+    """Wind is named for where it comes FROM, so the arrow starts on the
+    ring at that bearing and points in toward the field."""
+    tail = polar(RING + 1, wdir)
+    # Tip stops at radius 5 so the head stays clear of the runway bar.
+    tip = polar(5, wdir)
+    c.line(iround(tail[0]), iround(tail[1]), iround(tip[0]), iround(tip[1]), WIND_COL)
+    # Head: two barbs swept back toward the ring.
+    for s in [-1, 1]:
+        b = polar(8, wdir + s * 28)
+        c.line(iround(tip[0]), iround(tip[1]), iround(b[0]), iround(b[1]), WIND_COL)
 
+def draw_compass(c, rwys, fav, wdir, calm):
+    c.circle(CX, CY, RING, RING_COL)
+    for b in [0, 90, 180, 270]:
+        p1 = polar(RING, b)
+        p2 = polar(RING - 2, b)
+        c.line(iround(p1[0]), iround(p1[1]), iround(p2[0]), iround(p2[1]), TICK_COL)
+    # North gets a white pip so the picture has an up.
+    n = polar(RING, 0)
+    c.pixel(iround(n[0]), iround(n[1]), "white")
+
+    drawn = {}
+    for i, rw in enumerate(rwys):
+        if fav != None and i == fav["idx"]:
+            continue
+        k = iround(rw["hdg"]) % 180
+        if k not in drawn:
+            drawn[k] = True
+            draw_runway(c, rw["hdg"], RWY_DIM, 9)
+    if fav != None:
+        draw_runway(c, fav["hdg"], RWY_FAV, 9)
+    elif len(rwys) > 0 and len(drawn) == 0:
+        draw_runway(c, rwys[0]["hdg"], RWY_DIM, 9)
+
+    if wdir != None and not calm:
+        draw_wind_arrow(c, wdir)
+
+# ------------------------------------------------------------
+# Screens
+# ------------------------------------------------------------
+
+def nodata(c, title, sub):
+    c.fill(NODATA_BG)
+    f = fit_font(c, title, ["6x8", "5x7", "4x5"], EDGER - EDGEL)
+    c.text_center(clip(c, title, f, EDGER - EDGEL), 8, font = f, color = NODATA_TITLE)
+    c.text_center(clip(c, sub, "4x5", EDGER - EDGEL), 20, font = "4x5", color = NODATA_SUB)
+
+def segs(c, parts, x, y, font):
+    """Draw [text, color] runs left to right with a 1px join; returns x."""
+    for p in parts:
+        c.text(p[0], x, y, font = font, color = p[1])
+        x += c.text_width(p[0], font) + 1
+    return x
+
+def segs_width(c, parts, font):
+    w = 0
+    for p in parts:
+        w += c.text_width(p[0], font) + 1
+    return w - 1
+
+GAP = 3
+
+def row_width(c, groups, font):
+    w = 0
+    for g in groups:
+        w += segs_width(c, g, font) + GAP
+    return w - GAP
+
+def row_fit(c, groups, maxw, font):
+    """Shed groups from the end until the row fits."""
+    keep = [g for g in groups if len(g) > 0]
+    for _ in range(len(keep)):
+        if row_width(c, keep, font) <= maxw:
+            break
+        keep = keep[:-1]
+    return keep
+
+def first_fit(c, candidates, maxw, font):
+    """The first candidate row that fits whole; the last one, shed, if
+    none does."""
+    for cand in candidates:
+        if row_width(c, cand, font) <= maxw:
+            return cand
+    return row_fit(c, candidates[-1], maxw, font)
+
+def draw_row(c, groups, y, font):
+    x = TX
+    for g in groups:
+        x = segs(c, g, x, y, font) + GAP - 1
+
+def airport_page(c, ctx, which):
+    ids = airport_ids(ctx)
+    icao = ids[which]
+    if len(icao) < 3:
+        icao = ids[0]
+    if len(icao) < 3:
+        nodata(c, "ADD AN AIRPORT", "SET AN ICAO CODE LIKE KTKI")
+        return
+
+    data = fetch(ctx)
     if data["state"] == "offline":
-        c.text_center(
-            "NO WEATHER DATA",
-            13,
-            font = "5x7",
-            color = "red",
-        )
+        nodata(c, "NO WEATHER DATA", "TRYING AGAIN IN 5 MIN")
         return
-
+    m = data["metar"].get(icao)
     if m == None:
-        c.text_center(
-            "METAR UNAVAILABLE",
-            13,
-            font = "4x5",
-            color = "gray",
-        )
+        nodata(c, "NO METAR FOR " + icao, "CHECK THE ICAO CODE")
         return
 
-    cat = str(safe(m, "fltCat", "---")).upper()
-
-    c.text(
-        cat,
-        126,
-        1,
-        font = "5x7",
-        color = category_color(cat),
-        align = "right",
-    )
-
-    c.text(
-        "WND",
-        2,
-        11,
-        font = "4x5",
-        color = "gray",
-    )
-
-    c.text(
-        wind_text(m),
-        23,
-        10,
-        font = "5x7",
-        color = "white",
-    )
-
-    c.text(
-        "VIS",
-        91,
-        11,
-        font = "4x5",
-        color = "gray",
-    )
-
-    c.text(
-        visibility_text(m),
-        111,
-        10,
-        font = "5x7",
-        color = "white",
-    )
-
-    c.text(
-        "CIG",
-        2,
-        20,
-        font = "4x5",
-        color = "gray",
-    )
-
-    c.text(
-        ceiling_text(m),
-        23,
-        20,
-        font = "4x5",
-        color = "white",
-    )
-
-    c.text(
-        "T/D",
-        77,
-        20,
-        font = "4x5",
-        color = "gray",
-    )
-
-    c.text(
-        temp_dew_f_text(m),
-        99,
-        20,
-        font = "4x5",
-        color = "white",
-    )
-
-    c.text(
-        "ALT",
-        2,
-        27,
-        font = "4x5",
-        color = "gray",
-    )
-
-    c.text(
-        altimeter_text(m),
-        23,
-        27,
-        font = "4x5",
-        color = "white",
-    )
-
-
-# ------------------------------------------------------------
-# Sustained + gust wind components
-#
-# Example:
-#
-# FAV 18
-# HW 7/13
-# XW 1/3
-#
-# If no gust:
-#
-# HW 7KT
-# XW 1KT
-# ------------------------------------------------------------
-
-def draw_components(c, m, fav, x):
-    speed = safe(m, "wspd", None)
-    gust = safe(m, "wgst", None)
-
-    if speed == None:
-        return
-
-    steady = wind_components(
-        int(speed),
-        fav["angle"],
-    )
-
-    c.text(
-        "FAV " + fav["name"],
-        x,
-        11,
-        font = "4x5",
-        color = "green",
-    )
-
-    if gust != None and int(gust) > int(speed):
-        gust_comp = wind_components(
-            int(gust),
-            fav["angle"],
-        )
-
-        hw_text = (
-            "HW "
-            + str(steady["head"])
-            + "/"
-            + str(gust_comp["head"])
-        )
-
-        xw_text = (
-            "XW "
-            + str(steady["cross"])
-            + "/"
-            + str(gust_comp["cross"])
-        )
-
-    else:
-        hw_text = "HW " + str(steady["head"]) + "KT"
-        xw_text = "XW " + str(steady["cross"]) + "KT"
-
-    c.text(
-        hw_text,
-        x,
-        19,
-        font = "4x5",
-        color = "white",
-    )
-
-    c.text(
-        xw_text,
-        x,
-        26,
-        font = "4x5",
-        color = "white",
-    )
-
-
-# ------------------------------------------------------------
-# KTKI RUNWAY
-#
-# Current published true bearings:
-# RWY 18 = 182 true
-# RWY 36 = 002 true
-#
-# METAR wind is true, so use true runway bearings.
-# ------------------------------------------------------------
-
-def draw_ktki_runway(c, m):
-    direction = safe(m, "wdir", None)
-    speed = safe(m, "wspd", None)
-
-    c.text(
-        "KTKI",
-        2,
-        1,
-        font = "5x7",
-        color = "white",
-    )
-
-    c.text(
-        wind_text(m),
-        126,
-        1,
-        font = "5x7",
-        color = "white",
-        align = "right",
-    )
-
-    fav = None
-
-    if direction != None and speed != None and int(speed) > 0:
-        fav = favored_runway(
-            float(direction),
-            182.0,
-            "18",
-            2.0,
-            "36",
-        )
-
-    color36 = "gray"
-    color18 = "gray"
-
-    if fav != None:
-        if fav["name"] == "36":
-            color36 = "green"
-        else:
-            color18 = "green"
-
-    # Slight 2-degree east-of-north orientation.
-    # At 32px resolution this is essentially vertical.
-    c.line(43, 10, 43, 29, "gray")
-    c.line(49, 10, 49, 29, "gray")
-
-    c.line(46, 11, 46, 14, "white")
-    c.line(46, 17, 46, 20, "white")
-    c.line(46, 23, 46, 26, "white")
-
-    c.text(
-        "36",
-        31,
-        9,
-        font = "4x5",
-        color = color36,
-    )
-
-    c.text(
-        "18",
-        51,
-        26,
-        font = "4x5",
-        color = color18,
-    )
-
-    if fav == None:
-        c.text(
-            "FAV --",
-            72,
-            12,
-            font = "4x5",
-            color = "gray",
-        )
-
-        c.text(
-            "CALM/VRB",
-            72,
-            21,
-            font = "4x5",
-            color = "white",
-        )
-
-        return
-
-    draw_components(
-        c,
-        m,
-        fav,
-        72,
-    )
-
-
-# ------------------------------------------------------------
-# KADS RUNWAY
-#
-# Current published true bearings:
-# RWY 16 = 160 true
-# RWY 34 = 340 true
-#
-# North = top.
-# ------------------------------------------------------------
-
-def draw_kads_runway(c, m):
-    direction = safe(m, "wdir", None)
-    speed = safe(m, "wspd", None)
-
-    c.text(
-        "KADS",
-        2,
-        1,
-        font = "5x7",
-        color = "white",
-    )
-
-    c.text(
-        wind_text(m),
-        126,
-        1,
-        font = "5x7",
-        color = "white",
-        align = "right",
-    )
-
-    fav = None
-
-    if direction != None and speed != None and int(speed) > 0:
-        fav = favored_runway(
-            float(direction),
-            160.0,
-            "16",
-            340.0,
-            "34",
-        )
-
-    color34 = "gray"
-    color16 = "gray"
-
-    if fav != None:
-        if fav["name"] == "34":
-            color34 = "green"
-        else:
-            color16 = "green"
-
-    # 340/160 true orientation
-    c.line(38, 9, 45, 29, "gray")
-    c.line(44, 7, 51, 27, "gray")
-
-    c.line(42, 10, 43, 13, "white")
-    c.line(44, 16, 45, 19, "white")
-    c.line(46, 22, 47, 25, "white")
-
-    c.text(
-        "34",
-        25,
-        7,
-        font = "4x5",
-        color = color34,
-    )
-
-    c.text(
-        "16",
-        52,
-        26,
-        font = "4x5",
-        color = color16,
-    )
-
-    if fav == None:
-        c.text(
-            "FAV --",
-            75,
-            12,
-            font = "4x5",
-            color = "gray",
-        )
-
-        c.text(
-            "CALM/VRB",
-            75,
-            21,
-            font = "4x5",
-            color = "white",
-        )
-
-        return
-
-    draw_components(
-        c,
-        m,
-        fav,
-        75,
-    )
-
-
-# ------------------------------------------------------------
-# Runway page
-# ------------------------------------------------------------
-
-def runway_page(c, ctx, airport):
     c.fill("black")
 
-    data = read_metars(ctx)
-    m = data[airport]
+    tempu = str(ctx.inputs.get("tempunits", "F")).upper()
+    tempu = "C" if tempu == "C" else "F"
+    altu = str(ctx.inputs.get("altunits", "INHG")).upper()
+    showg = bool_input(ctx.inputs.get("gusts", True), True)
+    limit = num(ctx.inputs.get("xwlimit", "15"))
 
-    if data["state"] == "offline" or m == None:
-        c.text(
-            airport,
-            2,
-            1,
-            font = "5x7",
-            color = "white",
-        )
+    spd = num(get(m, "wspd"))
+    gst = num(get(m, "wgst"))
+    wdir = num(get(m, "wdir"))
+    calm = spd == None or spd < 1
 
-        c.text_center(
-            "NO WIND DATA",
-            14,
-            font = "5x7",
-            color = "red",
-        )
+    rwys = runways(data["apt"].get(icao))
+    fav = None
+    if wdir != None and not calm and len(rwys) > 0:
+        fav = favored(rwys, wdir)
 
-        return
+    draw_compass(c, rwys, fav, wdir, calm)
 
-    if airport == "KTKI":
-        draw_ktki_runway(c, m)
+    # Row 1 (y 1-7): airport + category chip. The chip is measured first
+    # and the ICAO is clipped into whatever is left.
+    cat = category(m)
+    chipx = EDGER + 1
+    if cat[0] != "":
+        cw = c.text_width(cat[0], "4x5") + 4
+        chipx = EDGER - cw + 1
+        c.round_rect(chipx, 0, EDGER, 8, 1, fill = cat[1])
+        c.text(cat[0], chipx + 2, 2, font = "4x5", color = cat[2])
+    c.text(clip(c, icao, "5x7", chipx - TX - 2), TX, 1, font = "5x7", color = "white")
+
+    # Temperature rides in the header, right-aligned against the chip:
+    # the 4-row column has no room for it below ("10SM BKN035 A3003 95F"
+    # is 98px against 84). Dewpoint drops first when "-12/-15C" won't fit
+    # between the ICAO (24px at 5x7) and the chip.
+    icao_end = TX + c.text_width(icao, "5x7")
+    room = chipx - 3 - (icao_end + 4)
+    for t in temp_strs(m, tempu):
+        if t != "" and c.text_width(t, "4x5") <= room:
+            c.text(t, chipx - 3 - c.text_width(t, "4x5"), 2, font = "4x5", color = "white")
+            break
+
+    # Row 2 (y 10-17): the wind, the hero. "130/10G18" is 62px at 6x8,
+    # which leaves room for a KT unit before the right edge.
+    w = wind_str(m)
+    wf = fit_font(c, w, ["6x8", "5x7"], EDGER - TX - 10)
+    c.text(w, TX, 10, font = wf, color = "white")
+    if w != "CALM" and spd != None:
+        c.text("KT", TX + c.text_width(w, wf) + 2, 13, font = "4x5", color = LABEL)
+
+    # Row 3 (y 20-24): favored runway and its components.
+    if fav != None:
+        steady = components(spd, fav["off"])
+        hw = str(steady[0])
+        xw = str(steady[1])
+        hwg = hw
+        worst = steady[1]
+        if showg and gst != None and gst > spd:
+            gc = components(gst, fav["off"])
+            hwg += "/" + str(gc[0])
+            xw += "/" + str(gc[1])
+            worst = gc[1]
+        rwy = [fav["name"], "green"]
+        xwg = [["XW", LABEL], [xw, xw_color(worst, limit)]]
+
+        # Crosswind is the reason the row exists, so it is never shed.
+        # "RWY01L HW12/20 XW15/25" is 103px against 84: lose the RWY
+        # label first, then the headwind gust, then the headwind.
+        cands = [
+            [[["RWY", LABEL], rwy], [["HW", LABEL], [hwg, "white"]], xwg],
+            [[rwy], [["HW", LABEL], [hwg, "white"]], xwg],
+            [[rwy], [["HW", LABEL], [hw, "white"]], xwg],
+            [[rwy], xwg],
+        ]
+    elif calm:
+        cands = [[[["CALM", LABEL], ["ANY RUNWAY", "green"]]]]
+    elif len(rwys) == 0:
+        cands = [[[["NO RUNWAY DATA", LABEL]]]]
     else:
-        draw_kads_runway(c, m)
+        cands = [[[["VARIABLE WIND", LABEL]]]]
+    draw_row(c, first_fit(c, cands, EDGER - TX, "4x5"), 20, "4x5")
 
-
-# ------------------------------------------------------------
-# SR22T PIXEL ART
-#
-# Tiny blue/white side-profile airplane.
-# Designed specifically for 128x32.
-# ------------------------------------------------------------
-
-def draw_sr22t(c):
-    blue = "#008CFF"
-    white = "white"
-    dark = "#333333"
-
-    # Tail / vertical stabilizer
-    c.line(3, 10, 3, 22, blue)
-    c.line(4, 11, 7, 16, blue)
-    c.line(5, 12, 8, 16, blue)
-
-    # Upper fuselage
-    c.line(6, 16, 31, 16, blue)
-    c.line(8, 15, 28, 15, blue)
-
-    # Lower white fuselage
-    c.line(5, 17, 34, 17, white)
-    c.line(8, 18, 31, 18, white)
-
-    # Nose
-    c.line(31, 15, 36, 16, blue)
-    c.line(31, 18, 36, 17, white)
-
-    # Cockpit / cabin
-    c.line(15, 13, 24, 13, blue)
-    c.line(13, 14, 26, 14, blue)
-
-    c.line(16, 14, 22, 14, dark)
-    c.line(17, 13, 21, 13, dark)
-
-    # Low wing
-    c.line(16, 18, 26, 22, white)
-    c.line(17, 18, 29, 21, blue)
-
-    # Horizontal tail
-    c.line(2, 17, 10, 17, white)
-
-    # Nose / prop
-    c.line(36, 13, 36, 20, "gray")
-    c.line(35, 16, 38, 16, "gray")
-
-    # Wheels
-    c.line(14, 19, 14, 22, "gray")
-    c.line(29, 18, 29, 22, "gray")
-
-    c.line(12, 22, 16, 22, white)
-    c.line(27, 22, 31, 22, white)
-
+    # Row 4 (y 26-30): conditions, shed from the right when they overflow.
+    row4 = [
+        [[vis_str(m), "white"]] if vis_str(m) != "" else [],
+        [[ceiling_str(m), "white"]] if ceiling_str(m) != "" else [],
+        [[alt_str(m, altu), "white"]] if alt_str(m, altu) != "" else [],
+    ]
+    draw_row(c, row_fit(c, row4, EDGER - TX, "4x5"), 26, "4x5")
 
 # ============================================================
 # PAGES
 # ============================================================
 
-def main(c, ctx):
-    c.fill("black")
+def airport1(c, ctx):
+    airport_page(c, ctx, 0)
 
-    # Tiny blue/white SR22T
-    draw_sr22t(c)
-
-    # Title shifted right to make room for aircraft
-    c.text(
-        "PILOT BOARD",
-        44,
-        5,
-        font = "6x8",
-        color = "green",
-    )
-
-    c.line(
-        44,
-        15,
-        123,
-        15,
-        "gray",
-    )
-
-    c.text(
-        "KTKI  •  KADS",
-        51,
-        20,
-        font = "5x7",
-        color = "white",
-    )
-
-
-def ktki_wx(c, ctx):
-    weather_page(
-        c,
-        ctx,
-        "KTKI",
-    )
-
-
-def ktki_rwy(c, ctx):
-    runway_page(
-        c,
-        ctx,
-        "KTKI",
-    )
-
-
-def kads_wx(c, ctx):
-    weather_page(
-        c,
-        ctx,
-        "KADS",
-    )
-
-
-def kads_rwy(c, ctx):
-    runway_page(
-        c,
-        ctx,
-        "KADS",
-    )
+def airport2(c, ctx):
+    airport_page(c, ctx, 1)

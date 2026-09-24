@@ -1,12 +1,53 @@
 gdn: 1
 id: pilot-board
-version: 0.1.0
+version: 0.2.0
 name: "Pilot Board"
 author: "Patrick O'Toole"
-description: Live aviation weather and runway wind information for KTKI and KADS.
-category: Lifestyle
+description: Runway wind for your airports — favored runway, headwind and crosswind against your personal limit, plus the METAR at a glance.
+category: Weather
 entry: app.star
 width: 128
 height: 32
 refresh: 300
-pages: [main, ktki_wx, ktki_rwy, kads_wx, kads_rwy]
+pages: [airport1, airport2]
+inputs:
+  - key: airport1
+    type: string
+    app_input_type: free-text
+    label: Airport
+    default: "KTKI"
+    help: ICAO code of your home field, e.g. KTKI, KSFO or EGLL. US three-letter codes like TKI work too.
+  - key: airport2
+    type: string
+    app_input_type: free-text
+    label: Second airport
+    default: ""
+    help: Optional, e.g. KADS. Leave blank and both pages show the first airport.
+  - key: xwlimit
+    type: choice
+    app_input_type: dropdown
+    label: Crosswind limit
+    default: "15"
+    choices: ["NONE", "8", "10", "12", "15", "17", "20", "25"]
+    options: ["NONE", "8", "10", "12", "15", "17", "20", "25"]
+    help: Your personal limit in knots. Crosswind turns amber within 3 kt of it and red above it.
+  - key: gusts
+    type: string
+    app_input_type: checkbox
+    label: Show gust components
+    default: true
+    help: Show headwind and crosswind as steady/gust, e.g. XW 8/14.
+  - key: tempunits
+    type: choice
+    app_input_type: dropdown
+    label: Temperature
+    default: "F"
+    choices: ["F", "C"]
+    options: ["F", "C"]
+  - key: altunits
+    type: choice
+    app_input_type: dropdown
+    label: Altimeter
+    default: "INHG"
+    choices: ["INHG", "HPA"]
+    options: ["INHG", "HPA"]
