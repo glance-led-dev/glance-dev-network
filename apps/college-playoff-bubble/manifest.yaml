@@ -11,7 +11,7 @@ width: 192
 height: 32
 # 300 s: each page advances one frame per refresh (bracket 4 paths, bubble
 # 3 lists). The rankings change weekly; the feed is cached for an hour.
-refresh: 300
+refresh: 21600
 
 pages: [bracket, bubble, myteam]
 
