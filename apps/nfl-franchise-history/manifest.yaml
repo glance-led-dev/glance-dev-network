@@ -3,7 +3,7 @@ id: nfl-franchise-history
 version: 0.1.0
 name: NFL Franchise History
 author: glance-led-dev
-description: Every NFL club's logo and trophy shelf - the nickname in club colours, home market and founding year, and a Lombardi on the shelf for every Super Bowl win (a ghost for every loss) with a bronze cup for older league titles - then a new frame a minute - true history stories, the all-time series with its rival, and its most famous retired jersey. No key, no network.
+description: Every NFL club's felt pennant - the nickname stitched along the cloth in club colours, the home market, founding year and last title above the tail, and a Lombardi standing under it for every Super Bowl win (a ghost for every loss) - then a new frame a minute - true history stories, the all-time series with its rival, and its most famous retired jersey. No key, no network.
 category: Sports
 entry: app.star
 
@@ -12,7 +12,7 @@ height: 32
 # 60 s because the trivia page shows a new frame every minute, and ALL TEAMS
 # moves to the next club every 10 minutes. There is no network to spare -
 # every story is baked in.
-refresh: 1800
+refresh: 60
 
 pages: [legacy, trivia]
 
@@ -23,35 +23,25 @@ assets:
   - assets/ATL.png
   - assets/BAL.png
   - assets/BUF.png
-  - assets/CAR.png
   - assets/CHI.png
-  - assets/CIN.png
   - assets/CLE.png
   - assets/DAL.png
   - assets/DEN.png
   - assets/DET.png
   - assets/GB.png
-  - assets/HOU.png
-  - assets/IND.png
   - assets/JAX.png
   - assets/KC.png
   - assets/LV.png
-  - assets/LAC.png
   - assets/LAR.png
   - assets/MIA.png
-  - assets/MIN.png
   - assets/NE.png
   - assets/NO.png
-  - assets/NYG.png
   - assets/NYJ.png
   - assets/PHI.png
   - assets/PIT.png
   - assets/SF.png
   - assets/SEA.png
-  - assets/TB.png
   - assets/TEN.png
-  - assets/WSH.png
-  - assets/NFL.png
 
 inputs:
   - key: team
