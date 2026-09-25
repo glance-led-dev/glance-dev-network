@@ -774,6 +774,87 @@ XXX.XXXXXXXX.XXX
 """, {"G": "#2FE06F", "W": "#C8FFD8", "S": "#FF7A1F"}],
 }
 
+# Conference marks, hand-drawn at 1x from the official logos and at most
+# 10 tall so they sit on the wall line (y 0..9) clear of the Heisman
+# statues' heads at y 11. Dark marks are lifted for the LED: the B1G's
+# black B goes white, the SEC and American navies go a brighter blue.
+# The FBS independents have no mark of their own, so Notre Dame keeps the
+# word.
+CONF_ART = {
+    "SEC": ["""
+...GGGGGGGGG...
+.GGNNNNNNNNNGG.
+GNWWWNWWWNWWWNG
+GNWNNNWNNNWNNNG
+GNWWWNWWWNWNNNG
+GNNNWNWNNNWNNNG
+GNNNWNWNNNWNNNG
+GNWWWNWWWNWWWNG
+.GGNNNNNNNNNGG.
+...GGGGGGGGG...
+""", {"G": "#E8B92E", "N": "#2A4FB0", "W": "#F4F7FF"}],
+    "BIG TEN": ["""
+WWWW..BBB..BBBB
+WW.WW..BB.BB...
+WW.WW..BB.BB...
+WWWW...BB.BB.BB
+WW.WW..BB.BB..B
+WW.WW..BB.BB..B
+WW.WW..BB.BB..B
+WWWW...BB..BBBB
+""", {"W": "#F4F7FF", "B": "#1FA0F0"}],
+    "ACC": ["""
+....BBB...BBBB..BBBB
+..BB.BB.BB....BB....
+..BB.BB.BB....BB....
+.BBBBB.BB....BB.....
+.BB.BB.BB....BB.....
+BB.BB.BB....BB......
+BB.BB..BBBB..BBBB...
+....................
+BBBBBBBBBBBBBBBBBB..
+""", {"B": "#3A6BF0"}],
+    "BIG 12": ["""
+WWWWWWWWWWWWWWWWW
+.WWWWWWWWWWWWWWW.
+..WW...WW.WW.WW..
+...WW.WW..WW.WW..
+....WWW...WW.WW..
+...WW.WW..WW.WW..
+..WW...WW.WW.WW..
+.WWWWWWWWWWWWWWW.
+WWWWWWWWWWWWWWWWW
+""", {"W": "#F4F7FF"}],
+    "PAC-12": ["""
+KKKKKKKKKKK
+K.........K
+K..W..WW..K
+K.WW....W.K
+K..W...W..K
+K..W..W...K
+K.WWW.WWW.K
+.K.......K.
+..K.....K..
+...KKKKK...
+""", {"K": "#B8C0C8", "W": "#F4F7FF"}],
+    "AMERICAN": ["""
+....NNN....
+...NNNNN...
+...NN.NN...
+..NNR.RNN..
+..NRRRRRN..
+.NN.RRR.NN.
+.NNNR.RNNN.
+NN.......NN
+NN.......NN
+NNN.....NNN
+""", {"N": "#4F74E0", "R": "#FF2A3F"}],
+}
+
+def conf_dims(name):
+    rows = CONF_ART[name][0].strip("\n").split("\n")
+    return [max([len(r) for r in rows]), len(rows)]
+
 # ------------------------------------------------------------- helpers
 KEEP = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-:;/&+%#!?()$@"
 
@@ -955,8 +1036,14 @@ def legacy(c, ctx):
     # and the mascot's last word (MINNESOTA GOPHERS) in 5x7 then 4x5, and
     # only then the school alone.
     conf = s[10]
-    c.text(conf, WALL_R, 2, font = "4x5", color = DIM, align = "right")
-    room = WALL_R - c.text_width(conf, "4x5") - 5 - WALL_X + 1
+    if conf in CONF_ART:
+        d = conf_dims(conf)
+        c.sprite(CONF_ART[conf][0], WALL_R - d[0] + 1, (10 - d[1]) // 2, legend = CONF_ART[conf][1])
+        cfw = d[0]
+    else:
+        c.text(conf, WALL_R, 2, font = "4x5", color = DIM, align = "right")
+        cfw = c.text_width(conf, "4x5")
+    room = WALL_R - cfw - 5 - WALL_X + 1
     school, mascot = s[2], s[3]
     short = mascot.split(" ")[-1]
     placed = False
