@@ -3,7 +3,7 @@ id: nfl-record-book
 version: 0.1.0
 name: NFL Record Book
 author: glance-led-dev
-description: The NFL's all-time records and famous firsts, one a minute - the record as a big gold number, what it is, who holds it, and their team's logo. Passing, rushing, receiving, defense, special teams, team records and oddities. No network needed.
+description: The NFL's all-time records and famous firsts, one a minute, drawn as an open record book - what the record is and who holds it on the left page, the big number on the right, their team's logo on the bookmark ribbon. Passing, rushing, receiving, defense, special teams, team records and oddities. No network needed.
 category: Sports
 entry: app.star
 
@@ -15,7 +15,8 @@ refresh: 60
 pages: [record]
 
 # Team logos: 40 x 24 pixel art, named by ESPN abbreviation, plus the NFL
-# shield as a fallback; vs-*.png are 24 x 18 opponents for head-to-head records.
+# shield as a fallback; vs-*.png are 24 x 18 opponents for head-to-head records
+# (the 40 x 24 logo rides the bookmark ribbon).
 assets:
   - ARI.png
   - ATL.png

@@ -1,13 +1,12 @@
 # NFL Record Book
 
-The NFL's all-time records and famous firsts, one per minute. Each record shows:
+The NFL's all-time records and famous firsts, one per minute, drawn as the record book itself lying open across the panel:
 
-- the holder's team logo, next to a rail in the chapter's colour
-- the chapter icon, the record's scope (SEASON, CAREER, GAME, FIRST and so on) and what was counted
-- the record itself as a big raised-gold number, with its unit
-- who holds it, and when. Every other time round the book, this line says how long the record has stood instead ("STANDS 74 YRS", or "NEW 2025" for one set last season), when it fits.
-
-Every record has a picture. That's either the chapter's object (football, cleat, glove, helmet, goalposts, Lombardi trophy, record book) or the record's own (stopwatch, thermometer, turkey, ring, TV, birthday cake). Head-to-head records show the other team's logo under a small VS.
+- **The cover** is leather in the chapter's colour (blue for passing, green for rushing, red for defense and so on), with the page stack showing underneath.
+- **The left page** is the entry: what was counted (REC YARDS, SACKS, FIELD GOAL...), who holds it in black ink, and when in sepia. Every other time round the book, the when line says how long the record has stood instead ("STANDS 74 YRS", or "NEW 2025" for one set last season), when it fits. A small n/N folio sits in the page's top corner.
+- **A picture** is pasted in by the fold: the chapter's object (football, cleat, glove, helmet, goalposts, Lombardi trophy, record book) or the record's own (stopwatch, thermometer, turkey, ring, TV, birthday cake). For a head-to-head record it's the other team's logo, under a small VS.
+- **The spine** runs down the middle, with the paper shading into the fold.
+- **The right page** is the number. A black bookmark ribbon hangs from the top of the spine carrying the holder's team logo, and next to it the record is pressed into the paper in the chapter's ink, with its unit and a tab for its scope (SEASON, CAREER, GAME, FIRST, LONGEST...).
 
 Chapters: passing, rushing, receiving, defense, special teams, team records and oddities (the longest game, the coldest game, the oldest player, the first Monday Night game and more). There are 71 entries, including the records the 2025 season set: Myles Garrett's 23 sacks, Cam Little's 68-yard field goal and Matthew Stafford's 28 straight touchdown passes without an interception.
 

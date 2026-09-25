@@ -5,45 +5,51 @@
 # still stands going into the 2026 season (or is a dated first that can never
 # be broken). Records that fell recently or sit on a knife edge are left out.
 #
-# DESIGN. The record book as a gold-leaf plaque, graphics first. The
-# holder's club sits on the left - its 40 x 24 logo on black - closed off by
-# a 2 px rail in the chapter's colour. On the right, the chip row names the
-# record: a pill with its scope (SEASON, CAREER, GAME, FIRST...) and what was
-# counted, in white. Under it the number itself is the hero - big, gold, with
-# its unit - cast as raised gold leaf, with a 1 px bronze copy down-right
-# like the letters on a Hall of Fame plaque - and to its right, who holds it
-# and when. Every other lap, the when line says how long the record has
-# stood (STANDS 74 YRS, or NEW 2025), whenever that costs the row nothing.
-# Units the title already names (CAREER SACKS 200) are dropped so the
-# picture gets the room. Every record carries a
-# picture: the chapter's object (football, cleat, glove, helmet, goalposts,
-# Lombardi trophy, record book) or the record's own (stopwatch, thermometer,
-# turkey, ring, TV, birthday cake), drawn at 2x between hero and holder
-# whenever the row has room, and at 1x in the chip row when it does not. A
-# head-to-head record draws the other club as its logo under a small VS
-# instead of naming it. The number is the only gold on the panel, so the eye
-# lands on it first; the name is the only large white.
+# DESIGN. The panel IS the record book, lying open, inset on black (nothing
+# lit outside x 6..185). A leather cover in the chapter's colour frames two
+# parchment pages; a dark spine runs down the middle with the paper shading
+# into the fold on both sides. The LEFT page is the entry: what was counted,
+# who holds it in black ink, and when in sepia - every other lap, how long
+# the record has stood (STANDS 74 YRS, or NEW 2025) whenever that fits. By
+# the fold a picture is pasted in on a black plate: the chapter's object at
+# 2x, or for a head-to-head the other club's logo under a small VS. The
+# RIGHT page is the number: a black silk bookmark ribbon hangs from the
+# head of the spine carrying the holder's club logo, cut with a swallowtail,
+# and beside it the record itself - big, pressed into the paper in the
+# chapter's ink - over a tab with its scope (SEASON, CAREER, FIRST...). The
+# only dark shapes on the paper are the ribbon, the plate, the number and
+# the ink, so the eye goes logo -> number -> name.
 #
 # Frames: one record per minute (refresh 60), stepping through the book with
 # a stride that is coprime to its length so consecutive minutes jump between
-# chapters instead of reading one chapter in order. A small n/N counter says
-# the rotation is deliberate. The Records dropdown picks the whole book, one
-# chapter, or one club (its records plus the famous games it lost).
+# chapters instead of reading one chapter in order. A small n/N folio in the
+# left page's corner says the rotation is deliberate. The Records dropdown
+# picks the whole book, one chapter, or one club (its records plus the
+# famous games it lost).
 
 # ------------------------------------------------------------------ layout
-# 192 wide. Logo x 6..45 (40 x 24 at y 4), rail x 48..49, text zone x 53..185:
-# 6 px edge padding each side, and 3 px of black between the rail and text.
-LOGO_X = 6
-LOGO_Y = 4
-RAIL_X = 48
-TX = 53
-TR = 185
-TW = TR - TX + 1
+# 192 wide, and nothing lit outside x 6..185: the book is inset on black.
+# Cover x 6 / 185, rows 0 and 31. Left page x 7..94 (edge line x 7), spine
+# x 95..96, right page x 97..184 (edge line x 184), pages y 1..29 with the
+# page stack at y 30. Left-page text x 10..89. The ribbon (40 x 24 logo +
+# 1 px selvedge) hangs against the spine at x 97..138 from y 0; the number
+# owns x 141..182.
+BOOK_L = 6
+BOOK_R = 185
+LP_L = 10
+LP_R = 89
+RIB_X = 97
+NUM_L = 141
+NUM_R = 182
+SPINE_X = 95
 
-GOLD = "#FFC53D"
-BRONZE = "#8A4E00"
-INK = "#F4F7FF"
-DIM = "#6E7A94"
+PAPER = "#DCCB9C"
+EDGE = "#A38F60"
+SHADE = ["#C9B787", "#AE9B6B", "#86744A"]
+SPINE = "#3B2914"
+INK = "#1B1208"
+SEPIA = "#5C4524"
+PRESS = "#B09B69"
 
 # chapter -> [colour, icon]
 CHAPTER = {
@@ -139,8 +145,8 @@ RECORDS = [
     ["TEAM", "BIGGEST", "COMEBACK", "33", "PTS", "2022 VIKINGS", "VIKINGS", "2022 - WON 39-36", "MIN", 2022],
     ["TEAM", "MOST", "NFL TITLES", "13", "", "PACKERS", "PACKERS", "9 PRE-SB + 4 SB", "GB", 0],
     ["TEAM", "STREAK", "WINS W/ PLAYOFFS", "21", "WINS", "PATRIOTS", "PATRIOTS", "2003-2004", "NE", 2004],
-    ["TEAM", "SUPER BOWL", "WIN MARGIN", "45", "PTS", "49ERS", "49ERS", "SB XXIV 55-10", "SF", 1990],
-    ["TEAM", "SUPER BOWL", "COMEBACK", "25", "PTS", "PATRIOTS", "PATRIOTS", "SB LI DOWN 28-3", "NE", 2017],
+    ["TEAM", "SB", "WIN MARGIN", "45", "PTS", "49ERS", "49ERS", "SB XXIV 55-10", "SF", 1990],
+    ["TEAM", "SB", "COMEBACK", "25", "PTS", "PATRIOTS", "PATRIOTS", "SB LI DOWN 28-3", "NE", 2017],
     ["TEAM", "FIRST", "6-TIME SB CHAMP", "6", "", "STEELERS", "STEELERS", "SB XLIII 2009", "PIT", 0],
     # oddities
     ["ODDITIES", "LONGEST", "GAME PLAYED", "82:40", "", "DOLPHINS 27-24", "DOLPHINS", "2OT XMAS 1971", "MIA", 1971],
@@ -156,14 +162,14 @@ RECORDS = [
 ]
 
 # --------------------------------------------------------------- pixel art
-# At most 10 x 7, so every icon sits in the chip row (y 0..6). Each chapter
+# At most 10 x 7, so every icon fits the head row at 1x (y 2..8) and the plate at 2x. Each chapter
 # has its own object - the ball for passing, a cleat for rushing, a glove for
 # receiving, a helmet for defense, goalposts for special teams, the Lombardi
 # trophy for team records, the closed record book itself (a gold star on
 # its cover) for oddities - and some records carry their own picture in place of a word: a stopwatch for the
 # longest game, a thermometer for the coldest, a turkey on Thanksgiving, a
 # ring, a TV for Monday Night, a birthday cake for the oldest player.
-# X takes the chapter's colour; every other letter is fixed.
+# X takes the chapter's colour (its dark ink on paper); every other letter is fixed.
 PAL = {"X": "", "W": "#FFFFFF", "B": "#B0602D", "D": "#6B3414", "S": "#B8C0CC",
        "K": "#5A6478", "Y": "#FFC53D", "R": "#FF3D2E", "O": "#FF9A1F",
        "L": "#3D8BFF", "P": "#FF7EB6", "N": "#8A5A2B"}
@@ -326,16 +332,6 @@ VS_LOGO = {"KC": "vs-KC.png", "DAL": "vs-DAL.png", "NYJ": "vs-NYJ.png", "NYG": "
            "WSH": "vs-WSH.png", "DEN": "vs-DEN.png", "ATL": "vs-ATL.png", "IND": "vs-IND.png"}
 
 # ------------------------------------------------------------- text tools
-HEXD = "0123456789abcdef"
-
-def ink_for(fill):
-    """Black type on a bright pill, white on a dark one (brightness 150)."""
-    h = str(fill).lower()
-    if not h.startswith("#") or len(h) != 7:
-        return "black"
-    v = [HEXD.find(h[i]) * 16 + HEXD.find(h[i + 1]) for i in [1, 3, 5]]
-    return "black" if (299 * v[0] + 587 * v[1] + 114 * v[2]) // 1000 >= 150 else "white"
-
 def clip(c, text, font, maxw):
     t = str(text)
     if c.text_width(t, font) <= maxw:
@@ -345,15 +341,8 @@ def clip(c, text, font, maxw):
             return t[:k].rstrip(" -")
     return ""
 
-def fit(c, text, fonts, maxw):
-    for f in fonts:
-        if c.text_width(text, f) <= maxw:
-            return [text, f]
-    last = fonts[len(fonts) - 1]
-    return [clip(c, text, last, maxw), last]
-
 # Lit rows per face, top-aligned.
-INKH = {"16x20_bold": 20, "16x20": 20, "10x16_bold": 16, "10x16": 16, "9x12_bold": 12, "9x12": 12,
+INKH = {"16x20_bold": 20, "16x20": 20, "6x16": 16, "3x7": 7, "10x16_bold": 16, "10x16": 16, "9x12_bold": 12, "9x12": 12,
         "6x8": 8, "5x7b": 7, "5x7": 7, "4x5": 5}
 
 # ----------------------------------------------------------------- picking
@@ -403,37 +392,64 @@ def stride(n):
             return s
     return 1
 
+
 # ------------------------------------------------------------------- draws
-def unit_w(c, unit):
-    if unit == "":
-        return 0
-    if unit.startswith("*"):
-        return 4 + c.text_width(unit[1:], "5x7")
-    return c.text_width(unit, "5x7")
+def draw_spread(c, col):
+    """The open book: chapter-coloured leather, two parchment pages shading
+    into the fold, the spine down the middle and the page stack below."""
+    cover = color.dim(col, 60)
+    c.fill("black")
+    c.rect(BOOK_L, 0, BOOK_R, 31, fill = cover)
+    c.rect(BOOK_L + 1, 1, SPINE_X - 1, 29, fill = PAPER)
+    c.rect(SPINE_X + 2, 1, BOOK_R - 1, 29, fill = PAPER)
+    # The page block: edges of the leaves under the open ones.
+    c.rect(BOOK_L + 2, 30, SPINE_X - 2, 30, fill = EDGE)
+    c.rect(SPINE_X + 3, 30, BOOK_R - 2, 30, fill = EDGE)
+    c.rect(BOOK_L + 1, 1, BOOK_L + 1, 29, fill = EDGE)
+    c.rect(BOOK_R - 1, 1, BOOK_R - 1, 29, fill = EDGE)
+    # Paper darkening into the gutter, both sides of the spine.
+    for i in range(3):
+        c.rect(SPINE_X - 3 + i, 1, SPINE_X - 3 + i, 29, fill = SHADE[i])
+        c.rect(SPINE_X + 4 - i, 1, SPINE_X + 4 - i, 29, fill = SHADE[i])
+    # The leaves curl down into the fold at the head.
+    c.rect(SPINE_X - 2, 1, SPINE_X - 1, 1, fill = cover)
+    c.rect(SPINE_X + 2, 1, SPINE_X + 3, 1, fill = cover)
+    c.rect(SPINE_X, 0, SPINE_X + 1, 31, fill = SPINE)
 
-def draw_unit(c, unit, x, y, col):
-    if unit.startswith("*"):
-        # A 3 x 3 degree ring: no bundled face carries the glyph.
-        c.rect(x, y, x + 2, y + 2, outline = col)
-        c.text(unit[1:], x + 4, y, font = "5x7", color = col)
-    else:
-        c.text(unit, x, y, font = "5x7", color = col)
-
-# Bold faces only, so the gold number has the same weight on every record.
-HERO_FONTS = ["16x20_bold", "10x16_bold", "9x12_bold"]
+def draw_ribbon(c, x, w, h, logo, edge):
+    """A black silk bookmark from the top edge: selvedge in `edge`, the logo
+    on it, and a swallowtail cut 4 rows deep under the logo."""
+    c.rect(x, 0, x + w - 1, h - 1, fill = "black")
+    c.rect(x, 0, x, h - 1, fill = edge)
+    c.rect(x + w - 1, 0, x + w - 1, h - 1, fill = edge)
+    mid = x + w // 2
+    for i in range(4):
+        y = h + i
+        cut = 1 + 3 * i
+        c.rect(x, y, mid - cut - 1, y, fill = "black")
+        c.rect(mid + cut, y, x + w - 1, y, fill = "black")
+        c.pixel(x, y, edge)
+        c.pixel(x + w - 1, y, edge)
+    c.image(logo, x + 1, 1)
 
 # The hero faces draw "," "." and ":" as full-width cells ("89 , 214"), so
-# they are drawn by hand as small square dots between the digit runs.
+# they are drawn by hand as small square dots between the digit runs. Bold
+# faces first; the tall condensed 6x16 is the last resort for 22,895.
+HERO_FONTS = ["16x20_bold", "10x16_bold", "9x12_bold", "6x16"]
 PUNCT = [",", ".", ":"]
 
 def dot(font):
     return 3 if INKH[font] >= 20 else 2
 
-def hero_runs(value):
+def punct(font):
+    # 6x16 has no "-" glyph either.
+    return PUNCT + ["-"] if font == "6x16" else PUNCT
+
+def hero_runs(value, font):
     runs = []
     cur = ""
     for ch in value.elems():
-        if ch in PUNCT:
+        if ch in punct(font):
             if cur != "":
                 runs.append(cur)
                 cur = ""
@@ -446,21 +462,18 @@ def hero_runs(value):
 
 def hero_w(c, value, font):
     w = 0
-    for r in hero_runs(value):
-        w += dot(font) + 2 if r in PUNCT else c.text_width(r, font)
+    for r in hero_runs(value, font):
+        w += (dot(font) * 2 if r == "-" else dot(font)) + 2 if r in punct(font) else c.text_width(r, font)
     return w
-
-def draw_hero(c, value, font, x, y, col):
-    """The number as raised gold leaf: a bronze copy 1 px down-right, then
-    the gold on top, like the letters cast on a Hall of Fame plaque."""
-    draw_face(c, value, font, x + 1, y + 1, BRONZE)
-    return draw_face(c, value, font, x, y, col)
 
 def draw_face(c, value, font, x, y, col):
     h = INKH[font]
     d = dot(font)
-    for r in hero_runs(value):
-        if r in PUNCT:
+    for r in hero_runs(value, font):
+        if r == "-":
+            c.rect(x + 1, y + h // 2 - 1, x + 2 * d, y + h // 2, fill = col)
+            x += 2 * d + 2
+        elif r in PUNCT:
             px = x + 1
             if r == ":":
                 c.rect(px, y + h // 3 - 1, px + d - 1, y + h // 3 + d - 2, fill = col)
@@ -475,57 +488,169 @@ def draw_face(c, value, font, x, y, col):
             x += c.text_width(r, font)
     return x
 
-def plan_body(c, r, when, right, icon, alt = ""):
-    """Largest hero face first. Under each face, graphics beat words: the
-    record's icon at 2x in the gap (5 px of black each side) is tried with
-    every holder form before any form is tried without it. A 4x5 name is a
-    last resort, after every hero face has had a readable one ("VAN
-    BROCKLIN" in 4x5 beside a 16x20 "554" loses the who). The full name is
-    6x8 or 5x7b, never thin 5x7 beside a bold surname on the next record."""
-    value, unit, full, short = r[3], r[4], r[5], r[6]
-    tw = right - TX + 1
-    # Sized for the wider of the detail and its alternate, so the layout
-    # holds still when the detail line swaps.
-    ww = max(c.text_width(when, "4x5"), c.text_width(alt, "4x5"))
-    uw = unit_w(c, unit)
-    iw2 = icon_w(icon) * 2 + 10
-    holders = [[full, "6x8"], [short, "6x8"], [full, "5x7b"], [short, "5x7b"]]
-    for hf in HERO_FONTS:
-        hw = hero_w(c, value, hf) + (2 + uw if uw > 0 else 0)
-        for extra in [iw2, 6]:
-            for ho in holders:
-                rw = max(c.text_width(ho[0], ho[1]), ww)
-                if hw + extra + rw <= tw:
-                    return {"hf": hf, "hw": hw, "name": ho[0], "nf": ho[1], "when": when,
-                            "rw": rw, "big": extra == iw2}
-    # Nothing fits whole: smallest hero, 4x5 name, and clip the detail.
-    hf = HERO_FONTS[len(HERO_FONTS) - 1]
-    hw = hero_w(c, value, hf) + (2 + uw if uw > 0 else 0)
-    room = tw - hw - 6
-    return {"hf": hf, "hw": hw, "name": clip(c, short, "4x5", room), "nf": "4x5",
-            "when": clip(c, when, "4x5", room), "rw": room, "big": False}
+def draw_hero(c, value, font, x, y, col):
+    """Pressed into the page: a pale copy 1 px down-right catches the light
+    under the ink, like type bitten into thick paper."""
+    draw_face(c, value, font, x + 1, y + 1, PRESS)
+    return draw_face(c, value, font, x, y, col)
 
-def chip_row(c, r, col, icon, cnt, show_icon = True):
-    """Icon, scope pill, then what was counted in white. The counter is the
-    first thing shed, then the title drops to 4x5, then it is clipped."""
-    px = TX
-    if show_icon:
-        draw_icon(c, icon, col, TX, 0)
-        px = TX + icon_w(icon) + 3
-    c.badge(r[1], px, 0, color = ink_for(col), bg = col, font = "4x5")
-    tx = px + c.text_width(r[1], "4x5") + 4 + 3
-    cw = c.text_width(cnt, "4x5")
-    for f in ["5x7", "4x5"]:
-        for keep in [True, False]:
-            # 7 px: text_width counts no trailing column, and 5 px read as touching
-            # ("PICK-SIX TDS" against "5/5").
-            room = (TR - cw - 7 if keep else TR) - tx + 1
-            if c.text_width(r[2], f) <= room:
-                if keep:
-                    c.text(cnt, TR, 1, font = "4x5", color = DIM, align = "right")
-                c.text(r[2], tx, 0 if f == "5x7" else 1, font = f, color = INK)
+# A unit is dropped only when the title already says it (PASS YARDS 5,477).
+IMPLIED = {"YDS": ["YARD", "YDS", "-YD"], "TD": ["TD"], "REC": ["RECEPTION"],
+           "INT": ["INTERCEPTION"], "FG": ["FIELD GOALS"], "WINS": ["WINS"],
+           "PTS": ["POINTS"], "RINGS": ["RINGS"], "GAMES": ["GAMES"], "STARTS": ["STARTS"]}
+
+def implied(unit, title):
+    for w in IMPLIED.get(unit, []):
+        if w in title:
+            return True
+    return False
+
+def unit_w(c, unit, font):
+    if unit == "":
+        return 0
+    if unit.startswith("*"):
+        return 4 + c.text_width(unit[1:], font)
+    return c.text_width(unit, font)
+
+def draw_unit(c, unit, x, y, col, font):
+    if unit.startswith("*"):
+        # A 3 x 3 degree ring: no bundled face carries the glyph.
+        c.rect(x, y, x + 2, y + 2, outline = col)
+        c.text(unit[1:], x + 4, y, font = font, color = col)
+    else:
+        c.text(unit, x, y, font = font, color = col)
+
+def plan_number(c, value, unit, title):
+    """Largest face first. Under each face the unit sits beside the number
+    (5x7, then 4x5), or is dropped when the title already says it."""
+    room = NUM_R - NUM_L + 1
+    for hf in HERO_FONTS:
+        hw = hero_w(c, value, hf)
+        if hw > room:
+            continue
+        if unit == "":
+            return {"hf": hf, "hw": hw, "uf": ""}
+        for uf in ["5x7", "4x5"]:
+            if hw + 2 + unit_w(c, unit, uf) <= room:
+                return {"hf": hf, "hw": hw, "uf": uf}
+        if implied(unit, title):
+            return {"hf": hf, "hw": hw, "uf": ""}
+    print("PROBE number-fallback " + value)
+    hf = HERO_FONTS[len(HERO_FONTS) - 1]
+    return {"hf": hf, "hw": hero_w(c, value, hf), "uf": ""}
+
+def draw_number(c, r, ink):
+    """The number centred on the right page, with the scope tab (SEASON,
+    CAREER, FIRST...) under it: 23 / SEASON."""
+    p = plan_number(c, r[3], r[4], r[2])
+    hh = INKH[p["hf"]]
+    uw = unit_w(c, r[4], p["uf"]) if p["uf"] != "" else 0
+    gw = p["hw"] + (2 + uw if uw > 0 else 0)
+    x = NUM_L + (NUM_R - NUM_L + 1 - gw) // 2
+    y = 2 + (20 - hh) // 2
+    end = draw_hero(c, r[3], p["hf"], x, y, ink)
+    if uw > 0:
+        draw_unit(c, r[4], end + 2, y + hh - INKH[p["uf"]], SEPIA, p["uf"])
+    pw = c.text_width(r[1], "4x5") + 4
+    if pw > NUM_R - NUM_L + 1:
+        print("PROBE scope-wide " + r[1])
+    c.badge(r[1], NUM_L + (NUM_R - NUM_L + 1 - pw) // 2, 23, color = PAPER, bg = ink, font = "4x5")
+
+
+# Left page rows (ink tops): head 2, name 11 (6x8) / 12 (7 px faces), when 22
+# (21 in 3x7). The plate - a black picture pasted in by the fold - is
+# x 64..89, y 10..29: the other club for a head-to-head, else the chapter's
+# picture at 2x.
+PLATE_X = LP_R - 25
+PLATE_Y = 10
+HEAD_TRIES = [["5x7", True], ["4x5", True], ["5x7", False], ["4x5", False], ["3x7", True], ["3x7", False]]
+NAME_Y = {"6x8": 11, "5x7b": 12, "4x5": 13}
+
+def draw_head(c, r, ink, icon, cnt, with_icon):
+    """What was counted (after the chapter's picture when the plate is not
+    drawn), then the folio. The folio goes first, then the picture, before
+    the title shrinks to 4x5 and then 3x7."""
+    zone = LP_R - LP_L + 1
+    iw = icon_w(icon) + 3
+    pick = None
+    for t in (HEAD_TRIES if with_icon else [["5x7", False], ["4x5", False], ["3x7", False]]):
+        w = (iw if t[1] else 0) + c.text_width(r[2], t[0])
+        if w <= zone:
+            pick = [t[1], t[0], w]
+            break
+    if pick == None:
+        print("PROBE head-clipped " + r[2])
+        pick = [False, "3x7", zone]
+    x = LP_L
+    if pick[0]:
+        draw_icon(c, icon, ink, x, 2)
+        x += iw
+    ty = 3 if pick[1] == "4x5" else 2
+    c.text(clip(c, r[2], pick[1], LP_R - x + 1), x, ty, font = pick[1], color = INK)
+    if pick[2] + 6 + c.text_width(cnt, "4x5") <= zone:
+        c.text(cnt, LP_R, 3, font = "4x5", color = SEPIA, align = "right")
+
+def fit_name(c, r, room):
+    for t in [[r[5], "6x8"], [r[6], "6x8"], [r[5], "5x7b"], [r[6], "5x7b"], [r[6], "4x5"]]:
+        if c.text_width(t[0], t[1]) <= room:
+            return t
+    return None
+
+def fit_when(c, when, room):
+    for f in ["4x5", "3x7"]:
+        if c.text_width(when, f) <= room:
+            return [when, f]
+    return None
+
+def draw_when(c, when, f, alt, show_alt, ink, room):
+    """The when line, or - every other lap - how long the record has stood,
+    whenever that fits the room the when line already had."""
+    if show_alt and alt != "":
+        lab = alt.split(" ", 1)[0]
+        yrs = alt.split(" ", 1)[1]
+        for af in ["4x5", "3x7"]:
+            gap = 4 if af == "4x5" else 3
+            if c.text_width(lab, af) + gap + c.text_width(yrs, af) <= room:
+                ay = 22 if af == "4x5" else 21
+                c.text(lab, LP_L, ay, font = af, color = SEPIA)
+                c.text(yrs, LP_L + c.text_width(lab, af) + gap, ay, font = af, color = ink)
                 return
-    c.text(clip(c, r[2], "4x5", TR - tx + 1), tx, 1, font = "4x5", color = INK)
+    c.text(when, LP_L, 22 if f == "4x5" else 21, font = f, color = SEPIA)
+
+def draw_plate(c, col, opp, icon):
+    c.rect(PLATE_X, PLATE_Y, PLATE_X + 25, PLATE_Y + 19, fill = "black", outline = col)
+    if opp != "":
+        c.image(VS_LOGO[opp], PLATE_X + 1, PLATE_Y + 1)
+    else:
+        draw_icon2(c, icon, col, PLATE_X + 13 - icon_w(icon), PLATE_Y + 3)
+
+def plan_left(c, r, ex):
+    """Graphics first: the plate is tried with every holder form before any
+    form is tried without it. A head-to-head tries the plate with the VS,
+    then without it; when neither fits, the plain when line (which names
+    the other club in words) replaces it."""
+    opp = ex.get("opp", "")
+    tries = []
+    if opp in VS_LOGO:
+        tries.append(["opp", PLATE_X - 3 - c.text_width("VS", "4x5") - 4, ex["when"]])
+        tries.append(["opp", PLATE_X - 4, ex["when"]])
+    else:
+        tries.append(["icon", PLATE_X - 4, ex.get("when", r[7])])
+    tries.append(["", LP_R, r[7]])
+    for i in range(len(tries)):
+        t = tries[i]
+        room = t[1] - LP_L + 1
+        nm = fit_name(c, r, room)
+        wh = fit_when(c, t[2], room)
+        if nm != None and wh != None:
+            vs = t[0] == "opp" and i == 0
+            if opp in VS_LOGO and t[0] == "":
+                print("PROBE opp-dropped " + r[3])
+            return {"plate": t[0], "vs": vs, "room": room, "name": nm, "when": wh}
+    print("PROBE left-clipped " + r[6] + " / " + r[7])
+    room = LP_R - LP_L + 1
+    return {"plate": "", "vs": False, "room": room,
+            "name": [clip(c, r[6], "4x5", room), "4x5"], "when": [clip(c, r[7], "3x7", room), "3x7"]}
 
 def record(c, ctx):
     book = chapter_list(ctx)
@@ -535,61 +660,22 @@ def record(c, ctx):
     r = book[idx]
     ch = CHAPTER[r[0]]
     col = ch[0]
-    c.fill("black")
-
-    # Identity: the holder's club, closed off by the chapter's rail.
-    c.image(LOGO.get(r[8], "NFL.png"), LOGO_X, LOGO_Y)
-    c.rect(RAIL_X, 0, RAIL_X + 1, 31, fill = col)
-
+    ink = color.dim(col, 45)
     ex = EXTRA.get(r[3] + "|" + r[2], {})
     icon = ex.get("icon", ch[1])
 
-    # A head-to-head record shows the other club as its 24 x 18 logo at the
-    # right edge, under a small VS, and the text block ends 4 px before it.
-    # y 14 leaves a 1 px row of black between the VS and the logo's top.
-    right = TR
-    when = ex.get("when", r[7])
-    alt = stands(r, ctx.now.year)
-    opp = ex.get("opp", "")
-    if opp in VS_LOGO:
-        ox = TR - 23
-        c.image(VS_LOGO[opp], ox, 14)
-        c.text("VS", ox + 12, 8, font = "4x5", color = DIM, align = "center")
-        right = ox - 4
+    draw_spread(c, col)
 
-    # When there is room, the icon moves out of the chip row and into the gap
-    # between hero and holder at 2x; otherwise it stays 1x in the chip row.
-    # The "stands" line never costs the page anything: the layout sized for
-    # it is used only when it matches the one sized for the detail alone.
-    p = plan_body(c, r, when, right, icon)
-    if alt != "":
-        pa = plan_body(c, r, when, right, icon, alt)
-        if pa["hf"] == p["hf"] and pa["name"] == p["name"] and pa["nf"] == p["nf"] and pa["big"] == p["big"]:
-            p = pa
-    gap_l = TX + p["hw"] + 5
-    gap_r = right - p["rw"] - 5
-    big = p["big"]
-    chip_row(c, r, col, icon, str(idx + 1) + "/" + str(n), not big)
-    if big:
-        draw_icon2(c, icon, col, (gap_l + gap_r + 1) // 2 - icon_w(icon), 12)
+    # Right page: the holder's club on the bookmark, the number beside it.
+    draw_ribbon(c, RIB_X, 42, 26, LOGO.get(r[8], "NFL.png"), col)
+    draw_number(c, r, ink)
 
-    # Body y 9..28: gold hero left, holder right-aligned.
-    hh = INKH[p["hf"]]
-    hy = 9 + (20 - hh) // 2
-    end = draw_hero(c, r[3], p["hf"], TX, hy, GOLD)
-    if r[4] != "":
-        draw_unit(c, r[4], end + 2, hy + hh - 7, color.dim(GOLD, 70))
-
-    nh = INKH[p["nf"]]
-    block = nh + 3 + 5
-    ny = 9 + (20 - block) // 2
-    c.text(p["name"], right, ny, font = p["nf"], color = INK, align = "right")
-    # Every other lap through the book, the detail line says how long the
-    # record has stood - what a fan says out loud.
-    wy = ny + nh + 3
-    if alt != "" and (k // n) % 2 == 1 and c.text_width(alt, "4x5") <= p["rw"]:
-        yrs = alt.split(" ", 1)[1]
-        c.text(yrs, right, wy, font = "4x5", color = color.dim(GOLD, 80), align = "right")
-        c.text(alt.split(" ", 1)[0], right - c.text_width(yrs, "4x5") - 4, wy, font = "4x5", color = DIM, align = "right")
-    else:
-        c.text(p["when"], right, wy, font = "4x5", color = DIM, align = "right")
+    # Left page: head row, then holder and when beside the plate.
+    p = plan_left(c, r, ex)
+    draw_head(c, r, ink, icon, str(idx + 1) + "/" + str(n), p["plate"] == "")
+    if p["plate"] != "":
+        draw_plate(c, col, ex.get("opp", "") if p["plate"] == "opp" else "", icon)
+    if p["vs"]:
+        c.text("VS", PLATE_X - 3, 18, font = "4x5", color = SEPIA, align = "right")
+    c.text(p["name"][0], LP_L, NAME_Y[p["name"][1]], font = p["name"][1], color = INK)
+    draw_when(c, p["when"][0], p["when"][1], stands(r, ctx.now.year), (k // n) % 2 == 1, ink, p["room"])
