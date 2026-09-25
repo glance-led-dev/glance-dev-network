@@ -1,0 +1,205 @@
+gdn: 1
+id: college-stadium-gameday
+version: 0.1.0
+name: College Stadium Gameday
+author: glance-led-dev
+description: The home stadiums of college football, drawn in pixel art - the nickname, capacity, the year it opened and the gameday stories that make it loud. For 58 FBS programs. No network needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 120 s: each refresh shows the next gameday story. With ALL SCHOOLS the
+# school changes every 20 minutes so both pages show the same one.
+refresh: 120
+
+pages: [stadium, gameday]
+
+# School logos, 40 x 24 pixel art, named by ESPN abbreviation.
+assets:
+  - MICH.png
+  - PSU.png
+  - OSU.png
+  - TAMU.png
+  - LSU.png
+  - TENN.png
+  - ALA.png
+  - TEX.png
+  - UGA.png
+  - USC.png
+  - NEB.png
+  - FLA.png
+  - AUB.png
+  - OU.png
+  - CLEM.png
+  - ND.png
+  - WIS.png
+  - ORE.png
+  - WASH.png
+  - IOWA.png
+  - MSU.png
+  - FSU.png
+  - MIA.png
+  - MISS.png
+  - MSST.png
+  - ARK.png
+  - SC.png
+  - UK.png
+  - TTU.png
+  - BAY.png
+  - KSU.png
+  - WVU.png
+  - UTAH.png
+  - BYU.png
+  - ASU.png
+  - STAN.png
+  - CAL.png
+  - UCLA.png
+  - VT.png
+  - UNC.png
+  - SYR.png
+  - ARMY.png
+  - NAVY.png
+  - BOIS.png
+  - MINN.png
+  - ILL.png
+  - RUTG.png
+  - DUKE.png
+  - GT.png
+  - PITT.png
+  - ISU.png
+  - IU.png
+  - COLO.png
+  - TCU.png
+  - MIZ.png
+  - OKST.png
+  - PUR.png
+  - AFA.png
+
+inputs:
+  - key: school
+    type: choice
+    app_input_type: dropdown
+    label: School
+    default: "ALL SCHOOLS"
+    help: Pick a school to show its stadium and gameday stories, or ALL SCHOOLS to tour a new stadium every 20 minutes.
+    choices:
+      - "ALL SCHOOLS"
+      - "AIR FORCE"
+      - "ALABAMA"
+      - "ARIZONA STATE"
+      - "ARKANSAS"
+      - "ARMY"
+      - "AUBURN"
+      - "BAYLOR"
+      - "BOISE STATE"
+      - "BYU"
+      - "CALIFORNIA"
+      - "CLEMSON"
+      - "COLORADO"
+      - "DUKE"
+      - "FLORIDA"
+      - "FLORIDA STATE"
+      - "GEORGIA"
+      - "GEORGIA TECH"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "IOWA STATE"
+      - "KANSAS STATE"
+      - "KENTUCKY"
+      - "LSU"
+      - "MIAMI"
+      - "MICHIGAN"
+      - "MICHIGAN STATE"
+      - "MINNESOTA"
+      - "MISSISSIPPI STATE"
+      - "MISSOURI"
+      - "NAVY"
+      - "NEBRASKA"
+      - "NORTH CAROLINA"
+      - "NOTRE DAME"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OLE MISS"
+      - "OREGON"
+      - "PENN STATE"
+      - "PITTSBURGH"
+      - "PURDUE"
+      - "RUTGERS"
+      - "SOUTH CAROLINA"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "TEXAS TECH"
+      - "UCLA"
+      - "USC"
+      - "UTAH"
+      - "VIRGINIA TECH"
+      - "WASHINGTON"
+      - "WEST VIRGINIA"
+      - "WISCONSIN"
+    options:
+      - "ALL SCHOOLS"
+      - "AIR FORCE"
+      - "ALABAMA"
+      - "ARIZONA STATE"
+      - "ARKANSAS"
+      - "ARMY"
+      - "AUBURN"
+      - "BAYLOR"
+      - "BOISE STATE"
+      - "BYU"
+      - "CALIFORNIA"
+      - "CLEMSON"
+      - "COLORADO"
+      - "DUKE"
+      - "FLORIDA"
+      - "FLORIDA STATE"
+      - "GEORGIA"
+      - "GEORGIA TECH"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "IOWA STATE"
+      - "KANSAS STATE"
+      - "KENTUCKY"
+      - "LSU"
+      - "MIAMI"
+      - "MICHIGAN"
+      - "MICHIGAN STATE"
+      - "MINNESOTA"
+      - "MISSISSIPPI STATE"
+      - "MISSOURI"
+      - "NAVY"
+      - "NEBRASKA"
+      - "NORTH CAROLINA"
+      - "NOTRE DAME"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OLE MISS"
+      - "OREGON"
+      - "PENN STATE"
+      - "PITTSBURGH"
+      - "PURDUE"
+      - "RUTGERS"
+      - "SOUTH CAROLINA"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "TEXAS TECH"
+      - "UCLA"
+      - "USC"
+      - "UTAH"
+      - "VIRGINIA TECH"
+      - "WASHINGTON"
+      - "WEST VIRGINIA"
+      - "WISCONSIN"
