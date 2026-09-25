@@ -11,7 +11,7 @@ width: 192
 height: 32
 # 60 s because the tradition page shows a new story each minute. Nothing is
 # fetched - the data is baked into app.star.
-refresh: 900
+refresh: 60
 
 pages: [legacy, tradition]
 
@@ -23,38 +23,24 @@ assets:
   - UGA.png
   - FLA.png
   - LSU.png
-  - TENN.png
   - TEX.png
   - OU.png
-  - TAMU.png
   - MISS.png
-  - ARK.png
-  - SC.png
   - MICH.png
   - OSU.png
-  - PSU.png
   - NEB.png
   - USC.png
   - ORE.png
   - WASH.png
   - UCLA.png
   - MINN.png
-  - IU.png
   - WIS.png
   - CLEM.png
   - FSU.png
   - MIA.png
-  - VT.png
-  - STAN.png
-  - GT.png
-  - PITT.png
-  - SYR.png
   - COLO.png
   - BYU.png
-  - TCU.png
-  - TTU.png
   - ND.png
-  - BOIS.png
   - ARMY.png
   - NAVY.png
 # The same schools at 24 x 18, authored for the banner (never scaled at
