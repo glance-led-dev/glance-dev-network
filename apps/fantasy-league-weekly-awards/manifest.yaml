@@ -1,0 +1,93 @@
+gdn: 1
+id: fantasy-league-weekly-awards
+version: 0.1.0
+name: Fantasy Weekly Awards
+author: glance-led-dev
+description: Your ESPN or Sleeper fantasy league's awards for the week just played, on three pages - the podium (top scorer, player of the week), the games (closest, unluckiest, biggest blowout) and the shame (lowest score, points left on the bench) - each with its own pixel-art trophy, your own award first and a strip showing how your week went. Enter your league ID and team name.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 300 s: the league ID and team are free text (the under-5-minute rule
+# allows only dropdown / checkbox / selection inputs). Last week's results
+# barely move; each page shows its next award every refresh, and in week 1
+# the SO FAR awards follow the live scores.
+refresh: 300
+
+assets:
+  - ARI.png
+  - ATL.png
+  - BAL.png
+  - BUF.png
+  - CAR.png
+  - CHI.png
+  - CIN.png
+  - CLE.png
+  - DAL.png
+  - DEN.png
+  - DET.png
+  - GB.png
+  - HOU.png
+  - IND.png
+  - JAX.png
+  - KC.png
+  - LAC.png
+  - LAR.png
+  - LV.png
+  - MIA.png
+  - MIN.png
+  - NE.png
+  - NFL.png
+  - NO.png
+  - NYG.png
+  - NYJ.png
+  - PHI.png
+  - PIT.png
+  - SEA.png
+  - SF.png
+  - TB.png
+  - TEN.png
+  - WSH.png
+
+pages: [podium, games, shame]
+
+inputs:
+  - key: league
+    type: string
+    app_input_type: free-text
+    label: League ID
+    default: ""
+    help: "The number in your league's web address - ESPN (leagueId=...) or Sleeper (sleeper.com/leagues/...). Leave blank for a demo."
+  - key: team
+    type: string
+    app_input_type: free-text
+    label: Your team
+    default: ""
+    help: "Your team name or your manager / username. Part of it is fine, any case. Your team gets a YOU tag when it wins an award."
+  - key: platform
+    type: choice
+    app_input_type: dropdown
+    label: Platform
+    default: "AUTO"
+    help: "AUTO works it out from the ID (Sleeper IDs are 18-19 digits). Yahoo leagues are not supported - Yahoo needs a sign-in a panel can't do."
+    choices:
+      - "AUTO"
+      - "ESPN"
+      - "SLEEPER"
+    options:
+      - "AUTO"
+      - "ESPN"
+      - "SLEEPER"
+  - key: espns2
+    type: string
+    app_input_type: api-key
+    label: ESPN espn_s2 cookie (private leagues only)
+    default: ""
+    help: "Only for PRIVATE ESPN leagues. In a desktop browser logged into ESPN, open your league, then DevTools > Application > Cookies > espn.com and copy espn_s2."
+  - key: swid
+    type: string
+    app_input_type: api-key
+    label: ESPN SWID cookie (private leagues only)
+    default: ""
+    help: "Only for PRIVATE ESPN leagues. From the same cookie list, copy SWID (the value in curly braces)."
