@@ -3,32 +3,41 @@
 # Your school's head coach, live from ESPN, plus the longest-serving coaches
 # in major college football.
 #
-#   coach    Who is running your program right now: the school logo, the
-#            coach's name, his record at the school ('212-128 AT IOWA'), a
-#            pixel-art coach in the school's kit and a tenure strip - one
-#            pennant per season, this season lit. A new hire gets a sky NEW
-#            HIRE chip and 'REPLACES MOORE' - the carousel story.
-#   resume   This season's record as the hero, the AP rank as a gold badge
-#            with last week's move as a green/red arrow, the conference
-#            standing, and a wooden trophy case: one cup per championship the
+#   coach    THE SIDELINE. A big pixel-art coach walks the chalk line in
+#            the middle of the panel, in the school's kit, headset on and
+#            clipboard out. Over the name hangs a small school banner (the
+#            nickname, 'CRIMSON TIDE'); under it the tenure strip - one
+#            pennant per season, this one lit. To his right a stadium
+#            scoreboard on legs shows the logo and his record at the school
+#            in amber bulbs ('212-128', AT IOWA). A new hire's board reads
+#            NEW HIRE over this season's record, and his strip says who he
+#            replaced ('REPLACES MOORE') - the carousel story.
+#   resume   The same sideline: this season on a scoreboard - a header in
+#            the school colour ('2026 SEASON  1ST IN SEC'), the record in
+#            bulbs (green while unbeaten, red once the losses lead by two),
+#            the AP rank as a gold badge with last week's move as an arrow -
+#            and beside it a wooden trophy case: one cup per championship the
 #            coach has won as a head coach, in the colour of its level (gold
 #            FBS, silver FCS, bronze D2/D3/NAIA, silver Lombardis for Bill
-#            Belichick's six Super Bowls), each year on a plaque below.
+#            Belichick's six Super Bowls), each year on a plaque below. No
+#            titles: the coach walks the sideline beside the board instead.
 #   tenure   The longest-tenured FBS head coaches, three at a time: logo,
 #            rank (T-5 for ties), years in charge, surname, first season and
 #            a bar scaled to Ferentz's 28 years; gold for the leader.
 #
-# DESIGN. Graphics first, in the sideline's own vernacular. The coach is a
-# picture - visor in the school's second colour, polo in its first (so
-# crimson Alabama in a white visor never reads as red Utah), headset,
-# clipboard - and his collar is the season's mood: red on the hot seat, gold
-# while unbeaten. The program is its logo. Tenure is counted in pennants,
-# titles stand in a lit trophy case, rank is a badge with an arrow, and the
-# tenure ladder is a bar chart of years. The words left are the ones only
-# words can say: the name, the records, the years. One bold thing per page:
-# the coach figure, the trophy case, the tenure bars. Black ground; school
-# colours are lifted when ESPN's are too dark for an LED (Alabama crimson,
-# navy blues).
+# DESIGN. Archetype: SIDELINE - a scene, not a logo-and-text row. A chalk
+# line and striped turf run the full width of both school pages; the coach
+# (28 x 28, the biggest thing on the panel) walks it in the middle, and the
+# words live on the things that stand on a sideline: the school banner
+# overhead, the scoreboard, the pennants. The logo is never a left column -
+# it is lit on the scoreboard at 20 x 12. The coach is a picture - visor in
+# the school's second colour, polo in its first (so crimson Alabama in a
+# white visor never reads as red Utah) - and his collar is the season's
+# mood: red on the hot seat, gold while unbeaten. Records are amber
+# scoreboard bulbs, titles stand in a lit trophy case, the tenure ladder is
+# a bar chart of years. Failure screens stay in the set: a dark scoreboard
+# with the message and a flat grey coach on a dimmed sideline. Black
+# ground; school colours are lifted when ESPN's are too dark for an LED.
 #
 # DATA. Who the coach is, the season record and the AP rank are always live
 # (ESPN core API for the coach and the AP poll, ESPN site API for record,
@@ -41,15 +50,15 @@
 # Ferentz's first Iowa season was 1999" never goes stale, and the id check
 # means it is only used while that coach is still the one ESPN lists. A coach
 # not in the tables (a hire after this was written) falls back to ESPN's own
-# seasons, walked back year by year within the request budget, and shows
-# SINCE rather than a record.
+# seasons, walked back year by year within the request budget, and his
+# scoreboard shows this season's record rather than a career one.
 #
 # Budget (8 uncached requests a render). Studio and previews render all three
 # pages in ONE run and the cap is shared, so the pages are budgeted together:
 # team 1 + coach lookup COACH_BUDGET (3) + AP poll 1 + tenure 3 = 8. The coach
 # lookup is the coach list (+ the coach's own record and one step of the walk
 # for an unknown coach) - enough to tell a new or interim hire from a
-# returning one. Both school pages use the same budget, so they agree on SINCE.
+# returning one. Both school pages use the same budget, so they agree on YEAR N.
 
 TEAM_URL = "https://site.web.api.espn.com/apis/site/v2/sports/football/college-football/teams/"
 CORE = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football/"
@@ -699,7 +708,7 @@ TITLE_SHORT = {"NATL": "NATL", "SB": "SB", "FCS": "FCS", "D2": "D-II", "D3": "D-
 # against the coach's per-season record table (Wikipedia, from the school
 # media guides); partial seasons were split by hand. Coaches whose credit
 # the sources disagree on are left out (Fickell and the 2022 Guaranteed
-# Rate Bowl), and they show SINCE instead. The live season is added on top
+# Rate Bowl), and their scoreboard shows this season instead. The live season is added on top
 # only while it is the season right after RECORD_THROUGH.
 RECORD_THROUGH = 2025
 RECORD = {
@@ -888,37 +897,42 @@ TENURE_TEAM = {
 }
 
 # --------------------------------------------------------------- pixel art
-# The coach, 22 x 24: V visor (the school's second colour, so crimson
-# Alabama wears a white visor and does not look like red Utah), v brim
-# shade, S skin, s skin shade, H headset band/cup, M mic, P polo (school
-# colour), p polo shade, L collar and crest (the momentum trim: red once the
-# losses lead by two, gold while unbeaten), C clipboard, W paper, K khakis,
-# k khaki shade, B shoes.
+# The coach walking the sideline, 28 x 28, facing the scoreboard: V visor
+# (the school's second colour, so crimson Alabama wears a white visor and
+# does not look like red Utah), v brim shade, S skin, s skin shade, E eyes,
+# H headset band/cup, M mic boom, P polo (school colour), p polo shade, L
+# collar and placket (the momentum trim: red once the losses lead by two,
+# gold while unbeaten), C clipboard, W paper, w play lines, K khakis, k
+# khaki shade, B shoes. Mid-stride: back foot left, front foot right.
 COACH = """
-......VVVVVV..........
-.....VVVVVVVV.........
-....HVVVVVVVVvvvv.....
-....HSSSSSSSS.........
-...HHSSSSSSSSS........
-...HHSS.SS.SSS........
-....HSSSSSSSSS........
-....HMSSSSSSSs........
-.....MMSSsSSs.........
-.......SSSSS..........
-.....PPLLLLLLPP.......
-....PPPPLPPPPPPPP.....
-...PPPPPLPPPPPPPPPP...
-...PPpPPPPPPPPPCCCCC..
-...PPpPPPPPPPPCWWWWWC.
-...SSpPPPPPPPPCWWWWWC.
-...SS.PPPPPPPPCWSWWWC.
-......PPPPPPPPSCWWWWC.
-......KKKKKKKK.CCCCC..
-......KKKKkKKK........
-......KKK..kKK........
-......KKK..kKK........
-.....BBBB..BBBB.......
-.....BBBB..BBBBB......
+..........VVVVVV............
+.........VVVVVVVV...........
+........VVVVVVVVVV..........
+........VVVVVVVVVVvvvvv.....
+.......HHSSSSSSSSS..........
+.......HHSSSSSSSSSS.........
+.......HHSSSSSESSSES........
+.......HHSSSSSSSSSSS........
+........HSSSSSSSSSSs........
+........MSSSSSSSsSs.........
+.........MMMMSSSSs..........
+............SSSS............
+.........PPLLLLLPP..........
+........PPPPPPLPPPPP........
+.......PPPPPPPLPPPPPP.......
+......PPpPPPPPPPPPPPPP......
+......PPpPPPPPPPPPPPPPP..HH.
+......PPpPPPPPPPPPPPPSCCHHCC
+......SS.PPPPPPPPPPP.SCWWWWC
+......SS.PPPPPPPPPPP..CWwwWC
+.........PPPPPPPPPP...CWWWWC
+.........KKKKKKKKKK...CWwwWC
+........KKKKKkKKKKK...CWWWWC
+.......KKKK...KKKKK...CCCCCC
+......KKKK.....KKKKK........
+.....KKKK.......KKKK........
+....KKKK.........KKKK.......
+...BBBBB.........BBBBBB.....
 """
 
 # 7 x 9 trophies: a cup (college titles) and a Lombardi (the NFL's).
@@ -944,15 +958,13 @@ LOMBARDI = """
 ..XXX..
 .XXXXX.
 """
-# 5 x 7 pennant, one per season in the tenure strip.
+# 4 x 5 pennant, one per season in the tenure strip under the name.
 PENNANT = """
-X....
-XXX..
-XXXXX
-XXX..
-X....
-X....
-X....
+X...
+XXX.
+XXXX
+XXX.
+X...
 """
 # 9 x 9 stopwatch for the tenure page.
 WATCH = """
@@ -1058,9 +1070,6 @@ def pill(c, word, fill, x, y):
 
 def pill_w(c, word):
     return c.text_width(word, "4x5") + 4
-
-def rail(c, color):
-    c.rect(0, 0, 1, 31, fill = color)
 
 # ESPN's standing names that do not fit the chip row ('1ST IN MOUNTAIN WEST'
 # clipped to '1ST IN MOUNTAIN'), shortened the way fans write them.
@@ -1288,40 +1297,63 @@ def career_record(co, tm):
     return str(base[0] + v[0]) + "-" + str(base[1] + v[1])
 
 # ------------------------------------------------------------ shared chrome
-def school_mark(c, sch, tm):
-    """The 40 x 24 logo at x 6..45, closed off at x 48..49 by a two-tone bar."""
-    c.image(LOGO_L[sch["abbr"]], 6, 4)
-    c.rect(48, 0, 48, 31, fill = tm["color"])
-    c.rect(49, 0, 49, 31, fill = tm["alt"] if tm["alt"] != tm["color"] else DIM)
+# The sideline: a chalk boundary line at y 30 and turf at y 31 under every
+# school page, mowed in 16 px stripes. Text stops at y 28, a row above it.
+CHALK = "#C8D0DC"
+TURF = "#1E7A38"
+TURF2 = "#2C9A4A"
+STEEL = "#5A6478"   # scoreboard frame
+POST = "#3A4150"    # scoreboard legs, headset
+
+def sideline(c, dim = False):
+    c.rect(0, 30, 191, 30, fill = color.dim(CHALK, 45) if dim else CHALK)
+    for i in range(12):
+        col = TURF if i % 2 == 0 else TURF2
+        c.rect(i * 16, 31, i * 16 + 15, 31, fill = color.dim(col, 45) if dim else col)
+
+def scoreboard(c, x0, x1, y1, frame = STEEL):
+    """A stadium scoreboard: framed box y 0..y1 standing on two legs that
+    reach the chalk. The inside is left black for the caller."""
+    c.rect(x0, 0, x1, y1, outline = frame)
+    for lx in [x0 + 8, x1 - 9]:
+        c.rect(lx, y1 + 1, lx + 1, 29, fill = POST)
 
 def coach_sprite(c, x, y, tm, rec):
     polo = tm["color"]
     visor = tm["alt"] if tm["alt"] != polo else INK
     state = rec_color(rec)
     trim = RED if state == RED else (GOLD if state == GOOD else visor)
-    leg = {"V": visor, "v": color.dim(visor, 60), "S": "#E8B48A", "s": "#B9825C", "H": "#3A4150",
-           "M": "#9AA3B2", "P": polo, "p": color.dim(polo, 60), "L": trim, "C": "#8B5A2B",
-           "W": "#F4F7FF", "K": "#C8B48A", "k": "#9C8A64", "B": "#2A2E38"}
+    leg = {"V": visor, "v": color.dim(visor, 60), "S": "#E8B48A", "s": "#B9825C", "E": "#2A1A10",
+           "H": POST, "M": "#9AA3B2", "P": polo, "p": color.dim(polo, 60), "L": trim,
+           "C": "#8B5A2B", "W": "#F4F7FF", "w": "#6E7A94", "K": "#C8B48A", "k": "#9C8A64", "B": "#2A2E38"}
     c.sprite(COACH, x, y, legend = leg)
 
-def fail_screen(c, head, sub):
+def ghost_coach(c, x, col):
+    """The empty-sideline figure for the failure screens: one flat colour."""
+    leg = {}
+    for ch in "VvSsHMPpLCWwKkB".elems():
+        leg[ch] = col
+    leg["E"] = None
+    c.sprite(COACH, x, 2, legend = leg)
+
+def note_screen(c, head, sub, hcol, frame, ghost):
+    """Failure and empty screens, in the page's own set: a dark scoreboard
+    carries the message, a flat grey coach stands beside it."""
     c.fill("black")
-    rail(c, OFFLINE)
-    c.sprite(CUP, 12, 11, legend = {"X": DIM})
-    hf = fit(c, head, ["6x8", "5x7", "4x5"], 160)
-    c.text(hf[1], 108, 8, font = hf[0], color = AMBER, align = "center")
-    sf = fit(c, sub, ["4x5"], 160)
-    c.text(sf[1], 108, 21, font = sf[0], color = DIM, align = "center")
+    sideline(c, True)
+    scoreboard(c, 6, 150, 23, frame)
+    hf = fit(c, head, ["6x8", "5x7", "4x5"], 136)
+    c.text(hf[1], 78, 4 + (8 - INKH[hf[0]]) // 2, font = hf[0], color = hcol, align = "center")
+    sf = fit(c, sub, ["4x5"], 136)
+    c.text(sf[1], 78, 15, font = sf[0], color = DIM, align = "center")
+    ghost_coach(c, 158, ghost)
+
+def fail_screen(c, head, sub):
+    note_screen(c, head, sub, AMBER, OFFLINE, OFFLINE)
 
 def quiet_screen(c, sch, head, sub):
     """No coach on file is an answer, not an outage: green and calm."""
-    c.fill("black")
-    rail(c, GOOD)
-    c.image(LOGO_L[sch["abbr"]], 6, 4)
-    hf = fit(c, head, ["6x8", "5x7", "4x5"], 128)
-    c.text(hf[1], 118, 8, font = hf[0], color = GOOD, align = "center")
-    sf = fit(c, sub, ["4x5"], 128)
-    c.text(sf[1], 118, 21, font = sf[0], color = DIM, align = "center")
+    note_screen(c, head, sub, GOOD, STEEL, "#2A3040")
 
 def load_school(c, ctx, budget):
     """Both school pages share this: -> [sch, tm, co] or None after drawing
@@ -1334,18 +1366,33 @@ def load_school(c, ctx, budget):
     co = fetch_coach(sch, season_now(ctx), budget)
     if not co["ok"]:
         if co["why"] == "none":
-            quiet_screen(c, sch, "NO HEAD COACH ON FILE", "ESPN LISTS NONE FOR " + sch["label"])
+            quiet_screen(c, sch, "NO HEAD COACH ON FILE", "ESPN LISTS NONE FOR " + sch["abbr"])
         else:
             fail_screen(c, "ESPN OFFLINE", "CHECKING AGAIN SOON")
         return None
     return [sch, tm, co]
 
-# Text zone between the team bar and the coach sprite, whose leftmost lit
-# columns (headset, elbow) are x 167 when drawn at x 164. TR 165 left one
-# pixel and 'JEFF LEBBY' read as touching the headset; 3 px reads as air.
-TX = 53
-TR = 163
-TW = TR - TX + 1
+def banner(c, word, fill, x, y, maxw):
+    """The school banner overhead: a cloth in the school colour with a
+    swallowtail cut into its right end."""
+    t = clip(c, word, "4x5", maxw - 7)
+    if t == "":
+        return
+    x1 = x + 2 + c.text_width(t, "4x5") + 4
+    c.rect(x, y, x1, y + 6, fill = fill)
+    c.rect(x1, y + 2, x1, y + 4, fill = "black")
+    c.pixel(x1 - 1, y + 3, "black")
+    c.text(t, x + 2, y + 1, font = "4x5", color = ink_for(fill))
+
+# Page 1 zones. Name block x TX..NR under the banner; the coach sprite at
+# CX (his leftmost lit column, the back shoe, is CX + 3), so NR leaves
+# 4 px of air; the scoreboard x BX0..BX1.
+TX = 6
+NR = 76
+TW = NR - TX + 1
+CX = 78
+BX0 = 111
+BX1 = 185
 
 # --------------------------------------------------------------- page: coach
 def coach(c, ctx):
@@ -1354,34 +1401,22 @@ def coach(c, ctx):
     if d == None:
         return
     sch, tm, co = d[0], d[1], d[2]
+    season_rec = co_record(tm)
     c.fill("black")
-    school_mark(c, sch, tm)
-    coach_sprite(c, 164, 8, tm, co_record(tm))
+    sideline(c)
+    coach_sprite(c, CX, 2, tm, season_rec)
 
     year = co["season"] - co["since"] + 1
     new = year <= 1
-    since = "SINCE " + str(co["since"])
-    sw = c.text_width(since, "4x5")
 
-    # Chip row. New hire: the sky NEW HIRE pill. Otherwise the fan's
-    # question - his record here, '212-128 AT IOWA' - with SINCE only when
-    # it still fits ('212-128 AT IOWA' is 67 px, so Ferentz drops it; his
-    # YEAR 28 below says the same). No verified record: the HEAD COACH pill.
-    if new:
-        pill(c, "NEW HIRE", SKY, TX, 0)
-    else:
-        car = career_record(co, tm)
-        if car != "":
-            tail = " AT " + sch["abbr"]
-            c.text(car, TX, 1, font = "4x5", color = INK)
-            x = TX + c.text_width(car, "4x5")
-            c.text(tail, x, 1, font = "4x5", color = DIM)
-            if x + c.text_width(tail, "4x5") + 5 <= TR - sw:
-                c.text(since, TR, 1, font = "4x5", color = DIM, align = "right")
-        else:
-            pw = pill(c, "HEAD COACH", tm["color"], TX, 0)
-            if TX + pw + 3 <= TR - sw:
-                c.text(since, TR, 1, font = "4x5", color = DIM, align = "right")
+    # Banner overhead: the nickname ('CRIMSON TIDE'), else the school, else
+    # its abbreviation - whichever is first to fit whole.
+    word = sch["abbr"]
+    for w in [tm["nick"], sch["label"]]:
+        if w != "" and c.text_width(w, "4x5") <= TW - 7:
+            word = w
+            break
+    banner(c, word, tm["color"], TX, 0, TW)
 
     # Hero y 8..22: the full name when it fits big, else the surname big.
     full = (co["first"] + " " + co["last"]).strip()
@@ -1395,35 +1430,62 @@ def coach(c, ctx):
         pick = [clip(c, co["last"], "4x5", TW), "4x5"]
     draw_name(c, pick[0], TX, 8 + (15 - INKH[pick[1]]) // 2, pick[1], INK)
 
-    # Strip y 25..31. A new hire: his one gold pennant and the man he
-    # replaced - the carousel story. Otherwise 'YEAR N' and one pennant per
-    # season, this one lit; a long tenure shrinks them to 2 px posts so
-    # Ferentz's 28 still fit, and the count is always in the label.
+    # The scoreboard: school logo and the record in amber bulbs. His record
+    # at the school ('212-128', captioned AT IOWA) when it is verified; a
+    # new hire's or an unverified coach's is this season's.
+    car = "" if new else career_record(co, tm)
     if new:
-        c.sprite(PENNANT, TX, 25, legend = {"X": GOLD})
-        x = TX + 9
+        digits, cap, ccol = season_rec, "NEW HIRE", SKY
+    elif car != "":
+        digits, cap, ccol = car, "AT " + sch["abbr"], DIM
+        longer = cap + " SINCE " + str(co["since"])
+        if c.text_width(longer, "4x5") <= BX1 - BX0 - 5:
+            cap = longer
+    else:
+        digits, cap, ccol = season_rec, str(co["season"]) + " SEASON", DIM
+    scoreboard(c, BX0, BX1, 23)
+    c.image(LOGO_L[sch["abbr"]], BX0 + 3, 3, w = 20, h = 12)
+    zx0 = BX0 + 26
+    zw = BX1 - 3 - zx0 + 1
+    rf = fit(c, digits, ["9x12", "8x10", "6x8", "5x7", "4x5"], zw)
+    c.text(rf[1], zx0 + zw // 2, 3 + (12 - INKH[rf[0]]) // 2, font = rf[0], color = AMBER, align = "center")
+    c.rect(BX0 + 2, 16, BX1 - 2, 16, fill = "#2A3040")
+    cf = fit(c, cap, ["4x5"], BX1 - BX0 - 5)
+    c.text(cf[1], (BX0 + BX1 + 1) // 2, 18, font = "4x5", color = ccol, align = "center")
+
+    # Strip y 24..28 under the name. A new hire: his one gold pennant and
+    # the man he replaced - the carousel story. Otherwise 'YEAR N' and one
+    # pennant per season, this one lit; a long tenure shrinks them to 2 px
+    # posts so Ferentz's 28 still fit, and the count is always in the label.
+    if new:
+        c.sprite(PENNANT, TX, 24, legend = {"X": GOLD})
+        x = TX + 7
         prev = PREV.get(co["id"], "")
-        if prev != "" and c.text_width("REPLACES " + prev, "4x5") <= TR - x + 1:
-            c.text("REPLACES", x, 26, font = "4x5", color = DIM)
-            c.text(prev, x + c.text_width("REPLACES ", "4x5"), 26, font = "4x5", color = INK)
+        if prev != "" and c.text_width("REPLACES " + prev, "4x5") <= NR - x + 1:
+            c.text("REPLACES", x, 24, font = "4x5", color = DIM)
+            c.text(prev, x + c.text_width("REPLACES ", "4x5"), 24, font = "4x5", color = INK)
+        elif prev != "" and c.text_width("AFTER " + prev, "4x5") <= NR - x + 1:
+            c.text("AFTER", x, 24, font = "4x5", color = DIM)
+            c.text(prev, x + c.text_width("AFTER ", "4x5"), 24, font = "4x5", color = INK)
         else:
-            c.text("YEAR 1", x, 26, font = "4x5", color = INK)
+            c.text("YEAR 1", x, 24, font = "4x5", color = INK)
         return
     label = "YEAR " + str(year)
-    c.text(label, TX, 26, font = "4x5", color = GOLD if year >= 10 else INK)
+    c.text(label, TX, 24, font = "4x5", color = GOLD if year >= 10 else INK)
     x0 = TX + c.text_width(label, "4x5") + 4
-    room = TR - x0 + 1
-    if year * 6 <= room:
+    room = NR - x0 + 1
+    if year * 5 - 1 <= room:
         for i in range(year):
             col = GOLD if i == year - 1 else tm["color"]
-            c.sprite(PENNANT, x0 + i * 6, 25, legend = {"X": col})
+            c.sprite(PENNANT, x0 + i * 5, 24, legend = {"X": col})
     else:
-        step = 3 if year * 3 <= room else 2
-        n = min(year, room // step)
+        step = 3 if year * 3 - 1 <= room else 2
+        n = min(year, (room + 1) // step)
         for i in range(n):
             col = GOLD if i == n - 1 else tm["color"]
-            c.rect(x0 + i * step, 25, x0 + i * step, 31, fill = col)
-            c.pixel(x0 + i * step + 1, 25, col)
+            c.rect(x0 + i * step, 24, x0 + i * step, 28, fill = col)
+            if step == 3:
+                c.pixel(x0 + i * step + 1, 25, col)
 
 # -------------------------------------------------------------- page: resume
 # The trophy case: a wooden cabinet, cups on the shelf, and each title's
@@ -1432,6 +1494,7 @@ WOOD = "#8A5A2E"
 SHELF = "#C8904E"
 GLASS = "#2E3A52"
 PLAQUE = "#9AA3B2"
+CY = 4   # the case's top edge; cups at CY + 2, shelf CY + 11, plaques CY + 13
 
 def trophy_case(c, titles, n, x1, room):
     """Draws the cabinet right-aligned to x1 inside `room` px; -> True when
@@ -1446,11 +1509,11 @@ def trophy_case(c, titles, n, x1, room):
     inner = shown * pitch - (pitch - 7)
     w = inner + 4
     x0 = x1 - w + 1
-    c.rect(x0, 8, x1, 19, outline = WOOD)
-    c.rect(x0, 19, x1, 19, fill = SHELF)
-    c.pixel(x0 + 1, 9, GLASS)
-    c.pixel(x0 + 1, 10, GLASS)
-    c.pixel(x0 + 2, 9, GLASS)
+    c.rect(x0, CY, x1, CY + 11, outline = WOOD)
+    c.rect(x0, CY + 11, x1, CY + 11, fill = SHELF)
+    c.pixel(x0 + 1, CY + 1, GLASS)
+    c.pixel(x0 + 1, CY + 2, GLASS)
+    c.pixel(x0 + 2, CY + 1, GLASS)
     tx = x0 + 2
     k = 0
     for t in titles:
@@ -1458,9 +1521,9 @@ def trophy_case(c, titles, n, x1, room):
         for yr in t[1]:
             if k >= shown:
                 break
-            c.sprite(art, tx, 10, legend = {"X": TROPHY_COLOR[t[0]]})
+            c.sprite(art, tx, CY + 2, legend = {"X": TROPHY_COLOR[t[0]]})
             if pitch == 10:
-                c.text(str(yr)[2:], tx, 21, font = "3x4", color = PLAQUE)
+                c.text(str(yr)[2:], tx, CY + 13, font = "3x4", color = PLAQUE)
             tx += pitch
             k += 1
     return pitch == 10
@@ -1472,17 +1535,9 @@ def resume(c, ctx):
         return
     sch, tm, co = d[0], d[1], d[2]
     ap = fetch_ap(sch)
+    rec = co_record(tm)
     c.fill("black")
-    school_mark(c, sch, tm)
-
-    # Chip row: the season pill, the conference standing right-aligned
-    # ('1ST IN SEC'), measured first so the pill never runs into it.
-    word = str(co["season"]) + " SEASON"
-    pw = pill_w(c, word)
-    if tm["standing"] != "":
-        sf = fit(c, tm["standing"], ["4x5"], 185 - (TX + pw + 4) + 1)
-        c.text(sf[1], 185, 1, font = "4x5", color = INK, align = "right")
-    pill(c, word, tm["color"], TX, 0)
+    sideline(c)
 
     titles = TITLES.get(co["id"], [])
     n_troph = 0
@@ -1494,52 +1549,68 @@ def resume(c, ctx):
         badge = "#" + str(ap[0]) + " AP"
         if ap[1] > 0 and ap[1] != ap[0]:
             arrow = ap[0] < ap[1]
+
+    # What stands right of the board: the trophy case (one cup per title,
+    # 8 px each when packed) or, with no titles, the coach himself.
+    if n_troph > 0:
+        limit = 185 - (n_troph * 8 + 3) - 4
+    else:
+        limit = 150
+    limit = max(limit, 96)
+
+    # This season on the scoreboard, x 6..bx1: a header in the school colour
+    # ('2026 SEASON', then the standing when it fits whole), the record in
+    # bulbs - amber, green while unbeaten, red once the losses lead by two -
+    # and the AP rank as a gold badge with last week's move as an arrow.
+    word = str(co["season"]) + " SEASON"
     side = 0
     if badge != "":
-        side = pill_w(c, badge) + 4 + (6 if arrow != None else 0)
-    if n_troph > 0:
-        side += n_troph * 8 + 3
-
-    # Record hero: W-L under a SEASON pill needs no other label. It gets
-    # what the badge and a packed trophy case leave (Belichick's six
-    # Lombardis beside '#12 AP' take 85 px), stepping down a face rather
-    # than pushing a cup off the shelf.
-    rec = co_record(tm)
-    rf = fit(c, rec, ["16x20", "10x16", "9x12", "8x10"], min(70, 185 - side - 5 - TX + 1))
-    ry = 9 if rf[0] == "16x20" else 11
-    c.text(rf[1], TX, ry, font = rf[0], color = rec_color(rec))
-    rec_end = TX + c.text_width(rf[1], rf[0])
-    rx = rec_end + 5
-
-    # AP rank: a gold '#8 AP' badge with last week's move as an arrow
-    # (green up, red down); unranked says nothing rather than 'NR'.
+        side = 3 + pill_w(c, badge) + (7 if arrow != None else 0)
+    rf = fit(c, rec, ["10x16", "9x12", "8x10"], limit - 3 - 9 - side)
+    rw = c.text_width(rf[1], rf[0])
+    hw = c.text_width(word, "4x5")
+    st = tm["standing"]
+    stw = c.text_width(st, "4x5") if st != "" else 0
+    bx1 = max(9 + rw + side + 3, 9 + hw + 3)
+    if st != "" and 9 + hw + 6 + stw + 3 <= limit:
+        bx1 = max(bx1, 9 + hw + 6 + stw + 3)
+    else:
+        st = ""
+    bx1 = min(limit, max(bx1, 70))
+    scoreboard(c, 6, bx1, 25)
+    c.rect(7, 1, bx1 - 1, 7, fill = tm["color"])
+    hink = ink_for(tm["color"])
+    c.text(word, 9, 2, font = "4x5", color = hink)
+    if st != "":
+        c.text(st, bx1 - 3, 2, font = "4x5", color = hink, align = "right")
+    rcol = rec_color(rec)
+    c.text(rf[1], 9, 9 + (15 - INKH[rf[0]]) // 2, font = rf[0], color = AMBER if rcol == INK else rcol)
+    rx = 9 + rw + 3
     if badge != "":
         pill(c, badge, GOLD, rx, 14)
         rx += pill_w(c, badge) + 2
         if arrow != None:
             c.sprite(UP if arrow else DOWN, rx, 16, legend = {"X": GOOD if arrow else RED})
-            rx += 6
-        rx += 2
 
     if n_troph == 0:
-        coach_sprite(c, 164, 8, tm, rec)
+        coach_sprite(c, (bx1 + 187) // 2 - 14, 2, tm, rec)
         return
 
     # Trophy case, right-aligned to x 185: one cup per title the COACH has
     # won as a head coach, and the credit line names him so Alabama is
     # never read as a three-time NAIA champion.
-    trophy_case(c, titles, n_troph, 185, 185 - rx + 1)
+    trophy_case(c, titles, n_troph, 185, 185 - (bx1 + 4) + 1)
     # The credit line names the top level only ('4X NATL', not the FCS
     # titles behind them); the cups show the rest in their own colours.
     level = titles[0][0]
     n_top = len(titles[0][1])
     cnt = (str(n_top) + "X " if n_top > 1 else "")
     who = co["last"]
-    room = 185 - (rec_end + 4) + 1
+    room = 185 - (bx1 + 4) + 1
     for w in [who + " " + cnt + TITLE_WORD[level], who + " " + cnt + TITLE_SHORT[level],
               cnt + TITLE_WORD[level], cnt + TITLE_SHORT[level]]:
         if c.text_width(w, "4x5") <= room:
-            c.text(w, 185, 27, font = "4x5", color = TROPHY_COLOR[level], align = "right")
+            c.text(w, 185, 23, font = "4x5", color = TROPHY_COLOR[level], align = "right")
             break
 
 # -------------------------------------------------------------- page: tenure

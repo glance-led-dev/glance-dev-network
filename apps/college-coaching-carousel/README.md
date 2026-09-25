@@ -2,26 +2,38 @@
 
 Your college football program's head coach, on a 192 x 32 Glance panel.
 
-- **coach** - the school logo, the coach's name and a pixel-art coach in the
-  school's kit: a polo in the main colour and a visor in the second colour.
-  The collar turns red once this season's losses lead by two and gold while
-  the team is unbeaten. The top line is the coach's record at the school
-  (`212-128 AT IOWA`, the verified total through 2025 plus this season). The
-  bottom line has one pennant per season at the school, with this season's in
-  gold. A first-season coach gets a NEW HIRE chip and the name of the coach
-  he replaced (`REPLACES MOORE`).
-- **resume** - this season's record as the hero (green while unbeaten, red
-  once the losses lead by two), the AP Top 25 rank as a gold badge with last
-  week's move shown as a green or red arrow, the conference standing
-  (`1ST IN MWC`) and a wooden trophy case. The case holds one cup per title
-  the coach has won as a head coach, with the year under each cup: gold for
-  FBS national titles, silver for FCS, bronze for D-II / D-III / NAIA and
-  silver Lombardis for Super Bowls. The line under the case names the coach,
-  so the titles aren't read as the school's.
+Both school pages are a sideline scene: a chalk line and striped turf run
+along the bottom, and the words sit on the things that stand there.
+
+- **coach** - a big pixel-art coach (28 x 28) walks the sideline in the middle
+  of the panel, headset on and clipboard out. He wears a polo in the school's
+  main colour and a visor in its second colour. His collar turns red once
+  this season's losses lead by two and gold while the team is unbeaten. On
+  the left, a small school banner (the nickname, `CRIMSON TIDE`) hangs over
+  the coach's name. Under the name is one pennant per season at the school,
+  with this season's in gold. On the right, a stadium scoreboard shows the
+  school logo and the coach's record at the school in amber bulbs
+  (`212-128`, captioned `AT IOWA`): the verified total through 2025 plus
+  this season. A first-season coach's board reads NEW HIRE over this
+  season's record, and his strip names the coach he replaced
+  (`REPLACES MOORE`).
+- **resume** - this season on the scoreboard. The header, in the school
+  colour, reads `2026 SEASON` and the conference standing (`1ST IN MWC`)
+  when it fits. The record is in bulbs: amber, green while unbeaten, red
+  once the losses lead by two. The AP Top 25 rank is a gold badge with last
+  week's move as a green or red arrow. Beside the board is a wooden trophy
+  case with one cup per title the coach has won as a head coach, with the
+  year under each cup: gold for FBS national titles, silver for FCS, bronze
+  for D-II / D-III / NAIA and silver Lombardis for Super Bowls. The line
+  under the case names the coach, so the titles aren't read as the
+  school's. A coach with no titles walks the sideline beside the board.
 - **tenure** - the 14 FBS head coaches who started before 2020, three per
   frame (the frame changes every 15 minutes). Each gets a logo, a rank
   (ties show as `T-5`), years in charge and a gold or grey bar scaled to
   Ferentz's 28 seasons. Your school's coach is underlined in gold.
+
+When ESPN can't be reached, a dark scoreboard on a dimmed sideline reads
+ESPN OFFLINE, with a grey coach beside it.
 
 One setting: **School** (any of the 138 FBS programs). No key needed.
 
@@ -48,7 +60,7 @@ Records at the school come from a second table: wins and losses through the
 interim games he coached, and vacated wins removed (Iowa 2023). Each total was
 summed from ESPN's season records and checked against the coach's per-season
 record table from the school media guides. Coaches the sources disagree on
-are left out and show `SINCE <year>` instead. This season's live record is
+are left out, and their scoreboard shows this season's record instead. This season's live record is
 added on top, and only for 2026, so a stale total is never shown.
 
 Championship counts cover titles won as a head coach through the 2025 season.
