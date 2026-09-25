@@ -11,7 +11,7 @@ width: 192
 height: 32
 # Leaders move once a week (after each game), so every 30 minutes is plenty.
 # The ESPN leaders call is cached for the same 1800 s; athlete names for a day.
-refresh: 1800
+refresh: 14400
 
 pages: [passing, rushing, receiving, defense]
 
