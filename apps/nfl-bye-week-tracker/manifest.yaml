@@ -12,7 +12,7 @@ height: 32
 # 300 s: a six-bye week splits into two frames that swap every 5 minutes.
 # The data itself barely moves - the current week is cached 1 h, specific
 # weeks and team schedules 12 h (byes are fixed for the season).
-refresh: 300
+refresh: 3600
 
 pages: [thisweek, nextweek, myteam]
 
