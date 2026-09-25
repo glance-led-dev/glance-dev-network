@@ -12,7 +12,7 @@ height: 32
 # 180 s: each refresh moves the spotlight to the next leader (and, with ALL
 # positions, the podium to the next position every third refresh). The stat
 # feeds are cached 30 minutes - they only change while games are on.
-refresh: 180
+refresh: 14400
 
 pages: [podium, spotlight]
 

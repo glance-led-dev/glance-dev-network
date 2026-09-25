@@ -5,17 +5,16 @@
 #
 #   podium     The top three at one position standing on a podium: second
 #              on the left, first in the middle, third on the right. Each
-#              step is in its medal's colour, topped by a stripe in the
-#              player's club colours, with the club's 24 x 18 logo in a
-#              black window on the step face and the player's points in
-#              black beside it; the surname stands above. The position,
-#              the week and the scoring system sit to the left.
-#   spotlight  One leader at a time, hung like a medal: the points on a
-#              plaque framed in the medal colour, slung from a ribbon in the
-#              club's two colours; then the fantasy rank pill (WR1, T-K1 on
-#              a tie) with the week and opponent (or points per game for a
-#              season), the player's name as the hero, the stat line that
-#              produced the score, and the club logo on the right.
+#              club's 24 x 18 logo stands on a medal-coloured step (6, 4
+#              and 2 rows tall), the points in the medal's colour beside
+#              it and the surname above. The position, the week and the
+#              scoring system sit to the left.
+#   spotlight  One leader at a time: the club logo, then a pixel-art medal
+#              with the rank on it, hung on a ribbon in the club's two
+#              colours; the fantasy rank (WR1, T-K1 on a tie) with the week
+#              and opponent (or points per game for a season), the player's
+#              name as the hero, the points in the medal's colour on the
+#              right, and the stat line that produced them underneath.
 #
 # DESIGN. A leaderboard should feel like a medal ceremony, so the colour
 # carries the rank everywhere it appears: gold, silver and bronze for the
@@ -23,10 +22,10 @@
 # medal (competition ranking), and two scores that would both round to 29.8
 # are shown to two decimals so the medals never contradict the numbers. The
 # podium reads as a picture before it reads as text - three steps of three
-# heights, each wearing its club's colours and carrying its club's logo. The spotlight's one memorable
-# thing is the medal: a plaque on a club-coloured ribbon, deliberately not
-# the logo-and-bar card of Fantasy Football News; the 40 x 24 logo (shared
-# with that app, never scaled) closes the page on the right instead.
+# heights, each with its club's logo standing on it. The spotlight's one
+# memorable thing is the medal: a disc with the rank on it, hung on a
+# club-coloured ribbon beside the 40 x 24 logo (shared with Fantasy Football
+# News, never scaled).
 # Everything stays inside x 8..184 so the app reads as its own unit between
 # its neighbours on a scroll panel.
 #
@@ -446,17 +445,16 @@ def load_page(c, ctx):
 # ------------------------------------------------------------- page: podium
 # x 8..29 the legend column (position, week, scoring), then three columns
 # with 2 px between them: 2nd x 32..79, 1st x 82..134, 3rd x 137..184, as a
-# podium stands. Each column is the player's surname over a step: a 2 px
-# stripe in the club's colours, then the step face in the medal colour with
-# the club's 24 x 18 logo in a black window on its left and the points in
-# black on the right. The steps stand 22, 20 and 18 rows tall - 18 is the
-# logo, so third place is as low as a step can go.
+# podium stands. Each column is the player's surname, then the club's
+# 24 x 18 logo with the points in medal colour to its right, standing on a
+# step lit along its top edge. The steps are 6, 4 and 2 rows tall, so the
+# three columns step down from the middle like a real podium.
 COLS = {2: [32, 48], 1: [82, 53], 3: [137, 48]}
 LEG_X = 8
 LEG_W = 22
 WIN_W = 24
 # medal rank -> [name y, stripe y, points fonts]
-STEP = {1: [0, 8, ["6x8", "5x7", "4x5"]], 2: [2, 10, ["5x7", "4x5"]], 3: [4, 12, ["5x7", "4x5"]]}
+STEP = {1: [0, 26, ["6x8", "5x7", "4x5"]], 2: [2, 28, ["5x7", "4x5"]], 3: [4, 30, ["5x7", "4x5"]]}
 
 # Surnames too long for a column even in 4x5, written the way a fantasy app
 # abbreviates them rather than clipped mid-word.
@@ -523,57 +521,74 @@ def podium(c, ctx):
         rank = p["rank"] if p != None else slotn
         m = medal(rank)
         s = STEP[min(rank, 3)]
-        tc = club(p["team"]) if p != None else ["#3A4356", "#3A4356"]
-        c.rect(x0, s[1], x1, s[1], fill = tc[0])
-        c.rect(x0, s[1] + 1, x1, s[1] + 1, fill = tc[1])
-        top = s[1] + 2
-        c.rect(x0, top, x1, 31, fill = m[0])
+        # the step: a medal-coloured block, lit along its top edge
+        c.rect(x0, s[1], x1, 31, fill = m[2])
+        c.rect(x0, s[1], x1, s[1], fill = m[1])
+        if s[1] + 1 <= 31:
+            c.rect(x0 + 1, s[1] + 1, x1 - 1, 31, fill = m[0])
         if p == None:
-            # an empty step keeps its rank, so the podium still stands
-            c.text(str(rank), x0 + w // 2, top + (32 - top - 7) // 2, font = "5x7",
-                   color = "black", align = "center")
+            # an empty place keeps its rank, so the podium still stands
+            c.text(str(rank), x0 + w // 2, s[0] + 8, font = "5x7", color = m[2], align = "center")
             continue
+        # the club logo stands on the step, the score in medal colour beside it
+        ly = s[1] - 18
         logo = LOGO_S.get(p["team"], "")
         tx0 = x0
         if logo != "":
-            c.rect(x0, top, x0 + WIN_W - 1, 31, fill = "black")
-            c.image(logo, x0, top + (32 - top - 18) // 2)
+            c.image(logo, x0, ly)
             tx0 = x0 + WIN_W
-        # points in black on the medal, centred in what is left of the face,
-        # 1 px clear of the logo window and of the column edge
-        aw = x1 - tx0 - 1
+        aw = x1 - tx0
         pt = fit(c, p["shown"], s[2], aw)
-        c.text(pt[1], tx0 + 1 + aw // 2, top + (32 - top - INKH[pt[0]]) // 2,
-               font = pt[0], color = "black", align = "center")
+        c.text(pt[1], tx0 + aw // 2 + 1, ly + (18 - INKH[pt[0]]) // 2,
+               font = pt[0], color = m[0], align = "center")
         # 1 px clear of each column edge, so neighbouring names never run together
         nf = podium_name(c, p["forms"][3], w - 2)
         c.text(nf[1], x0 + w // 2, s[0] + (7 - INKH[nf[0]]) // 2, font = nf[0], color = INK,
                align = "center")
 
 # ---------------------------------------------------------- page: spotlight
-# The leader hangs like a medal: x 8..55 a plaque framed in the medal colour
-# holding the points, hung from a ribbon striped in the club's two colours
-# (x 22..41, y 0..5). x 59..140 the chip row (rank pill, week and opponent), the name
-# as the hero and the stat line. x 145..184 the club logo, 40 x 24 at y 4.
-# "40.8" is 43 px in 10x16 inside the plaque's 44; a season "112.6" (52 px)
-# or a tie-break "29.78" steps down to 9x12.
-PL_L = 8
-PL_R = 55
-TX = 59
+# x 8..47 the club logo, 40 x 24 at y 4; x 51..64 the medal on its ribbon.
+# x 70..140 the chip row (rank, week and opponent) and the name as the hero;
+# x 144..184 the points and the scoring. The stat line runs x 70..184 below.
+# A season "112.6" or a tie-break "29.78" steps down from 10x16 to fit.
+LOGO_X = 8
+MEDAL_X = 51
+TX = 70
 TR = 140
 TW = TR - TX + 1
-LOGO_X = 145
+PTS_L = 144
+PTS_R = 184
 
-# 20 x 6: the medal's ribbon in the club's colours (A accent, J jersey),
-# hanging from the top edge into a clasp (M, the medal colour) that sits on
-# the plaque.
-RIBBON = """
-AAAAAJJJJJJJJJJAAAAA
-AAAAAJJJJJJJJJJAAAAA
-AAAAAJJJJJJJJJJAAAAA
-AAAAAJJJJJJJJJJAAAAA
-.AAAAJJJJJJJJJJAAAA.
-......MMMMMMMM......
+# 14 x 26: a medal hung from the top edge on a ribbon in the club's colours
+# (A accent, J jersey), through a clasp into a disc in the medal's colour
+# (M face, H highlight, S rim). The rank is written on the disc.
+MEDAL_ART = """
+...AAJJJJAA...
+...AAJJJJAA...
+...AAJJJJAA...
+...AAJJJJAA...
+...AAJJJJAA...
+...AAJJJJAA...
+...AAJJJJAA...
+...AAJJJJAA...
+...AAJJJJAA...
+....AJJJJA....
+.....SSSS.....
+.....S..S.....
+....SSSSSS....
+..SSMMMMMMSS..
+.SMMHHMMMMMMS.
+.SMHMMMMMMMMS.
+SMHMMMMMMMMMMS
+SMHMMMMMMMMMMS
+SMMMMMMMMMMMMS
+SMMMMMMMMMMMMS
+SMMMMMMMMMMMMS
+SMMMMMMMMMMMMS
+.SMMMMMMMMMMS.
+.SMMMMMMMMMMS.
+..SSMMMMMMSS..
+....SSSSSS....
 """
 
 def stat_line(c, parts, x, y, maxw):
@@ -606,22 +621,22 @@ def spotlight(c, ctx):
     tc = club(p["team"])
     c.fill("black")
 
-    # the medal: ribbon, plaque, points, scoring
-    c.sprite(RIBBON, (PL_L + PL_R + 1) // 2 - 10, 0, legend = {"A": tc[0], "J": tc[1], "M": m[0]})
-    c.rect(PL_L, 6, PL_R, 31, outline = m[0])
-    c.rect(PL_L + 1, 6, PL_R - 1, 6, fill = m[1])
-    cx = (PL_L + PL_R + 1) // 2
-    pt = fit(c, p["shown"], ["10x16", "9x12", "8x10"], PL_R - PL_L - 3)
-    c.text(pt[1], cx, 9 + (15 - INKH[pt[0]]) // 2, font = pt[0], color = m[0], align = "center")
-    c.text(d["score_label"] + " PTS", cx, 25, font = "4x5", color = DIM, align = "center")
-
+    # the club logo opens the page, the medal hangs beside it
     c.image(LOGO.get(p["team"], "NFL.png"), LOGO_X, 4)
+    c.sprite(MEDAL_ART, MEDAL_X, 0, legend = {"A": tc[0], "J": tc[1], "M": m[0], "H": m[1], "S": m[2]})
+    c.text(str(rank), MEDAL_X + 7, 16, font = "5x7", color = "black", align = "center")
 
-    # chip row: the fantasy rank pill (WR1; T-K1 on a tie), then the
-    # richest context that fits, right-aligned to the text zone.
+    # the score closes it on the right, in the medal's colour
+    cx = (PTS_L + PTS_R + 1) // 2
+    pt = fit(c, p["shown"], ["10x16", "9x12", "8x10"], PTS_R - PTS_L + 1)
+    c.text(pt[1], cx, 1 + (15 - INKH[pt[0]]) // 2, font = pt[0], color = m[0], align = "center")
+    c.text(d["score_label"] + " PTS", cx, 18, font = "4x5", color = DIM, align = "center")
+
+    # chip row: the fantasy rank (WR1; T-K1 on a tie) in the medal colour,
+    # then the richest context that fits, right-aligned to the text zone.
     tag = ("T-" if p["tied"] else "") + d["pos"] + str(rank)
-    c.badge(tag, TX, 0, color = "black", bg = m[0], font = "4x5")
-    left = TX + c.text_width(tag, "4x5") + 6 + 3    # the pill is 6 px wider than its text
+    c.text(tag, TX, 1, font = "4x5", color = m[0])
+    left = TX + c.text_width(tag, "4x5") + 4
     if d["season"]:
         yr = d["when"].replace(" FINAL", "") if d["when"].endswith(" FINAL") else ""
         ppg = (fmt_pts(p["pts"] / p["gp"]) + " PPG") if p["gp"] > 0 else ""
@@ -649,4 +664,5 @@ def spotlight(c, ctx):
         pick = [clip(c, forms[2], "4x5", TW), "4x5"]
     c.text(pick[0], TX, 9 + (12 - INKH[pick[1]]) // 2, font = pick[1], color = INK)
 
-    stat_line(c, stat_parts(d["pos"], p["stats"], d["season"]), TX, 25, TW)
+    # the stat line runs the full width, under the score too
+    stat_line(c, stat_parts(d["pos"], p["stats"], d["season"]), TX, 25, PTS_R - TX + 1)
