@@ -1,32 +1,41 @@
 # College Football Program History
 #
-# A history card and a traditions rotation for 39 major FBS programs. No
-# network: everything below is baked in and checked by hand.
+# A trophy room for 39 major FBS programs. No network: everything below is
+# baked in and checked by hand.
 #
-#   legacy     the program's card - its logo, its full name, then the trophy
-#              case: claimed national titles beside a gold trophy and Heisman
-#              winners beside a bronze stiff-arm figure, over the year it
-#              first played and the house it plays in.
-#   tradition  one story from the program's history at a time, rotating by
-#              the minute - players, coaches, titles, trophies, rivalries,
-#              streaks: a pill with its name in the school's colour, the story
-#              in three lines, and art for it on the right. A story that names
-#              another program shows that program's logo - the face-off: Bama
-#              on the left, Auburn on the right for the Iron Bowl. Otherwise a
-#              pixel icon - a bell, a jug, an axe, a wagon, a turnover chain -
-#              drawn in the school's own colours where the object has none.
+#   legacy     the trophy shelf - one gold cup on the shelf for every claimed
+#              national title and one bronze stiff-arm statue for every
+#              Heisman, engraved counts on the shelf's walnut lip, the
+#              school and mascot on the wall above, and the school's felt
+#              banner hanging at the right with its logo and first season.
+#   tradition  the same wall with a framed plaque on it: one story from the
+#              program's history at a time, rotating by the minute - players,
+#              coaches, titles, trophies, rivalries, streaks. The story's
+#              name is a school-colour tag on the frame's top rail. A story
+#              that names another program shows that program's logo on the
+#              plaque, facing the school's own banner (the Iron Bowl plaque
+#              carries Auburn beside the Bama banner). Otherwise a pixel icon
+#              - a bell, a jug, an axe, a wagon, a turnover chain - drawn in
+#              the school's own colours where the object has none.
 #
-# DESIGN. The logo is the anchor on both pages, always at the same spot
-# (x 6..45, y 1) so a viewer's eye never has to find the school twice. Under
-# it a nameplate carries the conference (SEC, BIG TEN, PAC-12...) between two
-# school-colour rules, and a thin bracket at x 49 closes it off rather than
-# the solid bar other sports apps use, so the card reads as a plaque on a
-# wall. On the legacy page the hero is the trophy case: two big numbers, each
-# carried by pixel art a fifth grader can read (a gold cup for titles, the
-# Heisman pose for Heismans), with a two-line label so the numbers are never
-# magic. Titles are the program's own CLAIMED count - the honest word for a
-# sport that crowned champions by poll for a century. Counts run through the
-# 2025 season; conferences are the 2026 line-up.
+# DESIGN. The archetype is a TROPHY ROOM: the counts are objects you can
+# see, not numbers. The shelf runs the whole panel (x 6..185, top y 23)
+# and the school's banner hangs full height in front of its right end
+# (x 158..185): the logo at its authored 24 x 18 (never scaled) in a window
+# picked to contrast with it - cream for dark marks, near-black for bright
+# ones - over the first season and a swallowtail. Nothing lights outside
+# x 6..185. Cups are 5 px on a 6 px pitch with 2 px more after every fifth,
+# so a long row counts in fives; statues are 6 px on a 7 px pitch. Built
+# for the worst case, Alabama's 18 claimed titles: 113 px of cups, a 6 px
+# gap, 4 statues ending at x 153, 4 px short of the banner. The statues and
+# their lip plate share a right edge placed so neither collides with the
+# cups or the cup plate. A zero is one grey ghost on the shelf - an empty
+# spot, not a missing one. The logo never sits at the left. Titles are the
+# program's own CLAIMED count - the honest word for a sport that crowned
+# champions by poll for a century. Counts run through the 2025 season;
+# conferences are the 2026 line-up. The home stadium stays in the data
+# (and in college-stadium-gameday, which owns stadium lore) but no longer
+# has a row on the panel: the shelf needs it.
 #
 # Stadium and gameday lore lives in college-stadium-gameday and most Heisman
 # stories in heisman-trophy-history, so this app keeps to program history and
@@ -47,14 +56,27 @@ GOLD_D = "#B07A10"
 BRONZE = "#E09A55"
 BRONZE_D = "#8A5A2B"
 BASE = "#9AA3B2"
+GOLD_W = "#FFF1B8"
+GHOST = "#3C4452"
+GHOST_T = "#A08868"
+WOOD_TOP = "#C8894A"
+WOOD_EDGE = "#8A5A2B"
+WOOD = "#3E2614"
+LIP_T = "#E8C9A0"
+PLAQUE = "#24170C"
 
 # --------------------------------------------------------------- layout
-LOGO_X = 6
-LOGO_Y = 1
-RULE_X = 49
-TX = 53
-TR = 185
-TW = TR - TX + 1
+# The wall runs x 8..153; the banner hangs full height at x 158..185,
+# in front of the shelf's right end; nothing lights outside x 6..185. The shelf top is
+# y 23 with the walnut lip under it to the bottom row.
+WALL_X = 8
+WALL_R = 153
+BAN_X0 = 158
+BAN_X1 = 185
+SHELF_Y = 23
+SHELF_X0 = 6
+SHELF_X1 = 185
+GROUP_GAP = 6
 
 # Literal paths: the lint only accepts asset names it can see.
 LOGOS = {
@@ -68,9 +90,21 @@ LOGOS = {
     "ND": "ND.png", "BOIS": "BOIS.png", "ARMY": "ARMY.png", "NAVY": "NAVY.png",
 }
 
+# The 24 x 18 set for the banner, drawn at its authored size.
+BANNER_LOGOS = {
+    "ALA": "S_ALA.png", "AUB": "S_AUB.png", "UGA": "S_UGA.png", "FLA": "S_FLA.png", "LSU": "S_LSU.png",
+    "TENN": "S_TENN.png", "TEX": "S_TEX.png", "OU": "S_OU.png", "TAMU": "S_TAMU.png", "MISS": "S_MISS.png",
+    "ARK": "S_ARK.png", "SC": "S_SC.png", "MICH": "S_MICH.png", "OSU": "S_OSU.png", "PSU": "S_PSU.png",
+    "NEB": "S_NEB.png", "USC": "S_USC.png", "ORE": "S_ORE.png", "WASH": "S_WASH.png", "UCLA": "S_UCLA.png",
+    "MINN": "S_MINN.png", "IU": "S_IU.png", "WIS": "S_WIS.png", "CLEM": "S_CLEM.png", "FSU": "S_FSU.png",
+    "MIA": "S_MIA.png", "VT": "S_VT.png", "STAN": "S_STAN.png", "GT": "S_GT.png", "PITT": "S_PITT.png",
+    "SYR": "S_SYR.png", "COLO": "S_COLO.png", "BYU": "S_BYU.png", "TCU": "S_TCU.png", "TTU": "S_TTU.png",
+    "ND": "S_ND.png", "BOIS": "S_BOIS.png", "ARMY": "S_ARMY.png", "NAVY": "S_NAVY.png",
+}
+
 # ---------------------------------------------------------------- data
 # [dropdown label, logo, school, mascot, first season, claimed national
-#  titles, Heisman winners (awards), home line, accent, second colour,
+#  titles, Heisman winners (awards), home line (not drawn - see DESIGN), accent, second colour,
 #  conference (2026), [[headline, story, icon, opponent logo or ""], ...]]
 # Colours are each school's own, lifted where a navy or maroon would vanish
 # on an LED. No apostrophes anywhere - the panel fonts have none.
@@ -805,26 +839,44 @@ def pick_school(ctx):
     n = len(S)
     return S[((ctx.now.unix // SCHOOL_SECONDS) * 7) % n]
 
-def frame_logo(c, s):
-    """The logo on its plaque: the logo, a nameplate under it carrying the
-    conference between two school-colour rules, and a 1 px bracket closing
-    it off at x 49."""
-    c.image(LOGOS[s[1]], LOGO_X, LOGO_Y)
-    conf = s[10]
-    cw = c.text_width(conf, "4x5")
-    cx = LOGO_X + (40 - cw) // 2
-    c.text(conf, cx, 26, font = "4x5", color = INK)
-    if cx - 3 >= LOGO_X:
-        c.rect(LOGO_X, 28, cx - 3, 28, fill = s[8])
-        c.rect(cx + cw + 2, 28, LOGO_X + 39, 28, fill = s[8])
-    c.rect(RULE_X, 1, RULE_X, 30, fill = s[8])
-    c.rect(RULE_X - 2, 1, RULE_X - 1, 1, fill = s[8])
-    c.rect(RULE_X - 2, 30, RULE_X - 1, 30, fill = s[8])
+# ------------------------------------------------------------ the room
+# Both pages are the same wall. On the right, from a brass rod at y 0, hangs
+# the school's felt banner: school-colour felt, a window with the logo at
+# its authored 24 x 18, the year the program first played, a swallowtail.
+
+# The window behind the logo is chosen per logo for contrast: dark for
+# logos drawn to sit on black (bright or light marks), cream for the dark
+# ones (Alabama's crimson A, Oklahoma's crimson OU, Penn State's navy lion)
+# that would sink into a dark field. Picked by measuring every 24 x 18 logo
+# against both fields. The window is a pixel wider than the logo on each
+# side, so a mark in the banner's own colour keeps its edge.
+LIGHT_WINDOW = {
+    "ALA": True, "ARK": True, "AUB": True, "BOIS": True, "BYU": True, "IU": True,
+    "LSU": True, "MISS": True, "OU": True, "PITT": True, "PSU": True, "SC": True,
+    "STAN": True, "SYR": True, "TAMU": True, "TCU": True, "TTU": True, "UCLA": True,
+    "USC": True, "VT": True, "WASH": True, "WIS": True,
+}
+WINDOW_LIGHT = "#EEE8DA"
+WINDOW_DARK = "#0E1016"
+
+def felt_banner(c, s):
+    """The banner hangs full height in front of the shelf's right end:
+    a brass rod, school-colour felt, a 26 x 20 window with the 24 x 18
+    logo, the first season, and a swallowtail. x 158..185, y 0..30."""
+    c.rect(BAN_X0, 0, BAN_X1, 0, fill = GOLD_D)
+    c.rect(BAN_X0, 1, BAN_X1, 27, fill = s[8])
+    win = WINDOW_LIGHT if LIGHT_WINDOW.get(s[1], False) else WINDOW_DARK
+    c.rect(BAN_X0 + 1, 1, BAN_X1 - 1, 20, fill = win)
+    c.image(BANNER_LOGOS[s[1]], BAN_X0 + 2, 2)
+    c.text(str(s[4]), (BAN_X0 + BAN_X1 + 1) // 2, 22, font = "4x5", color = ink_for(s[8]), align = "center")
+    # the swallowtail: two points hanging off the bottom edge
+    for i in range(3):
+        c.rect(BAN_X0 + i, 28 + i, BAN_X0 + 12 - i, 28 + i, fill = s[8])
+        c.rect(BAN_X1 - 12 + i, 28 + i, BAN_X1 - i, 28 + i, fill = s[8])
 
 # ---------------------------------------------------------- page: legacy
 def draw_icon(c, name, s, x, y, dim = False):
-    """An icon at 1x with the school's colours filled in; `dim` greys it out
-    (a trophy case with nothing in it)."""
+    """A tradition icon at 1x with the school's colours filled in."""
     e = ICONS[name]
     leg = {}
     for k in e[1]:
@@ -833,79 +885,137 @@ def draw_icon(c, name, s, x, y, dim = False):
     leg.setdefault("X", s[8])
     leg.setdefault("S", s[9])
     if dim:
-        leg = {k: "#3C4452" for k in leg}
+        leg = {k: GHOST for k in leg}
     c.sprite(e[0], x, y, legend = leg)
 
 def icon_dims(name):
     rows = ICONS[name][0].strip("\n").split("\n")
     return [max([len(r) for r in rows]), len(rows)]
 
-def stat(c, s, x, icon, value, top, bottom):
-    """Trophy-case entry: the icon, its number in 10x16, a two-line label.
-    Returns the x just past the block."""
-    d = icon_dims(icon)
-    none = value == 0
-    draw_icon(c, icon, s, x, 7 + (17 - d[1]) // 2, none)
-    nx = x + d[0] + 1
-    num = str(value)
-    c.text(num, nx, 8, font = "10x16", color = DIM if none else INK)
-    lx = nx + c.text_width(num, "10x16") + 2
-    c.text(top, lx, 10, font = "4x5", color = DIM)
-    c.text(bottom, lx, 17, font = "4x5", color = DIM)
-    return lx + max(c.text_width(top, "4x5"), c.text_width(bottom, "4x5"))
-
-# 9 x 5 stadium, the label for the home line.
-MINI_STADIUM = """
-X.......X
-XXXXXXXXX
-X.X.X.X.X
-XXXXXXXXX
-GGGGGGGGG
+# The shelf objects. A national-title cup is 5 wide and 8 tall on a pitch of
+# 6, with 2 px more after every fifth cup so a long row still counts at a
+# glance (Alabama's 18 read as 5 5 5 3). A Heisman is the stiff-arm pose, 6
+# wide and 12 tall on a pitch of 7, standing on a grey plinth.
+CUP = """
+YYYYY
+DWYYD
+.WYY.
+.YYY.
+..Y..
+..Y..
+.YYY.
+DDDDD
 """
+CUP_W = 5
+CUP_P = 6
+
+STATUE = """
+...XX.
+...XX.
+XXXXX.
+...XXX
+...XBB
+...XX.
+..XXX.
+.XX.X.
+X...X.
+X....X
+.PPPP.
+PPPPPP
+"""
+STATUE_W = 6
+STATUE_P = 7
+
+def row_width(n, pitch, w):
+    if n == 0:
+        return w
+    return (n - 1) * pitch + w + ((n - 1) // 5) * 2
+
+def draw_row(c, sprite, legend, n, x, pitch, h):
+    """n objects standing on the shelf top (last row y 23) from x; zero
+    draws one ghost - the spot on the shelf that is waiting."""
+    y = SHELF_Y - h
+    if n == 0:
+        c.sprite(sprite, x, y, legend = {k: GHOST for k in legend})
+        return
+    for i in range(n):
+        c.sprite(sprite, x + i * pitch + (i // 5) * 2, y, legend = legend)
+
+def engrave(c, x, num, words, lit, none):
+    """Lip plate: the count in the trophy's metal, the words in pale wood."""
+    c.text(num, x, SHELF_Y + 3, font = "4x5", color = GHOST_T if none else lit)
+    c.text(words, x + c.text_width(num + " ", "4x5"), SHELF_Y + 3, font = "4x5", color = GHOST_T if none else LIP_T)
 
 def legacy(c, ctx):
     s = pick_school(ctx)
     c.fill("black")
-    frame_logo(c, s)
 
-    # Row 1: SCHOOL MASCOT - the school in its colour, the mascot in white;
-    # the richest form that fits (both in 5x7, both in 4x5, school alone).
+    # The wall line: SCHOOL MASCOT, conference right-aligned before the
+    # banner. Richest form that fits: both in 5x7, both in 4x5, the school
+    # and the mascot's last word (MINNESOTA GOPHERS) in 5x7 then 4x5, and
+    # only then the school alone.
+    conf = s[10]
+    c.text(conf, WALL_R, 2, font = "4x5", color = DIM, align = "right")
+    room = WALL_R - c.text_width(conf, "4x5") - 5 - WALL_X + 1
     school, mascot = s[2], s[3]
+    short = mascot.split(" ")[-1]
     placed = False
-    for f in ["5x7", "4x5"]:
-        if c.text_width(school + " " + mascot, f) <= TW:
-            y = 0 if f == "5x7" else 1
-            c.text(school, TX, y, font = f, color = s[8])
-            c.text(mascot, TX + c.text_width(school + " ", f), y, font = f, color = INK)
+    for pair in [[mascot, "5x7"], [mascot, "4x5"], [short, "5x7"], [short, "4x5"]]:
+        m, f = pair[0], pair[1]
+        if c.text_width(school + " " + m, f) <= room:
+            y = 1 if f == "5x7" else 2
+            c.text(school, WALL_X, y, font = f, color = s[8])
+            c.text(m, WALL_X + c.text_width(school + " ", f), y, font = f, color = INK)
             placed = True
             break
     if not placed:
-        sf = fit(c, school, ["5x7", "4x5"], TW)
-        c.text(sf[1], TX, 0, font = sf[0], color = s[8])
+        sf = fit(c, school, ["5x7", "4x5"], room)
+        c.text(sf[1], WALL_X, 1 if sf[0] == "5x7" else 2, font = sf[0], color = s[8])
 
-    # Row 2 (y 7..23): the trophy case - national titles beside the gold
-    # cup, Heisman winners beside the stiff-arm. A zero draws dim: the case
-    # is empty, not missing. Worst case 18 titles / 7 Heismans is 132 px.
-    x = stat(c, s, TX, "CUP", s[5], "NATL", "TITLES")
-    stat(c, s, x + 4, "HEISMAN", s[6], "HEISMAN", "WINNERS")
+    # The shelf: a lit top edge, then the walnut lip with its plates.
+    c.rect(SHELF_X0, SHELF_Y, SHELF_X1, SHELF_Y, fill = WOOD_TOP)
+    c.rect(SHELF_X0, SHELF_Y + 1, SHELF_X1, 31, fill = WOOD)
+    c.rect(SHELF_X0, SHELF_Y + 1, SHELF_X1, SHELF_Y + 1, fill = WOOD_EDGE)
 
-    # Row 3 (y 25..31): the stadium (a tiny stadium is the label) left,
-    # the first season right, 5 px apart at worst.
-    est = "EST " + str(s[4])
-    c.text(est, TR, 26, font = "4x5", color = DIM, align = "right")
-    c.sprite(MINI_STADIUM, TX, 26, legend = {"X": s[9], "G": "#2FC46A"})
-    hx = TX + 11
-    room = TR - c.text_width(est, "4x5") - 5 - hx + 1
-    hf = fit(c, s[7], ["5x7", "4x5"], room)
-    c.text(hf[1], hx, 25 if hf[0] == "5x7" else 26, font = hf[0], color = s[9])
+    titles, heis = s[5], s[6]
+    tnum = str(titles)
+    twords = "CLAIMED TITLE" if titles == 1 else "CLAIMED TITLES"
+    hnum = str(heis)
+    hwords = "HEISMAN" if heis == 1 else "HEISMANS"
+
+    # Cups and their plate start at the left. The Heisman statues and their
+    # plate are right-aligned to one edge R, the first x where the statues
+    # clear the cups and the plate clears the cup plate, both by 6 px.
+    # Worst case Alabama: 18 cups (113 px) + 6 + 4 statues ends at R 153,
+    # 4 px short of the banner (x 158); its plate slides left under the
+    # cups' spare lip. USC's 8 statues end at 146.
+    cw = row_width(titles, CUP_P, CUP_W)
+    cpw = c.text_width(tnum + " " + twords, "4x5")
+    sw = row_width(heis, STATUE_P, STATUE_W)
+    hpw = c.text_width(hnum + " " + hwords, "4x5")
+    r = max(WALL_X + cw - 1 + GROUP_GAP + sw, WALL_X + cpw - 1 + GROUP_GAP + hpw)
+    hx = r - sw + 1
+
+    draw_row(c, CUP, {"Y": GOLD, "W": GOLD_W, "D": GOLD_D}, titles, WALL_X, CUP_P, 8)
+    draw_row(c, STATUE, {"X": BRONZE, "B": BRONZE_D, "P": BASE}, heis, hx, STATUE_P, 12)
+    engrave(c, WALL_X, tnum, twords, GOLD, titles == 0)
+    engrave(c, r - hpw + 1, hnum, hwords, BRONZE, heis == 0)
+
+    # The banner last: it hangs in front of the shelf's right end.
+    felt_banner(c, s)
 
 # ------------------------------------------------------- page: tradition
-# Text zone x 53..160, then 2 px of black, then the icon zone x 163..185.
-# A story that names another program trades the icon for that program's
-# logo at x 146..185 - the face-off - and the text zone narrows to x 142.
-FX_R = 160
-ICON_CX = 174
-OPP_X = 146
+# The same wall, the banner in the same place, and a framed plaque filling
+# the rest: a gold frame (x 6..153, y 3..31) whose top rail runs behind the
+# story's name tag and the counter. Inside, three lines of story and, at
+# the right, the story's icon - or, when the story names another program,
+# that program's logo, so the plaque faces the school's own banner.
+PL_X0 = 6
+PL_X1 = 153
+PL_TOP = 3
+TX = PL_X0 + 3
+ICON_CX = 143
+OPP_X = PL_X1 - 41
 
 def tradition(c, ctx):
     s = pick_school(ctx)
@@ -914,24 +1024,31 @@ def tradition(c, ctx):
     idx = (ctx.now.unix // 60) % n
     head, body, icon, opp = facts[idx][0], facts[idx][1], facts[idx][2], facts[idx][3]
     c.fill("black")
-    frame_logo(c, s)
+    felt_banner(c, s)
 
-    # Chip row: the story's name on a school-colour pill; the counter
-    # right-aligned over the art zone.
+    # The frame and the plaque's walnut face.
+    c.rect(PL_X0, PL_TOP, PL_X1, 31, fill = PLAQUE, outline = GOLD_D)
+
+    # Counter sits on the top rail at the right, the name tag on the left.
     counter = str(idx + 1) + "/" + str(n)
-    c.text(counter, TR, 1, font = "4x5", color = DIM, align = "right")
-    room = TR - c.text_width(counter, "4x5") - 4 - TX
-    word = clip(c, head, "4x5", room - 4)
-    c.badge(word, TX, 0, color = ink_for(s[8]), bg = s[8], font = "4x5")
+    cw = c.text_width(counter, "4x5")
+    cx = PL_X1 - 3 - cw + 1
+    c.rect(cx - 2, 0, PL_X1 - 1, 6, fill = "black")
+    c.text(counter, cx, 1, font = "4x5", color = DIM)
+    room = cx - 2 - 3 - (PL_X0 + 3) - 4
+    word = clip(c, head, "4x5", room)
+    ww = c.text_width(word, "4x5")
+    c.rect(PL_X0 + 2, 0, PL_X0 + 2 + ww + 3, 6, fill = s[8])
+    c.text(word, PL_X0 + 4, 1, font = "4x5", color = ink_for(s[8]))
 
-    # The art: the opponent's logo, or the story's icon centred in x 163..185.
+    # The art: the opponent's logo or the story's icon, inside the plaque.
     if opp in LOGOS:
-        c.image(LOGOS[opp], OPP_X, 8)
+        c.image(LOGOS[opp], OPP_X, 7)
         right = OPP_X - 4
     else:
         d = icon_dims(icon)
-        draw_icon(c, icon, s, ICON_CX - d[0] // 2, 8 + (24 - d[1]) // 2)
-        right = FX_R
+        draw_icon(c, icon, s, ICON_CX - d[0] // 2, 8 + (23 - d[1]) // 2)
+        right = ICON_CX - 8 - 3
     fw = right - TX + 1
 
     # Story: three lines in 5x7, then the narrower 4x7 (same height, a pixel
@@ -940,8 +1057,8 @@ def tradition(c, ctx):
         w = wrap(c, body, f, fw, 3)
         if w[1]:
             for i in range(len(w[0])):
-                c.text(w[0][i], TX, 9 + i * 8, font = f, color = INK)
+                c.text(w[0][i], TX, 8 + i * 8, font = f, color = INK)
             return
     w = wrap(c, body, "4x5", fw, 4)
     for i in range(len(w[0])):
-        c.text(w[0][i], TX, 9 + i * 6, font = "4x5", color = INK)
+        c.text(w[0][i], TX, 7 + i * 6, font = "4x5", color = INK)
