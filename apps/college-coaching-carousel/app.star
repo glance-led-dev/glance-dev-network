@@ -223,165 +223,150 @@ SCHOOLS = {
     "WYOMING": ["WYO", "2751"],
 }
 
-# Literal asset paths (the publish lint needs literals). L = 40 x 24 hero
-# logos, S = 24 x 18 for the tenure ladder; filenames match the shared
+# Literal asset paths (the publish lint needs literals). 24 x 18 logos,
+# drawn at their authored size on the scoreboard and the tenure ladder
+# (never scaled); filenames match the shared
 # _logos set so polished logos re-sync by a straight copy, except Texas A&M
 # (TAMU.png - '&' is not a legal asset name).
-LOGO_L = {
-    "AFA": "L/AFA.png",
-    "AKR": "L/AKR.png",
-    "ALA": "L/ALA.png",
-    "APP": "L/APP.png",
-    "ARIZ": "L/ARIZ.png",
-    "ARK": "L/ARK.png",
-    "ARMY": "L/ARMY.png",
-    "ARST": "L/ARST.png",
-    "ASU": "L/ASU.png",
-    "AUB": "L/AUB.png",
-    "BALL": "L/BALL.png",
-    "BAY": "L/BAY.png",
-    "BC": "L/BC.png",
-    "BGSU": "L/BGSU.png",
-    "BOIS": "L/BOIS.png",
-    "BUFF": "L/BUFF.png",
-    "BYU": "L/BYU.png",
-    "CAL": "L/CAL.png",
-    "CCU": "L/CCU.png",
-    "CIN": "L/CIN.png",
-    "CLEM": "L/CLEM.png",
-    "CLT": "L/CLT.png",
-    "CMU": "L/CMU.png",
-    "COLO": "L/COLO.png",
-    "CONN": "L/CONN.png",
-    "CSU": "L/CSU.png",
-    "DEL": "L/DEL.png",
-    "DUKE": "L/DUKE.png",
-    "ECU": "L/ECU.png",
-    "EMU": "L/EMU.png",
-    "FAU": "L/FAU.png",
-    "FIU": "L/FIU.png",
-    "FLA": "L/FLA.png",
-    "FRES": "L/FRES.png",
-    "FSU": "L/FSU.png",
-    "GASO": "L/GASO.png",
-    "GAST": "L/GAST.png",
-    "GT": "L/GT.png",
-    "HAW": "L/HAW.png",
-    "HOU": "L/HOU.png",
-    "ILL": "L/ILL.png",
-    "IOWA": "L/IOWA.png",
-    "ISU": "L/ISU.png",
-    "IU": "L/IU.png",
-    "JMU": "L/JMU.png",
-    "JXST": "L/JXST.png",
-    "KENN": "L/KENN.png",
-    "KENT": "L/KENT.png",
-    "KSU": "L/KSU.png",
-    "KU": "L/KU.png",
-    "LIB": "L/LIB.png",
-    "LOU": "L/LOU.png",
-    "LSU": "L/LSU.png",
-    "LT": "L/LT.png",
-    "M-OH": "L/M-OH.png",
-    "MASS": "L/MASS.png",
-    "MD": "L/MD.png",
-    "MEM": "L/MEM.png",
-    "MIA": "L/MIA.png",
-    "MICH": "L/MICH.png",
-    "MINN": "L/MINN.png",
-    "MISS": "L/MISS.png",
-    "MIZ": "L/MIZ.png",
-    "MOST": "L/MOST.png",
-    "MRSH": "L/MRSH.png",
-    "MSST": "L/MSST.png",
-    "MSU": "L/MSU.png",
-    "MTSU": "L/MTSU.png",
-    "NAVY": "L/NAVY.png",
-    "NCSU": "L/NCSU.png",
-    "ND": "L/ND.png",
-    "NDSU": "L/NDSU.png",
-    "NEB": "L/NEB.png",
-    "NEV": "L/NEV.png",
-    "NIU": "L/NIU.png",
-    "NMSU": "L/NMSU.png",
-    "NU": "L/NU.png",
-    "ODU": "L/ODU.png",
-    "OHIO": "L/OHIO.png",
-    "OKST": "L/OKST.png",
-    "ORE": "L/ORE.png",
-    "ORST": "L/ORST.png",
-    "OSU": "L/OSU.png",
-    "OU": "L/OU.png",
-    "PITT": "L/PITT.png",
-    "PSU": "L/PSU.png",
-    "PUR": "L/PUR.png",
-    "RICE": "L/RICE.png",
-    "RUTG": "L/RUTG.png",
-    "SAC": "L/SAC.png",
-    "SC": "L/SC.png",
-    "SDSU": "L/SDSU.png",
-    "SHSU": "L/SHSU.png",
-    "SJSU": "L/SJSU.png",
-    "SMU": "L/SMU.png",
-    "STAN": "L/STAN.png",
-    "SYR": "L/SYR.png",
-    "TA&M": "L/TAMU.png",
-    "TCU": "L/TCU.png",
-    "TEM": "L/TEM.png",
-    "TENN": "L/TENN.png",
-    "TEX": "L/TEX.png",
-    "TLSA": "L/TLSA.png",
-    "TOL": "L/TOL.png",
-    "TROY": "L/TROY.png",
-    "TTU": "L/TTU.png",
-    "TULN": "L/TULN.png",
-    "TXST": "L/TXST.png",
-    "UAB": "L/UAB.png",
-    "UCF": "L/UCF.png",
-    "UCLA": "L/UCLA.png",
-    "UGA": "L/UGA.png",
-    "UK": "L/UK.png",
-    "UL": "L/UL.png",
-    "ULM": "L/ULM.png",
-    "UNC": "L/UNC.png",
-    "UNLV": "L/UNLV.png",
-    "UNM": "L/UNM.png",
-    "UNT": "L/UNT.png",
-    "USA": "L/USA.png",
-    "USC": "L/USC.png",
-    "USF": "L/USF.png",
-    "USM": "L/USM.png",
-    "USU": "L/USU.png",
-    "UTAH": "L/UTAH.png",
-    "UTEP": "L/UTEP.png",
-    "UTSA": "L/UTSA.png",
-    "UVA": "L/UVA.png",
-    "VAN": "L/VAN.png",
-    "VT": "L/VT.png",
-    "WAKE": "L/WAKE.png",
-    "WASH": "L/WASH.png",
-    "WIS": "L/WIS.png",
-    "WKU": "L/WKU.png",
-    "WMU": "L/WMU.png",
-    "WSU": "L/WSU.png",
-    "WVU": "L/WVU.png",
-    "WYO": "L/WYO.png",
-}
 LOGO_S = {
-    "IOWA": "S/IOWA.png",
     "AFA": "S/AFA.png",
-    "CLEM": "S/CLEM.png",
-    "NCSU": "S/NCSU.png",
+    "AKR": "S/AKR.png",
+    "ALA": "S/ALA.png",
+    "APP": "S/APP.png",
+    "ARIZ": "S/ARIZ.png",
+    "ARK": "S/ARK.png",
     "ARMY": "S/ARMY.png",
-    "EMU": "S/EMU.png",
-    "M-OH": "S/M-OH.png",
-    "PITT": "S/PITT.png",
-    "UGA": "S/UGA.png",
+    "ARST": "S/ARST.png",
+    "ASU": "S/ASU.png",
+    "AUB": "S/AUB.png",
+    "BALL": "S/BALL.png",
+    "BAY": "S/BAY.png",
+    "BC": "S/BC.png",
+    "BGSU": "S/BGSU.png",
+    "BOIS": "S/BOIS.png",
+    "BUFF": "S/BUFF.png",
     "BYU": "S/BYU.png",
-    "MINN": "S/MINN.png",
+    "CAL": "S/CAL.png",
+    "CCU": "S/CCU.png",
+    "CIN": "S/CIN.png",
+    "CLEM": "S/CLEM.png",
+    "CLT": "S/CLT.png",
+    "CMU": "S/CMU.png",
+    "COLO": "S/COLO.png",
+    "CONN": "S/CONN.png",
+    "CSU": "S/CSU.png",
+    "DEL": "S/DEL.png",
+    "DUKE": "S/DUKE.png",
+    "ECU": "S/ECU.png",
+    "EMU": "S/EMU.png",
+    "FAU": "S/FAU.png",
+    "FIU": "S/FIU.png",
+    "FLA": "S/FLA.png",
+    "FRES": "S/FRES.png",
+    "FSU": "S/FSU.png",
+    "GASO": "S/GASO.png",
+    "GAST": "S/GAST.png",
+    "GT": "S/GT.png",
+    "HAW": "S/HAW.png",
+    "HOU": "S/HOU.png",
+    "ILL": "S/ILL.png",
+    "IOWA": "S/IOWA.png",
+    "ISU": "S/ISU.png",
+    "IU": "S/IU.png",
+    "JMU": "S/JMU.png",
+    "JXST": "S/JXST.png",
+    "KENN": "S/KENN.png",
+    "KENT": "S/KENT.png",
+    "KSU": "S/KSU.png",
+    "KU": "S/KU.png",
+    "LIB": "S/LIB.png",
+    "LOU": "S/LOU.png",
+    "LSU": "S/LSU.png",
+    "LT": "S/LT.png",
+    "M-OH": "S/M-OH.png",
+    "MASS": "S/MASS.png",
     "MD": "S/MD.png",
+    "MEM": "S/MEM.png",
+    "MIA": "S/MIA.png",
+    "MICH": "S/MICH.png",
+    "MINN": "S/MINN.png",
+    "MISS": "S/MISS.png",
+    "MIZ": "S/MIZ.png",
+    "MOST": "S/MOST.png",
+    "MRSH": "S/MRSH.png",
+    "MSST": "S/MSST.png",
+    "MSU": "S/MSU.png",
+    "MTSU": "S/MTSU.png",
+    "NAVY": "S/NAVY.png",
+    "NCSU": "S/NCSU.png",
+    "ND": "S/ND.png",
+    "NDSU": "S/NDSU.png",
+    "NEB": "S/NEB.png",
+    "NEV": "S/NEV.png",
+    "NIU": "S/NIU.png",
+    "NMSU": "S/NMSU.png",
+    "NU": "S/NU.png",
+    "ODU": "S/ODU.png",
+    "OHIO": "S/OHIO.png",
+    "OKST": "S/OKST.png",
+    "ORE": "S/ORE.png",
+    "ORST": "S/ORST.png",
     "OSU": "S/OSU.png",
+    "OU": "S/OU.png",
+    "PITT": "S/PITT.png",
+    "PSU": "S/PSU.png",
+    "PUR": "S/PUR.png",
+    "RICE": "S/RICE.png",
+    "RUTG": "S/RUTG.png",
+    "SAC": "S/SAC.png",
+    "SC": "S/SC.png",
+    "SDSU": "S/SDSU.png",
+    "SHSU": "S/SHSU.png",
+    "SJSU": "S/SJSU.png",
+    "SMU": "S/SMU.png",
+    "STAN": "S/STAN.png",
+    "SYR": "S/SYR.png",
+    "TA&M": "S/TAMU.png",
+    "TCU": "S/TCU.png",
+    "TEM": "S/TEM.png",
+    "TENN": "S/TENN.png",
+    "TEX": "S/TEX.png",
+    "TLSA": "S/TLSA.png",
+    "TOL": "S/TOL.png",
+    "TROY": "S/TROY.png",
+    "TTU": "S/TTU.png",
+    "TULN": "S/TULN.png",
+    "TXST": "S/TXST.png",
+    "UAB": "S/UAB.png",
+    "UCF": "S/UCF.png",
+    "UCLA": "S/UCLA.png",
+    "UGA": "S/UGA.png",
+    "UK": "S/UK.png",
+    "UL": "S/UL.png",
+    "ULM": "S/ULM.png",
+    "UNC": "S/UNC.png",
+    "UNLV": "S/UNLV.png",
+    "UNM": "S/UNM.png",
+    "UNT": "S/UNT.png",
+    "USA": "S/USA.png",
+    "USC": "S/USC.png",
+    "USF": "S/USF.png",
+    "USM": "S/USM.png",
+    "USU": "S/USU.png",
+    "UTAH": "S/UTAH.png",
+    "UTEP": "S/UTEP.png",
+    "UTSA": "S/UTSA.png",
+    "UVA": "S/UVA.png",
+    "VAN": "S/VAN.png",
+    "VT": "S/VT.png",
+    "WAKE": "S/WAKE.png",
+    "WASH": "S/WASH.png",
+    "WIS": "S/WIS.png",
     "WKU": "S/WKU.png",
+    "WMU": "S/WMU.png",
+    "WSU": "S/WSU.png",
+    "WVU": "S/WVU.png",
+    "WYO": "S/WYO.png",
 }
 
 # ---------------------------------------------------------- verified facts
@@ -1390,12 +1375,13 @@ def banner(c, word, fill, x, y, maxw):
 
 # Page 1 zones. Name block x TX..NR under the banner; the coach sprite at
 # CX (his leftmost lit column, the back shoe, is CX + 3), so NR leaves
-# 4 px of air; the scoreboard x BX0..BX1.
+# 4 px of air; the scoreboard x BX0..BX1 (his clipboard ends at CX + 27,
+# 2 px clear of the frame).
 TX = 6
 NR = 76
 TW = NR - TX + 1
 CX = 78
-BX0 = 111
+BX0 = 108
 BX1 = 185
 
 # --------------------------------------------------------------- page: coach
@@ -1437,25 +1423,32 @@ def coach(c, ctx):
     # The scoreboard: school logo and the record in amber bulbs. His record
     # at the school ('212-128', captioned AT IOWA) when it is verified; a
     # new hire's or an unverified coach's is this season's.
+    # Inside the frame (x BX0+1..BX1-1, y 1..22): the 24 x 18 logo at its
+    # authored size, x BX0+2.., y 3..20; right of it the zone x zx0..BX1-2
+    # holds the record (y 2..13), a rule (y 15) and the caption (y 17..21).
+    zx0 = BX0 + 2 + 24 + 1
+    zw = BX1 - 2 - zx0 + 1
     car = "" if new else career_record(co, tm)
     if new:
-        digits, cap, ccol = season_rec, "NEW HIRE", SKY
+        digits, caps, ccol = season_rec, ["NEW HIRE"], SKY
     elif car != "":
-        digits, cap, ccol = car, "AT " + sch["abbr"], DIM
-        longer = cap + " SINCE " + str(co["since"])
-        if c.text_width(longer, "4x5") <= BX1 - BX0 - 5:
-            cap = longer
+        digits, ccol = car, DIM
+        caps = ["AT " + sch["abbr"] + " SINCE " + str(co["since"]), "AT " + sch["abbr"]]
     else:
-        digits, cap, ccol = season_rec, str(co["season"]) + " SEASON", DIM
+        digits, ccol = season_rec, DIM
+        caps = [str(co["season"]) + " SEASON", "IN " + str(co["season"])]
+    cap = caps[len(caps) - 1]
+    for t in caps:
+        if c.text_width(t, "4x5") <= zw:
+            cap = t
+            break
     scoreboard(c, BX0, BX1, 23)
-    c.image(LOGO_L[sch["abbr"]], BX0 + 3, 3, w = 20, h = 12)
-    zx0 = BX0 + 26
-    zw = BX1 - 3 - zx0 + 1
+    c.image(LOGO_S[sch["abbr"]], BX0 + 2, 3)
     rf = fit(c, digits, ["9x12", "8x10", "6x8", "5x7", "4x5"], zw)
-    c.text(rf[1], zx0 + zw // 2, 3 + (12 - INKH[rf[0]]) // 2, font = rf[0], color = AMBER, align = "center")
-    c.rect(BX0 + 2, 16, BX1 - 2, 16, fill = "#2A3040")
-    cf = fit(c, cap, ["4x5"], BX1 - BX0 - 5)
-    c.text(cf[1], (BX0 + BX1 + 1) // 2, 18, font = "4x5", color = ccol, align = "center")
+    c.text(rf[1], zx0 + zw // 2, 2 + (12 - INKH[rf[0]]) // 2, font = rf[0], color = AMBER, align = "center")
+    c.rect(zx0, 15, BX1 - 2, 15, fill = "#2A3040")
+    cf = fit(c, cap, ["4x5"], zw)
+    c.text(cf[1], zx0 + zw // 2, 17, font = "4x5", color = ccol, align = "center")
 
     # Strip y 24..28 under the name. A new hire: his one gold pennant and
     # the man he replaced - the carousel story. Otherwise 'YEAR N' and one
