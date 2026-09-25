@@ -200,6 +200,17 @@ def chase_name_color(series, chase):
     entry = CHASE_COLOR.get(series)
     return entry[0] if entry else ""
 
+# Race dates on the next-race page and the schedule, in each series' own
+# colour: NASCAR yellow for Cup, O'Reilly green, Craftsman red for Trucks.
+SERIES_DATE_COLOR = {
+    "NASCAR": "#FFD100",
+    "NASCAR - O'Reilly": "#009D57",
+    "NASCAR - Trucks": "#E20514",
+}
+
+def date_color(series):
+    return SERIES_DATE_COLOR.get(series, SERIES_DATE_COLOR["NASCAR"])
+
 MONTHS_FULL = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
                "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
 
@@ -1200,10 +1211,10 @@ def _draw_next_card(c, ctx, st, big):
         draw_page_tab(c, "NEXT RACE", COLORS["accent"])
     c.text(fit_text(c, st["race_name"], "6x8", text_w), cx, 2, font = "6x8", color = COLORS["text"], align = "center")
     c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
-    c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = COLORS["accent2"], align = "center")
+    c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = date_color(st["series"]), align = "center")
 
 def _draw_schedule(c, ctx, st, skip):
-    draw_page_tab(c, "SCHEDULE", COLORS["accent2"])
+    draw_page_tab(c, "SCHEDULE", date_color(st["series"]))
     up = upcoming_races(st["schedule"], st["series"])
     # up[0] is the immediate next race -- that's the `event` page.
     races = up[1 + skip:1 + skip + 3]
@@ -1215,7 +1226,7 @@ def _draw_schedule(c, ctx, st, skip):
     y = 8
     for r in races:
         dt = local_race_daydate(ctx, r.get("race_date", r.get("date_scheduled", "")))
-        c.text(dt, 4, y, font = "5x7", color = COLORS["accent2"])
+        c.text(dt, 4, y, font = "5x7", color = date_color(st["series"]))
         nm = short_race(r.get("race_name", "RACE")) + "  -  " + short_track(r.get("track_name", ""))
         c.text(fit_text(c, nm, "5x7", c.width - dx - 4), dx, y, font = "5x7", color = COLORS["text"])
         y += 8
