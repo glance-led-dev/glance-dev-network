@@ -3,7 +3,7 @@ id: heisman-trophy-history
 version: 0.1.0
 name: Heisman Trophy History
 author: glance-led-dev
-description: Every Heisman Trophy winner since 1935 - year, school logo, position and a line of history - plus the trophy case, schools ranked by wins. Pick a school or a decade, or walk the whole list. No network needed.
+description: Every Heisman Trophy winner since 1935 as the trophy itself - the bronze statue centred on a pedestal with the winner's name on its brass plate, the year and school logo in spotlights either side - then his museum plaque with a line of history, and the trophy case of schools ranked by wins. Pick a school or a decade, or walk the whole list. No network needed.
 category: Sports
 entry: app.star
 
@@ -13,7 +13,7 @@ height: 32
 # (unix // 300), so ALL WINNERS walks the whole list in about 7.5 hours.
 refresh: 300
 
-pages: [winner, count]
+pages: [winner, plaque, count]
 
 # School logos: 40 x 24 for the winner page, S_ 24 x 18 for the trophy case.
 assets:

@@ -3,43 +3,53 @@
 # Every Heisman Trophy winner since 1935, one at a time, plus the schools
 # that have won it most. Static data - no network, nothing to go down.
 #
-#   winner  one winner per five minutes: the year in gold (a gold star after
-#           it when his team won the national title too), the position on a
-#           pixel jersey in the school's colours, the school's trophy shelf
-#           (his own wins lit - both of Griffin's), the name as the hero,
-#           and one line of history when there is one worth telling.
-#   count   the trophy case. For a school: one little trophy per win with
-#           the year under each (title years sparkle and turn gold), and the
-#           drought ('LAST 1987'). For a decade: its winners, logo over year.
-#           For ALL WINNERS: the schools ranked by wins, four logos to a
-#           frame with gold / silver / bronze medals for the top three
-#           counts, then a BY POSITION frame - every winner as one coloured
-#           column, 1935 to 2025, the backs' era giving way to the QBs'.
+#   winner  one winner per five minutes, as the trophy itself: the bronze
+#           stiff-arm statue centred on a walnut pedestal, the winner's name
+#           engraved on its brass plate; the year (a gold star beside it
+#           when his team won the national title too) and the position
+#           jersey in a spotlight on the left, the school logo in a
+#           spotlight on the right.
+#   plaque  the museum placard beside the statue, same winner: the full
+#           name, the school and position, the school's trophy shelf (his
+#           own wins lit - both of Griffin's) and one line of history, or
+#           where the win ranks for his school ('3RD OF 7 NOTRE DAME').
+#   count   the trophy case. For a school: one little statue per win with
+#           the year under each (title years sparkle and turn gold), the
+#           drought ('LAST 1987'), and the logo in the same right spotlight.
+#           For a decade: its winners, logo over year. For ALL WINNERS: the
+#           schools ranked by wins, four logos to a frame with gold / silver
+#           / bronze medals for the top three counts, then a BY POSITION
+#           frame - every winner as one coloured column, 1935 to 2025.
 #
-# DESIGN. The app's identity is the statue itself - a bronze stiff-arm,
-# knee up, ball tucked, on a dark plinth, standing in a warm ceremony
-# spotlight at the left edge of every page, so a viewer knows what the name
-# beside it means before they read it. That lit statue is the one bold
-# element; the rest stays quiet. Gold is the award's colour: the year, the
-# counts, the trophies and the championship stars. The name is white on
-# black. School colour lives only in the logo and the jersey. The logo sits
-# between the statue and the name at its authored 40 x 24 (the trophy case
-# uses the authored 24 x 18 set), never scaled at draw time. Chicago, Yale
+# DESIGN. CENTER PEDESTAL. Page 1 is the trophy, not a row of facts: a
+# 28 x 21 bronze stiff-arm statue stands dead centre on a walnut pedestal
+# under its own warm spotlight, and the winner's name is engraved in dark
+# letters on the pedestal's brass plate (the plate grows with the name, up
+# to 92 px). Two smaller spotlights flank it like a museum case: the year in
+# gold 9x12 on the left, the school logo at its authored 40 x 24 on the
+# right. Symmetry is the point - nothing else on the panel is centred like
+# this. Gold/bronze is the award's colour: statue, year, plate, counts,
+# stars. School colour lives only in the logo and the jersey. Chicago, Yale
 # and Princeton no longer play at the top level and have no logo in the
-# set, so they get a block monogram in the school's colour instead.
+# set, so they get a block monogram in the school colour, named under it.
 #
 # Frames: refresh is 300 s and the winner shown is (unix // 300) mod the
-# list, so ALL WINNERS walks the whole history every ~7.5 hours.
+# list, so ALL WINNERS walks the whole history every ~7.5 hours; the winner
+# and plaque pages always show the same winner.
 
 REFRESH = 300
 
 # ------------------------------------------------------------------ layout
-# 192 wide. Statue x 6..23, logo slot x 28..67 (40 x 24 at y 4), text zone
-# x 72..185: 6 px of padding at both edges.
-STATUE_X = 6
-LOGO_X = 28
-LOGO_Y = 4
-TX = 72
+# 192 wide. Left spotlight x 6..47 (centre 27), pedestal centred on x 96
+# (at most x 50..141, lip 49..142), right spotlight x 145..185 (logo
+# x 145..184). 6 px of padding at both edges.
+LX = 27
+RX = 165
+PED_C = 96
+PED_MAX = 92
+PED_MIN = 48
+LOGO_X = 145
+TX = 6
 TR = 185
 TW = TR - TX + 1
 
@@ -231,41 +241,38 @@ MONOGRAM = {"CHI": ["C", "#C8323F"], "YALE": ["Y", "#3D7BFF"], "PRIN": ["P", "#F
 BY_NAME = {SCHOOLS[k][0]: k for k in SCHOOLS}
 DECADES = ["1930S", "1940S", "1950S", "1960S", "1970S", "1980S", "1990S", "2000S", "2010S", "2020S"]
 
+
 # --------------------------------------------------------------- pixel art
-# The statue, 18 x 28, facing left: stiff arm out, ball tucked in the far
-# arm, front knee up, standing leg planted on the plinth. H highlight, B
-# bronze, D shadow, S plinth, s plinth edge.
+# The statue, 28 x 21, facing left: stiff arm straight out with the palm
+# up, ball tucked in the far arm, front knee up and shin hanging, the
+# standing leg planted on its bronze base plate. H highlight, B bronze,
+# D shadow, P base plate.
 STATUE = """
-..........HHH.....
-.........HBBBD....
-.........HBBBD....
-..........BBD.....
-..........BDD.....
-..HHBBBBBBBBBBD...
-.HD......BBBBBBD..
-.........BBBBDDBD.
-.........BBBBHHBD.
-.........BBBBHHBD.
-.........BBBBBDD..
-..........BBBBD...
-.........BBBBBD...
-......HBBBBBBBD...
-....HBBBBD..BBD...
-....HBD.....BBD...
-.....BD.....BBD...
-.....BD.....BBD...
-......BD....BBD...
-......BBD...BBD...
-.......DD..BBBD...
-...........BBBBD..
-..........HBBBBD..
-.....SSSSSSSSSSSS.
-.....SSSSSSSSSSSS.
-....SSSSSSSSSSSSSS
-....SSSSSSSSSSSSSS
-....ssssssssssssss
+...............HHHH.........
+..............HBBBBD........
+.............DHBBBBD........
+.HH...........HBBBBD........
+.HBD...........BBBD.........
+.HBBHHHHHHHHBBBBBBBD........
+..BBBBBBBBBBBBBBBBBBBD......
+..DD.........BBBBBBHHBD.....
+.............BBBBBBHHHBD....
+.............BBBBBBHHHBD....
+..............BBBBBBDDD.....
+..............BBBBBBBD......
+.............HBBBBBBBBD.....
+........HHBBBBBBBB.BBBBD....
+......HBBBBBBBBD....BBBD....
+.....HBBBDDD........BBBD....
+.....HBBD...........BBBD....
+......BBBD..........BBBD....
+.......BBBD........HBBBD....
+........DDD.......HBBBBBD...
+..........PPPPPPPPPPPPPPPPP.
 """
-STATUE_LEG = {"H": "#FFE08A", "B": "#D9962E", "D": "#8A5A1E", "S": "#3A4356", "s": "#262C3A"}
+STATUE_LEG = {"H": "#FFE08A", "B": "#D9962E", "D": "#8A5A1E", "P": "#6A4418"}
+STATUE_W = 28
+
 
 # 9 x 12 statue for the trophy case - the big one in miniature.
 MINI = """
@@ -347,9 +354,19 @@ POS_GROUPS = [
     ["END/CB", "#A8B2C8", ["END", "CB"]],
 ]
 
-# The ceremony spotlight behind the big statue: a warm cone, brighter at
-# the plinth, fading toward the top.
-SPOT = ["#221604", "#34230A", "#4A320E"]
+
+# Spotlights. A cone is drawn row by row, dim at the top and warmer toward
+# the floor; the side pools end in a flat 3-row ellipse of light.
+SPOT = ["#120B02", "#1A1104", "#241806"]
+POOL = ["#3A280C", "#5A3E14", "#3A280C"]
+
+# The pedestal: walnut block, bronze lip, brass nameplate with the name
+# engraved dark into it.
+WALNUT = "#3A2412"
+WALNUT_HI = "#5E3C1E"
+LIP = "#B07A2E"
+BRASS = "#E0B04A"
+ENGRAVE = "#1A0E02"
 
 # --------------------------------------------------------------- selection
 def mode(ctx):
@@ -461,18 +478,18 @@ def name_forms(raw):
     ini = ".".join([x[:1] for x in fs]) + "."
     return [first + " " + last, ini + " " + last, last]
 
-def pick_name(c, full, maxw):
-    """The biggest face first: across a room 'A. GRIFFIN' in 10x16 reads
-    further than 'ARCHIE GRIFFIN' in 8x10 (which is 116 px, over the 114 px
-    zone anyway). Full name, then initials + surname, then the surname."""
-    f = name_forms(full)
-    for o in [[0, "10x16"], [0, "9x12"], [1, "10x16"], [1, "9x12"], [2, "10x16"],
-              [1, "8x10"], [2, "9x12"], [0, "6x8"], [1, "6x8"], [2, "6x8"]]:
-        if tw(c, f[o[0]], o[1]) <= maxw:
-            return [f[o[0]], o[1]]
-    return [clip(c, f[2], "5x7", maxw), "5x7"]
 
 # ------------------------------------------------------------ shared chrome
+def fit_name(c, full, maxw, order):
+    """The first [form, font] in order that fits maxw. Forms: 0 full name,
+    1 initials + surname, 2 surname. Last resort: the surname clipped."""
+    f = name_forms(full)
+    for o in order:
+        if tw(c, f[o[0]], o[1]) <= maxw:
+            return [f[o[0]], o[1]]
+    last = order[len(order) - 1][1]
+    return [clip(c, f[2], last, maxw), last]
+
 def jersey(c, key, pos, x, y):
     """The position on a 9 px tall pixel jersey in the school's colours -
     sleeves, a neck notch - instead of a plain pill. Returns the last x it
@@ -487,18 +504,47 @@ def jersey(c, key, pos, x, y):
     c.text(pos, x + 5, y + 3, font = "4x5", color = col[1])
     return x + 3 + bw
 
-def statue(c):
-    """The statue under a warm ceremony spotlight: a cone from the top of
-    the panel widening to the plinth, three steps brighter toward the base,
-    kept inside x 6..24 so the app edge stays clean."""
-    cx = STATUE_X + 9
-    for y in range(0, 25):
-        h = 2 + y * 7 // 24
-        c.rect(cx - h, y, cx + h, y, fill = SPOT[min(2, y // 9)])
-    c.sprite(STATUE, STATUE_X, 2, legend = STATUE_LEG)
+def jersey_w(c, pos):
+    return c.text_width(pos, "4x5") + 9
+
+def cone(c, cx, y0, y1, h0, h1):
+    """A warm light cone centred on cx from y0 (half-width h0) to y1
+    (half-width h1), three steps brighter toward the floor."""
+    n = y1 - y0
+    for y in range(y0, y1 + 1):
+        k = y - y0
+        h = h0 + (h1 - h0) * k // max(1, n)
+        c.rect(cx - h, y, cx + h, y, fill = SPOT[min(2, k * 3 // (n + 1))])
+
+def side_spot(c, cx):
+    """A flanking spotlight: cone from the top, pool of light on the floor.
+    Stays inside cx - 20 .. cx + 20."""
+    cone(c, cx, 0, 27, 5, 17)
+    c.rect(cx - 14, 28, cx + 14, 28, fill = POOL[0])
+    c.rect(cx - 20, 29, cx + 20, 29, fill = POOL[1])
+    c.rect(cx - 14, 30, cx + 14, 30, fill = POOL[2])
+
+def pedestal(c, text, font):
+    """The walnut pedestal centred on PED_C, y 21..31: a bronze lip, the
+    block, and a brass plate with the text engraved in it. Width follows
+    the text. Returns [x0, x1] of the block."""
+    w = tw(c, text, font) if text != "" else 0
+    pw = max(PED_MIN, min(PED_MAX, w + 12))
+    x0 = PED_C - pw // 2
+    x1 = x0 + pw - 1
+    c.rect(x0 - 1, 21, x1 + 1, 21, fill = LIP)
+    c.rect(x0, 22, x1, 31, fill = WALNUT)
+    c.rect(x0, 22, x0, 31, fill = WALNUT_HI)
+    # The plate: brass, 3 px of walnut each side, y 22..31.
+    c.rect(x0 + 3, 22, x1 - 3, 31, fill = BRASS)
+    if text != "":
+        ty = 23 if INKH[font] >= 8 else 24
+        draw_text(c, text, PED_C - w // 2, ty, font, ENGRAVE)
+    return [x0, x1]
 
 def logo_big(c, key, x, y):
-    """The 40 x 24 logo in the slot at (x, y), or the monogram."""
+    """The 40 x 24 logo at (x, y); a monogram school gets its letter in
+    the school colour with the name under it."""
     s = SCHOOLS.get(key, None)
     if s == None:
         return
@@ -506,7 +552,8 @@ def logo_big(c, key, x, y):
         c.image(s[1], x, y)
         return
     m = MONOGRAM[key]
-    c.text(m[0], x + 20, y, font = "16x24_bold", color = m[1], align = "center")
+    c.text(m[0], x + 20, y, font = "16x20_bold", color = m[1], align = "center")
+    c.text(s[0], x + 20, y + 22, font = "4x5", color = INK, align = "center")
 
 def logo_small(c, key, x, y):
     """The 24 x 18 logo at (x, y), or the monogram at 11x14."""
@@ -520,58 +567,109 @@ def logo_small(c, key, x, y):
     c.text(m[0], x + 12, y + 2, font = "11x14_bold", color = m[1], align = "center")
 
 def empty(c, label):
-    """A filter with no winners: an answer, not an error."""
+    """A filter with no winners: an empty pedestal, the plate reading
+    NO WINNERS - an answer, not an error."""
     c.fill("black")
-    statue(c)
-    c.text("NO WINNERS", 106, 8, font = "6x8", color = GOLD, align = "center")
-    t = clip(c, "IN THE " + label, "4x5", 150)
-    c.text(t, 106, 20, font = "4x5", color = DIM, align = "center")
+    cone(c, PED_C, 0, 20, 3, 18)
+    pedestal(c, "NO WINNERS", "6x8")
+    t = clip(c, "IN THE " + label, "4x5", 80)
+    c.text(t, PED_C, 8, font = "4x5", color = DIM, align = "center")
+
+def current(ctx):
+    """[mode, winner or None]: the winner both the winner and the plaque
+    page show this refresh."""
+    r = pick(ctx)
+    if len(r[1]) == 0:
+        return [r[0], None]
+    return [r[0], r[1][step(ctx) % len(r[1])]]
 
 # ------------------------------------------------------------- page: winner
 def winner(c, ctx):
-    r = pick(ctx)
-    m, ws = r[0], r[1]
-    if len(ws) == 0:
-        empty(c, m[2])
+    r = current(ctx)
+    w = r[1]
+    if w == None:
+        empty(c, r[0][2])
         return
-    w = ws[step(ctx) % len(ws)]
-    has_note = w[4] != ""
     c.fill("black")
-    statue(c)
-    # With a note the logo rises to y 1..24 and the note runs as a caption
-    # under it, x 28..185 (158 px): the longest, 'HALLOWEEN PUNT RETURN VS
-    # OLE MISS', is 153 px and would never fit the 114 px text zone.
-    logo_big(c, w[2], LOGO_X, 1 if has_note else LOGO_Y)
 
-    # Row 1 (y 0..8): the year in gold 6x8, the position on a jersey, and
-    # at the right the school's trophy shelf - one trophy per win, this one
-    # lit. The logo already says the school, so the name only appears for
-    # the three monogram schools, where the letter alone could be anyone.
-    # A gold star after the year: his team won the national title too.
+    # Centre: the statue under its own cone, on the pedestal. The name is
+    # engraved on the plate: the full name when it fits in 6x8, else
+    # initials + surname, then 5x7, then the surname alone.
+    nm = fit_name(c, w[1], PED_MAX - 12, [[0, "6x8"], [1, "6x8"], [1, "5x7"], [2, "6x8"], [2, "5x7"]])
+    cone(c, PED_C, 0, 20, 3, 18)
+    c.sprite(STATUE, PED_C - STATUE_W // 2, 0, legend = STATUE_LEG)
+    pedestal(c, nm[0], nm[1])
+
+    # Left spotlight: the year in gold, then the title star (his team won
+    # the national title too) and the position jersey, centred as a group.
+    side_spot(c, LX)
     yr = str(w[0])
-    c.text(yr, TX, 0, font = "6x8", color = GOLD)
-    jx = TX + c.text_width(yr, "6x8") + 4
-    if w[0] in CHAMPS:
-        c.sprite(STAR7, jx, 1, legend = STAR_LEG)
-        jx += 11
-    jend = jersey(c, w[2], w[3], jx, 0)
-    # Every trophy of this player lights - Griffin's shelf lights '74 and
-    # '75, the only double.
-    shelf = [x for x in WINNERS if x[2] == w[2]]
-    sx = TR - len(shelf) * 6 + 2
-    for i in range(len(shelf)):
-        c.sprite(TINY, sx + i * 6, 1, legend = TINY_ON if shelf[i][1] == w[1] else TINY_OFF)
-    if SCHOOLS[w[2]][1] == "":
-        room = sx - 4 - (jend + 4) + 1
-        c.text(clip(c, SCHOOLS[w[2]][0], "4x5", room), sx - 4, 2, font = "4x5", color = DIM, align = "right")
+    c.text(yr, LX, 3, font = "9x12", color = GOLD, align = "center")
+    champ = w[0] in CHAMPS
+    gw = jersey_w(c, w[3]) + (10 if champ else 0)
+    gx = LX - gw // 2
+    if champ:
+        c.sprite(STAR7, gx, 18, legend = STAR_LEG)
+        gx += 10
+    jersey(c, w[2], w[3], gx, 17)
 
-    # The name is the hero: centred in y 10..24 over a note, y 10..30 alone.
-    nm = pick_name(c, w[1], TW)
-    band_h = 15 if has_note else 21
-    y = 10 + (band_h - INKH[nm[1]]) // 2
-    draw_text(c, nm[0], TX, y, nm[1], INK)
-    if has_note:
-        draw_text(c, clip(c, w[4], "4x5", TR - LOGO_X + 1), LOGO_X, 27, "4x5", NOTE)
+    # Right spotlight: the logo at its authored 40 x 24.
+    side_spot(c, RX)
+    logo_big(c, w[2], LOGO_X, 2)
+
+# ------------------------------------------------------------- page: plaque
+# A brass-framed placard, x 6..185: full name + year, school + jersey +
+# the school's trophy shelf, and one line of history.
+FRAME = "#8A5A1E"
+PLAQUE = "#160E04"
+
+def ordinal(n):
+    if n % 100 in [11, 12, 13]:
+        return str(n) + "TH"
+    return str(n) + {1: "ST", 2: "ND", 3: "RD"}.get(n % 10, "TH")
+
+def plaque(c, ctx):
+    r = current(ctx)
+    w = r[1]
+    if w == None:
+        empty(c, r[0][2])
+        return
+    c.fill("black")
+    c.rect(TX, 0, TR, 31, fill = FRAME)
+    c.rect(TX + 1, 1, TR - 1, 30, fill = PLAQUE)
+    L = TX + 5
+    R = TR - 5
+
+    # Row 1: year (and title star) at the right, the name filling the rest.
+    yr = str(w[0])
+    c.text(yr, R, 4, font = "6x8", color = GOLD, align = "right")
+    yx = R - c.text_width(yr, "6x8")
+    if w[0] in CHAMPS:
+        c.sprite(STAR7, yx - 10, 4, legend = STAR_LEG)
+        yx -= 10
+    nm = fit_name(c, w[1], yx - 5 - L, [[0, "8x10"], [0, "6x8"], [1, "8x10"], [1, "6x8"], [2, "6x8"]])
+    draw_text(c, nm[0], L, 3 if nm[1] == "8x10" else 4, nm[1], INK)
+
+    # Row 2: school name, the position jersey, and at the right the
+    # school's trophy shelf - every win of this player lit (Griffin's two).
+    shelf = [x for x in WINNERS if x[2] == w[2]]
+    sx = R - len(shelf) * 6 + 2
+    for i in range(len(shelf)):
+        c.sprite(TINY, sx + i * 6, 15, legend = TINY_ON if shelf[i][1] == w[1] else TINY_OFF)
+    school = SCHOOLS[w[2]][0]
+    jw = jersey_w(c, w[3])
+    sn = clip(c, school, "5x7", sx - 4 - jw - 4 - L)
+    draw_text(c, sn, L, 15, "5x7", GOLD)
+    jersey(c, w[2], w[3], L + tw(c, sn, "5x7") + 4, 14)
+
+    # Row 3: the history note, or where this win ranks for the school.
+    if w[4] != "":
+        draw_text(c, clip(c, w[4], "4x5", R - L + 1), L, 25, "4x5", NOTE)
+    else:
+        k = len([x for x in shelf if x[0] <= w[0]])
+        n = len(shelf)
+        t = school + "'S ONLY HEISMAN" if n == 1 else ordinal(k) + " OF " + str(n) + " " + school + " HEISMANS"
+        draw_text(c, clip(c, t, "4x5", R - L + 1), L, 25, "4x5", DIM)
 
 # -------------------------------------------------------------- page: count
 def count(c, ctx):
@@ -581,38 +679,36 @@ def count(c, ctx):
         empty(c, m[2])
         return
     c.fill("black")
-    statue(c)
     if m[0] == "SCHOOL":
         trophy_case(c, m[1], ws)
     else:
         leaders(c, ctx, m, ws)
 
+# The trophy case runs x 6..140; the logo stands in the right spotlight.
+CR = 140
+CW = CR - TX + 1
+
 def trophy_case(c, key, ws):
-    """One school: logo, 'N HEISMANS', and one trophy per win with its year."""
-    logo_big(c, key, LOGO_X, LOGO_Y)
+    """One school: 'N HEISMANS', the drought, one statue per win with its
+    year - and the logo in the same right-hand spotlight as page 1."""
+    side_spot(c, RX)
+    logo_big(c, key, LOGO_X, 2)
     n = len(ws)
     word = "HEISMAN" if n == 1 else "HEISMANS"
     c.text(str(n), TX, 0, font = "6x8", color = GOLD)
     wx = TX + c.text_width(str(n), "6x8") + 3
     c.text(word, wx, 1, font = "5x7", color = GOLD)
-    # Right of the count: the drought ('LAST 1987') - the logo already says
-    # the school. A monogram school has no logo, so it keeps its name.
-    room = TR - (wx + c.text_width(word, "5x7") + 4) + 1
-    if SCHOOLS[key][1] == "":
-        tag = SCHOOLS[key][0]
-    elif n >= 2:
-        tag = "LAST " + str(ws[n - 1][0])
-    else:
-        tag = ""
-    if tag != "":
-        c.text(clip(c, tag, "4x5", room), TR, 2, font = "4x5", color = DIM, align = "right")
+    # The drought ('LAST 1987') - the logo already says the school.
+    if n >= 2:
+        room = CR - (wx + c.text_width(word, "5x7") + 4) + 1
+        c.text(clip(c, "LAST " + str(ws[n - 1][0]), "4x5", room), CR, 2, font = "4x5", color = DIM, align = "right")
 
-    # The case, one trophy per win. Up to two wins each cell is half the
-    # zone and carries the full year and the surname; three to five get
-    # 4-digit years ('2009' is 19 px, so cells of 21+); six to eight drop
-    # to 2-digit years, because 8 x 14 px is all the 114 px zone holds.
+    # The case, one statue per win. Up to two wins each cell is half the
+    # case and carries the full year and the surname; three to five get
+    # 4-digit years ('2009' is 19 px, so cells of 21+); six to eight get
+    # 2-digit years in cells of 16.
     if n <= 2:
-        cell = TW // 2
+        cell = CW // 2
         for i in range(n):
             cx = TX + i * cell
             c.sprite(MINI, cx, 12, legend = MINI_LEG)
@@ -623,7 +719,7 @@ def trophy_case(c, key, ws):
             f = fit(c, last, ["5x7", "4x5", "picopixel"], cell - 14)
             draw_text(c, f[1], cx + 12, 19, f[0], INK)
         return
-    cell = min(28, TW // n)
+    cell = min(28, CW // n)
     for i in range(n):
         cx = TX + i * cell
         mx = cx + (cell - 9) // 2
@@ -672,21 +768,21 @@ def leaders(c, ctx, m, ws):
         if tally[k] not in levels:
             levels.append(tally[k])
 
-    c.text("MOST HEISMANS", 30, 0, font = "4x5", color = GOLD)
+    # Cells 44 px wide across the panel (4 x 44 = 176, x 8..183): the
+    # 24 x 18 logo at y 6, the count in 10x16 beside it, the rank ('#1',
+    # 'T2') under the logo. A dim rule closes each cell - without it
+    # '[TEX] 2 [MIA] 2' reads as either school's 2.
+    x0 = 8
+    c.text("MOST HEISMANS", x0, 0, font = "4x5", color = GOLD)
     if frames > 1:
         c.text(str(f + 1) + "/" + str(frames), TR, 0, font = "4x5", color = DIM, align = "right")
-
-    # Cells 39 px wide from x 30: the 24 x 18 logo at y 6, the count in
-    # 10x16 beside it, the rank ('#1', 'T2') under the logo. A dim rule
-    # closes each cell - without it '[TEX] 2 [MIA] 2' reads as either
-    # school's 2.
     for i in range(len(show)):
         k = show[i]
-        cx = 30 + i * 39
+        cx = x0 + i * 44
         rank = 1 + len([x for x in ranked if tally[x] > tally[k]])
         tie = len([x for x in ranked if tally[x] == tally[k]]) > 1
         logo_small(c, k, cx, 6)
-        c.text(str(tally[k]), cx + 26, 7, font = "10x16", color = INK)
+        c.text(str(tally[k]), cx + 27, 7, font = "10x16", color = INK)
         # The top three counts wear a medal in gold, silver or bronze.
         tag = ("T" if tie else "#") + str(rank)
         medal = levels.index(tally[k]) + 1
@@ -698,7 +794,7 @@ def leaders(c, ctx, m, ws):
         else:
             c.text(tag, cx + 12, 27, font = "4x5", color = DIM, align = "center")
         if i < len(show) - 1:
-            c.vline(cx + 37, 9, 29, "#2B3550")
+            c.vline(cx + 41, 9, 29, "#2B3550")
 
 def decade_class(c, ctx, m, ws):
     """The decade's winners in order, five to a frame (balanced: the six
@@ -707,30 +803,30 @@ def decade_class(c, ctx, m, ws):
     per = (len(ws) + frames - 1) // frames
     f = step(ctx) % frames
     show = ws[f * per:f * per + per]
-    c.text("THE " + m[2], 30, 0, font = "4x5", color = GOLD)
+    c.text("THE " + m[2], TX, 0, font = "4x5", color = GOLD)
     if frames > 1:
         c.text(str(f + 1) + "/" + str(frames), TR, 0, font = "4x5", color = DIM, align = "right")
-    # Cells 31 px from x 30 (5 x 31 = 155, ending at 184), centred as a group.
-    cell = 31
-    x0 = 30 + (155 - len(show) * cell) // 2
+    # Cells 34 px (5 x 34 = 170), centred as a group on the panel.
+    cell = 34
+    x0 = 96 - len(show) * cell // 2
     for i in range(len(show)):
         cx = x0 + i * cell
-        logo_small(c, show[i][2], cx + 3, 8)
+        logo_small(c, show[i][2], cx + 5, 8)
         yr = str(show[i][0])
         if show[i][0] in CHAMPS:
             # Star left of a gold year: the title came too.
             yw = c.text_width(yr, "4x5")
-            c.sprite(STAR5, cx + 15 - yw // 2 - 7, 27, legend = STAR_LEG)
-            c.text(yr, cx + 15, 27, font = "4x5", color = GOLD, align = "center")
+            c.sprite(STAR5, cx + 17 - yw // 2 - 7, 27, legend = STAR_LEG)
+            c.text(yr, cx + 17, 27, font = "4x5", color = GOLD, align = "center")
         else:
-            c.text(yr, cx + 15, 27, font = "4x5", color = INK, align = "center")
+            c.text(yr, cx + 17, 27, font = "4x5", color = INK, align = "center")
 
 def by_position(c, ws):
-    """Every winner as one 1 px column, 1935 at the left, 2025 at the right,
+    """Every winner as one column, 1935 at the left, 2025 at the right,
     coloured by position - the backs' era, then the quarterbacks' - with
-    decade ticks under it and the totals as a legend on the right."""
-    c.text("BY POSITION", 30, 0, font = "4x5", color = GOLD)
-    x0 = 30
+    ticks every 20 years under it and the totals as a legend on the right."""
+    x0 = TX + 2
+    c.text("BY POSITION", TX, 0, font = "4x5", color = GOLD)
     y0, y1 = 8, 22
     grp = {}
     for g in POS_GROUPS:
@@ -741,16 +837,16 @@ def by_position(c, ws):
     for w in ws:
         g = grp.get(w[3], POS_GROUPS[3])
         tot[g[0]] += 1
-        x = x0 + w[0] - first
+        x = x0 + (w[0] - first) * 6 // 5
         c.rect(x, y0, x, y1, fill = g[1])
     last = WINNERS[len(WINNERS) - 1][0]
     # Ticks every 20 years, labelled '40 '60 '80 '00 '20.
     for yr in range(1940, last + 1, 20):
-        x = x0 + yr - first
+        x = x0 + (yr - first) * 6 // 5
         c.rect(x, y1 + 2, x, y1 + 3, fill = DIM)
         c.text(str(yr)[2:], x, 27, font = "4x5", color = DIM, align = "center")
     # Legend: swatch + label + total, two columns of two.
-    lx = x0 + last - first + 8
+    lx = x0 + (last - first) * 6 // 5 + 8
     for i in range(len(POS_GROUPS)):
         g = POS_GROUPS[i]
         gx = lx + (i // 2) * 30
