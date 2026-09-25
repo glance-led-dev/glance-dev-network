@@ -551,8 +551,11 @@ def timeline(c, ctx):
     now_logo(c, club)
 
     if frames > 1:
+        # Pips end by x 185 (NOW_X + 41) however many frames a club has, so
+        # nothing lights the x 186..191 edge.
+        px0 = min(NOW_X + 36, NOW_X + 42 - frames * 3)
         for f in range(frames):
-            fx = NOW_X + 36 + f * 3
+            fx = px0 + f * 3
             c.rect(fx, 28, fx + 1, 29, fill = club[1] if f == fr else RULE)
 
     # Free space left of the cells: the club's name, the count, and the rule

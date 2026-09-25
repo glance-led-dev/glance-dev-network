@@ -12,7 +12,7 @@ height: 32
 # 60 s: the timeline steps one frame (up to five older logos) per minute. There is
 # no network, so the refresh costs nothing; 33 dropdown choices is inside the
 # 48-combination limit for a sub-2-minute refresh.
-refresh: 3600
+refresh: 60
 
 pages: [timeline, firstnow]
 
