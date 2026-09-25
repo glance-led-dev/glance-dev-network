@@ -71,7 +71,7 @@ LOGO = {
     "LAC": "LAC.png", "LAR": "LAR.png", "LV": "LV.png", "MIA": "MIA.png",
     "MIN": "MIN.png", "NE": "NE.png", "NO": "NO.png", "NYJ": "NYJ.png",
     "PIT": "PIT.png", "SF": "SF.png", "TEN": "TEN.png", "WSH": "WSH.png",
-    "JAX": "JAX.png", "PHI": "PHI.png", "NFL": "NFL.png",
+    "JAX": "JAX.png", "PHI": "PHI.png",
 }
 
 # --------------------------------------------------------------- the book
@@ -667,7 +667,7 @@ def record(c, ctx):
     draw_spread(c, col)
 
     # Right page: the holder's club on the bookmark, the number beside it.
-    draw_ribbon(c, RIB_X, 42, 26, LOGO.get(r[8], "NFL.png"), col)
+    draw_ribbon(c, RIB_X, 42, 26, LOGO[r[8]], col)
     draw_number(c, r, ink)
 
     # Left page: head row, then holder and when beside the plate.

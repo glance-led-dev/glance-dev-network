@@ -10,7 +10,7 @@ entry: app.star
 width: 192
 height: 32
 # 60 s: one record per minute. Nothing is fetched - the book is baked in.
-refresh: 900
+refresh: 60
 
 pages: [record]
 
@@ -44,7 +44,6 @@ assets:
   - WSH.png
   - JAX.png
   - PHI.png
-  - NFL.png
   - vs-ATL.png
   - vs-DAL.png
   - vs-DEN.png
