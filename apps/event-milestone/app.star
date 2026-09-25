@@ -1,10 +1,17 @@
 # Event Milestone - how long since something happened, or how long until it
 # does. (192x32)
 #
-# One event per install -- add the app again to track another. Two levels:
+# One event per install -- add the app again to track another.
 #
-#   upper   DAYS SINCE <EVENT>                          [event date]
-#   lower   [theme art]  <count> DAYS               [month][week][day] lamps
+#   |+--------+ DAYS SINCE <EVENT>
+#   ||  theme |                                    [month][week][day]
+#   ||  32x32 | <count> DAYS
+#   |+--------+                                         [event date]
+#
+# An accent rail 2 px wide down the left edge, the theme icon filling the
+# full height beside it, and everything else in the column between the icon
+# and the right edge: the title across its top, the count under it on the
+# left, the anniversary lamps and the date stacked on the right.
 #
 # A date in the future counts DOWN and the head reads DAYS TO instead. The
 # direction lives in the title only: underneath, a countdown is just a number
@@ -12,21 +19,21 @@
 # it twice -- "DAYS TO WEDDING" over "114 DAYS AWAY" -- reads as a warning
 # rather than a countdown. Today keeps the SINCE head and shows TODAY.
 #
-# Because a future date is a supported case, the date inputs are declared
-# `date` and not `date-past`: date-past caps the picker at today, which would
-# put the whole countdown half of the app out of reach.
+# The date input is declared `date`, which the Glance app's picker limits to
+# today and later -- the countdown is this app's job, and past dates belong to
+# event-since. A date still goes past once the event has happened, so the
+# count-up branch stays: the day after the wedding reads DAYS SINCE WEDDING
+# rather than an error.
 #
-# Everything runs from the left edge of the safe zone: the art at PAD, the
-# number after it, the unit after that. The count takes the largest face that
-# still clears the lamps, and the ladder drops it a size for a number long
-# enough to need the room.
+# The count takes the largest face that still clears the lamp-and-date column,
+# and the ladder drops it a size for a number long enough to need the room.
 #
 # Vertically the count is CENTRED in the band and the unit sits on its
 # baseline -- not hung from BAND with the unit on its own centre, which put the
 # number one row under the title with eight dead rows beneath it and left
 # "DAYS" floating two rows low. See HERO_FONTS and ink_height().
 #
-# Forty-nine themes share one 24x24 sprite slot; see ART and draw_theme().
+# Fifty themes, each a PNG in assets/; see THEMES and draw_theme().
 #
 # The three lamps under the date are the anniversary at a glance, as a strict
 # cascade: orange for the whole of the event's month, green once the
@@ -43,9 +50,8 @@
 # Pure date arithmetic from ctx.now. Nothing is fetched, so there is no stale
 # or empty screen to design around -- only a date the user has not set yet.
 #
-# Chrome follows the scroll house kit (github-pulse-scroll): an accent rail and
-# a measured content band. This app plays between two others in the scroll
-# sequence, so nothing is drawn outside x PAD..c.width-1-PAD.
+# The panel is drawn edge to edge -- the rail IS the left edge -- rather than
+# inside the scroll kit's 8 px safe zone, so the icon can take all 32 rows.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -54,15 +60,17 @@ DIGITS = "0123456789"
 HEXCHARS = "0123456789ABCDEF"
 
 INK = "#08090D"          # near-black ground, per the contrast rule
-DIM = "#5E5E7A"          # the date under the title
 MID = "#9A9AB8"          # secondary rows
 STRUCT = "#1E2030"       # the unlit lamps
 
-PAD = 8                  # scroll safe zone: neighbours slide past the edges
+RAIL_W = 2               # the accent rail down the left edge
+ICON = 32                # the theme icon: a 32x32 tile beside the left rail
+LEFT = RAIL_W + ICON + 3             # content column: icon, 3 px gap ...
+RIGHT_EDGE = 192 - 3                 # ... to 2 px short of the right edge
 BAND = 8                 # lower level starts here, below the title row
 
-# The anniversary lamps: three 5x5 blocks, 4px apart, right-aligned under the
-# date. 5 + 4 + 5 + 4 + 5 = 23 wide, ending at c.width-1-PAD (see marks_x).
+# The anniversary lamps: three 5x5 blocks, 4px apart, right-aligned over the
+# date. 5 + 4 + 5 + 4 + 5 = 23 wide, ending at RIGHT_EDGE (see marks_x).
 # Left to right they narrow: the month, the week, then the day itself.
 MONTH_ON = "#E87722"     # orange: today is in the event's month
 WEEK_ON = "#3FA34D"      # green:  the anniversary falls in this week
@@ -74,7 +82,9 @@ DAY_ON = "#2160AF"       # navy:   today is the anniversary itself
 # inverted. #2160AF is that same navy at a brightness the panel can show --
 # the channel ratios are 0.19:0.55:1.00 either way, so it is the same hue,
 # lifted, not a different colour.
-MARKS_Y = 8
+MARKS_Y = 11             # lamps: rows 11-15, just under the title
+DATE_Y = 25              # date: rows 25-29, the foot of the column
+DATE_FONT = "4x5"
 
 # The count block. 16x24 is deliberately NOT in the ladder: it is exactly as
 # tall as the band, so it lands one row under the title with nothing below,
@@ -83,9 +93,8 @@ MARKS_Y = 8
 # pixels that were pushing a five-digit count down to 10x16.
 HERO_FONTS = ["16x20", "10x16", "8x12"]
 UNIT_FONT = "6x8"        # not 8x12: see the note on LAMP_SPAN
-ART_GAP = 6              # art to number
 UNIT_GAP = 6             # number to unit
-CLEAR = 4                # unit to the lamps
+CLEAR = 4                # unit to the lamp-and-date column
 LAMP_SPAN = 23           # three 5x5 lamps, 4px apart
 #
 # The third lamp costs the count 9px of width, which is exactly enough to push
@@ -184,1539 +193,57 @@ def _hexval(ch):
     return HEXCHARS.find(ch.upper())
 
 
-# ----------------------------------------------------------------- pixel art
-# Authored at 24x24 -- the icon module the layout grammar already uses, and
-# the full height of the lower level.
+# ---------------------------------------------------------------- theme art
+# Every theme is a PNG in assets/, named after the theme with spaces as
+# hyphens: "torii gate" -> torii-gate.png. Each is drawn into the 32x32 icon
+# tile beside the left rail.
 #
-# The first cut was 12x12 drawn at scale 2, on the theory that chunky reads
-# better at 30 feet. At that size a mortarboard is a white blob over a box and
-# the ring is an oval with a dot: the shapes stopped being recognisable long
-# before the pixels stopped being visible. Same footprint, four times the
-# detail, and the panel resolves 1px strokes fine -- the fonts are 1px.
-#
-# The bundled icon set is 8x8 one-bit shapes -- its ring is an outline circle,
-# a washer rather than a wedding ring -- and has nothing for most of these, so
-# all forty-nine themes are drawn here instead, in colour and to one style.
-#
-# They were authored with a small generator that draws into a 24x24 char grid
-# from primitives -- discs, swept polygons, half-ellipse domes -- rather than
-# by counting dots by hand, and it asserts every sprite is 24x24 with no
-# character missing from its legend before emitting. What ships is the emitted
-# array; the generator is dev scaffolding and lives outside the repo.
-
-RING = [
-    "........................",
-    "..........GGGG..........",
-    ".........G....G.........",
-    "........G......G........",
-    ".........G....G.........",
-    "..........G..G..........",
-    "...........GG...........",
-    "........########........",
-    "......##........##......",
-    ".....#............#.....",
-    "....#..............#....",
-    "....#..............#....",
-    "...#................#...",
-    "...#................#...",
-    "...#................#...",
-    "...#................#...",
-    "....#..............#....",
-    "....#..............#....",
-    ".....#............#.....",
-    "......##........##......",
-    "........########........",
-    "........................",
-    "........................",
-    "........................",
-]
-
-CAKE = [
-    ".......F..F..F..........",
-    ".......C..C..C..........",
-    ".......C..C..C..........",
-    ".......TTTTTTTTTT.......",
-    "......TTTTTTTTTTTT......",
-    "......TTTTTTTTTTTT......",
-    "......##########SS......",
-    "......##########SS......",
-    "......##########SS......",
-    "......##########SS......",
-    "....TTTTTTTTTTTTTTTT....",
-    "...TTTTTTTTTTTTTTTTTT...",
-    "...TTTTTTTTTTTTTTTTTT...",
-    "...################SS...",
-    "...################SS...",
-    "...################SS...",
-    "...################SS...",
-    "...################SS...",
-    "...################SS...",
-    "..PPPPPPPPPPPPPPPPPPPP..",
-    "..PPPPPPPPPPPPPPPPPPPP..",
-    "........................",
-    "........................",
-    "........................",
-]
-
-
-CAP = [
-    "........................",
-    "........................",
-    "...........##...........",
-    ".........######.........",
-    ".......##########.......",
-    ".....##############.....",
-    "...##################...",
-    ".######################.",
-    "...##################..T",
-    ".....##############....T",
-    ".......##########......T",
-    ".......#........#......T",
-    ".......#........#......T",
-    ".......#........#......T",
-    ".......#........#....TTT",
-    ".......#........#....TTT",
-    ".......#........#....TTT",
-    ".......##......##.......",
-    "........########........",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-
-# A legend value of None turns that character off, so one art string can carry
-# detail that a single-colour draw simply drops.
-RING_LEGEND = {"G": "#FFFFFF", "#": "#E8C44A"}
-CAKE_LEGEND = {"F": "#FFB020", "C": "#FFF6E0", "T": "#FFF0F5",
-               "#": "#E85AA8", "S": "#A8306E", "P": "#C9CCD8"}
-CAP_LEGEND = {"#": "#F2F2F8", "T": "#E8C44A"}
-
-HOUSE = [
-    "........................",
-    "............R...........",
-    "...........RRR..........",
-    "..........RRRRR.........",
-    ".........RRRRRRR........",
-    "........RRRRRRRRR.......",
-    "......RRRRRRRRRRRRR.....",
-    ".....RRRRRRRRRRRRRRR....",
-    "....RRRRRRRRRRRRRRRRR...",
-    "...RRRRRRRRRRRRRRRRRRR..",
-    "........................",
-    "....WWWWWWWWWWWWWWWW....",
-    "....WWWWWWWWWWWWWWWW....",
-    "....WWGGGGWWWWGGGGWW....",
-    "....WWGGGGWWWWGGGGWW....",
-    "....WWGGGGWWWWGGGGWW....",
-    "....WWWWWWDDDDWWWWWW....",
-    "....WWWWWWDDDDWWWWWW....",
-    "....WWWWWWDDDDWWWWWW....",
-    "....WWWWWWDDDDWWWWWW....",
-    "....WWWWWWDDDDWWWWWW....",
-    "........................",
-    "........................",
-    "........................",
-]
-
-HOUSE_LEGEND = {"D": "#8B5A2B", "G": "#6FB7E8", "R": "#C0392B", "W": "#E8D8B0"}
-
-CAR = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "......BBBBBBBBBBB.......",
-    ".....BBGGGGGGGGGBB......",
-    ".....BBGGGGGGGGGBB......",
-    "....BBBGGGGGGGGGBBB.....",
-    "....BBBGGGGGGGGGBBB.....",
-    ".BBBBBBBBBBBBBBBBBBBBBB.",
-    ".BBBBBBBBBBBBBBBBBBBBBB.",
-    ".BBBBBBBBBBBBBBBBBBBBBB.",
-    ".BBBBKKKBBBBBBBBKKKBBBB.",
-    ".BBBKKKKKBBBBBBKKKKKBBB.",
-    ".BBKKKKKKKBBBBKKKKKKKBB.",
-    "...KKKSKKK....KKKSKKK...",
-    "...KKKKKKK....KKKKKKK...",
-    "....KKKKK......KKKKK....",
-    ".....KKK........KKK.....",
-    "........................",
-    "........................",
-    "........................",
-]
-
-CAR_LEGEND = {"B": "#E03A3A", "G": "#9FD4F5", "K": "#3A3A44", "S": "#C9CCD8"}
-
-BICYCLE = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "................HHHH....",
-    ".........SSSS.....H.....",
-    "..........FFFFF...H.....",
-    ".........F.F...F..H.....",
-    "....WWW..F..F..F.WHW....",
-    "..WWWWWWF....F.WFWHWWW..",
-    ".WWWW.WFWW....FFFWHWWWW.",
-    ".WW...F.WW....WWFFH..WW.",
-    "WWW...F.WWW..WWW.FH..WWW",
-    "WW...F...WW..WW...H...WW",
-    "WWW.....WWW..WWW.....WWW",
-    ".WW.....WW....WW.....WW.",
-    ".WWWW.WWWW....WWWW.WWWW.",
-    "..WWWWWWW......WWWWWWW..",
-    "....WWW..........WWW....",
-    "........................",
-    "........................",
-    "........................",
-]
-
-BICYCLE_LEGEND = {"F": "#4EA8FF", "H": "#C9CCD8",
-                   "S": "#8B5A2B", "W": "#C9CCD8"}
-
-YACHT = [
-    "........................",
-    "........................",
-    "............M...........",
-    "...........SM...........",
-    "..........SSM...........",
-    "..........SSMS..........",
-    ".........SSSMSS.........",
-    "........SSSSMSSS........",
-    ".......SSSSSMSSS........",
-    ".......SSSSSMSSSS.......",
-    "......SSSSSSMSSSSS......",
-    ".....SSSSSSSMSSSSSS.....",
-    "....SSSSSSSSMSSSSSS.....",
-    "....SSSSSSSSMSSSSSSS....",
-    "............M...........",
-    "............M...........",
-    "..HHHHHHHHHHHHHHHHHHHHH.",
-    "...HHHHHHHHHHHHHHHHHHH..",
-    "....HHHHHHHHHHHHHHHHH...",
-    "....HHHHHHHHHHHHHHHH....",
-    "........................",
-    "........................",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "........................",
-]
-
-YACHT_LEGEND = {"H": "#E03A3A", "M": "#9A9AB8", "S": "#FFFFFF", "W": "#2160AF"}
-
-DEPART = [
-    "........................",
-    "........................",
-    "........................",
-    "......BB................",
-    "......BBB...........A...",
-    ".......BBB.........AAA..",
-    ".......BBBB.......AAAAA.",
-    "..BB....BBBB.......AAA..",
-    "..BBB....BBBB......AAA..",
-    "BBBBBBBBBBBBBBBB...AAA..",
-    "BBBBBBBBBBBBBBBBB..AAA..",
-    "BBBBBBBBBBBBBBBB...AAA..",
-    "..BBB....BBBB...........",
-    "..BB....BBBB............",
-    ".......BBBB.............",
-    ".......BBB..............",
-    "......BBB...............",
-    "......BB................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-DEPART_LEGEND = {"A": "#3FA34D", "B": "#E8E8F0"}
-
-ARRIVE = [
-    "........................",
-    "........................",
-    "........................",
-    "......BB................",
-    "......BBB..........AAA..",
-    ".......BBB.........AAA..",
-    ".......BBBB........AAA..",
-    "..BB....BBBB.......AAA..",
-    "..BBB....BBBB......AAA..",
-    "BBBBBBBBBBBBBBBB..AAAAA.",
-    "BBBBBBBBBBBBBBBBB..AAA..",
-    "BBBBBBBBBBBBBBBB....A...",
-    "..BBB....BBBB...........",
-    "..BB....BBBB............",
-    ".......BBBB.............",
-    ".......BBB..............",
-    "......BBB...............",
-    "......BB................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-ARRIVE_LEGEND = {"A": "#4EA8FF", "B": "#E8E8F0"}
-
-TREE = [
-    "........................",
-    "........................",
-    "...........LLL..........",
-    ".........LLLLLLL........",
-    "........LLLLLLLLL.......",
-    ".......LLLLLLLLLLL......",
-    ".......LLLLLLLLLLL......",
-    "......LLLLLLLLLLLLL.....",
-    "......LLLLLLLLLLLLL.....",
-    "....LLLLLLLLLLLLLLLLL...",
-    "....LLLLLLLLLLLLLLLLL...",
-    "...LLLLLLLLLLLLLLLLLLL..",
-    "...LLLLLLLLLLLLLLLLLLL..",
-    "...LLLLLLLLLLLLLLLLLLL..",
-    "....LLLLLLLLLLLLLLLLL...",
-    "....LLLLLLLTTTLLLLLLL...",
-    "......LLL..TTT..LLL.....",
-    "...........TTT..........",
-    "...........TTT..........",
-    "...........TTT..........",
-    "...........TTT..........",
-    "...........TTT..........",
-    "........................",
-    "........................",
-]
-
-TREE_LEGEND = {"L": "#3FA34D", "T": "#8B5A2B"}
-
-FLOWER = [
-    "........................",
-    "........................",
-    "...........PPP..........",
-    "..........PPPPP.........",
-    ".........PPPPPPP........",
-    ".......PPPPPPPPPPP......",
-    "......PPPPPPPPPPPPP.....",
-    ".....PPPPPPCCCPPPPPP....",
-    ".....PPPPPCCCCCPPPPP....",
-    ".....PPPPPCCCCCPPPPP....",
-    "......PPPPCCCCCPPPP.....",
-    ".......PPPPCCCPPPP......",
-    ".......PPPPPPPPPPP......",
-    ".......PPPPPPPPPPP......",
-    "........PPPPPPPPP.......",
-    "......S..PPPSPPP........",
-    "......SSSS..SS..........",
-    "......SSSSSSSS..........",
-    ".......SSSS.SS..........",
-    "............SS..........",
-    "............SS..........",
-    "............SS..........",
-    "............SS..........",
-    "........................",
-]
-
-FLOWER_LEGEND = {"C": "#FFD24A", "P": "#E85AA8", "S": "#3FA34D"}
-
-BEACH = [
-    "........................",
-    "........................",
-    "........................",
-    ".LL.....LL..............",
-    ".LLL...LLL..............",
-    "LLLLL.LLL...............",
-    "LLLLLLLLLLLLL...........",
-    "..LLLLLLLLLLL...........",
-    "....LNLNL...............",
-    "....TTLLLLL.............",
-    "....TT..LLLL............",
-    "....TTT...LL......H.....",
-    ".....TT..........HHHH...",
-    ".....TT..........HHH....",
-    ".....TT.........HHHH....",
-    ".....TT........HHHH.....",
-    ".....TT.......HHHH......",
-    ".....TTT......HHHHHHHHH.",
-    "......TT.......HHHHHHHH.",
-    "......TT.......H.....H..",
-    "......TT................",
-    "SSSSSSSSSSSSSSSSSSSSSSSS",
-    "SSSSSSSSSSSSSSSSSSSSSSSS",
-    "........................",
-]
-
-BEACH_LEGEND = {"H": "#E8B04A", "L": "#3FA34D", "N": "#6B4423",
-                 "S": "#E8D8B0", "T": "#8B5A2B"}
-
-MOUNTAINS = [
-    "........................",
-    "........................",
-    "..................UUU...",
-    ".................UUUUU..",
-    "........W.......UUUUUUU.",
-    ".......WWW......UUUUUUU.",
-    ".......WWW......UUUUUUU.",
-    "......WWWWW......UUUUU..",
-    "......WWWWW.......UUU...",
-    ".....MMMMMMM.....W......",
-    ".....MMMMMMMM...WWW.....",
-    "....MMMMMMMMM...WWW.....",
-    "....MMMMMMMMMM.MMMMM....",
-    "...MMMMMMMMMMMMMMMMM....",
-    "...MMMMMMMMMMMMMMMMMM...",
-    "..MMMMMMMMMMMMMMMMMMMM..",
-    "..MMMMMMMMMMMMMMMMMMMM..",
-    ".MMMMMMMMMMMMMMMMMMMMMM.",
-    ".MMMMMMMMMMMMMMMMMMMMMM.",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-MOUNTAINS_LEGEND = {"M": "#6E7A94", "U": "#FFD24A", "W": "#FFFFFF"}
-
-TORII = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "..RRRRRRRRRRRRRRRRRRRR..",
-    "..RRDDDDDDDDDDDDDDDDRR..",
-    "..RRRRRRRRRRRRRRRRRRRR..",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    "....RRRRRRRDDRRRRRRR....",
-    "....RRRRRRRDDRRRRRRR....",
-    "....RRRRRRRDDRRRRRRR....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    ".....RRRR......RRRR.....",
-    "........................",
-    "........................",
-]
-
-TORII_LEGEND = {"D": "#7A1F1F", "R": "#E03A3A"}
-
-PAGODA = [
-    "........................",
-    "............R...........",
-    "..........RRRRR.........",
-    ".........RRRRRRR........",
-    "........RRRRRRRRR.......",
-    "........................",
-    ".........BBBBBB.........",
-    ".........BBBBBB.........",
-    ".......RRRRRRRRRRR......",
-    "......RRRRRRRRRRRRR.....",
-    ".....RRRRRRRRRRRRRRR....",
-    "....RRRRRRRRRRRRRRRRR...",
-    "........................",
-    ".......BBBBBBBBBB.......",
-    ".......BBBBBBBBBB.......",
-    "......RRRRRRRRRRRRR.....",
-    ".....RRRRRRRRRRRRRRR....",
-    "....RRRRRRRRRRRRRRRRR...",
-    "..RRRRRRRRRRRRRRRRRRRRR.",
-    "........................",
-    "......BBBBDDDDBBBB......",
-    "......BBBBDDDDBBBB......",
-    "......BBBBDDDDBBBB......",
-    "........................",
-]
-
-PAGODA_LEGEND = {"B": "#E8D8B0", "D": "#8B5A2B", "R": "#C0392B"}
-
-CASTLE = [
-    "...........SRR..........",
-    "..........PPPP..........",
-    "...B......PPPP......B...",
-    "...B.....PPPPPP.....B...",
-    "..BBB...PPPPPPPP...BBB..",
-    "..BBB...PPPPPPPP...BBB..",
-    ".BBBBB..DSSSSSSS..BBBBB.",
-    ".BBBBB..DSSSSSSS..BBBBB.",
-    "BBBBBBB.DSSSSSSS.BBBBBBB",
-    ".DSSSS..DSKSSKSS..DSSSS.",
-    ".DSSSS..DSKSSKSS..DSSSS.",
-    ".DSSSS..DSKSSKSS..DSSSS.",
-    ".DSKSSSSDSSSSSSSS.DSKSS.",
-    ".DSKSSSSDSSSSSSSSSDSKSS.",
-    ".DSKSSSSDSSSSSSSSSDSKSS.",
-    ".DSSSSSSDSSSSSSSSSDSSSS.",
-    ".DSSSSSSDSSSKSSSSSDSSSS.",
-    ".DSSSSSSDSSKKSSSSSDSSSS.",
-    ".DSSSSSSDSKKKKSSSSDSSSS.",
-    ".DSSSSSSDSKKKKSSSSDSSSS.",
-    ".DSSSSSSDSKKKKSSSSDSSSS.",
-    ".DSSSSSSDSKKKKSSSSDSSSS.",
-    ".DSSSSSSDSKKKKSSSSDSSSS.",
-    "........................",
-]
-
-CASTLE_LEGEND = {"B": "#4EA8FF", "D": "#9A9AB8", "K": "#22242E",
-                 "P": "#E85AA8", "R": "#E0243C", "S": "#D8DCE8"}
-
-FIREWORKS = [
-    "........................",
-    "...................W....",
-    "........Y.......W.....W.",
-    "...................P....",
-    "...Y....R....Y....P.P...",
-    "....R...R...R..W.P.W.P.W",
-    ".....R..R..R......P.P...",
-    "......R.R.R........P....",
-    ".......R.R......W.....W.",
-    ".Y.RRRR.Y.RRRR.Y...W....",
-    ".......R.R..............",
-    "......R.R.R.............",
-    ".....R..R..R.......W....",
-    "....R...R...R...W.....W.",
-    "...Y....R....Y.....C....",
-    "..................C.C...",
-    "........Y......W.C.W.C.W",
-    "..................C.C...",
-    "........Y..........C....",
-    "........Y.......W.....W.",
-    "...................W....",
-    "........Y...............",
-    "........Y...............",
-    "........................",
-]
-
-FIREWORKS_LEGEND = {"C": "#25F8CB", "P": "#E85AA8", "R": "#E0243C",
-                    "W": "#F2F2F8", "Y": "#FFD24A"}
-
-TENT = [
-    "........................",
-    "........................",
-    "..........L...L.........",
-    "...........L.L..........",
-    "............L...........",
-    "...........ODD..........",
-    "...........ODD..........",
-    "..........OOODD.........",
-    ".........OOOODDD........",
-    ".........OOOODDD........",
-    "........OOOIOIDDD.......",
-    ".......OOOOIOIDDDD......",
-    "......OOOOIIOIIDDDD.....",
-    "......OOOOIIOIIDDDD.....",
-    ".....OOOOOIIOIIDDDDD....",
-    "....OOOOOIIIOIIIDDDDD...",
-    "....OOOOOIIIOIIIDDDDD...",
-    "...OOOOOOIIIOIIIDDDDDD..",
-    "..OOOOOOIIIIOIIIIDDDDDD.",
-    "..GOOGOOIIIIOIIIIDDDDGD.",
-    "GGGGGGGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGGGGGGG",
-    "........................",
-    "........................",
-]
-
-TENT_LEGEND = {"D": "#C8601A", "G": "#3FA34D", "I": "#FFD9A0", "L": "#8B5A2B",
-               "O": "#FF8A1E"}
-
-GIRL = [
-    "........HHHHHHHHH.......",
-    "........HHHHHHHHH.......",
-    "..........KKKKK.........",
-    "........HKKKKKKKH.......",
-    "........HKKKKKKKH.......",
-    "........HKKKKKKKH.......",
-    "........H.KKKKK.H.......",
-    "...........KKK..........",
-    "..........PPPPP.........",
-    "........PPPPPPPPP.......",
-    "........PPPPPPPPP.......",
-    "........PPPPPPPPP.......",
-    "........PPPPPPPPP.......",
-    "........PPPPPPPPP.......",
-    "..........PPPPP.........",
-    ".........PPPPPPP........",
-    ".........PPPPPPP........",
-    "........PPPPPPPPP.......",
-    "........................",
-    "..........KK.KK.........",
-    "..........KK.KK.........",
-    "..........KK.KK.........",
-    "........................",
-    "........................",
-]
-
-GIRL_LEGEND = {"H": "#5A3A22", "K": "#F2C79A", "P": "#E85AA8"}
-
-BOY = [
-    "........................",
-    "...........KKK..........",
-    "..........KKKKK.........",
-    ".........KKKKKKK........",
-    ".........KKKKKKK........",
-    ".........KKKKKKK........",
-    "..........KKKKK.........",
-    "...........KKK..........",
-    "..........BBBBB.........",
-    "........BBBBBBBBB.......",
-    "........BBBBBBBBB.......",
-    "........BBBBBBBBB.......",
-    "........BBBBBBBBB.......",
-    "........BBBBBBBBB.......",
-    "..........BBBBB.........",
-    "..........BB.BB.........",
-    "..........BB.BB.........",
-    "..........BB.BB.........",
-    "..........BB.BB.........",
-    "..........BB.BB.........",
-    "..........BB.BB.........",
-    "..........BB.BB.........",
-    "........................",
-    "........................",
-]
-
-BOY_LEGEND = {"B": "#4EA8FF", "K": "#F2C79A"}
-
-CAMPFIRE = [
-    "........................",
-    "........................",
-    "........................",
-    "............F...........",
-    "...........FFF..........",
-    "...........FFF..........",
-    "..........FFFFF.........",
-    "..........FFYFF.........",
-    ".........FFYYYFF........",
-    ".........FFYYYFF........",
-    "........FFYYYYYFF.......",
-    "........FFYYYYYFF.......",
-    ".......FFYYYYYYYFF......",
-    ".........FYYYYYF........",
-    "..........FFFFF.........",
-    "........................",
-    "........................",
-    "...LLLL...........LLLL..",
-    "...LLLLLLLLLLLLLLLLLLL..",
-    "......LLLLLLLLLLLLL.....",
-    "...LLLLLLLLLLLLLLLLLLL..",
-    "...LLLL...........LLLL..",
-    "........................",
-    "........................",
-]
-
-CAMPFIRE_LEGEND = {"F": "#FF6A1E", "L": "#8B5A2B", "Y": "#FFD24A"}
-
-HELICOPTER = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "..SSSSSSSSSSSSSSSSSSSSS.",
-    "..SSSSSSSSSSSSSSSSSSSSS.",
-    "...........SS...........",
-    "........BBBSS.......BB..",
-    "......BBBBBBB.......BB..",
-    ".....BBBBBBBBB......BB..",
-    ".....WWWWWWWBB......BB..",
-    "....BWWWWWWWBBBBBBBBBBB.",
-    "....WWWWWWWWBBBBBBBBBBB.",
-    "....WWWWWWWWBBBBBBBBBBB.",
-    ".....BBBBBBBBB..........",
-    ".....BBBBBBBBB..........",
-    "......BSBBBBS...........",
-    "......SSSSSSSSS.........",
-    "......SSSSSSSSS.........",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-HELICOPTER_LEGEND = {"B": "#4EA8FF", "S": "#C9CCD8", "W": "#9FD4F5"}
-
-PARAGLIDER = [
-    "........................",
-    "........................",
-    "........................",
-    ".........YYYGGGG........",
-    "......OOOYYYGGGGBBB.....",
-    ".....OOOOYYYGGGGBBBB....",
-    "...RROOOOYYYGGGGBBBBVV..",
-    "...RROOOOYYYGGGGBBBBVV..",
-    "..RRROOOOYYYGGGGBBBBVVV.",
-    "..RRROOOOYYYGGGGBBBBVVV.",
-    "..RRROOOOYYYGGGGBBBBVVV.",
-    "..SRROOOSYYYGGGGSBBBVVS.",
-    "...S....S.......S....S..",
-    "....S....S.....S....S...",
-    ".....S...S.....S...S....",
-    "......S...S...S...S.....",
-    ".......SS.S...S.SS......",
-    ".........S.S.S.S........",
-    "..........SS.SS.........",
-    "...........SSS..........",
-    "............S...........",
-    "........................",
-    "........................",
-    "........................",
-]
-
-PARAGLIDER_LEGEND = {"B": "#4EA8FF", "G": "#3FA34D", "O": "#FF8A1E",
-                      "R": "#E0243C", "S": "#9A9AB8", "V": "#9B59B6",
-                      "Y": "#FFD24A"}
-
-FISHING = [
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..................S.....",
-    "..........F....S..S.....",
-    ".........FFF....SS......",
-    ".........FFF............",
-    "F......FFFFFF...........",
-    "FF...FFFFFFFFF..........",
-    ".FFFFFFFFFFFFEF.........",
-    ".FFFFFFFFFFFFFFF........",
-    ".FFFFFFFFFFFFFF.........",
-    "FF.FFFFFFFFFFFF.........",
-    ".....FFFFFFFFF..........",
-    "........................",
-    "........................",
-]
-
-FISHING_LEGEND = {"E": "#08090D", "F": "#4EA8FF", "S": "#C9CCD8"}
-
-RUNNER = [
-    "........................",
-    "...............KKK......",
-    "..............KKKKK.....",
-    ".............KKKKKKK....",
-    ".............KKKKKKK....",
-    ".............KKKKKKK....",
-    "..............KKKKK.....",
-    "...............KKK..BB..",
-    "...........BBBBBBB..BB..",
-    "...........BBBBBBB..BB..",
-    "..........BBBBBBBBBBBBB.",
-    "........BBBBBBBBBBBBBBB.",
-    "......BBBBBBBBBBB..BBBB.",
-    "......BBB.BBBBBBB....BB.",
-    "......BB..BBBBBBB.......",
-    "......BBB..BB.BBB.......",
-    ".......BB.BBB.BBBBB.....",
-    ".......BB.BB....BBBBB...",
-    ".......BBBBB......BBB...",
-    "......BBBBB........BB...",
-    "..BBBBBBBB........BBB...",
-    "..BBBBB...........BB....",
-    "..................BB....",
-    "..................BB....",
-]
-
-RUNNER_LEGEND = {"B": "#FF8A1E", "K": "#F2C79A"}
-
-GOLD = [
-    "........................",
-    ".......AAAAA.CCCCC......",
-    ".......AAAAA.CCCCC......",
-    "........AAAACCCCC.......",
-    "........AAAACCCCC.......",
-    "........AAAACCCCC.......",
-    "........AAAACCCCC.......",
-    "........AAAACCCCC.......",
-    ".........AACCCCC........",
-    "...........MMM..........",
-    ".........MMMMMMM........",
-    "........MMMHHHMMM.......",
-    ".......MMHHHHHHHMM......",
-    ".......MMHHHHHHHMM......",
-    "......MMHHHHHHHHHMM.....",
-    "......MMHHHHHHHHHMM.....",
-    "......MMHHHHHHHHHMM.....",
-    ".......MMHHHHHHHMM......",
-    ".......MMHHHHHHHMM......",
-    "........MMMHHHMMM.......",
-    ".........MMMMMMM........",
-    "...........MMM..........",
-    "........................",
-    "........................",
-]
-
-GOLD_LEGEND = {"A": "#E0243C", "C": "#4EA8FF", "H": "#E0A81E", "M": "#FFD24A"}
-
-SOCCER = [
-    "........................",
-    "...........KKK..........",
-    "..........KKKKK.........",
-    "..........KKKKK.........",
-    "........WWKKKKKWW.......",
-    "......WWWWWKKKWWWWW.....",
-    ".....WWWWWWWWWWWWWWW....",
-    ".....WWWWWWWKWWWWWWW....",
-    "....WWWWWWWKKKWWWWWWW...",
-    "...KKKWWWKKKKKKKWWWKKK..",
-    "..KKKKKWKKKKKKKKKWKKKKK.",
-    "..KKKKKWKKKKKKKKKWKKKKK.",
-    "..KKKKKWKKKKKKKKKWKKKKK.",
-    "...KKKWWWKKKKKKKWWWKKK..",
-    "...WWWWWWKKKKKKKWWWWWW..",
-    "....WWWWWWWWWWWWWWWWW...",
-    "....WWWWWWWWWWWWWWWWW...",
-    ".....WWWWWWWWWWWWWWW....",
-    ".....WKKKWWWWWWWKKKW....",
-    ".....KKKKKWWWWWKKKKK....",
-    ".....KKKKKWWWWWKKKKK....",
-    ".....KKKKKWWWWWKKKKK....",
-    "......KKK.......KKK.....",
-    "........................",
-]
-
-SOCCER_LEGEND = {"K": "#22242E", "W": "#F2F2F8"}
-
-FOOTBALL = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "..........BBBBB.........",
-    "........BBBBBBBBB.......",
-    "......BBBBBBBBBBBBB.....",
-    "....BBBBBBBBBBBBBBBBB...",
-    "...BBBBBBWBWBWBWBBBBBB..",
-    "..BBBBBBBWBWBWBWBBBBBBB.",
-    "..BBBBBBWWWWWWWWWBBBBBB.",
-    "..BBBBBBBWBWBWBWBBBBBBB.",
-    "...BBBBBBWBWBWBWBBBBBB..",
-    "....BBBBBBBBBBBBBBBBB...",
-    "......BBBBBBBBBBBBB.....",
-    "........BBBBBBBBB.......",
-    "..........BBBBB.........",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FOOTBALL_LEGEND = {"B": "#8B4513", "W": "#F2F2F8"}
-
-BASKETBALL = [
-    "........................",
-    "........................",
-    "........................",
-    "..........OOKOO.........",
-    ".....K..OOOOKOOOO..K....",
-    "......KOOOOOKOOOOOK.....",
-    ".....OKOOOOOKOOOOOKO....",
-    ".....OOKOOOOKOOOOKOO....",
-    "....OOOOKOOOKOOOKOOOO...",
-    "....OOOOKOOOKOOOKOOOO...",
-    "...OOOOOOKOOKOOKOOOOOO..",
-    "...OOOOOOKOOKOOKOOOOOO..",
-    "...KKKKKKKKKKKKKKKKKKK..",
-    "...OOOOOOKOOKOOKOOOOOO..",
-    "...OOOOOOKOOKOOKOOOOOO..",
-    "....OOOOKOOOKOOOKOOOO...",
-    "....OOOOKOOOKOOOKOOOO...",
-    ".....OOKOOOOKOOOOKOO....",
-    ".....OOKOOOOKOOOOKOO....",
-    "......KOOOOOKOOOOOK.....",
-    ".....K..OOOOKOOOO..K....",
-    "..........OOKOO.........",
-    "........................",
-    "........................",
-]
-
-BASKETBALL_LEGEND = {"K": "#22242E", "O": "#E8721E"}
-
-BADMINTON = [
-    "........................",
-    "........................",
-    "...WSWWWSWWWSWWWSWWWSW..",
-    "...WSWWWSWWWSWWWSWWWSW..",
-    "....WSWWSWWWSWWWSWWSW...",
-    "....WSWWSWWWSWWSWWWSW...",
-    ".....WSWWSWWSWWSWWSW....",
-    ".....WSWWSWWSWWSWWSW....",
-    "......SWWSWWSWWSWSW.....",
-    "......WSWSWWSWSWWSW.....",
-    ".......SWSWWSWSWSW......",
-    ".......SWSWWSWSWSW......",
-    "........SWSWSWSSW.......",
-    "........SWSWSSWSW.......",
-    ".........SSWSSSW........",
-    ".........CCCCCCC........",
-    ".........CCCCCCC........",
-    ".........CCCCCCC........",
-    ".........CCCCCCC........",
-    ".........CCCCCCC........",
-    ".........CCCCCCC........",
-    "..........CCCCC.........",
-    "...........CCC..........",
-    "........................",
-]
-
-BADMINTON_LEGEND = {"C": "#D9A066", "S": "#C9CCD8", "W": "#F2F2F8"}
-
-VOLLEYBALL = [
-    "........................",
-    "........................",
-    "........................",
-    "..........WWBWW.........",
-    "........WWWWBWWWW.......",
-    "......WWWWWWBWWWWWW.....",
-    ".....WWWWWWWBWWWWWWW....",
-    "....BWWWWWWWBWWWWWWW....",
-    "....WBBBWWWWBWWWWWWWW...",
-    "....WWWWBWWWBWWWWWWWB...",
-    "...WWWWWWBBBBWWWWBBBWW..",
-    "...WWWWWWWWWBWWWBWWWWW..",
-    "...WWWWWWWWWBBBBWWWWWW..",
-    "...WWWWWWWWWBWWWBWWWWW..",
-    "...WWWWWWBBBBWWWWBBBWW..",
-    "....WWWWBWWWBWWWWWWWB...",
-    "....WBBBWWWWBWWWWWWWW...",
-    "....BWWWWWWWBWWWWWWW....",
-    ".....WWWWWWWBWWWWWWW....",
-    "......WWWWWWBWWWWWW.....",
-    "........WWWWBWWWW.......",
-    "..........WWBWW.........",
-    "........................",
-    "........................",
-]
-
-VOLLEYBALL_LEGEND = {"B": "#2160AF", "W": "#F2F2F8"}
-
-HOCKEY = [
-    "........................",
-    "........................",
-    ".....TT.................",
-    ".....TT.................",
-    "......TT................",
-    "......TT................",
-    "......TT................",
-    "......TT................",
-    ".......TT...............",
-    ".......TT...............",
-    ".......TT...............",
-    "........TT..............",
-    "........TT..............",
-    "........TT..............",
-    "........TT..............",
-    ".........TT.............",
-    ".........TTTTTTTTTT.....",
-    ".........TTTTTTTTTT.KKK.",
-    ".........TTTTTTTTTTKKKKK",
-    "...................KKKKK",
-    "...................KKKKK",
-    "IIIIIIIIIIIIIIIIIIIIIIII",
-    "IIIIIIIIIIIIIIIIIIIIIIII",
-    "........................",
-]
-
-HOCKEY_LEGEND = {"I": "#6FB7E8", "K": "#22242E", "T": "#C89A5A"}
-
-SKIING = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    ".....................RR.",
-    "........SSSSS.......RRR.",
-    "........SSSSS.....RRRR..",
-    "..RRRRRRRRRRRRRRRRRRR...",
-    "..RRRRRRRRRRRRRRRRR.....",
-    "........................",
-    "........................",
-    "........................",
-    ".....................BB.",
-    "........SSSSS.......BBB.",
-    "........SSSSS.....BBBB..",
-    "..BBBBBBBBBBBBBBBBBBB...",
-    "..BBBBBBBBBBBBBBBBB.....",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-SKIING_LEGEND = {"B": "#4EA8FF", "R": "#E0243C", "S": "#C9CCD8"}
-
-CHESS = [
-    "........................",
-    "...........WWW..........",
-    "...........WWW..........",
-    ".........WWWWWWW........",
-    ".........WWWWWWW........",
-    "...........WWW..........",
-    "..........WWWWW.........",
-    ".........WWWWWWW........",
-    ".........WWWWWWW........",
-    ".........WWWWWWW........",
-    ".........WWWWWWW........",
-    ".........WWWWWWW........",
-    ".........WWWWWWW........",
-    "........WDDDDDDDW.......",
-    "........WDDDDDDDW.......",
-    "........WWWWWWWWW.......",
-    "........WWWWWWWWW.......",
-    ".......WWWWWWWWWWW......",
-    ".......WWWWWWWWWWW......",
-    "........................",
-    ".....WWWWWWWWWWWWWWW....",
-    ".....WWWWWWWWWWWWWWW....",
-    ".....WWWWWWWWWWWWWWW....",
-    "........................",
-]
-
-CHESS_LEGEND = {"D": "#9A9AB8", "W": "#F2F2F8"}
-
-GOLF = [
-    "........................",
-    "........................",
-    "...............RS.......",
-    ".............RRRS.......",
-    "..........RRRRRRS.......",
-    "........RRRRRRRRS.......",
-    "......RRRRRRRRRRS.......",
-    "........RRRRRRRRS.......",
-    "..........RRRRRRS.......",
-    ".............RRRS.......",
-    "...............SS.......",
-    "...............SS.......",
-    "...............SS.......",
-    "...............SS.......",
-    "...............SS.......",
-    "...............SS.......",
-    "......WWW......SS.......",
-    ".....WWWWW.....SS.......",
-    ".....WWWWW.....SS.......",
-    "..GGGWWWWWGGGGGGGGGGGGG.",
-    "...GGGWWWGGGGGGGGGGGGG..",
-    "....GGGGGGGGGGGGGGGG....",
-    "........................",
-    "........................",
-]
-
-GOLF_LEGEND = {"G": "#3FA34D", "R": "#E0243C", "S": "#C9CCD8", "W": "#F2F2F8"}
-
-TROPHY = [
-    "........................",
-    "........................",
-    "......MMMMMMMMMMMMM.....",
-    "...MMMMMMMMMMMMMMMMMMM..",
-    "..MMMMMMMMMMMMMMMMMMMMM.",
-    ".MMM.MMMMMMMMMMMMMMM.MMM",
-    ".MM...MMMMMMMMMMMMM...MM",
-    ".MMM.MMMMMMMMMMMMMMM.MMM",
-    "..MMMMMMMMMMMMMMMMMMMMM.",
-    "...MMM.MMMMMMMMMMM.MMM..",
-    "........MMMMMMMMM.......",
-    "........MMMMMMMMM.......",
-    "........................",
-    "...........MMM..........",
-    "...........MMM..........",
-    "...........MMM..........",
-    "...........MMM..........",
-    ".......MMMMMMMMMMM......",
-    ".......MMMMMMMMMMM......",
-    ".......MMMMMMMMMMM......",
-    ".....HHHHHHHHHHHHHHH....",
-    ".....HHHHHHHHHHHHHHH....",
-    ".....HHHHHHHHHHHHHHH....",
-    "........................",
-]
-
-TROPHY_LEGEND = {"H": "#8B5A2B", "M": "#FFD24A"}
-
-# National flags. Each is a 24x15 band across the middle of the sprite slot,
-# one size for all of them so they line up as a set rather than each
-# taking its own real proportions. Black stripes are drawn in dark grey:
-# true black is an unlit LED, and Germany and the UAE would lose an edge.
-
-FLAG_CN = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRYRRRRRRRRRRRRRRR",
-    "RRRRYRRRRRRRRRRRRRRRRRRR",
-    "RRRRYRRRRYRRRRRRRRRRRRRR",
-    "RRYYYYYRRRRRRRRRRRRRRRRR",
-    "RRRYYYRRRYRRRRRRRRRRRRRR",
-    "RRRYRYRRRRRRRRRRRRRRRRRR",
-    "RRYRRRYRYRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_CN_LEGEND = {"R": "#E0243C", "Y": "#FFD24A"}
-
-FLAG_US = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "BBBBBBBBBBBRRRRRRRRRRRRR",
-    "BWBWBWBWBWBWWWWWWWWWWWWW",
-    "BBBBBBBBBBBRRRRRRRRRRRRR",
-    "BWBWBWBWBWBWWWWWWWWWWWWW",
-    "BBBBBBBBBBBRRRRRRRRRRRRR",
-    "BWBWBWBWBWBWWWWWWWWWWWWW",
-    "BBBBBBBBBBBRRRRRRRRRRRRR",
-    "BBBBBBBBBBBWWWWWWWWWWWWW",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_US_LEGEND = {"B": "#2A56C6", "R": "#E0243C", "W": "#F2F2F8"}
-
-FLAG_RU = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "BBBBBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBB",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_RU_LEGEND = {"B": "#2A56C6", "R": "#E0243C", "W": "#F2F2F8"}
-
-FLAG_UK = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "RRWWBBBBBWRRRWBBBBBBWWRR",
-    "WRRRWBBBBWRRRWBBBBBWRRRW",
-    "BWWRRWWBBWRRRWBBBWWRRWWB",
-    "BBBWRRRWWWRRRWBWWRRRWBBB",
-    "BBBBWWRRWWRRRWWWRRWWBBBB",
-    "WWWWWWWWWWRRRWWWWWWWWWWW",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "WWWWWWWWWWRRRWWWWWWWWWWW",
-    "BBBBWWRRWWRRRWWWRRWWBBBB",
-    "BBBWRRRWWWRRRWBWWRRRWBBB",
-    "BWWRRWWBBWRRRWBBBWWRRWWB",
-    "WRRRWBBBBWRRRWBBBBBWRRRW",
-    "RRWWBBBBBWRRRWBBBBBBWWRR",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_UK_LEGEND = {"B": "#2A56C6", "R": "#E0243C", "W": "#F2F2F8"}
-
-FLAG_FR = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "BBBBBBBBWWWWWWWWRRRRRRRR",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_FR_LEGEND = {"B": "#2A56C6", "R": "#E0243C", "W": "#F2F2F8"}
-
-FLAG_DE = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "KKKKKKKKKKKKKKKKKKKKKKKK",
-    "KKKKKKKKKKKKKKKKKKKKKKKK",
-    "KKKKKKKKKKKKKKKKKKKKKKKK",
-    "KKKKKKKKKKKKKKKKKKKKKKKK",
-    "KKKKKKKKKKKKKKKKKKKKKKKK",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "RRRRRRRRRRRRRRRRRRRRRRRR",
-    "YYYYYYYYYYYYYYYYYYYYYYYY",
-    "YYYYYYYYYYYYYYYYYYYYYYYY",
-    "YYYYYYYYYYYYYYYYYYYYYYYY",
-    "YYYYYYYYYYYYYYYYYYYYYYYY",
-    "YYYYYYYYYYYYYYYYYYYYYYYY",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_DE_LEGEND = {"K": "#4A4A55", "R": "#E0243C", "Y": "#FFD24A"}
-
-FLAG_JP = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWRRRRWWWWWWWWWW",
-    "WWWWWWWWWRRRRRRWWWWWWWWW",
-    "WWWWWWWWRRRRRRRRWWWWWWWW",
-    "WWWWWWWWRRRRRRRRWWWWWWWW",
-    "WWWWWWWWRRRRRRRRWWWWWWWW",
-    "WWWWWWWWRRRRRRRRWWWWWWWW",
-    "WWWWWWWWRRRRRRRRWWWWWWWW",
-    "WWWWWWWWWRRRRRRWWWWWWWWW",
-    "WWWWWWWWWWRRRRWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_JP_LEGEND = {"R": "#E0243C", "W": "#F2F2F8"}
-
-FLAG_BR = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "GGGGGGGGGGGYYGGGGGGGGGGG",
-    "GGGGGGGGGGYYYYGGGGGGGGGG",
-    "GGGGGGGGGYYYYYYGGGGGGGGG",
-    "GGGGGGGYYYYYYYYYYGGGGGGG",
-    "GGGGGGYYYYBBBBYYYYGGGGGG",
-    "GGGGGYYYYBBBBBBYYYYGGGGG",
-    "GGGYYYYYBBBBBBWBYYYYYGGG",
-    "GGYYYYYYBBWWWWBBYYYYYYGG",
-    "GGGYYYYYBWBBBBBBYYYYYGGG",
-    "GGGGGYYYYBBBBBBYYYYGGGGG",
-    "GGGGGGYYYYBBBBYYYYGGGGGG",
-    "GGGGGGGYYYYYYYYYYGGGGGGG",
-    "GGGGGGGGGYYYYYYGGGGGGGGG",
-    "GGGGGGGGGGYYYYGGGGGGGGGG",
-    "GGGGGGGGGGGYYGGGGGGGGGGG",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_BR_LEGEND = {"B": "#2A56C6", "G": "#1FA34A", "W": "#F2F2F8",
-                  "Y": "#FFD24A"}
-
-FLAG_IN = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "OOOOOOOOOOOOOOOOOOOOOOOO",
-    "OOOOOOOOOOOOOOOOOOOOOOOO",
-    "OOOOOOOOOOOOOOOOOOOOOOOO",
-    "OOOOOOOOOOOOOOOOOOOOOOOO",
-    "OOOOOOOOOOOOOOOOOOOOOOOO",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWBBBWWWWWWWWWWW",
-    "WWWWWWWWWWBWBWWWWWWWWWWW",
-    "WWWWWWWWWWBBBWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWWWW",
-    "GGGGGGGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGGGGGGG",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_IN_LEGEND = {"B": "#2A56C6", "G": "#1FA34A", "O": "#FF9933",
-                  "W": "#F2F2F8"}
-
-FLAG_IT = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "GGGGGGGGWWWWWWWWRRRRRRRR",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_IT_LEGEND = {"G": "#1FA34A", "R": "#E0243C", "W": "#F2F2F8"}
-
-FLAG_AE = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "RRRRRRGGGGGGGGGGGGGGGGGG",
-    "RRRRRRGGGGGGGGGGGGGGGGGG",
-    "RRRRRRGGGGGGGGGGGGGGGGGG",
-    "RRRRRRGGGGGGGGGGGGGGGGGG",
-    "RRRRRRGGGGGGGGGGGGGGGGGG",
-    "RRRRRRWWWWWWWWWWWWWWWWWW",
-    "RRRRRRWWWWWWWWWWWWWWWWWW",
-    "RRRRRRWWWWWWWWWWWWWWWWWW",
-    "RRRRRRWWWWWWWWWWWWWWWWWW",
-    "RRRRRRWWWWWWWWWWWWWWWWWW",
-    "RRRRRRKKKKKKKKKKKKKKKKKK",
-    "RRRRRRKKKKKKKKKKKKKKKKKK",
-    "RRRRRRKKKKKKKKKKKKKKKKKK",
-    "RRRRRRKKKKKKKKKKKKKKKKKK",
-    "RRRRRRKKKKKKKKKKKKKKKKKK",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_AE_LEGEND = {"G": "#1FA34A", "K": "#4A4A55", "R": "#E0243C",
-                  "W": "#F2F2F8"}
-
-FLAG_CA = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "RRRRRRWWWWWWWWWWWWRRRRRR",
-    "RRRRRRWWWWWWWWWWWWRRRRRR",
-    "RRRRRRWWWWWWWWWWWWRRRRRR",
-    "RRRRRRWWWWWRWWWWWWRRRRRR",
-    "RRRRRRWWWWRRRWWWWWRRRRRR",
-    "RRRRRRWWRWRRRWRWWWRRRRRR",
-    "RRRRRRWRRRRRRRRRWWRRRRRR",
-    "RRRRRRWWRRRRRRRWWWRRRRRR",
-    "RRRRRRWWWRRRRRWWWWRRRRRR",
-    "RRRRRRWWWWWRWWWWWWRRRRRR",
-    "RRRRRRWWWWWRWWWWWWRRRRRR",
-    "RRRRRRWWWWWWWWWWWWRRRRRR",
-    "RRRRRRWWWWWWWWWWWWRRRRRR",
-    "RRRRRRWWWWWWWWWWWWRRRRRR",
-    "RRRRRRWWWWWWWWWWWWRRRRRR",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_CA_LEGEND = {"R": "#E0243C", "W": "#F2F2F8"}
-
-FLAG_AU = [
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-    "RRWBWRWBBWRRBBBBBBWBBBBB",
-    "WRRWWRWBWRRWBBBBBWWWBBBB",
-    "WWWWWRWWWWWWBBBBBBWBBBBB",
-    "RRRRRRRRRRRRBBBBBBBBBBBB",
-    "WWWWWRWWWWWWBBBBBBBBBWBB",
-    "BBWRWRWRRWBBBBBWBBBBWWWB",
-    "WRRWWRWBWRRWBBWWWBBBBWBB",
-    "RRWBWRWBBWRRBBBWBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBWBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBWBBBBBBBBBBBBBBBBBB",
-    "BBBBWWWBBBBBBBBBBBWBBBBB",
-    "BBBBBWBBBBBBBBBBBWWWBBBB",
-    "BBBBBBBBBBBBBBBBBBWBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBB",
-    "........................",
-    "........................",
-    "........................",
-    "........................",
-]
-
-FLAG_AU_LEGEND = {"B": "#2A56C6", "R": "#E0243C", "W": "#F2F2F8"}
-
-# Every theme the dropdown offers, as [art, legend]. A dict rather than a
-# chain of branches: nearly fifty themes is too many to read as elifs, and
-# norm_theme() can validate a saved value straight against the keys.
-#
-# Grouped by category in the same order as the dropdown. The phone shows a
-# flat list with no headers, so the grouping is carried by the order alone;
-# the labels themselves are unchanged, so saved settings still match.
-ART = {
+# The pictures are 32x32 PNGs, drawn 1:1. The flags are the
+# world-countries set, 40 wide at each country's own proportions, so they are
+# scaled to the tile's width instead and centred in its height.
+
+# Every theme the dropdown offers. Grouped by category in the same order as
+# the dropdown. The phone shows a flat list with no headers, so the grouping
+# is carried by the order alone; the labels themselves are unchanged, so
+# saved settings still match.
+THEMES = [
     # Life events
-    "wedding": [RING, RING_LEGEND],
-    "birthday": [CAKE, CAKE_LEGEND],
-    "graduation": [CAP, CAP_LEGEND],
-    "girl": [GIRL, GIRL_LEGEND],
-    "boy": [BOY, BOY_LEGEND],
-    "house": [HOUSE, HOUSE_LEGEND],
-    "fireworks": [FIREWORKS, FIREWORKS_LEGEND],
-
+    "wedding", "birthday", "graduation", "girl", "boy", "house", "fireworks",
     # Travel
-    "departure": [DEPART, DEPART_LEGEND],
-    "arrival": [ARRIVE, ARRIVE_LEGEND],
-    "car": [CAR, CAR_LEGEND],
-    "yacht": [YACHT, YACHT_LEGEND],
-    "helicopter": [HELICOPTER, HELICOPTER_LEGEND],
-
+    "departure", "arrival", "car", "yacht", "helicopter",
     # Places
-    "beach": [BEACH, BEACH_LEGEND],
-    "mountains": [MOUNTAINS, MOUNTAINS_LEGEND],
-    "torii gate": [TORII, TORII_LEGEND],
-    "pagoda": [PAGODA, PAGODA_LEGEND],
-    "castle": [CASTLE, CASTLE_LEGEND],
-
+    "beach", "mountains", "torii gate", "pagoda", "castle",
     # Outdoors
-    "tree": [TREE, TREE_LEGEND],
-    "flower": [FLOWER, FLOWER_LEGEND],
-    "campfire": [CAMPFIRE, CAMPFIRE_LEGEND],
-    "tent": [TENT, TENT_LEGEND],
-    "fishing": [FISHING, FISHING_LEGEND],
-    "paraglider": [PARAGLIDER, PARAGLIDER_LEGEND],
-    "bicycle": [BICYCLE, BICYCLE_LEGEND],
-
+    "tree", "flower", "campfire", "tent", "fishing", "paraglider", "bicycle",
     # Awards
-    "gold medal": [GOLD, GOLD_LEGEND],
-    "trophy": [TROPHY, TROPHY_LEGEND],
-
+    "gold medal", "trophy",
     # Sports
-    "running": [RUNNER, RUNNER_LEGEND],
-    "soccer": [SOCCER, SOCCER_LEGEND],
-    "football": [FOOTBALL, FOOTBALL_LEGEND],
-    "basketball": [BASKETBALL, BASKETBALL_LEGEND],
-    "volleyball": [VOLLEYBALL, VOLLEYBALL_LEGEND],
-    "badminton": [BADMINTON, BADMINTON_LEGEND],
-    "hockey": [HOCKEY, HOCKEY_LEGEND],
-    "skiing": [SKIING, SKIING_LEGEND],
-    "golf": [GOLF, GOLF_LEGEND],
-    "chess": [CHESS, CHESS_LEGEND],
-
+    "running", "soccer", "football", "basketball", "volleyball", "badminton",
+    "hockey", "skiing", "golf", "chess",
     # Flags
-    "china": [FLAG_CN, FLAG_CN_LEGEND],
-    "usa": [FLAG_US, FLAG_US_LEGEND],
-    "russia": [FLAG_RU, FLAG_RU_LEGEND],
-    "uk": [FLAG_UK, FLAG_UK_LEGEND],
-    "france": [FLAG_FR, FLAG_FR_LEGEND],
-    "germany": [FLAG_DE, FLAG_DE_LEGEND],
-    "japan": [FLAG_JP, FLAG_JP_LEGEND],
-    "brazil": [FLAG_BR, FLAG_BR_LEGEND],
-    "india": [FLAG_IN, FLAG_IN_LEGEND],
-    "italy": [FLAG_IT, FLAG_IT_LEGEND],
-    "uae": [FLAG_AE, FLAG_AE_LEGEND],
-    "canada": [FLAG_CA, FLAG_CA_LEGEND],
-    "australia": [FLAG_AU, FLAG_AU_LEGEND],
-}
+    "usa", "uk", "uae", "south korea", "russia", "japan", "italy", "india",
+    "germany", "france", "china", "canada", "brazil", "australia",
+]
 
-SCALE = 1
-ART_W = 24               # every theme is one 24x24 sprite
+# Flags, as the [w, h] they are drawn at. Starlark cannot read a PNG's size,
+# so it is written down here: 40 wide scaled to 32, keeping each flag's own
+# proportions.
+FLAG_SIZE = {
+    "china": [32, 22],       # 40x27
+    "usa": [32, 17],         # 40x21
+    "russia": [32, 22],      # 40x27
+    "uk": [32, 16],          # 40x20
+    "france": [32, 22],      # 40x27
+    "germany": [32, 19],     # 40x24
+    "japan": [32, 22],       # 40x27
+    "brazil": [32, 22],      # 40x28
+    "india": [32, 22],       # 40x27
+    "italy": [32, 22],       # 40x27
+    "uae": [32, 16],         # 40x20
+    "canada": [32, 16],      # 40x20
+    "australia": [32, 16],   # 40x20
+    "south korea": [32, 22], # 40x27
+}
 
 
 def norm_theme(value):
@@ -1724,22 +251,24 @@ def norm_theme(value):
 
     The dropdown hands back the label as typed in the manifest ("Torii Gate"),
     but a value saved before a theme existed -- or before this input existed at
-    all -- arrives as something not in ART, so the fallback has to be a real
+    all -- arrives as something not in THEMES, so the fallback has to be a real
     theme rather than an error state.
     """
     t = str(value).strip().lower()
-    if t in ART:
+    if t in THEMES:
         return t
     return "wedding"
 
 
-def draw_theme(c, theme, x, y):
-    """Draw the theme's art with its top-left at (x, y). Returns the x just
-    past it, so the layout never hard-codes a width the art might change.
-    """
-    a = ART.get(theme, ART["wedding"])
-    c.sprite(a[0], x, y, legend = a[1], scale = SCALE)
-    return x + ART_W
+def draw_theme(c, theme):
+    """Draw the theme's PNG in the icon tile beside the left rail, centred."""
+    if theme not in THEMES:
+        theme = "wedding"
+    size = FLAG_SIZE.get(theme, [ICON, ICON])
+    w = size[0]
+    h = size[1]
+    c.image(theme.replace(" ", "-") + ".png", RAIL_W + (ICON - w) // 2,
+            (c.height - h) // 2, w = w, h = h)
 
 
 def _hex2(v):
@@ -1891,43 +420,31 @@ def pretty_date(ymd):
 # ------------------------------------------------------------------- chrome
 
 def rail(c, color):
-    c.rect(0, 0, 1, c.height - 1, fill = color)
+    """The accent rail down the left edge."""
+    c.rect(0, 0, RAIL_W - 1, c.height - 1, fill = color)
 
 
-def title_row(c, event, head, right, event_color = "white"):
-    """The upper level: "<HEAD><EVENT>" and the date, right-aligned.
+def title_row(c, event, head, event_color = "white"):
+    """The upper level: "<HEAD><EVENT>" across the content column.
 
     `head` is "DAYS SINCE " or "DAYS TO " -- the caller decides, because only
     it knows which side of today the date falls on.
 
     `event_color` is the event's own colour, shared with its count, so the
-    name and the number read as one event while the fixed head and the date
-    stay neutral.
+    name and the number read as one event while the fixed head stays neutral.
 
     Drawn from y=0 so the row ends at 6 and the lower level can start at 8
-    with a clear row between them. Hung off y=1 instead, the 5x7 title ends on
-    row 7 and the art's top row touches it.
+    with a clear row between them.
 
     The head is the fixed part, so only the event name is allowed to shrink or
     clip -- cutting the phrase itself would leave "DAYS SIN".
     """
-    c.text(head, PAD, 1, font = "4x5", color = MID)
-    x = PAD + c.text_width(head, "4x5")
+    c.text(head, LEFT, 1, font = "4x5", color = MID)
+    x = LEFT + c.text_width(head, "4x5")
+    avail = RIGHT_EDGE + 1 - x
 
-    if right != "":
-        c.text(right, c.width - 1 - PAD, 1, font = "4x5", color = DIM,
-               align = "right")
-        rw = c.text_width(right, "4x5") + 6
-    else:
-        rw = 0
-
-    avail = c.width - PAD - rw - x
-
-    # The name gets a font ladder, not just a clip. Even with the dots gone
-    # the fixed label and the date leave only about 60px, and "GRADUATION" in
-    # 5x7 wants 59: clipping alone silently ate the S off "MASTERS", which is
-    # a different word rather than an obviously shortened one. Dropping a size
-    # keeps every letter, and clip_words is still there for names no size fits.
+    # The name gets a font ladder, not just a clip: dropping a size keeps every
+    # letter, and clip_words is still there for names no size fits.
     nf = fit(c, event, ["5x7", "4x5"], avail)
     font = nf[0]
     c.text(clip_words(c, event, font, avail), x,
@@ -1942,15 +459,16 @@ def message(c, head, sub, head_color = "#E8B04A"):
     the row above. 16x20 costs four pixels of head and buys the sub its proper
     place underneath.
     """
-    c.text(clip(c, head, "16x20", c.width - 2 * PAD), c.width // 2, 4,
+    w = c.width - 2 * (RAIL_W + 2)
+    c.text(clip(c, head, "16x20", w), c.width // 2, 4,
            font = "16x20", color = head_color, align = "center")
     if sub != "":
-        c.text(clip(c, sub, "4x5", c.width - 2 * PAD), c.width // 2, 26,
+        c.text(clip(c, sub, "4x5", w), c.width // 2, 26,
                font = "4x5", color = MID, align = "center")
 
 
 def marks_x(c):
-    return c.width - PAD - LAMP_SPAN
+    return RIGHT_EDGE + 1 - LAMP_SPAN
 
 
 def lamp(c, x, y, on, color):
@@ -2013,7 +531,7 @@ def lamp_states(ctx, ymd):
 
 
 def marks(c, ymd, ctx):
-    """The three anniversary lamps, sitting under the date they qualify.
+    """The three anniversary lamps, sitting over the date they qualify.
 
     They narrow left to right: orange for the whole of the event's month,
     green once the anniversary is in this Monday-to-Sunday week, navy on the
@@ -2081,21 +599,25 @@ def since(c, ctx):
         unit = "DAY" if n == 1 else "DAYS"
 
     rail(c, ink_accent)
-    title_row(c, ev["name"], head, pretty_date(ev["ymd"]), num_ink)
+    draw_theme(c, ev["theme"])
+    title_row(c, ev["name"], head, num_ink)
 
-    # Anniversary lamps, under the date they qualify.
+    # The right-hand column: the anniversary lamps over the date they qualify.
+    date = pretty_date(ev["ymd"])
     marks(c, ev["ymd"], ctx)
+    c.text(date, RIGHT_EDGE, DATE_Y, font = DATE_FONT, color = MID,
+           align = "right")
+    col_x = RIGHT_EDGE + 1 - max(LAMP_SPAN, c.text_width(date, DATE_FONT))
 
     # ----- the count, from the left -----------------------------------------
-    # The art sits at PAD and the number follows it. The count has to stop
-    # short of the lamps: they sit in rows 8-12 on the right, and the number is
-    # tall enough to run straight under them.
-    x = draw_theme(c, ev["theme"], PAD, BAND) + ART_GAP
+    # The count starts at the content column and has to stop short of the
+    # lamp-and-date column on the right.
+    x = LEFT
 
     uw = c.text_width(unit, UNIT_FONT) if unit != "" else 0
     ugap = UNIT_GAP if unit != "" else 0
 
-    hf = fit(c, word, HERO_FONTS, marks_x(c) - CLEAR - x - ugap - uw)
+    hf = fit(c, word, HERO_FONTS, col_x - CLEAR - x - ugap - uw)
     hw = c.text_width(hf[1], hf[0])
 
     # Centre the number's ink in the band rather than hanging it from BAND.

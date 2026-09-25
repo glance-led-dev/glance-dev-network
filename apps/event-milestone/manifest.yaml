@@ -13,6 +13,58 @@ refresh: 21600
 
 pages: [since]
 
+assets:
+  - arrival.png
+  - australia.png
+  - badminton.png
+  - basketball.png
+  - beach.png
+  - bicycle.png
+  - birthday.png
+  - boy.png
+  - brazil.png
+  - campfire.png
+  - canada.png
+  - car.png
+  - castle.png
+  - chess.png
+  - china.png
+  - departure.png
+  - fireworks.png
+  - fishing.png
+  - flower.png
+  - football.png
+  - france.png
+  - germany.png
+  - girl.png
+  - gold-medal.png
+  - golf.png
+  - graduation.png
+  - helicopter.png
+  - hockey.png
+  - house.png
+  - india.png
+  - italy.png
+  - japan.png
+  - mountains.png
+  - pagoda.png
+  - paraglider.png
+  - running.png
+  - russia.png
+  - skiing.png
+  - soccer.png
+  - south-korea.png
+  - tent.png
+  - torii-gate.png
+  - tree.png
+  - trophy.png
+  - uae.png
+  - uk.png
+  - usa.png
+  - volleyball.png
+  - wedding.png
+  - yacht.png
+
 inputs:
   - key: event
     type: string
@@ -25,7 +77,7 @@ inputs:
     app_input_type: date
     label: Event date
     default: "2026-12-31"
-    help: The day it happens - counts DAYS TO it, then TODAY on the day.
+    help: The day it happens - today or later. Counts DAYS TO it, then TODAY on the day.
   - key: theme
     type: choice
     app_input_type: dropdown
@@ -75,18 +127,19 @@ inputs:
       - Golf
       - Chess
       # Flags
-      - China
       - USA
-      - Russia
       - UK
-      - France
-      - Germany
-      - Japan
-      - Brazil
-      - India
-      - Italy
       - UAE
+      - "South Korea"
+      - Russia
+      - Japan
+      - Italy
+      - India
+      - Germany
+      - France
+      - China
       - Canada
+      - Brazil
       - Australia
   - key: numcolor
     type: choice
