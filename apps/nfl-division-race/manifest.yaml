@@ -11,7 +11,7 @@ width: 192
 height: 32
 # Standings only move when a game ends, so every 30 minutes is plenty; the
 # ESPN fetch is cached for the same 1800 s.
-refresh: 1800
+refresh: 14400
 
 pages: [race, team]
 
