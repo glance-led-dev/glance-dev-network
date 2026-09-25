@@ -44,10 +44,12 @@
 # seasons, walked back year by year within the request budget, and shows
 # SINCE rather than a record.
 #
-# Budget (8 uncached requests a render): coach = team + coach list (+ the
-# coach's own record and the walk for an unknown coach, capped at 7);
-# resume = team + AP poll + the same, capped at 6; tenure = 3, the three
-# coaches of the frame on screen.
+# Budget (8 uncached requests a render). Studio and previews render all three
+# pages in ONE run and the cap is shared, so the pages are budgeted together:
+# team 1 + coach lookup COACH_BUDGET (3) + AP poll 1 + tenure 3 = 8. The coach
+# lookup is the coach list (+ the coach's own record and one step of the walk
+# for an unknown coach) - enough to tell a new or interim hire from a
+# returning one. Both school pages use the same budget, so they agree on SINCE.
 
 TEAM_URL = "https://site.web.api.espn.com/apis/site/v2/sports/football/college-football/teams/"
 CORE = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football/"
@@ -57,6 +59,7 @@ HEADERS = {"User-Agent": "glance-college-coaching-carousel (glance-led.dev)"}
 TEAM_TTL = 3600      # record, rank, standing: move once a week, checked hourly
 STAFF_TTL = 21600    # who the head coach is
 PAST_TTL = 2592000   # a past season's coach never changes
+COACH_BUDGET = 3     # requests fetch_coach may spend; see the budget note
 
 # ------------------------------------------------------------------ palette
 INK = "#F4F7FF"
@@ -1346,8 +1349,8 @@ TW = TR - TX + 1
 
 # --------------------------------------------------------------- page: coach
 def coach(c, ctx):
-    # team + up to 7 = the 8-request cap.
-    d = load_school(c, ctx, 7)
+    # team + COACH_BUDGET; see the budget note at the top.
+    d = load_school(c, ctx, COACH_BUDGET)
     if d == None:
         return
     sch, tm, co = d[0], d[1], d[2]
@@ -1463,8 +1466,8 @@ def trophy_case(c, titles, n, x1, room):
     return pitch == 10
 
 def resume(c, ctx):
-    # team + AP poll + up to 6 = the 8-request cap.
-    d = load_school(c, ctx, 6)
+    # team + AP poll + COACH_BUDGET; see the budget note at the top.
+    d = load_school(c, ctx, COACH_BUDGET)
     if d == None:
         return
     sch, tm, co = d[0], d[1], d[2]
