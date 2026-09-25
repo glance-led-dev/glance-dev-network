@@ -3,161 +3,162 @@ id: college-football-stat-leaders
 version: 0.1.0
 name: College Football Stat Leaders
 author: glance-led-dev
-description: The FBS national stat leaders - passing, QB rating, rushing, receiving, tackles, sacks and interceptions - one player at a time with a gold, silver or bronze medal, the school's logo, his jersey stripe and the number that put him there, plus how far he leads or trails. Filter by stat family or conference. No key needed.
+description: The FBS national stat leaders run as a race - the top 3 in passing, QB rating, rushing, receiving, tackles, sacks or interceptions as bars in each school's colours with the number at the tip and the school's logo hanging from it like a pennant, gold, silver and bronze starting blocks, and the leader's margin. Filter by stat family or conference. No key needed.
 category: Sports
 entry: app.star
 
 width: 192
 height: 32
-# 120 s: each frame shows one leader and the rotation steps every two
-# minutes. The ESPN leaders feed is cached for 1800 s - college stats only
+# 120 s: each frame shows one leaderboard's top 3 and the rotation steps
+# every two minutes. The ESPN leaders feed is cached for 1800 s - college stats only
 # move on game days. Inputs: 5 stat families x 12 conferences = 60
 # combinations, under the 100 allowed below a 5-minute refresh.
 refresh: 120
 
 pages: [leaders]
 
-# School logos: 40 x 24 pixel art, one per FBS program, named by ESPN
-# abbreviation.
+# School logos: 24 x 18 pixel art (the catalog's small NCAA set), one per
+# FBS program, named by ESPN abbreviation (Texas A&M as TAMU: '&' is not a
+# legal asset name).
 assets:
-  - AFA.png
-  - AKR.png
-  - ALA.png
-  - APP.png
-  - ARIZ.png
-  - ARK.png
-  - ARMY.png
-  - ARST.png
-  - ASU.png
-  - AUB.png
-  - BALL.png
-  - BAY.png
-  - BC.png
-  - BGSU.png
-  - BOIS.png
-  - BUFF.png
-  - BYU.png
-  - CAL.png
-  - CCU.png
-  - CIN.png
-  - CLEM.png
-  - CLT.png
-  - CMU.png
-  - COLO.png
-  - CONN.png
-  - CSU.png
-  - DEL.png
-  - DUKE.png
-  - ECU.png
-  - EMU.png
-  - FAU.png
-  - FIU.png
-  - FLA.png
-  - FRES.png
-  - FSU.png
-  - GASO.png
-  - GAST.png
-  - GT.png
-  - HAW.png
-  - HOU.png
-  - ILL.png
-  - IOWA.png
-  - ISU.png
-  - IU.png
-  - JMU.png
-  - JXST.png
-  - KENN.png
-  - KENT.png
-  - KSU.png
-  - KU.png
-  - LIB.png
-  - LOU.png
-  - LSU.png
-  - LT.png
-  - M-OH.png
-  - MASS.png
-  - MD.png
-  - MEM.png
-  - MIA.png
-  - MICH.png
-  - MINN.png
-  - MISS.png
-  - MIZ.png
-  - MOST.png
-  - MRSH.png
-  - MSST.png
-  - MSU.png
-  - MTSU.png
-  - NAVY.png
-  - NCSU.png
-  - ND.png
-  - NDSU.png
-  - NEB.png
-  - NEV.png
-  - NIU.png
-  - NMSU.png
-  - NU.png
-  - ODU.png
-  - OHIO.png
-  - OKST.png
-  - ORE.png
-  - ORST.png
-  - OSU.png
-  - OU.png
-  - PITT.png
-  - PSU.png
-  - PUR.png
-  - RICE.png
-  - RUTG.png
-  - SC.png
-  - SAC.png
-  - SDSU.png
-  - SHSU.png
-  - SJSU.png
-  - SMU.png
-  - STAN.png
-  - SYR.png
-  - TAMU.png
-  - TCU.png
-  - TEM.png
-  - TENN.png
-  - TEX.png
-  - TLSA.png
-  - TOL.png
-  - TROY.png
-  - TTU.png
-  - TULN.png
-  - TXST.png
-  - UAB.png
-  - UCF.png
-  - UCLA.png
-  - UGA.png
-  - UK.png
-  - UL.png
-  - ULM.png
-  - UNC.png
-  - UNLV.png
-  - UNM.png
-  - UNT.png
-  - USA.png
-  - USC.png
-  - USF.png
-  - USM.png
-  - USU.png
-  - UTAH.png
-  - UTEP.png
-  - UTSA.png
-  - UVA.png
-  - VAN.png
-  - VT.png
-  - WAKE.png
-  - WASH.png
-  - WIS.png
-  - WKU.png
-  - WMU.png
-  - WSU.png
-  - WVU.png
-  - WYO.png
+  - S/AFA.png
+  - S/AKR.png
+  - S/ALA.png
+  - S/APP.png
+  - S/ARIZ.png
+  - S/ARK.png
+  - S/ARMY.png
+  - S/ARST.png
+  - S/ASU.png
+  - S/AUB.png
+  - S/BALL.png
+  - S/BAY.png
+  - S/BC.png
+  - S/BGSU.png
+  - S/BOIS.png
+  - S/BUFF.png
+  - S/BYU.png
+  - S/CAL.png
+  - S/CCU.png
+  - S/CIN.png
+  - S/CLEM.png
+  - S/CLT.png
+  - S/CMU.png
+  - S/COLO.png
+  - S/CONN.png
+  - S/CSU.png
+  - S/DEL.png
+  - S/DUKE.png
+  - S/ECU.png
+  - S/EMU.png
+  - S/FAU.png
+  - S/FIU.png
+  - S/FLA.png
+  - S/FRES.png
+  - S/FSU.png
+  - S/GASO.png
+  - S/GAST.png
+  - S/GT.png
+  - S/HAW.png
+  - S/HOU.png
+  - S/ILL.png
+  - S/IOWA.png
+  - S/ISU.png
+  - S/IU.png
+  - S/JMU.png
+  - S/JXST.png
+  - S/KENN.png
+  - S/KENT.png
+  - S/KSU.png
+  - S/KU.png
+  - S/LIB.png
+  - S/LOU.png
+  - S/LSU.png
+  - S/LT.png
+  - S/M-OH.png
+  - S/MASS.png
+  - S/MD.png
+  - S/MEM.png
+  - S/MIA.png
+  - S/MICH.png
+  - S/MINN.png
+  - S/MISS.png
+  - S/MIZ.png
+  - S/MOST.png
+  - S/MRSH.png
+  - S/MSST.png
+  - S/MSU.png
+  - S/MTSU.png
+  - S/NAVY.png
+  - S/NCSU.png
+  - S/ND.png
+  - S/NDSU.png
+  - S/NEB.png
+  - S/NEV.png
+  - S/NIU.png
+  - S/NMSU.png
+  - S/NU.png
+  - S/ODU.png
+  - S/OHIO.png
+  - S/OKST.png
+  - S/ORE.png
+  - S/ORST.png
+  - S/OSU.png
+  - S/OU.png
+  - S/PITT.png
+  - S/PSU.png
+  - S/PUR.png
+  - S/RICE.png
+  - S/RUTG.png
+  - S/SC.png
+  - S/SAC.png
+  - S/SDSU.png
+  - S/SHSU.png
+  - S/SJSU.png
+  - S/SMU.png
+  - S/STAN.png
+  - S/SYR.png
+  - S/TAMU.png
+  - S/TCU.png
+  - S/TEM.png
+  - S/TENN.png
+  - S/TEX.png
+  - S/TLSA.png
+  - S/TOL.png
+  - S/TROY.png
+  - S/TTU.png
+  - S/TULN.png
+  - S/TXST.png
+  - S/UAB.png
+  - S/UCF.png
+  - S/UCLA.png
+  - S/UGA.png
+  - S/UK.png
+  - S/UL.png
+  - S/ULM.png
+  - S/UNC.png
+  - S/UNLV.png
+  - S/UNM.png
+  - S/UNT.png
+  - S/USA.png
+  - S/USC.png
+  - S/USF.png
+  - S/USM.png
+  - S/USU.png
+  - S/UTAH.png
+  - S/UTEP.png
+  - S/UTSA.png
+  - S/UVA.png
+  - S/VAN.png
+  - S/VT.png
+  - S/WAKE.png
+  - S/WASH.png
+  - S/WIS.png
+  - S/WKU.png
+  - S/WMU.png
+  - S/WSU.png
+  - S/WVU.png
+  - S/WYO.png
 
 inputs:
   - key: stat
@@ -165,7 +166,7 @@ inputs:
     app_input_type: dropdown
     label: Stat
     default: "ALL STATS"
-    help: ALL STATS rotates through all eleven leaderboards, the top 3 in each, one player every two minutes. PASSING is yards, touchdowns and QB rating; RUSHING yards and touchdowns; RECEIVING yards, catches and touchdowns; DEFENSE tackles, sacks and interceptions.
+    help: ALL STATS rotates through all eleven leaderboards, one board (its top 3) every two minutes. PASSING is yards, touchdowns and QB rating; RUSHING yards and touchdowns; RECEIVING yards, catches and touchdowns; DEFENSE tackles, sacks and interceptions.
     choices:
       - "ALL STATS"
       - "PASSING"

@@ -1,25 +1,24 @@
 # College Football Stat Leaders
 
-The FBS national stat leaders, the numbers the Heisman race is argued over, one player at a time. Each frame shows:
+The FBS national stat leaders, the numbers the Heisman race is argued over, run as a race. Each frame is one leaderboard's top 3:
 
-- a gold, silver or bronze medal with the player's rank, hanging on a ribbon in the stat family's colour
-- the player's jersey number and position under the medal
-- the school's logo
-- the player's last name, underlined with a stripe in the school's two colours, with his first name and school under it
-- the number that put him there, over a tab naming the stat (PASS YDS, QB RTG, RUSH TDS, CATCHES, TACKLES, SACKS, INTS...)
-- the race along the top: "+53 ON #2" for the leader, "-53 TO #1" for the players chasing him, "TIED FOR #1" when two share the lead
+- three horizontal bars growing left to right, each in the school's own colour and tipped in its second colour, with the player's last name (and position, when there is room) at the left and his number at the tip
+- gold, silver and bronze starting blocks at the left with the rank on them. Players tied on the same number share a block colour and rank
+- the school's logo hanging from the tip of each bar like a pennant, so the three logos step down and back across the panel: the leader at the right edge, the chasers further back the more they trail (always at least a logo's width apart, so the bar lengths show the order and roughly the gaps; the numbers are exact)
+- under the leader's logo, the stat family's icon and his margin over #2 in gold ("+53", or "TIED")
+- in the corner under the bars, the board's name in the stat family's colour (PASS YDS, QB RTG, RUSH TDS, CATCHES, TACKLES, SACKS, INTS...), the week and the scope
 
-**Stats (11):** passing yards, passing TDs, QB rating, rushing yards, rushing TDs, receiving yards, receptions, receiving TDs, total tackles, sacks, interceptions. Each shows its top 3, one player every two minutes. Players tied on the same number share a medal.
+**Stats (11):** passing yards, passing TDs, QB rating, rushing yards, rushing TDs, receiving yards, receptions, receiving TDs, total tackles, sacks, interceptions. One board every two minutes.
 
 **Settings**
-- **Stat:** `ALL STATS` rotates through all eleven leaderboards (33 frames). Or pick a family: `PASSING` (yards, TDs, QB rating), `RUSHING` (yards, TDs), `RECEIVING` (yards, catches, TDs) or `DEFENSE` (tackles, sacks, interceptions).
+- **Stat:** `ALL STATS` rotates through all eleven leaderboards (11 frames). Or pick a family: `PASSING` (yards, TDs, QB rating), `RUSHING` (yards, TDs), `RECEIVING` (yards, catches, TDs) or `DEFENSE` (tackles, sacks, interceptions).
 - **Conference:** `ALL FBS` ranks players nationally. Pick SEC, Big Ten, Big 12, ACC, American, Mountain West, Sun Belt, MAC, Conference USA, Pac-12 or Independents (Notre Dame, UConn) to see only that group's leaders.
 
 **Data:** ESPN's college football leaders feed. No key needed. It is cached for 30 minutes, since college stats only change on game days.
 
 **Screens**
-- **In season:** the week is shown along the top ("WEEK 4"). If the row runs out of room, the week is left off.
-- **Bowls and playoff:** "POSTSEASON" in place of the week.
-- **Offseason, or before any games are played:** last season's final leaders, labelled "2025 FINAL". This label is always shown; the race is left off to make room for it.
-- **No leaders this season or last:** a green "NO ... LEADERS YET" screen.
-- **ESPN unreachable:** an "ESPN OFFLINE" screen.
+- **In season:** the week is shown next to the board name ("WEEK 4").
+- **Bowls and playoff:** "POSTSEASON" in place of the week ("BOWLS" when the board name leaves too little room).
+- **Offseason, or before any games are played:** last season's final leaders, labelled "2025 FINAL".
+- **No leaders this season or last:** a green "NO ... LEADERS YET" screen on an empty track.
+- **ESPN unreachable:** an "ESPN OFFLINE" screen on an empty grey track.
