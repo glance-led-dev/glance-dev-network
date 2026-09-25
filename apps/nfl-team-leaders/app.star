@@ -7,24 +7,28 @@
 #   receiving  the receiver's yards, with his catches and TDs
 #   defense    the tackle, sack and interception leaders as a three-row board
 #
-# DESIGN. A broadcast stat graphic, read left to right: the club's logo (the
-# hand-tuned 40 x 24 pixel-art set, drawn 1:1 - never scaled) with the season
-# under it, then the nameplate, the number, and on the right a pixel-art
-# player in the club's own uniform doing the job, his real jersey number over
-# his helmet. The figure is the category label - the QB cocked to throw, the
-# RB with the ball tucked, the WR high-pointing a catch (a tight end takes it
-# into his chest, a back catches it on the run), the defender squared up
-# facing the board - so nobody needs to read PASSING.
+# DESIGN. Every page is a trading card. The panel is one framed card in the
+# club's jersey colour (x 6..185, a 1 px frame), split like a horizontal
+# Topps card: on the left a photo window behind a 2 px jersey-colour mat, on
+# the right the card's stat side on black. The one memorable thing is the
+# player in the window: a 22 x 24 pixel-art figure in the club's uniform,
+# drawn 1:1 and centred in the photo, standing on a strip of turf under a night-sky gradient, lit by a halo. He is doing the page's job - the QB cocked to
+# throw, the RB with the ball tucked, the WR high-pointing a catch (a tight
+# end takes it into his chest, a back catches it on the run), the defender
+# squared up - so nobody needs to read PASSING. The window's left column carries the rest of the card
+# furniture: the club logo small in the top corner (the authored 24 x 18
+# set, drawn 1:1 - logos are never scaled) and his real jersey number under
+# it in the club's trim ("foil") colour.
 #
-# The one loud thing is the nameplate: a leaning plate in the club's jersey
-# colour across the top, the name knocked out of it in white (black on a
-# bright jersey), like a TV lower third. Everything under it stays on black
-# and quiet: the yards as a 16x20 hero, the unit in the club accent, the TDs
-# and INTs in white - always both, '0 INT' included - and the player's league
-# rank as a footnote ('5TH IN NFL', gold when he leads the league). The
-# defense page trades the hero for a three-row board - label, player, number
-# - and puts each number on its own small jersey-colour plate, the same lean
-# as the nameplate; a shared lead shows as '+1' after the name.
+# The stat side is the card's nameplate: a plate in the club's trim
+# ("foil") colour across the top with the player's name knocked out of it
+# and a small stamp at its right end - his league rank ('5TH IN NFL'), or
+# the card year when there is no rank ('2025 SEASON' on last season's card).
+# Under it his yards in 10x16, the unit in the club accent and the rest of
+# the line beside it (always both parts, '0 INT' included). The defense card
+# trades the plate for a three-row board - label, player, number on a small
+# leaning foil plate - with '+1' after a shared lead, and carries the card
+# year under the logo instead of a jersey number.
 #
 # Data: ESPN's core API, teams/{id}/leaders (about 44 KB) names each leader by
 # athlete $ref. A hero page adds one athlete call (name, jersey, position)
@@ -35,8 +39,7 @@
 # With the pre-season fallback the extra leaders call is paid for by skipping
 # the rank (last season's rank is not the news), so it is 8 again.
 # Before a club's first game the season has no leaders yet, so the app falls
-# back to last season, and the year under the logo - in the club accent then
-# - says which one it is.
+# back to last season, and the card year says which one it is.
 
 CORE = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/"
 HEADERS = {"User-Agent": "glance-nfl-team-leaders (glance-led.dev)"}
@@ -47,25 +50,35 @@ LEADERS_TTL = 1800
 ATHLETE_TTL = 86400
 
 # ------------------------------------------------------------------ layout
-# 192 wide. Logo x 6..45 (40 x 24 at y 1) with the season in 4x5 centred
-# under it at y 27; text zone x 52..185, so 6 px of edge padding each side
-# and 6 px of black between logo and text.
-LOGO_X = 6
-LOGO_Y = 1
-LOGO_CX = 26
-TX = 52
-R = 185
-# Player zone x 164..185 (22 x 24 at y 8, the jersey number above it at
-# y 0..6); the nameplate and text beside it stop at x 159, keeping 4 px of
-# black before the figure.
-PX = 164
-PR = 159
+# 192 wide. The card is x 6..185, y 0..31 (1 px frame in the jersey colour,
+# 6 px of edge padding each side). The photo window's mat fills x 7..73,
+# y 1..30 in the jersey colour; the glass inside it is x 9..71, y 2..29 with
+# the turf in its bottom three rows. The stat side is x 75..184 on black,
+# text x 77..182.
+CARD_X0 = 6
+CARD_X1 = 185
+MAT_X1 = 73
+GX0 = 9
+GX1 = 71
+# The figure is centred on x 54 in the glass right of the logo column.
+FIG_CX = 54
+GY0 = 2
+GY1 = 29
+SX0 = 75
+TX = 77
+R = 182
 
 INK = "#F4F7FF"
 DIM = "#6E7A94"
 OFFLINE = "#3C4043"
 GOOD = "#2FE06F"
 WHITE = "#F0F2F5"
+GOLD = "#FFC83D"
+SKY_TOP = "#1B2A4A"
+SKY_LOW = "#070B14"
+HALO = "#2A3C66"
+TURF = "#1F7A36"
+TURF_LOW = "#12501F"
 
 FONTH = {"16x20": 20, "10x16": 16, "6x8": 8, "5x7": 7, "4x5": 5, "3x7": 7, "picopixel": 5}
 
@@ -106,6 +119,18 @@ LOGOS = {
     "MIN": "MIN.png", "NE": "NE.png", "NO": "NO.png", "NYG": "NYG.png",
     "NYJ": "NYJ.png", "PHI": "PHI.png", "PIT": "PIT.png", "SF": "SF.png",
     "SEA": "SEA.png", "TB": "TB.png", "TEN": "TEN.png", "WSH": "WSH.png",
+}
+
+# The authored 24 x 18 small set, drawn 1:1 as the card's corner badge.
+SMALL_LOGOS = {
+    "ARI": "S_ARI.png", "ATL": "S_ATL.png", "BAL": "S_BAL.png", "BUF": "S_BUF.png",
+    "CAR": "S_CAR.png", "CHI": "S_CHI.png", "CIN": "S_CIN.png", "CLE": "S_CLE.png",
+    "DAL": "S_DAL.png", "DEN": "S_DEN.png", "DET": "S_DET.png", "GB": "S_GB.png",
+    "HOU": "S_HOU.png", "IND": "S_IND.png", "JAX": "S_JAX.png", "KC": "S_KC.png",
+    "LV": "S_LV.png", "LAC": "S_LAC.png", "LAR": "S_LAR.png", "MIA": "S_MIA.png",
+    "MIN": "S_MIN.png", "NE": "S_NE.png", "NO": "S_NO.png", "NYG": "S_NYG.png",
+    "NYJ": "S_NYJ.png", "PHI": "S_PHI.png", "PIT": "S_PIT.png", "SF": "S_SF.png",
+    "SEA": "S_SEA.png", "TB": "S_TB.png", "TEN": "S_TEN.png", "WSH": "S_WSH.png",
 }
 
 # abbr -> [accent, second]. Each club's own colours, with navy, black and
@@ -170,6 +195,7 @@ TEAM_STYLE = {
 
 # --------------------------------------------------------------- pixel art
 # The ball, for the offline card.
+# The ball, for the offline card.
 BALL = """
 ...DDDDD...
 .DBBBBBBBD.
@@ -181,11 +207,13 @@ DBBWBWBWBBD
 """
 BALL_LEG = {"D": "#5A2E0E", "B": "#A0522D", "W": "#FFFFFF"}
 
-# The players: 22 x 24 at 1x, in the club's uniform. H helmet, T helmet
-# stripe, M facemask, J jersey (j the far arm and side, a shade darker),
-# N number, G gloves, P pants (p far leg), S socks (s far sock), K cleats,
-# B ball, L laces. The offense faces right, into the page; the defense faces
-# left, at them.
+
+# The players: 22 x 24 at 1x, drawn 1:1 (a 5:4 stretch to 26 x 30 was tried
+# and read lumpy), in the club's uniform. H helmet, T helmet stripe, M
+# facemask, J jersey (j the far arm and side, a shade darker), N number, G
+# gloves, P pants (p far leg), S socks (s far sock), K cleats, B ball, L
+# laces. Blank rows are trimmed at draw time, so each figure stands on the
+# turf.
 QB_ART = """
 .BBB..................
 BBLBB.................
@@ -525,20 +553,66 @@ def league_rank(year, value, stat):
         return [rk, ("T-" if same > 1 else "") + ordinal(rk)]
     return [0, ""]
 
-# ------------------------------------------------------------ shared chrome
-def logo_block(c, abbr, year, last):
-    """The club's logo, and the season it is showing centred under it - in
-    the club accent when it is last season's, so '2025' reads as meant."""
-    c.image(LOGOS[abbr], LOGO_X, LOGO_Y)
-    if year != None:
-        c.text(str(year), LOGO_CX, 27, font = "4x5", color = accent(abbr)[0] if last else DIM, align = "center")
-
+# ------------------------------------------------------------ the card
 def accent(abbr):
     return TEAM_COLOR.get(abbr, ["#B0BCCB", DIM])
 
+def jersey_fill(abbr):
+    return TEAM_STYLE[abbr][1]
+
+def rgb(h):
+    h = h.lstrip("#")
+    return [int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)]
+
+def far(a, b):
+    """Two colours an LED shows as clearly different (RGB distance)."""
+    x = rgb(a)
+    y = rgb(b)
+    return abs(x[0] - y[0]) + abs(x[1] - y[1]) + abs(x[2] - y[2]) >= 150
+
+def foil(abbr):
+    """The card's second colour - the nameplate, the jersey number, the
+    defense plates: the club's trim (KC gold on the red card, BUF red on the
+    blue) unless it is too close to the jersey (CIN's orange trim on an
+    orange jersey), then the club accent, then white."""
+    j = jersey_fill(abbr)
+    for f in [TEAM_STYLE[abbr][0], TEAM_COLOR[abbr][1], TEAM_COLOR[abbr][0], WHITE]:
+        if far(f, j):
+            return f
+    return WHITE
+
+def ink_for(fill):
+    """Text on a plate: white, flipped to black once the fill is bright.
+    The cut is luma 142, measured on the club colours: it flips gold, old
+    gold and silver (143, where white measured under 3:1) and keeps white on
+    CIN's orange (142) and the light blues (LAC 138, MIA 137)."""
+    x = rgb(fill)
+    return "#000000" if (299 * x[0] + 587 * x[1] + 114 * x[2]) // 1000 > 142 else WHITE
+
+def card(c, frame):
+    """The empty card: the 1 px frame, the photo window's mat and glass (a
+    night sky over three rows of turf) and the black stat side."""
+    c.fill("black")
+    c.round_rect(CARD_X0, 0, CARD_X1, 31, 2, outline = frame)
+    c.rect(CARD_X0 + 1, 1, MAT_X1, 30, fill = frame)
+    c.gradient_rect(GX0, GY0, GX1, GY1 - 3, SKY_TOP, SKY_LOW, horizontal = False)
+    c.rect(GX0, GY1 - 2, GX1, GY1 - 2, fill = TURF_LOW)
+    c.rect(GX0, GY1 - 1, GX1, GY1 - 1, fill = TURF)
+    c.rect(GX0, GY1, GX1, GY1, fill = TURF_LOW)
+
+def halo(c):
+    """The photo's light: a soft disc behind the figure."""
+    c.fill_circle(FIG_CX, 14, 12, HALO)
+
+def trim(art):
+    """The art's rows without the blank ones above and below the figure."""
+    rows = [r for r in art.strip("\n").split("\n")]
+    lit = [i for i in range(len(rows)) if rows[i].replace(".", "") != ""]
+    return rows[lit[0]:lit[len(lit) - 1] + 1]
+
 def player(c, art, abbr):
-    """The player zone, x 164..185 at y 8: a 22 x 24 figure in the club's
-    uniform doing this page's job. The helmet stripe is the first club
+    """The figure, drawn 1:1 and centred on x 54 in front of the halo, his
+    cleats on the turf a row above the mat. The helmet stripe is the first club
     colour that shows on the helmet (KC's red helmet takes the gold)."""
     st = TEAM_STYLE[abbr]
     stripe = WHITE
@@ -549,47 +623,63 @@ def player(c, art, abbr):
     leg = {"H": st[2], "T": stripe, "M": "#9AA3B2", "J": st[1], "j": color.dim(st[1], 60),
            "N": WHITE, "G": WHITE, "P": st[3], "p": color.dim(st[3], 60), "S": st[1],
            "s": color.dim(st[1], 60), "K": "#8A94A8", "B": "#A0522D", "L": "#FFFFFF"}
-    c.sprite(art, PX, 8, legend = leg)
+    halo(c)
+    rows = trim(art)
+    w = max([len(r) for r in rows])
+    c.sprite(rows, FIG_CX - w // 2, GY1 - len(rows), legend = leg)
+
+def corner_marks(c, abbr, number, year, last):
+    """The card furniture in the window's left column (x 11..34): the club
+    logo small in the top corner - the authored 24 x 18 set, drawn 1:1 -
+    and under it the jersey number (foil, 5x7) on a hero card, or the card
+    year (4x5, in the foil colour when it is last season's) on the defense
+    card."""
+    c.image(SMALL_LOGOS[abbr], GX0 + 2, GY0)
+    if number != "":
+        c.text("#" + number, GX0 + 2, GY0 + 19, font = "5x7", color = foil(abbr))
+    elif year != None:
+        c.text(str(year), GX0 + 2, GY0 + 21, font = "4x5", color = foil(abbr) if last else INK)
 
 def plate(c, x0, x1, y0, h, fill):
-    """A broadcast-graphic plate: a parallelogram leaning right like a TV
-    lower third, 3 px of lean over its height, x0..x1 at its widest."""
+    """A leaning plate like a card's foil stamp: 3 px of lean over its
+    height, x0..x1 at its widest."""
     for i in range(h):
         s = (h - 1 - i) * 3 // (h - 1)
         c.line(x0 + s, y0 + i, x1 - 3 + s, y0 + i, color = fill)
 
-def jersey_fill(abbr):
-    return TEAM_STYLE[abbr][1]
-
-def ink_for(fill):
-    """Text on a plate: white, flipped to black once the fill is bright.
-    The cut is luma 142, measured on the jersey table: it flips PIT's gold,
-    NO's old gold and LV's silver (143, where white measured under 3:1) and
-    keeps white on CIN's orange (142) and the light blues (LAC 138, MIA
-    137), where white reads as the club's own numbers do."""
-    h = fill.lstrip("#")
-    r = int(h[0:2], 16)
-    g = int(h[2:4], 16)
-    b = int(h[4:6], 16)
-    return "#000000" if (299 * r + 587 * g + 114 * b) // 1000 > 142 else WHITE
-
 def fail_screen(c, head, sub):
-    c.fill("black")
-    c.rect(0, 0, 1, 31, fill = OFFLINE)
-    c.sprite(BALL, 12, 12, legend = BALL_LEG)
-    hf = fit(c, head, ["6x8", "5x7", "4x5"], 150)
-    c.text(hf[1], 110, 8, font = hf[0], color = "amber", align = "center")
-    sf = fit(c, sub, ["4x5", "picopixel"], 150)
-    c.text(sf[1], 110, 20, font = sf[0], color = DIM, align = "center")
+    """A card turned face down: a grey frame, the ball in the window."""
+    card(c, OFFLINE)
+    c.sprite(BALL, (GX0 + GX1) // 2 - 5, 12, legend = BALL_LEG)
+    hf = fit(c, head, ["6x8", "5x7", "4x5"], R - TX + 1)
+    c.text(hf[1], TX, 6, font = hf[0], color = "amber")
+    lines = two_lines(c, sub, "4x5", R - TX + 1)
+    for i in range(len(lines)):
+        c.text(lines[i], TX, 17 + i * 7, font = "4x5", color = DIM)
+
+def two_lines(c, text, font, maxw):
+    """The text on one line, or broken at a word onto two (each clipped)."""
+    if c.text_width(text, font) <= maxw:
+        return [text]
+    words = text.split(" ")
+    for k in range(len(words) - 1, 0, -1):
+        first = " ".join(words[:k])
+        if c.text_width(first, font) <= maxw:
+            return [first, clip(c, " ".join(words[k:]), font, maxw)]
+    return [clip(c, text, font, maxw)]
 
 def quiet_screen(c, abbr, year, last, head, sub):
-    """Nothing to show is an answer, not an error: green, and calm."""
-    c.fill("black")
-    logo_block(c, abbr, year, last)
+    """Nothing to show is an answer, not an error: the club's card with the
+    full-size logo in the window, and a calm green line."""
+    card(c, jersey_fill(abbr))
+    c.image(LOGOS[abbr], (GX0 + GX1) // 2 - 19, GY0 + 1)
     hf = fit(c, head, ["6x8", "5x7", "4x5"], R - TX + 1)
-    c.text(hf[1], TX, 8, font = hf[0], color = GOOD)
-    sf = fit(c, sub, ["4x5", "picopixel"], R - TX + 1)
-    c.text(sf[1], TX, 20, font = sf[0], color = DIM)
+    c.text(hf[1], TX, 3, font = hf[0], color = GOOD)
+    lines = two_lines(c, sub, "4x5", R - TX + 1)
+    for i in range(len(lines)):
+        c.text(lines[i], TX, 13 + i * 6, font = "4x5", color = DIM)
+    if year != None:
+        c.text(str(year), TX, 25, font = "4x5", color = foil(abbr) if last else INK)
 
 def guard(c, d):
     """Draws the error / empty screen and returns False when there is
@@ -637,6 +727,9 @@ def draw_row(c, parts, x, y, font, gap):
         c.text(p, x, y, font = font, color = INK)
         x += c.text_width(p, font) + gap
 
+def rank_forms(r):
+    return [r + " IN NFL", r + " NFL", r] if r != "" else []
+
 def hero_page(c, ctx, page):
     d = load_team(ctx)
     if not guard(c, d):
@@ -651,71 +744,82 @@ def hero_page(c, ctx, page):
     # Last season's rank (pre-season fallback) is skipped: it is not the
     # news, and its request is the one the fallback leaders call used up.
     rank = [0, ""] if d["last"] else league_rank(d["year"], get(leader, "value", None), spec[5])
-    c.fill("black")
-    logo_block(c, d["abbr"], d["year"], d["last"])
-
-    # The nameplate, y 0..9 over x 50..159: the club's jersey colour as a
-    # leaning broadcast plate with the name stroked white on it, then his
-    # jersey number over the figure's head in the club accent (x 164..185,
-    # y 0..6; the figure starts at y 8). 'AMON-RA ST. BROWN' is 118 px at
-    # 6x8 and 98 px sit inside the plate's lean, so it becomes
-    # 'A. ST. BROWN' at 6x8 rather than dropping a size.
+    f = foil(d["abbr"])
+    card(c, jersey_fill(d["abbr"]))
+    corner_marks(c, d["abbr"], who["jersey"], d["year"], d["last"])
     player(c, figure_for(page, who["pos"]), d["abbr"])
-    plate(c, 50, PR, 0, 10, jersey_fill(d["abbr"]))
+
+    # The nameplate, y 1..10 across the stat side (x 75..184, into the
+    # frame): the foil colour with the name knocked out of it at x 77, and
+    # a 4x5 stamp right-aligned at x 182. 'AMON-RA ST. BROWN' is 118 px in
+    # 6x8, so it is 'A. ST. BROWN' (83).
+    c.rect(SX0, 1, CARD_X1 - 1, 10, fill = f)
+    ink = ink_for(f)
     full = who["name"]
     forms = name_forms(full) if full != "" else [d["nick"] + " " + spec[3]] * 3
-    nm = pick_name(c, forms, ["6x8", "5x7"], PR - 5 - 55 + 1)
-    c.text(nm[0], 55, 1 + (8 - FONTH[nm[1]]) // 2, font = nm[1], color = ink_for(jersey_fill(d["abbr"])))
-    if who["jersey"] != "":
-        c.text("#" + who["jersey"], PX + 11, 0, font = "5x7", color = col[0], align = "center")
+    room = R - TX + 1
+    # The stamp is the league rank, or - with no rank to show (pre-season
+    # fallback, or outside the top 32) - the card year.
+    rforms = rank_forms(rank[1])
+    if rforms == []:
+        rforms = [str(d["year"]) + " SEASON", str(d["year"])] if d["last"] else [str(d["year"])]
+    # Name and stamp share the plate, like a card's: the name in 6x8 (full,
+    # else initial + surname) with the longest stamp that fits beside it
+    # ('5TH IN NFL' -> '5TH NFL' -> '5TH'), then the same in 5x7. Only when
+    # neither form fits beside any stamp does the stamp leave (a rank then
+    # rides the unit row) and the name take the whole plate. Last season's
+    # card must say so: there the name may fall to the bare surname first.
+    nm = None
+    rt = ""
+    names = forms if d["last"] else forms[:2]
+    for font in ["6x8", "5x7"]:
+        for n in names:
+            for t in rforms:
+                if c.text_width(n, font) + c.text_width(t, "4x5") + 6 <= room:
+                    nm = [n, font]
+                    rt = t
+                    break
+            if nm != None:
+                break
+        if nm != None:
+            break
+    if nm == None:
+        nm = pick_name(c, forms, ["6x8", "5x7"], room)
+    c.text(nm[0], TX, 2 + (8 - FONTH[nm[1]]) // 2, font = nm[1], color = ink)
+    if rt != "":
+        c.text(rt, R, 4, font = "4x5", color = ink, align = "right")
 
-    # Row 2 (y 11..30): yards as the hero, the unit and the rest of the line
-    # stacked beside it, all inside x 52..159. No thousands comma: at 16x20
-    # it draws as a 12 px hole ('1 ,401') and costs the stack its room.
+    # Under the plate (y 14..28): the yards in 10x16, then the unit in the
+    # club accent and the rest of the line stacked beside it, largest face
+    # that fits. No thousands comma: it draws as a hole ('1 ,401').
     v = get(leader, "value", None)
     num = str(int(v)) if type(v) in ["float", "int"] else "0"
     stack = extras(get(leader, "displayValue", ""), spec[2])
-    big = "16x20" if PR - (TX + c.text_width(num, "16x20") + 4) + 1 >= 30 else "10x16"
-    c.text(num, TX, 11 if big == "16x20" else 13, font = big, color = INK)
-    sx = TX + c.text_width(num, big) + 4
-    sw = PR - sx + 1
+    c.text(num, TX, 14, font = "10x16", color = INK)
+    sx = TX + c.text_width(num, "10x16") + 5
+    sw = R - sx + 1
     unit_w = 0
     for u in spec[1]:
         if c.text_width(u, "5x7") <= sw:
-            c.text(u, sx, 11, font = "5x7", color = col[0])
+            c.text(u, sx, 14, font = "5x7", color = col[0])
             unit_w = c.text_width(u, "5x7")
             break
+    placed = False
+    for fs in [["5x7", 5, 22], ["4x5", 4, 24], ["3x7", 3, 22]]:
+        if row_width(c, stack, fs[0], fs[1]) <= sw:
+            draw_row(c, stack, sx, fs[2], fs[0], fs[1])
+            placed = True
+            break
+    if not placed:
+        c.text(clip(c, " ".join(stack), "3x7", sw), sx, 22, font = "3x7", color = INK)
 
-    # The stack under the unit, largest that fits: both parts on one 5x7
-    # row, else one 4x5 row, else one part per 4x5 row. The league rank is
-    # the footnote under them ('5TH IN NFL', gold when he leads the league)
-    # and is dropped first: behind '4183' only 39 px are left and the TDs
-    # and INTs matter more. Without a rank the row sits on the hero's
-    # baseline (y 24 in 5x7, y 26 in 4x5).
-    r = rank[1]
-    rt = ""
-    if r != "":
-        for t in [r + " IN NFL", r + " NFL", r]:
-            if c.text_width(t, "4x5") <= sw:
-                rt = t
+    # A rank the plate had no room for rides the unit row, right-aligned
+    # (gold when he leads the league), or is dropped.
+    if rt == "" and rank[1] != "":
+        for t in rforms:
+            if unit_w + 5 + c.text_width(t, "4x5") <= sw:
+                c.text(t, R, 15, font = "4x5", color = GOLD if rank[0] == 1 else INK, align = "right")
                 break
-    rcol = "#FFC83D" if rank[0] == 1 else INK
-    if row_width(c, stack, "5x7", 5) <= sw:
-        draw_row(c, stack, sx, 19 if rt != "" else 24, "5x7", 5)
-        if rt != "":
-            c.text(rt, sx, 27, font = "4x5", color = rcol)
-    elif row_width(c, stack, "4x5", 4) <= sw:
-        draw_row(c, stack, sx, 19 if rt != "" else 26, "4x5", 4)
-        if rt != "":
-            c.text(rt, sx, 26, font = "4x5", color = rcol)
-    else:
-        # Behind a 4-digit hero the footnote has no row, so the bare
-        # ordinal rides the unit row when it fits ('YDS 1ST', 4x5 on the
-        # 5x7 baseline).
-        for i in range(len(stack)):
-            c.text(clip(c, stack[i], "4x5", sw), sx, 19 + i * 7, font = "4x5", color = INK)
-        if r != "" and unit_w > 0 and unit_w + 4 + c.text_width(r, "4x5") <= sw:
-            c.text(r, sx + unit_w + 4, 13, font = "4x5", color = rcol)
 
 def passing(c, ctx):
     hero_page(c, ctx, "passing")
@@ -749,39 +853,39 @@ def defense(c, ctx):
             nm = athlete(leader)["name"]
             # A failed name lookup keeps the number: the row names the club.
             rows.append([spec[1], nm if nm != "" else "?" + d["nick"], fmt_value(v), d["ties"].get(spec[0], 0)])
-    c.fill("black")
-    logo_block(c, d["abbr"], d["year"], d["last"])
-
-    # Three rows, y 0..9, 11..20, 22..31, beside the defender (x 52..159).
-    # Each number sits on its own jersey-colour plate, stroked white - the
-    # board's one loud thing - measured first and right-aligned at x 159 so
-    # the three line up; the label is in the club accent from x 52, the
-    # name 4 px after the widest label (a fixed x ran 'SACKS' into the
-    # name) and clipped to what the plate leaves. A shared lead shows as
-    # '+1' after the name: early in the season most of these are ties.
+    f = foil(d["abbr"])
+    card(c, jersey_fill(d["abbr"]))
+    corner_marks(c, d["abbr"], "", d["year"], d["last"])
     player(c, DEF_ART, d["abbr"])
-    fill = jersey_fill(d["abbr"])
+
+    # Three rows on the stat side, y 2..10, 12..20, 22..30. Each number sits
+    # on its own small leaning foil plate (5x7, 1 px of fill above and
+    # below), measured first and right-aligned so the three line up and
+    # end at x 183, a pixel clear of the frame; the label is in the club
+    # accent from x 77, the name 4 px after the widest label and clipped to
+    # what the plate leaves. A shared lead shows as '+1' after the name.
+    ink = ink_for(f)
+    px1 = CARD_X1 - 2
     nx = TX + max([c.text_width(r[0], "4x5") for r in rows]) + 4
     for i in range(3):
-        y = i * 11
+        y = 2 + i * 10
         lab, name, val, tie = rows[i][0], rows[i][1], rows[i][2], rows[i][3]
-        c.text(lab, TX, y + 3, font = "4x5", color = col[0])
-        vw = c.text_width(val, "6x8")
-        # The plate leans 3 px, so the number keeps 2 px of fill inside the
-        # lean at both ends: x PR-4-vw .. PR-5, plate x PR-vw-9 .. PR.
-        px0 = PR - vw - 9
+        c.text(lab, TX, y + 2, font = "4x5", color = col[0])
+        vw = c.text_width(val, "5x7")
+        # The number keeps 2 px of fill inside the lean at both ends.
+        px0 = px1 - vw - 8
         if val == "0":
-            c.text(val, PR - 5, y + 1, font = "6x8", color = DIM, align = "right")
+            c.text(val, px1 - 4, y + 1, font = "5x7", color = DIM, align = "right")
         else:
-            plate(c, px0, PR, y, 10, fill)
-            c.text(val, PR - 4 - vw, y + 1, font = "6x8", color = ink_for(fill))
+            plate(c, px0, px1, y, 9, f)
+            c.text(val, px1 - 4 - vw, y + 1, font = "5x7", color = ink)
         maxw = px0 - 3 - nx + 1
         if name == "":
-            c.text(clip(c, "NONE YET", "4x5", maxw), nx, y + 3, font = "4x5", color = DIM)
+            c.text(clip(c, "NONE YET", "4x5", maxw), nx, y + 2, font = "4x5", color = DIM)
             continue
         if name.startswith("?"):
             nm = pick_name(c, [name[1:]], DEF_NAME_FONTS, maxw)
-            c.text(nm[0], nx, y + 1 + (8 - FONTH[nm[1]]) // 2, font = nm[1], color = DIM)
+            c.text(nm[0], nx, y + 1 + (7 - FONTH[nm[1]]) // 2, font = nm[1], color = DIM)
             continue
         # The '+N' tie tag gives way before the name is cut.
         tag = "+" + str(tie) if tie > 0 else ""
@@ -791,7 +895,6 @@ def defense(c, ctx):
         if tag != "" and nm[0] not in forms:
             tag = ""
             nm = pick_name(c, forms, DEF_NAME_FONTS, maxw)
-        ny = y + 1 + (8 - FONTH[nm[1]]) // 2
-        c.text(nm[0], nx, ny, font = nm[1], color = INK)
+        c.text(nm[0], nx, y + 1 + (7 - FONTH[nm[1]]) // 2, font = nm[1], color = INK)
         if tag != "":
-            c.text(tag, nx + c.text_width(nm[0], nm[1]) + 3, y + 3, font = "4x5", color = DIM)
+            c.text(tag, nx + c.text_width(nm[0], nm[1]) + 3, y + 2, font = "4x5", color = DIM)

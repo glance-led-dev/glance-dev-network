@@ -15,8 +15,9 @@ refresh: 1800
 
 pages: [passing, rushing, receiving, defense]
 
-# Team logos: the hand-tuned 40 x 24 pixel-art set, one per club, named by
-# ESPN abbreviation.
+# Team logos, named by ESPN abbreviation: the hand-tuned 40 x 24 pixel-art
+# set (the empty card's window) and the authored 24 x 18 small set, S_*.png
+# (the corner badge on every card).
 assets:
   - ARI.png
   - ATL.png
@@ -50,6 +51,38 @@ assets:
   - TB.png
   - TEN.png
   - WSH.png
+  - S_ARI.png
+  - S_ATL.png
+  - S_BAL.png
+  - S_BUF.png
+  - S_CAR.png
+  - S_CHI.png
+  - S_CIN.png
+  - S_CLE.png
+  - S_DAL.png
+  - S_DEN.png
+  - S_DET.png
+  - S_GB.png
+  - S_HOU.png
+  - S_IND.png
+  - S_JAX.png
+  - S_KC.png
+  - S_LV.png
+  - S_LAC.png
+  - S_LAR.png
+  - S_MIA.png
+  - S_MIN.png
+  - S_NE.png
+  - S_NO.png
+  - S_NYG.png
+  - S_NYJ.png
+  - S_PHI.png
+  - S_PIT.png
+  - S_SF.png
+  - S_SEA.png
+  - S_TB.png
+  - S_TEN.png
+  - S_WSH.png
 
 inputs:
   - key: team
