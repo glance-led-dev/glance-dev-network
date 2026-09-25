@@ -11,7 +11,7 @@ width: 192
 height: 32
 # Standings change once a week at most; the ESPN call is cached for the same
 # 1800 s.
-refresh: 1800
+refresh: 43200
 
 pages: [bracket, hunt]
 
