@@ -818,7 +818,9 @@ def my_school(ctx):
 
 # ------------------------------------------------------------- drawing kit
 def rail(c, color):
-    c.rect(0, 0, 1, 31, fill = color)
+    # x 6..7: nothing lights x 0..5 or 186..191, so the app never runs
+    # into its neighbours on a scroll wall.
+    c.rect(6, 0, 7, 31, fill = color)
 
 def logo(c, team, x, y, big):
     """The school's own logo, or - for an FCS school outside the set - a tidy
@@ -901,7 +903,7 @@ def calm_screen(c, head, sub, week, crown = False):
     if crown:
         c.sprite(CROWN, 12, 11, legend = {"X": GOLD, "J": GOOD}, scale = 2)
     else:
-        c.sprite(BALL, 8, 9, legend = BALL_LEGEND, scale = 2)
+        c.sprite(BALL, 10, 9, legend = BALL_LEGEND, scale = 2)
     # Head x 38..181 (y 5..20 in 10x16); the week sits bottom right on the
     # sub's row, measured first, so a 139 px 'NO UPSETS YET' never runs
     # into it (at the top right it touched the head's first row).
@@ -1076,13 +1078,13 @@ def carnage(c, ctx):
     cnt = str(len(fallen))
     nf = "16x20" if len(fallen) < 10 else "10x16"
     ny = 3 if nf == "16x20" else 5
-    c.text(cnt, 8, ny, font = nf, color = C_SHOCK)
+    c.text(cnt, 10, ny, font = nf, color = C_SHOCK)
     cw = c.text_width(cnt, nf)
-    lx = 8 + cw + 3
+    lx = 10 + cw + 3
     c.text("RANKED", lx, 4, font = "4x5", color = INK)
     c.text("TEAM" if len(fallen) == 1 else "TEAMS", lx, 10, font = "4x5", color = INK)
     c.text("FELL", lx, 16, font = "4x5", color = INK)
-    c.text(d["week"], 8, 26, font = "4x5", color = DIM)
+    c.text(d["week"], 10, 26, font = "4x5", color = DIM)
 
     # Right: the fallen, best-ranked first, 24 x 18 logos over badges in
     # their tier colour (red shocker, orange big, amber upset, purple a
