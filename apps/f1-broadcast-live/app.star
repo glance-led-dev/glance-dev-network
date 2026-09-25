@@ -123,6 +123,9 @@ EDGE = 4
 # wide as the NEXT RACE tag under it (41 px in 4x5).
 LOGO_W, LOGO_H = 44, 12
 
+# Race date/time on the next-race page and the calendar: F1 red.
+DATE_COLOR = "#E10600"
+
 # Bitmap fonts have no accented glyphs and skip them silently -- "Hülkenberg"
 # drew as HLKENBERG. Fold to plain ASCII after upper-casing.
 ASCII_FOLD = {
@@ -1041,7 +1044,7 @@ def event(c, ctx):
         c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
         when = local_dt(ctx, st["race_date"], st.get("race_time", ""))
         wf = "5x7" if c.text_width(when, "5x7") <= text_w else "4x5"
-        c.text(fit_text(c, when, wf, text_w), cx, top_for(wf, 27), font = wf, color = COLORS["text"], align = "center")
+        c.text(fit_text(c, when, wf, text_w), cx, top_for(wf, 27), font = wf, color = DATE_COLOR, align = "center")
         return
 
     session = st.get("session", "RACE")
@@ -1201,7 +1204,7 @@ def cal_per_page(width):
     return 6 if width >= 320 else 4
 
 def _draw_calendar(c, ctx, skip):
-    date_color = COLORS["muted"]
+    date_color = DATE_COLOR
     draw_page_tab(c, "CALENDAR", "#E2E8F0")
     upcoming = fetch_f1_upcoming(ctx)
     per = cal_per_page(c.width)
