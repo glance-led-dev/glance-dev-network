@@ -3,7 +3,7 @@ id: college-football-stat-leaders
 version: 0.1.0
 name: College Football Stat Leaders
 author: glance-led-dev
-description: The FBS national stat leaders run as a race - the top 3 in passing, QB rating, rushing, receiving, tackles, sacks or interceptions as bars in each school's colours with the number at the tip and the school's logo hanging from it like a pennant, gold, silver and bronze starting blocks, and the leader's margin. Filter by stat family or conference. No key needed.
+description: The FBS national stat leaders run as a race - the top 3 in passing, QB rating, rushing, receiving, tackles, sacks or interceptions as bars in each school's colours with the number at the tip and the school's logo hanging from it like a pennant, and gold, silver and bronze starting blocks. Filter by stat family, touchdowns, or conference. No key needed.
 category: Sports
 entry: app.star
 
@@ -11,9 +11,9 @@ width: 192
 height: 32
 # 120 s: each frame shows one leaderboard's top 3 and the rotation steps
 # every two minutes. The ESPN leaders feed is cached for 1800 s - college stats only
-# move on game days. Inputs: 5 stat families x 12 conferences = 60
+# move on game days. Inputs: 6 stat choices x 12 conferences = 72
 # combinations, under the 100 allowed below a 5-minute refresh.
-refresh: 120
+refresh: 900
 
 pages: [leaders]
 
@@ -166,19 +166,21 @@ inputs:
     app_input_type: dropdown
     label: Stat
     default: "ALL STATS"
-    help: ALL STATS rotates through all eleven leaderboards, one board (its top 3) every two minutes. PASSING is yards, touchdowns and QB rating; RUSHING yards and touchdowns; RECEIVING yards, catches and touchdowns; DEFENSE tackles, sacks and interceptions.
+    help: ALL STATS rotates through all eleven leaderboards, one board (its top 3) every two minutes. PASSING is yards, touchdowns and QB rating; RUSHING yards and touchdowns; RECEIVING yards, catches and touchdowns; DEFENSE tackles, sacks and interceptions; TOUCHDOWNS the passing, rushing and receiving touchdown leaders.
     choices:
       - "ALL STATS"
       - "PASSING"
       - "RUSHING"
       - "RECEIVING"
       - "DEFENSE"
+      - "TOUCHDOWNS"
     options:
       - "ALL STATS"
       - "PASSING"
       - "RUSHING"
       - "RECEIVING"
       - "DEFENSE"
+      - "TOUCHDOWNS"
   - key: conference
     type: choice
     app_input_type: dropdown

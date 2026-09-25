@@ -17,27 +17,27 @@
 # with its bar, so the three pennants step down and back across the
 # panel - the leader's at the right edge, the chasers behind him by how
 # far they trail (at least a logo's width, so no two ever touch). Under
-# the leader's pennant: the stat family's icon and his margin in gold
-# ("+53", "TIED"). In the corner the bars leave free: the board's name in
-# the family colour (PASS YDS, QB RTG, CATCHES, SACKS...), the week, and
-# the scope. No logo column on the left: the logos ride the race.
+# the leader's pennant: the stat family's icon. In the corner the bars
+# leave free: the board's name in the family colour (PASS YDS, QB RTG,
+# CATCHES, SACKS...), the week, and the scope. No logo column on the left: the logos ride the race.
 #
 #   y 0-5    [1]MAIAVA QB ==========================1173|  +-USC--+
 #   y 7-12   [2]ATKINSON QB ================1120|  +-ORST-+  |      |
 #   y 14-19  [3]STOKES QB ======1053|  +-MEM--+  |      |  +------+
 #   y 21-25  PASS YDS  WEEK 4       |      |  +------+   (ball)
-#   y 27-31  FBS                    +------+               +53
+#   y 27-31  FBS                    +------+
 #
 # Palette: PASSING #4A9CFF, RUSHING #3CE0A0 (turf), RECEIVING #FF9A3C,
 # DEFENSE #FF5AB4 - validated for colour-blind separation on black, and
 # every family also carries its word and its icon. Gold #FFC72C belongs to
-# the #1 block and the leader's margin only.
+# the #1 block only.
 #
 # Frames: refresh is 120 s and the frame steps every two minutes, one
 # chosen leaderboard at a time. The feed is cached for 1800 s: college
 # stats move on Saturdays, not by the minute. The Stat input picks a family
-# (5 choices) rather than a single board, so 5 x 12 conference choices = 60
-# combinations stays under the 100 allowed at a 2-minute refresh.
+# (or TOUCHDOWNS: the pass, rush and receiving TD boards) rather than a
+# single board, so 6 x 12 conference choices = 72 combinations stays under
+# the 100 allowed at a 2-minute refresh.
 
 LEADERS = "https://site.web.api.espn.com/apis/site/v3/sports/football/college-football/leaders"
 HEADERS = {"User-Agent": "glance-college-football-stat-leaders (glance-led.dev)"}
@@ -53,8 +53,8 @@ FRAME_SECONDS = 120
 # down and to the left: #1's right edge is x 185, and every logo sits at
 # least 26 px left of the one above (24 px logo + 2 px of black), which is
 # what keeps three 18-row logos apart in 32 rows. Bar i ends 2 px before
-# its logo. Under #1's logo (x 162..185, y 20..31) the family icon and the
-# lead; the corner under the bars (x 6 .. #3's logo - 2, y 21..31) holds
+# its logo. Under #1's logo (x 162..185, y 20..31) the family icon; the
+# corner under the bars (x 6 .. #3's logo - 2, y 21..31) holds
 # the board name, scope and week.
 EDGE_L = 6
 EDGE_R = 185
@@ -368,9 +368,8 @@ def num_text(s):
     return str(s).replace(",", "").strip()
 
 def tenths(s):
-    """'1173' -> 11730, '6.5' -> 65; None for anything else. Margins are
-    worked from the numbers on the panel, so QB rating 158.3 vs 154.2 reads
-    '+4' (158 - 154), never a digit the viewer cannot see."""
+    """'1173' -> 11730, '6.5' -> 65; None for anything else. The race gaps
+    are worked from the numbers on the panel."""
     t = num_text(s)
     parts = t.split(".")
     if len(parts) > 2 or t == "":
@@ -384,26 +383,6 @@ def tenths(s):
     if len(parts) == 2 and parts[1] != "":
         frac = int(parts[1][0])
     return whole * 10 + frac
-
-def fmt_tenths(n):
-    s = str(n // 10)
-    if n % 10 != 0:
-        s += "." + str(n % 10)
-    return s
-
-def lead(rows):
-    """The leader's margin over #2 for the header: [text, colour]. Worked
-    from the numbers on the panel, so QB rating 158.3 vs 154.2 reads '+4.1'
-    exactly as the two tips show it."""
-    if len(rows) < 2:
-        return ["", DIM]
-    if rows[1]["rank"] == 1:
-        return ["TIED", GOLD]
-    t = tenths(rows[0]["shown"])
-    u = tenths(rows[1]["shown"])
-    if t == None or u == None or u >= t:
-        return ["", DIM]
-    return ["+" + fmt_tenths(t - u), GOLD]
 
 # ------------------------------------------------------------------ feeds
 def get(obj, key, fallback = None):
@@ -634,10 +613,10 @@ def pennant(c, p, x, y, ico, icol):
     t = clip(c, name, "4x5", LOGO_W - 4)
     c.text(t, x + (LOGO_W - c.text_width(t, "4x5")) // 2, y + 6, font = "4x5", color = p["color"])
 
-def header(c, k, scope, when, rows, right):
+def header(c, k, scope, when, right):
     """The corner under the bars (x 6..right): the board's name in the
     family colour and the week on one line, the scope under it. Under #1's
-    logo: the family icon and the leader's margin in gold."""
+    logo: the family icon."""
     col = k[3]
     maxw = right - EDGE_L + 1
     lab = k[2]
@@ -657,12 +636,7 @@ def header(c, k, scope, when, rows, right):
                 break
     c.text(clip(c, scope, "4x5", maxw), EDGE_L, HEAD_Y[1], font = "4x5", color = SOFT)
     iw = icon_w(k[4])
-    icon(c, k[4], col, L1CX - iw // 2, 19)
-    m = lead(rows)
-    if m[0] != "":
-        mw = c.text_width(m[0], "4x5")
-        if mw <= LOGO_W:
-            c.text(m[0], L1CX - mw // 2, 27, font = "4x5", color = m[1])
+    icon(c, k[4], col, L1CX - iw // 2, 22)
 
 def empty_track(c, fill, head, sub, hcol):
     """The track with nobody on it: three blocks in one flat colour, the
@@ -690,7 +664,10 @@ def quiet_screen(c, head, sub):
 # ------------------------------------------------------------- page: leaders
 def leaders(c, ctx):
     want = str(ctx.inputs.get("stat", "ALL STATS")).strip().upper()
-    cats = [k for k in CATS if k[1] == want]
+    if want == "TOUCHDOWNS":
+        cats = [k for k in CATS if k[0].endswith("Touchdowns")]
+    else:
+        cats = [k for k in CATS if k[1] == want]
     if len(cats) == 0:
         cats = CATS
     conf = CONFS.get(str(ctx.inputs.get("conference", "ALL FBS")).strip().upper(), CONFS["ALL FBS"])
@@ -707,7 +684,7 @@ def leaders(c, ctx):
         if len(rows) > 0:
             frames.append([k, rows[:3]])
     if len(frames) == 0:
-        head = "NO LEADERS YET" if len(cats) == len(CATS) else "NO " + cats[0][1] + " LEADERS YET"
+        head = "NO LEADERS YET" if len(cats) == len(CATS) else "NO " + want + " LEADERS YET"
         quiet_screen(c, head, "FIRST STATS ARRIVE AFTER KICKOFF")
         return
     f = frames[(ctx.now.unix // FRAME_SECONDS) % len(frames)]
@@ -721,4 +698,4 @@ def leaders(c, ctx):
         rank_block(c, p["rank"], BAR_Y[i])
         bar(c, p, BAR_Y[i], xs[i] - 3)
         pennant(c, p, xs[i], BAR_Y[i], k[4], k[3])
-    header(c, k, conf[1], d["when"], rows, xs[len(xs) - 1] - 3)
+    header(c, k, conf[1], d["when"], xs[len(xs) - 1] - 3)
