@@ -11,7 +11,7 @@ width: 192
 height: 32
 # 300 s: one upset per 5-minute frame. The current week's scoreboard is
 # cached 10 minutes, a past week's 6 hours, and a final's closing line a day.
-refresh: 300
+refresh: 7200
 
 pages: [upsets, carnage]
 
