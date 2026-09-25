@@ -1,0 +1,114 @@
+gdn: 1
+id: fantasy-league-waiver-targets
+version: 0.1.0
+name: Waiver Targets
+author: glance-led-dev
+description: The best players nobody in your ESPN or Sleeper fantasy league has rostered - ranked by this week's projection in your league's own scoring, season points and how fast managers across Sleeper are adding them, with club logos, opponents, injury and bye tags. Add your team to see what each one means for your roster, plus your waiver order and FAAB.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 300 s: the league ID and team are free text (the under-5-minute rule
+# allows only dropdown / checkbox / selection inputs). ALL steps to the
+# next position every refresh.
+refresh: 300
+
+pages: [target, wire]
+
+# NFL club logos: the 24 x 18 list set (<club>_S.png).
+assets:
+  - ARI_S.png
+  - ATL_S.png
+  - BAL_S.png
+  - BUF_S.png
+  - CAR_S.png
+  - CHI_S.png
+  - CIN_S.png
+  - CLE_S.png
+  - DAL_S.png
+  - DEN_S.png
+  - DET_S.png
+  - GB_S.png
+  - HOU_S.png
+  - IND_S.png
+  - JAX_S.png
+  - KC_S.png
+  - LAC_S.png
+  - LAR_S.png
+  - LV_S.png
+  - MIA_S.png
+  - MIN_S.png
+  - NE_S.png
+  - NO_S.png
+  - NYG_S.png
+  - NYJ_S.png
+  - PHI_S.png
+  - PIT_S.png
+  - SEA_S.png
+  - SF_S.png
+  - TB_S.png
+  - TEN_S.png
+  - WSH_S.png
+
+inputs:
+  - key: league
+    type: string
+    app_input_type: free-text
+    label: League ID
+    default: ""
+    help: "The number in your league's web address - ESPN (leagueId=...) or Sleeper (sleeper.com/leagues/...). Leave blank for a demo."
+  - key: team
+    type: string
+    app_input_type: free-text
+    label: Your team
+    default: ""
+    help: "Your team name or your manager / username. Part of it is fine, any case. Adds what each target means for YOUR roster (RB3 +2.9 / NEED K) and your waiver order and FAAB. Leave blank for the league-wide wire."
+  - key: platform
+    type: choice
+    app_input_type: dropdown
+    label: Platform
+    default: "AUTO"
+    help: "AUTO works it out from the ID (Sleeper IDs are 18-19 digits). Yahoo leagues are not supported - Yahoo needs a sign-in a panel can't do."
+    choices:
+      - "AUTO"
+      - "ESPN"
+      - "SLEEPER"
+    options:
+      - "AUTO"
+      - "ESPN"
+      - "SLEEPER"
+  - key: espns2
+    type: string
+    app_input_type: api-key
+    label: ESPN espn_s2 cookie (private leagues only)
+    default: ""
+    help: "Only for PRIVATE ESPN leagues. In a desktop browser logged into ESPN, open your league, then DevTools > Application > Cookies > espn.com: copy espn_s2 and SWID."
+  - key: swid
+    type: string
+    app_input_type: api-key
+    label: ESPN SWID cookie (private leagues only)
+    default: ""
+    help: "Only for PRIVATE ESPN leagues. In a desktop browser logged into ESPN, open your league, then DevTools > Application > Cookies > espn.com: copy espn_s2 and SWID."
+  - key: position
+    type: choice
+    app_input_type: dropdown
+    label: Position
+    default: "ALL"
+    help: "Which spot to scout. ALL steps through the positions, one per refresh."
+    choices:
+      - "ALL"
+      - "QB"
+      - "RB"
+      - "WR"
+      - "TE"
+      - "K"
+      - "DEF"
+    options:
+      - "ALL"
+      - "QB"
+      - "RB"
+      - "WR"
+      - "TE"
+      - "K"
+      - "DEF"
