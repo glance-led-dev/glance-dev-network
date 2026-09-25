@@ -17,21 +17,26 @@
 # Both pages list players worth at least 5 points (projected, or per game),
 # at most 8 of them.
 #
-# DESIGN. An X-ray film on a lightbox. The right edge of the strip is a
-# dark-blue viewing box with a pixel skeleton in it - skull, collarbones,
-# ribs round the spine, pelvis, femurs, knees, shins, feet - and the bone
-# that is hurt glows in the status colour with a dim halo round it: red for
-# OUT and IR, orange for DOUBTFUL, amber for QUESTIONABLE. You read WHERE
-# he is hurt before you read a word. On the left, the club's logo with the
-# matchup ("VS CHI") under it on the gametime page, or the injury itself
-# ("SURGERY") on the out page, closed off by a two-tone bar in the club's
-# colours. Between them, on black: the chip row (status, position, and a
-# white game-day pill - MNF, TNF, SAT - when the game is not on a Sunday,
-# the classic lineup trap), the player's name as the hero, and a footer
-# with the body part (in the status colour) on the left and the number
-# that makes this news matter ("PROJ 14.3", or "PPG 11.9" for a player who
-# is out) on the right. An undisclosed injury shows a "?" on the film and
-# how fresh the news is ("UPD 3H AGO").
+# DESIGN. An X-ray lightbox is the whole show. The centre of the strip is
+# a landscape lightbox - a glowing 1 px rim, two clips on top - holding a
+# dark-blue film with a full-body skeleton lying across it, head on the
+# left: skull, collarbones, ribs round the spine, arms at the sides, pelvis,
+# femurs, knees, shins, feet. The bone that is hurt glows in the status
+# colour with a dim halo round it: red for OUT and IR, orange for DOUBTFUL,
+# amber for QUESTIONABLE. You read WHERE he is hurt before you read a word.
+# The club logo sits at half size in the film's top-right corner, and the
+# film's bottom edge carries the caption, as a radiograph is labelled: the
+# player's name in bone white on the left, the body part in the status
+# colour on the right. Left of the lightbox, the status as a rubber stamp
+# (a frame in the status colour with a few pixels of ink missing), with the
+# position pill, a white game-day pill (MNF, TNF, SAT - the classic lineup
+# trap) and the n/N counter under it. Right of it, the number that makes
+# this news matter ("PROJ 14.3", or "PPG 11.9" for a player who is out),
+# with the matchup ("VS CHI") or the injury itself ("SURGERY") under it.
+# An undisclosed injury puts a "?" on the ribs and says how fresh the news
+# is ("UPD 3H AGO"). Offline, empty and offseason screens keep all three
+# zones: a stamp (ERROR / CLEAR / OFF / PRE), the film with a grey or an
+# all-green skeleton and the news as its caption, and a number.
 #
 # Frames: one player every two minutes with an n/N counter, which is why
 # refresh is 120 (the floor for an app that fetches live data) while the
@@ -51,23 +56,34 @@ MIN_VALUE = 5.0          # projected points, or points per game
 IR_FRESH_DAYS = 14       # IR / PUP moves older than this are old news
 
 # ------------------------------------------------------------------ layout
-# 192 wide. Logo x 6..45 (40 x 24 at y 0), matchup under it at y 26, team
-# bar x 47..48, text x 52..151, lightbox x 156..185 with the 17 x 29
-# skeleton at x 163. 6 px of edge padding each side.
-LOGO_X = 6
-BAR_X = 47
-TX = 52
-TR = 151
-TW = TR - TX + 1
-BOX_X0 = 156
-BOX_X1 = 185
-BODY_X = 163
+# 192 wide, three zones, 6 px of edge padding each side.
+#   x   6..43   the stamp (y 0..13), position / game-day pills (y 16), n/N (y 25)
+#   x  46..147  the lightbox: a lit 1 px rim, the film x 47..146 y 1..30.
+#               Skeleton 71 x 19 at x 49 y 2, the club logo at half size
+#               (20 x 12) in the film's top-right corner, the caption (name
+#               left, body part right) along the bottom edge y 22..29.
+#   x 150..185  the number: label y 2, value y 8..19, matchup / note y 25.
+STAMP_X0 = 6
+STAMP_X1 = 43
+BOX_X0 = 46
+BOX_X1 = 147
+FILM_X0 = BOX_X0 + 1
+FILM_X1 = BOX_X1 - 1
+BODY_X = 49
 BODY_Y = 2
+MINI_X = 125             # 20 x 12 logo, x 125..144
+MINI_Y = 2
+CAP_X0 = 49
+CAP_X1 = 144
+CAP_W = CAP_X1 - CAP_X0 + 1
+NUM_X0 = 150
+NUM_X1 = 185
+NUM_W = NUM_X1 - NUM_X0 + 1
+NUM_MID = (NUM_X0 + NUM_X1 + 1) // 2
 
 # ----------------------------------------------------------------- palette
 INK = "#F4F7FF"
 DIM = "#6E7A94"
-OFFLINE = "#3C4043"
 GOOD = "#2FE06F"
 C_OUT = "#FF2D2D"
 C_DOUBT = "#FF7A1F"
@@ -75,6 +91,8 @@ C_QUES = "#FFBF00"
 XRAY_BG = "#0A1A33"
 XRAY_EDGE = "#1E3A66"
 BONE = "#A8C8F0"
+LIGHT = "#D6E6FF"        # the lightbox glowing round the film
+CLIP = "#56627A"         # the two film clips on the top rim
 DAY_PILL = "#F4F7FF"
 
 POS_COLOR = {"QB": "#FF6F9C", "RB": "#2EE6C8", "WR": "#5CB8FF", "TE": "#FFB45C"}
@@ -108,61 +126,37 @@ LOGO = {
     "NFL": "NFL.png",
 }
 
-# Club [accent, jersey] for the bar, navy and black lifted so they read on
-# an LED.
-CLUB = {
-    "ARI": ["#E0304F", "#E0304F"], "ATL": ["#E8243C", "#A5ACAF"], "BAL": ["#D0A52E", "#7B5CE8"],
-    "BUF": ["#E8203A", "#2A6BFF"], "CAR": ["#19A6F0", "#B8BEC4"], "CHI": ["#FF5A1F", "#3F63C0"],
-    "CIN": ["#FF6A1F", "#F0F2F5"], "CLE": ["#FF4E10", "#9A6433"], "DAL": ["#B0B7BC", "#3D7BFF"],
-    "DEN": ["#FF5A14", "#3A6AB0"], "DET": ["#1C9BE8", "#B0B7BC"], "GB": ["#FFB612", "#2E8B57"],
-    "HOU": ["#E8233C", "#3A5A8C"], "IND": ["#3D86E8", "#F0F2F5"], "JAX": ["#D7A22A", "#00A5B8"],
-    "KC": ["#FFB612", "#FF2447"], "LV": ["#C4CACD", "#8A9196"], "LAC": ["#FFC20E", "#2AA8F0"],
-    "LAR": ["#FFD100", "#2F6BFF"], "MIA": ["#FC6A12", "#00C2CC"], "MIN": ["#FFC62F", "#8F5BE8"],
-    "NE": ["#E8203F", "#3A5A9C"], "NO": ["#D3BC8D", "#8A8580"], "NYG": ["#E8203F", "#2A5FE0"],
-    "NYJ": ["#F0F2F5", "#1FA36E"], "PHI": ["#B0B7BC", "#0FA0A8"], "PIT": ["#FFB612", "#8A8580"],
-    "SF": ["#D4B46A", "#E8201F"], "SEA": ["#69BE28", "#3A5A9C"], "TB": ["#F0263A", "#8A8580"],
-    "TEN": ["#4B92DB", "#F0F2F5"], "WSH": ["#FFB612", "#B8323A"],
-}
-
 # Sleeper abbreviations that differ from the logo set.
 ALIAS = {"WAS": "WSH", "JAC": "JAX", "LA": "LAR", "OAK": "LV", "SD": "LAC", "STL": "LAR"}
 
 # ----------------------------------------------------------- the skeleton
-# 17 x 29, front view, drawn as bones. Each region is its own letter so any
-# one of them can light up: H skull, N neck, S collarbones and shoulders,
-# C ribs, B spine and lower back, A upper arm, E elbow, F forearm, W wrist,
-# P hand, G pelvis and hip, T femur (thigh), K knee, L shin, X ankle,
-# O foot. The holes (eye sockets, the gaps between ribs) show the film.
+# 71 x 19: a full-body front view lying on the film, head on the left, as a
+# radiograph is hung on a landscape lightbox. Each region is its own letter
+# so any one of them can light up: H skull, N neck, S collarbones and
+# shoulders, C ribs, B spine and lower back, A upper arm, E elbow, F forearm
+# (both bones), W wrist, P hand, G pelvis and hip, T femur (thigh), K knee,
+# L shin (tibia and fibula), X ankle, O foot. The holes (eye sockets, the
+# gaps between ribs and between the leg bones) show the film.
 BODY = """
-......HHHHH......
-.....HHHHHHH.....
-.....H..H..H.....
-.....HHHHHHH.....
-......HH.HH......
-.......HHH.......
-........N........
-...SSSSSNSSSSS...
-..SS.CCCBCCC.SS..
-..A.C...B...C.A..
-..A..CCCBCCC..A..
-..A.C...B...C.A..
-..A..CCCBCCC..A..
-..E....BBB....E..
-.F.....BBB.....F.
-.F....GGGGG....F.
-W....GG.B.GG....W
-P....GGGGGGG....P
-.....TT...TT.....
-.....TT...TT.....
-.....TT...TT.....
-.....TT...TT.....
-....KKKK.KKKK....
-.....LL...LL.....
-.....LL...LL.....
-.....LL...LL.....
-.....XX...XX.....
-....OOO...OOO....
-...OOO.....OOO...
+.........................EFFFFFFFFFWPPP................................
+............SAAAAAAAAAAAAE.........WP..................................
+...........SS............EFFFFFFFFFWPPP...............................O
+...........S.............................GG..........................OO
+..HHHH.....S......CC.CC.CC.CC...........GGGG.............KK..........OO
+.HHHHHHH...S..CC.C..C..C..C..CC.........GG.GGTTTTTTTTTTTTKKLLLLLLLLLXOO
+HHH..HHHH..S..C..C..C..C..C..C..........G..GGTTTTTTTTTTTTKK.........XO.
+HH...HH.H..S.C..C..C..C..C..C...........GG..G............KKLLLLLLLLLXO.
+HHH.HHHHH..S.C..C..C..C..C..C....B.B.B...GG.G..........................
+HHHHHH.HHNNBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBGGGG..........................
+HHH.HHHHH..S.C..C..C..C..C..C....B.B.B...GG.G..........................
+HH...HH.H..S.C..C..C..C..C..C...........GG..G............KKLLLLLLLLLXO.
+HHH..HHHH..S..C..C..C..C..C..C..........G..GGTTTTTTTTTTTTKK.........XO.
+.HHHHHHH...S..CC.C..C..C..C..CC.........GG.GGTTTTTTTTTTTTKKLLLLLLLLLXOO
+..HHHH.....S......CC.CC.CC.CC...........GGGG.............KK..........OO
+...........S.............................GG..........................OO
+...........SS............EFFFFFFFFFWPPP...............................O
+............SAAAAAAAAAAAAE.........WP..................................
+.........................EFFFFFFFFFWPPP................................
 """
 REGIONS = "HNSCBAEFWPGTKLXO"
 ROWS = [r for r in BODY.strip().split("\n")]
@@ -225,20 +219,60 @@ def glow_sprite(lit):
         out.append(line)
     return "\n".join(out)
 
-def lightbox(c, part, col, mode = "injury"):
-    """The X-ray box, x 156..185: a dark-blue film, a brighter frame, the
-    skeleton in bone blue with the hurt bone in the status colour and a
-    halo round it. Mode "healthy" lights every bone (the all-clear),
-    "plain" draws the whole skeleton in `col` (grey when offline)."""
-    c.rect(BOX_X0, 0, BOX_X1, 31, fill = XRAY_BG, outline = XRAY_EDGE)
+def lightbox(c, part, col, team, mode = "injury"):
+    """The hero, x 46..147: a lightbox glowing in a 1 px rim round a
+    dark-blue film held by two clips, the skeleton lying across it in bone
+    blue with the hurt bone in the status colour and a halo round it, and
+    the club logo at half size in the film's top-right corner. Mode
+    "healthy" lights every bone (the all-clear), "plain" draws the whole
+    skeleton in `col` (grey when offline)."""
+    c.rect(BOX_X0, 0, BOX_X1, 31, fill = XRAY_BG, outline = LIGHT)
+    for cx in [BOX_X0 + 12, BOX_X1 - 15]:
+        c.rect(cx, 0, cx + 3, 1, fill = CLIP)
     lit = REGIONS if mode == "healthy" else ("" if mode == "plain" else lit_regions(part))
     leg = {"h": HALO.get(col, XRAY_EDGE)}
     for r in REGIONS.elems():
         leg[r] = col if lit.find(r) >= 0 or mode == "plain" else BONE
     c.sprite(glow_sprite("" if mode == "healthy" else lit), BODY_X, BODY_Y, legend = leg)
+    c.image(LOGO[team], MINI_X, MINI_Y, 20, 12)
     if lit == "" and mode == "injury":
-        # Undisclosed: a stroked "?" over the ribs, since there is nothing to point at.
-        c.text_stroke("?", BODY_X + 6, BODY_Y + 9, font = "5x7", color = col, stroke = "black")
+        # Undisclosed: a big "?" over the ribs, since there is nothing to point at.
+        c.text_stroke("?", BODY_X + 18, BODY_Y + 5, font = "8x10", color = col, stroke = XRAY_BG)
+
+def stamp(c, words, col):
+    """The status as a rubber stamp, x 6..43 y 0..13: a 1 px frame in the
+    status colour with the word centred inside, the biggest face that fits,
+    and a few pixels of the frame missing where the ink did not take."""
+    c.rect(STAMP_X0, 0, STAMP_X1, 13, outline = col)
+    for w in [[STAMP_X0 + 5, 0], [STAMP_X0 + 6, 0], [STAMP_X1, 4], [STAMP_X1 - 9, 13], [STAMP_X0, 10]]:
+        c.pixel(w[0], w[1], "black")
+    room = STAMP_X1 - STAMP_X0 - 5    # 2 px of paper each side of the word
+    pick = ["4x5", clip(c, words[len(words) - 1], "4x5", room)]
+    done = False
+    for f in ["8x10", "6x8", "5x7", "4x5"]:
+        for w in words:
+            if not done and c.text_width(w, f) <= room:
+                pick = [f, w]
+                done = True
+    y = 1 + (13 - INKH[pick[0]]) // 2
+    c.text(pick[1], (STAMP_X0 + STAMP_X1 + 1) // 2, y, font = pick[0], color = col, align = "center")
+
+def number_zone(c, top, big, big_col, bottom, bottom_col):
+    """x 150..185: a small label, the number, and a line under it."""
+    if top != "":
+        tf = fit(c, top, ["4x5", "3x4"], NUM_W)
+        c.text(tf[1], NUM_MID, 2, font = tf[0], color = DIM, align = "center")
+    bf = ["5x7", big]
+    for f in ["9x12", "8x10", "6x8", "5x7"]:
+        if bf[0] == "5x7" and tight_w(c, big, f) <= NUM_W:
+            bf = [f, big]
+            if f != "5x7":
+                break
+    bw = tight_w(c, bf[1], bf[0])
+    tight_text(c, bf[1], NUM_MID - bw // 2, 8 + (12 - INKH[bf[0]]) // 2, bf[0], big_col)
+    if bottom != "":
+        lf = fit(c, bottom, ["4x5", "3x4"], NUM_W)
+        c.text(lf[1], NUM_MID, 25 if lf[0] == "4x5" else 26, font = lf[0], color = bottom_col, align = "center")
 
 # ------------------------------------------------------------- text tools
 KEEP = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-:;/&+%#!?()$@"
@@ -281,7 +315,7 @@ def fit(c, text, fonts, maxw):
     return [pick, clip(c, t, pick, maxw)]
 
 # Lit rows per face, top-aligned.
-INKH = {"10x16": 15, "9x12": 12, "8x10": 10, "6x8": 8, "5x7": 7, "4x5": 5}
+INKH = {"10x16": 15, "9x12": 12, "8x10": 10, "6x8": 8, "5x7": 7, "4x5": 5, "3x4": 4}
 
 SUFFIX = ["JR.", "JR", "SR.", "SR", "II", "III", "IV", "V"]
 PARTICLE = ["ST.", "ST", "DE", "DI", "DA", "DU", "LA", "LE", "VAN", "VON", "DEL", "DOS"]
@@ -336,17 +370,6 @@ def tight_text(c, text, x, y, font, col):
         if t != "":
             c.text(t, x, y, font = font, color = col)
             x += c.text_width(t, font)
-
-def pick_name(c, forms, maxw):
-    """The biggest face first: the last name alone in 10x16 reads further
-    than the full name in 8x10. Returns [form index, font]."""
-    order = [[0, "10x16"], [1, "10x16"], [2, "10x16"], [0, "9x12"], [1, "9x12"], [2, "9x12"],
-             [3, "10x16"], [3, "9x12"], [1, "8x10"], [2, "8x10"], [3, "8x10"],
-             [2, "6x8"], [3, "6x8"], [3, "5x7"]]
-    for o in order:
-        if tight_w(c, forms[o[0]], o[1]) <= maxw:
-            return o
-    return [-1, "5x7"]
 
 HEXD = "0123456789abcdef"
 
@@ -574,23 +597,33 @@ def fetch(ctx, which):
     return dict(s, ok = True, off = False, players = players, week = week, stype = stype, season = season)
 
 # ------------------------------------------------------------ the screens
-def message(c, bar_col, head, head_col, subs, mode, box_col):
-    """Error, empty and offseason share one card: the lightbox stays (so the
-    app still reads as itself), the words sit centred in the text zone.
-    `subs` lists wordings longest first; the first that fits wins."""
+def caption_fit(c, options):
+    """The first wording that fits the film's caption line in 6x8 or 5x7,
+    else the first that fits in 4x5."""
+    for t in options:
+        for f in ["6x8", "5x7"]:
+            if c.text_width(t, f) <= CAP_W:
+                return [f, t]
+    for t in options:
+        if c.text_width(t, "4x5") <= CAP_W:
+            return ["4x5", t]
+    return ["4x5", clip(c, options[len(options) - 1], "4x5", CAP_W)]
+
+def caption_y(font):
+    """Bottom-align every caption face on y 29."""
+    return 30 - INKH[font]
+
+def message(c, stamp_words, stamp_col, caps, cap_col, top, big, big_col, bottom, mode, box_col):
+    """Error, empty and offseason keep the same three zones, so the app still
+    reads as itself: a stamp, the lightbox (grey skeleton when the data is
+    down, every bone green for the all-clear) with the news as the film's
+    caption, and a number on the right."""
     c.fill("black")
-    c.image(LOGO["NFL"], LOGO_X, 4)
-    c.rect(BAR_X, 0, BAR_X + 1, 31, fill = bar_col)
-    lightbox(c, "", box_col, mode)
-    mid = (TX + TR) // 2
-    hf = fit(c, head, ["6x8", "5x7", "4x5"], TW)
-    c.text(hf[1], mid, 8, font = hf[0], color = head_col, align = "center")
-    sub = subs[len(subs) - 1]
-    for t in subs:
-        if c.text_width(t, "4x5") <= TW:
-            sub = t
-            break
-    c.text(clip(c, sub, "4x5", TW), mid, 21, font = "4x5", color = DIM, align = "center")
+    stamp(c, stamp_words, stamp_col)
+    lightbox(c, "", box_col, "NFL", mode)
+    cf = caption_fit(c, caps)
+    c.text(cf[1], CAP_X0, caption_y(cf[0]), font = cf[0], color = cap_col)
+    number_zone(c, top, big, big_col, bottom, INK)
 
 def gametime(c, ctx):
     page(c, ctx, "gametime")
@@ -598,128 +631,88 @@ def gametime(c, ctx):
 def out(c, ctx):
     page(c, ctx, "out")
 
-def chips(c, p, stv, col, count):
-    """Status pill, position pill and (off a Sunday) the game-day pill on
-    the left; the n/N counter right. The counter always stays: the status
-    word shortens first, then the day pill goes, then the position."""
-    cw = c.text_width(count, "4x5")
-    right = TR - cw - 4
-    mid = MID_WORD.get(stv[0], stv[1])
-    tries = [[stv[0], True, True], [mid, True, True], [stv[1], True, True],
-             [stv[0], True, False], [mid, True, False], [stv[1], True, False], [stv[1], False, False]]
-    pick = tries[len(tries) - 1]
-    for t in tries:
-        w = pill_w(c, t[0])
-        if t[1]:
-            w += 2 + pill_w(c, p["pos"])
-        if t[2]:
-            if p["day"] == "":
-                continue
-            w += 2 + pill_w(c, p["day"])
-        if TX + w - 1 <= right:
-            pick = t
-            break
-    c.text(count, TR, 1, font = "4x5", color = DIM, align = "right")
-    x = TX
-    pill(c, pick[0], col, x, 0)
-    x += pill_w(c, pick[0]) + 2
-    if pick[1]:
-        pill(c, p["pos"], POS_COLOR.get(p["pos"], DIM), x, 0)
-        x += pill_w(c, p["pos"]) + 2
-    if pick[2]:
-        pill(c, p["day"], DAY_PILL, x, 0)
+def pills(c, p):
+    """Position pill and, off a Sunday, the white game-day pill (MNF, TNF,
+    SAT - the classic lineup trap) under the stamp."""
+    x = STAMP_X0
+    pill(c, p["pos"], POS_COLOR.get(p["pos"], DIM), x, 16)
+    x += pill_w(c, p["pos"]) + 2
+    if p["day"] != "" and x + pill_w(c, p["day"]) - 1 <= STAMP_X1:
+        pill(c, p["day"], DAY_PILL, x, 16)
 
-def under_logo(c, p, which, d):
+def bottom_right(c, p, which, d):
     """Gametime: the matchup. Out: the injury itself (SURGERY, FRACTURE),
     else the week."""
     if which == "gametime":
-        t = "VS " + p["opp"] if p["opp"] != "" else week_label(d)
-        col = INK
-    else:
-        t = ""
-        n = p["note"]
-        if n != "":
-            if c.text_width(n, "4x5") <= 40:
-                t = n
-            elif NOTE_SHORT.get(n, "") != "":
-                t = NOTE_SHORT[n]
-            elif c.text_width(n.split(" ")[0], "4x5") <= 40:
-                t = n.split(" ")[0]
-        col = INK
-        if t == "":
-            t = week_label(d)
-    c.text(clip(c, t, "4x5", 40), LOGO_X + 20, 26, font = "4x5", color = col, align = "center")
+        return "VS " + p["opp"] if p["opp"] != "" else week_label(d)
+    n = p["note"]
+    if n != "":
+        if c.text_width(n, "4x5") <= NUM_W:
+            return n
+        if NOTE_SHORT.get(n, "") != "" and c.text_width(NOTE_SHORT[n], "4x5") <= NUM_W:
+            return NOTE_SHORT[n]
+        if c.text_width(n.split(" ")[0], "4x5") <= NUM_W:
+            return n.split(" ")[0]
+    return week_label(d)
+
+# Caption name forms and faces, best first: [form index, font].
+CAP_NAME = [[0, "6x8"], [1, "6x8"], [0, "5x7"], [1, "5x7"], [2, "6x8"], [2, "5x7"],
+            [3, "6x8"], [3, "5x7"], [2, "4x5"], [3, "4x5"]]
 
 def page(c, ctx, which):
     d = fetch(ctx, which)
     if not d["ok"]:
-        message(c, OFFLINE, d["head"], "amber", [d["sub"]], "plain", DIM)
+        code = d["head"] == "SLEEPER ERROR"
+        message(c, ["ERROR"], C_QUES, [d["head"]], "amber",
+                "HTTP" if code else "RETRY", d["sub"].split(" ")[1] if code else "2", INK,
+                "RETRY" if code else "MINUTES", "plain", DIM)
         return
     if d["off"]:
         if d["pre"]:
-            message(c, DIM, "PRESEASON", INK, ["INJURY REPORT STARTS WEEK 1", "BACK IN WEEK 1"], "plain", BONE)
+            message(c, ["PRE"], BONE, ["PRESEASON", "PRE"], INK, "STARTS", "WK1", INK, "", "plain", BONE)
         else:
-            message(c, DIM, "OFFSEASON", INK, ["INJURY REPORT RETURNS WEEK 1", "BACK IN WEEK 1"], "plain", BONE)
+            message(c, ["OFF"], BONE, ["OFFSEASON", "OFF"], INK, "RETURNS", "WK1", INK, "", "plain", BONE)
         return
     ps = d["players"]
     if len(ps) == 0:
         who = d["pos"] + "S" if d["pos"] != "ALL" else "PLAYERS"
         wk = week_label(d)
         if which == "gametime":
-            message(c, GOOD, "NO GAME-TIME CALLS", GOOD,
-                    ["NO " + who + " QUESTIONABLE - " + wk, "NO " + who + " QUESTIONABLE", "ALL CLEAR"], "healthy", GOOD)
+            message(c, ["CLEAR"], GOOD, ["NO GAME-TIME CALLS", "NO CALLS"], GOOD,
+                    who, "0", GOOD, wk, "healthy", GOOD)
         else:
-            message(c, GOOD, "NOBODY RULED OUT", GOOD,
-                    ["NO FANTASY " + who + " OUT - " + wk, "NO " + who + " OUT - " + wk, "ALL CLEAR"], "healthy", GOOD)
+            message(c, ["CLEAR"], GOOD, ["NOBODY RULED OUT", "NONE OUT"], GOOD,
+                    who, "0", GOOD, wk, "healthy", GOOD)
         return
 
     idx = (ctx.now.unix // 120) % len(ps)
     p = ps[idx]
     stv = STATUS[p["status"]]
     col = stv[2]
+    team = p["team"] if p["team"] in LOGO else "NFL"
     c.fill("black")
 
-    # Left: logo, the matchup or the injury under it, then the club bar.
-    team = p["team"] if p["team"] in CLUB else "NFL"
-    c.image(LOGO[team], LOGO_X, 0)
-    club = CLUB.get(team, ["#3A4356", DIM])
-    c.rect(BAR_X, 0, BAR_X, 31, fill = club[0])
-    c.rect(BAR_X + 1, 0, BAR_X + 1, 31, fill = club[1])
-    under_logo(c, p, which, d)
+    # Left: the stamp, the pills, the n/N counter.
+    stamp(c, [stv[0], MID_WORD.get(stv[0], stv[1]), stv[1]], col)
+    pills(c, p)
+    c.text(str(idx + 1) + "/" + str(len(ps)), STAMP_X0, 25, font = "4x5", color = DIM)
 
-    # Right: the X-ray.
-    lightbox(c, p["part"], col)
+    # Centre: the film.
+    lightbox(c, p["part"], col, team)
 
-    chips(c, p, stv, col, str(idx + 1) + "/" + str(len(ps)))
-
-    # Hero: the name, centred in the band y 8..22.
-    forms = name_forms(p["name"])
-    nm = pick_name(c, forms, TW)
-    ny = 8 + (15 - INKH[nm[1]]) // 2
-    if nm[0] < 0:
-        c.text(clip(c, forms[3], "5x7", TW), TX, ny, font = "5x7", color = INK)
-    else:
-        tight_text(c, forms[nm[0]], TX, ny, nm[1], INK)
-
-    # Footer y 25..31: the number right (measured first), its label left of
-    # it, the body part in whatever is left.
-    val = one_decimal(p["val"])
-    vw = c.text_width(val, "5x7")
-    c.text(val, TR, 25, font = "5x7", color = INK, align = "right")
+    # Right: the number that makes this news matter.
     word = "PROJ" if which == "gametime" else "PPG"
-    undisclosed = p["part"] == "" or p["part"] == "UNDISCLOSED"
-    lx = TR - vw - 3
     tag = SCORING_TAG[d["scoring"]]
     label = word + (" " + tag if tag != "" else "")
-    first = p["part"] if not undisclosed else "UPD " + p["age"] + " AGO"
-    if TX + c.text_width(first, "5x7") + 4 + c.text_width(label, "4x5") > lx:
+    if c.text_width(label, "4x5") > NUM_W:
         label = word
-    c.text(label, lx, 27, font = "4x5", color = DIM, align = "right")
-    room = lx - c.text_width(label, "4x5") - 4 - TX
+    number_zone(c, label, one_decimal(p["val"]), INK, bottom_right(c, p, which, d), INK)
 
-    # "KNEE - MENISCUS": the whole phrase if it fits (5x7, then 4x5), else
-    # the part before the dash. Undisclosed: how fresh the news
-    # is ("UPD 3H AGO"), since there is no part to name.
+    # The caption along the film's bottom edge: the name left in bone
+    # white, the body part right in the status colour ("KNEE - MENISCUS",
+    # else the part before the dash). Undisclosed: how fresh the news is
+    # ("UPD 3H AGO") instead. The name gets the biggest face first.
+    undisclosed = p["part"] == "" or p["part"] == "UNDISCLOSED"
     if undisclosed:
         parts = (["UPD " + p["age"] + " AGO"] if p["age"] != "" else []) + ["UNDISCLOSED", "UNDISC"]
         if p["note"] != "":
@@ -728,11 +721,18 @@ def page(c, ctx, which):
         parts = [p["part"]]
         if p["part"].find(" - ") > 0:
             parts.append(p["part"][:p["part"].find(" - ")])
-    pf = None
-    for t in parts:
-        for f in ["5x7", "4x5"]:
-            if pf == None and c.text_width(t, f) <= room:
-                pf = [f, t]
-    if pf == None:
-        pf = ["4x5", clip(c, parts[len(parts) - 1], "4x5", room)]
-    c.text(pf[1], TX, 25 if pf[0] == "5x7" else 27, font = pf[0], color = col)
+    forms = name_forms(p["name"])
+    pick = None
+    for nm in CAP_NAME:
+        nw = tight_w(c, forms[nm[0]], nm[1])
+        for t in parts:
+            for f in ["5x7", "4x5"]:
+                if pick == None and nw + 4 + c.text_width(t, f) <= CAP_W:
+                    pick = [nm, f, t]
+    if pick == None:
+        nm = [3, "4x5"]
+        room = CAP_W - tight_w(c, forms[3], "4x5") - 4
+        pick = [nm, "4x5", clip(c, parts[len(parts) - 1], "4x5", room)]
+    nm = pick[0]
+    tight_text(c, forms[nm[0]], CAP_X0, caption_y(nm[1]), nm[1], INK)
+    c.text(pick[2], CAP_X1, caption_y(pick[1]), font = pick[1], color = col, align = "right")
