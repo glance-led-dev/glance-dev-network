@@ -360,7 +360,9 @@ def frame(ctx, n):
     return (ctx.now.unix // STEP) % n
 
 def rail(c, color):
-    c.rect(0, 0, 1, 31, fill = color)
+    # x 6..7: nothing lights x 0..5 or 186..191, so the app never runs
+    # into its neighbours on a scroll wall.
+    c.rect(6, 0, 7, 31, fill = color)
 
 def trophy(c, x, y, scale):
     c.sprite(TROPHY, x, y, legend = {"B": GOLD, "W": "#FFF3C4", "G": "#D9A21B"}, scale = scale)
