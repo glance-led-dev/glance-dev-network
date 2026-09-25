@@ -4,34 +4,41 @@
 # top players at each position, one player per frame, ranked in the
 # league's own scoring (PPR, half PPR or standard).
 #
-# DESIGN. A matchup card read left to right, with one loud thing on it: the
-# number sits on a patch of turf. The player's club logo (the 40 x 24
-# hand-drawn set) opens the card, closed off by a stripe in the position's
-# colour - the one colour that tells QB from WR before a word is read. Then
-# the hero: the projection in 10x16 chalk white on a dark-green field band
-# with yard lines and hash marks, "PPR PROJ" above it, and under it the
-# verdict against the player's season average - a green up-arrow "AVG 17.1"
-# when this week is a step up, an amber down-arrow when it is a step down.
-# Once the game is over the band reads FINAL: the actual points on the turf
-# and the projection underneath, arrowed the same way.
-# Then the player: a chip row with the rank pill (#1 RB in the position
-# colour, T2 on a tie), an injury pill when Sleeper lists one (Q amber,
-# D orange, OUT/IR red - the pill shortens before the tier is dropped), and
-# the tier as a glyph plus a word, sized to a 12-team league: a gold star
-# STUD, a green tick START, a sky diamond FLEX. First name over surname
-# (a defense is city over nickname, long cities shortened), and the
-# projected stat line in the position colour. The card closes on the
-# opponent: "VS SUN" / "AT MON" (home or away, and the game day in the
-# position colour) over their 24 x 18 logo, so the matchup reads as two
-# crests facing each other across the field.
+# DESIGN. A projection ladder. Page 1 is a staircase that falls from left
+# to right across the whole panel: the top four at the position, one step
+# each, the #1 step the tallest and gold, the rest in the position's colour
+# (the one colour that tells QB from WR at a glance). Each step reads the way
+# a stair does - the club crest (the 24 x 18 set, at its authored size)
+# stands on the tread with the projected points beside it, the surname is
+# printed along the tread's lit edge, and the riser below carries the rank
+# numeral where the step is tall enough to hold one. Over each number a
+# small marker: a green up-arrow when this week projects above the player's
+# season average, an amber down-arrow when below, a chequered flag once his
+# game is over, and the injury tag (Q, D, OUT, IR, PUP, SUS) in its alarm
+# colour. Step widths follow the names, so a MCCAFFREY gets the room a LAMB
+# does not need. The air over the low end of the stairs holds the header:
+# the position in its colour, and the scoring and week.
+# Page 2 is the spotlight, one step of the same staircase zoomed in: the
+# player's crest stands centred on a single pedestal with the points cut
+# into it (gold for #1). Left of it the player - rank pill, injury pill and
+# tier (a gold star STUD, a green tick START, a sky diamond FLEX, sized to a
+# 12-team league), first name over surname and the projected stat line;
+# right of it the matchup - VS (home) or AT (away) and the game day beside
+# the opponent's crest - and the verdict against the season average. Once
+# the game is over the pedestal turns white and holds the actual points,
+# with the real stat line and PROJ arrowed up or down underneath.
 #
-# Frames: refresh is 120 and each frame is one rank. A single position walks
-# its top 10 (20 minutes); ALL steps QB, RB, WR, TE, K, DEF and goes one rank
-# deeper each lap, top 3 each (36 minutes).
+# Frames: refresh is 120 and each frame is one ladder. ALL steps QB, RB, WR,
+# TE, K, DEF (the top four each, a 12-minute lap) and the spotlight walks the
+# top 3 one lap at a time. A single position spotlights ranks 1 to 10 in turn
+# (20 minutes), and the ladder shows whichever four - 1-4, 5-8 or 9-10 -
+# hold the player in the spotlight.
 #
 # Requests per render: the Sleeper week, the schedule (27 KB), the position's
-# projections, its season stats (for the average) and, only when the game
-# is over, its week stats. The WR feeds run 850-920 KB against a 1 MB cap, so
+# projections, its season stats (the averages for all four steps come from
+# the one feed) and, only when the spotlit player's game is over, its week
+# stats: five at most, and the two pages share them through the cache.
+# The WR feeds run 850-920 KB against a 1 MB cap, so
 # any body over 1 MB is treated as too large: the average is simply left off,
 # and a projections feed that is too large gets its own message (ALL skips
 # on to the next position instead).
@@ -51,22 +58,32 @@ MAX_BODY = 1000000   # the published http cap; the local SDK allows 2 MB
 
 # ------------------------------------------------------------------ layout
 # 192 wide, 6 px of edge padding each side.
-LOGO_X = 6          # own logo x 6..45, y 4..27
-LOGO_Y = 4
-STRIPE_X = 48       # position stripe x 48..49
-P_L = 51            # points column x 51..95
-P_R = 95
-P_CX = 73
-TURF_T = 7          # the field band y 7..24
-TURF_B = 24
-N_X = 99            # name column x 99..156
-N_R = 156
-N_W = N_R - N_X + 1
-CHIP_R = 155        # the chip row stops short of the divider
-O_DIV = 158         # a hairline that closes the player off from the opponent
-O_X = 161           # opponent logo x 161..184 (24 x 18), y 9..26
-O_Y = 9
-O_CX = 173
+# Page 1, the ladder: four steps with a 1 px gap across x 6..185, each as
+# wide as its logo + points or its surname needs, the spare shared out.
+# Four, not five: a step is a 24 x 18 crest with the points beside it
+# (24 + 1 + 18 = 43 px), and a fifth would not fit the width; stacking the
+# points under the crest instead would leave no height for the stairs to fall.
+STEPS = 4
+LADDER_L = 6
+LADDER_R = 185
+NAME_CAP = 44                 # a longer surname sheds its suffix / first half
+PTS_MAX = 18                  # "24.5" in 4x7; 100+ drops the tenth
+TREAD = [18, 20, 23, 25]      # the top of each step; it runs to the floor
+BAND_H = 7                    # the lit tread edge the surname is printed on
+SM_W = 24                     # the crests stand at their authored 24 x 18
+SM_H = 18
+HEAD_R = 185
+
+# Page 2, the spotlight: player | pedestal | matchup.
+L_X = 6             # player block x 6..72
+L_R = 72
+PED_L = 76          # the pedestal x 76..115, y 19..31
+PED_R = 115
+PED_T = 19
+PED_CX = 96
+R_X = 120           # matchup block x 120..185
+O_X = 161           # opponent crest x 161..184 (24 x 18), y 8..25
+O_Y = 8
 EDGE_R = 185
 
 # ----------------------------------------------------------------- palette
@@ -74,10 +91,8 @@ INK = "#F4F7FF"
 DIM = "#6E7A94"
 FIRST = "#9AA3B2"     # the first name: quieter than the surname, brighter than a label
 OFFLINE = "#3C4043"
-DIV = "#2A3142"
+GOLD = "#FFC62F"      # the #1 step
 GOOD = "#2FE06F"
-TURF = "#0E4622"      # the field band
-TURF_LINE = "#3E9A5A" # yard lines and hash marks: chalk, dimmed into the grass
 UP = "#2FE06F"        # step up on the average / beat the projection
 DOWN = "#FFBF00"      # step down
 
@@ -119,15 +134,6 @@ POST_WEEK = {1: "WILD CARD", 2: "DIVISIONAL", 3: "CONF CHAMP", 4: "SUPER BOWL"}
 DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
 
 # Logos, as literal paths so the asset lint can see every one.
-LOGO = {
-    "ARI": "ARI.png", "ATL": "ATL.png", "BAL": "BAL.png", "BUF": "BUF.png", "CAR": "CAR.png",
-    "CHI": "CHI.png", "CIN": "CIN.png", "CLE": "CLE.png", "DAL": "DAL.png", "DEN": "DEN.png",
-    "DET": "DET.png", "GB": "GB.png", "HOU": "HOU.png", "IND": "IND.png", "JAX": "JAX.png",
-    "KC": "KC.png", "LV": "LV.png", "LAC": "LAC.png", "LAR": "LAR.png", "MIA": "MIA.png",
-    "MIN": "MIN.png", "NE": "NE.png", "NO": "NO.png", "NYG": "NYG.png", "NYJ": "NYJ.png",
-    "PHI": "PHI.png", "PIT": "PIT.png", "SF": "SF.png", "SEA": "SEA.png", "TB": "TB.png",
-    "TEN": "TEN.png", "WSH": "WSH.png", "NFL": "NFL.png",
-}
 SMALL = {
     "ARI": "ARI_S.png", "ATL": "ATL_S.png", "BAL": "BAL_S.png", "BUF": "BUF_S.png", "CAR": "CAR_S.png",
     "CHI": "CHI_S.png", "CIN": "CIN_S.png", "CLE": "CLE_S.png", "DAL": "DAL_S.png", "DEN": "DEN_S.png",
@@ -192,6 +198,13 @@ XXXXX
 """
 ARROW_W = 5
 
+# Game over, 5 x 3: a strip of chequered flag.
+FLAG = """
+X.X.X
+.X.X.
+X.X.X
+"""
+
 # ------------------------------------------------------------- text tools
 KEEP = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-/&"
 
@@ -229,7 +242,7 @@ def fit(c, text, fonts, maxw):
     f = fonts[len(fonts) - 1]
     return [f, clip(c, text, f, maxw)]
 
-FONTH = {"10x16": 16, "9x12": 12, "8x10": 10, "6x8": 8, "5x7": 7, "4x5": 5}
+FONTH = {"10x16": 16, "9x12": 12, "8x10": 10, "6x8": 8, "5x7": 7, "4x7": 7, "4x5": 5, "3x4": 4}
 
 HEXD = "0123456789abcdef"
 
@@ -243,6 +256,17 @@ def ink_for(fill):
 
 def pill(c, word, fill, x, y):
     c.badge(word, x, y, color = ink_for(fill), bg = fill, font = "4x5")
+
+def shade(fill, num, den):
+    """The colour darkened to num/den - a step's riser under its lit tread."""
+    h = str(fill).lower()
+    if not h.startswith("#") or len(h) != 7:
+        return fill
+    out = "#"
+    for i in [1, 3, 5]:
+        v = (HEXD.find(h[i]) * 16 + HEXD.find(h[i + 1])) * num // den
+        out += HEXD[v // 16] + HEXD[v % 16]
+    return out
 
 def pill_w(c, word):
     return c.text_width(word, "4x5") + 4
@@ -381,7 +405,7 @@ def fetch_board(st, pos, key):
         team = club(get(x, "team", ""))
         opp = club(get(x, "opponent", ""))
         pts = fnum(s.get(key, 0))
-        if team not in LOGO or team == "NFL" or opp not in SMALL or pts <= 0:
+        if team not in SMALL or opp not in SMALL or pts <= 0:
             continue
         if str(get(p, "position", pos)) != pos:
             continue
@@ -396,20 +420,25 @@ def fetch_board(st, pos, key):
     rows = sorted(rows, key = lambda row: -row["pts"])
     return {"ok": True, "rows": rows}
 
-def season_avg(st, pos, key, pid):
-    """The player's points per game played so far this regular season, or
-    -1 when there is no history yet or the feed is unavailable / too large."""
+def season_avgs(st, pos, key, pids):
+    """player_id -> points per game played so far this regular season, for
+    the ids asked for; a player with no games yet, or every player when the
+    feed is unavailable / too large, is simply missing."""
+    out = {}
     v = pull(SLEEPER_STATS + st["season"], {"season_type": "regular", "position[]": pos}, SEASON_TTL, "list")
     if v[0] != "ok":
-        return -1.0
+        return out
     for x in v[1]:
-        if type(x) == "dict" and str(get(x, "player_id", "")) == pid:
-            s = get(x, "stats", {})
-            gp = fnum(get(s, "gp", 0))
-            if gp <= 0:
-                return -1.0
-            return fnum(get(s, key, 0)) / gp
-    return -1.0
+        if type(x) != "dict":
+            continue
+        pid = str(get(x, "player_id", ""))
+        if pid not in pids:
+            continue
+        s = get(x, "stats", {})
+        gp = fnum(get(s, "gp", 0))
+        if gp > 0:
+            out[pid] = fnum(get(s, key, 0)) / gp
+    return out
 
 def week_actual(st, pos, key, pid):
     """[actual points, actual stat dict] for this week, or [-1, None] when
@@ -431,47 +460,46 @@ def week_label(st):
         return POST_WEEK.get(st["week"], "PLAYOFFS")
     return "WEEK " + str(st["week"])
 
-# -------------------------------------------------------------- screens
-def message(c, head, sub, color, rail_color):
-    """The shared status card: the football resting on the same patch of
-    turf the card's number stands on, edged in the state colour, then a
-    head and a what-to-do line centred in the safe zone."""
-    c.fill("black")
-    c.rect(8, TURF_T, 45, TURF_B, fill = TURF)
-    c.rect(8, TURF_T, 45, TURF_T, fill = rail_color)
-    c.rect(8, TURF_B, 45, TURF_B, fill = rail_color)
-    for x in range(10, 45, 5):
-        c.rect(x, TURF_T + 1, x, TURF_T + 1, fill = TURF_LINE)
-        c.rect(x, TURF_B - 1, x, TURF_B - 1, fill = TURF_LINE)
-    c.sprite(BALL, 16, 9, legend = BALL_LEG, scale = 2)
-    hf = fit(c, head, ["6x8", "5x7", "4x5"], 128)
-    c.text(hf[1], 117, 8, font = hf[0], color = color, align = "center")
-    sf = fit(c, sub, ["4x5"], 128)
-    c.text(sf[1], 117, 21, font = sf[0], color = DIM, align = "center")
 
-def frame_pick(ctx, want, perpos_all, perpos_one):
-    """[position, rank index] for this frame."""
+# -------------------------------------------------------------- screens
+def message(c, head, sub, color, step_color):
+    """The shared status card: an empty four-step staircase in the state
+    colour with the football resting on the top step, then a head and a
+    what-to-do line centred in the rest of the safe zone."""
+    c.fill("black")
+    for k in range(4):
+        x = 8 + 11 * k
+        t = 14 + 3 * k
+        c.rect(x, t, x + 9, 25, fill = shade(step_color, 1, 2))
+        c.rect(x, t, x + 9, t + 1, fill = step_color)
+    c.sprite(BALL, 8, 6, legend = BALL_LEG)
+    hf = fit(c, head, ["6x8", "5x7", "4x5"], 124)
+    c.text(hf[1], 119, 8, font = hf[0], color = color, align = "center")
+    sf = fit(c, sub, ["4x5"], 124)
+    c.text(sf[1], 119, 21, font = sf[0], color = DIM, align = "center")
+
+def frame_pick(ctx, want):
+    """[position, spotlight rank index] for this frame. ALL: one position per
+    frame, the spotlight one rank deeper each lap (top 3). One position: the
+    spotlight walks its top 10."""
     f = ctx.now.unix // FRAME_SECONDS
     if want in POSITIONS:
-        return [want, f % perpos_one]
-    return [POSITIONS[f % len(POSITIONS)], (f // len(POSITIONS)) % perpos_all]
+        return [want, f % 10]
+    return [POSITIONS[f % len(POSITIONS)], (f // len(POSITIONS)) % 3]
 
-# ---------------------------------------------------------------- page
-def board(c, ctx):
+def board_data(ctx):
+    """Everything both pages draw from: {msg: [head, sub, colour, step colour]}
+    for a status screen, or the board for this frame."""
     want = str(ctx.inputs.get("position", "ALL")).strip().upper()
     sc = SCORING.get(str(ctx.inputs.get("scoring", "PPR")).strip().upper(), SCORING["PPR"])
 
     st = fetch_state()
     if not st["ok"]:
-        message(c, st["head"], st["sub"], "amber", OFFLINE)
-        return
+        return {"msg": [st["head"], st["sub"], "amber", OFFLINE]}
     if st["stype"] not in ["regular", "post"] or st["week"] < 1 or st["season"] == "":
-        message(c, "PRESEASON" if st["stype"] == "pre" else "OFFSEASON", "PROJECTIONS START WEEK 1", GOOD, GOOD)
-        return
+        return {"msg": ["PRESEASON" if st["stype"] == "pre" else "OFFSEASON", "PROJECTIONS START WEEK 1", GOOD, GOOD]}
 
-    per_all = 3
-    per_one = 10
-    pick = frame_pick(ctx, want, per_all, per_one)
+    pick = frame_pick(ctx, want)
     pos = pick[0]
     d = fetch_board(st, pos, sc[0])
     if not d["ok"] and d["big"] and want not in POSITIONS:
@@ -480,18 +508,30 @@ def board(c, ctx):
         pos = POSITIONS[(POSITIONS.index(pos) + 1) % len(POSITIONS)]
         d = fetch_board(st, pos, sc[0])
     if not d["ok"]:
-        message(c, d["head"], d["sub"], "amber", OFFLINE)
-        return
+        return {"msg": [d["head"], d["sub"], "amber", OFFLINE]}
     rows = d["rows"]
     if len(rows) == 0:
-        message(c, "NO " + pos + " PROJECTIONS YET", week_label(st) + " - CHECK LATER", GOOD, GOOD)
-        return
-    n = min(len(rows), per_all if want not in POSITIONS else per_one)
-    idx = pick[1] % n
-    row = rows[idx]
+        return {"msg": ["NO " + pos + " PROJECTIONS YET", week_label(st) + " - CHECK LATER", GOOD, GOOD]}
+    n = min(len(rows), 3 if want not in POSITIONS else 10)
+    spot = pick[1] % n
+    # The ladder that holds the spotlit player: 1-4, 5-8 or 9-10 when one
+    # position walks its top 10; ALL spotlights the top 3 on the top 4.
+    first = (spot // STEPS) * STEPS
+    return {"msg": None, "st": st, "sc": sc, "pos": pos, "rows": rows, "spot": spot,
+            "first": first, "ladder": rows[first:min(first + STEPS, max(n, STEPS))],
+            "games": fetch_games(st)}
 
-    # Rank by the rounded number on screen, so two 9.3s are both T1.
-    mine = tenths(row["pts"])
+def game_of(b, row):
+    """[day, home, done] for a player's game, from the schedule; a bare VS
+    with the projection's own date when the schedule is missing."""
+    g = b["games"].get(row["game"], None)
+    if g == None:
+        return [weekday(row["date"]), True, False]
+    return [g["day"], g["home"] == row["team"], g["done"]]
+
+def rank_of(rows, idx):
+    """[rank, tied] by the rounded number on screen, so two 9.3s are both T1."""
+    mine = tenths(rows[idx]["pts"])
     above = 0
     tied = False
     for i in range(len(rows)):
@@ -500,131 +540,252 @@ def board(c, ctx):
             above += 1
         elif t == mine and i != idx:
             tied = True
-    rank = above + 1
+    return [above + 1, tied]
 
-    games = fetch_games(st)
-    g = games.get(row["game"], None)
-    day = g["day"] if g != None else weekday(row["date"])
-    home = (g["home"] == row["team"]) if g != None else True
-    done = g["done"] if g != None else False
+def surname(c, last, fonts, maxw):
+    """[font, text] for a surname in maxw: the largest font that fits, then
+    shed a suffix (JR., III), then keep the second half of a double-barrelled
+    name, then hard-clip."""
+    lf = fit(c, last, fonts, maxw)
+    if lf[1] != last:
+        words = last.split(" ")
+        if len(words) > 1 and words[len(words) - 1] in SUFFIX:
+            last = " ".join(words[:len(words) - 1])
+            lf = fit(c, last, fonts, maxw)
+    if lf[1] != last and "-" in last:
+        lf = fit(c, last.split("-")[-1], fonts, maxw)
+    return lf
 
-    wa = week_actual(st, pos, sc[0], row["id"]) if done else [-1.0, None]
+def step_color(b, i):
+    """The true #1 is gold; every other step wears the position colour."""
+    return GOLD if b["first"] + i == 0 else POS_COLOR[b["pos"]]
+
+# ---------------------------------------------------------------- page 1
+def board(c, ctx):
+    b = board_data(ctx)
+    if b["msg"] != None:
+        message(c, b["msg"][0], b["msg"][1], b["msg"][2], b["msg"][3])
+        return
+    c.fill("black")
+    pos = b["pos"]
+    st = b["st"]
+    rows = b["ladder"]
+    avgs = season_avgs(st, pos, b["sc"][0], [r["id"] for r in rows])
+
+    geo = steps_geo(c, rows)
+
+    # The header, in the air over the low end of the stairs (from step 3
+    # on, whose crest starts at y 5): the position in its colour at the
+    # right edge, and the scoring, span and week in the 3x4 beside it.
+    n = len(geo)
+    head_x = geo[2][0] if n > 2 else geo[n - 1][0] + geo[n - 1][1] + 2
+    pw = c.text_width(pos, "4x5")
+    c.text(pos, HEAD_R - pw + 1, 0, font = "4x5", color = POS_COLOR[pos])
+    wk = "WK " + str(st["week"]) if st["stype"] != "post" else week_label(st)
+    span = ("#" + str(b["first"] + 1) + "-" + str(b["first"] + len(rows)) + " ") if b["first"] > 0 else ""
+    room = HEAD_R - pw - 3 - head_x + 1
+    head = ""
+    for h in [span + b["sc"][1] + " PROJ " + wk, span + b["sc"][1] + " " + wk, span + b["sc"][1],
+              b["sc"][1] + " " + wk, b["sc"][1]]:
+        if c.text_width(h, "3x4") <= room:
+            head = h
+            break
+    c.text(head, head_x, 0, font = "3x4", color = FIRST)
+
+    for i in range(len(rows)):
+        g = geo[i]
+        step(c, b, i, rows[i], avgs, g[0], g[1], g[2])
+
+def tread_name(c, row):
+    """The surname for a tread, shortened the way the spotlight does it: a
+    suffix (JR., III) goes first, then the first half of a double-barrelled
+    name, but only when it would not fit a widened step anyway."""
+    last = row["last"] if row["last"] != "" else (row["first"] if row["first"] != "" else row["team"])
+    if c.text_width(last, "3x4") <= NAME_CAP:
+        return last
+    words = last.split(" ")
+    if len(words) > 1 and words[len(words) - 1] in SUFFIX:
+        last = " ".join(words[:len(words) - 1])
+    if c.text_width(last, "3x4") > NAME_CAP and "-" in last:
+        last = last.split("-")[-1]
+    return last
+
+def tread_points(c, row):
+    num = one_dp(row["pts"])
+    if c.text_width(num, "4x7") > PTS_MAX:
+        num = whole(row["pts"])   # 100+ loses its tenth
+    return num
+
+def total(xs):
+    t = 0
+    for v in xs:
+        t += v
+    return t
+
+def steps_geo(c, rows):
+    """[x0, width, name] per step. Every step needs room for its logo and
+    points (and the marker row over them), and for its surname in 3x4 at
+    least; the panel's spare width is then shared out evenly (as if all four
+    steps were there, so a short board leaves open air), and a surname
+    gets the 4x5 font wherever its step is wide enough. Four very long names
+    could overfill the panel: the longest is then shortened."""
+    n = len(rows)
+    names = []
+    need = []
+    base = []
+    for r in rows:
+        nm = tread_name(c, r)
+        inj = INJ.get(r["inj"], None)
+        bw = max(SM_W + 1 + c.text_width(tread_points(c, r), "4x7"),
+                 SM_W + 1 + ARROW_W + 1 + (c.text_width(inj[1], "3x4") if inj != None else 0))
+        names.append(nm)
+        base.append(bw)
+        need.append(max(bw, c.text_width(nm, "3x4")))
+    room = LADDER_R - LADDER_L + 1 - (n - 1)
+    for _ in range(40):
+        if total(need) <= room:
+            break
+        k = 0
+        for i in range(n):
+            if need[i] - base[i] > need[k] - base[k]:
+                k = i
+        if need[k] <= base[k]:
+            break
+        need[k] = max(base[k], need[k] - 1)
+    spare = room - total(need)
+    out = []
+    x = LADDER_L
+    for i in range(n):
+        w = need[i] + (spare // STEPS if spare > 0 else 0) + (1 if spare > 0 and i < spare % STEPS else 0)
+        out.append([x, w, names[i]])
+        x += w + 1
+    return out
+
+def step(c, b, i, row, avgs, x0, w, name):
+    t = TREAD[i]
+    col = step_color(b, i)
+    x1 = x0 + w - 1
+
+    # The step: lit tread edge, darker riser to the floor.
+    c.rect(x0, t, x1, 31, fill = shade(col, 1, 3))
+    c.rect(x0, t, x1, t + BAND_H - 1, fill = col)
+    nf = fit(c, name, ["4x5", "3x4"], w)
+    if nf[1] != name:
+        # Only when four long names overfill the panel: an abbreviation
+        # with a stop, never a bare cut.
+        nf = ["3x4", clip(c, name, "3x4", w - 2) + "."]
+    c.text(nf[1], x0 + w // 2, t + 1 + (5 - FONTH[nf[0]]) // 2, font = nf[0],
+           color = ink_for(col), align = "center")
+
+    # The rank on the riser, where the riser is tall enough to hold it.
+    riser = 31 - (t + BAND_H) + 1
+    rk = str(b["first"] + i + 1)
+    for f in ["8x10", "6x8", "4x5"]:
+        if FONTH[f] + 2 <= riser and c.text_width(rk, f) <= w - 4:
+            c.text(rk, x0 + w // 2, t + BAND_H + 1 + (riser - 2 - FONTH[f]) // 2, font = f,
+                   color = shade(col, 3, 4), align = "center")
+            break
+
+    # On the tread: the club logo and the points beside it, right-aligned.
+    c.image(SMALL.get(row["team"], "KC_S.png"), x0, t - SM_H)
+    num = tread_points(c, row)
+    c.text(num, x1 - c.text_width(num, "4x7") + 1, t - 7, font = "4x7", color = GOLD if col == GOLD else INK)
+
+    # Over the number: game over, or up / down on the season average, at
+    # the number's left edge; the injury tag in its alarm colour at the right.
+    inj = INJ.get(row["inj"], None)
+    tw = c.text_width(inj[1], "3x4") if inj != None else 0
+    mx = x1 - max(c.text_width(num, "4x7"), ARROW_W + 1 + tw) + 1
+    if game_of(b, row)[2]:
+        c.sprite(FLAG, mx, t - 11, legend = {"X": INK})
+    elif row["id"] in avgs:
+        up = tenths(row["pts"]) >= tenths(avgs[row["id"]])
+        c.sprite(ARROW_UP if up else ARROW_DOWN, mx, t - 11, legend = {"X": UP if up else DOWN})
+    if inj != None:
+        c.text(inj[1], x1 - c.text_width(inj[1], "3x4") + 1, t - 12, font = "3x4", color = inj[2])
+
+# ---------------------------------------------------------------- page 2
+def spotlight(c, ctx):
+    b = board_data(ctx)
+    if b["msg"] != None:
+        message(c, b["msg"][0], b["msg"][1], b["msg"][2], b["msg"][3])
+        return
+    st = b["st"]
+    pos = b["pos"]
+    sc = b["sc"]
+    rows = b["rows"]
+    idx = b["spot"]
+    row = rows[idx]
+    rt = rank_of(rows, idx)
+    gm = game_of(b, row)
+    wa = week_actual(st, pos, sc[0], row["id"]) if gm[2] else [-1.0, None]
     actual = wa[0]
-    avg = season_avg(st, pos, sc[0], row["id"]) if actual < 0 else -1.0
+    avg = -1.0
+    if actual < 0:
+        avg = season_avgs(st, pos, sc[0], [row["id"]]).get(row["id"], -1.0)
+    col = GOLD if idx == 0 else POS_COLOR[pos]
+    pedestal(c, row, pos, col, rt[0], rt[1], sc[1], st, gm, actual, wa[1], avg)
 
-    card(c, row, pos, rank, tied, sc[1], st, day, home, actual, wa[1], avg)
-
-def verdict(c, word, value, beat, y):
-    """Arrow + word + number, centred in the points column; the arrow and the
-    colour both say up or down, so it never rests on colour alone."""
-    text = word + " " + one_dp(value)
-    tw = c.text_width(text, "4x5")
-    col = UP if beat else DOWN
-    w = ARROW_W + 2 + tw
-    x = P_CX - w // 2
-    if x < P_L:
-        x = P_L
-    c.sprite(ARROW_UP if beat else ARROW_DOWN, x, y + 1, legend = {"X": col})
-    c.text(text, x + ARROW_W + 2, y, font = "4x5", color = col)
-
-def turf(c):
-    """The field band: grass, chalk sidelines, a yard-line stub every 5 px
-    along both edges (longer every 10), and the number stands mid-field."""
-    c.rect(P_L, TURF_T, P_R, TURF_B, fill = TURF)
-    c.rect(P_L, TURF_T, P_R, TURF_T, fill = TURF_LINE)
-    c.rect(P_L, TURF_B, P_R, TURF_B, fill = TURF_LINE)
-    for x in range(P_L + 2, P_R - 1, 5):
-        h = 2 if (x - P_L - 2) % 10 == 0 else 1
-        c.rect(x, TURF_T + 1, x, TURF_T + h, fill = TURF_LINE)
-        c.rect(x, TURF_B - h, x, TURF_B - 1, fill = TURF_LINE)
-
-def card(c, row, pos, rank, tied, scoring_word, st, day, home, actual, played, avg):
+def pedestal(c, row, pos, col, rank, tied, scoring_word, st, gm, actual, played, avg):
     c.fill("black")
     pcol = POS_COLOR[pos]
     final = actual >= 0
 
-    # Own club, closed off by the position stripe.
-    c.image(LOGO.get(row["team"], "NFL.png"), LOGO_X, LOGO_Y)
-    c.rect(STRIPE_X, 0, STRIPE_X + 1, 31, fill = pcol)
-
-    # Points column: what the number is, the number on the turf, the verdict.
-    head = scoring_word + (" FINAL" if final else " PROJ")
-    c.text(head, P_CX, 1, font = "4x5", color = INK if final else DIM, align = "center")
-    turf(c)
+    # Centre: the club logo standing on its pedestal, the points cut in.
+    c.image(SMALL.get(row["team"], "KC_S.png"), PED_CX - 12, 0)
+    ped = INK if final else col
+    c.rect(PED_L, PED_T, PED_R, 31, fill = shade(ped, 3, 5))
+    c.rect(PED_L + 1, PED_T + 1, PED_R - 1, 31, fill = ped)
     shown = actual if final else row["pts"]
     num = one_dp(shown)
-    if c.text_width(num, "9x12") > P_R - P_L - 1:
-        num = whole(shown)   # 100+ loses its tenth before it loses its size
-    nf = fit(c, num, ["10x16", "9x12", "8x10"], P_R - P_L - 1)
-    c.text_stroke(nf[1], P_CX, TURF_T + 1 + (16 - FONTH[nf[0]]) // 2, font = nf[0], color = INK,
-                  stroke = "black", align = "center")
-    if final:
-        verdict(c, "PROJ", row["pts"], tenths(actual) >= tenths(row["pts"]), 27)
-    elif avg >= 0:
-        verdict(c, "AVG", avg, tenths(row["pts"]) >= tenths(avg), 27)
-    else:
-        wk = "WK " + str(st["week"]) if st["stype"] != "post" else week_label(st)
-        if c.text_width(wk, "4x5") > P_R - P_L + 1:
-            wk = "PLAYOFFS"
-        c.text(wk, P_CX, 27, font = "4x5", color = DIM, align = "center")
+    if c.text_width(num, "8x10") > PED_R - PED_L - 3:
+        num = whole(shown)
+    nf = fit(c, num, ["8x10", "6x8", "5x7"], PED_R - PED_L - 3)
+    c.text(nf[1], PED_CX, PED_T + 2 + (10 - FONTH[nf[0]]) // 2, font = nf[0], color = ink_for(ped), align = "center")
 
-    # Chip row: rank pill, injury pill (filled - it is the alarm), then the
-    # tier as glyph + coloured word. When it gets tight the rank pill drops
-    # the position word, then the injury shortens to its letter; the tier is
-    # the last thing to go.
+    # Left: the player. Chip row - rank pill, injury pill, tier; when it gets
+    # tight the rank pill drops the position word, then the injury shortens
+    # to its letter, then the tier glyph goes (never the tier word).
     cut = TIER_CUT[pos]
     tier = ["STUD", C_STUD, STAR] if rank <= cut[0] else (["START", C_START, TICK] if rank <= cut[1] else ["FLEX", C_FLEX, DIAMOND])
     tier_w = ARROW_W + 2 + c.text_width(tier[0], "4x5")
+    word_w = c.text_width(tier[0], "4x5")
     rk_num = ("T" if tied else "#") + str(rank)
     inj = INJ.get(row["inj"], None)
-    word_w = c.text_width(tier[0], "4x5")
-    plans = []   # [rank pill, injury pill or None, draw the tier glyph]
     if inj != None:
         plans = [[rk_num + " " + pos, inj[0], True], [rk_num, inj[0], True], [rk_num, inj[1], True],
                  [rk_num, inj[1], False]]
     else:
-        plans = [[rk_num + " " + pos, None, True], [rk_num, None, True]]
+        plans = [[rk_num + " " + pos, None, True], [rk_num, None, True], [rk_num, None, False]]
     choice = plans[len(plans) - 1]
     for p in plans:
         w = pill_w(c, p[0]) + 3 + (pill_w(c, p[1]) + 3 if p[1] != None else 0) + (tier_w if p[2] else word_w)
-        if N_X + w - 1 <= CHIP_R:
+        if L_X + w - 1 <= L_R:
             choice = p
             break
-    pill(c, choice[0], pcol, N_X, 0)
-    x = N_X + pill_w(c, choice[0]) + 3
+    pill(c, choice[0], pcol, L_X, 0)
+    x = L_X + pill_w(c, choice[0]) + 3
     if choice[1] != None:
         pill(c, choice[1], inj[2], x, 0)
         x += pill_w(c, choice[1]) + 3
-    if choice[2] and x + tier_w - 1 <= CHIP_R:
+    if choice[2] and x + tier_w - 1 <= L_R:
         c.sprite(tier[2], x, 1, legend = {"X": tier[1]})
         c.text(tier[0], x + ARROW_W + 2, 1, font = "4x5", color = tier[1])
-    elif x + word_w - 1 <= CHIP_R:
+    elif x + word_w - 1 <= L_R:
         c.text(tier[0], x, 1, font = "4x5", color = tier[1])
 
-    # First name over surname. A defense is city over nickname
-    # ("KANSAS CITY" / "CHIEFS").
+    # First name over surname (a defense is city over nickname).
     first = row["first"]
     last = row["last"]
     if first == "" and last == "":
         last = row["team"]
-    ff = fit(c, first, ["5x7", "4x5"], N_W)
-    c.text(ff[1], N_X, 8 + (7 - FONTH[ff[0]]) // 2, font = ff[0], color = FIRST if pos != "DEF" else INK, align = "left")
-    lf = fit(c, last, ["8x10", "6x8", "5x7", "4x5"], N_W)
-    if lf[1] != last:
-        # Too long even in 4x5: shed a suffix (JR., III) before hard-clipping.
-        words = last.split(" ")
-        if len(words) > 1 and words[len(words) - 1] in SUFFIX:
-            last = " ".join(words[:len(words) - 1])
-            lf = fit(c, last, ["8x10", "6x8", "5x7", "4x5"], N_W)
-    if lf[1] != last and "-" in last:
-        # Still too long: keep the second half of a double-barrelled name.
-        lf = fit(c, last.split("-")[-1], ["8x10", "6x8", "5x7", "4x5"], N_W)
-    c.text(lf[1], N_X, 16 + (10 - FONTH[lf[0]]) // 2, font = lf[0], color = INK)
+    lw = L_R - L_X + 1
+    ff = fit(c, first, ["5x7", "4x5"], lw)
+    c.text(ff[1], L_X, 8 + (7 - FONTH[ff[0]]) // 2, font = ff[0], color = FIRST if pos != "DEF" else INK)
+    lf = surname(c, last, ["8x10", "6x8", "5x7", "4x5"], lw)
+    c.text(lf[1], L_X, 16 + (10 - FONTH[lf[0]]) // 2, font = lf[0], color = INK)
 
-    # The line that makes the number: projected, or the real one once the
-    # game is over. It may run under the opponent's crest (which ends at
-    # y 26) to x 185.
-    lw = EDGE_R - N_X + 1
+    # The line that makes the number: projected, or the real one once over.
     forms = stat_forms(pos, played if final and played != None else row["stats"])
     line = ""
     for form in forms:
@@ -633,18 +794,26 @@ def card(c, row, pos, rank, tied, scoring_word, st, day, home, actual, played, a
             break
     if line == "":
         line = clip(c, forms[0], "4x5", lw)
-    c.text(line, N_X, 27, font = "4x5", color = pcol)
+    c.text(line, L_X, 27, font = "4x5", color = pcol)
 
-    # The opponent: VS (home) or AT (away; the 4x5 "@" reads as a Q) and the game day, over their crest.
-    at = "VS" if home else "AT"
-    aw = c.text_width(at, "4x5")
-    dw = c.text_width(day, "4x5") if day != "" else 0
-    total = aw + (4 + dw if dw > 0 else 0)
-    ox = O_CX - total // 2
-    if ox + total - 1 > EDGE_R:
-        ox = EDGE_R - total + 1
-    c.rect(O_DIV, 0, O_DIV, 25, fill = DIV)
-    c.text(at, ox, 1, font = "4x5", color = DIM)
-    if dw > 0:
-        c.text(day, ox + aw + 4, 1, font = "4x5", color = pcol)
+    # Right: what the number is, the matchup, the verdict.
+    c.text(scoring_word + (" FINAL" if final else " PROJ"), R_X, 1, font = "4x5", color = INK if final else DIM)
+    at = "VS" if gm[1] else "AT"
+    c.text(at, R_X, 13, font = "4x5", color = DIM)
+    if gm[0] != "":
+        c.text(gm[0], R_X + c.text_width(at, "4x5") + 4, 13, font = "4x5", color = pcol)
     c.image(SMALL.get(row["opp"], "KC_S.png"), O_X, O_Y)
+    if final:
+        verdict(c, "PROJ", row["pts"], tenths(actual) >= tenths(row["pts"]), 27)
+    elif avg >= 0:
+        verdict(c, "AVG", avg, tenths(row["pts"]) >= tenths(avg), 27)
+    else:
+        wk = "WK " + str(st["week"]) if st["stype"] != "post" else week_label(st)
+        c.text(clip(c, wk, "4x5", EDGE_R - R_X + 1), R_X, 27, font = "4x5", color = DIM)
+
+def verdict(c, word, value, beat, y):
+    """Arrow + word + number; the arrow and the colour both say up or down,
+    so it never rests on colour alone."""
+    col = UP if beat else DOWN
+    c.sprite(ARROW_UP if beat else ARROW_DOWN, R_X, y + 1, legend = {"X": col})
+    c.text(word + " " + one_dp(value), R_X + ARROW_W + 2, y, font = "4x5", color = col)

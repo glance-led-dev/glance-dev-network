@@ -3,86 +3,54 @@ id: fantasy-weekly-projections
 version: 0.1.0
 name: Fantasy Weekly Projections
 author: glance-led-dev
-description: This week's top projected fantasy players by position - projected points against their season average, the stat line behind them, a STUD / START / FLEX tier, injury tags, and the matchup (home or away, game day) in team logos. Finished games show the final score. PPR, half PPR or standard. From Sleeper, no key needed.
+description: This week's top projected fantasy players by position as a staircase of club logos, the #1 step tallest and gold - projected points against their season average, the stat line behind them, a STUD / START / FLEX tier, injury tags, and the matchup (home or away, game day) in team logos. Finished games show the final score. PPR, half PPR or standard. From Sleeper, no key needed.
 category: Sports
 entry: app.star
 
 width: 192
 height: 32
-# 120 s: each refresh shows the next player on the board (one rank per
-# frame). Projections and the Sleeper week are cached for an hour, season
-# stats for six hours and the schedule and week stats for 30 minutes.
+# 120 s: each refresh shows the next ladder (one position per frame in ALL)
+# and the next player in the spotlight. Projections and the Sleeper week are
+# cached for an hour, season stats for six hours and the schedule and week
+# stats for 30 minutes.
 refresh: 120
 
-pages: [board]
+pages: [board, spotlight]
 
-# Team logos: the 40 x 24 hero set (<abbr>.png, plus NFL.png) and the
-# 24 x 18 list set (<abbr>_S.png) for the opponent.
+# Team logos: the 24 x 18 set (<abbr>_S.png), drawn at its authored size on
+# the ladder's steps and on the spotlight.
 assets:
-  - ARI.png
   - ARI_S.png
-  - ATL.png
   - ATL_S.png
-  - BAL.png
   - BAL_S.png
-  - BUF.png
   - BUF_S.png
-  - CAR.png
   - CAR_S.png
-  - CHI.png
   - CHI_S.png
-  - CIN.png
   - CIN_S.png
-  - CLE.png
   - CLE_S.png
-  - DAL.png
   - DAL_S.png
-  - DEN.png
   - DEN_S.png
-  - DET.png
   - DET_S.png
-  - GB.png
   - GB_S.png
-  - HOU.png
   - HOU_S.png
-  - IND.png
   - IND_S.png
-  - JAX.png
   - JAX_S.png
-  - KC.png
   - KC_S.png
-  - LAC.png
   - LAC_S.png
-  - LAR.png
   - LAR_S.png
-  - LV.png
   - LV_S.png
-  - MIA.png
   - MIA_S.png
-  - MIN.png
   - MIN_S.png
-  - NE.png
   - NE_S.png
-  - NFL.png
-  - NO.png
   - NO_S.png
-  - NYG.png
   - NYG_S.png
-  - NYJ.png
   - NYJ_S.png
-  - PHI.png
   - PHI_S.png
-  - PIT.png
   - PIT_S.png
-  - SEA.png
   - SEA_S.png
-  - SF.png
   - SF_S.png
-  - TB.png
   - TB_S.png
-  - TEN.png
   - TEN_S.png
-  - WSH.png
   - WSH_S.png
 
 inputs:
