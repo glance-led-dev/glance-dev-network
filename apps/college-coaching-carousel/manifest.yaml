@@ -3,21 +3,19 @@ id: college-coaching-carousel
 version: 0.1.0
 name: College Coaching Carousel
 author: glance-led-dev
-description: Your college football program's head coach, live from ESPN - a pixel-art coach in your school's colours, years in charge counted in pennants, this season's record and AP rank, a trophy case of every title the coach has won - plus the longest-tenured coaches in FBS. No key needed.
+description: Your college football program's head coach, live from ESPN - a pixel-art coach in your school's colours, years in charge counted in pennants, this season's record and AP rank, and a trophy case of every title the coach has won. No key needed.
 category: Sports
 entry: app.star
 
 width: 192
 height: 32
-# 900 s: the coach and the tenure ladder change a few times a year and the
-# record once a week; the tenure page flips between its two frames every
-# refresh. Feeds are cached longer - record 1 h, coaching staff 6 h.
+# 900 s: the coach changes a few times a year and the record once a week.
+# Feeds are cached longer - record 1 h, coaching staff 6 h.
 refresh: 900
 
-pages: [coach, resume, tenure]
+pages: [coach, resume]
 
-# 24 x 18 school logos (S/), drawn unscaled on the scoreboard and the
-# tenure ladder, named as in the shared FBS logo set.
+# 24 x 18 school logos (S/), drawn unscaled on the scoreboard, named as in the shared FBS logo set.
 assets:
   - S/AFA.png
   - S/AKR.png
@@ -164,7 +162,7 @@ inputs:
     app_input_type: dropdown
     label: School
     default: "ALABAMA"
-    help: Any FBS program. The coach and record come live from ESPN; the tenure page highlights your school's coach when he is on it.
+    help: Any FBS program. The coach and record come live from ESPN.
     choices:
       - "AIR FORCE"
       - "AKRON"

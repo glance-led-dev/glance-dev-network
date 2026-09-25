@@ -27,10 +27,6 @@ along the bottom, and the words sit on the things that stand there.
   for D-II / D-III / NAIA and silver Lombardis for Super Bowls. The line
   under the case names the coach, so the titles aren't read as the
   school's. A coach with no titles walks the sideline beside the board.
-- **tenure** - the 14 FBS head coaches who started before 2020, three per
-  frame (the frame changes every 15 minutes). Each gets a logo, a rank
-  (ties show as `T-5`), years in charge and a gold or grey bar scaled to
-  Ferentz's 28 seasons. Your school's coach is underlined in gold.
 
 When ESPN can't be reached, a dark scoreboard on a dimmed sideline reads
 ESPN OFFLINE, with a grey coach beside it.

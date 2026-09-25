@@ -1,7 +1,7 @@
 # College Coaching Carousel
 #
-# Your school's head coach, live from ESPN, plus the longest-serving coaches
-# in major college football.
+# Your school's head coach, live from ESPN: who he is, how long he has been
+# there, this season's record and the titles he has won.
 #
 #   coach    THE SIDELINE. A big pixel-art coach walks the chalk line in
 #            the middle of the panel, in the school's kit, headset on and
@@ -21,9 +21,6 @@
 #            FBS, silver FCS, bronze D2/D3/NAIA, silver Lombardis for Bill
 #            Belichick's six Super Bowls), each year on a plaque below. No
 #            titles: the coach walks the sideline beside the board instead.
-#   tenure   The longest-tenured FBS head coaches, three at a time: logo,
-#            rank (T-5 for ties), years in charge, surname, first season and
-#            a bar scaled to Ferentz's 28 years; gold for the leader.
 #
 # DESIGN. Archetype: SIDELINE - a scene, not a logo-and-text row. A chalk
 # line and striped turf run the full width of both school pages; the coach
@@ -34,8 +31,7 @@
 # the school's second colour, polo in its first (so crimson Alabama in a
 # white visor never reads as red Utah) - and his collar is the season's
 # mood: red on the hot seat, gold while unbeaten. Records are amber
-# scoreboard bulbs, titles stand in a lit trophy case, the tenure ladder is
-# a bar chart of years. Failure screens stay in the set: a dark scoreboard
+# scoreboard bulbs, titles stand in a lit trophy case. Failure screens stay in the set: a dark scoreboard
 # with the message and a flat grey coach on a dimmed sideline. Black
 # ground; school colours are lifted when ESPN's are too dark for an LED.
 #
@@ -53,9 +49,9 @@
 # seasons, walked back year by year within the request budget, and his
 # scoreboard shows this season's record rather than a career one.
 #
-# Budget (8 uncached requests a render). Studio and previews render all three
+# Budget (8 uncached requests a render). Studio and previews render both
 # pages in ONE run and the cap is shared, so the pages are budgeted together:
-# team 1 + coach lookup COACH_BUDGET (3) + AP poll 1 + tenure 3 = 8. The coach
+# team 1 + coach lookup COACH_BUDGET (3) + AP poll 1 = 5. The coach
 # lookup is the coach list (+ the coach's own record and one step of the walk
 # for an unknown coach) - enough to tell a new or interim hire from a
 # returning one. Both school pages use the same budget, so they agree on YEAR N.
@@ -224,8 +220,7 @@ SCHOOLS = {
 }
 
 # Literal asset paths (the publish lint needs literals). 24 x 18 logos,
-# drawn at their authored size on the scoreboard and the tenure ladder
-# (never scaled); filenames match the shared
+# drawn at their authored size on the scoreboard (never scaled); filenames match the shared
 # _logos set so polished logos re-sync by a straight copy, except Texas A&M
 # (TAMU.png - '&' is not a legal asset name).
 LOGO_S = {
@@ -842,45 +837,6 @@ PREV = {
     "483465": "ROGERS",        # K. Moore, Washington State
 }
 
-# The longest-tenured FBS coaches, oldest first: [abbr, coach id, first
-# season, surname]. Every 2026 FBS coach who started before 2020 is here.
-# Ranks come from this list (ties share one, shown T-5); the page checks
-# only the three coaches it is about to draw against ESPN's current staff
-# and drops any who has left.
-TENURE = [
-    ["IOWA", "559972", 1999, "FERENTZ"],
-    ["AFA", "559873", 2007, "CALHOUN"],
-    ["CLEM", "2331668", 2008, "SWINNEY"],
-    ["NCSU", "2574258", 2013, "DOEREN"],
-    ["ARMY", "2496595", 2014, "MONKEN"],
-    ["EMU", "2518896", 2014, "CREIGHTON"],
-    ["M-OH", "3083495", 2014, "MARTIN"],
-    ["PITT", "3164111", 2015, "NARDUZZI"],
-    ["UGA", "3960423", 2016, "SMART"],
-    ["BYU", "2026707", 2016, "SITAKE"],
-    ["MINN", "124316", 2017, "FLECK"],
-    ["MD", "2331935", 2019, "LOCKSLEY"],
-    ["OSU", "4369610", 2019, "DAY"],
-    ["WKU", "4407282", 2019, "HELTON"],
-]
-# Abbr -> ESPN team id for the tenure candidates.
-TENURE_TEAM = {
-    "AFA": "2005",
-    "ARMY": "349",
-    "BYU": "252",
-    "CLEM": "228",
-    "EMU": "2199",
-    "IOWA": "2294",
-    "M-OH": "193",
-    "MD": "120",
-    "MINN": "135",
-    "NCSU": "152",
-    "OSU": "194",
-    "PITT": "221",
-    "UGA": "61",
-    "WKU": "98",
-}
-
 # --------------------------------------------------------------- pixel art
 # The coach walking the sideline, 28 x 28, facing the scoreboard: V visor
 # (the school's second colour, so crimson Alabama wears a white visor and
@@ -950,18 +906,6 @@ XXX.
 XXXX
 XXX.
 X...
-"""
-# 9 x 9 stopwatch for the tenure page.
-WATCH = """
-...XXX...
-....X....
-..XXXXX..
-.X..W..X.
-X...W...X
-X...WW..X
-X.......X
-.X.....X.
-..XXXXX..
 """
 # 5 x 3 poll-movement arrows beside the AP badge.
 UP = """
@@ -1609,88 +1553,3 @@ def resume(c, ctx):
         if c.text_width(w, "4x5") <= room:
             c.text(w, 185, 23, font = "4x5", color = TROPHY_COLOR[level], align = "right")
             break
-
-# -------------------------------------------------------------- page: tenure
-def tenure_ranks():
-    """Static ranks from TENURE's first seasons: [rank, tied]."""
-    out = []
-    for t in TENURE:
-        ahead = 0
-        same = 0
-        for u in TENURE:
-            if u[2] < t[2]:
-                ahead += 1
-            elif u[2] == t[2]:
-                same += 1
-        out.append([ahead + 1, same > 1])
-    return out
-
-def tenure(c, ctx):
-    season = season_now(ctx)
-    mine = school_pick(ctx)["abbr"]
-    frames = (len(TENURE) + 2) // 3
-    f = (ctx.now.unix // 900) % frames
-    ranks = tenure_ranks()
-
-    # Only this frame's three coaches are checked (3 requests): each must
-    # still be the coach ESPN lists at his school, or he is left out.
-    rows = []
-    offline = False
-    for k in range(f * 3, min(f * 3 + 3, len(TENURE))):
-        t = TENURE[k]
-        r = http.get(CORE + "seasons/" + str(season) + "/teams/" + TENURE_TEAM[t[0]] + "/coaches",
-                     headers = HEADERS, ttl_seconds = STAFF_TTL)
-        if r["status_code"] == 0:
-            offline = True
-            break
-        if r["status_code"] != 200 or type(r["json"]) != "dict":
-            continue
-        items = get(r["json"], "items", [])
-        if len(items) == 0 or coach_id_of(get(items[0], "$ref", "")) != t[1]:
-            continue
-        rows.append(k)
-    if len(rows) == 0:
-        if offline:
-            fail_screen(c, "ESPN OFFLINE", "CHECKING AGAIN SOON")
-        else:
-            fail_screen(c, "NO TENURE DATA", "CHECKING AGAIN SOON")
-        return
-
-    c.fill("black")
-    # Left header x 6..45: stopwatch over 'LONGEST / TENURED / FBS HCS'.
-    c.sprite(WATCH, 6, 1, legend = {"X": GOLD, "W": INK})
-    c.text(str(f + 1) + "/" + str(frames), 45, 3, font = "4x5", color = DIM, align = "right")
-    c.text("LONGEST", 6, 13, font = "4x5", color = INK)
-    c.text("TENURED", 6, 19, font = "4x5", color = INK)
-    c.text("FBS HCS", 6, 25, font = "4x5", color = DIM)
-    c.rect(48, 2, 48, 29, fill = "#2A3040")
-
-    # Three 44 px slots from x 52: logo with the rank and years in charge
-    # beside it, then surname and first season; a gold tenure bar under
-    # each, its length the years in charge against Ferentz's.
-    top = season - TENURE[0][2] + 1
-    for i in range(len(rows)):
-        k = rows[i]
-        t = TENURE[k]
-        # A short frame is centred in the ladder rather than left hanging.
-        x = 52 + i * 45 + (3 - len(rows)) * 22
-        lead = ranks[k][0] == 1
-        me = t[0] == mine
-        yrs = season - t[2] + 1
-        c.image(LOGO_S[t[0]], x, 1)
-        rk = ("T-" if ranks[k][1] else "#") + str(ranks[k][0])
-        # 'T-12' is 23 px in 5x7 and ran into the logo (x + 0..23); the rank
-        # gets x + 25..43, so a long one drops to 4x5.
-        rf = fit(c, rk, ["5x7", "4x5"], 18)
-        c.text(rf[1], x + 43, 2 if rf[0] == "5x7" else 3, font = rf[0], color = GOLD if lead else INK, align = "right")
-        c.text(str(yrs) + "Y", x + 43, 11, font = "4x5", color = DIM, align = "right")
-        nm = fit(c, t[3], ["4x5"], 43)
-        c.text(nm[1], x, 20, font = "4x5", color = GOLD if me else INK)
-        c.text(str(t[2]), x, 26, font = "4x5", color = GOLD if lead else DIM)
-        # Tenure bar x + 20..43 after the year ('2019' is 16 px wide): 24 px
-        # is Ferentz's run, everyone else to scale, so the ladder shows the
-        # gap between 28 years and 8 at a glance.
-        bw = max(2, (24 * yrs) // top)
-        c.rect(x + 20, 27, x + 19 + bw, 29, fill = GOLD if lead else "#9AA3B2")
-        if me:
-            c.rect(x, 31, x + 42, 31, fill = GOLD)
