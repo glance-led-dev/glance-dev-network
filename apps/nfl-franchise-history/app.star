@@ -1,41 +1,47 @@
 # NFL Franchise History
 #
-# Every club's story on a brass plaque: where it came from, what it has won,
+# Every club's story on a felt pennant: where it came from, what it has won,
 # and the stories its fans still tell.
 #
-#   legacy  The franchise card. Club logo, home market, the year it was
-#           founded and the year of its last title, and a trophy case - one
-#           pixel-art Lombardi per Super Bowl win on a wooden shelf, a dim
-#           ghost Lombardi for every Super Bowl lost, the W-L record under
-#           the shelf, and bronze cups for NFL / AFL titles won outside a
-#           Super Bowl.
+#   legacy  The club's pennant. A felt pennant in club colours flies from a
+#           wooden stick across the panel, the nickname stitched along it.
+#           Above the tail: the home market, the year the club was founded
+#           and the year of its last title. Under the tail stands the trophy
+#           haul - one silver Lombardi per Super Bowl win, a dim ghost
+#           Lombardi for every Super Bowl lost - with the SB record and a
+#           bronze cup for NFL / AFL titles won outside a Super Bowl.
 #   trivia  One frame per minute. Most frames are a true story from the
-#           club's history with its year on a pennant; one is the rivalry
-#           card (both logos, the all-time series between them) and one is
-#           the club's most famous retired jersey, drawn in its colours.
+#           club's history, its year stitched on a short pennant; one is the
+#           rivalry card (club pennant, the all-time series, the rival's
+#           logo) and one is the club's most famous retired jersey.
 #
-# DESIGN. A museum plaque, not a news ticker. The page is held by four brass
-# corner brackets (x 4 and x 187, the scroll safe zone) instead of a full
-# frame, so the corners read as a mounted plaque while the rows keep every
-# pixel of the 32. The logo sits on black at the left; a hairline in the
-# club's accent colour separates it from the words.
+# DESIGN. The hanging pennant is the one memorable thing: a 30 px tall felt
+# triangle in the club's colour with a trim-coloured sleeve at the stick and
+# a trim edge, flying from x 8 to a point at x 170. The nickname is stitched
+# in ONE face per name - the biggest of 10x16 / 9x12 / 8x10 / 6x8 / 5x7 /
+# 4x5 in which every letter, at its own place along the taper, clears the
+# trim by a felt row - so short names (BILLS, RAMS, 49ERS) get 10x16 and
+# long ones step down as a whole word, never letter by letter (a per-letter
+# step-down read as mixed case). Every other item lives in the two black
+# triangles the tapering cloth leaves free: market / EST / last title
+# right-aligned above the tail, the Lombardis standing under the tip and the
+# SB record and cup on the floor row beside them. Nothing sits at a fixed x:
+# each row's left limit is computed from the cloth, so no text can touch the
+# felt. No logo column - the club is its colours and its stitched name.
 #
-# Legacy: the nickname is the hero, laddered 10x16 -> 9x12 -> 8x10 so
-# BUCCANEERS and COMMANDERS (89 px at 8x10) still fit the 89 px text zone.
-# The trophy case is the one memorable thing: silver Lombardis for wins and
-# dim ghost Lombardis for losses, so the Bills' four trips read as four
-# ghosts on the shelf rather than an empty case. Up to six stand 6 px apart,
-# seven or eight close to 5 px; New England's twelve do not fit 40 px, so it
-# shows its six wins and the record says 6-6. EST and LAST share the footer
-# row: the founding year in gold, the last title in white (NO TITLE in dim).
+# Trophies: silver Lombardis for wins, dim ghosts for losses, so the Bills'
+# four trips read as four ghosts rather than an empty case. They stand 6 px
+# apart under the tip, 5 px when eight need the room; New England's twelve
+# do not fit, so it shows its six wins and the record says 6-6. Clubs with
+# no Super Bowl trip say so in the trophy spot.
 #
-# Trivia: the year rides a pennant in the club's accent (black or white ink
-# picked by brightness), DID YOU KNOW in dim beside it, and a row of 2x2 pips
-# top right marks the frame. The story is three lines of 5x7, the biggest
-# face that fits a 70-character story in 133 px. The rivalry frame is a
-# scoreboard: club logo left, rival logo right, the W-L-T series between
-# them at 9x12, and who leads in the leader's colour. The legend frame is a
-# pixel jersey (sleeve stripes, V collar, twill number) in club colours.
+# Trivia: the story frame is a short pennant (stick at x 6, tip x 74) with
+# the story's year stitched in one face and the story in three lines of 5x7
+# (4x7 when 5x7 needs a fourth line) beside the tail, DID YOU KNOW and 2x2
+# frame pips on the top row. The rivalry frame keeps the club's short
+# pennant (tip x 64, abbreviation stitched) facing the rival's logo, the
+# W-L-T series between them. The legend frame is a pixel jersey in club
+# colours.
 #
 # No network: everything is baked in, so there is nothing to fail. Super Bowl
 # counts run through Super Bowl LX (February 2026); head-to-head series run
@@ -43,29 +49,53 @@
 # was played, so a Super Bowl belongs to the February it was won in.
 #
 # Frames: the trivia page rotates one frame per minute, and ALL TEAMS moves
-# to the next club every 10 minutes (so the legacy card and the trivia beside
-# it always agree). Hence refresh 60.
+# to the next club every 10 minutes (so the legacy pennant and the trivia
+# beside it always agree). Hence refresh 60.
 
 # ------------------------------------------------------------------ layout
-LOGO_X = 7          # 40 x 24 logo, x 7..46
-LOGO_Y = 4
-RULE_X = 49         # hairline between logo and words
-TX = 52             # text zone starts
-TR = 140            # legacy text zone ends (89 px: BUCCANEERS at 8x10)
-CASE_L = 145        # trophy case x 145..184 (40 px)
-CASE_R = 184
-FACT_R = 184        # trivia text zone ends (133 px)
+POLE_X = 6          # the pennant stick, x 6..7
+PX0 = 8             # the pennant's sleeve (wide end) starts here
+SLEEVE = 4          # sleeve columns, x 8..11
+TOP0 = 1            # the cloth spans rows 1..30 at the sleeve
+BOT0 = 30
+TIP = 170           # legacy pennant tip
+TTIP = 74           # story pennant tip
+RTIP = 64           # rivalry pennant tip (it carries only the abbreviation)
+LET_X = 13          # first stitched letter (x 12 is the felt gap after the sleeve)
+R = 185             # right edge of content (lit pixels stay in x 6..185)
+STORY_X = 76        # story column x 76..185 (110 px)
 RIVAL_X = 145       # rival logo, x 145..184
 
 # ----------------------------------------------------------------- palette
 INK = "#F4F7FF"
 DIM = "#7A849C"
 GOLD = "#FFC53D"
-BRASS = "#9C7A2E"
 BRONZE = "#D98A3D"
-SHELF = "#8A5A2B"
-SHELF_D = "#4A2F16"
 PIP_OFF = "#3A4152"
+WOOD = "#C08A4E"
+WOOD_D = "#7A5028"
+
+# Pennant cloth per club: [felt, stitched letters, trim]. Dark club colours
+# are lifted so the cloth still reads as a shape on the LED; black clubs get
+# a charcoal felt.
+PEN = {
+    "ARI": ["#B0142F", "#FFFFFF", "#FFC53D"], "ATL": ["#C8102E", "#FFFFFF", "#A5ACAF"],
+    "BAL": ["#4B2CA0", "#FFC53D", "#FFC53D"], "BUF": ["#1F4FC8", "#FFFFFF", "#E8203F"],
+    "CAR": ["#0077B8", "#FFFFFF", "#A5ACAF"], "CHI": ["#23407A", "#FF6A2A", "#FF6A2A"],
+    "CIN": ["#E8480F", "#FFFFFF", "#FFFFFF"], "CLE": ["#7A4526", "#FF7A1F", "#FF7A1F"],
+    "DAL": ["#244A8C", "#FFFFFF", "#B0B7BC"], "DEN": ["#E8480F", "#FFFFFF", "#2A4580"],
+    "DET": ["#0070AE", "#FFFFFF", "#B0B7BC"], "GB": ["#1F6B45", "#FFB612", "#FFB612"],
+    "HOU": ["#23407A", "#FFFFFF", "#E8233C"], "IND": ["#1F4FAE", "#FFFFFF", "#FFFFFF"],
+    "JAX": ["#00808F", "#FFFFFF", "#D7A22A"], "KC": ["#D0142F", "#FFFFFF", "#FFB81C"],
+    "LV": ["#3A3F45", "#D5DADD", "#A5ACAF"], "LAC": ["#0074B5", "#FFFFFF", "#FFC20E"],
+    "LAR": ["#1F4FC8", "#FFD100", "#FFD100"], "MIA": ["#008089", "#FFFFFF", "#FC6A1C"],
+    "MIN": ["#5C34A0", "#FFC62F", "#FFC62F"], "NE": ["#1F3D7A", "#FFFFFF", "#D0142F"],
+    "NO": ["#3A3530", "#D3BC8D", "#D3BC8D"], "NYG": ["#1F3FA0", "#FFFFFF", "#D0142F"],
+    "NYJ": ["#1A7A55", "#FFFFFF", "#FFFFFF"], "PHI": ["#0E6E73", "#FFFFFF", "#B0B7BC"],
+    "PIT": ["#383C44", "#FFB612", "#FFB612"], "SF": ["#B8102A", "#FFFFFF", "#C9A866"],
+    "SEA": ["#26468F", "#FFFFFF", "#69BE28"], "TB": ["#C20A0A", "#FFFFFF", "#FF7900"],
+    "TEN": ["#3F80C8", "#FFFFFF", "#E8203F"], "WSH": ["#7E1C27", "#FFB612", "#FFB612"],
+}
 
 # ------------------------------------------------------------------ logos
 # Literal paths: the publish lint needs to see every asset name.
@@ -535,7 +565,7 @@ BBTBBBBBBBBBBBBBBBBBBBBBBTBB
 """
 
 # ------------------------------------------------------------- text tools
-INKH = {"10x16": 15, "9x12": 12, "8x10": 10, "5x7": 7, "4x5": 5}
+INKH = {"10x16": 15, "9x12": 12, "8x10": 10, "6x8": 8, "5x7": 7, "4x7": 7, "4x5": 5}
 
 def clip(c, text, font, maxw):
     t = str(text)
@@ -589,26 +619,88 @@ def club_for(ctx):
     # one on both pages.
     return ORDER[(ctx.now.unix // 600) % len(ORDER)]
 
-# ------------------------------------------------------------ shared chrome
-def plaque(c, abbr):
-    """Brass corner brackets at x 4 / 187, the logo on black, and a hairline
-    in the club's accent."""
-    for x, dx in [[4, 1], [187, -1]]:
-        for y, dy in [[0, 1], [31, -1]]:
-            c.line(x, y, x + 3 * dx, y, BRASS)
-            c.line(x, y, x, y + 3 * dy, BRASS)
-    c.image(LOGO.get(abbr, "assets/NFL.png"), LOGO_X, LOGO_Y)
-    c.line(RULE_X, 3, RULE_X, 28, color.dim(ACCENT.get(abbr, DIM), 70))
 
-def pennant(c, label, x, y, fill):
-    """A pennant: a 7 px tall flag with the label centred on the cloth and a
-    3 px tapered tip. Returns the x just past the tip."""
-    w = c.text_width(label, "4x5")
-    x1 = x + w + 3
-    c.rect(x, y, x1, y + 6, fill = fill)
-    c.fill_triangle(x1 + 1, y, x1 + 1, y + 6, x1 + 4, y + 3, fill)
-    c.text(label, x + 2, y + 1, font = "4x5", color = ink_for(fill))
-    return x1 + 5
+def frames_for(abbr):
+    """Stories first, then the rivalry card, then the retired jersey."""
+    fr = [["story", f] for f in CLUBS[abbr][6]]
+    if abbr in RIVAL:
+        fr.append(["rival", RIVAL[abbr]])
+    if abbr in LEGEND:
+        fr.append(["legend", LEGEND[abbr]])
+    return fr
+
+
+# ------------------------------------------------------------ the pennant
+STITCH = ["10x16", "9x12", "8x10", "6x8", "5x7", "4x5"]
+
+def span(x, tip):
+    """The rows [top, bottom] the cloth covers at column x for a pennant from
+    the sleeve at PX0 to a point at tip (bottom < top: no cloth there). The
+    cloth is symmetric about the centre of rows TOP0..BOT0."""
+    n = BOT0 - TOP0 + 1
+    mid = TOP0 + n // 2
+    if x < PX0 or x > tip:
+        return [mid, mid - 1]
+    ln = tip - PX0
+    h2 = (n * (tip - x) + ln) // (2 * ln)
+    return [mid - h2, mid + h2 - 1]
+
+def clear_from(tip, y0, y1):
+    """The first column from which every column to the right keeps the rows
+    y0..y1 plus a 1 px buffer clear of the cloth."""
+    x = PX0
+    for _ in range(tip - PX0 + 2):
+        s = span(x, tip)
+        if s[1] < s[0] or s[1] < y0 - 1 or s[0] > y1 + 1:
+            return x
+        x += 1
+    return tip + 1
+
+def pole(c):
+    """The wooden stick with a gold knob."""
+    c.rect(POLE_X, 2, POLE_X, 31, fill = WOOD)
+    c.rect(POLE_X + 1, 2, POLE_X + 1, 31, fill = WOOD_D)
+    c.rect(POLE_X, 0, POLE_X + 1, 1, fill = GOLD)
+
+def cloth(c, abbr, tip):
+    """Felt from the sleeve to the tip: sleeve columns in the trim colour, then
+    felt with a one-pixel trim edge top and bottom."""
+    p = PEN.get(abbr, ["#3A4152", INK, DIM])
+    pole(c)
+    for x in range(PX0, tip + 1):
+        s = span(x, tip)
+        if s[1] < s[0]:
+            continue
+        if x < PX0 + SLEEVE:
+            c.line(x, s[0], x, s[1], p[2])
+            continue
+        c.line(x, s[0], x, s[1], p[0])
+        c.pixel(x, s[0], p[2])
+        c.pixel(x, s[1], p[2])
+
+def stitch(c, text, tip, x, color):
+    """Letter the cloth in ONE face: the biggest in STITCH for which every
+    letter, at its own place along the taper, clears the trim by a felt row
+    above and below. Letters are 1 px apart and centred on the cloth.
+    Returns the x after the last letter."""
+    n = BOT0 - TOP0 + 1
+    t = str(text)
+    for f in STITCH:
+        y = TOP0 + (n - INKH[f]) // 2
+        cx = x
+        ok = True
+        for ch in t.elems():
+            w = 2 if ch == " " else c.text_width(ch, f)
+            s = span(cx + w - 1, tip)
+            if ch != " " and not (s[0] <= y - 2 and s[1] >= y + INKH[f] + 1):
+                ok = False
+                break
+            cx += w + 1
+        if ok or f == STITCH[-1]:
+            if ok:
+                c.text(t, x, y, font = f, color = color)
+            return cx
+    return x
 
 def pips(c, n, cur, right, y, on):
     """n 2x2 squares ending at x = right; the current one lit."""
@@ -621,125 +713,124 @@ def legacy(c, ctx):
     c.fill("black")
     abbr = club_for(ctx)
     d = CLUBS[abbr]
-    plaque(c, abbr)
-    tw = TR - TX + 1
+    p = PEN.get(abbr, ["#3A4152", INK, DIM])
+    cloth(c, abbr, TIP)
+    stitch(c, d[0], TIP, LET_X, p[1])
 
-    # Market above, the nickname as the hero, the footer row below:
-    # founded in gold on the left, the last title on the right.
-    c.text(clip(c, d[1], "4x5", tw), TX, 1, font = "4x5", color = DIM)
-    nick = d[0]
-    font = ladder(c, nick, ["10x16", "9x12", "8x10"], tw)
-    c.text(clip(c, nick, font, tw), TX, 8 + (15 - INKH[font]) // 2, font = font, color = INK)
-    c.text("EST", TX, 26, font = "4x5", color = DIM)
-    c.text(str(d[2]), TX + c.text_width("EST", "4x5") + 3, 26, font = "4x5", color = GOLD)
+    # Above the tail, right-aligned: market, EST year; then the last title.
+    x = R + 1
+    yr = str(d[2])
+    c.text(yr, x, 1, font = "4x5", color = GOLD, align = "right")
+    x -= c.text_width(yr, "4x5") + 3
+    c.text("EST", x, 1, font = "4x5", color = DIM, align = "right")
+    x -= c.text_width("EST", "4x5") + 6
+    lim = clear_from(TIP, 1, 5)
+    mk = clip(c, d[1], "4x5", x - lim)
+    if mk != "":
+        c.text(mk, x, 1, font = "4x5", color = DIM, align = "right")
+
     last = LAST_TITLE.get(abbr, 0)
     if last > 0:
-        yw = c.text_width(str(last), "4x5")
-        c.text(str(last), TR, 26, font = "4x5", color = INK, align = "right")
-        c.text("TITLE", TR - yw - 3, 26, font = "4x5", color = DIM, align = "right")
+        ly = str(last)
+        c.text(ly, R + 1, 7, font = "4x5", color = INK, align = "right")
+        c.text("TITLE", R + 1 - c.text_width(ly, "4x5") - 3, 7, font = "4x5", color = DIM, align = "right")
     else:
-        c.text("NO TITLE", TR, 26, font = "4x5", color = DIM, align = "right")
+        c.text("NO TITLE", R + 1, 7, font = "4x5", color = DIM, align = "right")
 
-    # Trophy case x 145..184: silver Lombardis for wins, then dim ghosts for
-    # losses, standing on the shelf at y 13.
+    # Under the tip: silver Lombardis for wins, then dim ghosts for losses.
     wins = d[3]
     lost = SB_LOST.get(abbr, 0)
-    mid = (CASE_L + CASE_R + 1) // 2
+    tx0 = clear_from(TIP, 19, 30)
+    mid = (tx0 + R + 1) // 2
     n = wins + lost
-    pitch = 6
-    if n > 6:
-        pitch = 5
     if n > 8:
         # Only New England (6-6): the wins alone, the record says the rest.
         n = wins
-        lost = 0
-        pitch = 6
+    left = mid
     if n > 0:
+        pitch = 6 if (n - 1) * 6 + 5 <= R - tx0 + 1 else 5
         row = (n - 1) * pitch + 5
-        x0 = mid - row // 2
+        left = mid - row // 2
         for i in range(n):
-            leg = LOMBARDI_LEG if i < wins else GHOST_LEG
-            c.sprite(LOMBARDI, x0 + i * pitch, 1, legend = leg)
-    c.line(CASE_L, 13, CASE_R, 13, SHELF)
-    c.line(CASE_L + 1, 14, CASE_R - 1, 14, SHELF_D)
+            c.sprite(LOMBARDI, left + i * pitch, 19, legend = LOMBARDI_LEG if i < wins else GHOST_LEG)
+    else:
+        # Right-aligned: the short line under the tip, the long one on the
+        # floor row where the cloth is already out of the way.
+        c.text("NEVER IN", R + 1, 19, font = "4x5", color = DIM, align = "right")
+        c.text("A SUPER BOWL", R + 1, 25, font = "4x5", color = DIM, align = "right")
+        left = R + 1 - c.text_width("A SUPER BOWL", "4x5")
 
-    # The Super Bowl record under the shelf: SB in gold, W-L in white.
-    rec = str(wins) + "-" + str(SB_LOST.get(abbr, 0))
-    lw = c.text_width("SB", "4x5")
-    rw = c.text_width(rec, "4x5")
-    x = mid - (lw + 4 + rw) // 2
-    c.text("SB", x, 17, font = "4x5", color = GOLD if wins > 0 else DIM)
-    c.text(rec, x + lw + 4, 17, font = "4x5", color = INK if n > 0 else DIM)
-
-    # League titles won outside a Super Bowl: a bronze cup and the count.
+    # On the floor row left of the trophies: the SB record (hugging them) and
+    # a bronze cup for league titles won outside a Super Bowl.
+    fl = clear_from(TIP, 26, 30)
+    x = left - 4
+    if n > 0:
+        rec = str(wins) + "-" + str(lost)
+        c.text(rec, x, 26, font = "4x5", color = INK, align = "right")
+        x -= c.text_width(rec, "4x5") + 3
+        c.text("SB", x, 26, font = "4x5", color = GOLD if wins > 0 else DIM, align = "right")
+        x -= c.text_width("SB", "4x5") + 6
     if d[4] > 0:
         label = "+" + str(d[4]) + " " + d[5]
-        w = 5 + 2 + c.text_width(label, "4x5")
-        x = mid - w // 2
-        c.sprite(CUP, x, 25, legend = {"X": BRONZE})
-        c.text(label, x + 7, 25, font = "4x5", color = BRONZE)
+        w = c.text_width(label, "4x5")
+        if x - w - 7 + 1 >= fl:
+            c.text(label, x, 26, font = "4x5", color = BRONZE, align = "right")
+            c.sprite(CUP, x - w - 7, 26, legend = {"X": BRONZE})
 
 # ------------------------------------------------------------- page: trivia
-def frames_for(abbr):
-    """Stories first, then the rivalry card, then the retired jersey."""
-    fr = [["story", f] for f in CLUBS[abbr][6]]
-    if abbr in RIVAL:
-        fr.append(["rival", RIVAL[abbr]])
-    if abbr in LEGEND:
-        fr.append(["legend", LEGEND[abbr]])
-    return fr
-
 def story(c, abbr, f):
-    acc = ACCENT.get(abbr, DIM)
-    x = pennant(c, f[0] if f[0] != "" else "LORE", TX, 0, acc)
-    c.text("DID YOU KNOW", x + 1, 1, font = "4x5", color = DIM)
+    p = PEN.get(abbr, ["#3A4152", INK, DIM])
+    cloth(c, abbr, TTIP)
+    stitch(c, f[0] if f[0] != "" else "LORE", TTIP, LET_X, p[1])
+    c.text("DID YOU KNOW", STORY_X, 1, font = "4x5", color = DIM)
 
-    # Three lines of 5x7 when the story fits, else three of 4x5, centred in
-    # the band y 8..30 (1 px under the pennant, 1 px off the bottom edge).
-    tw = FACT_R - TX + 1
+    # Three lines of 5x7 when the story fits, else three of 4x7 (same height,
+    # narrower), centred in the band y 8..30.
+    tw = R - STORY_X + 1
     lines = wrap(c, f[1], "5x7", tw)
-    font, step = "5x7", 8
+    font = "5x7"
     if len(lines) > 3:
-        lines = wrap(c, f[1], "4x5", tw)
-        font, step = "4x5", 7
+        lines = wrap(c, f[1], "4x7", tw)
+        font = "4x7"
     if len(lines) > 3:
         lines = lines[:3]
         lines[2] = clip(c, lines[2], font, tw - c.text_width("..", font)) + ".."
-    h = len(lines) * step - (step - INKH[font])
+    h = len(lines) * 8 - 1
     y = 8 + (23 - h) // 2
     for i in range(len(lines)):
-        c.text(lines[i], TX, y + i * step, font = font, color = INK)
+        c.text(lines[i], STORY_X, y + i * 8, font = font, color = INK)
 
 def rivalry(c, abbr, r):
-    """A scoreboard: this club's logo left (the plaque), the rival's right,
-    the all-time series between them."""
+    """The club's short pennant facing the rival's logo, the all-time series
+    between them."""
     rv = r[0]
     w, l, t = r[1], r[2], r[3]
-    acc = ACCENT.get(abbr, DIM)
-    pennant(c, "RIVALRY", TX, 0, acc)
-    c.image(LOGO.get(rv, "assets/NFL.png"), RIVAL_X, LOGO_Y)
-    c.line(RIVAL_X - 3, 3, RIVAL_X - 3, 28, color.dim(ACCENT.get(rv, DIM), 70))
+    p = PEN.get(abbr, ["#3A4152", INK, DIM])
+    cloth(c, abbr, RTIP)
+    stitch(c, abbr, RTIP, LET_X, p[1])
+    c.image(LOGO.get(rv, "assets/NFL.png"), RIVAL_X, 4)
 
-    zl = TX
-    zr = RIVAL_X - 5
+    zl = RTIP + 3
+    zr = RIVAL_X - 4
     zm = (zl + zr + 1) // 2
+    c.text("RIVAL", zl, 1, font = "4x5", color = GOLD)
+    c.text("THRU 2025", zr, 1, font = "4x5", color = DIM, align = "right")
     rec = str(w) + "-" + str(l) + ("-" + str(t) if t > 0 else "")
     font = ladder(c, rec, ["10x16", "9x12", "8x10"], zr - zl + 1)
     c.text(rec, zm, 8 + (15 - INKH[font]) // 2, font = font, color = INK, align = "center")
 
     if w > l:
-        msg, col = CLUBS[abbr][0] + " LEAD", acc
+        msg, col = CLUBS[abbr][0] + " LEAD", PEN[abbr][2] if abbr in PEN else INK
     elif l > w:
         msg, col = CLUBS[rv][0] + " LEAD", ACCENT.get(rv, DIM)
     else:
         msg, col = "SERIES TIED", DIM
     c.text(clip(c, msg, "4x5", zr - zl + 1), zm, 26, font = "4x5", color = col, align = "center")
-    c.text("THRU 2025", zr, 1, font = "4x5", color = DIM, align = "right")
 
 def legend(c, abbr, g):
     """The club's most famous retired number, on a pixel jersey."""
     j = JERSEY.get(abbr, [ACCENT.get(abbr, DIM), "#FFFFFF", "", "#FFFFFF"])
-    jx, jy = TX + 3, 6
+    jx, jy = 12, 6
     c.sprite(JERSEY_ART, jx, jy, legend = {"B": j[0], "T": j[3]})
     num = g[2]
     nf = ladder(c, num, ["8x10", "6x8"], 17)
@@ -750,7 +841,7 @@ def legend(c, abbr, g):
         c.text(num, jx + 14, ny, font = nf, color = j[1], align = "center")
 
     x = jx + 28 + 6
-    tw = FACT_R - x + 1
+    tw = R - x + 1
     c.text("RETIRED NO. " + num, x, 1, font = "4x5", color = GOLD)
     c.text(clip(c, g[0], "5x7", tw), x, 8, font = "5x7", color = DIM)
     sf = ladder(c, g[1], ["10x16", "9x12", "8x10"], tw)
@@ -763,15 +854,14 @@ def trivia(c, ctx):
     n = len(fr)
     idx = (ctx.now.unix // 60) % n
     kind, data = fr[idx][0], fr[idx][1]
-    plaque(c, abbr)
-    acc = ACCENT.get(abbr, DIM)
+    on = PEN[abbr][2] if abbr in PEN else DIM
 
     if kind == "rival":
         rivalry(c, abbr, data)
-        pips(c, n, idx, FACT_R, 1, acc)
+        pips(c, n, idx, R - 2, 1, on)
     elif kind == "legend":
         legend(c, abbr, data)
-        pips(c, n, idx, FACT_R, 2, acc)
+        pips(c, n, idx, R, 2, on)
     else:
         story(c, abbr, data)
-        pips(c, n, idx, FACT_R, 2, acc)
+        pips(c, n, idx, R, 2, on)

@@ -3,7 +3,7 @@ id: nfl-franchise-history
 version: 0.1.0
 name: NFL Franchise History
 author: glance-led-dev
-description: Every NFL club's story on a brass plaque - its logo, founding year, last title and a trophy case with a Lombardi for every Super Bowl win and a ghost for every loss, then a new frame a minute - true history stories, the all-time series with its rival, and its most famous retired jersey. No key, no network.
+description: Every NFL club's felt pennant - the nickname stitched along the cloth in club colours, the home market, founding year and last title above the tail, and a Lombardi standing under it for every Super Bowl win (a ghost for every loss) - then a new frame a minute - true history stories, the all-time series with its rival, and its most famous retired jersey. No key, no network.
 category: Sports
 entry: app.star
 
