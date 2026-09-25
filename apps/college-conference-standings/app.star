@@ -426,7 +426,9 @@ def column(c, row, x, rank, rc, indep):
         c.sprite(UP if d > 0 else DOWN, bx + bw + 2, Y_ALL + 1, legend = {"X": GOOD if d > 0 else RED})
 
 def rail(c, col):
-    c.rect(0, 0, 1, 31, fill = col)
+    # x 6..7: nothing lights x 0..5 or 186..191, so the app never runs
+    # into its neighbours on a scroll wall.
+    c.rect(6, 0, 7, 31, fill = col)
 
 def message(c, head, sub, col, rail_col):
     c.fill("black")
