@@ -9,10 +9,9 @@ school's colours, with the gameday stories that make each one loud.
   panel in the school's colours. Its nickname ("THE BIG HOUSE", "DEATH
   VALLEY", "THE SWAMP") is lit up on the video board over the far stands,
   and the school flag flies over the right-hand stands. Signs on the
-  stadium's base show the listed capacity ("CAP 107,601"), a bronze plaque
-  with the year it opened ("EST 1927") and, for the 12 biggest stadiums, a
-  gold size-rank pill ("#1 IN FBS"). On alternate refreshes the side signs
-  show the record crowd instead ("REC 115,109" ... "IN 2013").
+  stadium's base show the listed capacity ("CAP 107,601") and a bronze
+  plaque with the year it opened ("EST 1927"). On alternate refreshes the
+  signs show the record crowd instead ("REC 115,109" ... "IN 2013").
   The stadium comes in four builds, each with a detail you can pick out from
   across the room:
   - bowl
@@ -38,6 +37,4 @@ listed figures for the 2026 season. Where the sources disagree (Army's
 Michie Stadium, Cal, TCU and Air Force), the app shows the record crowd or
 the setting instead of a capacity. Stadium names are current as of the 2026
 season. Sponsor-named stadiums (Kroger Field, Acrisure Stadium and others)
-can change names, so check the names and capacities each season. The size
-ranks are worked out from the capacities in the app, so updating a capacity
-updates the rank.
+can change names, so check the names and capacities each season.

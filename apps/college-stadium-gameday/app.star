@@ -9,8 +9,7 @@
 #            panel in the school's colours, its nickname lit up on the video
 #            board over the far stands, the school flag flying over the
 #            right-hand stands, and signs on the base: the capacity (or the
-#            record crowd), a bronze plaque with the year it opened, and the
-#            FBS size rank.
+#            record crowd) and a bronze plaque with the year it opened.
 #   gameday  One gameday story at a time on the video board, with an icon
 #            and a pill saying what kind of story it is (NOISE, RECORD
 #            CROWD, ON THE WATER, FAMOUS PLAY...) and the stadium's name.
@@ -32,7 +31,7 @@
 #   y0  .L.......[*=*=* THE BIG HOUSE *=*=*]..|[LOGO]..L.
 #       ssssssss====||=================||=====|=[FLAG]ssss
 #       sZZggWGggWGggWGggWGggWGggWGggWGggWGggWGggWGggZZs
-#       SSSS[CAP 107,601]SSS[EST 1927]SSS[#1 IN FBS]SSSSS
+#       SSSSSSSSSS[CAP 107,601]SSS[EST 1927]SSSSSSSSSSSSS
 #   y31  EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #
 # The name people call the place is the hero, in white on the stadium's own
@@ -40,11 +39,11 @@
 # bulbs, hung on two struts over the far stands - 6x8 when it fits, 5x7,
 # then two balanced 5x7 lines broken after a space or a hyphen ('VAUGHT-' /
 # 'HEMINGWAY'). The school logo (the authored 24 x 18 set, never scaled)
-# is on a flag over the right end of the stands. The base carries three signs: 'CAP 107,601' (the label
-# in the school colour), the bronze dedication plaque 'EST 1927' - dim
-# bronze frame, a dark row either side of bright gold 4x5 letters - and a
-# gold '#1 IN FBS' pill for the 12 biggest. On alternate refreshes the side
-# signs show the record crowd ('REC 115,109' ... 'IN 2013'); a stadium
+# is on a flag over the right end of the stands. The base carries a centred
+# row of signs: 'CAP 107,601' (the label in the school colour) and the bronze
+# dedication plaque 'EST 1927' - dim bronze frame, a dark row either side of
+# bright gold 4x5 letters. On alternate refreshes the side signs show the
+# record crowd ('REC 115,109' ... 'IN 2013'); a stadium
 # whose capacity we could not verify always shows its record (or its
 # setting, 'ABOVE THE HUDSON').
 #
@@ -500,14 +499,6 @@ LOGOS = {
 KEYS = [s["key"] for s in SCHOOLS]
 BY_KEY = {s["key"]: s for s in SCHOOLS}
 
-# Size rank by listed capacity, sorted at load so a capacity edit re-ranks.
-# Only the top 12 are shown: every FBS home stadium over 88,000 is in this
-# table (Nebraska, 85,458, is next), so ranks 1-12 hold for the whole FBS,
-# while lower ranks would be thrown off by stadiums the app doesn't carry.
-RANK_MAX = 12
-_BY_CAP = sorted([s for s in SCHOOLS if s["cap"] > 0], key = lambda s: -s["cap"])
-RANK = {_BY_CAP[i]["key"]: i + 1 for i in range(len(_BY_CAP))}
-
 # Per-school art tells, each one a thing fans know the place by.
 WATER = ["WASHINGTON", "TENNESSEE", "BAYLOR", "ARMY", "PITTSBURGH"]   # boats, rivers
 PEAKS = ["COLORADO", "AIR FORCE", "BYU", "UTAH"]                        # the mountains behind
@@ -842,9 +833,8 @@ def sign(c, x, w, fill, frame):
 
 def facade(c, s, ctx):
     """Signs on the stadium's base, y 23..31: the crowd on the left, the
-    bronze dedication plaque in the middle, the size rank on the right. On
-    alternate refreshes the left sign carries the record crowd and the right
-    one its year. The plaque keeps its contrast fix: 9 rows, a dark row
+    bronze dedication plaque beside it. On alternate refreshes the left sign
+    carries the record crowd and a right-hand one its year. The plaque keeps its contrast fix: 9 rows, a dark row
     either side of the 4x5 text, a dim bronze frame and bright gold letters
     ('EST' in 3x4 read as 'FST' at 5x)."""
     tcol = s["c"][1] if not is_whiteish(s["c"][1]) else s["c"][0]
@@ -862,9 +852,6 @@ def facade(c, s, ctx):
         right = ["year", "IN " + str(rec[1])]
     elif s["cap"] > 0:
         left = ["cap", commas(s["cap"])]
-        rk = RANK.get(s["key"], 99)
-        if rk <= RANK_MAX:
-            right = ["rank", "#" + str(rk) + " IN FBS"]
     else:
         # No number we could verify: the place instead of a hole.
         left = ["alt", s.get("tag", s["short"])]
@@ -877,11 +864,12 @@ def facade(c, s, ctx):
             lw = c.text_width(left[1], "4x5") + 6
     rw = 0
     if right != None:
-        rw = c.text_width(right[1], "4x5") + (4 if right[0] == "rank" else 6)
+        rw = c.text_width(right[1], "4x5") + 6
 
-    # The plaque sits centred on the base; a side sign too wide for its half
-    # pushes the row over rather than getting cut.
-    px = MID - pw // 2
+    # The row of signs sits centred on the base; a side sign too wide for its
+    # half pushes the row over rather than getting cut.
+    total = (lw + 4 if lw > 0 else 0) + pw + (4 + rw if rw > 0 else 0)
+    px = MID - total // 2 + (lw + 4 if lw > 0 else 0)
     if lw > 0 and px - 4 - lw < 8:
         px = 8 + lw + 4
     if rw > 0 and px + pw + 4 + rw - 1 > 183:
@@ -892,7 +880,7 @@ def facade(c, s, ctx):
         sign(c, lx, lw, "#0A0D14", "#5A6478")
         if left[0] == "cap" or left[0] == "rec":
             # 'CAP 107,601' / 'REC 115,109': the label in the school's
-            # colour (the old crowd icon read as a '#' beside the rank pill)
+            # colour
             lab = "CAP" if left[0] == "cap" else "REC"
             c.text(lab, lx + 3, PLAQUE_Y, font = "4x5", color = tcol if left[0] == "cap" else DIM)
             c.text(left[1], lx + 3 + c.text_width(lab, "4x5") + 3, PLAQUE_Y, font = "4x5", color = INK)
@@ -905,12 +893,8 @@ def facade(c, s, ctx):
 
     if right != None:
         rx = px + pw + 4
-        if right[0] == "rank":
-            c.rect(rx, PLAQUE_Y - 1, rx + rw - 1, PLAQUE_Y + 5, fill = "#FFD24A")
-            c.text(right[1], rx + 2, PLAQUE_Y, font = "4x5", color = "black")
-        else:
-            sign(c, rx, rw, "#0A0D14", "#5A6478")
-            c.text(right[1], rx + 3, PLAQUE_Y, font = "4x5", color = DIM)
+        sign(c, rx, rw, "#0A0D14", "#5A6478")
+        c.text(right[1], rx + 3, PLAQUE_Y, font = "4x5", color = DIM)
 
 def stadium(c, ctx):
     s = pick_school(ctx)
