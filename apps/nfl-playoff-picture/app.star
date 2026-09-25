@@ -261,12 +261,14 @@ def eliminated(t):
 
 # ----------------------------------------------------------------- screens
 def rail(c, color):
-    c.rect(0, 0, 1, 31, fill = color)
+    # x 6..7: nothing lights x 0..5 or 186..191, so the app never runs
+    # into its neighbours on a scroll wall.
+    c.rect(6, 0, 7, 31, fill = color)
 
 def fail_screen(c, d):
     c.fill("black")
     rail(c, OFFLINE)
-    c.sprite(BALL, 8, 9, legend = BALL_LEG, scale = 2)
+    c.sprite(BALL, 10, 9, legend = BALL_LEG, scale = 2)
     hf = fit(c, d["head"], ["6x8", "5x7", "4x5"], 150)
     c.text(hf[1], 110, 8, font = hf[0], color = "#E8B04A", align = "center")
     sf = fit(c, d["sub"], ["4x5", "picopixel"], 150)
@@ -276,7 +278,7 @@ def quiet_screen(c, conf, head, sub):
     """Nothing to rank yet is an answer, not an error: green and calm."""
     c.fill("black")
     rail(c, GOOD)
-    c.sprite(TROPHY_BIG, 8, 5, legend = {"X": "#D9DEE8", "Y": GOLD}, scale = 2)
+    c.sprite(TROPHY_BIG, 10, 5, legend = {"X": "#D9DEE8", "Y": GOLD}, scale = 2)
     conf_pill(c, conf, 30, 13)
     hf = fit(c, head, ["6x8", "5x7", "4x5"], 130)
     c.text(hf[1], 118, 8, font = hf[0], color = GOOD, align = "center")
