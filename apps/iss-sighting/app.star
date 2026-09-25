@@ -160,12 +160,12 @@ def interp_at(t_target, t0, az0, el0, t1, az1, el1):
 
 # Heavens-Above and Pollux Labs both cut visibility off at 10 deg elevation
 # rather than N2YO's near-horizon endEl - below 10 deg, haze/buildings/trees
-# usually swallow it anyway. This makes our end-of-visibility symmetric with
-# the same real-world threshold startVisibility already lands close to.
+# usually swallow it anyway. Applied to both the rise and the set.
 VISIBLE_EL_THRESHOLD = 10.0
 
 def time_at_elevation(threshold, t0, el0, t1, el1):
-    # el0 (at t0) is assumed >= el1 (at t1) - descending from the peak.
+    # el0 (at t0) is assumed >= el1 (at t1) - walking away from the peak.
+    # t1 can be before t0 (the rising arm) - the interpolation still holds.
     if el0 <= threshold:
         return t0  # already at/below threshold by the peak - no descending arm above it
     if el1 >= threshold:
@@ -498,8 +498,14 @@ def evaluate_pass(p, loc, off, cloud_resp, now):
     end_az_raw = float(p.get("endAz", 0))
     end_el_raw = float(p.get("endEl", 0))
 
-    # Symmetric with the start: cut the descending arm off at the same real-
-    # world elevation threshold, rather than N2YO's near-horizon endUTC/endEl.
+    # Cut both arms off at the same real-world elevation threshold, rather
+    # than N2YO's near-horizon points. startVisibility alone can sit right at
+    # the horizon (0 deg) when the ISS rises already sunlit, so the start is
+    # the later of that and the 10 deg crossing on the way up - found via the
+    # same interpolation run peak-first, backwards along the rising arm.
+    rise0 = time_at_elevation(VISIBLE_EL_THRESHOLD, max_utc, max_el_raw, start_utc, start_el_raw)
+    if rise0 > start0:
+        start0 = rise0
     end0 = time_at_elevation(VISIBLE_EL_THRESHOLD, max_utc, max_el_raw, end_utc, end_el_raw)
 
     # Further clamp to the sun's own -6 deg (civil twilight) crossing on
@@ -734,11 +740,15 @@ def draw_word_badge(c, x_right, y, text, bg):
     # A filled rect sized to the word, right edge pinned at x_right. The
     # slate-to-gold scale spans dark to light, so pick whichever text color
     # actually contrasts against this particular fill.
-    w = c.text_width(text, MAIN_FONT)
+    # The word uses the shorter 4x5 font inside a MAIN_FONT-height box, so
+    # it gets 1px of padding top and bottom - at full 4x7 height, dark text
+    # on the gold tiers (BRILLIANT/DAZZLING) filled the box edge to edge and
+    # read as cramped. 4x5 shares 4x7's glyph widths, so sizing is unchanged.
+    w = c.text_width(text, "4x5")
     x0 = x_right - w
     textcolor = "white" if brightness(bg) < 140 else "black"
-    c.rect(x0 - 1, y, x_right, y + 6, fill = bg)
-    c.text(text, x0, y, font = MAIN_FONT, color = textcolor, align = "left")
+    c.rect(x0 - 2, y, x_right, y + 6, fill = bg)
+    c.text(text, x0 - 1, y + 1, font = "4x5", color = textcolor, align = "left")
 
 def draw_look_row(c, y, verb, color, az, az_deg, el):
     # Fixed columns (verb / direction+degrees / ELEV) rather than one
