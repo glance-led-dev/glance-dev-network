@@ -5,25 +5,28 @@ school's colours, with the gameday stories that make each one loud.
 
 **Pages**
 
-- **stadium**: the school logo, a pixel-art stadium, the nickname
-  ("THE BIG HOUSE", "DEATH VALLEY", "THE SWAMP"), the listed capacity and a
-  bronze plaque on the stadium with the year it opened. The 12 biggest
-  stadiums carry a gold size-rank pill ("#1 IN FBS"). On alternate refreshes
-  the capacity row shows the record crowd ("REC 115,109 2013").
+- **stadium**: the stadium takes centre stage, drawn across the whole
+  panel in the school's colours. Its nickname ("THE BIG HOUSE", "DEATH
+  VALLEY", "THE SWAMP") is lit up on the video board over the far stands,
+  and the school flag flies over the right-hand stands. Signs on the
+  stadium's base show the listed capacity ("CAP 107,601"), a bronze plaque
+  with the year it opened ("EST 1927") and, for the 12 biggest stadiums, a
+  gold size-rank pill ("#1 IN FBS"). On alternate refreshes the side signs
+  show the record crowd instead ("REC 115,109" ... "IN 2013").
   The stadium comes in four builds, each with a detail you can pick out from
   across the room:
-  - bowl, with a video board
+  - bowl
   - horseshoe, with one end open and a scoreboard in the gap
   - double-deck, with an upper deck in the school's second colour
   - dome
 
   Some stadiums get their own detail: Tennessee's checkerboard end zones,
   Georgia's hedges, a night sky over LSU, mountains behind Colorado, Air
-  Force, BYU and Utah, water under the stadiums fans reach by boat or that
-  sit on a river, and Boise State's blue field.
-- **gameday**: one story at a time, such as record crowds, noise, fans who
-  arrive by boat, famous plays and the band. Each story carries an icon and a
-  category pill.
+  Force, BYU and Utah, water at the foot of the stadiums fans reach by boat
+  or that sit on a river, and Boise State's blue field.
+- **gameday**: a close-up of the video board with one story at a time, such
+  as record crowds, noise, fans who arrive by boat, famous plays and the
+  band. Each story carries an icon, a category pill and the stadium's name.
 
 **Settings**
 

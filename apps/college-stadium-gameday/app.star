@@ -5,41 +5,54 @@
 # make the place loud - record crowds, famous finishes, fans who arrive by
 # boat, a crowd that registered on a seismograph.
 #
-#   stadium  The stadium card: school logo, a pixel-art stadium in the
-#            school's colours, the nickname as the hero, the capacity with
-#            its FBS size rank (or the record crowd), and a bronze plaque
-#            with the year it opened.
-#   gameday  One gameday story at a time, with an icon saying what kind of
-#            story it is (NOISE, RECORD CROWD, ON THE WATER, FAMOUS PLAY...).
+#   stadium  Stadium centre stage: the stadium drawn across the whole
+#            panel in the school's colours, its nickname lit up on the video
+#            board over the far stands, the school flag flying over the
+#            right-hand stands, and signs on the base: the capacity (or the
+#            record crowd), a bronze plaque with the year it opened, and the
+#            FBS size rank.
+#   gameday  One gameday story at a time on the video board, with an icon
+#            and a pill saying what kind of story it is (NOISE, RECORD
+#            CROWD, ON THE WATER, FAMOUS PLAY...) and the stadium's name.
 #
-# DESIGN. Graphics first. The stadium is the star: a 52 x 26 three-quarter
-# view drawn from string art - the rim of stands in the school's colours
-# with a scatter of crowd dots, tiered rows on the near side, a mowed field
-# with yard lines and end zones, an arched base below, and light towers
-# standing over the corners. Four builds, each with a tell a fan can read
-# from across the room: BOWL (a video board over the far stands), HORSESHOE
-# (one end open, the scoreboard standing in the gap), DOUBLE (an upper deck
-# ringing the bowl in the second school colour, a press box on top) and
-# DOME (a ribbed roof with a highlight). Then the place itself: Neyland's
-# orange-and-white checkerboard end zones, the hedge ring at Sanford, a
-# crescent moon and stars over Death Valley, snowcapped peaks behind
-# Boulder, the Academy, Provo and Salt Lake, a strip of water under the
-# stadiums fans reach by boat or sit on a river, and Boise's blue field.
+# DESIGN. STADIUM CENTER STAGE. The building is the whole picture, not a
+# thumbnail beside a text column: there is no logo-left column on either
+# page. The 52 x 26 three-quarter-view string art is widened in the middle
+# of the field to 160 x 26 (x 16..175, y 6..31) - a long mowed field with
+# yard lines, end zones at both ends, the rim of stands in the school's
+# colours with a scatter of crowd dots, tiered near-side rows, an arched
+# base and light towers over the corners. Four builds keep their tell:
+# BOWL, HORSESHOE (open at the left end, the scoreboard in the gap), DOUBLE
+# (an upper deck in the second school colour under a press box) and DOME
+# (a ribbed roof). Then the place itself: Neyland's checkerboard end zones,
+# the hedge ring at Sanford, a moon and stars over Death Valley, snowcapped
+# peaks behind Boulder, the Academy, Provo and Salt Lake, water lapping at
+# the base of the stadiums fans reach by boat, and Boise's blue field.
 #
-# The one loud element is the bronze dedication plaque hung on the base of
-# every stadium - "EST 1927" - the way the real buildings carry their
-# date. The school logo sits left at 40 x 24; the text column on the right
-# is quiet: the official name (or the city) in the school's second colour,
-# the nickname in white, then a crowd icon, the listed capacity and, for
-# the 12 biggest, a gold "#1 IN FBS" pill. On alternate refreshes that row
-# shows the record crowd instead ("REC 115,109 2013"); a stadium whose
-# capacity we could not verify always shows its record (or its setting).
+#   y0  .L.......[*=*=* THE BIG HOUSE *=*=*]..|[LOGO]..L.
+#       ssssssss====||=================||=====|=[FLAG]ssss
+#       sZZggWGggWGggWGggWGggWGggWGggWGggWGggWGggWGggZZs
+#       SSSS[CAP 107,601]SSS[EST 1927]SSS[#1 IN FBS]SSSSS
+#   y31  EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #
-# The gameday page keeps the logo, adds a two-tone bar in the school's
-# colours, and gives the story a 7 x 7 icon and a category pill so a viewer
-# knows what kind of story it is before reading a word. Stories are sized
-# to three lines of 5x7 in the 133 px text zone (4x5 when a line runs long);
-# every story of every school is rendered and checked to fit without a cut.
+# The name people call the place is the hero, in white on the stadium's own
+# video board: a black face with a school-colour frame studded with marquee
+# bulbs, hung on two struts over the far stands - 6x8 when it fits, 5x7,
+# then two balanced 5x7 lines broken after a space or a hyphen ('VAUGHT-' /
+# 'HEMINGWAY'). The school logo (the authored 24 x 18 set, never scaled)
+# is on a flag over the right end of the stands. The base carries three signs: 'CAP 107,601' (the label
+# in the school colour), the bronze dedication plaque 'EST 1927' - dim
+# bronze frame, a dark row either side of bright gold 4x5 letters - and a
+# gold '#1 IN FBS' pill for the 12 biggest. On alternate refreshes the side
+# signs show the record crowd ('REC 115,109' ... 'IN 2013'); a stadium
+# whose capacity we could not verify always shows its record (or its
+# setting, 'ABOVE THE HUDSON').
+#
+# The gameday page is the close-up of that board: its side rails in the
+# school colour with bulbs, a header with the story's 7 x 7 icon, category
+# pill and the official name (or city) in the second school colour, and the
+# story in white across x 9..182 - three lines of 5x7 at most (4x5 when a
+# line runs long); every story of every school is rendered and checked.
 #
 # No network: the data below is baked in. ALL SCHOOLS changes school every
 # 20 minutes so both pages always show the same school; a story changes on
@@ -49,14 +62,31 @@ REFRESH = 120
 SCHOOL_SECS = 1200
 
 # ------------------------------------------------------------------ layout
-LOGO_X = 6
-LOGO_Y = 4
-ART_X = 49         # 52 x 26 stadium, x 49..100
-ART_Y = 3
-TX = 103           # stadium text column x 103..185 (83 px); the art ends at x 99
-TR = 185
-GX = 53            # gameday text zone x 53..185 (133 px)
-BAR_X = 48
+MID = 96           # the panel's centre column
+# The 52-column string art is widened in the middle to 160 columns: art
+# columns 20..31 (a 12-column slice - the yard-line and dome-rib periods,
+# 4 and 6, both divide it) are repeated 9 more times. It is drawn x 16..175,
+# y 6..31, so the stadium fills the panel's width and the whole lower half.
+SLICE_A = 20
+SLICE_B = 32
+SLICE_N = 9
+ART_W = 52 + (SLICE_B - SLICE_A) * SLICE_N
+ART_X = MID - ART_W // 2
+ART_Y = 6
+# The video board hangs over the far stands, centred, no wider than x 39..153
+# (inner 109 px), 3 px clear of the flag pole at x 157. The flag flies over
+# the right end of the stands: cloth x 158..183, y 0..19, round the school
+# logo drawn at its authored 24 x 18 (never scaled), pole down to y 21.
+BOARD_L = 39
+BOARD_R = 153
+FLAG_POLE = 157
+FLAG_X = 158
+FLAG_W = 26
+FLAG_H = 20
+TL = 9             # gameday text zone x 9..182 (174 px), inside the board
+TR = 182           # rails at x 6 and x 185 (every lit pixel stays in x 6..185)
+RAIL_L = 6
+RAIL_R = 185
 
 INK = "#F4F7FF"
 DIM = "#8A94A8"
@@ -174,23 +204,13 @@ EeEEeEEERRRROoOOOOOoOOOOOoOOOOOoOOOOOoORRRREEEeEEeE.
 ............EEEEEEEEEEEEEEEEEEEEEEEEEEE.............
 .................EEEEEEEEEEEEEEEEE..................
 """
-ART = {"BOWL": BOWL, "HORSESHOE": HORSESHOE, "DOUBLE": DOUBLE, "DOME": DOME}
+def mirror(art):
+    rows = art.strip("\n").split("\n")
+    return "\n" + "\n".join(["".join(reversed(list(r.elems()))) for r in rows]) + "\n"
 
-# 5 x 5 icons for the stadium card's numbers.
-ICON_CROWD = """
-.X.X.
-XXXXX
-.X.X.
-XXXXX
-XXXXX
-"""
-ICON_CAL = """
-.X.X.
-XXXXX
-X...X
-X.X.X
-XXXXX
-"""
+# The horseshoe opens to the left: the school flag flies over the right-hand
+# stands and would hide a scoreboard standing in a right-hand gap.
+ART = {"BOWL": BOWL, "HORSESHOE": mirror(HORSESHOE), "DOUBLE": DOUBLE, "DOME": DOME}
 
 # 7 x 7 story icons. "X" takes the category colour.
 STORY_ICONS = {
@@ -417,64 +437,64 @@ SCHOOLS = [
 ]
 
 LOGOS = {
-    "MICHIGAN": "MICH.png",
-    "PENN STATE": "PSU.png",
-    "OHIO STATE": "OSU.png",
-    "TEXAS A&M": "TAMU.png",
-    "LSU": "LSU.png",
-    "TENNESSEE": "TENN.png",
-    "ALABAMA": "ALA.png",
-    "TEXAS": "TEX.png",
-    "GEORGIA": "UGA.png",
-    "USC": "USC.png",
-    "NEBRASKA": "NEB.png",
-    "FLORIDA": "FLA.png",
-    "AUBURN": "AUB.png",
-    "OKLAHOMA": "OU.png",
-    "CLEMSON": "CLEM.png",
-    "NOTRE DAME": "ND.png",
-    "WISCONSIN": "WIS.png",
-    "OREGON": "ORE.png",
-    "WASHINGTON": "WASH.png",
-    "IOWA": "IOWA.png",
-    "MICHIGAN STATE": "MSU.png",
-    "FLORIDA STATE": "FSU.png",
-    "MIAMI": "MIA.png",
-    "OLE MISS": "MISS.png",
-    "MISSISSIPPI STATE": "MSST.png",
-    "ARKANSAS": "ARK.png",
-    "SOUTH CAROLINA": "SC.png",
-    "KENTUCKY": "UK.png",
-    "TEXAS TECH": "TTU.png",
-    "BAYLOR": "BAY.png",
-    "KANSAS STATE": "KSU.png",
-    "WEST VIRGINIA": "WVU.png",
-    "UTAH": "UTAH.png",
-    "BYU": "BYU.png",
-    "ARIZONA STATE": "ASU.png",
-    "STANFORD": "STAN.png",
-    "CALIFORNIA": "CAL.png",
-    "UCLA": "UCLA.png",
-    "VIRGINIA TECH": "VT.png",
-    "NORTH CAROLINA": "UNC.png",
-    "SYRACUSE": "SYR.png",
-    "ARMY": "ARMY.png",
-    "NAVY": "NAVY.png",
-    "BOISE STATE": "BOIS.png",
-    "MINNESOTA": "MINN.png",
-    "ILLINOIS": "ILL.png",
-    "RUTGERS": "RUTG.png",
-    "DUKE": "DUKE.png",
-    "GEORGIA TECH": "GT.png",
-    "PITTSBURGH": "PITT.png",
-    "IOWA STATE": "ISU.png",
-    "INDIANA": "IU.png",
-    "COLORADO": "COLO.png",
-    "TCU": "TCU.png",
-    "MISSOURI": "MIZ.png",
-    "OKLAHOMA STATE": "OKST.png",
-    "PURDUE": "PUR.png",
-    "AIR FORCE": "AFA.png",
+    "MICHIGAN": "S_MICH.png",
+    "PENN STATE": "S_PSU.png",
+    "OHIO STATE": "S_OSU.png",
+    "TEXAS A&M": "S_TAMU.png",
+    "LSU": "S_LSU.png",
+    "TENNESSEE": "S_TENN.png",
+    "ALABAMA": "S_ALA.png",
+    "TEXAS": "S_TEX.png",
+    "GEORGIA": "S_UGA.png",
+    "USC": "S_USC.png",
+    "NEBRASKA": "S_NEB.png",
+    "FLORIDA": "S_FLA.png",
+    "AUBURN": "S_AUB.png",
+    "OKLAHOMA": "S_OU.png",
+    "CLEMSON": "S_CLEM.png",
+    "NOTRE DAME": "S_ND.png",
+    "WISCONSIN": "S_WIS.png",
+    "OREGON": "S_ORE.png",
+    "WASHINGTON": "S_WASH.png",
+    "IOWA": "S_IOWA.png",
+    "MICHIGAN STATE": "S_MSU.png",
+    "FLORIDA STATE": "S_FSU.png",
+    "MIAMI": "S_MIA.png",
+    "OLE MISS": "S_MISS.png",
+    "MISSISSIPPI STATE": "S_MSST.png",
+    "ARKANSAS": "S_ARK.png",
+    "SOUTH CAROLINA": "S_SC.png",
+    "KENTUCKY": "S_UK.png",
+    "TEXAS TECH": "S_TTU.png",
+    "BAYLOR": "S_BAY.png",
+    "KANSAS STATE": "S_KSU.png",
+    "WEST VIRGINIA": "S_WVU.png",
+    "UTAH": "S_UTAH.png",
+    "BYU": "S_BYU.png",
+    "ARIZONA STATE": "S_ASU.png",
+    "STANFORD": "S_STAN.png",
+    "CALIFORNIA": "S_CAL.png",
+    "UCLA": "S_UCLA.png",
+    "VIRGINIA TECH": "S_VT.png",
+    "NORTH CAROLINA": "S_UNC.png",
+    "SYRACUSE": "S_SYR.png",
+    "ARMY": "S_ARMY.png",
+    "NAVY": "S_NAVY.png",
+    "BOISE STATE": "S_BOIS.png",
+    "MINNESOTA": "S_MINN.png",
+    "ILLINOIS": "S_ILL.png",
+    "RUTGERS": "S_RUTG.png",
+    "DUKE": "S_DUKE.png",
+    "GEORGIA TECH": "S_GT.png",
+    "PITTSBURGH": "S_PITT.png",
+    "IOWA STATE": "S_ISU.png",
+    "INDIANA": "S_IU.png",
+    "COLORADO": "S_COLO.png",
+    "TCU": "S_TCU.png",
+    "MISSOURI": "S_MIZ.png",
+    "OKLAHOMA STATE": "S_OKST.png",
+    "PURDUE": "S_PUR.png",
+    "AIR FORCE": "S_AFA.png",
 }
 
 KEYS = [s["key"] for s in SCHOOLS]
@@ -518,7 +538,7 @@ WAVES = """
 .bbWbbbbbWbbbbbWbbbbbWbbbbbWbbbbbWbbbbbWbbbbbWbbbb.
 bBBbBBBBBbBBBBBbBBBBBbBBBBBbBBBBBbBBBBBbBBBBBbBBBBb
 """
-PLAQUE_Y = 24      # y 24..30: art rows 21..27, the arched base under the seats
+PLAQUE_Y = 24      # sign text y 24..28, the sign frames y 23..31: on the arched base
 
 # ------------------------------------------------------------- text tools
 HEXD = "0123456789abcdef"
@@ -672,6 +692,10 @@ def art_for(s):
         chars = []
         for i in range(len(row)):
             ch = row[i]
+            if s["build"] == "BOWL" and r <= 3 and (ch == "B" or ch == "b"):
+                # The bowl's own little video board makes way for the big
+                # marquee board drawn over the far stands.
+                ch = "."
             if ch == ".":
                 if i < len(bk):
                     ch = bk[i]
@@ -692,107 +716,223 @@ def art_for(s):
         out.append("".join(chars))
     return "\n" + "\n".join(out) + "\n"
 
-def school_mark(c, s):
-    c.image(LOGOS[s["key"]], LOGO_X, LOGO_Y)
+def widen(art):
+    """Stretch 52-column string art to ART_W by repeating the slice of
+    columns SLICE_A..SLICE_B-1 SLICE_N more times, in the middle of the
+    field. Plain repetition would line the crowd dots up in columns every 12
+    px, so in each repeat a dot is swapped for another cell of the same row's
+    slice, and a seat here and there lights up as a dot."""
+    rows = art.strip("\n").split("\n")
+    w = SLICE_B - SLICE_A
+    out = []
+    for r in range(len(rows)):
+        row = rows[r] + "." * (52 - len(rows[r]))
+        sl = row[SLICE_A:SLICE_B]
+        ext = []
+        for k in range(SLICE_N):
+            for j in range(w):
+                ch = sl[j]
+                if "cde".find(ch) >= 0:
+                    ch = sl[(j + 5 * (k + 1) + r) % w]
+                    if FIELD_CH.find(ch) >= 0 or ch == "z" or ch == "H":
+                        ch = sl[j]
+                elif "sSTE".find(ch) >= 0 and (k * 7 + j * 3 + r * 5) % 23 == 0:
+                    ch = {"s": "c", "S": "c", "T": "d", "E": "e"}[ch]
+                ext.append(ch)
+        out.append(row[:SLICE_B] + "".join(ext) + row[SLICE_B:])
+    return "\n" + "\n".join(out) + "\n"
+
+def flag(c, s):
+    """The school flag, flying over the right end of the stands: a grey pole
+    from the top of the panel down into the stands and a black cloth edged
+    in the school colour round the 24 x 18 logo (drawn unscaled)."""
+    edge = s["c"][1] if not is_whiteish(s["c"][1]) else s["c"][0]
+    c.rect(FLAG_POLE, 0, FLAG_POLE, 21, fill = "#9AA0AC")
+    c.rect(FLAG_X, 0, FLAG_X + FLAG_W - 1, FLAG_H - 1, fill = "black", outline = edge)
+    c.image(LOGOS[s["key"]], FLAG_X + 1, 1)
 
 def stadium_art(c, s):
-    key = s["key"]
-    c.sprite(art_for(s), ART_X, ART_Y, legend = legend_for(s))
-    # Under it: the lake or the river the fans come in on.
-    if key in WATER:
-        c.sprite(WAVES, ART_X, ART_Y + 26, legend = {"b": "#2A7FD8", "B": "#1A4FA0", "W": "#A8E4FF"})
-    # The dedication plaque on the facade: bronze, "EST" and the year, hung
-    # on the base of the bowl below the seats. (3x4 read as "FST" at 5x,
-    # so both words are 4x5: 'EST 1927' is 34 px, 40 with the frame.)
+    # A bitmap op holds at most 4096 cells and 160 x 26 is 4160, so the art
+    # goes down in two bands of 13 rows.
+    rows = widen(art_for(s)).strip("\n").split("\n")
+    leg = legend_for(s)
+    c.sprite("\n" + "\n".join(rows[:13]) + "\n", ART_X, ART_Y, legend = leg)
+    c.sprite("\n" + "\n".join(rows[13:]) + "\n", ART_X, ART_Y + 13, legend = leg)
+
+    # The lake or the river the fans come in on, lapping at the foot of the
+    # stadium.
+    if s["key"] in WATER:
+        c.sprite(widen(WAVES), ART_X, 30, legend = {"b": "#2A7FD8", "B": "#1A4FA0", "W": "#A8E4FF"})
+
+def balance2(c, text, font, maxw, lines):
+    """Re-break a two-line hero_wrap result at the break (after a space or a
+    hyphen) that makes the longer line shortest: 'THE HOUSE' / 'ROCKNE
+    BUILT' on a centred board, not 'THE HOUSE ROCKNE' / 'BUILT'."""
+    if len(lines) != 2:
+        return lines
+    toks = []
+    for w in [x for x in str(text).split(" ") if x != ""]:
+        parts = w.split("-")
+        for i in range(len(parts)):
+            toks.append([parts[i] + ("-" if i < len(parts) - 1 else ""), " " if i == 0 else ""])
+    best = lines
+    bw = max(c.text_width(lines[0], font), c.text_width(lines[1], font))
+    for k in range(1, len(toks)):
+        a = toks[0][0]
+        for t in toks[1:k]:
+            a += t[1] + t[0]
+        b = toks[k][0]
+        for t in toks[k + 1:]:
+            b += t[1] + t[0]
+        wa = c.text_width(a, font)
+        wb = c.text_width(b, font)
+        if wa <= maxw and wb <= maxw and max(wa, wb) < bw:
+            best = [a, b]
+            bw = max(wa, wb)
+    return best
+
+def board_lines(c, hero):
+    """The hero on the video board: [font, [lines]]. One line of 6x8 when it
+    fits the board, else one of 5x7, else two lines of 5x7 broken after a
+    hyphen or a space (hero_wrap: 'VAUGHT-' / 'HEMINGWAY'), else 4x5."""
+    inner = BOARD_R - BOARD_L + 1 - 6
+    for f in ["6x8", "5x7"]:
+        if c.text_width(hero, f) <= inner:
+            return [f, [hero]]
+    lines = hero_wrap(c, hero, "5x7", inner)
+    if lines != None and len(lines) <= 2:
+        return ["5x7", balance2(c, hero, "5x7", inner, lines)]
+    return ["4x5", wrap(c, hero, "4x5", inner)[:2]]
+
+def video_board(c, s):
+    """The stadium's video board, hung over the far stands on two struts:
+    black face, a frame in the school colour studded with marquee bulbs,
+    and the name people call the place in white."""
+    p = s["c"][0]
+    got = board_lines(c, s["hero"])
+    f = got[0]
+    lines = got[1]
+    h = {"6x8": 8, "5x7": 7, "4x5": 5}[f]
+    tw = 0
+    for ln in lines:
+        tw = max(tw, c.text_width(ln, f))
+    bw = tw + 6
+    if bw % 2 == 0:
+        bw += 1
+    x0 = MID - bw // 2
+    x1 = x0 + bw - 1
+    y1 = 2 + len(lines) * (h + 1)
+
+    # struts from the board down into the far stands
+    for sx in [x0 + 5, x1 - 5]:
+        c.rect(sx, y1 + 1, sx, y1 + 3, fill = "#5A606C")
+    c.rect(x0, 0, x1, y1, fill = "black", outline = p)
+    bulb = "#FFF1B0"
+    for x in range(x0, x1 + 1, 3):
+        c.pixel(x, 0, bulb)
+        c.pixel(x, y1, bulb)
+    for y in range(0, y1 + 1, 3):
+        c.pixel(x0, y, bulb)
+        c.pixel(x1, y, bulb)
+    for i in range(len(lines)):
+        c.text(lines[i], MID, 2 + i * (h + 1), font = f, color = INK, align = "center")
+
+def sign(c, x, w, fill, frame):
+    c.rect(x, PLAQUE_Y - 1, x + w - 1, PLAQUE_Y + 7, fill = fill, outline = frame)
+
+def facade(c, s, ctx):
+    """Signs on the stadium's base, y 23..31: the crowd on the left, the
+    bronze dedication plaque in the middle, the size rank on the right. On
+    alternate refreshes the left sign carries the record crowd and the right
+    one its year. The plaque keeps its contrast fix: 9 rows, a dark row
+    either side of the 4x5 text, a dim bronze frame and bright gold letters
+    ('EST' in 3x4 read as 'FST' at 5x)."""
+    tcol = s["c"][1] if not is_whiteish(s["c"][1]) else s["c"][0]
     yr = str(s["open"])
     est_w = c.text_width("EST", "4x5")
-    w = est_w + 3 + c.text_width(yr, "4x5") + 6
-    px = ART_X + 26 - w // 2
-    # The letters touched the bronze frame top and bottom and ran into it at
-    # 1x, so the plaque is 9 rows (y 23..31) with a dark row either side of
-    # the text, a dimmer frame, and bright gold letters.
-    c.rect(px, PLAQUE_Y - 1, px + w - 1, PLAQUE_Y + 7, fill = "#160C02", outline = "#9A6A2A")
-    c.text("EST", px + 3, PLAQUE_Y + 1, font = "4x5", color = "#F0B860")
-    c.text(yr, px + 3 + est_w + 3, PLAQUE_Y + 1, font = "4x5", color = "#FFE9A8")
+    pw = est_w + 3 + c.text_width(yr, "4x5") + 6
+
+    # What goes on the side signs: [kind, text].
+    left = None
+    right = None
+    rec = s.get("rec")
+    frame = (ctx.now.unix // REFRESH) % 2
+    if rec != None and (s["cap"] <= 0 or frame == 1):
+        left = ["rec", commas(rec[0])]
+        right = ["year", "IN " + str(rec[1])]
+    elif s["cap"] > 0:
+        left = ["cap", commas(s["cap"])]
+        rk = RANK.get(s["key"], 99)
+        if rk <= RANK_MAX:
+            right = ["rank", "#" + str(rk) + " IN FBS"]
+    else:
+        # No number we could verify: the place instead of a hole.
+        left = ["alt", s.get("tag", s["short"])]
+
+    lw = 0
+    if left != None:
+        if left[0] == "cap" or left[0] == "rec":
+            lw = c.text_width("CAP" if left[0] == "cap" else "REC", "4x5") + 3 + c.text_width(left[1], "4x5") + 6
+        else:
+            lw = c.text_width(left[1], "4x5") + 6
+    rw = 0
+    if right != None:
+        rw = c.text_width(right[1], "4x5") + (4 if right[0] == "rank" else 6)
+
+    # The plaque sits centred on the base; a side sign too wide for its half
+    # pushes the row over rather than getting cut.
+    px = MID - pw // 2
+    if lw > 0 and px - 4 - lw < 8:
+        px = 8 + lw + 4
+    if rw > 0 and px + pw + 4 + rw - 1 > 183:
+        px = 183 - rw - 4 - pw + 1
+
+    if left != None:
+        lx = px - 4 - lw
+        sign(c, lx, lw, "#0A0D14", "#5A6478")
+        if left[0] == "cap" or left[0] == "rec":
+            # 'CAP 107,601' / 'REC 115,109': the label in the school's
+            # colour (the old crowd icon read as a '#' beside the rank pill)
+            lab = "CAP" if left[0] == "cap" else "REC"
+            c.text(lab, lx + 3, PLAQUE_Y, font = "4x5", color = tcol if left[0] == "cap" else DIM)
+            c.text(left[1], lx + 3 + c.text_width(lab, "4x5") + 3, PLAQUE_Y, font = "4x5", color = INK)
+        else:
+            c.text(left[1], lx + 3, PLAQUE_Y, font = "4x5", color = INK)
+
+    sign(c, px, pw, "#160C02", "#9A6A2A")
+    c.text("EST", px + 3, PLAQUE_Y, font = "4x5", color = "#F0B860")
+    c.text(yr, px + 3 + est_w + 3, PLAQUE_Y, font = "4x5", color = "#FFE9A8")
+
+    if right != None:
+        rx = px + pw + 4
+        if right[0] == "rank":
+            c.rect(rx, PLAQUE_Y - 1, rx + rw - 1, PLAQUE_Y + 5, fill = "#FFD24A")
+            c.text(right[1], rx + 2, PLAQUE_Y, font = "4x5", color = "black")
+        else:
+            sign(c, rx, rw, "#0A0D14", "#5A6478")
+            c.text(right[1], rx + 3, PLAQUE_Y, font = "4x5", color = DIM)
 
 def stadium(c, ctx):
     s = pick_school(ctx)
     c.fill("black")
-    school_mark(c, s)
     stadium_art(c, s)
+    flag(c, s)
+    video_board(c, s)
+    facade(c, s, ctx)
 
-    maxw = TR - TX + 1
-    # The official name when the hero is a nickname and the name fits the
-    # column; otherwise the city ('BRYANT-DENNY STADIUM' is 94 px here).
-    top = s["city"]
-    # The panel fonts have no "&" glyph, so a name carrying one ('JONES
-    # AT&T STADIUM') falls back to the city too.
+def top_line(c, s, maxw):
+    """The official name when the hero is a nickname and the name fits;
+    otherwise the city. The panel fonts have no '&' glyph, so 'JONES AT&T
+    STADIUM' falls back to the city too."""
     if s["hero"] != s["name"] and s["name"].find("&") < 0 and c.text_width(s["name"], "4x5") <= maxw:
-        top = s["name"]
-    tcol = s["c"][1] if not is_whiteish(s["c"][1]) else s["c"][0]
-    c.text(clip(c, top, "4x5", maxw), TX, 1, font = "4x5", color = tcol)
-
-    # Hero band y 7..24: one line of 8x10 when it fits, else two of 6x8
-    # (rows 7..14 and 16..23, so the numbers row at 25 keeps its 1 px gap),
-    # else two of 5x7.
-    hero = s["hero"]
-    drawn = False
-    for f in ["8x10", "7x10"]:
-        if c.text_width(hero, f) <= maxw:
-            c.text(hero, TX, 11, font = f, color = INK)
-            drawn = True
-            break
-    if not drawn:
-        for f, h in [["6x8", 8], ["5x7", 7]]:
-            lines = hero_wrap(c, hero, f, maxw)
-            if lines != None and len(lines) <= 2:
-                y0 = 7 if len(lines) == 2 else 12
-                for i in range(len(lines)):
-                    c.text(lines[i], TX, y0 + i * (h + 1), font = f, color = INK)
-                drawn = True
-                break
-    if not drawn:
-        lines = wrap(c, hero, "4x5", maxw)
-        for i in range(min(3, len(lines))):
-            c.text(lines[i], TX, 7 + i * 6, font = "4x5", color = INK)
-
-    # Numbers row y 26..30 (the rank pill fills 25..31). Two frames on the
-    # refresh timer: the capacity with its FBS size rank, then the record
-    # crowd. A stadium with no verified capacity shows its record every time.
-    rec = s.get("rec")
-    frame = (ctx.now.unix // REFRESH) % 2
-    if rec != None and (s["cap"] <= 0 or frame == 1):
-        c.text("REC", TX, 26, font = "4x5", color = DIM)
-        x = TX + c.text_width("REC", "4x5") + 3
-        c.text(commas(rec[0]), x, 26, font = "4x5", color = INK)
-        x += c.text_width(commas(rec[0]), "4x5") + 3
-        if x + c.text_width(str(rec[1]), "4x5") <= TR:
-            c.text(str(rec[1]), x, 26, font = "4x5", color = DIM)
-    elif s["cap"] > 0:
-        # 'CROWD 102,780 #3 IN FBS' is 82 px: the icon (5) + 1, the number,
-        # 2 px, then the pill - it overran the old 81 px column (x 105) and
-        # fell back to a bare '#3', so the column now starts at x 103.
-        # Ranks 10-12 carry five-digit capacities: '#10 IN FBS' fits too.
-        c.sprite(ICON_CROWD, TX, 26, legend = {"X": tcol})
-        x = TX + 6
-        c.text(commas(s["cap"]), x, 26, font = "4x5", color = INK)
-        x += c.text_width(commas(s["cap"]), "4x5") + 2
-        rk = RANK.get(s["key"], 99)
-        if rk <= RANK_MAX:
-            label = "#" + str(rk) + " IN FBS"
-            w = c.text_width(label, "4x5") + 4
-            # A bare '#2' would be a magic number, so a pill that can't
-            # say IN FBS is left off rather than shortened.
-            if x + w - 1 <= TR:
-                c.rect(x, 25, x + w - 1, 31, fill = "#FFD24A")
-                c.text(label, x + 2, 26, font = "4x5", color = "black")
-    else:
-        # No number we could verify: the place instead of a hole.
-        alt = s.get("tag", s["short"])
-        if alt != top:
-            c.text(clip(c, alt, "4x5", maxw), TX, 26, font = "4x5", color = DIM)
+        return s["name"]
+    return s["city"]
 
 def gameday(c, ctx):
+    """Close up on the video board: its two side rails in the school colour
+    with marquee bulbs, a header with the story's icon, category pill and
+    the stadium's official name (or city) in the school's second colour,
+    and the story in white across the full width."""
     s = pick_school(ctx)
     facts = s["facts"]
     n = len(facts)
@@ -800,35 +940,41 @@ def gameday(c, ctx):
     f = facts[idx]
     kind = STORY_KIND[f[0]]
     c.fill("black")
-    school_mark(c, s)
     p = s["c"][0]
     sec = s["c"][1]
-    c.rect(BAR_X, 0, BAR_X, 31, fill = p)
-    c.rect(BAR_X + 1, 0, BAR_X + 1, 31, fill = sec if not is_whiteish(sec) else "#D8DDE6")
+    tcol = sec if not is_whiteish(sec) else p
 
-    # Chip row y 0..6: the story's icon, the category pill in the school
-    # colour, the stadium's short name when it fits whole, and the counter.
+    for x in [RAIL_L, RAIL_R]:
+        c.rect(x, 0, x, 31, fill = p)
+        for y in range(1, 32, 3):
+            c.pixel(x, y, "#FFF1B0")
+
+    # Header y 0..6: icon, the category pill, the stadium name, the counter.
     leg = dict(ICON_FIXED)
     leg["X"] = kind[1]
-    c.sprite(STORY_ICONS[f[0]], GX, 0, legend = leg)
+    c.sprite(STORY_ICONS[f[0]], TL, 0, legend = leg)
     cnt = str(idx + 1) + "/" + str(n)
     c.text(cnt, TR, 1, font = "4x5", color = DIM, align = "right")
-    px = GX + 10
+    px = TL + 10
     pw = c.text_width(kind[0], "4x5") + 4
     c.badge(kind[0], px, 0, color = ink_for(p), bg = p, font = "4x5")
-    room = TR - c.text_width(cnt, "4x5") - 5 - (px + pw + 4)
-    if c.text_width(s["short"], "4x5") <= room:
-        c.text(s["short"], px + pw + 4, 1, font = "4x5", color = DIM)
+    nx = px + pw + 4
+    room = TR - c.text_width(cnt, "4x5") - 5 - nx
+    top = top_line(c, s, room)
+    if c.text_width(top, "4x5") > room:
+        top = s["short"] if c.text_width(s["short"], "4x5") <= room else ""
+    if top != "":
+        c.text(top, nx, 1, font = "4x5", color = tcol)
 
-    # The story: up to three lines of 5x7 across x 53..185; 4x5 is the
+    # The story: up to three lines of 5x7 across x 9..182; 4x5 is the
     # fallback, and every story ships sized for 5x7.
-    maxw = TR - GX + 1
+    maxw = TR - TL + 1
     lines = wrap(c, f[1], "5x7", maxw)
     if len(lines) <= 3:
         y0 = [0, 16, 12, 8][len(lines)]
         for i in range(len(lines)):
-            c.text(lines[i], GX, y0 + i * 8, font = "5x7", color = INK)
+            c.text(lines[i], TL, y0 + i * 8, font = "5x7", color = INK)
         return
     lines = wrap(c, f[1], "4x5", maxw)
     for i in range(min(3, len(lines))):
-        c.text(lines[i], GX, 10 + i * 7, font = "4x5", color = INK)
+        c.text(lines[i], TL, 10 + i * 7, font = "4x5", color = INK)
