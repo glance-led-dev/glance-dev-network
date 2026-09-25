@@ -1,6 +1,6 @@
 # Fantasy Injury Report
 
-This week's NFL injury report, ranked by fantasy impact. The centre of the panel is an X-ray lightbox: a full-body skeleton lies across the film, and the bone where the player is hurt glows with a halo round it, red for OUT or IR, orange for DOUBTFUL and amber for QUESTIONABLE. The film's bottom edge is labelled like a radiograph, with the player's name on the left and the body part on the right, and the club logo sits small in the film's corner. To the left, the status is a rubber stamp with the position (and a white `MNF`, `TNF` or `SAT` pill for a game not on a Sunday) under it. To the right is the number that matters. An undisclosed injury puts a "?" on the film.
+This week's NFL injury report, ranked by fantasy impact. The centre of the panel is an X-ray lightbox: a full-body skeleton lies across the film, and the bone where the player is hurt glows with a halo round it, red for OUT or IR, orange for DOUBTFUL and amber for QUESTIONABLE. The film's bottom edge is labelled like a radiograph, with the player's name on the left and the body part on the right, and the club logo sits in the film's corner. To the left, the status is a rubber stamp with the position (and a white `MNF`, `TNF` or `SAT` pill for a game not on a Sunday) under it. To the right is the number that matters. An undisclosed injury puts a "?" on the film.
 
 ## Pages
 

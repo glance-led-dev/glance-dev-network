@@ -24,7 +24,8 @@
 # femurs, knees, shins, feet. The bone that is hurt glows in the status
 # colour with a dim halo round it: red for OUT and IR, orange for DOUBTFUL,
 # amber for QUESTIONABLE. You read WHERE he is hurt before you read a word.
-# The club logo sits at half size in the film's top-right corner, and the
+# The club logo (24 x 18, drawn at its authored size) sits in the film's
+# top-right corner, and the
 # film's bottom edge carries the caption, as a radiograph is labelled: the
 # player's name in bone white on the left, the body part in the status
 # colour on the right. Left of the lightbox, the status as a rubber stamp
@@ -59,8 +60,9 @@ IR_FRESH_DAYS = 14       # IR / PUP moves older than this are old news
 # 192 wide, three zones, 6 px of edge padding each side.
 #   x   6..43   the stamp (y 0..13), position / game-day pills (y 16), n/N (y 25)
 #   x  46..147  the lightbox: a lit 1 px rim, the film x 47..146 y 1..30.
-#               Skeleton 71 x 19 at x 49 y 2, the club logo at half size
-#               (20 x 12) in the film's top-right corner, the caption (name
+#               Skeleton 71 x 19 at x 49..119 y 2..20, the 24 x 18 club
+#               logo at x 121..144 y 3..20 (1 px clear of the skeleton, the
+#               clip and the caption), the caption (name
 #               left, body part right) along the bottom edge y 22..29.
 #   x 150..185  the number: label y 2, value y 8..19, matchup / note y 25.
 STAMP_X0 = 6
@@ -71,8 +73,10 @@ FILM_X0 = BOX_X0 + 1
 FILM_X1 = BOX_X1 - 1
 BODY_X = 49
 BODY_Y = 2
-MINI_X = 125             # 20 x 12 logo, x 125..144
-MINI_Y = 2
+MINI_X = 121             # 24 x 18 logo, x 121..144
+MINI_Y = 3
+MINI_W = 24
+MINI_H = 18
 CAP_X0 = 49
 CAP_X1 = 144
 CAP_W = CAP_X1 - CAP_X0 + 1
@@ -112,8 +116,9 @@ MID_WORD = {"INJURED RESERVE": "INJ RESERVE"}
 # The halo round a lit bone: the status colour at about 55 %.
 HALO = {C_OUT: "#8C1818", C_DOUBT: "#8C440F", C_QUES: "#8C6A00", GOOD: "#1A8240"}
 
-# Logos ship as 40 x 24 PNGs named by ESPN abbreviation. Literal file names,
-# because the publish lint cannot follow a built-up path.
+# Logos ship as 24 x 18 PNGs named by ESPN abbreviation, drawn unscaled.
+# Literal file names, because the publish lint cannot follow a built-up
+# path. No team (the message screens, an unknown club) gets the NFL tile.
 LOGO = {
     "ARI": "ARI.png", "ATL": "ATL.png", "BAL": "BAL.png", "BUF": "BUF.png",
     "CAR": "CAR.png", "CHI": "CHI.png", "CIN": "CIN.png", "CLE": "CLE.png",
@@ -123,7 +128,6 @@ LOGO = {
     "MIN": "MIN.png", "NE": "NE.png", "NO": "NO.png", "NYG": "NYG.png",
     "NYJ": "NYJ.png", "PHI": "PHI.png", "PIT": "PIT.png", "SF": "SF.png",
     "SEA": "SEA.png", "TB": "TB.png", "TEN": "TEN.png", "WSH": "WSH.png",
-    "NFL": "NFL.png",
 }
 
 # Sleeper abbreviations that differ from the logo set.
@@ -223,7 +227,8 @@ def lightbox(c, part, col, team, mode = "injury"):
     """The hero, x 46..147: a lightbox glowing in a 1 px rim round a
     dark-blue film held by two clips, the skeleton lying across it in bone
     blue with the hurt bone in the status colour and a halo round it, and
-    the club logo at half size in the film's top-right corner. Mode
+    the club logo in the film's top-right corner (an "NFL" tile when there
+    is no club). Mode
     "healthy" lights every bone (the all-clear), "plain" draws the whole
     skeleton in `col` (grey when offline)."""
     c.rect(BOX_X0, 0, BOX_X1, 31, fill = XRAY_BG, outline = LIGHT)
@@ -234,7 +239,12 @@ def lightbox(c, part, col, team, mode = "injury"):
     for r in REGIONS.elems():
         leg[r] = col if lit.find(r) >= 0 or mode == "plain" else BONE
     c.sprite(glow_sprite("" if mode == "healthy" else lit), BODY_X, BODY_Y, legend = leg)
-    c.image(LOGO[team], MINI_X, MINI_Y, 20, 12)
+    if team in LOGO:
+        c.image(LOGO[team], MINI_X, MINI_Y)
+    else:
+        # The league tile: the 40 x 24 shield would not fit the corner.
+        c.rect(MINI_X, MINI_Y, MINI_X + MINI_W - 1, MINI_Y + MINI_H - 1, outline = XRAY_EDGE)
+        c.text("NFL", MINI_X + MINI_W // 2, MINI_Y + (MINI_H - 7) // 2, font = "5x7", color = BONE, align = "center")
     if lit == "" and mode == "injury":
         # Undisclosed: a big "?" over the ribs, since there is nothing to point at.
         c.text_stroke("?", BODY_X + 18, BODY_Y + 5, font = "8x10", color = col, stroke = XRAY_BG)

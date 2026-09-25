@@ -16,7 +16,7 @@ refresh: 120
 
 pages: [gametime, out]
 
-# Team logos: 40 x 24 pixel art named by ESPN abbreviation, plus the NFL shield.
+# Team logos: 24 x 18 pixel art named by ESPN abbreviation, drawn unscaled.
 assets:
   - ARI.png
   - ATL.png
@@ -50,7 +50,6 @@ assets:
   - TB.png
   - TEN.png
   - WSH.png
-  - NFL.png
 
 inputs:
   - key: position
