@@ -1,0 +1,124 @@
+gdn: 1
+id: fantasy-league-transactions
+version: 0.1.0
+name: League Transaction Wire
+author: glance-led-dev
+description: Your ESPN or Sleeper fantasy league's waiver wire, newest first - claims with their FAAB bids, free-agent adds and drops, and trades - with each fantasy team's crest and each player's NFL logo. Your own team's moves are marked in gold, with your FAAB left and the bids that beat yours.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 600 s: the league ID and team are free text (the under-5-minute rule
+# allows only dropdown / checkbox / selection inputs), and a league's
+# wire moves a few times a day.
+refresh: 600
+
+pages: [latest, wire]
+
+assets:
+  - ARI.png
+  - ARI_S.png
+  - ATL.png
+  - ATL_S.png
+  - BAL.png
+  - BAL_S.png
+  - BUF.png
+  - BUF_S.png
+  - CAR.png
+  - CAR_S.png
+  - CHI.png
+  - CHI_S.png
+  - CIN.png
+  - CIN_S.png
+  - CLE.png
+  - CLE_S.png
+  - DAL.png
+  - DAL_S.png
+  - DEN.png
+  - DEN_S.png
+  - DET.png
+  - DET_S.png
+  - GB.png
+  - GB_S.png
+  - HOU.png
+  - HOU_S.png
+  - IND.png
+  - IND_S.png
+  - JAX.png
+  - JAX_S.png
+  - KC.png
+  - KC_S.png
+  - LAC.png
+  - LAC_S.png
+  - LAR.png
+  - LAR_S.png
+  - LV.png
+  - LV_S.png
+  - MIA.png
+  - MIA_S.png
+  - MIN.png
+  - MIN_S.png
+  - NE.png
+  - NE_S.png
+  - NFL.png
+  - NO.png
+  - NO_S.png
+  - NYG.png
+  - NYG_S.png
+  - NYJ.png
+  - NYJ_S.png
+  - PHI.png
+  - PHI_S.png
+  - PIT.png
+  - PIT_S.png
+  - SEA.png
+  - SEA_S.png
+  - SF.png
+  - SF_S.png
+  - TB.png
+  - TB_S.png
+  - TEN.png
+  - TEN_S.png
+  - WSH.png
+  - WSH_S.png
+
+inputs:
+  - key: league
+    type: string
+    app_input_type: free-text
+    label: League ID
+    default: ""
+    help: "The number in your league's web address - ESPN (leagueId=...) or Sleeper (sleeper.com/leagues/...). Leave blank for a demo."
+  - key: team
+    type: string
+    app_input_type: free-text
+    label: Your team
+    default: ""
+    help: "Your team name or your manager / username - your moves are marked in gold. Part of it is fine, any case."
+  - key: platform
+    type: choice
+    app_input_type: dropdown
+    label: Platform
+    default: "AUTO"
+    help: "AUTO works it out from the ID (Sleeper IDs are 18-19 digits). Yahoo leagues are not supported - Yahoo needs a sign-in a panel can't do."
+    choices:
+      - "AUTO"
+      - "ESPN"
+      - "SLEEPER"
+    options:
+      - "AUTO"
+      - "ESPN"
+      - "SLEEPER"
+  - key: espns2
+    type: string
+    app_input_type: api-key
+    label: ESPN espn_s2 cookie (private leagues only)
+    default: ""
+    help: "Only for PRIVATE ESPN leagues. In a desktop browser logged into ESPN, open your league, then DevTools > Application > Cookies > espn.com and copy espn_s2."
+  - key: swid
+    type: string
+    app_input_type: api-key
+    label: ESPN SWID cookie (private leagues only)
+    default: ""
+    help: "Only for PRIVATE ESPN leagues. From the same cookie list, copy SWID (the value in curly braces)."
