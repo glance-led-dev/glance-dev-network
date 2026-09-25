@@ -12,7 +12,7 @@ height: 32
 # 120 s: each page moves to the next player every two minutes, the fastest
 # an app that fetches live data may refresh. Projections are cached for 30
 # minutes, season stats and the NFL week for an hour.
-refresh: 120
+refresh: 900
 
 pages: [gametime, out]
 
