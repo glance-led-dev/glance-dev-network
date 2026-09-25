@@ -11,7 +11,7 @@ width: 192
 height: 32
 # 900 s: the coach changes a few times a year and the record once a week.
 # Feeds are cached longer - record 1 h, coaching staff 6 h.
-refresh: 900
+refresh: 14400
 
 pages: [coach, resume]
 
