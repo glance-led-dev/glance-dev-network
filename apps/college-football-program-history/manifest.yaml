@@ -11,7 +11,7 @@ width: 192
 height: 32
 # 60 s because the tradition page shows a new story each minute. Nothing is
 # fetched - the data is baked into app.star.
-refresh: 60
+refresh: 900
 
 pages: [legacy, tradition]
 
