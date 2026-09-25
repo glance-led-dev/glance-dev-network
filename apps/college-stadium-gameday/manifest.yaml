@@ -11,7 +11,7 @@ width: 192
 height: 32
 # 120 s: each refresh shows the next gameday story. With ALL SCHOOLS the
 # school changes every 20 minutes so both pages show the same one.
-refresh: 120
+refresh: 1800
 
 pages: [stadium, gameday]
 
