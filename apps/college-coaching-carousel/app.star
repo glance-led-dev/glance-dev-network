@@ -1298,18 +1298,22 @@ def career_record(co, tm):
 
 # ------------------------------------------------------------ shared chrome
 # The sideline: a chalk boundary line at y 30 and turf at y 31 under every
-# school page, mowed in 16 px stripes. Text stops at y 28, a row above it.
+# school page, mowed in 15 px stripes. Text stops at y 28, a row above it.
+# Like everything else it stays inside x 6..185, so a scroll panel never
+# runs it into the neighbouring app.
 CHALK = "#C8D0DC"
 TURF = "#1E7A38"
 TURF2 = "#2C9A4A"
 STEEL = "#5A6478"   # scoreboard frame
 POST = "#3A4150"    # scoreboard legs, headset
+EDGE0 = 6
+EDGE1 = 185
 
 def sideline(c, dim = False):
-    c.rect(0, 30, 191, 30, fill = color.dim(CHALK, 45) if dim else CHALK)
+    c.rect(EDGE0, 30, EDGE1, 30, fill = color.dim(CHALK, 45) if dim else CHALK)
     for i in range(12):
         col = TURF if i % 2 == 0 else TURF2
-        c.rect(i * 16, 31, i * 16 + 15, 31, fill = color.dim(col, 45) if dim else col)
+        c.rect(EDGE0 + i * 15, 31, EDGE0 + i * 15 + 14, 31, fill = color.dim(col, 45) if dim else col)
 
 def scoreboard(c, x0, x1, y1, frame = STEEL):
     """A stadium scoreboard: framed box y 0..y1 standing on two legs that
