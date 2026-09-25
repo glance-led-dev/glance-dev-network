@@ -60,17 +60,18 @@ SPOT = "#22346A"   # the nameplate under your club
 CONF_COLOR = {"AFC": "#D8202E", "NFC": "#2F6BFF"}
 
 # ------------------------------------------------------------------ layout
-# Banner x 5..11 with the conference cut out of it; the direction runs
-# beside it in white at x 13..17 ("W" is 5 wide). A first try cut both
+# Banner x 6..12 with the conference cut out of it; the direction runs
+# beside it in white at x 14..18 ("W" is 5 wide). Nothing lights x 0..5 or
+# 186..191, so the app never runs into its neighbours on a scroll wall. A first try cut both
 # words into one 14 px banner, and the two columns read across as
 # "AW / FE / CS" - the direction has to look different to read down.
 # Logos: 40 px cells at x 20, 62, 104, 146 with 2 px of black between
-# them, so the grid spans x 20..185: 2 px clear of the direction letters,
+# them, so the grid spans x 20..185: 1 px clear of the direction letters,
 # 6 px of padding at the right edge.
-BAN_L = 5
-BAN_R = 11
-BAN_CX = 8           # conference letters x 6..9, star x 6..10
-DIR_CX = 15          # direction letters x 13..17
+BAN_L = 6
+BAN_R = 12
+BAN_CX = 9           # conference letters x 7..10, star x 7..11
+DIR_CX = 16          # direction letters x 14..18
 CELL_X = [20, 62, 104, 146]
 CELL_W = 40
 REC_Y = 25     # record row under the 24 px logos (y 0..23), 1 px clear
@@ -287,12 +288,13 @@ def find(ctx):
 
 # ------------------------------------------------------------------ screens
 def rail(c, color):
-    c.rect(0, 0, 1, 31, fill = color)
+    # x 6..7: the first two columns inside the safe zone.
+    c.rect(6, 0, 7, 31, fill = color)
 
 def message(c, color, head, sub, head_color):
     c.fill("black")
     rail(c, color)
-    logo(c, "NFL", 8, 4)
+    logo(c, "NFL", 10, 4)
     hf = fit(c, head, ["6x8", "5x7", "4x5"], 128)
     c.text(hf[1], 118, 9, font = hf[0], color = head_color, align = "center")
     sf = fit(c, sub, ["4x5", "picopixel"], 128)
