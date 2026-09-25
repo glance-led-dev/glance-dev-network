@@ -17,9 +17,10 @@
 #           the year under each (title years sparkle and turn gold), the
 #           drought ('LAST 1987'), and the logo in the same right spotlight.
 #           For a decade: its winners, logo over year. For ALL WINNERS: the
-#           schools ranked by wins, four logos to a frame with gold / silver
-#           / bronze medals for the top three counts, then a BY POSITION
-#           frame - every winner as one coloured column, 1935 to 2025.
+#           top five on a podium of walnut pedestals (gold / silver /
+#           bronze plates with the count engraved), then a trophy shelf per
+#           tied count (one little trophy per win under each logo), then a
+#           BY POSITION frame - every winner as one coloured column.
 #
 # DESIGN. CENTER PEDESTAL. Page 1 is the trophy, not a row of facts: a
 # 28 x 21 bronze stiff-arm statue stands dead centre on a walnut pedestal
@@ -304,19 +305,6 @@ SSSSS
 """
 TINY_ON = {"H": "#FFE08A", "B": "#FFC62F", "D": "#B07A1E", "S": "#8A94A8"}
 TINY_OFF = {"H": "#7A5E2A", "B": "#6A4E1E", "D": "#3E2E12", "S": "#3A4356"}
-
-# 7 x 8 medal: ribbon over a disc, for ranks 1-3 on the leaderboard.
-MEDAL = """
-R.....R
-.R...R.
-..RRR..
-.MMMMM.
-MMHMMMM
-MHMMMMM
-MMMMMMM
-.MMMMM.
-"""
-MEDAL_COL = {1: "#FFC62F", 2: "#C8D0DC", 3: "#D0843A"}
 
 # Stars for a same-season national title: 7 x 7 beside the winner's year,
 # 5 x 5 beside a year in the decade class, 3 x 3 sparkle over a trophy in
@@ -754,47 +742,89 @@ def leaders(c, ctx, m, ws):
         tally[w[2]] += 1
     # Most wins first; ties keep the order of each school's first win.
     ranked = [k for k in sorted(order, key = lambda k: -tally[k]) if tally[k] >= 2]
-    # One more frame after the leaderboard: every winner by position.
-    frames = (len(ranked) + 3) // 4 + 1
+    # Frames: the podium (the top five on metal pedestals), then one
+    # trophy shelf per remaining count (at most four schools a shelf, split
+    # evenly), then every winner by position.
+    top = ranked[:5]
+    shelves = []
+    rest = ranked[5:]
+    counts = []
+    for k in rest:
+        if tally[k] not in counts:
+            counts.append(tally[k])
+    for n in counts:
+        grp = [k for k in rest if tally[k] == n]
+        parts = (len(grp) + 3) // 4
+        per = (len(grp) + parts - 1) // parts
+        for i in range(0, len(grp), per):
+            shelves.append([n, grp[i:i + per]])
+    frames = 1 + len(shelves) + 1
     f = step(ctx) % frames
-    if f == frames - 1:
+    if f == 0:
+        podium(c, top, tally)
+    elif f == frames - 1:
         by_position(c, ws)
-        return
-    show = ranked[f * 4:f * 4 + 4]
-    # Medals go to the top three distinct counts (8 gold, 7 silver, 4
-    # bronze), so Alabama's bronze shows even though its tag reads #5.
+    else:
+        shelf(c, shelves[f - 1][0], shelves[f - 1][1])
+
+# The podium. Metal plates by distinct count: gold, silver, bronze; below
+# that the plain brass of page 1.
+PLATE = ["#FFC62F", "#C8D0DC", "#D0843A"]
+PLATE_HI = ["#FFE08A", "#EEF2F8", "#F0A860"]
+
+def podium(c, top, tally):
+    """The top five on walnut pedestals like page 1's: the leader in the
+    middle on the tallest, the rest fanned out 2-1-3 style (4 far left,
+    5 far right), each pedestal's height and plate metal set by the count
+    engraved on it."""
     levels = []
-    for k in ranked:
+    for k in top:
         if tally[k] not in levels:
             levels.append(tally[k])
+    # Slot order across the panel for ranks 1..5.
+    slots = [2, 1, 3, 0, 4]
+    cell = 36
+    x0 = PED_C - cell * 5 // 2
+    for i in range(len(top)):
+        k = top[i]
+        n = tally[k]
+        cx = x0 + slots[i] * cell + cell // 2
+        # Lip row: 18 for the leader's count, 2 px lower per win behind,
+        # never below 22 so the plate keeps room for its 6x8 numeral.
+        lip = min(22, 18 + (tally[top[0]] - n) * 2)
+        logo_small(c, k, cx - 12, lip - 18)
+        # Pedestal: bronze lip, walnut block, metal plate, count engraved.
+        c.rect(cx - 15, lip, cx + 14, lip, fill = LIP)
+        c.rect(cx - 14, lip + 1, cx + 13, 31, fill = WALNUT)
+        c.rect(cx - 14, lip + 1, cx - 14, 31, fill = WALNUT_HI)
+        lv = levels.index(n)
+        metal = PLATE[lv] if lv < 3 else BRASS
+        c.rect(cx - 9, lip + 1, cx + 8, 31, fill = metal)
+        c.rect(cx - 9, lip + 1, cx + 8, lip + 1, fill = PLATE_HI[lv] if lv < 3 else "#F0C868")
+        c.text(str(n), cx, lip + 2 + (31 - lip - 9) // 2 - (1 if lip >= 22 else 0), font = "6x8", color = ENGRAVE, align = "center")
 
-    # Cells 44 px wide across the panel (4 x 44 = 176, x 8..183): the
-    # 24 x 18 logo at y 6, the count in 10x16 beside it, the rank ('#1',
-    # 'T2') under the logo. A dim rule closes each cell - without it
-    # '[TEX] 2 [MIA] 2' reads as either school's 2.
-    x0 = 8
-    c.text("MOST HEISMANS", x0, 0, font = "4x5", color = GOLD)
-    if frames > 1:
-        c.text(str(f + 1) + "/" + str(frames), TR, 0, font = "4x5", color = DIM, align = "right")
-    for i in range(len(show)):
-        k = show[i]
-        cx = x0 + i * 44
-        rank = 1 + len([x for x in ranked if tally[x] > tally[k]])
-        tie = len([x for x in ranked if tally[x] == tally[k]]) > 1
-        logo_small(c, k, cx, 6)
-        c.text(str(tally[k]), cx + 27, 7, font = "10x16", color = INK)
-        # The top three counts wear a medal in gold, silver or bronze.
-        tag = ("T" if tie else "#") + str(rank)
-        medal = levels.index(tally[k]) + 1
-        if medal <= 3:
-            tw_ = c.text_width(tag, "4x5")
-            mx = cx + 12 - (tw_ + 9) // 2
-            c.sprite(MEDAL, mx, 24, legend = {"R": "#E8203F", "M": MEDAL_COL[medal], "H": "#FFFFFF"})
-            c.text(tag, mx + 9, 27, font = "4x5", color = MEDAL_COL[medal])
-        else:
-            c.text(tag, cx + 12, 27, font = "4x5", color = DIM, align = "center")
-        if i < len(show) - 1:
-            c.vline(cx + 41, 9, 29, "#2B3550")
+def shelf(c, n, keys):
+    """A trophy-case shelf for every school tied on n wins: the count big
+    and gold at the left, each logo standing on a long walnut shelf under
+    with one little gold trophy per win on the shelf's
+    front edge."""
+    # Left: the count and what it counts.
+    c.text(str(n), 26, 3, font = "10x16", color = GOLD, align = "center")
+    c.text("HEISMANS", 26, 21, font = "4x5", color = GOLD, align = "center")
+    c.text("EACH", 26, 27, font = "4x5", color = DIM, align = "center")
+    # The shelf, x 50..186: lip at 20, walnut 21..31.
+    sx0, sx1 = 50, TR
+    cell = (sx1 - sx0 + 1) // len(keys)
+    c.rect(sx0 - 1, 20, sx1 + 1, 20, fill = LIP)
+    c.rect(sx0, 21, sx1, 31, fill = WALNUT)
+    c.rect(sx0, 21, sx1, 21, fill = WALNUT_HI)
+    for i in range(len(keys)):
+        cx = sx0 + i * cell + cell // 2
+        logo_small(c, keys[i], cx - 12, 2)
+        # One trophy per win, centred under the logo.
+        tx = cx - (n * 6 - 1) // 2
+        for j in range(n):
+            c.sprite(TINY, tx + j * 6, 23, legend = TINY_ON)
 
 def decade_class(c, ctx, m, ws):
     """The decade's winners in order, five to a frame (balanced: the six
