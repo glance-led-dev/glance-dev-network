@@ -1,0 +1,14 @@
+gdn: 1
+id: day-of-the-dead-banner
+version: 0.1.0
+name: "Day of the Dead Banner"
+author: "FCYC"
+description: Three papel picado swoops on black.
+category: Art
+entry: app.star
+width: 384
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - day_of_the_dead_banner.png
