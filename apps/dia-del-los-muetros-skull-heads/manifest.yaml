@@ -1,0 +1,14 @@
+gdn: 1
+id: dia-del-los-muetros-skull-heads
+version: 0.1.0
+name: "dia del los muetros skull heads"
+author: "FCYC"
+description: Colorful sugar skull heads on black.
+category: Art
+entry: app.star
+width: 384
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - dia_del_los_muetros_skull_heads.png
