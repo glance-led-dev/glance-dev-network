@@ -316,6 +316,56 @@ def looks_like_townnews(html):
     return False
 
 
+def looks_like_townnews_url(url):
+    u = str(url).lower()
+    if u.find("closings-and-delays") >= 0:
+        return True
+    if u.find("/app/closings/") >= 0:
+        return True
+    return False
+
+
+def townnews_callsign(url):
+    host = host_label(url)
+    dot = host.find(".")
+    if dot >= 0:
+        host = host[:dot]
+    news = host.find("NEWS")
+    if news >= 3 and news <= 5:
+        return host[:news]
+    n = len(host)
+    if n >= 3 and n <= 5:
+        return host
+    if n >= 4:
+        return host[:4]
+    return ""
+
+
+def townnews_guess_urls(origin, page_url):
+    urls = []
+    sign = townnews_callsign(page_url)
+    if sign != "":
+        urls.append(origin + "/app/closings/" + sign + "-closingsC.xml")
+        urls.append(origin + "/app/closings/" + sign + "-closings.xml")
+    return urls
+
+
+def with_trailing_slash(url):
+    u = collapse_ws(url)
+    q = u.find("?")
+    if q >= 0:
+        path = u[:q]
+        qs = u[q:]
+    else:
+        path = u
+        qs = ""
+    if path == "" or path[len(path) - 1] == "/":
+        return u
+    if path.find(".xml") >= 0 or path.find(".json") >= 0:
+        return u
+    return path + "/" + qs
+
+
 def looks_like_nexstar(html):
     h = str(html)
     if h.find("nexstardigital.net") >= 0:
@@ -713,21 +763,44 @@ def wp_rendered(data):
     return ""
 
 
-def fetch_townnews(origin, html):
+def fetch_townnews(origin, html, page_url = ""):
     urls = townnews_xml_urls(html, origin)
+    extra = townnews_guess_urls(origin, page_url if page_url != "" else origin)
+    for url in extra:
+        exists = False
+        for prev in urls:
+            if prev == url:
+                exists = True
+        if exists == False:
+            urls.append(url)
     if urls == []:
         parsed = parse_townnews_xml(html)
         if parsed != None:
             return parsed
         return {"kind": "unparseable", "rows": []}
-    xml_url = urls[0]
-    x = http_get(xml_url)
-    if x["status_code"] != 200:
-        return {"kind": "unavailable", "rows": []}
-    parsed = parse_townnews_xml(x["body"])
-    if parsed != None:
-        return parsed
-    return {"kind": "unparseable", "rows": []}
+    saw_body = False
+    for xml_url in urls:
+        x = http_get(xml_url)
+        if x["status_code"] != 200:
+            continue
+        saw_body = True
+        parsed = parse_townnews_xml(x["body"])
+        if parsed != None:
+            return parsed
+    if saw_body:
+        return {"kind": "unparseable", "rows": []}
+    return {"kind": "unavailable", "rows": []}
+
+
+def try_townnews(url):
+    origin = origin_of(url)
+    if origin == "":
+        return None
+    got = fetch_townnews(origin, "", url)
+    kind = got.get("kind", "")
+    if kind == "ok" or kind == "empty":
+        return got
+    return None
 
 
 def fetch_nexstar_wp(url):
@@ -1694,6 +1767,8 @@ def fetch_source(url):
     u = collapse_ws(url)
     if u.find("://") < 0 and u.find(".") >= 0:
         u = "https://" + u
+    if u.find("http://") == 0:
+        u = "https://" + u[7:]
     if u.find("https://") != 0 and u.find("http://") != 0:
         return {"kind": "unsupported", "rows": []}
 
@@ -1767,13 +1842,31 @@ def fetch_source(url):
             return parsed
         return {"kind": "unparseable", "rows": []}
 
+    # TownNews HTML is ~370KB and often 301s without a trailing slash. Live GDN
+    # does not follow redirects and times out at 4s through a proxy, so skip the
+    # page and hit the small BLOX XML feed first (KOAM-closingsC.xml is 83 bytes).
+    if looks_like_townnews_url(u):
+        tn = try_townnews(u)
+        if tn != None:
+            return tn
+
     r = http_get(u)
     if r["status_code"] != 200:
-        if looks_like_closings_url(u):
-            wp = fetch_nexstar_wp(u)
-            if wp != None:
-                return wp
-        return {"kind": "unavailable", "rows": []}
+        slashed = with_trailing_slash(u)
+        if slashed != u:
+            r2 = http_get(slashed)
+            if r2["status_code"] == 200:
+                u = slashed
+                r = r2
+        if r["status_code"] != 200:
+            tn = try_townnews(u)
+            if tn != None:
+                return tn
+            if looks_like_closings_url(u):
+                wp = fetch_nexstar_wp(u)
+                if wp != None:
+                    return wp
+            return {"kind": "unavailable", "rows": []}
 
     parsed = parse_gsync_json(r["json"])
     if parsed != None:
@@ -1812,7 +1905,7 @@ def fetch_source(url):
         return {"kind": "unparseable", "rows": []}
 
     if looks_like_townnews(body):
-        return fetch_townnews(origin_of(u), body)
+        return fetch_townnews(origin_of(u), body, u)
 
     if looks_like_nexstar(body) or nexstar_iframe_src(body) != "":
         return fetch_nexstar(u, body)
