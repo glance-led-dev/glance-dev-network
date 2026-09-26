@@ -2,8 +2,9 @@
 # rail, compact eyebrow, wrestler names as the hero. No portraits, no
 # source chrome, no full-screen header. Title matches with icons reuse
 # the WWE Champions 72x32 belt at x=10. Previous-show results reuse that
-# layout. City/time from the lineup when present. If the card omits them,
-# WWE.com events fills the dated city and the single next PLE on the overview.
+# City/time from the lineup when present. If the card omits them, WWE.com
+# events fills the dated city and the single next PLE on the overview.
+# build.py joins these files.
 BRANDS = ["RAW", "SMACKDOWN", "NXT"]
 COLORS = {"RAW": "#E10600", "SMACKDOWN": "#3D7EFF", "NXT": "#E7B43A", "WWE": "#D8DEE8"}
 DEEP = {"RAW": "#6B0000", "SMACKDOWN": "#10244A", "NXT": "#3A2E10", "WWE": "#101018"}
@@ -325,10 +326,13 @@ def between(s, start, end):
     b = s.find(end, a + len(start))
     return s[a + len(start):b] if b >= 0 else ""
 
-def plain(s):
+def plain(s, limit = 5000):
     # Bound work before walking the markup. Headings/list entries only.
     text = ""
-    for fragment in s[:5000].split("<"):
+    cap = limit
+    if cap > len(s):
+        cap = len(s)
+    for fragment in s[:cap].split("<"):
         text = text + (fragment.split(">", 1)[1] if ">" in fragment else fragment)
     pairs = [["&amp;", "&"], ["&#038;", "&"], ["&#8217;", "'"], ["&#039;", "'"], ["&#39;", "'"], ["&apos;", "'"], ["&#8216;", "'"], ["’", "'"], ["‘", "'"], ["&#8211;", "-"], ["&#8212;", "-"], ["–", "-"], ["—", "-"], ["&#8220;", '"'], ["&#8221;", '"'], ["&quot;", '"'], ["&nbsp;", " "], ["\u00a0", " "], ["é", "e"], ["á", "a"], ["í", "i"], ["ó", "o"], ["ú", "u"], ["ñ", "n"]]
     for p in pairs:
@@ -528,17 +532,52 @@ def parse_next_ple(body, nowday, year, month):
         if day < nowday:
             continue
         city = plain(between(chunk, 'le-card-meta-venue">', "</p>")).strip(" ,")
-        event = {"name": name, "date": MONTHS[m - 1][:3] + " " + str(d), "city": city, "day": day}
+        when = ""
+        if len(words) > 0 and words[0] in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
+            when = words[0][:3] + " " + MONTHS[m - 1][:3] + " " + str(d)
+        clock = time_from_prose(plain(chunk))
+        event = {"name": name, "date": MONTHS[m - 1][:3] + " " + str(d), "when": when, "city": city, "time": clock, "day": day}
         if best == None or event["day"] < best["day"]:
             best = event
+    enrich_ple(body, best)
     return best
 
-def fill_wwe_meta(shows, ctx):
-    if not shows:
+def enrich_ple(body, ple):
+    # Trending cards often omit start time. The dated events list has
+    # "Saturday, September 26th Chicago, IL 7:30 PM | Allstate Arena".
+    if ple == None:
         return
+    city = str(ple.get("city", "")).upper()
+    if city == "":
+        return
+    hay = plain(body, 80000)
+    needle = city.split(",")[0]
+    pos = 0
+    for _ in range(8):
+        i = hay.find(needle, pos)
+        if i < 0:
+            return
+        window = hay[max(0, i - 80):i + 100]
+        stamp = str(ple.get("date", "")).upper()
+        bits = stamp.split()
+        dayn = bits[len(bits) - 1] if bits else ""
+        if dayn != "" and dayn not in window:
+            pos = i + 1
+            continue
+        if ple.get("time", "") == "":
+            t = time_from_prose(window)
+            if t != "":
+                ple["time"] = t
+        if ple.get("time", "") != "":
+            return
+        pos = i + 1
+
+def fill_wwe_meta(shows, ctx):
+    # Always load WWE.com, even with no weekly lineup, so a PLE still
+    # has a date, city, and time for the overview.
     response = http.get(WWE_EVENTS, ttl_seconds = 900)
     if response["status_code"] != 200:
-        return
+        return None
     body = response.get("body", "")
     places = parse_wwe_events(body)
     ple = parse_next_ple(body, ctx.now.unix // 86400, ctx.now.year, ctx.now.month)
@@ -551,10 +590,14 @@ def fill_wwe_meta(shows, ctx):
             break
         if ple != None:
             s["ple"] = ple
+    return ple
 
 def apply_weekly_time(shows):
     # Lineup articles often omit start time. Weekly RAW/SD/NXT air at 8PM ET.
+    # Never invent a start time for a PLE-only fallback card.
     for s in shows:
+        if s.get("kind", "") == "ple":
+            continue
         if s.get("time", "") == "" and s["brand"] in BRANDS:
             s["time"] = "8PM ET"
 
@@ -571,8 +614,11 @@ def fetch_shows(cfg, ctx):
         chosen = select_show(shows, cfg)
         if cfg["brand"] != "AUTO" and chosen != None and chosen["city"] != "" and chosen["time"] != "":
             break
-    fill_wwe_meta(shows, ctx)
+    ple = fill_wwe_meta(shows, ctx)
     apply_weekly_time(shows)
+    if select_show(shows, cfg) == None and ple != None:
+        brand = cfg["brand"] if cfg["brand"] in BRANDS else "WWE"
+        shows.append({"brand": brand, "day": ple["day"], "date": ple.get("date", ""), "time": ple.get("time", ""), "city": ple.get("city", ""), "venue": "", "items": [], "kind": "ple", "ple": ple, "source": "WWE"})
     return shows
 
 
@@ -974,7 +1020,62 @@ def match_page(c, show, item, index, total, cfg):
         return
     text(c, item.get("text", item.get("label", "")), LEFT, 14, RIGHT - LEFT, ["6x8", "5x7", "4x5"], WHITE)
 
+HOTGOLD = "#FFD24A"
+
+def ple_overview(c, show):
+    # No weekly card. Black field, gold hero type — not a gold wallpaper.
+    col = brand_col(show)
+    ground(c, col)
+    brand = show["brand"]
+    ple = show.get("ple")
+    if type(ple) != "dict":
+        ple = {}
+    text(c, brand, LEFT, 2, 50, ["4x5"], col)
+    when = str(ple.get("when", "")).upper()
+    if when == "":
+        when = str(ple.get("date", show.get("date", ""))).upper()
+    # Date chip occupies the top-right. Name must stop before it.
+    # 'WORLDS COLLIDE' is 152px at 10x16 and used to run under SAT SEP 26.
+    chip_left = RIGHT
+    if when != "":
+        tw = c.text_width(when, "4x5")
+        chip_x = RIGHT - tw - 3
+        if chip_x < LEFT + 54:
+            chip_x = LEFT + 54
+        chip_left = chip_x - 2
+        c.rect(chip_left, 1, RIGHT + 1, 7, fill = HOTGOLD)
+        text(c, when, RIGHT, 2, tw + 2, ["4x5"], "#101018", "right")
+    name = str(ple.get("name", "")).upper()
+    if name != "":
+        gap = 3
+        slot = chip_left - gap - LEFT
+        if slot < 40:
+            slot = 40
+        fitted = fit(c, name, slot, ["10x16", "7x12", "6x8", "5x7", "4x5"])
+        fh = FONT_HEIGHT.get(fitted[1], 8)
+        ny = 24 - fh
+        if ny < 8:
+            ny = 8
+        c.text(fitted[0], LEFT, ny, font = fitted[1], color = HOTGOLD)
+        star_x = LEFT + c.text_width(fitted[0], fitted[1]) + 3
+        if star_x + 5 <= chip_left - gap and fh >= 12:
+            result_star(c, star_x, ny + fh // 2 - 2, HOTGOLD)
+    place = str(show.get("city", ple.get("city", ""))).upper()
+    clock = str(show.get("time", ple.get("time", ""))).upper()
+    if clock == "TIME TBA":
+        clock = ""
+    if place != "" and clock != "":
+        text(c, place, LEFT, 25, 118, ["5x7", "4x5"], WHITE)
+        text(c, clock, RIGHT, 25, 50, ["5x7", "4x5"], HOTGOLD, "right")
+    elif place != "":
+        text(c, place, LEFT, 24, RIGHT - LEFT, ["5x7", "4x5"], WHITE)
+    elif clock != "":
+        text(c, clock, RIGHT, 24, 50, ["5x7", "4x5"], HOTGOLD, "right")
+
 def overview_page(c, show, cfg):
+    if show.get("kind", "") == "ple":
+        ple_overview(c, show)
+        return
     col = brand_col(show)
     ground(c, col)
     brand = show["brand"]

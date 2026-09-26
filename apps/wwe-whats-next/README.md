@@ -10,6 +10,11 @@ The overview is the event plate: brand, city, time, match count, and the next
 Premium Live Event on a gold bar. Match pages put names in the hero slot.
 Championship bouts reuse the WWE Champions 72×32 belt art.
 
+If the pinned weekly show has no posted lineup yet, overview still shows the
+next Premium Live Event — name, day, start time, and city — instead of
+CARD UNAVAILABLE. Match pages stay empty until a card is announced. The PLE
+title picks the largest font that fits and leaves a gap before the date chip.
+
 ## Settings
 
 | Input | What it does |
