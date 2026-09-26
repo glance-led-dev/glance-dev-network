@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-white-sox-word-sign
+version: 0.1.0
+name: "Chicago White Sox Word Sign"
+author: "FCYC"
+description: Chicago script, Sox logo, and White Sox script on black.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - chicago_white_sox_word_sign.png
