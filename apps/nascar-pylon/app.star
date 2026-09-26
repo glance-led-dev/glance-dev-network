@@ -58,6 +58,8 @@ COLORS = {
     "lapped": "#5C6674",
     # Soft amber lead-lap cut (quieter than bright caution yellow).
     "lead_line": "#8A6A2A",
+    # Chase tick. Bright green, kept off the position-gain number green.
+    "chase": "#00E640",
     "error": "#FF5D73",
     "dark": "#0B0D10",
 }
@@ -217,7 +219,7 @@ def is_on_lead_lap(laps, leader_laps, cf_delta):
     return laps >= leader_laps - 1
 
 
-def vehicle_rows(feed):
+def vehicle_rows(feed, chase_on):
     vehicles = feed.get("vehicles", [])
     race_lap = int(feed.get("lap_number", 0))
     fastest_num = fastest_last_lap_num(vehicles)
@@ -234,6 +236,12 @@ def vehicle_rows(feed):
         out = is_retired(status)
         repair = is_repairing(status, on_track)
         laps = int(car.get("laps_completed", 0))
+        driver = car.get("driver", {})
+        if driver == None:
+            driver = {}
+        in_chase = False
+        if chase_on and bool(driver.get("is_in_chase", False)):
+            in_chase = True
         rows.append({
             "pos": int(car.get("running_position", 0)),
             "num": num,
@@ -245,6 +253,7 @@ def vehicle_rows(feed):
             "pit": recent_pit(car, race_lap),
             "fastest": num == fastest_num and fastest_num != "",
             "delta": position_delta(car),
+            "chase": in_chase,
         })
     n = len(rows)
     for i in range(n):
@@ -335,7 +344,7 @@ def build_state(series, race, feed):
         "stage3": stage3,
         "run_type": int(feed.get("run_type", 0)),
         "session": session_label(feed, stage_num),
-        "rows": vehicle_rows(feed),
+        "rows": vehicle_rows(feed, int(race.get("playoff_round", 0) or 0) > 0),
     }
 
 
@@ -543,7 +552,12 @@ def pylon(c, ctx):
 
         c.text(zero_pad2(row["pos"]), x, y, font = "4x5", color = COLORS["muted"])
         color = car_number_color(row, on_lead)
-        c.text(row["num"], x + 11, y, font = "4x5", color = color)
+        # Widest position glyphs reach x+8. One black pixel, a 1px bar, then
+        # one black pixel, so the number starts at x+12 instead of x+11.
+        num_x = x + 12
+        if row["chase"]:
+            c.rect(x + 10, y, x + 10, y + 4, fill = COLORS["chase"])
+        c.text(row["num"], num_x, y, font = "4x5", color = color)
 
         num_w = c.text_width(row["num"], "4x5")
-        draw_status_dots(c, x + 11 + num_w + 2, y, row)
+        draw_status_dots(c, num_x + num_w + 2, y, row)
