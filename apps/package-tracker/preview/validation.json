@@ -1,0 +1,13 @@
+{
+  "scenarios": 11,
+  "rendered_pages": 44,
+  "checks": [
+    "real Starlark execution",
+    "all text bounds",
+    "Scroll edge safe zones",
+    "persistent identity on four pages",
+    "all undelivered statuses rotate",
+    "delivered excluded",
+    "authentication/offline/malformed responses"
+  ]
+}

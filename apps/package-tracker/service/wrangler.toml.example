@@ -1,0 +1,22 @@
+name = "glance-package-discovery"
+main = "src/worker.mjs"
+compatibility_date = "2026-09-25"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "glance-package-discovery"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+
+[vars]
+DISCOVERY_MODE = "imap"
+DELIVERY_TIMEZONE = "America/New_York"
+# Only shipping-related messages. No attachments, read-state changes or outgoing email.
+GMAIL_QUERY = 'newer_than:30d -in:sent -in:spam -in:trash {subject:shipped subject:shipment subject:tracking subject:delivery subject:"on the way" from:ups.com from:fedex.com from:informeddelivery.usps.com}'
+
+# Configure with `wrangler secret put NAME`, never here:
+# READ_KEY, WRITE_KEY, FEDEX_CLIENT_ID, FEDEX_CLIENT_SECRET, UPS_CLIENT_ID, UPS_CLIENT_SECRET
+# Legacy paid tracking also requires ALLOW_PAID_TRACKING = "true".
+# OAuth alternative only: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN

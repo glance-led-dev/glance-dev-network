@@ -1,0 +1,33 @@
+gdn: 1
+id: package-tracker
+version: 0.1.0
+name: Package Tracker
+author: Package Tracker contributors
+description: Active FedEx, UPS and USPS shipments with carrier logos, persistent sender identity, latest scans and expected delivery.
+category: Productivity
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages: [delivery, latest, scan, journey]
+assets: [ups.png, fedex.png, usps.png]
+inputs:
+  - key: endpoint
+    type: string
+    app_input_type: free-text
+    label: Package feed URL
+    default: ""
+    help: HTTPS status URL supplied by your package discovery service.
+  - key: readkey
+    type: string
+    app_input_type: api-key
+    label: Package feed key
+    default: ""
+    help: Read-only feed key. Keep this separate from your email and tracking service credentials.
+  - key: demo
+    type: string
+    app_input_type: dropdown
+    label: Preview scenario
+    default: Live
+    choices: [Live, UPS, FedEx, USPS, All carriers, Delay, Delivery attempted, Missing details, Long details, No active packages, Stale data]
+    help: Demo choices use fictional shipments and never contact an inbox or carrier.
