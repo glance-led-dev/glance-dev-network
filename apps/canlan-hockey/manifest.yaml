@@ -1,0 +1,20 @@
+gdn: 1
+id: canlan-hockey
+version: 0.1.0
+name: Canlan Hockey
+author: Mike D'Arpino
+description: Make The Call schedule, Friday 18+ D standings, and player stats.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+
+refresh: 300
+
+pages:
+  - schedule
+  - standings_1
+  - standings_2
+  - players_1
+  - players_2
