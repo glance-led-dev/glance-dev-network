@@ -1,0 +1,92 @@
+gdn: 1
+id: fantasy-weekly-projections
+version: 0.1.0
+name: Fantasy Weekly Projections
+author: glance-led-dev
+description: This week's top projected fantasy players by position as a staircase of club logos, the #1 step tallest and gold - projected points against their season average, the stat line behind them, a STUD / START / FLEX tier, injury tags, and the matchup (home or away, game day) in team logos. Finished games show the final score. PPR, half PPR or standard. From Sleeper, no key needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 120 s: each refresh shows the next ladder (one position per frame in ALL)
+# and the next player in the spotlight. Projections and the Sleeper week are
+# cached for an hour, season stats for six hours and the schedule and week
+# stats for 30 minutes.
+refresh: 120
+
+pages: [board, spotlight]
+
+# Team logos: the 24 x 18 set (<abbr>_S.png), drawn at its authored size on
+# the ladder's steps and on the spotlight.
+assets:
+  - ARI_S.png
+  - ATL_S.png
+  - BAL_S.png
+  - BUF_S.png
+  - CAR_S.png
+  - CHI_S.png
+  - CIN_S.png
+  - CLE_S.png
+  - DAL_S.png
+  - DEN_S.png
+  - DET_S.png
+  - GB_S.png
+  - HOU_S.png
+  - IND_S.png
+  - JAX_S.png
+  - KC_S.png
+  - LAC_S.png
+  - LAR_S.png
+  - LV_S.png
+  - MIA_S.png
+  - MIN_S.png
+  - NE_S.png
+  - NO_S.png
+  - NYG_S.png
+  - NYJ_S.png
+  - PHI_S.png
+  - PIT_S.png
+  - SEA_S.png
+  - SF_S.png
+  - TB_S.png
+  - TEN_S.png
+  - WSH_S.png
+
+inputs:
+  - key: position
+    type: choice
+    app_input_type: dropdown
+    label: Position
+    default: "ALL"
+    help: ALL rotates through QB, RB, WR, TE, K and DEF, showing the top 3 at each. Pick one position to walk its top 10.
+    choices:
+      - "ALL"
+      - "QB"
+      - "RB"
+      - "WR"
+      - "TE"
+      - "K"
+      - "DEF"
+    options:
+      - "ALL"
+      - "QB"
+      - "RB"
+      - "WR"
+      - "TE"
+      - "K"
+      - "DEF"
+  - key: scoring
+    type: choice
+    app_input_type: dropdown
+    label: Scoring
+    default: "PPR"
+    help: The league scoring the projected points and the ranking use.
+    choices:
+      - "PPR"
+      - "HALF PPR"
+      - "STANDARD"
+    options:
+      - "PPR"
+      - "HALF PPR"
+      - "STANDARD"
