@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-blackhawks-history-row
+version: 0.1.0
+name: "Chicago Blackhawks History Row"
+author: "FCYC"
+description: Five Chicago Blackhawks graphics in a row on white.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - chicago_blackhawks_history_row.png
