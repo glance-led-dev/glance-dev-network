@@ -22,6 +22,7 @@ assets:
   - car-10.png
   - car-11.png
   - car-12.png
+  - car-14.png
   - car-16.png
   - car-17.png
   - car-18.png
@@ -65,10 +66,12 @@ assets:
   - car-91.png
   - car-97.png
   - car-98.png
+  - car-99.png
   - car-1-sm.png
   - car-10-sm.png
   - car-11-sm.png
   - car-12-sm.png
+  - car-14-sm.png
   - car-16-sm.png
   - car-17-sm.png
   - car-18-sm.png
@@ -112,6 +115,7 @@ assets:
   - car-91-sm.png
   - car-97-sm.png
   - car-98-sm.png
+  - car-99-sm.png
 
 inputs:
   - key: series

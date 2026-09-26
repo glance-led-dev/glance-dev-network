@@ -74,6 +74,8 @@ COLORS = {
     "accent": "#FF6A00",
     "accent2": "#FFD166",
     "error": "#FF5D73",
+    # Chase position number on the live top-6 board.
+    "chase": "#00E640",
 }
 
 
@@ -131,10 +133,126 @@ def short_race(name, limit = 20):
     text = text.replace(" POWERED BY ", " ")
     text = text.replace(" AVAILABLE AT WALMART", "")
     text = text.replace(" AVAILABLE AT ", " ")
+    text = text.replace(".COM", "")
     text = text.replace("  ", " ").strip()
-    if len(text) > limit:
-        text = text[:limit].strip()
-    return text
+    if len(text) <= limit:
+        return text
+    # Cut on a word so a long title doesn't end mid-word ("SUI").
+    cut = text[:limit]
+    space = -1
+    for i in range(len(cut)):
+        if cut[i] == " ":
+            space = i
+    if space > 0:
+        return cut[:space].strip()
+    return cut.strip()
+
+
+def chase_number_set(feed, race):
+    # Vehicle numbers the live feed marks in the Chase. Empty outside Chase races.
+    found = {}
+    if feed == None or race == None:
+        return found
+    if int(race.get("playoff_round", 0) or 0) <= 0:
+        return found
+    vehicles = feed.get("vehicles", [])
+    if vehicles == None:
+        return found
+    for car in vehicles:
+        driver = car.get("driver", {})
+        if driver == None:
+            driver = {}
+        if not bool(driver.get("is_in_chase", False)):
+            continue
+        num = str(car.get("vehicle_number", ""))
+        if num != "":
+            found[num] = True
+    return found
+
+
+def number_in_chase(digits, chase):
+    if chase.get(digits, False):
+        return True
+    stripped = digits
+    for _i in range(3):
+        if len(stripped) > 1 and stripped[0] == "0":
+            stripped = stripped[1:]
+    if stripped != digits and chase.get(stripped, False):
+        return True
+    return False
+
+
+def draw_update_note(c, text, chase, color):
+    # Same wrap as the old single-color note, but #car numbers of Chase
+    # drivers are drawn in chase green.
+    font = "4x5"
+    x0 = 3
+    y = 13
+    max_w = c.width - 6
+    line_h = 6
+    space_w = c.text_width(" ", font)
+    words = str(text).split(" ")
+    x = x0
+    line = 0
+    for word in words:
+        if word == "":
+            continue
+        digits = ""
+        if len(word) > 1 and word[0] == "#":
+            for i in range(len(word)):
+                if i == 0:
+                    continue
+                ch = word[i]
+                if ch < "0" or ch > "9":
+                    break
+                digits += ch
+        pieces = []
+        n = 0
+        if digits != "" and number_in_chase(digits, chase):
+            n = 1 + len(digits)
+            pieces.append([word[:n], COLORS["chase"]])
+            if n < len(word):
+                pieces.append([word[n:], color])
+        else:
+            pieces.append([word, color])
+        word_w = 0
+        for piece in pieces:
+            word_w += c.text_width(piece[0], font)
+        if x > x0 and x + word_w > x0 + max_w:
+            line += 1
+            if line >= 3:
+                break
+            x = x0
+            y += line_h
+        for piece in pieces:
+            c.text(piece[0], x, y, font = font, color = piece[1])
+            x += c.text_width(piece[0], font)
+        x += space_w
+
+
+def fit_line(c, text, font, max_w):
+    # Shrink to the widest whole-word prefix that fits max_w pixels.
+    text = str(text).strip()
+    if text == "" or max_w < 1:
+        return ""
+    if c.text_width(text, font) <= max_w:
+        return text
+    words = text.split(" ")
+    kept = ""
+    for word in words:
+        if word == "":
+            continue
+        trial = word if kept == "" else kept + " " + word
+        if c.text_width(trial, font) > max_w:
+            break
+        kept = trial
+    if kept != "":
+        return kept
+    for _i in range(24):
+        if len(text) <= 1 or c.text_width(text, font) <= max_w:
+            break
+        text = text[:len(text) - 1]
+    return text.strip()
 
 
 def format_gap(delta, position):
@@ -255,11 +373,16 @@ def pick_races(schedule, series_name, mode):
     return None, "NO RACES"
 
 
-def vehicle_rows(feed):
+def vehicle_rows(feed, chase_on):
     vehicles = feed.get("vehicles", [])
     rows = []
     for car in vehicles:
         driver = car.get("driver", {})
+        if driver == None:
+            driver = {}
+        in_chase = False
+        if chase_on and bool(driver.get("is_in_chase", False)):
+            in_chase = True
         rows.append({
             "pos": int(car.get("running_position", 0)),
             "num": str(car.get("vehicle_number", "?")),
@@ -268,6 +391,7 @@ def vehicle_rows(feed):
             "status": int(car.get("status", 0)),
             "laps": int(car.get("laps_completed", 0)),
             "mfg": str(car.get("vehicle_manufacturer", "")),
+            "chase": in_chase,
         })
     n = len(rows)
     for i in range(n):
@@ -329,7 +453,7 @@ def live_state(series, source, race, feed):
         "cautions": int(feed.get("number_of_caution_segments", 0)),
         "caution_laps": int(feed.get("number_of_caution_laps", 0)),
         "lead_changes": int(feed.get("number_of_lead_changes", 0)),
-        "rows": vehicle_rows(feed),
+        "rows": vehicle_rows(feed, int(race.get("playoff_round", 0) or 0) > 0),
         "race_date": format_date(race.get("race_date", "")),
         "status_note": "",
         "http_status": 200,
@@ -350,21 +474,36 @@ def draw_chrome(c, state, title, right = ""):
     flag = int(state.get("flag_state", 0))
     live = bool(state.get("live", False))
     finished = flag == 5 or flag == 9
+    title_x = 2
+    title_color = COLORS["text"]
     if live and not finished:
         # Live race pages: status flag only — skip the brand checkered.
         if flag > 0:
             draw_flag_icon(c, flag, 2, 0)
-            c.text(title, 14, 2, font = "5x7", color = COLORS["text"])
+            title_x = 14
         else:
-            c.text(title, 2, 2, font = "5x7", color = COLORS["text"])
+            title_x = 2
     elif live and flag > 0:
         # Finished / results: keep brand checkered + checkered status flag.
         c.image("checkered.png", 2, 1, w = 14, h = 8)
         draw_flag_icon(c, flag, 18, 0)
-        c.text(title, 30, 2, font = "5x7", color = COLORS["text"])
+        title_x = 30
     else:
         c.image("checkered.png", 2, 1, w = 14, h = 8)
-        c.text(title, 20, 2, font = "5x7", color = COLORS["accent"])
+        title_x = 20
+        title_color = COLORS["accent"]
+    # Leave the lap count (or other right label) intact, and give the title
+    # whatever width remains so a long race name keeps whole words.
+    gap = 4
+    avail = c.width - 3 - title_x - gap
+    right_w = 0
+    if right != "":
+        right_w = c.text_width(right, "5x7")
+        if right_w > avail - 48:
+            right = fit_line(c, right, "5x7", avail - 48)
+            right_w = c.text_width(right, "5x7")
+    title = fit_line(c, title, "5x7", avail - right_w)
+    c.text(title, title_x, 2, font = "5x7", color = title_color)
     if right != "":
         c.text(right, c.width - 3, 2, font = "5x7", color = COLORS["muted"], align = "right")
     if live and flag > 0:
@@ -417,6 +556,9 @@ def draw_car_badge(c, x, y, num, mfg, size = 11):
         return s
     if n == "12":
         c.image("car-12.png", x, y, w = s, h = s)
+        return s
+    if n == "14":
+        c.image("car-14.png", x, y, w = s, h = s)
         return s
     if n == "16":
         c.image("car-16.png", x, y, w = s, h = s)
@@ -544,6 +686,9 @@ def draw_car_badge(c, x, y, num, mfg, size = 11):
     if n == "98":
         c.image("car-98.png", x, y, w = s, h = s)
         return s
+    if n == "99":
+        c.image("car-99.png", x, y, w = s, h = s)
+        return s
     return draw_number_plate(c, x, y + 1, n, mfg, s)
 
 
@@ -567,6 +712,9 @@ def draw_car_badge_small(c, x, y, num, mfg, size = 10):
         return s
     if n == "12":
         c.image("car-12-sm.png", x, y, w = s, h = s)
+        return s
+    if n == "14":
+        c.image("car-14-sm.png", x, y, w = s, h = s)
         return s
     if n == "16":
         c.image("car-16-sm.png", x, y, w = s, h = s)
@@ -693,6 +841,9 @@ def draw_car_badge_small(c, x, y, num, mfg, size = 10):
         return s
     if n == "98":
         c.image("car-98-sm.png", x, y, w = s, h = s)
+        return s
+    if n == "99":
+        c.image("car-99-sm.png", x, y, w = s, h = s)
         return s
     # Keep fallback plates inside the badge slot so names don't collide.
     return draw_number_plate(c, x, y + 1, n, mfg, s)
@@ -836,7 +987,8 @@ def upcoming(c, ctx):
         return
 
     # Three-column grid, no gap times, so up to 6 places fit with real badges:
-    # POS + car badge + name per cell, 2 rows tall x 3 columns wide.
+    # POS + car badge + name per cell. Read down each column:
+    # 1 over 2, 3 over 4, 5 over 6.
     show = 6
     if show > len(rows):
         show = len(rows)
@@ -844,11 +996,14 @@ def upcoming(c, ctx):
     badge = 10
     for i in range(show):
         row = rows[i]
-        col = i % 3
-        line = i // 3
+        col = i // 2
+        line = i % 2
         x = 2 + col * col_w
         y = 11 + line * 10
-        c.text(str(row["pos"]), x, y + 3, font = "4x5", color = COLORS["muted"])
+        pos_color = COLORS["muted"]
+        if row["chase"]:
+            pos_color = COLORS["chase"]
+        c.text(str(row["pos"]), x, y + 3, font = "4x5", color = pos_color)
         badge_x = x + 8
         bw = draw_car_badge_small(c, badge_x, y, row["num"], row["mfg"], badge)
         name = row["name"]
@@ -899,7 +1054,10 @@ def results(c, ctx):
         badge_x = cx - badge // 2
         if badge_x < left + 1:
             badge_x = left + 1
-        c.text(str(row["pos"]), left + 1, 15, font = "4x5", color = COLORS["accent2"])
+        pos_color = COLORS["accent2"]
+        if row["chase"]:
+            pos_color = COLORS["chase"]
+        c.text(str(row["pos"]), left + 1, 15, font = "4x5", color = pos_color)
         draw_car_badge(c, badge_x, 11, row["num"], row["mfg"], badge)
         name = row["name"]
         if len(name) > 6:
@@ -924,7 +1082,7 @@ def race(c, ctx):
     practice_or_qual = run_type in [1, 2] or togo >= 500
     finished = (not practice_or_qual) and (togo <= 0 or state["flag_state"] == 5 or state["flag_state"] == 9)
     lap_str = str(lap_now) + "/" + str(total) if total > 0 else str(lap_now)
-    chrome_title = series_session_title(state) if practice_or_qual else short_race(state["race_name"], 16)
+    chrome_title = series_session_title(state) if practice_or_qual else state["race_name"]
     draw_chrome(c, state, chrome_title, lap_str)
 
     # Progress bar follows live flag color; finished races use checkered silver
@@ -1034,6 +1192,7 @@ def fetch_updates(ctx):
     if err != None:
         return err
 
+    feed = None
     race = None
     source = "PREV"
     flag_state = 0
@@ -1053,11 +1212,25 @@ def fetch_updates(ctx):
             race = upcoming_race
             source = "LIVE"
             flag_state = int(live["data"].get("flag_state", 0))
+            feed = live["data"]
     if race == None:
         race, _ = pick_races(schedule, series, "PREVIOUS RACE")
         source = "PREV"
     if race == None:
         return {"ok": False, "title": "NO RACE", "sub": "NO UPDATES"}
+    if feed == None:
+        series_id = int(race.get("series_id", SERIES_IDS.get(series, 1)))
+        race_id = int(race.get("race_id", 0))
+        live_url = (
+            "https://cf.nascar.com/cacher/live/series_"
+            + str(series_id)
+            + "/"
+            + str(race_id)
+            + "/live-feed.json"
+        )
+        live = http_json(live_url, 45)
+        if live["ok"]:
+            feed = live["data"]
 
     year = int(race.get("race_season", ctx.now.year))
     series_id = int(race.get("series_id", SERIES_IDS.get(series, 1)))
@@ -1101,6 +1274,7 @@ def fetch_updates(ctx):
         "live": source == "LIVE",
         "flag_state": flag_state,
         "notes": notes,
+        "chase_nums": chase_number_set(feed, race),
     }
 
 
@@ -1142,13 +1316,7 @@ def updates(c, ctx):
     elif fs == 4 or fs == 5 or fs == 9:
         col = COLORS["accent2"]
 
-    c.text_wrapped(
-        note["text"],
-        3,
-        13,
-        c.width - 6,
-        font = "4x5",
-        color = col,
-        line_gap = 1,
-        max_lines = 3,
-    )
+    chase = state.get("chase_nums", {})
+    if chase == None:
+        chase = {}
+    draw_update_note(c, note["text"], chase, col)
