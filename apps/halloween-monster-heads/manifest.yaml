@@ -8,7 +8,7 @@ category: Art
 entry: app.star
 width: 384
 height: 32
-refresh: 900
+refresh: 86400
 pages: [main]
 assets:
   - halloween_monster_heads.png
