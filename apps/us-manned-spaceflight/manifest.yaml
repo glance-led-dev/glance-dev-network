@@ -1,0 +1,19 @@
+id: us-manned-spaceflight
+description: US crewed spaceflight launches and landings that happened on this date - CATEGORY - History
+author: cfdmb
+name: Today in US Manned Space Flight
+width: 128
+height: 32
+# Note for the GDN crew: refresh is 300 (5 min) on purpose. Each render
+# picks which event (busy days) or astronaut profile (empty days) to show,
+# so each refresh brings a new pick. Please keep it at or below 300.
+refresh: 300
+pages:
+  - title
+  - flight
+  - duration
+  - crew
+  - details1
+  - details2
+  - details3
+  - details4
