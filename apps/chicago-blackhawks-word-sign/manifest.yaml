@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-blackhawks-word-sign
+version: 0.1.0
+name: "Chicago Blackhawks Word Sign"
+author: "FCYC"
+description: Let's go Hawks artwork between the head and feather logos.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - chicago_blackhawks_word_sign.png
