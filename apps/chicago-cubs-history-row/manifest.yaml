@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-cubs-history-row
+version: 0.4.0
+name: "Chicago Cubs History Row"
+author: "FCYC"
+description: Six Cubs designs on white.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - chicago_cubs_history_row.png
