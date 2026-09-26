@@ -60,7 +60,7 @@ def message(c, title, sub, demo = False):
 
 def demo_data(ctx):
     d = {"schema_version": 1, "generated_at": ctx.now.unix, "demo": True,
-         "pets": [{"id": "pet-1", "name": "YOUR CAT", "weight_kg": 5.6, "age_years": 4, "age_days": 120, "visits_today": 4}],
+         "pets": [{"id": "pet-1", "name": "TEGAN", "weight_kg": 5.6, "age_years": 4, "age_days": 120, "visits_today": 4}],
          "devices": [
              {"kind": "feeder", "name": "GRANARY", "last_feed_at_local": "09/23 18:04", "next_feed_at_local": "09/23 22:00", "feedings_today": 3},
              {"kind": "fountain", "name": "KITCHEN", "water_pct": 82, "filter_days": 18},
@@ -216,3 +216,4 @@ def hopper(c, ctx):
     branded(c, "hopper", "LITTERHOPPER", LITTER, d.get("demo"))
     status = l.get("hopper_status")
     txt(c, status or "LEVEL NOT REPORTED", 48, 12, 134, "5x7", LITTER)
+
