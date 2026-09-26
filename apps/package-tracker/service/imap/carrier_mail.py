@@ -46,10 +46,10 @@ def notification(message, domain, packages, plain):
     result = {'status': state[0], 'message': state[1], 'notified_at': timestamp,
               'expected_date': '', 'delivery_window': ''}
     # Only a date directly labelled as expected/estimated/scheduled delivery.
-    months = r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
+    months = r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
     match = re.search(r'(?i)(?:expected|estimated|scheduled)\s+delivery(?:\s+date)?\s*:?\s*(?:on\s+)?(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]*\s*,?\s*)?(' + months + r'\s+\d{1,2}(?:,?\s+20\d{2})?|\d{1,2}\s+' + months + r'(?:,?\s+20\d{2})?)\b', plain)
     if match and state[0] != 'delivered':
-        value = match[1].replace(',', '')
+        value = re.sub(r'(?i)\bSept\b', 'Sep', match[1].replace(',', ''))
         years = [None] if re.search(r'20\d{2}$', value) else [date.year-1, date.year, date.year+1]
         candidates = []
         for year in years:

@@ -10,6 +10,7 @@ class DiscoveryTests(unittest.TestCase):
         self.assertEqual(p['notification']['delivery_window'], 'BY 9:00 PM')
         day_first = raw.replace(b'Expected Delivery: September 28, 2026', b'Expected Delivery On 28 SEP')
         self.assertEqual(discover.parse_message(day_first)[0]['notification']['expected_date'], '2026-09-28')
+        self.assertEqual(discover.parse_message(day_first.replace(b'28 SEP', b'28 Sept'))[0]['notification']['expected_date'], '2026-09-28')
         self.assertEqual(p['notification']['status'], 'unknown')
         self.assertIn('notification', discover.parse_message(raw.replace(b'header.from=tracking.usps.com', b'header.from=usps.com'))[0])
         self.assertNotIn('notification', discover.parse_message(raw.replace(b'dmarc=pass', b'dmarc=fail'))[0])
