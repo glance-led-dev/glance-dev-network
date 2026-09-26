@@ -1,0 +1,329 @@
+gdn: 1
+id: college-conference-standings
+version: 0.1.0
+name: College Conference Standings
+author: glance-led-dev
+description: FBS conference standings as a logo ladder - every school in order with its conference and overall record, leaders in gold - plus a hero card for the conference leader. Pick any FBS conference. No key needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# The ladder steps four schools per refresh, so an 18-team conference cycles
+# in ten minutes. ESPN's standings are cached 1800 s regardless - they move
+# once a week.
+refresh: 120
+
+pages: [ladder, leader]
+
+inputs:
+  - key: conference
+    type: choice
+    app_input_type: dropdown
+    label: Conference
+    default: "SEC"
+    help: The FBS conference to show. The Sun Belt shows its East and West divisions in turn; FBS Independents ranks Notre Dame and UConn by overall record (W-L) and shows their streaks.
+    choices:
+      - "SEC"
+      - "BIG TEN"
+      - "BIG 12"
+      - "ACC"
+      - "AMERICAN"
+      - "MOUNTAIN WEST"
+      - "SUN BELT"
+      - "MAC"
+      - "CONFERENCE USA"
+      - "PAC-12"
+      - "FBS INDEPENDENTS"
+    options:
+      - "SEC"
+      - "BIG TEN"
+      - "BIG 12"
+      - "ACC"
+      - "AMERICAN"
+      - "MOUNTAIN WEST"
+      - "SUN BELT"
+      - "MAC"
+      - "CONFERENCE USA"
+      - "PAC-12"
+      - "FBS INDEPENDENTS"
+
+# FBS logos, one 40 x 24 (leader card) and one 24 x 18 (_S, ladder) per
+# school, named by ESPN abbreviation (TA&M -> TAMU, M-OH -> MOH).
+assets:
+  - AFA.png
+  - AFA_S.png
+  - AKR.png
+  - AKR_S.png
+  - ALA.png
+  - ALA_S.png
+  - APP.png
+  - APP_S.png
+  - ARIZ.png
+  - ARIZ_S.png
+  - ARK.png
+  - ARK_S.png
+  - ARMY.png
+  - ARMY_S.png
+  - ARST.png
+  - ARST_S.png
+  - ASU.png
+  - ASU_S.png
+  - AUB.png
+  - AUB_S.png
+  - BALL.png
+  - BALL_S.png
+  - BAY.png
+  - BAY_S.png
+  - BC.png
+  - BC_S.png
+  - BGSU.png
+  - BGSU_S.png
+  - BOIS.png
+  - BOIS_S.png
+  - BUFF.png
+  - BUFF_S.png
+  - BYU.png
+  - BYU_S.png
+  - CAL.png
+  - CAL_S.png
+  - CCU.png
+  - CCU_S.png
+  - CIN.png
+  - CIN_S.png
+  - CLEM.png
+  - CLEM_S.png
+  - CLT.png
+  - CLT_S.png
+  - CMU.png
+  - CMU_S.png
+  - COLO.png
+  - COLO_S.png
+  - CONN.png
+  - CONN_S.png
+  - CSU.png
+  - CSU_S.png
+  - DEL.png
+  - DEL_S.png
+  - DUKE.png
+  - DUKE_S.png
+  - ECU.png
+  - ECU_S.png
+  - EMU.png
+  - EMU_S.png
+  - FAU.png
+  - FAU_S.png
+  - FIU.png
+  - FIU_S.png
+  - FLA.png
+  - FLA_S.png
+  - FRES.png
+  - FRES_S.png
+  - FSU.png
+  - FSU_S.png
+  - GASO.png
+  - GASO_S.png
+  - GAST.png
+  - GAST_S.png
+  - GT.png
+  - GT_S.png
+  - HAW.png
+  - HAW_S.png
+  - HOU.png
+  - HOU_S.png
+  - ILL.png
+  - ILL_S.png
+  - IOWA.png
+  - IOWA_S.png
+  - ISU.png
+  - ISU_S.png
+  - IU.png
+  - IU_S.png
+  - JMU.png
+  - JMU_S.png
+  - JXST.png
+  - JXST_S.png
+  - KENN.png
+  - KENN_S.png
+  - KENT.png
+  - KENT_S.png
+  - KSU.png
+  - KSU_S.png
+  - KU.png
+  - KU_S.png
+  - LIB.png
+  - LIB_S.png
+  - LOU.png
+  - LOU_S.png
+  - LSU.png
+  - LSU_S.png
+  - LT.png
+  - LT_S.png
+  - MOH.png
+  - MOH_S.png
+  - MASS.png
+  - MASS_S.png
+  - MD.png
+  - MD_S.png
+  - MEM.png
+  - MEM_S.png
+  - MIA.png
+  - MIA_S.png
+  - MICH.png
+  - MICH_S.png
+  - MINN.png
+  - MINN_S.png
+  - MISS.png
+  - MISS_S.png
+  - MIZ.png
+  - MIZ_S.png
+  - MOST.png
+  - MOST_S.png
+  - MRSH.png
+  - MRSH_S.png
+  - MSST.png
+  - MSST_S.png
+  - MSU.png
+  - MSU_S.png
+  - MTSU.png
+  - MTSU_S.png
+  - NAVY.png
+  - NAVY_S.png
+  - NCSU.png
+  - NCSU_S.png
+  - ND.png
+  - ND_S.png
+  - NDSU.png
+  - NDSU_S.png
+  - NEB.png
+  - NEB_S.png
+  - NEV.png
+  - NEV_S.png
+  - NIU.png
+  - NIU_S.png
+  - NMSU.png
+  - NMSU_S.png
+  - NU.png
+  - NU_S.png
+  - ODU.png
+  - ODU_S.png
+  - OHIO.png
+  - OHIO_S.png
+  - OKST.png
+  - OKST_S.png
+  - ORE.png
+  - ORE_S.png
+  - ORST.png
+  - ORST_S.png
+  - OSU.png
+  - OSU_S.png
+  - OU.png
+  - OU_S.png
+  - PITT.png
+  - PITT_S.png
+  - PSU.png
+  - PSU_S.png
+  - PUR.png
+  - PUR_S.png
+  - RICE.png
+  - RICE_S.png
+  - RUTG.png
+  - RUTG_S.png
+  - SAC.png
+  - SAC_S.png
+  - SC.png
+  - SC_S.png
+  - SDSU.png
+  - SDSU_S.png
+  - SHSU.png
+  - SHSU_S.png
+  - SJSU.png
+  - SJSU_S.png
+  - SMU.png
+  - SMU_S.png
+  - STAN.png
+  - STAN_S.png
+  - SYR.png
+  - SYR_S.png
+  - TAMU.png
+  - TAMU_S.png
+  - TCU.png
+  - TCU_S.png
+  - TEM.png
+  - TEM_S.png
+  - TENN.png
+  - TENN_S.png
+  - TEX.png
+  - TEX_S.png
+  - TLSA.png
+  - TLSA_S.png
+  - TOL.png
+  - TOL_S.png
+  - TROY.png
+  - TROY_S.png
+  - TTU.png
+  - TTU_S.png
+  - TULN.png
+  - TULN_S.png
+  - TXST.png
+  - TXST_S.png
+  - UAB.png
+  - UAB_S.png
+  - UCF.png
+  - UCF_S.png
+  - UCLA.png
+  - UCLA_S.png
+  - UGA.png
+  - UGA_S.png
+  - UK.png
+  - UK_S.png
+  - UL.png
+  - UL_S.png
+  - ULM.png
+  - ULM_S.png
+  - UNC.png
+  - UNC_S.png
+  - UNLV.png
+  - UNLV_S.png
+  - UNM.png
+  - UNM_S.png
+  - UNT.png
+  - UNT_S.png
+  - USA.png
+  - USA_S.png
+  - USC.png
+  - USC_S.png
+  - USF.png
+  - USF_S.png
+  - USM.png
+  - USM_S.png
+  - USU.png
+  - USU_S.png
+  - UTAH.png
+  - UTAH_S.png
+  - UTEP.png
+  - UTEP_S.png
+  - UTSA.png
+  - UTSA_S.png
+  - UVA.png
+  - UVA_S.png
+  - VAN.png
+  - VAN_S.png
+  - VT.png
+  - VT_S.png
+  - WAKE.png
+  - WAKE_S.png
+  - WASH.png
+  - WASH_S.png
+  - WIS.png
+  - WIS_S.png
+  - WKU.png
+  - WKU_S.png
+  - WMU.png
+  - WMU_S.png
+  - WSU.png
+  - WSU_S.png
+  - WVU.png
+  - WVU_S.png
+  - WYO.png
+  - WYO_S.png
