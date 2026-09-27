@@ -12,6 +12,25 @@ def obj(value):
 def text(value, fallback = ""):
     return value if type(value) == "string" else fallback
 
+def endpoint_url(value):
+    if type(value) != "string":
+        return ""
+    value = value.strip()
+    if value.startswith("https://"):
+        return value
+    # Colons terminate the device's settings descriptor. Accept host/path here
+    # and add the HTTPS scheme only after the settings reach the renderer.
+    if not value or ":" in value or any([x in value for x in [" ", "\t", "\r", "\n", "\\", "@", "#"]]):
+        return ""
+    host = value.split("/")[0].split("?")[0]
+    if "." not in host or host.startswith(".") or host.endswith("."):
+        return ""
+    if any([x not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-." for x in host.elems()]):
+        return ""
+    if any([not label or label.startswith("-") or label.endswith("-") for label in host.split(".")]):
+        return ""
+    return "https://" + value
+
 def clip(c, value, font, width):
     value = text(value).upper()[:160]
     if c.text_width(value, font) <= width:
@@ -183,10 +202,11 @@ def main(c, ctx):
         endpoint = text(ctx.inputs.get("endpoint", "")).strip()
         key = text(ctx.inputs.get("readkey", "")).strip()
         if not endpoint or not key:
-            message(c,"CONNECT ACCOUNT","ADD STATUS URL + DEVICE KEY")
+            message(c,"CONNECT ACCOUNT","ADD STATUS HOST + DEVICE KEY")
             return
-        if not endpoint.startswith("https://"):
-            message(c,"CHECK STATUS URL","HTTPS IS REQUIRED")
+        endpoint = endpoint_url(endpoint)
+        if not endpoint:
+            message(c,"CHECK STATUS HOST","ENTER HOST/PATH ONLY")
             return
         response = http.get(endpoint, headers={"Authorization":"Bearer "+key}, ttl_seconds=60)
         status = response.get("status_code",0)

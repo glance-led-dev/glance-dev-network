@@ -10,7 +10,11 @@ You need an always-on Docker host and a public HTTPS address through your own re
 
 ## Display setup
 
-Enter your companion HTTPS `/status` URL and READ_KEY in the Glance app inputs. Keep Preview scenario set to Live. Friends require opt-in both in your server configuration and the display settings. Fictional demo scenarios work without a backend.
+Enter your companion hostname and `/status` path, such as `xbox.example.com/status`, in **Companion status host/path**. Omit `https://`: its colon can truncate the device's settings descriptor. The app adds HTTPS when fetching the snapshot. Enter READ_KEY in **Device read key** and keep **Preview scenario** set to **Live**. Friends require opt-in both in your server configuration and the display settings. Fictional demo scenarios work without a backend.
+
+After this app update is available, edit an existing installation's endpoint to remove only the `https://` prefix, keep the hostname/path and existing device key, then save. The input keys are unchanged. Full HTTPS URLs remain accepted for legacy settings and Studio, but use hostname/path on the physical device. Public HTTPS hosting is still required; this change does not alter the companion's PUBLIC_URL or Microsoft redirect URI.
+
+The display refreshes every five minutes, as required for apps with text and API-key settings. The companion continues collecting a snapshot every four minutes. Glance caches the HTTP response for 60 seconds, and snapshots older than five minutes still show a stale warning.
 
 The app is not yet published in the catalogue. Use the GDN development workflow until catalogue publication is complete. Catalogue availability depends on maintainer review and merge.
 
@@ -23,6 +27,8 @@ The app is not yet published in the catalogue. Use the GDN development workflow 
 - Static cards use Glance bitmap fonts. Auto currently selects current activity or Profile; individual views can be selected. Smooth animation is not supported by the current runtime.
 
 ## Validation and limitations
+
+With the SDK dependencies installed, run `python -B -m unittest discover -s apps/xbox-companion/tests -v` from the repository root. These offline tests use the native Starlark host and mock HTTP to check endpoint normalization, retained authentication and caching, invalid and missing inputs, all demos, schema handling and the freshness boundaries. They do not prove delivery to a physical panel.
 
 The original live prototype verified Microsoft/Xbox authentication, profile, achievements, shared friend presence, TitleHub play timestamps and Microsoft Store artwork. Thirty rendering/behavior checks and GDN validation passed. The packaged companion's offline tests cover authorization, CSRF, PKCE, callback replay, encrypted token storage and exclusion of credentials from status output. Docker is unavailable in the development environment, so container execution and unattended refresh are not claimed as tested. Each deployment still needs end-to-end verification.
 

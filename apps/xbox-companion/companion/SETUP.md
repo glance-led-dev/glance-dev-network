@@ -53,11 +53,15 @@ Once Xbox Companion is available in the Glance catalogue, add it and enter:
 
 | Setting | Value |
 |---|---|
-| Companion status URL | `https://YOUR-HOST/status` |
+| Companion status host/path | `xbox.example.com/status` (replace with your public hostname, omit `https://`) |
 | Device read key | Your READ_KEY |
 | Preview scenario | Live |
 | Display | Your preferred card |
 | Show friend activity | Enable only if SHOW_FRIENDS=true on your server |
+
+Omit the scheme only in the Glance endpoint input: a colon can truncate the device's settings descriptor. The app adds HTTPS when requesting `/status`. Keep PUBLIC_URL and the Microsoft redirect URI as full HTTPS URLs. Existing Glance installations should remove only the `https://` prefix after updating the app, retaining their hostname/path and READ_KEY. Full HTTPS inputs remain supported for legacy settings and Studio.
+
+The Glance display refreshes every five minutes. The companion still collects a snapshot every four minutes, the display request uses a 60-second HTTP cache, and snapshots older than five minutes show an old-data warning.
 
 Catalogue submission is not included or completed in this package. Until the app is published, use the GDN development workflow to load `manifest.yaml` and `app.star` for testing. The companion alone does not install an app on a panel.
 
