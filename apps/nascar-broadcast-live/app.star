@@ -65,47 +65,47 @@ FLAG_COLOR = {
 # changes livery. Each series keeps its own table; never share one across
 # series or a same-numbered car picks up the wrong colors.
 NASCAR_DRIVER_COLOR = {
-    "1": ("#00A4DA", "#204C85"),
+    "1": ("#00A4DA", "#000000"),
     "2": ("#FFF200", "#006400"),
     "3": ("#C0C0C0", "#000000"),
     "4": ("#ECB11F", "#000000"),
     "5": ("#015998", "#FFFFFF"),
     "6": ("#009343", "#FFFFFF"),
-    "7": ("#2475D1", "#72D669"),
+    "7": ("#2475D1", "#FFFFFF"),
     "9": ("#0A0094", "#FFC836"),
     "10": ("#FF4500", "#000000"),
     "11": ("#2D95E5", "#FFFFFF"),
     "12": ("#FFF200", "#000000"),
-    "16": ("#000000", "#FDFF45"),
+    "16": ("#FDFF45", "#000000"),
     "17": ("#FF6700", "#000000"),
-    "19": ("#000000", "#FF5F1F"),
+    "19": ("#FF5F1F", "#000000"),
     "20": ("#EA0021", "#FFFFFF"),
     "21": ("#FFFFFF", "#D40000"),
-    "22": ("#FFCF1D", "#ED1C24"),
-    "23": ("#6138F5", "#04C785"),
-    "24": ("#D91C2B", "#005596"),
-    "33": ("#0A192F", "#CE714C"),
+    "22": ("#FFCF1D", "#000000"),
+    "23": ("#6138F5", "#FFFFFF"),
+    "24": ("#D91C2B", "#FFFFFF"),
+    "33": ("#CE714C", "#0A192F"),
     "34": ("#FFE100", "#000000"),
     "35": ("#95D600", "#000000"),
-    "38": ("#3472BD", "#32CD32"),
-    "41": ("#505359", "#000000"),
+    "38": ("#3472BD", "#FFFFFF"),
+    "41": ("#505359", "#FFFFFF"),
     "42": ("#FFFFFF", "#235DAB"),
-    "43": ("#D3AF37", "#6FBE4A"),
+    "43": ("#D3AF37", "#000000"),
     "45": ("#D3D3D3", "#CF1A2B"),
-    "47": ("#005A9C", "#FF5F1F"),
+    "47": ("#005A9C", "#FFFFFF"),
     "48": ("#650360", "#FFFFFF"),
     "51": ("#D3AF37", "#000000"),
-    "54": ("#000000", "#95D600"),
-    "60": ("#000000", "#50AD9A"),
+    "54": ("#95D600", "#000000"),
+    "60": ("#50AD9A", "#000000"),
     "71": ("#0058AA", "#81D9AC"),
     "77": ("#000080", "#E32227"),
     "88": ("#1E5BC6", "#F7C300"),
-    "97": ("#1E5BC6", "#DC052D"),
+    "97": ("#1E5BC6", "#FFFFFF"),
 }
 
 ORS_DRIVER_COLOR = {
-    "00": ("#FFCF1D", "#ED1C24"),
-    "0": ("#0088D8", "#4BB92C"),
+    "00": ("#FFCF1D", "#000000"),
+    "0": ("#0088D8", "#000000"),
     "1": ("#FF5F1F", "#000000"),
     "02": ("#000096", "#4D9DFF"),
     "2": ("#FFFFFF", "#FF0000"),
@@ -113,12 +113,12 @@ ORS_DRIVER_COLOR = {
     "7": ("#ED1B24", "#FFFFFF"),
     "8": ("#EF4138", "#000000"),
     "17": ("#015998", "#FFFFFF"),
-    "18": ("#666666", "#003E6F"),
-    "19": ("#0047BA", "#D42E12"),
+    "18": ("#666666", "#FFFFFF"),
+    "19": ("#0047BA", "#FFFFFF"),
     "20": ("#FFF200", "#006400"),
     "21": ("#FFFFFF", "#015998"),
     "24": ("#FFFFFF", "#ED1B2E"),
-    "26": ("#000000", "#52D1FF"),
+    "26": ("#52D1FF", "#000000"),
     "27": ("#FEC85A", "#B82C0F"),
     "28": ("#4169E1", "#000000"),
     "31": ("#174A7C", "#FDB913"),
@@ -126,9 +126,9 @@ ORS_DRIVER_COLOR = {
     "41": ("#44C744", "#000000"),
     "44": ("#0205C7", "#CCFF00"),
     "45": ("#155289", "#FFE600"),
-    "48": ("#006499", "#D62D2D"),
+    "48": ("#006499", "#FFFFFF"),
     "51": ("#D3AF37", "#000000"),
-    "54": ("#FFDD42", "#FFFFFF"),
+    "54": ("#FFDD42", "#000000"),
     "87": ("#FFFF73", "#FF0000"),
     "88": ("#FFFFFF", "#015998"),
     "92": ("#C9AC34", "#000000"),
@@ -138,37 +138,37 @@ ORS_DRIVER_COLOR = {
 
 TRUCK_DRIVER_COLOR = {
     "1": ("#0047BA", "#FFFFFF"),
-    "2": ("#E41D38", "#160BE6"),
+    "2": ("#E41D38", "#FFFFFF"),
     "5": ("#FFFFFF", "#0047BA"),
-    "7": ("#808080", "#FF5B00"),
-    "9": ("#8B3A3A", "#000000"),
+    "7": ("#808080", "#000000"),
+    "9": ("#8B3A3A", "#FFFFFF"),
     "10": ("#0066CC", "#FFFFFF"),
     "11": ("#DB0020", "#FFFFFF"),
     "12": ("#EE2E24", "#000000"),
-    "13": ("#000000", "#FF0000"),
+    "13": ("#FF0000", "#000000"),
     "14": ("#F6DE0F", "#000000"),
-    "15": ("#89CFF0", "#FFFFFF"),
-    "16": ("#FFFFFF", "#FF8D2E"),
+    "15": ("#89CFF0", "#000000"),
+    "16": ("#FFFFFF", "#000000"),
     "17": ("#FF6600", "#000000"),
     "18": ("#003F72", "#F8981C"),
     "19": ("#0A0094", "#FFC836"),
     "22": ("#FFFFFF", "#000000"),
-    "25": ("#000000", "#F6DE0F"),
-    "26": ("#5D8AAA", "#A9A9A9"),
+    "25": ("#F6DE0F", "#000000"),
+    "26": ("#5D8AAA", "#000000"),
     "33": ("#FFF836", "#000000"),
     "34": ("#FFE100", "#000000"),
     "38": ("#8ACF00", "#000000"),
     "42": ("#FFFFFF", "#0000B8"),
     "44": ("#0000B8", "#32CD32"),
-    "45": ("#C70000", "#0000B8"),
-    "52": ("#006499", "#D62D2D"),
+    "45": ("#C70000", "#FFFFFF"),
+    "52": ("#006499", "#FFFFFF"),
     "62": ("#FFFFFF", "#E30614"),
-    "76": ("#8C8B88", "#FFBF00"),
+    "76": ("#8C8B88", "#000000"),
     "77": ("#0058AA", "#81D9AC"),
-    "81": ("#00396F", "#B5160B"),
+    "81": ("#00396F", "#FFFFFF"),
     "88": ("#FFF200", "#000000"),
     "91": ("#FFC836", "#0A0094"),
-    "98": ("#8C8B88", "#F0941C"),
+    "98": ("#8C8B88", "#000000"),
     "99": ("#C71121", "#FFFFFF"),
 }
 
@@ -253,7 +253,7 @@ TRACK_SHAPE = {
 }
 
 # Real traced outlines -- (asset, native width, native height), pre-sized in
-# Python so no runtime distortion. Only used on the big `track` page and the
+# Python so no runtime distortion. Used on the event page and the
 # off-season cards; the live boards have no room for a raster outline.
 NASCAR_TRACK_ASSET = {
     "CHARLOTTE MOTOR SPEEDWAY": ("track-charlotte.png", 51, 26),
@@ -1042,38 +1042,38 @@ def event(c, ctx):
         extra = str(st.get("cautions", 0)) + " CAU   " + str(st.get("lead_changes", 0)) + " LEAD CHG"
         c.text(fit_text(c, extra, "picopixel", smw), sx, 25, font = "picopixel", color = COLORS["muted"])
 
-# 192: no room for the text | track | status trio, so stack the text and tuck
-# a small track outline against the right edge.
+# 192: no room for the text | track | status trio, so the outline runs
+# full-height on the left and the text stacks beside it.
 def _event_narrow(c, st):
     is_race = st["is_race"]
     session = st.get("session", "RACE")
 
     track_asset, nw, nh = nascar_track_dims(st["track_key"])
-    track_w, track_h = cap_track_dims(nw, nh, 30, 22)
-    trx = c.width - track_w - 3
-    draw_nascar_track(c, st["track_key"], track_asset, trx, (32 - track_h) // 2, track_w, track_h)
-    tzw = trx - 6
+    track_w, track_h = cap_track_dims(nw, nh, 56, 30)
+    draw_nascar_track(c, st["track_key"], track_asset, 3, (32 - track_h) // 2, track_w, track_h)
+    tx = 3 + track_w + 7
+    tzw = c.width - tx - 2
 
-    c.text(fit_text(c, st["race_name"], "6x8", tzw), 3, 1, font = "6x8", color = COLORS["text"])
-    c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), 3, 12, font = "4x5", color = COLORS["muted"])
+    c.text(fit_text(c, st["race_name"], "6x8", tzw), tx, 1, font = "6x8", color = COLORS["text"])
+    c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), tx, 11, font = "4x5", color = COLORS["muted"])
 
     if not is_race:
-        c.text(fit_text(c, session, "5x7", tzw), 3, 21, font = "5x7", color = COLORS["accent2"])
+        c.text(fit_text(c, session, "5x7", tzw), tx, 20, font = "5x7", color = COLORS["accent2"])
         return
 
     flag_s = fit_text(c, FLAG_LABEL.get(st["flag"], "FLAG"), "5x7", tzw)
-    c.text(flag_s, 3, 19, font = "5x7", color = flag_color(st["flag"]))
-    fx = 3 + c.text_width(flag_s, "5x7") + 6
-    if fx < tzw:
+    c.text(flag_s, tx, 18, font = "5x7", color = flag_color(st["flag"]))
+    fx = tx + c.text_width(flag_s, "5x7") + 6
+    if fx < c.width - 2:
         lap_txt = "LAP " + str(st["lap"]) + "/" + str(st["laps_total"])
-        c.text(fit_text(c, lap_txt, "4x5", tzw - fx + 3), fx, 20, font = "4x5", color = COLORS["text"])
+        c.text(fit_text(c, lap_txt, "4x5", c.width - 2 - fx), fx, 19, font = "4x5", color = COLORS["text"])
 
     stage_txt = "STAGE " + str(st["stage_num"]) + "/3" if st["stage_num"] > 0 else "FINAL STAGE"
-    c.text(fit_text(c, stage_txt, "4x5", tzw), 3, 26, font = "4x5", color = COLORS["accent2"])
-    ex = 3 + c.text_width(stage_txt, "4x5") + 6
-    if ex < tzw:
+    c.text(stage_txt, tx, 26, font = "4x5", color = COLORS["accent2"])
+    ex = tx + c.text_width(stage_txt, "4x5") + 6
+    if ex < c.width - 2:
         extra = str(st.get("cautions", 0)) + " CAU  " + str(st.get("lead_changes", 0)) + " LEAD CHG"
-        c.text(fit_text(c, extra, "picopixel", tzw - ex + 3), ex, 27, font = "picopixel", color = COLORS["muted"])
+        c.text(fit_text(c, extra, "picopixel", c.width - 2 - ex), ex, 27, font = "picopixel", color = COLORS["muted"])
 
 # ---------- pages: order / leaders / pit road ----------
 # Every page has one fixed job and a permanent tab label. The manifest page

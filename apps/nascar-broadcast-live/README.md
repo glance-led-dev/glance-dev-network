@@ -1,7 +1,7 @@
 # NASCAR - Broadcast Live
 
 A broadcast-style live leaderboard for the NASCAR Cup, Xfinity (O'Reilly Auto
-Parts), and Craftsman Truck series, on a 384px panel.
+Parts), and Craftsman Truck series, built for a 192px panel.
 
 A real page rotation — the panel requests one render per page, in order. Every
 page has one fixed job and a permanent label; the manifest page list is fixed,
@@ -10,12 +10,12 @@ so each page reads in both a live session and between sessions:
 | # | page | live session | between sessions |
 |---|------|--------------|------------------|
 | 1 | `logo` | series wordmark · LIVE | series wordmark · NEXT UP |
-| 2 | `event` | race · session · flag / lap / stage / cautions / lead changes · track shape | NEXT RACE card |
-| 3 | `order1` | ORDER P1–12 (car #, driver, gap, playoff badge) | LAST RACE — the full finishing order, 12 across the page |
-| 4 | `order2` | ORDER P13–24 | SCHEDULE — the next races |
-| 5 | `order3` | ORDER P25–36 | SCHEDULE — continued |
-| 6 | `order4` | ORDER P37–40 | SCHEDULE — continued |
-| 7 | `movers` | the six biggest gainers and six biggest losers vs. their starting spot | SEASON — race N of the schedule, playoff round, next race |
+| 2 | `event` | track outline · race · session · flag / lap / stage / cautions / lead changes | NEXT RACE card |
+| 3 | `order1` | ORDER P1–8 (car #, driver, gap, playoff badge) | LAST RACE — the full finishing order, a page at a time |
+| 4–7 | `order2`–`order5` | ORDER P9–40 | LAST RACE — continued |
+| 8 | `movers` | the biggest gainers and losers vs. their starting spot | SCHEDULE — the next races |
+
+The order board is 2 columns × 4 rows on a 192 panel and 3 × 4 on 384/640.
 
 Lapped runners show `-N LAP(S)` in the live order and the last-race result.
 
