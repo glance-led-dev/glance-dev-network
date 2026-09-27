@@ -6,7 +6,7 @@ A 192x32 GDN app for package status. Each view retains the carrier logo, sender 
 
 - Four pages: expected delivery, latest status/location, last carrier scan, and origin/destination.
 - Every undelivered, unarchived FedEx, UPS and USPS shipment stays eligible, including label-created, delayed, unknown and delivery-attempted shipments.
-- A different shipment is selected each minute. The four page functions use the same selection within that minute. A render crossing the minute boundary may switch shipment; the persistent identity makes the switch visible.
+- The display refreshes every five minutes, as required for GDN apps with free-text and API-key settings. A different shipment is selected each five-minute interval. The four page functions use the same selection within that interval. A render crossing the interval boundary may switch shipment; the persistent identity makes the switch visible.
 - Five progress segments represent label / acceptance / transit / final delivery stage / delivered. This is not distance or percentage completion. Delivered shipments leave the rotation.
 - Long carrier messages and location text continue across later passes. Long senders are fitted separately so the tracking suffix stays visible.
 - Missing sender: `SENDER UNKNOWN`. Missing date: `DELIVERY PENDING`. Missing window: `TIME NOT PROVIDED`. Missing location remains unknown, rather than inferring it from unrelated events.
@@ -18,10 +18,12 @@ A 192x32 GDN app for package status. Each view retains the carrier logo, sender 
 1. Copy this folder into `apps/package-tracker` in a Glance Developer Network checkout, or open this folder directly in Glance Studio.
 2. Start with a **Preview scenario** such as UPS, FedEx or USPS. No credentials are needed for demos.
 3. Set up the accompanying `package-discovery` service for automatic Gmail discovery and carrier tracking (included as `service/` in the release package).
-4. Enter its HTTPS `/status` URL and separate read-only key. The key input uses GDN's encrypted `api-key` type.
+4. Enter its hostname and `/status` path **without `https://`**, for example `example.invalid/status`, and the separate read-only key. The app adds HTTPS automatically. The key input uses GDN's encrypted `api-key` type.
 5. Switch Preview scenario to **Live**.
 
 Production defaults are Live with empty connection settings. Each user supplies their own authenticated feed. See [service setup](service/README.md) for the free direct-carrier and Gmail options.
+
+Glance device settings use colons as separators, so a pasted full URL can be truncated. Full HTTPS URLs remain supported for Studio and existing direct-render integrations; use hostname/path in device settings. Displayed status is a snapshot until the next refresh; the HTTP response cache remains 60 seconds.
 
 ## Feed contract
 

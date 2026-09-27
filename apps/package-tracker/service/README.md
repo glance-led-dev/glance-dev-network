@@ -22,7 +22,7 @@ Legacy EasyPost is disabled unless both ALLOW_PAID_TRACKING = "true" and EASYPOS
 4. Configure separate random READ_KEY and WRITE_KEY Worker secrets plus both FedEx secrets.
 5. Connect the Windows helper using Windows Credential Manager. Never place credentials in source or configuration files.
 6. Run node --test test/*.test.mjs and deploy. The schedule runs every 15 minutes and refreshes up to 15 eligible shipments, least recently checked first.
-7. Configure Glance with the private /status URL and encrypted read key.
+7. Configure Glance with the private hostname and /status path **without `https://`** (for example `example.invalid/status`) and the encrypted read key. The Glance app adds HTTPS automatically.
 
 Cloudflare quotas apply. This service does not change your subscription or activate paid tracking. IMAP discovery requires the Windows computer to be awake and signed in.
 

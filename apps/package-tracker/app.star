@@ -3,6 +3,26 @@
 COLORS = {"UPS": "#FFBF47", "FEDEX": "#C49BFF", "USPS": "#78B5FF"}
 ASSETS = {"UPS": "ups.png", "FEDEX": "fedex.png", "USPS": "usps.png"}
 MUTED = "#BCC6D5"
+REFRESH_SECONDS = 300
+
+def endpoint_url(value):
+    if type(value) != "string":
+        return ""
+    value = value.strip()
+    if value.startswith("https://"):
+        return value
+    # Colons terminate the device's settings descriptor. Accept host/path here
+    # and add the HTTPS scheme only after the settings reach the renderer.
+    if not value or ":" in value or any([x in value for x in [" ", "\t", "\r", "\n", "\\", "@", "#"]]):
+        return ""
+    host = value.split("/")[0].split("?")[0]
+    if "." not in host or host.startswith(".") or host.endswith("."):
+        return ""
+    if any([x not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-." for x in host.elems()]):
+        return ""
+    if any([not label or label.startswith("-") or label.endswith("-") for label in host.split(".")]):
+        return ""
+    return "https://" + value
 
 def obj(v):
     return v if type(v) == "dict" else {}
@@ -57,7 +77,7 @@ def demo_shipments():
 
 def feed(ctx):
     mode = ctx.inputs.get("demo", "Live")
-    endpoint = ctx.inputs.get("endpoint", "").strip()
+    endpoint = ctx.inputs.get("endpoint", "")
     key = ctx.inputs.get("readkey", "")
     if mode != "Live":
         items = demo_shipments()
@@ -74,12 +94,13 @@ def feed(ctx):
         return {"shipments": items, "generated_at": ctx.now.unix - (7200 if mode == "Stale data" else 0), "demo": True}
     if not endpoint or not key:
         return {"error": "CONNECT PACKAGE FEED", "detail": "ADD URL AND READ KEY"}
-    if not endpoint.startswith("https://"):
-        return {"error": "HTTPS URL REQUIRED", "detail": "CHECK FEED SETTINGS"}
+    endpoint = endpoint_url(endpoint)
+    if not endpoint:
+        return {"error": "CHECK FEED ADDRESS", "detail": "USE HOSTNAME AND PATH"}
     response = http.get(endpoint, headers = {"Authorization": "Bearer " + key}, ttl_seconds = 60)
-    if response.get("status", 0) in [401, 403]:
+    if response.get("status_code", 0) in [401, 403]:
         return {"error": "FEED KEY REJECTED", "detail": "CHECK READ KEY"}
-    if not response.get("ok", False):
+    if response.get("status_code", 0) != 200:
         return {"error": "FEED UNAVAILABLE", "detail": "WILL RETRY NEXT PASS"}
     data = obj(response.get("json"))
     if type(data.get("shipments")) != "list" or data.get("schema_version") != 1:
@@ -117,7 +138,8 @@ def draw(c, ctx, view):
     if not active:
         message(c, "NO ACTIVE PACKAGES", "UPDATES " + clean(data.get("discovery_status", "CONNECTED")))
         return
-    slot = ctx.now.unix // 60
+    # Match the manifest refresh so every shipment advances at the next render.
+    slot = ctx.now.unix // REFRESH_SECONDS
     p = dict(active[slot % len(active)])
     p["carrier"] = clean(p.get("carrier"))
     pass_number = slot // len(active)
