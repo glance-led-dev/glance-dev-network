@@ -1,6 +1,6 @@
 gdn: 1
 id: commute
-version: 0.3.0
+version: 0.3.1
 name: Commute
 author: Commute contributors
 description: Traffic-aware commute ETAs, named routes, optional stops, weather and road alerts with road-sign graphics.
@@ -8,7 +8,7 @@ category: Productivity
 entry: app.star
 width: 192
 height: 32
-refresh: 60
+refresh: 300
 pages: [main, routeweather]
 assets: [assets/starbucks.png]
 inputs:
@@ -18,14 +18,14 @@ inputs:
     label: Display
     default: Departure
     choices: [Departure, Routes, Conditions]
-    help: Departure keeps the countdown, route and stop deadline together. Choose Routes or Conditions for details. Urgent weather warnings take priority in every view.
+    help: Departure keeps the leave-by time, route and stop deadline together. Choose Routes or Conditions for details. Urgent weather warnings take priority in every view.
   - key: endpoint
     type: string
     app_input_type: free-text
     label: Commute status URL
     default: ""
     required: true
-    help: HTTPS /status URL from your personal Commute Worker. Addresses stay in your Worker configuration.
+    help: Enter your personal Commute Worker hostname followed by /status, without https://. The app uses HTTPS automatically. Addresses stay in your Worker configuration.
   - key: readkey
     type: string
     app_input_type: api-key
@@ -52,5 +52,5 @@ inputs:
     app_input_type: dropdown
     label: Arrive by
     default: Configured
-    choices: [Configured, "08:00", "08:15", "08:30"]
+    choices: [Configured, "8 AM", "8.15 AM", "8.30 AM"]
     help: Use your Worker setting or quickly choose 8, 8:15 or 8:30 AM in your configured local time zone.

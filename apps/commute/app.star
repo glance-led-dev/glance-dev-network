@@ -233,29 +233,60 @@ def demo_data(s, now):
     d["routeWeather"]={"direct":wx,"stop":wx}
     return d
 
+def endpoint_url(value):
+    if type(value) != "string":
+        return ""
+    value = value.strip()
+    if value.startswith("https://"):
+        return value
+    # Colons terminate the device's settings descriptor. Accept host/path here
+    # and add the HTTPS scheme only after the settings reach the renderer.
+    if not value or ":" in value or any([x in value for x in [" ", "\t", "\r", "\n", "\\", "@", "#"]]):
+        return ""
+    host = value.split("/")[0].split("?")[0]
+    if "." not in host or host.startswith(".") or host.endswith("."):
+        return ""
+    if any([x not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-." for x in host.elems()]):
+        return ""
+    if any([not label or label.startswith("-") or label.endswith("-") for label in host.split(".")]):
+        return ""
+    return "https://" + value
+
+def arrival_time(value):
+    # Send the existing HH:MM values to the Worker; only settings are colon-free.
+    return {"8 AM":"08:00", "8.15 AM":"08:15", "8.30 AM":"08:30", "08:00":"08:00", "08:15":"08:15", "08:30":"08:30"}.get(value, "Configured")
+
+def demo_leave_time(deadline,now):
+    # Demo checkedTime is 7:24 AM. Match its absolute labels to each deadline.
+    minutes=7*60+24+(deadline-now)//60
+    hour=(minutes//60)%24
+    minute=minutes%60
+    return str(hour%12 if hour%12 else 12)+":"+("0" if minute < 10 else "")+str(minute)+("A" if hour < 12 else "P")
+
 def fetch_data(ctx):
     scenario = ctx.inputs.get("demo", "Live")
     if scenario != "Live":
         d=demo_data(scenario,ctx.now.unix)
-        selected=ctx.inputs.get("arrivetime","Configured")
+        selected=arrival_time(ctx.inputs.get("arrivetime","Configured"))
         if selected in ["08:15","08:30"]:
             d["arriveBy"]=selected
-            d["direct"]["leaveBy"]="7:51A" if selected == "08:15" else "8:06A"
-            if d.get("stop"):
-                d["stop"]["leaveBy"]="7:41A" if selected == "08:15" else "7:56A"
         extra=900 if selected == "08:15" else 1800 if selected == "08:30" else 0
         d["direct"]["leaveAt"]=d["direct"].get("leaveAt",ctx.now.unix+(36-d["direct"]["minutes"])*60)+extra
+        d["direct"]["leaveBy"]=demo_leave_time(d["direct"]["leaveAt"],ctx.now.unix)
         if d.get("stop"):
             d["stop"]["leaveAt"]=ctx.now.unix-120+extra if scenario == "Stop too late" else d["direct"]["leaveAt"]-600
+            d["stop"]["leaveBy"]=demo_leave_time(d["stop"]["leaveAt"],ctx.now.unix)
         d["recommendation"]={"kind":"faster","minutes":4,"otherRoad":"WILMINGTON PIKE"}
         return d
-    url = ctx.inputs.get("endpoint", "").strip()
+    raw_url = ctx.inputs.get("endpoint", "").strip()
     key = ctx.inputs.get("readkey", "").strip()
-    if not url or not key:
+    if not raw_url or not key:
         return {"error":"SETUP REQUIRED","detail":"ADD STATUS URL + KEY"}
-    if not url.startswith("https://") or "?" in url or "#" in url:
-        return {"error":"INVALID URL","detail":"USE HTTPS STATUS URL"}
-    r = http.get(url,headers={"Authorization":"Bearer "+key},params={"arriveby":ctx.inputs.get("arrivetime","Configured")},ttl_seconds=30)
+    url = endpoint_url(raw_url)
+    if not url or "?" in url or "#" in url:
+        return {"error":"INVALID URL","detail":"USE HOSTNAME/STATUS"}
+    # Keep traffic younger than the unchanged 180-second freshness cutoff.
+    r = http.get(url,headers={"Authorization":"Bearer "+key},params={"arriveby":arrival_time(ctx.inputs.get("arrivetime","Configured"))},ttl_seconds=60)
     if r["status_code"] != 200:
         return {"error":"NO LIVE DATA","detail":"CHECK WORKER + KEY"}
     d = obj(r.get("json"))
@@ -297,16 +328,17 @@ def current_alert(d,ctx,trip):
     alerts = obj(d.get("alerts")).get(trip,[])
     return obj(alerts[0]) if type(alerts) == "list" and alerts else {}
 
-def countdown(r,now,short = False):
-    deadline=obj(r).get("leaveAt")
-    if type(deadline) not in ["int","float"]:
-        return "BY "+obj(r).get("leaveBy","--")
-    seconds=deadline-now
-    if seconds < 0:
-        return "TOO LATE" if short else str(int((-seconds+59)//60))+" MIN LATE"
-    if seconds < 60:
-        return "LEAVE NOW"
-    return ("IN " if short else "LEAVE IN ")+str(int(seconds//60))+"M"
+def departure_label(r,now,short = False):
+    # A frame can remain visible for five minutes. An absolute local deadline
+    # stays meaningful while a relative countdown would overstate time left.
+    route=obj(r)
+    leave_by=route.get("leaveBy")
+    if type(leave_by) != "string" or not leave_by.strip():
+        return "CHECK TIME" if short else "CHECK LEAVE TIME"
+    deadline=route.get("leaveAt")
+    if type(deadline) in ["int","float"] and deadline < now:
+        return ("MISSED " if short else "LATE / BY ")+leave_by
+    return ("BY " if short else "LEAVE BY ")+leave_by
 
 def mini_sign(c,road):
     kind=road.get("kind","road")
@@ -351,10 +383,11 @@ def draw_departure(c,ctx,d):
         which="direct"
     c.fill("black")
     mini_sign(c,obj(r.get("road")))
-    headline=countdown(r,ctx.now.unix)
+    headline=departure_label(r,ctx.now.unix)
     late=obj(r).get("leaveAt",ctx.now.unix)<ctx.now.unix
-    color=RED if late else AMBER if headline == "LEAVE NOW" else GREEN
-    txt(c,headline,41,0,110,"7x12" if c.text_width(headline,"7x12") <= 110 else "5x7",color)
+    color=RED if late else AMBER if obj(r).get("leaveAt",ctx.now.unix)-ctx.now.unix < 300 else GREEN
+    # 7x12 omits colon and slash glyphs; use a font that preserves clock times.
+    txt(c,headline,41,0,110,"6x9" if c.text_width(headline,"6x9") <= 110 else "5x7",color)
     # DEMO is compact and visibly separate from all departure information.
     if d.get("demo"):
         txt(c,"DEMO",155,0,26,color=AMBER)
@@ -370,10 +403,13 @@ def draw_departure(c,ctx,d):
     if d.get("stopEnabled"):
         small_coffee(c,"STARBUCKS" in clean(d.get("stopName","")))
         if which == "direct":
-            footer=d.get("stopName","STOP")+": "+(countdown(stop,ctx.now.unix,True) if valid_route(stop) else "UNKNOWN")
+            suffix=": "+(departure_label(stop,ctx.now.unix,True) if valid_route(stop) else "UNKNOWN")
+            # Reserve the complete deadline before shortening a long stop name.
+            stop_name=clip(c,d.get("stopName","STOP"),140-c.text_width(suffix,"5x7")-1,"5x7")
+            footer=stop_name+suffix
             footer_color=RED if stop.get("leaveAt",ctx.now.unix)<ctx.now.unix else AMBER
         else:
-            footer="DIRECT: "+countdown(d["direct"],ctx.now.unix,True)
+            footer="DIRECT: "+departure_label(d["direct"],ctx.now.unix,True)
             footer_color=GRAY
         txt(c,footer,41,25,140,"5x7",footer_color)
     else:

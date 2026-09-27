@@ -73,13 +73,15 @@ After the first scheduled collection, open the Worker root URL in a browser. Ent
 
 In Glance, configure:
 
-- **Status URL:** the Worker's HTTPS URL ending in `/status`.
+- **Status URL:** the Worker's hostname ending in `/status`, without `https://` (for example, `example.workers.dev/status`). The app adds HTTPS internally. Existing full HTTPS URLs remain accepted, but use the colon-free form on the device.
 - **Read key:** the separate `READ_KEY`, entered into the encrypted API-key field.
 - **Today's trip:** Direct or Stopover.
-- **Arrive by:** Configured, 08:00, 08:15 or 08:30.
+- **Arrive by:** Configured, 8 AM, 8.15 AM or 8.30 AM. These colon-free settings map to the service's existing `HH:MM` format; old saved values remain accepted.
 - **Preview scenario:** Live.
 
 Use the normal GDN catalogue submission/review workflow for distribution. Passing local validation does not install the app on a device or make it available in the catalogue.
+
+The Glance frame refreshes every five minutes and shows absolute local leave-by times. The service's collection schedule is unchanged. Traffic older than three minutes when rendered still shows as stale; a frame remains a snapshot until its next refresh. Use the companion for current estimates between Glance refreshes.
 
 ## 5. Optional county snow levels
 
