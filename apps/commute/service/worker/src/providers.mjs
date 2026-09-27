@@ -112,7 +112,8 @@ export async function weatherAlerts(lines,env,c,namespace,now,fetcher=fetch){
   return {byRoute:lines.map(line=>nwsEvents(expanded,line,now)),state:unresolved?'partial':'ok',checkedAt:Math.floor(response.at/1000),coverage:c.alertAreas.join(',')};
 }
 export async function roadEvents(lines,env,c,namespace,now,fetcher=fetch){
-  if(!c.ohgo||!env.OHGO_KEY)throw Error('OHGO_SETUP_REQUIRED');
+  if(!c.ohgo)return {byRoute:lines.map(()=>[]),state:'disabled',checkedAt:null,coverage:'NOT ENABLED'};
+  if(!env.OHGO_KEY)throw Error('OHGO_SETUP_REQUIRED');
   // Fetch statewide geometry, so a work-zone whose marker is outside the corridor
   // is still found when its line intersects the selected route. No bounding-box claim.
   const endpoints=[['incidents','incident'],['construction','construction'],['travel-delays','delay'],['dangerous-slowdowns','slowdown'],['weather-sensor-sites','surface']];

@@ -16,6 +16,6 @@
   "outsideIntervalMinutes": 60,
   "routeOptions": [],
   "alertAreas": ["OH"],
-  "ohgo": true,
+  "ohgo": false,
   "countyAdvisoryFeed": ""
 }

@@ -168,6 +168,15 @@ test('weather alerts resolve null geometries using official affected zones',asyn
 test('a missing county feed never synthesizes a snow emergency level',async()=>{
   await assert.rejects(countyAlerts([line],env(),config(),'t:',now),/NOT_CONFIGURED/);
 });
+test('NWS weather and warnings work without an OHGO account while enabled missing keys remain errors',async()=>{
+  const e=env();delete e.OHGO_KEY;e.CONFIG_JSON=JSON.stringify({...config(),ohgo:false});
+  const calls=[];const s=await refresh(e,now,mock(calls));
+  assert.equal(s.state,'ok');assert.equal(s.weather.temperatureF,68);
+  assert.equal(s.sources.weatherAlerts.state,'ok');assert.equal(s.sources.roads.state,'disabled');
+  assert.ok(s.alerts.direct.some(a=>a.title==='TORNADO WARNING'));
+  assert.ok(!calls.some(c=>c.url.hostname==='publicapi.ohgo.com'));
+  await assert.rejects(roadEvents([line],e,{ohgo:true},'test:',now,mock()),/OHGO_SETUP_REQUIRED/);
+});
 test('county feed requires provenance, expiry, freshness and route intersection',async()=>{
   const a={county:'SYNTHETIC',authority:'TEST SHERIFF',sourceUrl:'https://example.gov/advisories',level:2,updatedAt:new Date(now).toISOString(),expires:new Date(now+300e3).toISOString(),geometry:polygon};
   const c={...config(),countyAdvisoryFeed:'https://example.gov/feed'};

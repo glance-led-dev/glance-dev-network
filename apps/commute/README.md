@@ -15,6 +15,14 @@ This app uses your own authenticated Commute service. The companion source and s
 
 Your private service holds the home, destination, optional stop and API keys. Stop duration defaults to five minutes. Addresses and stop names are configurable; Starbucks is not required.
 
+## Your addresses and weather
+
+Set `origin.address` and `destination.address` in your own Worker's private `CONFIG_JSON` secret, or use precise latitude/longitude for a parking entrance. Updating that secret recalculates the trip on the next collection; the Glance status URL and read key stay the same. The current Glance settings and companion do not edit addresses. See [step-by-step endpoint setup](service/SETUP.md#set-or-change-the-two-endpoints), including optional stops and route corridors.
+
+**OHGO is optional.** For supported U.S. routes, NWS provides temperature, reported visibility, conditions and severe-weather alerts without an OHGO account or weather API key. Set `alertAreas` to every state your route crosses. The community example defaults to `ohgo: false`; NWS-only weather is treated as normal operation. This is not worldwide weather coverage.
+
+Ohio users can keep `ohgo: true` and their `OHGO_KEY` to add the existing incidents, construction, slowdowns, delays and fresh pavement/road-sensor readings. Those road-sensor features are not synthesized for users without OHGO. TomTom traffic ETAs work in either mode.
+
 ## Display
 
 The departure view puts the leave countdown, recommended route and the optional stop deadline together. Starbucks has its logo and an iced-coffee illustration. No arrival cushion is added. Routes and Conditions are selectable detail views; urgent weather alerts take priority in every view. Missing supplemental data does not displace the departure information.

@@ -31,7 +31,7 @@ export function sampleRoute(line){
   return [line[0],middle,line.at(-1)];
 }
 export async function collectRouteWeather(lines,env,c,namespace,now,fetcher=fetch){
-  let payload=null,ohgoState='unavailable';
+  let payload=null,ohgoState=c.ohgo?'unavailable':'disabled';
   if(c.ohgo&&env.OHGO_KEY)try{
     payload=(await cached(env.COMMUTE,namespace+'weather-sensor-sites',300,now,()=>json('https://publicapi.ohgo.com/api/v1/weather-sensor-sites?page-all=true',{headers:{Authorization:'APIKEY '+env.OHGO_KEY}},fetcher))).value;
     ohgoState='ok';
@@ -50,7 +50,7 @@ export async function collectRouteWeather(lines,env,c,namespace,now,fetcher=fetc
     }
     let sensors=[];let sensorState=ohgoState;
     if(payload)try{sensors=roadSensors(payload,line,now);}catch{sensorState='unavailable';}
-    byRoute.push({state:missing||sensorState!=='ok'?'partial':'ok',nwsState:missing===3?'unavailable':missing?'partial':'ok',ohgoState:sensorState,observations:[...stations.values()],sensors,checkedAt:Math.floor(now/1000)});
+    byRoute.push({state:missing||!['ok','disabled'].includes(sensorState)?'partial':'ok',nwsState:missing===3?'unavailable':missing?'partial':'ok',ohgoState:sensorState,observations:[...stations.values()],sensors,checkedAt:Math.floor(now/1000)});
   }
   return {direct:byRoute[0],stop:byRoute[1]||null};
 }

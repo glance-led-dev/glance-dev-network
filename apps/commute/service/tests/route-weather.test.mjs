@@ -55,13 +55,14 @@ test('route collector samples both trips, deduplicates stations and converts NWS
   const map=new Map(),kv={get:async k=>map.has(k)?JSON.parse(map.get(k)):null,put:async(k,v)=>map.set(k,v)};
   const env={COMMUTE:kv,NWS_USER_AGENT:'synthetic-test'};
   const f=async url=>{
+    assert.ok(!url.includes('ohgo.com'),'NWS-only weather must not call OHGO');
     if(url.includes('/points/'))return Response.json({properties:{observationStations:'https://api.weather.gov/gridpoints/TEST/stations'}});
     if(url.endsWith('/stations'))return Response.json({features:[{id:'https://api.weather.gov/stations/TEST',geometry:{coordinates:[-84,40.1]}}]});
     return Response.json({geometry:{coordinates:[-84,40.1]},properties:{timestamp:stamp,temperature:{value:0,unitCode:'wmoUnit:degC'},visibility:{value:1609.344,unitCode:'wmoUnit:m'},textDescription:'Snow'}});
   };
   const r=await collectRouteWeather([line,line],env,{ohgo:false},'test:',now,f);
   for(const data of [r.direct,r.stop]){
-    assert.equal(data.observations.length,1);assert.equal(data.observations[0].visibilityMiles,1);assert.equal(data.observations[0].temperatureF,32);assert.equal(data.ohgoState,'unavailable');
+    assert.equal(data.observations.length,1);assert.equal(data.observations[0].visibilityMiles,1);assert.equal(data.observations[0].temperatureF,32);assert.equal(data.ohgoState,'disabled');assert.equal(data.state,'ok');
     assert.equal(weatherSummary(data,now).kind,'snow');assert.ok(!JSON.stringify(data).includes('stationPoint'));
   }
 });

@@ -427,7 +427,7 @@ def draw_conditions(c,ctx,d):
         temp=weather.get("temperatureF")
         txt(c,(str(temp)+"F / " if temp != None else "")+"NEAR START",31,12,150,"5x7",GRAY)
         sources=obj(d.get("sources"))
-        missing=[name for key,name in [["weatherAlerts","WX ALERTS"],["roads","ROAD FEED"]] if obj(sources.get(key)).get("state") != "ok"]
+        missing=[name for key,name in [["weatherAlerts","WX ALERTS"],["roads","ROAD FEED"]] if obj(sources.get(key)).get("state") not in ["ok","disabled"]]
         txt(c,missing[0]+" UNKNOWN" if missing else "NO REPORTED ALERTS",11,24,170,"5x7",GRAY)
     if d.get("demo"):
         txt(c,"DEMO",155,0,26,color=AMBER)
@@ -538,10 +538,10 @@ def routeweather(c,ctx):
             hazard(c,28,0,w.get("conditionHazard"))
     else:
         text=w.get("description","CONDITIONS UNKNOWN")
-        if w.get("ohgoState") != "ok":
+        if w.get("ohgoState") not in ["ok","disabled"]:
             text+=" / RWIS N/A"
         c.rect(41,24,181,31,fill="#102737")
         level=w.get("conditionHazard","none")
         hazard(c,43,25,level)
         x=55 if level != "none" else 43
-        txt(c,text,x,25,181-x,"5x7",hazard_color(level) if level != "none" else WHITE if w.get("ohgoState") == "ok" else GRAY)
+        txt(c,text,x,25,181-x,"5x7",hazard_color(level) if level != "none" else WHITE if w.get("ohgoState") in ["ok","disabled"] else GRAY)

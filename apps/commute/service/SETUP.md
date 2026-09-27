@@ -1,11 +1,12 @@
 # Activate your own Commute
 
-The app is built, but live operation needs your routing account, OHGO registration and a deployed private service. Enter secrets locally or in Cloudflare's secret fields; do not paste them into shared issues, public configuration or screenshots.
+Live operation needs your own routing account and deployed private service. OHGO is optional. U.S. route weather and severe-weather alerts come from NWS independently of OHGO. Enter secrets locally or in Cloudflare's secret fields; do not paste them into shared issues, public configuration or screenshots.
 
 ## 1. Accounts
 
 - Create a TomTom developer key with Routing and Search access at the [TomTom developer portal](https://developer.tomtom.com/). The service can accept precise coordinates instead of addresses, removing the need to geocode.
-- Register for an OHGO key at [OHGO](https://publicapi.ohgo.com/). Its documented resources include incidents, construction and road-weather stations, not arbitrary home-to-work routing.
+- NWS weather needs no API key: supply the required identifying `NWS_USER_AGENT` string. This integration covers supported U.S. locations; it is not a worldwide weather service. See [NWS API documentation](https://www.weather.gov/documentation/services-web-api).
+- Optional, for Ohio routes: register for an [OHGO](https://publicapi.ohgo.com/) key to add incidents, construction, travel delays, dangerous slowdowns and available road-weather sensors. Without OHGO, leave `ohgo` false and omit `OHGO_KEY`.
 - Use your Cloudflare account with Workers and SQLite-backed Durable Objects enabled (available on Cloudflare Free). Review the account's provider quotas before enabling frequent checks. This app does not create or upgrade paid subscriptions.
 
 ## 2. Private trip configuration
@@ -13,6 +14,34 @@ The app is built, but live operation needs your routing account, OHGO registrati
 Copy `worker/config.example.json` to an unshared file named `config.private.json`. Fill in the locations, stop, time zone and arrival time. Each location accepts either `{ "address": "your complete address" }` or `{ "lat": 40.0, "lon": -84.0 }` (these numbers are illustrative).
 
 For a campus, hospital or large workplace, use the actual parking entrance coordinates rather than the street address of the entire campus. Ambiguous geocoding deliberately fails with CHECK LOCATIONS. A route cannot be confirmed until its destination entrance is correct.
+
+### Set or change the two endpoints
+
+Each person deploys their own service and stores their own configuration. They do not use someone else's endpoint or read key. In `config.private.json`, set:
+
+```json
+"origin": {"address": "YOUR COMPLETE HOME OR START ADDRESS"},
+"destination": {"address": "YOUR COMPLETE WORK OR DESTINATION ADDRESS"}
+```
+
+These are fields inside the complete configuration, not a standalone JSON document. Include city, state and ZIP. Alternatively use `lat` and `lon` coordinates, particularly for a parking entrance. Set `timeZone`, `arriveBy` and the traffic-check window for the trip. Set `alertAreas` to **every U.S. state the route crosses**, for example `["NY", "NJ"]`; do not leave the Ohio example for an out-of-state trip.
+
+To change an existing trip, open Cloudflare **Workers & Pages → your Commute Worker → Settings → Variables and Secrets**, edit the `CONFIG_JSON` secret, and replace its value with the complete updated JSON. Save/deploy the secret change. With the CLI, run `npx wrangler secret put CONFIG_JSON` from the `worker` folder and enter that same complete JSON at the private prompt. Do not place it on a command line or in a public repository.
+
+Open the companion with the same read key. The next collection resolves the new endpoints, recalculates routes and resamples weather. It may briefly show WAIT FOR FIRST CHECK. The service isolates old configuration data, so the previous home's route is not presented as the new route. Check the route and destination before relying on the new estimate. The Glance status URL and read key remain the same; Glance's current settings and the companion do **not** include an address editor.
+
+The two endpoints describe one journey. TomTom compares alternative roads between them automatically. `routeOptions` is only needed to request particular corridors; it is not where the home/work addresses go.
+
+### Weather with or without OHGO
+
+| Feature | NWS-only (`ohgo: false`) | OHGO enabled with a key |
+|---|---|---|
+| Temperature, visibility when reported, conditions and icons | Nearby NWS observations sampled along the actual route | NWS plus available nearby OHGO atmospheric sensors |
+| Severe-weather alerts | NWS route/zone matching in configured states | Same NWS coverage |
+| Pavement temperature, reported ice/snow and subsurface readings | Not available; never inferred from air temperature | Available where fresh OHGO sensors report them |
+| Ohio incidents, construction, slowdowns and travel delays | OHGO reports disabled; TomTom traffic ETA still works | OHGO reports near the route |
+
+NWS observations are checked near the start, route midpoint and destination, with repeated stations deduplicated. Missing visibility stays unknown. No OHGO account is required for weather, and deliberately disabling OHGO does not create a failed-feed warning. Enabling it without a valid key does show unavailable coverage. To retain OHGO, keep `ohgo: true` and the existing `OHGO_KEY` secret; the new community example does not change existing deployed configurations.
 
 An optional stop is configured with `stop.enabled`, `stop.name`, `stop.location` and `stop.durationMinutes`. Any business or errand stop is supported; coffee is just an example.
 
@@ -26,7 +55,7 @@ From the `worker` folder, deploy with `npx wrangler deploy`. The configuration c
 
 - `CONFIG_JSON`: your private route configuration as a JSON string.
 - `TOMTOM_KEY`: the routing provider key.
-- `OHGO_KEY`: your OHGO key.
+- `OHGO_KEY`: optional; required only when `ohgo` is true.
 - `READ_KEY`: a separate randomly generated secret of at least 24 characters.
 - `NWS_USER_AGENT`: an identifying application user-agent string.
 
@@ -80,7 +109,7 @@ Replace the empty geometry with the actual county boundary. `updatedAt` is when 
 
 1. Confirm origin, parking entrance, coffee stop and corridor points on a map.
 2. Verify authenticated live routing returns the intended roads and sensible traffic times for direct and stopover journeys.
-3. Verify OHGO and NWS schemas with the user's live account and inspect feed coverage for the commute.
+3. Verify NWS coverage for the route; also verify OHGO feeds if that integration is enabled.
 4. Observe at least two scheduled collections and confirm timestamps advance without manual refresh.
 5. Compare displayed estimates with a current driving app at the same time. Waze and TomTom can differ; do not present either as identical to the other.
 6. Confirm the Glance device's actual refresh cadence and input delivery after catalogue availability.
