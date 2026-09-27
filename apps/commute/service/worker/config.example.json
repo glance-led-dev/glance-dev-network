@@ -1,0 +1,21 @@
+{
+  "label": "WORK",
+  "origin": {"address": "ENTER YOUR START ADDRESS"},
+  "destination": {"address": "ENTER YOUR DESTINATION ADDRESS"},
+  "stop": {
+    "enabled": false,
+    "name": "COFFEE",
+    "location": {"address": "ENTER OPTIONAL STOP ADDRESS"},
+    "durationMinutes": 5
+  },
+  "timeZone": "America/New_York",
+  "arriveBy": "08:00",
+  "days": [1, 2, 3, 4, 5],
+  "activeStart": "06:30",
+  "activeEnd": "08:30",
+  "outsideIntervalMinutes": 60,
+  "routeOptions": [],
+  "alertAreas": ["OH"],
+  "ohgo": true,
+  "countyAdvisoryFeed": ""
+}

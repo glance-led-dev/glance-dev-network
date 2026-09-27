@@ -1,0 +1,56 @@
+gdn: 1
+id: commute
+version: 0.3.0
+name: Commute
+author: Commute contributors
+description: Traffic-aware commute ETAs, named routes, optional stops, weather and road alerts with road-sign graphics.
+category: Productivity
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages: [main, routeweather]
+assets: [assets/starbucks.png]
+inputs:
+  - key: viewmode
+    type: string
+    app_input_type: dropdown
+    label: Display
+    default: Departure
+    choices: [Departure, Routes, Conditions]
+    help: Departure keeps the countdown, route and stop deadline together. Choose Routes or Conditions for details. Urgent weather warnings take priority in every view.
+  - key: endpoint
+    type: string
+    app_input_type: free-text
+    label: Commute status URL
+    default: ""
+    required: true
+    help: HTTPS /status URL from your personal Commute Worker. Addresses stay in your Worker configuration.
+  - key: readkey
+    type: string
+    app_input_type: api-key
+    label: Commute read key
+    default: ""
+    required: true
+    help: Your private READ_KEY, stored encrypted by Glance. Never use your traffic provider key here.
+  - key: trip
+    type: string
+    app_input_type: dropdown
+    label: Today's trip
+    default: Direct
+    choices: [Direct, Stopover]
+    help: Chooses the main ETA and route alerts. Configure an optional stop in your Worker first.
+  - key: demo
+    type: string
+    app_input_type: dropdown
+    label: Preview scenario
+    default: Live
+    choices: [Live, Interstate, Leave now, Late, Local road, State route, US route, Rain, Winter roads, Sensors missing, Visibility missing, Weather stale, Storm warning, Warning traffic outage, Snow advisory, Construction, Accident, Dangerous slowdown, Road closed, Clouds, Night, Fog, Stop too late, Long names, Heavy traffic, Stale, Feed unavailable, No stop, Stop unavailable]
+    help: Sample scenes use no network and are visibly marked DEMO. Choose Live for your own trip.
+  - key: arrivetime
+    type: string
+    app_input_type: dropdown
+    label: Arrive by
+    default: Configured
+    choices: [Configured, "08:00", "08:15", "08:30"]
+    help: Use your Worker setting or quickly choose 8, 8:15 or 8:30 AM in your configured local time zone.

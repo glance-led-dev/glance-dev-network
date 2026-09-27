@@ -1,0 +1,6 @@
+.wrangler/
+node_modules/
+work/
+.dev.vars*
+config.private.json
+*.dpapi
