@@ -81,6 +81,25 @@ def demo_data(ctx):
         d["devices"][0]["name"] = "DOWNSTAIRS GRANARY CAMERA FEEDER"
     return d
 
+def endpoint_url(value):
+    if type(value) != "string":
+        return ""
+    value = value.strip()
+    if value.startswith("https://"):
+        return value
+    # Colons terminate the device's settings descriptor. Accept host/path here
+    # and add the HTTPS scheme only after the settings reach the renderer.
+    if not value or ":" in value or any([x in value for x in [" ", "\t", "\r", "\n", "\\", "@", "#"]]):
+        return ""
+    host = value.split("/")[0].split("?")[0]
+    if "." not in host or host.startswith(".") or host.endswith("."):
+        return ""
+    if any([x not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-." for x in host.elems()]):
+        return ""
+    if any([not label or label.startswith("-") or label.endswith("-") for label in host.split(".")]):
+        return ""
+    return "https://" + value
+
 def data(c, ctx):
     if ctx.inputs.get("demo", "Live") != "Live":
         d = demo_data(ctx)
@@ -90,7 +109,8 @@ def data(c, ctx):
         if not endpoint or not key:
             message(c, "SETUP REQUIRED", "ADD ENDPOINT + KEY")
             return None
-        if not endpoint.startswith("https://"):
+        endpoint = endpoint_url(endpoint)
+        if not endpoint:
             message(c, "HTTPS REQUIRED", "CHECK ENDPOINT URL")
             return None
         response = http.get(endpoint, headers = {"x-api-key": key}, ttl_seconds = 300)

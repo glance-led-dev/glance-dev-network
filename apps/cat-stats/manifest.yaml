@@ -14,9 +14,10 @@ inputs:
   - key: endpoint
     type: string
     app_input_type: free-text
-    label: Cat Stats HTTPS status URL
+    label: Cat Stats endpoint (without https://)
     default: ""
     required: true
+    help: "Enter your Cat Stats hostname and /status path without https://, for example: your-worker.your-subdomain.workers.dev/status. The app adds HTTPS automatically."
   - key: readkey
     type: string
     app_input_type: api-key
