@@ -1165,7 +1165,7 @@ def _draw_gains_losses(c, st):
             moved.append((r, r["start_pos"] - r["pos"]))
     gainers = sorted([m for m in moved if m[1] > 0], key = lambda e: -e[1])[:4]
     losers = sorted([m for m in moved if m[1] < 0], key = lambda e: e[1])[:4]
-    draw_page_tab(c, "MOVERS", GREEN)
+    draw_page_tab(c, "MOVERS", "#FFFFFF")
     if len(gainers) == 0 and len(losers) == 0:
         c.text("NO POSITIONS CHANGED YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
