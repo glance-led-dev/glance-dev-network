@@ -239,7 +239,7 @@ def title(c, ctx):
     # Left column: NOW / SHOWING stacked, with a hairline divider -- the same
     # shape the 384 build used, just narrower.
     c.text("NOW", SIDEBAR_W // 2, 7, font = "6x8", color = label_color, align = "center")
-    c.text("SHOWING", SIDEBAR_W // 2, 16, font = "6x8", color = label_color, align = "center")
+    c.text("SHOWING", SIDEBAR_W // 2, 17, font = "6x8", color = label_color, align = "center")
     c.line(DIVIDER_X, 4, DIVIDER_X, 27, "#444444")
 
     # Right column: name over genre, vertically centred in what's left.
