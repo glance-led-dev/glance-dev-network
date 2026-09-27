@@ -150,19 +150,108 @@ def schedule(c, ctx):
     else:
         matchup = "MAKE THE CALL AT " + opponent
 
-    matchup_text, matchup_font = fit_text(
-        c,
-        matchup,
-        ["6x8", "5x7", "4x5"],
-        186
-    )
+    # -----------------------------------------------------
+    # FIND BUNDLED OPPONENT LOGO
+    # -----------------------------------------------------
 
-    c.text_center(
-        matchup_text,
-        11,
-        font = matchup_font,
-        color = WHITE
-    )
+    logo = ""
+
+    if opponent == "TROJANS":
+        logo = "trojans.png"
+
+    elif opponent == "MIGHTY DS":
+        logo = "mighty-ds.png"
+
+    elif opponent == "ROYALS":
+        logo = "royals.png"
+
+    elif opponent == "THE GOATS":
+        logo = "the-goats.png"
+
+    elif opponent == "D5 MIGHTY DUCKS":
+        logo = "d5-mighty-ducks.png"
+
+    # -----------------------------------------------------
+    # MATCHUP
+    #
+    # MAKE THE CALL AT TROJANS [LOGO]
+    # -----------------------------------------------------
+
+    if logo:
+        logo_size = 16
+        gap = 3
+
+        matchup_font = "4x5"
+
+        for font in ["6x8", "5x7", "4x5"]:
+            text_width = c.text_width(
+                matchup,
+                font = font
+            )
+
+            total_width = (
+                text_width +
+                gap +
+                logo_size
+            )
+
+            if total_width <= 186:
+                matchup_font = font
+                break
+
+        text_width = c.text_width(
+            matchup,
+            font = matchup_font
+        )
+
+        total_width = (
+            text_width +
+            gap +
+            logo_size
+        )
+
+        start_x = (192 - total_width) // 2
+
+        c.text(
+            matchup,
+            start_x,
+            11,
+            font = matchup_font,
+            color = WHITE
+        )
+
+        logo_x = (
+            start_x +
+            text_width +
+            gap
+        )
+
+        c.image(
+            logo,
+            logo_x,
+            7,
+            w = logo_size,
+            h = logo_size
+        )
+
+    else:
+        matchup_text, matchup_font = fit_text(
+            c,
+            matchup,
+            ["6x8", "5x7", "4x5"],
+            186
+        )
+
+        c.text_center(
+            matchup_text,
+            11,
+            font = matchup_font,
+            color = WHITE
+        )
+
+    # -----------------------------------------------------
+    # DATE / TIME
+    # -----------------------------------------------------
 
     date_label = str(
         game.get("local_date_label", "")
@@ -187,6 +276,10 @@ def schedule(c, ctx):
         font = "5x7",
         color = YELLOW
     )
+
+    # -----------------------------------------------------
+    # LOCATION
+    # -----------------------------------------------------
 
     location = str(
         game.get("location", "")
@@ -253,7 +346,6 @@ def standing_row(c, row, rank, y):
     if otl > 0:
         record = record + "-" + str(otl)
 
-    # Rank
     c.text(
         str(rank),
         2,
@@ -262,7 +354,6 @@ def standing_row(c, row, rank, y):
         color = GRAY
     )
 
-    # Full team name
     name_text, name_font = fit_text(
         c,
         name,
@@ -278,7 +369,6 @@ def standing_row(c, row, rank, y):
         color = color
     )
 
-    # Record
     c.text(
         record,
         153,
@@ -288,7 +378,6 @@ def standing_row(c, row, rank, y):
         align = "right"
     )
 
-    # Points
     c.text(
         points + " PTS",
         190,
@@ -448,7 +537,6 @@ def players_block(c, data, start):
 
     c.fill(BLACK)
 
-    # Header
     c.text(
         "MAKE THE CALL",
         2,
@@ -484,7 +572,6 @@ def players_block(c, data, start):
         align = "center"
     )
 
-    # Four comfortably spaced player rows
     positions = [7, 13, 19, 25]
 
     for i in range(4):
