@@ -21,6 +21,9 @@ inputs:
     help: Which conference's division leaders, wild card spots and playoff hunt to show.
 
 assets:
+  - eastern_logo.png
+  - western_logo.png
+  - nhl_logo.png
   # Western Conference
   - ducks_glance_tiny.png
   - flames_glance_tiny.png
