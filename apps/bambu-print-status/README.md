@@ -21,8 +21,11 @@ Bambu printer(s) -> Bambu Cloud -> local Bambu Glance Bridge -> user's
 Cloudflare Worker -> Bambu Print Status GDN app
 
 1. Configure your compatible bridge and Worker (see Backend setup below).
-2. Enter the full HTTPS `/status` URL in **Status endpoint URL** (`endpoint`),
-   for example `https://your-worker.your-subdomain.workers.dev/status`.
+2. Enter your hostname and `/status` path in **Status endpoint (without https://)**
+   (`endpoint`), for example `your-worker.your-subdomain.workers.dev/status`.
+   Omit `https://` in the Glance Setup App: colons can truncate device settings.
+   The app adds HTTPS before making the request. Full HTTPS URLs remain supported
+   when passed directly by Studio or other tools.
    This is a placeholder; replace it with your own endpoint.
 3. Enter your bridge's `READ_KEY` in **Bambu status read API key** (`readkey`).
    Glance stores this through its encrypted `app_input_type: api-key` setting.
@@ -33,8 +36,8 @@ Cloudflare Worker -> Bambu Print Status GDN app
 
 Refresh and HTTP cache TTL are both 300 seconds for the free-text and api-key
 inputs. There is no default backend. Endpoint and key are never drawn on the
-panel. Missing settings show SETUP REQUIRED / ADD ENDPOINT + KEY; a configured
-endpoint without the `https://` prefix shows INVALID ENDPOINT / HTTPS REQUIRED.
+panel. Missing settings show SETUP REQUIRED / ADD ENDPOINT + KEY; an invalid
+endpoint or an explicit HTTP URL shows INVALID ENDPOINT / HTTPS REQUIRED.
 A failed request shows NO PRINTER DATA / CHECK CONNECTION.
 
 All named demo scenarios work without an endpoint or key and never request

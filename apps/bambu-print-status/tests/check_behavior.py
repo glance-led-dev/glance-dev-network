@@ -61,6 +61,34 @@ class Behavior(unittest.TestCase):
             self.assertNotIn(settings['endpoint'], ' '.join(c.texts))
             self.assertNotIn(settings['readkey'], ' '.join(c.texts))
 
+    def test_hostname_endpoint_uses_https_and_preserves_auth(self):
+        for endpoint in ['example.invalid/status', 'your-worker.your-subdomain.workers.dev/status', '  example.invalid/status  ']:
+            settings = {'endpoint': endpoint, 'readkey': 'test-only-key', 'demo': 'Live'}
+            get = Mock(return_value={'status_code': 200, 'json': ns['demo']('BOTH IDLE')})
+            with patch.dict(ns, http=SimpleNamespace(get=get)):
+                c=Canvas(); ns['main'](c, SimpleNamespace(inputs=settings, now=SimpleNamespace(unix=1800000000)))
+            get.assert_called_once_with('https://' + endpoint.strip(), headers={'x-api-key': 'test-only-key'}, ttl_seconds=300)
+            self.assertIn('READY', c.texts)
+            self.assertEqual(settings['endpoint'], endpoint)
+            self.assertNotIn('test-only-key', ' '.join(c.texts))
+
+    def test_invalid_shorthand_never_sends_credentials(self):
+        for endpoint in ['https', 'http://example.invalid/status', 'example.invalid:8080/status', '//example.invalid/status', 'user@example.invalid/status', 'example.invalid\\@other.invalid/status', 'example.invalid/status#fragment', 'example.invalid/with space', 'example.invalid/status?url=https://other.invalid', 'example..invalid/status', '-example.invalid/status', 'example-.invalid/status', 'example%2finvalid/status']:
+            get = Mock(side_effect=AssertionError('Invalid endpoint must not make a request'))
+            with patch.dict(ns, http=SimpleNamespace(get=get)):
+                c=Canvas(); ns['main'](c, SimpleNamespace(inputs={'endpoint': endpoint, 'readkey': 'test-only-key'}, now=SimpleNamespace(unix=1800000000)))
+            self.assertIn('INVALID ENDPOINT', c.texts)
+            get.assert_not_called()
+
+    def test_splash_bypasses_endpoint_normalization(self):
+        get = Mock(side_effect=AssertionError('Splash must not make a request'))
+        with patch.dict(ns, http=SimpleNamespace(get=get)):
+            c=Canvas(); ns['main'](c, SimpleNamespace(inputs={'demo': 'SPLASH', 'endpoint': 'https'}, now=SimpleNamespace(unix=1800000000)))
+        self.assertNotIn('SETUP REQUIRED', c.texts)
+        self.assertNotIn('INVALID ENDPOINT', c.texts)
+        self.assertTrue(c.images)
+        get.assert_not_called()
+
     def test_every_demo_without_settings_or_network(self):
         # Read the actual catalog choices so newly added demos are covered too.
         line = next(line for line in ROOT.joinpath('manifest.yaml').read_text().splitlines() if 'choices: [Live,' in line)
