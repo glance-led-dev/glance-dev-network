@@ -31,7 +31,7 @@ TEAMS = {
     "Utah Mammoth": {"logo": "assets/utah.png", "w": 36, "h": 27, "word": "MAMMOTH", "color": "#6CACE4", "top": "#FFFFFF"},
     "Vancouver Canucks": {"logo": "assets/van.png", "w": 31, "h": 30, "word": "CANUCKS", "color": "#3C6FE0", "top": "#00A651"},
     "Vegas Golden Knights": {"logo": "assets/vgk.png", "w": 22, "h": 30, "word": "KNIGHTS", "color": "#C8A86B", "top": "#FFFFFF"},
-    "Washington Capitals": {"logo": "assets/wsh.png", "w": 36, "h": 23, "word": "CAPS", "color": "#E41A2F", "top": "#3C6FD0"},
+    "Washington Capitals": {"logo": "assets/wsh.png", "w": 36, "h": 29, "word": "CAPS", "color": "#E41A2F", "top": "#3C6FD0"},
     "Winnipeg Jets": {"logo": "assets/wpg.png", "w": 30, "h": 30, "word": "JETS", "color": "#3C7BD0", "top": "#FFFFFF"},
 }
 
