@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-blackhawks-win-2
+version: 0.1.0
+name: "Chicago Blackhawks Win 2"
+author: "FCYC"
+description: Four Blackhawks heads layered over WIN on red.
+category: Art
+entry: app.star
+width: 384
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - chicago_blackhawks_win_2.png
