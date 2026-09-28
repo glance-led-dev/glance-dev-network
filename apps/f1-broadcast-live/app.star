@@ -277,6 +277,10 @@ def race_variants(name):
         out.append(base)
         if "-" in base:
             out.append(base.split("-")[0])
+    elif " GRAND PRIX " in name:
+        # "BAHRAIN GRAND PRIX IN SEPANG" -> "BAHRAIN GP IN SEPANG": keep the
+        # whole name and let the font ladder shrink it rather than cut it off.
+        out.append(name.replace(" GRAND PRIX ", " GP "))
     return out
 
 def up(s):
@@ -1035,7 +1039,7 @@ def event(c, ctx):
     trx = tx0 + text_w + gap
     draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
 
-    name, nf = fit_ladder(c, race_variants(st["race_name"]), ["6x8", "5x7", "4x5"], text_w)
+    name, nf = fit_ladder(c, race_variants(st["race_name"]), ["6x8", "5x7", "4x5", "picopixel"], text_w)
     # Row bottoms on this page: 9 (race / flag), 16 (circuit / lap),
     # 27 (date / flag row / session / temp / the logo tag).
     c.text(name, cx, top_for(nf, 9), font = nf, color = COLORS["text"], align = "center")
