@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-blackhawks-head-stripe-sign
+version: 0.1.0
+name: "Chicago Blackhawks Head Stripe Sign"
+author: "FCYC"
+description: Three Blackhawks heads over continuous jersey stripes.
+category: Art
+entry: app.star
+width: 384
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - chicago_blackhawks_head_stripe_sign.png
