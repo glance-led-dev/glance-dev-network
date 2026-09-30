@@ -81,3 +81,6 @@ Never put ADMIN_KEY, ENCRYPTION_KEY, a Microsoft secret or refresh token into Gl
 ## Verification status
 
 The original local prototype successfully fetched profile, achievements, shared friend activity, game history and artwork. The packaged service has offline authentication/storage tests. A fresh user's deployment, unattended Microsoft refresh, reverse proxy routing and actual panel delivery must still be verified end to end. No author-owned subscription or secret is required by the supplied configuration.
+# Alternative without an inbound Linux port
+
+For an HTTPS Cloudflare front end with a separate outbound-only Linux collector, see [the optional split deployment](cloudflare/README.md). The Docker instructions below remain available for an independent single-host installation.

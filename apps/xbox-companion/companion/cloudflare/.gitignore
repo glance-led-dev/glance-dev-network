@@ -1,0 +1,9 @@
+wrangler.toml
+.dev.vars
+.env
+private/
+.wrangler/
+venv/
+__pycache__/
+*.enc
+*.cred

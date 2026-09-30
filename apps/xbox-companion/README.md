@@ -6,7 +6,9 @@ A 192x32 community-app prototype with Profile, Now Playing / Last Played, Recent
 
 **[Follow the Docker setup guide](companion/SETUP.md).** Each user runs one companion, registers their own Microsoft app and connects their own Xbox account. No shared backend or author-owned Azure credentials are included. The companion encrypts its saved refresh token, updates every four minutes, and exposes a read-key-protected snapshot for Glance.
 
-You need an always-on Docker host and a public HTTPS address through your own reverse proxy. Glance cannot fetch a private LAN or localhost address. Self-hosting shifts operating costs to the user; this package does not provision a paid cloud service.
+The Docker option needs an always-on Docker host and a public HTTPS address through your own reverse proxy. Alternatively, use the **[Cloudflare and Linux setup guide](companion/cloudflare/README.md)**: your Worker hosts the sign-in page and snapshot feed, while your Linux server collects data over outbound HTTPS. It needs no inbound server port or Azure hosting. Both options use your own Microsoft registration and credentials; no community workload runs on the author's server.
+
+Glance cannot fetch a private LAN or localhost address. Self-hosting shifts operating costs to the user; this package does not provision a paid cloud service.
 
 ## Display setup
 
@@ -31,6 +33,8 @@ The app is not yet published in the catalogue. Use the GDN development workflow 
 With the SDK dependencies installed, run `python -B -m unittest discover -s apps/xbox-companion/tests -v` from the repository root. These offline tests use the native Starlark host and mock HTTP to check endpoint normalization, retained authentication and caching, invalid and missing inputs, all demos, schema handling and the freshness boundaries. They do not prove delivery to a physical panel.
 
 The original live prototype verified Microsoft/Xbox authentication, profile, achievements, shared friend presence, TitleHub play timestamps and Microsoft Store artwork. Thirty rendering/behavior checks and GDN validation passed. The packaged companion's offline tests cover authorization, CSRF, PKCE, callback replay, encrypted token storage and exclusion of credentials from status output. Docker is unavailable in the development environment, so container execution and unattended refresh are not claimed as tested. Each deployment still needs end-to-end verification.
+
+The optional Cloudflare/Linux deployment has also been verified with a live account, encrypted credential provisioning, automatic refresh-token renewal, and collector recovery after a Linux reboot. Its Worker tests cover authentication, CSRF, PKCE, callback replay, encrypted handoff, separate administrator/read/write keys, and snapshot filtering. This does not establish Docker execution or physical-device delivery.
 
 TitleHub currently worked with the prototype identity but its public production support contract remains unverified. Upstream changes, privacy settings and throttling can affect availability.
 
