@@ -1,0 +1,25 @@
+gdn: 1
+id: jukebox-now-playing
+version: 0.1.0
+name: Jukebox Now Playing
+author: pmoney303
+description: What's playing right now in the Bar zone of the P$ Jukebox (Home Assistant + Alexa), as a two-line card with a progress bar.
+category: Entertainment
+entry: app.star
+
+width: 192
+height: 32
+refresh: 60
+
+pages: [now_playing]
+
+assets:
+  - logo.png
+
+inputs:
+  - key: endpoint
+    type: string
+    app_input_type: free-text
+    label: Now-playing URL
+    default: ""
+    help: "Your jukebox's now-playing address, WITHOUT https:// (example: yoursite.netlify.app/.netlify/functions/now-playing). Leave blank to show the bundled demo."
