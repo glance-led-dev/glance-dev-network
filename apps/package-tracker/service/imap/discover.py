@@ -7,6 +7,8 @@ import getpass
 import html
 import imaplib
 import json
+import os
+from pathlib import Path
 import re
 import ssl
 import sys
@@ -20,9 +22,28 @@ DOMAINS = {'UPS': 'ups.com', 'FEDEX': 'fedex.com', 'USPS': 'usps.com'}
 
 
 def credential_store():
+    if sys.platform.startswith('linux'):
+        return SystemdCredentials()
     # Explicit native Windows backend: no fallback to a plaintext credential file.
     from keyring.backends.Windows import WinVaultKeyring
     return WinVaultKeyring()
+
+
+class SystemdCredentials:
+    """Read systemd's per-service credential; never fall back to a local file."""
+    def __init__(self):
+        directory = os.environ.get('CREDENTIALS_DIRECTORY')
+        if not directory:
+            raise RuntimeError('Run inside the configured systemd service')
+        self.values = json.loads((Path(directory) / 'secrets').read_text())
+
+    def get_password(self, service, name):
+        if service != SERVICE:
+            raise ValueError('Unexpected credential service')
+        return self.values.get(name)
+
+    def set_password(self, service, name, value):
+        raise RuntimeError('Use configure-linux.py to provision encrypted credentials')
 
 
 def valid(carrier, value):

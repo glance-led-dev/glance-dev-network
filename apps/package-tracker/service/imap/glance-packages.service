@@ -1,0 +1,24 @@
+[Unit]
+Description=Glance packages
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+[Service]
+Type=oneshot
+User=glance-packages
+Group=glance-packages
+WorkingDirectory=/var/lib/glance-packages
+ExecStart=/usr/bin/python3 /opt/glance/packages/discover.py
+LoadCredentialEncrypted=secrets:/etc/glance/packages.cred
+Environment=PYTHONUNBUFFERED=1
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/glance-packages
+RestrictSUIDSGID=true
+TimeoutStartSec=14min
+[Install]
+WantedBy=multi-user.target
