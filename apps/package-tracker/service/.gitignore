@@ -1,0 +1,11 @@
+wrangler.toml
+.dev.vars
+.env
+*.secret
+google-client.json
+.wrangler/
+node_modules/
+.venv/
+**/.venv/
+__pycache__/
+*.pyc
