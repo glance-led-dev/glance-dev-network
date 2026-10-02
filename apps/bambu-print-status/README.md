@@ -157,21 +157,7 @@ is used only when exactly one printing/preparing/finished printer is present.
 
 ## Verification
 
-Run `py -3.14 apps/bambu-print-status/tests/check_behavior.py` for behavioral
-checks, including configuration states, authenticated transport, and every demo
-scenario without network access. The Python-compatible harness complements
-actual Starlark rendering and full validation with Glance MCP.
-
-Run `py -3.14 apps/bambu-print-status/tests/render_v2.py` with the repository's
-Python dependencies installed to render all 32 demos, validate asset references
-against the manifest, assert 192x32 dimensions and x=10..181 pixel bounds, and
-regenerate the catalog and scenario gallery. `tests/build_assets.py` rebuilds
-the 13 runtime PNG assets offline from the retained reference artwork.
-If using the optional app-local dependencies on this workstation, first set
-`$env:PYTHONPATH = (Resolve-Path apps/bambu-print-status/.render-deps).Path`.
-That ignored directory is tooling only, not part of the app or its configuration.
-
-Render setup required, invalid endpoint, simulated HTTP failure, both idle,
+Run `gdn validate apps/bambu-print-status`, then render setup required, invalid endpoint, simulated HTTP failure, both idle,
 P2S printing, both printing, AMS inventory, and diagnostics with Glance MCP.
 Authenticated retrieval requires your own running backend and key.
 
