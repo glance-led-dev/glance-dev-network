@@ -13,7 +13,7 @@ entry: app.star
 width: 192
 height: 32
 
-# Re-render hourly — ratings/streaming availability don't change minute to minute.
+# Re-render daily — ratings don't change minute to minute.
 refresh: 86400
 
 # Pages the panel rotates through, in order. app.star must define a function per name.
