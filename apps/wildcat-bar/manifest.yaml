@@ -1,0 +1,44 @@
+gdn: 1
+id: wildcat-bar
+version: 0.2.0
+name: Wildcat Bar
+author: Mark Jones
+description: Custom messages with Kentucky football or mens basketball schedules and
+  scores.
+category: Sports
+entry: app.star
+width: 384
+height: 32
+refresh: 300
+pages:
+- main
+- schedule1
+- schedule2
+- schedule3
+- schedule4
+- schedule5
+- schedule6
+- schedule7
+inputs:
+- key: setting1
+  type: string
+  app_input_type: free-text
+  label: Your message
+  default: WELCOME TO THE WILDCAT BAR
+  help: Use | for a line break. Keep messages short.
+- key: displaymode
+  type: choice
+  app_input_type: dropdown
+  label: Display mode
+  default: Messages only
+  choices:
+  - Messages only
+  - Messages and schedule
+- key: sport
+  type: choice
+  app_input_type: dropdown
+  label: Sport
+  default: Kentucky football
+  choices:
+  - Kentucky football
+  - Kentucky basketball
