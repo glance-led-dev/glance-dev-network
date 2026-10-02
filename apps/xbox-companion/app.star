@@ -12,6 +12,20 @@ def obj(value):
 def text(value, fallback = ""):
     return value if type(value) == "string" else fallback
 
+def flag(ctx, key, fallback):
+    # Checkboxes can arrive as a bool or as "true"/"false" text; a non-empty
+    # "false" string is truthy, so normalize before testing.
+    value = ctx.inputs.get(key, fallback)
+    if type(value) == "bool":
+        return value
+    if type(value) == "string":
+        value = value.strip().lower()
+        if value in ["true", "1", "yes", "on"]:
+            return True
+        if value in ["false", "0", "no", "off"]:
+            return False
+    return fallback
+
 def endpoint_url(value):
     if type(value) != "string":
         return ""
@@ -95,14 +109,14 @@ def profile(c, data, ctx, isdemo):
     p = obj(data.get("profile"))
     presence = obj(data.get("presence"))
     base(c)
-    artwork(c, p.get("art"), ctx.inputs.get("showpic", True))
+    artwork(c, p.get("art"), flag(ctx, "showpic", True))
     c.image("xbox-small.png", 168, 3)
     c.text(clip(c, p.get("gamertag", "PLAYER"), "7x12", 116), 47, 4, font = "7x12", color = WHITE)
     status = text(presence.get("state"), "unknown").upper()
     status = status if status in ["ONLINE", "OFFLINE", "AWAY"] else "UNKNOWN"
     c.fill_circle(49, 24, 2, GREEN if status == "ONLINE" else "#879180")
     c.text(status, 55, 22, font = "4x5", color = DIM)
-    if ctx.inputs.get("showscore", True):
+    if flag(ctx, "showscore", True):
         c.text(clip(c, score(p.get("score"))+" G", "5x7", 78), 179, 21, font = "5x7", color = WHITE, align = "right")
     if isdemo:
         c.text("DEMO", 11, 23, font = "4x5", color = WHITE)
@@ -110,7 +124,7 @@ def profile(c, data, ctx, isdemo):
 def playing(c, data, ctx, isdemo):
     p = obj(data.get("presence"))
     title = text(p.get("title"))
-    if not ctx.inputs.get("showgame", True):
+    if not flag(ctx, "showgame", True):
         profile(c, data, ctx, isdemo)
         return
     current = bool(title) and text(p.get("state")).lower() in ["online", "away"]
@@ -121,7 +135,7 @@ def playing(c, data, ctx, isdemo):
         message(c, "LAST PLAYED", "GAME HISTORY NOT AVAILABLE")
         return
     base(c)
-    artwork(c, p.get("art"), ctx.inputs.get("showart", True))
+    artwork(c, p.get("art"), flag(ctx, "showart", True))
     label(c, "NOW PLAYING" if current else "LAST PLAYED", "DEMO" if isdemo else "XBOX")
     c.text(clip(c, title, "6x8", 132), 47, 12, font = "6x8", color = WHITE)
     sub = (text(p.get("rich")) or text(p.get("device")) or "PLAYING") if current else text(p.get("date"), "DATE NOT AVAILABLE")
@@ -129,7 +143,7 @@ def playing(c, data, ctx, isdemo):
 
 def achievement(c, data, ctx, isdemo):
     items = data.get("achievements", [])
-    if not ctx.inputs.get("showachievements", True):
+    if not flag(ctx, "showachievements", True):
         profile(c, data, ctx, isdemo)
         return
     if type(items) != "list" or not items:
@@ -137,9 +151,9 @@ def achievement(c, data, ctx, isdemo):
         return
     a = obj(items[0])
     base(c)
-    artwork(c, a.get("art"), ctx.inputs.get("showart", True))
+    artwork(c, a.get("art"), flag(ctx, "showart", True))
     points = score(a.get("score"))
-    right = ("+"+points+"G") if ctx.inputs.get("showscore", True) and points != "--" else ""
+    right = ("+"+points+"G") if flag(ctx, "showscore", True) and points != "--" else ""
     label(c, "RECENT UNLOCK", right)
     c.text(clip(c, a.get("name"), "6x8", 132), 47, 12, font = "6x8", color = WHITE)
     c.text(clip(c, a.get("game"), "4x5", 108 if isdemo else 132), 47, 24, font = "4x5", color = DIM)
@@ -147,7 +161,7 @@ def achievement(c, data, ctx, isdemo):
         c.text("DEMO",179,24,font="4x5",color=GREEN,align="right")
 
 def gamerscore(c, data, ctx, isdemo):
-    if not ctx.inputs.get("showscore", True):
+    if not flag(ctx, "showscore", True):
         profile(c, data, ctx, isdemo)
         return
     base(c)
@@ -161,7 +175,7 @@ def gamerscore(c, data, ctx, isdemo):
     c.text(clip(c, value+" G",font,132),47,12,font=font,color=WHITE)
 
 def activity(c, data, ctx, isdemo, friends = False):
-    if friends and not ctx.inputs.get("showfriends", False) and not isdemo:
+    if friends and not flag(ctx, "showfriends", False) and not isdemo:
         message(c, "FRIEND ACTIVITY OFF", "ENABLE FRIENDS IN SETTINGS")
         return
     feed = obj(data.get("friends" if friends else "activity"))
@@ -175,7 +189,7 @@ def activity(c, data, ctx, isdemo, friends = False):
     # Rotate on refresh, without inventing unsupported frame animation.
     a = obj(items[(ctx.now.unix // 60) % len(items)])
     base(c)
-    artwork(c, a.get("art"), ctx.inputs.get("showpic" if friends else "showart", True))
+    artwork(c, a.get("art"), flag(ctx, "showpic" if friends else "showart", True))
     label(c, "FRIEND ACTIVITY" if friends else text(obj(data.get("profile")).get("gamertag"), "PLAYER"))
     c.image("xbox-small.png", 168, 3)
     if isdemo:
@@ -238,7 +252,7 @@ def main(c, ctx):
         elif mode in ["Friends", "Friends Empty", "Friends Unavailable"]:
             view = "Friend Activity"
     if view == "Auto":
-        view = "Now Playing" if text(obj(data.get("presence")).get("title")) and ctx.inputs.get("showgame",True) else "Profile"
+        view = "Now Playing" if text(obj(data.get("presence")).get("title")) and flag(ctx, "showgame", True) else "Profile"
     if view == "Recent Activity":
         activity(c,data,ctx,isdemo)
     elif view == "Friend Activity":

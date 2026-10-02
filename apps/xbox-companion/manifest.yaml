@@ -30,6 +30,7 @@ inputs:
     label: Display
     default: Auto
     choices: [Auto, Profile, Now Playing, Gamerscore, Recent Achievement, Recent Activity, Friend Activity]
+    options: [Auto, Profile, Now Playing, Gamerscore, Recent Achievement, Recent Activity, Friend Activity]
   - key: showfriends
     type: boolean
     app_input_type: checkbox
@@ -67,4 +68,5 @@ inputs:
     label: Preview scenario
     default: Live
     choices: [Live, Profile, Playing, Last Played, Achievement, Score, Activity, Friends, Friends Empty, Friends Unavailable, Offline, Empty, Stale, Reconnect, Service Error, Long Names]
+    options: [Live, Profile, Playing, Last Played, Achievement, Score, Activity, Friends, Friends Empty, Friends Unavailable, Offline, Empty, Stale, Reconnect, Service Error, Long Names]
     help: Every preview uses fictional data, is labeled DEMO, and makes no network requests.
