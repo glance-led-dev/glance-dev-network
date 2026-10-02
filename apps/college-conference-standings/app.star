@@ -30,11 +30,12 @@
 # for / against / differential, then the record against AP Top-25 teams once
 # one has been played.
 #
-# Frames: the ladder shows four schools at a time and steps to the next four
-# every refresh (120 s), so an 18-team Big Ten cycles in ten minutes. The
-# Sun Belt is two divisions of seven; each division is laid out on its own
-# frames with its name in the legend. Standings move once a week, so the
-# ESPN call is cached for 30 minutes whatever the refresh.
+# Frames: the ladder shows four schools at a time, one frame per page, over
+# five ladder pages (the Big Ten's 18 schools need all five); a smaller
+# conference spreads its schools over all five, fewer to a page. The Sun Belt is
+# two divisions of seven; each division is laid out on its own frames with
+# its name in the legend. Standings move once a week, so every page redraws
+# every six hours.
 
 STANDINGS = "https://site.web.api.espn.com/apis/v2/sports/football/college-football/standings"
 HEADERS = {"User-Agent": "glance-college-conference-standings (glance-led.dev)"}
@@ -128,8 +129,10 @@ LOGO_L = {
     "WYO": "WYO.png",
 }
 
-REFRESH = 120
+REFRESH = 21600
 PER_FRAME = 4
+# Ladder pages: the Big Ten's 18 and the ACC's 17 schools need five.
+LADDER_PAGES = 5
 
 # ------------------------------------------------------------------ layout
 # 192 wide, content x 6..185. Legend x 6..40 (35 px), divider x 42, four
@@ -443,20 +446,53 @@ def no_standings(c, label):
 
 # ------------------------------------------------------------ page: ladder
 def ladder(c, ctx):
+    ladder_page(c, ctx, 0)
+
+def ladder2(c, ctx):
+    ladder_page(c, ctx, 1)
+
+def ladder3(c, ctx):
+    ladder_page(c, ctx, 2)
+
+def ladder4(c, ctx):
+    ladder_page(c, ctx, 3)
+
+def ladder5(c, ctx):
+    ladder_page(c, ctx, 4)
+
+def ladder_page(c, ctx, page):
     label = conf_label(ctx)
     d = fetch(label)
     if not d["ok"]:
         message(c, d["head"], d["sub"], AMBER, OFFLINE)
         return
     indep = independent(label)
-    # Frames: each group (division) is chunked into fours; frames run
-    # through every group in order.
+    # Frames: one per ladder page. Each group (division) gets the pages its
+    # schools need at four a page, then any spare pages go to the group with
+    # the most schools per page, so a smaller conference spreads out over
+    # all five pages (SEC 4-3-3-3-3) instead of repeating one.
+    groups = [g for g in d["groups"] if len(g["rows"]) > 0]
+    alloc = [(len(g["rows"]) + PER_FRAME - 1) // PER_FRAME for g in groups]
+    for _ in range(LADDER_PAGES):
+        total = 0
+        for a in alloc:
+            total += a
+        if total >= LADDER_PAGES:
+            break
+        best = -1
+        for i in range(len(groups)):
+            if alloc[i] < len(groups[i]["rows"]) and (best < 0 or len(groups[i]["rows"]) * alloc[best] > len(groups[best]["rows"]) * alloc[i]):
+                best = i
+        if best < 0:
+            break
+        alloc[best] += 1
     frames = []
-    for g in d["groups"]:
+    for gi in range(len(groups)):
+        g = groups[gi]
         rows = g["rows"]
         rc = race(rows, indep)
         # Balanced chunks: 18 schools are 4-4-4-3-3, never 4-4-4-4-2.
-        n = (len(rows) + PER_FRAME - 1) // PER_FRAME
+        n = alloc[gi]
         s = 0
         for k in range(n):
             size = len(rows) // n + (1 if k < len(rows) % n else 0)
@@ -465,7 +501,10 @@ def ladder(c, ctx):
     if len(frames) == 0:
         no_standings(c, label)
         return
-    fi = (ctx.now.unix // REFRESH) % len(frames)
+    # Only a conference with fewer schools than pages (the two FBS
+    # Independents) runs out; there is no way to skip a page, so it starts
+    # again from the top.
+    fi = page % len(frames)
     fr = frames[fi]
     c.fill("black")
     legend(c, label, fr["div"], ["W-L", "STREAK"] if indep else ["CONF", "OVERALL"])

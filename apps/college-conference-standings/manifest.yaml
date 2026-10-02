@@ -9,12 +9,11 @@ entry: app.star
 
 width: 192
 height: 32
-# The ladder steps four schools per refresh, so an 18-team conference cycles
-# in ten minutes. ESPN's standings are cached 1800 s regardless - they move
-# once a week.
-refresh: 120
+# Standings move once a week; every page redraws every six hours.
+refresh: 21600
 
-pages: [ladder, leader]
+# Four schools per ladder page; the Big Ten (18) and ACC (17) need all five.
+pages: [ladder, ladder2, ladder3, ladder4, ladder5, leader]
 
 inputs:
   - key: conference
