@@ -1,18 +1,20 @@
 id: mlb-playoff-picture
 name: MLB Playoff Picture
 author: cfdmb
-description: The AL/NL playoff bracket and Wild Card Round matchups, if the season ended today.
+description: The MLB playoff picture all year. In the regular season, the AL/NL field if the season ended today, first-round matchups, the wild card race and every division's magic number, tiebreaker-aware. In October, the live bracket - every series score, next game and who advanced, through the World Series.
 category: Sports
-width: 128
+width: 192
 height: 32
-refresh: 7200
+# Note for the GDN crew: refresh is 300 (5 min) so postseason pages can show
+# a live inning and score and flip to the next game soon after a final.
+refresh: 300
 pages:
   - intro
-  - byes
-  - al
-  - alds
-  - albubble
-  - nl
-  - nlds
-  - nlbubble
+  - al1
+  - al2
+  - al3
+  - nl1
+  - nl2
+  - nl3
+  - final
 inputs: []
