@@ -11,7 +11,7 @@
 
 FEED_URL = "https://mrnaturl-splits.pages.dev/api/splits.json"
 
-MINT = "#2fd07a"     # brand, header bar, forward splits
+MINT = "#2fd07a"     # brand, forward splits
 RED = "#e0533d"      # reverse splits
 SKY = "#6fb4ff"      # dates
 AMBER = "#f0b429"    # countdown
@@ -23,6 +23,60 @@ ROW_FONT = "4x5"
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+
+# --- pixel art ----------------------------------------------------------------
+
+COIN_LEGEND = {"O": "#9a6a12", "Y": "#f5c542", "H": "#fff1a8", "S": "#7a4e08"}
+
+# An 11x11 gold share coin with a dollar sign.
+COIN = [
+    "...OOOOO...",
+    "..OHHYYYO..",
+    ".OHYYSYYYO.",
+    "OHYYSSSSYYO",
+    "OYYSYSYYYYO",
+    "OYYYSSSYYYO",
+    "OYYYYSYSYYO",
+    "OYYSSSSYYYO",
+    ".OYYYSYYYO.",
+    "..OYYYYYO..",
+    "...OOOOO...",
+]
+
+# A 5x5 small coin, for "many shares".
+MINI_COIN = [
+    ".OOO.",
+    "OHYYO",
+    "OYYYO",
+    "OYYYO",
+    ".OOO.",
+]
+
+# Row icons, read left to right: one line forking into two (forward split),
+# two lines joining into one (reverse split).
+FORK = [
+    "...XX",
+    "..X..",
+    "XX...",
+    "..X..",
+    "...XX",
+]
+
+MERGE = [
+    "XX...",
+    "..X..",
+    "...XX",
+    "..X..",
+    "XX...",
+]
+
+ARROW = [
+    "..X..",
+    "...X.",
+    "XXXXX",
+    "...X.",
+    "..X..",
+]
 
 def get_data():
     # The feed changes once a day, so an hour of caching costs nothing.
@@ -61,10 +115,75 @@ def pick_font(c, text, choices, maxw):
             return choice
     return choices[len(choices) - 1]
 
+def is_reverse(entry):
+    return entry.get("k", "f") == "r"
+
 def kind_color(entry):
-    if entry.get("k", "f") == "r":
+    if is_reverse(entry):
         return RED
     return MINT
+
+def kind_icon(c, entry, x, y):
+    art = FORK
+    if is_reverse(entry):
+        art = MERGE
+    c.sprite(art, x, y, color = kind_color(entry))
+
+# --- sprites drawn from the art above -----------------------------------------
+
+def split_coin(c, x, y, scale):
+    # The coin cut down the middle: left half nudged up, right half nudged
+    # down and out. 13 * scale wide.
+    left = []
+    right = []
+    for row in COIN:
+        left.append(row[:6])
+        right.append("......" + row[6:])
+    c.sprite(left, x, y, legend = COIN_LEGEND, scale = scale)
+    c.sprite(right, x + 2 * scale, y + scale, legend = COIN_LEGEND,
+             scale = scale)
+
+def coin_flow(c, entry, x, y):
+    # Forward: one big coin becomes a pile of small ones. Reverse: the pile
+    # merges into one big coin. 33 px wide, 11 px tall.
+    color = kind_color(entry)
+    if is_reverse(entry):
+        mini_pile(c, x, y)
+        c.sprite(ARROW, x + 14, y + 3, color = color)
+        c.sprite(COIN, x + 22, y, legend = COIN_LEGEND)
+    else:
+        c.sprite(COIN, x, y, legend = COIN_LEGEND)
+        c.sprite(ARROW, x + 14, y + 3, color = color)
+        mini_pile(c, x + 22, y)
+
+def mini_pile(c, x, y):
+    for dx in [0, 6]:
+        for dy in [0, 6]:
+            c.sprite(MINI_COIN, x + dx, y + dy, legend = COIN_LEGEND)
+
+def calendar(c, x, y, w, h, iso, color):
+    # A tear-off calendar page: binder rings, a header in the split's color
+    # with the month, and a big day number on the page.
+    month = ""
+    day = ""
+    if len(iso) == 10:
+        month = MONTHS[int(iso[5:7]) - 1]
+        day = str(int(iso[8:10]))
+    head_h = 7
+    c.rect(x, y + 1, x + w - 1, y + head_h, fill = color)
+    c.rect(x, y + head_h + 1, x + w - 1, y + h - 1, fill = "#d8d8d8")
+    c.hline(x, y + h - 1, w, "#9a9a9a")
+    ring_l = x + 3
+    ring_r = x + w - 4
+    c.vline(ring_l, y, 3, "#5a5a5a")
+    c.vline(ring_r, y, 3, "#5a5a5a")
+    c.text(month, x + w // 2, y + 2, font = "4x5", color = "black",
+           align = "center")
+    body_top = y + head_h + 1
+    body_h = h - head_h - 2
+    font = pick_font(c, day, [["7x12", 12], ["6x8", 8]], w - 2)
+    c.text(day, x + w // 2, body_top + (body_h - font[1]) // 2 + 1,
+           font = font[0], color = "black", align = "center")
 
 # --- dates ------------------------------------------------------------------
 
@@ -124,84 +243,91 @@ def upcoming(data):
 
 # --- shared screens -----------------------------------------------------------
 
-def draw_brand(c, y, font):
-    c.text("STOCK SPLITS CALENDAR", c.width // 2, y, font = font, color = MINT,
-           align = "center")
+def message_screen(c, title, line1, line2, title_color):
+    # A coin on the left and two or three short lines beside it.
+    c.clear()
+    if wide(c):
+        x = margin(c) + 2
+        split_coin(c, x, 3, 2)
+        tx = x + 32
+        c.text("STOCK SPLITS CALENDAR", tx, 3, font = "5x7", color = MINT)
+        c.text(title, tx, 14, font = "6x8", color = title_color)
+        c.text(line1, tx, 25, font = "4x5", color = DIM)
+    else:
+        c.sprite(COIN, 2, 10, legend = COIN_LEGEND)
+        tfont = pick_font(c, title, [["5x7", 7], ["4x5", 5]], 48)
+        c.text(title, 39, 4 + (7 - tfont[1]) // 2, font = tfont[0],
+               color = title_color, align = "center")
+        c.text(line1, 39, 15, font = "4x5", color = DIM, align = "center")
+        c.text(line2, 39, 23, font = "4x5", color = DIM, align = "center")
 
 def draw_no_data(c):
-    c.clear()
     if wide(c):
-        draw_brand(c, 4, "6x8")
-        c.text("FEED UNAVAILABLE", c.width // 2, 16, font = "4x5",
-               color = DIM, align = "center")
-        c.text("CHECK BACK SOON", c.width // 2, 23, font = "4x5",
-               color = DIM, align = "center")
+        message_screen(c, "FEED UNAVAILABLE", "CHECK BACK SOON", "", DIM)
     else:
-        c.text("SPLITS", 32, 4, font = "5x7", color = MINT, align = "center")
-        c.text("NO DATA", 32, 16, font = "4x5", color = DIM, align = "center")
-        c.text("TRY LATER", 32, 23, font = "4x5", color = DIM,
-               align = "center")
+        message_screen(c, "NO DATA", "CHECK", "LATER", WHITE)
 
 def draw_all_clear(c):
-    c.clear()
     if wide(c):
-        draw_brand(c, 4, "6x8")
-        c.text("ALL CLEAR", c.width // 2, 15, font = "6x8", color = WHITE,
-               align = "center")
-        c.text("NO SPLITS SCHEDULED", c.width // 2, 25, font = "4x5",
-               color = DIM, align = "center")
+        message_screen(c, "ALL CLEAR", "NO SPLITS SCHEDULED", "", WHITE)
     else:
-        c.text("SPLITS", 32, 3, font = "5x7", color = MINT, align = "center")
-        c.text("ALL CLEAR", 32, 14, font = "5x7", color = WHITE,
-               align = "center")
-        c.text("NONE DUE", 32, 25, font = "4x5", color = DIM,
-               align = "center")
+        message_screen(c, "ALL CLEAR", "NO SPLITS", "DUE", WHITE)
 
 # --- cover ------------------------------------------------------------------
+
+def tally(c, x, art, label, n, color):
+    # 20 px column: icon + label on top, the count big underneath.
+    c.sprite(art, x, 3, color = color)
+    c.text(label, x + 7, 3, font = "4x5", color = color)
+    c.text(str(n), x + 10, 13, font = "8x12", color = color, align = "center")
 
 def cover(c, ctx):
     c.clear()
     data = get_data()
     width = c.width
 
-    if width >= 176:
-        c.text("STOCK SPLITS CALENDAR", width // 2, 2, font = "7x12",
-               color = MINT, align = "center")
-        sub_y = 17
-    elif wide(c):
-        draw_brand(c, 3, "6x8")
-        sub_y = 14
-    else:
-        c.text("SPLITS", 32, 1, font = "6x8", color = MINT, align = "center")
-        c.text("CALENDAR", 32, 10, font = "6x8", color = MINT,
-               align = "center")
-        sub_y = 20
+    if wide(c):
+        x = margin(c) + 2
+        split_coin(c, x, 3, 2)
+        tx = x + 32
+        c.text("STOCK SPLITS", tx, 2, font = "7x12", color = MINT)
+        if data == None:
+            c.text("NO DATA", tx, 18, font = "5x7", color = DIM)
+            return
+        rows = upcoming(data)
+        n = len(rows)
+        line = str(n) + " SCHEDULED"
+        if n == 0:
+            line = "NONE SCHEDULED"
+        c.text(line, tx, 17, font = "5x7", color = WHITE)
+        c.text("AS OF " + pretty_date(data.get("asof", "")), tx, 26,
+               font = "4x5", color = SKY)
 
-    if data == None:
-        c.text("NO DATA", width // 2, sub_y + 2, font = "4x5", color = DIM,
-               align = "center")
+        # Forward / reverse tally on the right: icon and label over a big
+        # count, each in its own color.
+        fwd = 0
+        rev = 0
+        for entry in rows:
+            if is_reverse(entry):
+                rev = rev + 1
+            else:
+                fwd = fwd + 1
+        right = width - 1 - margin(c)
+        tally(c, right - 43, FORK, "FWD", fwd, MINT)
+        tally(c, right - 19, MERGE, "REV", rev, RED)
         return
 
+    split_coin(c, 1, 4, 2)
+    c.text("SPLITS", 46, 2, font = "5x7", color = MINT, align = "center")
+    if data == None:
+        c.text("NO", 46, 13, font = "5x7", color = DIM, align = "center")
+        c.text("DATA", 46, 21, font = "4x5", color = DIM, align = "center")
+        return
     n = len(upcoming(data))
-    if n == 0:
-        line = "NONE SCHEDULED"
-        if not wide(c):
-            line = "NONE DUE"
-    elif n == 1:
-        line = "1 SCHEDULED"
-    else:
-        line = str(n) + " SCHEDULED"
-
-    if wide(c):
-        c.text(line, width // 2, sub_y, font = "4x5", color = WHITE,
-               align = "center")
-        stamp = "AS OF " + pretty_date(data.get("asof", ""))
-        c.text(stamp, width // 2, 26, font = "4x5", color = SKY,
-               align = "center")
-    else:
-        c.text(line, 32, sub_y, font = "4x5", color = WHITE, align = "center")
-        c.text(pretty_date(data.get("asof", "")), 32, 26, font = "4x5",
-               color = SKY, align = "center")
+    c.text(str(n), 46, 11, font = "7x12" if n < 100 else "5x7",
+           color = WHITE, align = "center")
+    c.text(pretty_date(data.get("asof", "")), 46, 25, font = "4x5",
+           color = SKY, align = "center")
 
 # --- next split (the hero) --------------------------------------------------
 
@@ -221,71 +347,63 @@ def next_split(c, ctx):
     width = c.width
     left = margin(c)
     right = width - 1 - margin(c)
-    inner = right - left + 1
-
-    # Header bar in the split's own color: FORWARD or REVERSE on the left,
-    # the effective date on the right when there is room.
-    c.rect(left, 0, right, 6, fill = color)
-    if top.get("k", "f") == "r":
-        label = "REVERSE SPLIT"
-        if not wide(c):
-            label = "REVERSE"
-    else:
-        label = "NEXT SPLIT"
-        if not wide(c):
-            label = "SPLIT"
-    c.text(label, left + 2, 1, font = "4x5", color = "black")
-    date_text = pretty_date(top["d"])
-    if not wide(c):
-        date_text = short_date(top["d"])
-    label_w = c.text_width(label, "4x5")
-    if inner - 6 - label_w - c.text_width(date_text, "4x5") >= 4:
-        c.text(date_text, right - 1, 1, font = "4x5", color = "black",
-               align = "right")
-
-    # Middle band y 9 to 21: ticker on the left in white, ratio on the right
-    # in the split's color. Ratio is measured first so the ticker never
-    # collides with it.
-    if wide(c):
-        ratio_choices = [["8x12", 12], ["6x8", 8], ["4x5", 6]]
-        tick_choices = [["8x12", 12], ["6x8", 8], ["4x5", 6]]
-    else:
-        ratio_choices = [["6x8", 8], ["4x5", 6]]
-        tick_choices = [["6x8", 8], ["4x5", 6]]
-
-    ratio = top["r"]
-    rchoice = pick_font(c, ratio, ratio_choices, inner // 2)
-    ratio_w = c.text_width(ratio, rchoice[0])
-    band_top = 8
-    band_h = 15
-    c.text(ratio, right - 1, band_top + (band_h - rchoice[1]) // 2,
-           font = rchoice[0], color = color, align = "right")
-
-    tick = top["s"].upper()
-    tick_room = inner - ratio_w - 8
-    tchoice = pick_font(c, tick, tick_choices, tick_room)
-    c.text(fit(c, tick, tchoice[0], tick_room), left + 2,
-           band_top + (band_h - tchoice[1]) // 2, font = tchoice[0],
-           color = WHITE)
-
-    # Bottom row: company on the left, countdown on the right.
-    meta_y = 25
     when = countdown(data, top["d"])
-    name_w = inner - 4
-    if when != "":
-        when_w = c.text_width(when, "4x5")
-        if inner - 6 - when_w >= 20:
-            c.text(when, right - 1, meta_y, font = "4x5", color = AMBER,
-                   align = "right")
-            name_w = inner - 8 - when_w
-    c.text(fit(c, top["n"].upper(), "4x5", name_w), left + 2, meta_y,
-           font = "4x5", color = DIM)
+    tick = top["s"].upper()
+
+    if not wide(c):
+        calendar(c, 0, 3, 20, 27, top["d"], color)
+        tx = 23
+        room = right - tx + 1
+        tchoice = pick_font(c, tick, [["6x8", 8], ["4x5", 6]], room)
+        c.text(fit(c, tick, tchoice[0], room), tx, 1, font = tchoice[0],
+               color = WHITE)
+        ratio = top["r"]
+        if c.text_width(ratio, "6x8") > room:
+            ratio = top.get("rs", ratio)
+        rchoice = pick_font(c, ratio, [["6x8", 8], ["4x5", 6]], room)
+        c.text(fit(c, ratio, rchoice[0], room), tx, 10 + (8 - rchoice[1]) // 2,
+               font = rchoice[0], color = color)
+        label = "FORWARD"
+        if is_reverse(top):
+            label = "REVERSE"
+        c.text(label, tx, 20, font = "4x5", color = color)
+        c.text(fit(c, when, "4x5", room), tx, 26, font = "4x5", color = AMBER)
+        return
+
+    calendar(c, left, 3, 22, 27, top["d"], color)
+    tx = left + 27
+
+    # Right block: ratio on top, the kind underneath, both in the split's
+    # color. Measured first so the rest fits into what's left.
+    ratio = top["r"]
+    rchoice = pick_font(c, ratio, [["8x12", 12], ["6x8", 8], ["4x5", 6]], 60)
+    c.text(ratio, right, 3 + (12 - rchoice[1]) // 2, font = rchoice[0],
+           color = color, align = "right")
+    label = "FORWARD SPLIT"
+    if is_reverse(top):
+        label = "REVERSE SPLIT"
+    c.text(label, right, 18, font = "4x5", color = color, align = "right")
+    block_w = c.text_width(ratio, rchoice[0])
+    label_w = c.text_width(label, "4x5")
+    if label_w > block_w:
+        block_w = label_w
+
+    flow_x = right - block_w - 8 - 34
+    coin_flow(c, top, flow_x, 10)
+
+    room = flow_x - 8 - tx
+    tchoice = pick_font(c, tick, [["8x12", 12], ["6x8", 8]], room)
+    c.text(fit(c, tick, tchoice[0], room), tx, 2, font = tchoice[0],
+           color = WHITE)
+    c.text(fit(c, top["n"].upper(), "4x5", room), tx, 17, font = "4x5",
+           color = DIM)
+    c.text(when, tx, 25, font = "4x5", color = AMBER)
 
 # --- list pages -------------------------------------------------------------
 
 def draw_rows(c, rows, first, last):
-    # Five splits per screen. Each row: a colour bar (mint forward, red
-    # reverse), the date, the ticker, the company when wide, and the ratio
+    # Five splits per screen. Each row: a fork (forward) or merge (reverse)
+    # icon, the date, the ticker, the company when wide, and the ratio
     # right-aligned. The ratio is measured first; everything else fits into
     # what is left.
     width = c.width
@@ -305,10 +423,11 @@ def draw_rows(c, rows, first, last):
         if w > date_w:
             date_w = w
 
-    date_x = left + 3
-    if wide(c):
-        date_x = left + 4
+    date_x = left + 7
     tick_x = date_x + date_w + 3
+    if wide(c):
+        date_x = left + 8
+        tick_x = date_x + date_w + 4
 
     tick_w = 0
     for entry in page:
@@ -322,7 +441,7 @@ def draw_rows(c, rows, first, last):
         slot = slot + 1
         color = kind_color(entry)
 
-        c.rect(left, y, left + 1, y + 4, fill = color)
+        kind_icon(c, entry, left, y)
         c.text(row_date(c, entry), date_x, y, font = ROW_FONT, color = SKY)
 
         ratio = entry["r"]
@@ -334,7 +453,7 @@ def draw_rows(c, rows, first, last):
         ratio_left = right - ratio_w
 
         tick = entry["s"].upper()
-        tick_room = ratio_left - 3 - tick_x
+        tick_room = ratio_left - 2 - tick_x
         c.text(fit(c, tick, ROW_FONT, tick_room), tick_x, y,
                font = ROW_FONT, color = WHITE)
 
@@ -367,10 +486,10 @@ def draw_list_page(c, first, last):
         text = str(n) + " SPLIT"
         if n != 1:
             text = text + "S"
-        c.text("END OF LIST", c.width // 2, 8, font = "5x7", color = MINT,
-               align = "center")
-        c.text(text + " DUE", c.width // 2, 20, font = "4x5", color = DIM,
-               align = "center")
+        if wide(c):
+            message_screen(c, "END OF LIST", text + " DUE", "", WHITE)
+        else:
+            message_screen(c, "END", text, "DUE", WHITE)
         return
     draw_rows(c, rows, first, last)
 
