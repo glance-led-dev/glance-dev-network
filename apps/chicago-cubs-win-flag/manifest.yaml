@@ -1,0 +1,26 @@
+gdn: 1
+id: chicago-cubs-win-flag
+version: 0.1.0
+name: "Chicago Cubs Win Flag"
+author: "FCYC"
+description: Waving Cubs W victory flags on Cubby blue, with or without Cubs C logos between them.
+category: Art
+entry: app.star
+width: 384
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - flags.png
+  - flags_and_logos.png
+inputs:
+  - key: style
+    label: Style
+    app_input_type: dropdown
+    default: "Flags and C logos"
+    options:
+      - "Flags and C logos"
+      - "Flags only"
+    choices:
+      - "Flags and C logos"
+      - "Flags only"
