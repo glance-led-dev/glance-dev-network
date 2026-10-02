@@ -1,0 +1,30 @@
+gdn: 1
+id: high-school-soccer
+version: 0.1.0
+name: "High School Soccer"
+author: "rcaribe2-cyber"
+description: Live high school soccer scores, record, and next game from MaxPreps.
+category: Sports
+entry: app.star
+width: 64
+height: 32
+refresh: 900
+pages:
+  - main
+  - team_logo
+  - season_record
+  - next_game
+inputs:
+  - key: teamurl
+    type: string
+    app_input_type: free-text
+    label: MaxPreps Team URL
+    default: "https://www.maxpreps.com/oh/elyria/elyria-catholic-panthers/soccer/girls/"
+    help: Paste the main MaxPreps page for your soccer team.
+
+  - key: teamabbr
+    type: string
+    app_input_type: free-text
+    label: Team abbreviation
+    default: "EC"
+    help: Enter a short team name for the display.
