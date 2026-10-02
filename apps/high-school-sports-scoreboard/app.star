@@ -9797,15 +9797,24 @@ def school_timezone_from_url(maxpreps_url):
     return "Eastern"
 
 def school_settings(ctx):
-    maxpreps_url = ctx.inputs.get("maxprepsurl", "")
-    if maxpreps_url == None:
-        maxpreps_url = ""
+    state = school_path_segment(ctx.inputs.get("schoolstate", ""))
+    city = school_path_segment(ctx.inputs.get("schoolcity", ""))
+    school = school_path_segment(ctx.inputs.get("schoolslug", ""))
+    maxpreps_url = ""
+    if state != "" and city != "" and school != "":
+        maxpreps_url = "/" + state + "/" + city + "/" + school + "/"
     return {
-        "school": "",
-        "state": "",
-        "maxpreps_url": maxpreps_url.strip(),
+        "school": school,
+        "state": state,
+        "maxpreps_url": maxpreps_url,
         "timezone": school_timezone_from_url(maxpreps_url),
     }
+
+def school_path_segment(value):
+    raw = str(value if value != None else "").strip().lower()
+    raw = raw.replace("https://", "").replace("http://", "")
+    raw = raw.replace("www.maxpreps.com", "").strip("/")
+    return raw.replace(" ", "-")
 
 def maxpreps_game_url(value):
     raw = str(value).strip()

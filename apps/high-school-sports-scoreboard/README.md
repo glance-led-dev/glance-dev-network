@@ -5,7 +5,7 @@ Displays one high school's current sports matchup on a 192x32 Glance display. Th
 ## Setup
 
 1. **Choose a sport.** Select Football, Boys Basketball, Girls Basketball, Baseball, Softball, Girls Volleyball, Boys Soccer, or Girls Soccer.
-2. **Add the MaxPreps school page.** Open the school's main MaxPreps page and enter its address **without** `http://` or `https://`. Use a value like `www.maxpreps.com/nc/charlotte/myers-park-mustangs/`. The protocol-free form keeps the value safe in Glance's render descriptor; the app restores HTTPS internally. Do not use a sport schedule, matchup, recap, or individual game URL.
+2. **Add the MaxPreps school location.** Open the school's main MaxPreps page and copy its three path portions into the separate settings. For `www.maxpreps.com/nc/charlotte/myers-park-mustangs/`, enter state `NC`, city `charlotte`, and school name `myers-park-mustangs`. Do not enter a complete URL, sport schedule, matchup, recap, or individual game page.
 3. **Connect Parse.** Create a [Parse account](https://parse.bot), then [subscribe to the public MaxPreps API](https://parse.bot/marketplace/1d510b08-d5bf-481d-aa00-82f8b510e6dd/maxpreps-com-api). If the subscription page offers **Bump to v18**, use it so the subscription matches the API snapshot requested by the app. Do not fork, merge, or edit the scraper. Copy your personal Parse API key into the app's encrypted **Parse API key** setting. Each user's requests and credits remain on their own Parse account; the app never includes, shares, or falls back to someone else's key.
 4. **Choose the display time zone.** The school timezone is detected automatically from its MaxPreps location. Display time zone controls the time shown on your Glance.
 5. **Choose a live frequency.** The default is every 30 minutes. Select **No live pulls** when you only want upcoming and final results, or select a faster interval while actively following a game.
@@ -79,11 +79,11 @@ Parse pricing and endpoint costs can change; check the usage page in your own Pa
 ## Common messages
 
 - **KEY ERROR:** the Parse key is missing, invalid, or connected to the wrong Parse account/API.
-- **URL ERROR:** the MaxPreps URL is not a valid main school page.
+- **URL ERROR:** one or more school-location fields are missing or do not form a valid MaxPreps school path.
 - **FEED ERROR:** the source could not be reached. The app waits briefly before retrying so repeated previews do not create a request burst.
 - **NO GAME / NO UPCOMING:** MaxPreps does not currently list a usable matchup for the selected sport.
 - **OFFSEASON:** the selected sport is outside its configured season and automatic pulls are paused.
 
 ## Updating settings
 
-The school timezone is detected automatically from its MaxPreps location. You can change the sport, school URL, display timezone, or live frequency without deleting and re-adding the app. Select **No live pulls** for upcoming and final results without recurring in-game checks, or use a faster frequency only when you want closer live updates.
+The school timezone is detected automatically from its MaxPreps location. You can change the sport, school-location fields, display timezone, or live frequency without deleting and re-adding the app. Select **No live pulls** for upcoming and final results without recurring in-game checks, or use a faster frequency only when you want closer live updates.
