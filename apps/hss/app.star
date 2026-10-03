@@ -9713,32 +9713,41 @@ SPORTS = {
     },
 }
 
+SPORT_CODES = {
+    "F": "Football",
+    "B": "Boys Basketball",
+    "G": "Girls Basketball",
+    "A": "Baseball",
+    "S": "Softball",
+    "V": "Girls Volleyball",
+    "M": "Boys Soccer",
+    "W": "Girls Soccer",
+}
+
+TIMEZONE_CODES = {
+    "E": "Eastern",
+    "C": "Central",
+    "M": "Mountain",
+    "P": "Pacific",
+    "Z": "Arizona",
+    "A": "Alaska",
+    "H": "Hawaii",
+}
+
 def selected_sport(ctx):
-    label = ctx.inputs.get("sport", "Football")
+    label = SPORT_CODES.get(str(ctx.inputs.get("s", "F")).strip().upper(), "Football")
     return SPORTS.get(label, SPORTS["Football"])
 
 def live_refresh_seconds(ctx):
     # Studio still renders on the manifest's five-minute cadence, but this
     # user-selected bucket controls how often a new Parse Scoretracker request
     # is allowed. Renders inside the same bucket reuse the cached response.
-    label = ctx.inputs.get("livefrequency", "Every 30 minutes (2 credits/hour)")
-    intervals = {
-        "Every 5 minutes": 300,
-        "Every 5 minutes (12 credits/hour)": 300,
-        "Every 10 minutes": 600,
-        "Every 10 minutes (6 credits/hour)": 600,
-        "Every 15 minutes": 900,
-        "Every 15 minutes (4 credits/hour)": 900,
-        "Every 20 minutes": 1200,
-        "Every 20 minutes (3 credits/hour)": 1200,
-        "Every 30 minutes": 1800,
-        "Every 30 minutes (2 credits/hour)": 1800,
-    }
-    return intervals.get(label, 1800)
+    minutes = str(ctx.inputs.get("f", "30")).strip()
+    intervals = {"5": 300, "10": 600, "15": 900, "20": 1200, "30": 1800}
+    return intervals.get(minutes, 1800)
 
 def live_pulls_enabled(ctx):
-    label = ctx.inputs.get("livefrequency", "Every 30 minutes (2 credits/hour)")
-    return label != "No live pulls (0 credits/hour)"
+    return str(ctx.inputs.get("f", "30")).strip() != "0"
 
 def sport_is_active(ctx, timezone):
     local = date_info_in_timezone(ctx.now.unix, timezone)
@@ -9797,9 +9806,9 @@ def school_timezone_from_url(maxpreps_url):
     return "Eastern"
 
 def school_settings(ctx):
-    state = school_path_segment(ctx.inputs.get("schoolstate", ""))
-    city = school_path_segment(ctx.inputs.get("schoolcity", ""))
-    school = school_path_segment(ctx.inputs.get("schoolslug", ""))
+    state = school_path_segment(ctx.inputs.get("a", ""))
+    city = school_path_segment(ctx.inputs.get("c", ""))
+    school = school_path_segment(ctx.inputs.get("n", ""))
     maxpreps_url = ""
     if state != "" and city != "" and school != "":
         maxpreps_url = "/" + state + "/" + city + "/" + school + "/"
@@ -11203,7 +11212,7 @@ def merge_live_game(base, live_game, ctx, display_timezone):
     return base
 
 def fetch_game_adaptive(ctx, kind, slot):
-    api_key = ctx.inputs.get("parsekey", "")
+    api_key = ctx.inputs.get("k", "")
     # Published installs always use live data once a Parse key is present.
     # With no key, Studio retains the safe local sample automatically.
     data_mode = ctx.inputs.get("datamode", "Live Parse")
@@ -11211,11 +11220,7 @@ def fetch_game_adaptive(ctx, kind, slot):
     sport = selected_sport(ctx)
     schools = school_settings(ctx)
     source_timezone = schools["timezone"]
-    display_timezone = ctx.inputs.get("displaytimezone", "Eastern")
-    gamechanger_team_id = ctx.inputs.get("gamechangerteamid", "")
-    if str(gamechanger_team_id).strip().lower() in ["", "none", "n/a", "na"]:
-        gamechanger_team_id = ""
-    gamechanger_live_enabled = live_pulls_enabled(ctx) and sport["code"] in ["BSB", "SB"] and str(gamechanger_team_id).strip() != "" and str(schools.get("maxpreps_url", "")).strip() != "" and kind in ["dynamic", "live"]
+    display_timezone = TIMEZONE_CODES.get(str(ctx.inputs.get("z", "E")).strip().upper(), "Eastern")
     if not sport_is_active(ctx, source_timezone):
         return None
 
@@ -11241,18 +11246,6 @@ def fetch_game_adaptive(ctx, kind, slot):
                     sample_copy["status"] = "live"
             return sample_copy
         return {"displayState": "key_error"}
-
-    # Baseball and softball can read the team's public GameChanger widget
-    # directly. This path needs no GameChanger login and spends no Parse
-    # credits. MaxPreps remains responsible for schedules, records, matchup
-    # stats, and final-game history.
-    gc_live = None
-    if gamechanger_live_enabled:
-        gc_response = gamechanger_live_request(
-            gamechanger_team_id,
-            "gc-live-" + str(ctx.now.unix // live_refresh_seconds(ctx)),
-        )
-        gc_live = gamechanger_live_game(gc_response, schools["school"])
 
     # An exact game URL can use MaxPreps' embedded Qwix ID directly. All
     # The dynamic page shares one half-hour cache bucket across its
@@ -11286,8 +11279,6 @@ def fetch_game_adaptive(ctx, kind, slot):
                 exact_game = None
             if exact_game == None:
                 pass
-            elif exact_game.get("type") != "final" and exact_game.get("status") != "final":
-                exact_game = overlay_gamechanger_live(exact_game, gc_live, display_timezone)
             if exact_game != None and kind == "dynamic":
                 return exact_game
             if exact_game != None and kind == "final":
@@ -11302,9 +11293,6 @@ def fetch_game_adaptive(ctx, kind, slot):
     # The required school URL is already the stable MaxPreps identifier.
     school_path = maxpreps_school_path(schools.get("maxpreps_url", ""))
     if school_path == None:
-        fallback = gamechanger_fallback_game(gc_live, sport["code"], slot, ctx, display_timezone)
-        if fallback != None:
-            return fallback
         return {"displayState": "url_error"}
 
     schedule = event_schedule(
@@ -11322,9 +11310,6 @@ def fetch_game_adaptive(ctx, kind, slot):
     if response_credit_error(schedule):
         return {"displayState": "no_credits"}
     if not valid_schedule(schedule):
-        fallback = gamechanger_fallback_game(gc_live, sport["code"], slot, ctx, display_timezone)
-        if fallback != None:
-            return fallback
         if schedule != None and schedule.get("status_code") == 200:
             return {"displayState": "no_game"}
         return {"displayState": "feed_error"}
@@ -11382,9 +11367,6 @@ def fetch_game_adaptive(ctx, kind, slot):
     matchup_was_final = game.get("type") == "final" or game.get("status") == "final"
     game = enrich_game_with_matchup(api_key, game, matchup_was_final)
     game = enrich_game_with_opponent_streak(ctx, api_key, game, sport, season, source_timezone)
-    if game.get("type") != "final" and game.get("status") != "final":
-        game = overlay_gamechanger_live(game, gc_live, display_timezone)
-
     # The schedule supplies matchup and final-score data, but football's
     # quarter breakdown lives in Scoretracker. Use the Qwix ID extracted by
     # the schedule scraper for started/final games only. A completed game's
