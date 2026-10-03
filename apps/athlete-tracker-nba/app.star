@@ -208,7 +208,7 @@ LOGO_SIZE = {
     "nba_gs": (19, 19),
     "nba_hou": (14, 19),
     "nba_ind": (23, 19),
-    "nba_lac": (19, 19),
+    "nba_lac": (14, 19),
     "nba_lal": (19, 16),
     "nba_mem": (20, 19),
     "nba_mia": (18, 19),
@@ -1165,6 +1165,27 @@ def stat_block(c, x, y, stats, tag, tag_color, accent, hero_color = "white"):
         c.text(v, rx + vw - c.text_width(v, "4x5"), yy, font = "4x5", color = "white")
         c.text(l, rx + vw + 3, yy, font = "4x5", color = "gray")
 
+def status_block(c, x, y, p, tag):
+    """Stat slot for a player with no numbers: the injury if he has one, else INACTIVE / NO STATS."""
+    inj = p["inj"]
+    if inj:
+        word, color = inj["tag"], inj["color"]
+        lines = [(inj["part"], "white"), (("BACK " + inj["back"]) if inj["back"] else "", "gray")]
+    elif p.get("inactive"):
+        word, color, lines = "INACTIVE", "gray", [("", "gray"), ("", "gray")]
+    else:
+        word, color, lines = "NO STATS", "gray", [(tag, "gray"), ("", "gray")]
+    hf = "9x12"
+    sw = max([c.text_width(t, "4x5") for (t, _) in lines])
+    if x + c.text_width(word, hf) + 3 + sw > 127:
+        hf = "7x12"
+    c.text(word, x, y, font = hf, color = color)
+    sx = x + c.text_width(word, hf) + 3
+    for i in range(len(lines)):
+        t, col = lines[i]
+        if t and sx + c.text_width(t, "4x5") <= 127:
+            c.text(t, sx, y + 1 + i * 6, font = "4x5", color = col)
+
 LOGO_BOX = 19
 
 # ESPN's game feeds sometimes use a different abbreviation from its team pages (UTA vs UTAH)
@@ -1305,6 +1326,7 @@ def athlete(lg, pid):
         "summary": summary,
         "szn": szn,
         "inj": injury(a.get("injuries")),
+        "inactive": (a.get("status") or {}).get("type") == "inactive",
     }
 
 # ESPN injury type -> (panel tag, keeps them out of the game)
@@ -1626,8 +1648,6 @@ def when_et(iso, now_unix, time_valid):
 
 # ---------------------------------------------------------------- pages
 
-NO_STATS = [("-", ""), ("-", ""), ("-", "")]
-
 def szn_tag(p, ev):
     """SZN while the stats are this season's; 25-26 / 2025 while ESPN still shows last season."""
     y = p.get("szn") or ""
@@ -1672,14 +1692,18 @@ def season(c, ctx):
         failed(c, why)
         return
     ov = overview(p["lg"], p["id"])
-    stats = season_stats(ov, p) or NO_STATS
+    stats = season_stats(ov, p)
     c.clear()
     draw_gear(c, p["lg"], p["num"], p["color"], p["alt"], p["logo"])
     name_and_logo(c, 35, p["last"], p["logo"], "")
     ac = accent(p["color"], p["alt"])
     # the logo names the team, so the bio line starts at the position
     meta_line(c, 35, 12, "" if p["logo"] else p["team"], p["pos"], p["ft"], p["in"], p["lbs"], ac, p["inj"])
-    stat_block(c, 35, 19, stats, szn_tag(p, next_event(ov, ctx.now.unix)), "gray", ac)
+    tag = szn_tag(p, next_event(ov, ctx.now.unix))
+    if stats:
+        stat_block(c, 35, 19, stats, tag, "gray", ac)
+    else:
+        status_block(c, 35, 19, p, tag)
 
 def game(c, ctx):
     p, why = pick_player(ctx)
@@ -1695,7 +1719,11 @@ def game(c, ctx):
         # offseason, or nothing on the schedule yet: say so and keep the season line
         stop = name_and_logo(c, 35, p["last"], p["logo"], "") - 3
         game_line(c, 35, 12, [("NO NEXT GAME", "gray")], stop)
-        stat_block(c, 35, 19, season_stats(ov, p) or NO_STATS, szn_tag(p, None), "gray", ac)
+        szn = season_stats(ov, p)
+        if szn:
+            stat_block(c, 35, 19, szn, szn_tag(p, None), "gray", ac)
+        else:
+            status_block(c, 35, 19, p, szn_tag(p, None))
         return
     me, opp = {}, {}
     for comp in ev.get("competitors") or []:
@@ -1725,8 +1753,12 @@ def game(c, ctx):
     if game_width(c, parts) > stop - 35 and parts[0][0] == "PRE":
         parts = parts[1:]                       # the date and time matter more than the tag
     game_line(c, 35, 12, parts, stop)
-    szn = season_stats(ov, p) or NO_STATS
+    szn = season_stats(ov, p)
     inj = p["inj"]
+    if not szn and (inj or p.get("inactive")):
+        # nothing to show but his status: injured with no games yet, or inactive
+        status_block(c, 35, 19, p, szn_tag(p, ev))
+        return
     if inj and inj["out"]:
         # injured reserve / IL / out: no projection to show, say why and when he is back
         stats, tag = out_block(p, szn)
@@ -1738,4 +1770,7 @@ def game(c, ctx):
         stat_block(c, 35, 19, proj, inj["tag"] if inj else "PROJ", inj["color"] if inj else "#4FA3FF", ac)
     else:
         # no projection for this player (goalies, kickers, defenders): show the season line
-        stat_block(c, 35, 19, szn, szn_tag(p, ev), "gray", ac)
+        if szn:
+            stat_block(c, 35, 19, szn, szn_tag(p, ev), "gray", ac)
+        else:
+            status_block(c, 35, 19, p, szn_tag(p, ev))
