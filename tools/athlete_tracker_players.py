@@ -84,9 +84,16 @@ def top_players(game, n, today):
 
 
 def team_abbrevs(site):
-    data = get(f"https://site.api.espn.com/apis/site/v2/sports/{site}/teams")
-    teams = data["sports"][0]["leagues"][0]["teams"]
-    return {int(t["team"]["id"]): t["team"]["abbreviation"] for t in teams}
+    """Team id -> abbreviation, only used to tell apart players who share a name.
+    site.api.espn.com has broken before while site.web.api.espn.com kept working."""
+    for host in ("site.api.espn.com", "site.web.api.espn.com"):
+        try:
+            data = get(f"https://{host}/apis/site/v2/sports/{site}/teams")
+            teams = data["sports"][0]["leagues"][0]["teams"]
+            return {int(t["team"]["id"]): t["team"]["abbreviation"] for t in teams}
+        except Exception as e:
+            print(f"  {host} teams: {e}", file=sys.stderr)
+    return {}   # duplicate names get "(FA)" rather than failing the run
 
 
 def read_existing(league):
