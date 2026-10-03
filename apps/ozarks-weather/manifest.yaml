@@ -1,0 +1,34 @@
+# OZARKS WEATHER
+
+gdn: 1
+id: ozarks-weather
+version: 0.1.0
+name: Ozarks Weather
+author: Scott Shaddox
+description: Local weather and conditions from around the Ozarks.
+entry: app.star
+
+# Glance Studio panel
+width: 192
+height: 32
+
+# Refresh weather data every 5 minutes
+refresh: 300
+
+# Pages shown in order
+pages: [current, forecast, around1, around2, around3, around4, outlook]
+
+# Installation settings
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "72662"
+    help: Your local ZIP code.
+
+  - key: city
+    type: string
+    app_input_type: free-text
+    label: City label
+    default: OMAHA AR
