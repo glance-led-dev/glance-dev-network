@@ -1,15 +1,12 @@
-# Date & Weather — today's date and weather for a US zip code. (192x32)
+# Date & Time — local date, time, and current weather for a US zip code.
 
-**TODAY:** the weekday over a big date on the left; on the right, the place,
-a drawn condition icon, the temperature, today's high and low, and the
-condition by name.
+Format: DATE | TIME | weather ICON + TEMP + CONDITION.
 
-**SKY:** three columns for today's chance of rain, sunrise, and sunset.
+Each section has its own configurable color. The whole line shares one
+user-selected font (4x5/6x8/8x12/10x16/16x24) and only drops to a smaller
+font if the full line — with real content — would overflow, so sizing stays
+consistent instead of each section picking its own.
 
-Settings: a zip code, a date style (SEP 14 / 14 SEP / 09/14 / 14/09), and one
-of five colors (white, amber, green, cyan, red) each for the date, the
-weather, and the temperature.
-
-It refreshes every 30 minutes, so it shows no clock: a time drawn at that rate
-would be up to 30 minutes stale. Sunrise and sunset are fixed for the day.
-Weather is from Open-Meteo and the place from Zippopotam; neither needs a key.
+The temperature reading can either match the weather color, or follow a
+hot/cold scale (icy blue when cold, ramping through green/yellow/orange to
+red when hot).
