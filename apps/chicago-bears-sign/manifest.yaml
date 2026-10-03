@@ -1,0 +1,15 @@
+gdn: 1
+id: chicago-bears-sign
+version: 0.1.0
+name: "Chicago Bears Sign"
+author: "FCYC"
+description: Chicago Bears gameday sign.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 900
+pages: [sign]
+assets:
+  - bears_primary.png
+  - bears_vintage_football.png
