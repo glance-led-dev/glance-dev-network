@@ -827,8 +827,8 @@ def pad_int(n, width):
     return sign + s
 
 
-# Integer hash of the current minute, so every page agrees on the pick
-# within a minute but the picks don't cycle visibly.
+# Integer hash, for a shuffle that looks random but every page of a
+# render agrees on.
 def scramble(x):
     x = x & 0xFFFFFFFF
     x = ((x ^ 61) ^ (x >> 16)) & 0xFFFFFFFF
@@ -840,10 +840,15 @@ def scramble(x):
 
 
 def rotation_index(ctx, n):
-    bucket = ctx.now.unix // 60
-
-    # Multiply-high range reduction: uses the hash's well-mixed high bits.
-    return (scramble(bucket) * n) // 4294967296
+    # The day's choices in a fresh shuffled order each day, stepping to the
+    # next one every hour: it looks random, but on a busy day every event
+    # gets its turn before any repeats and none comes up twice in a row.
+    # Hourly so it holds whatever refresh the panel uses, up to an hour.
+    # The day is counted on Eastern Standard Time, close enough for when
+    # the shuffle changes.
+    day = (ctx.now.unix - 5 * 3600) // 86400
+    order = sorted(range(n), key = lambda k: scramble(day * 4096 + k))
+    return order[(ctx.now.unix // 3600) % n]
 
 
 def days_from_civil(y, m, d):
