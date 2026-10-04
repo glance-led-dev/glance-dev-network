@@ -9,22 +9,6 @@ entry: app.star
 width: 192
 height: 32
 refresh: 300
-assets:
-- crossfit-preems.png
-- darps.png
-- ev.png
-- fash.png
-- godsplan.png
-- greek.png
-- hebrew-school-of-economics.png
-- mikeverrelli11.png
-- mills.png
-- mr-wrench.png
-- peter.png
-- put-him-in-the-bathroom.png
-- swatty.png
-- will-you-be-my-neighbours.png
-- page-1.png
 inputs:
 - key: leagueid
   type: string

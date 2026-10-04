@@ -105,60 +105,6 @@ def team_score(team):
     return safe_str(score)
 
 
-def team_logo_asset(team):
-    # Preserve the existing sample-league logo treatment. Other Fantrax
-    # leagues still render normally; teams without a bundled asset simply
-    # render without a logo.
-    name = team_name(team)
-
-    if name == "CROSSFIT PREEMS":
-        return "crossfit-preems.png"
-
-    if name == "DARPS":
-        return "darps.png"
-
-    if name == "EV":
-        return "ev.png"
-
-    if name == "FASH":
-        return "fash.png"
-
-    if name.startswith("GODSPLAN"):
-        return "godsplan.png"
-
-    if name == "GREEK":
-        return "greek.png"
-
-    if name == "HEBREW SCHOOL OF ECONOMICS":
-        return "hebrew-school-of-economics.png"
-
-    if name == "MIKEVERRELLI11":
-        return "mikeverrelli11.png"
-
-    if name.startswith("MILLS"):
-        return "mills.png"
-
-    if name == "MR. WRENCH":
-        return "mr-wrench.png"
-
-    if name == "PAGE 1":
-        return "page-1.png"
-
-    if name == "PETER":
-        return "peter.png"
-
-    if name == "PUT HIM IN THE BATHROOM":
-        return "put-him-in-the-bathroom.png"
-
-    if name == "SWATTY":
-        return "swatty.png"
-
-    if name == "WILL YOU BE MY NEIGHBOURS ?":
-        return "will-you-be-my-neighbours.png"
-
-    return ""
-
-
 def team_logo_pixels(data, team):
     if data == None or team == None:
         return []
@@ -241,19 +187,6 @@ def draw_team_row(c, data, team, y, color):
 
     if pixels:
         draw_logo_pixels(c, pixels, 0, y)
-    else:
-        # Bundled league assets remain a zero-cost fallback while a newly
-        # seen remote logo is warming into the Worker cache.
-        logo = team_logo_asset(team)
-
-        if logo:
-            c.image(
-                logo,
-                0,
-                y,
-                w = 16,
-                h = 16,
-            )
 
     name = fit_team_name(c, name, 126)
 
