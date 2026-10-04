@@ -1,13 +1,17 @@
 # Fantrax connection setup
 
-This app reads private Fantrax league data through the Fantrax GLANCE connector.
+## Get your Fantrax GLANCE token
 
-1. Open `https://fantrax-public.mdarpino.workers.dev/connect`.
-2. Sign in to Fantrax on that page.
-3. Copy the GLANCE token shown after a successful connection. The Fantrax password is used for the login attempt and is not stored by the connector.
-4. In the GLANCE app settings, enter:
-   - **Fantrax League ID** — the league ID from your Fantrax league URL.
-   - **Fantrax GLANCE Token** — the token from step 3.
+Before configuring this app on your GLANCE, you need a Fantrax GLANCE token.
+
+1. Open `https://fantrax-public.mdarpino.workers.dev/connect` in a web browser.
+2. Sign in with your Fantrax account.
+3. After a successful connection, copy the GLANCE token shown on the page.
+4. Add or configure **Fantrax Hockey Standings** on your GLANCE and enter:
+   - **Fantrax League ID** - the league ID from your Fantrax league URL.
+   - **Fantrax GLANCE Token** - the token generated in step 3.
+
+Your Fantrax password is used only for the login attempt and is not stored by the connector.
 
 Keep the GLANCE token private. It is entered as an encrypted `api-key` input.
 
