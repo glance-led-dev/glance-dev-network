@@ -88,17 +88,23 @@ def draw_no_data(c):
         c.text("NO DATA", 32, 15, font = "4x5", color = DIM, align = "center")
         c.text("TRY LATER", 32, 22, font = "4x5", color = DIM, align = "center")
 
+def title(c):
+    if wide(c):
+        return "MILESTONE WATCH"
+    return "MILESTONES"
+
 def draw_header(c, label, right, color):
-    # Filled bar in the league color, black text on it.
+    # Colored label on black with a thin rule under it (no filled bars, so
+    # every pixel of text sits on a black ground).
     left = margin(c)
     edge = c.width - 1 - margin(c)
-    c.rect(left, 0, edge, 6, fill = color)
-    c.text(label, left + 2, 1, font = "4x5", color = "black")
+    c.text(label, left + 1, 1, font = "4x5", color = color)
     if right != "":
         room = edge - left - 6 - c.text_width(label, "4x5")
         if c.text_width(right, "4x5") + 4 <= room:
-            c.text(right, edge - 1, 1, font = "4x5", color = "black",
+            c.text(right, edge, 1, font = "4x5", color = color,
                    align = "right")
+    c.line(left, 7, edge, 7, color = color)
 
 # --- next up (the hero) -----------------------------------------------------
 
@@ -110,7 +116,7 @@ def next_up(c, ctx):
         return
     item = data.get("next")
     if item == None:
-        draw_header(c, "NEXT UP", "", GOLD)
+        draw_header(c, title(c), "", GOLD)
         c.text("ALL CLEAR", c.width // 2, 12, font = "6x8", color = WHITE,
                align = "center")
         c.text("NONE CLOSE", c.width // 2, 24, font = "4x5", color = DIM,
@@ -123,7 +129,7 @@ def next_up(c, ctx):
     inner = c.width - 2 * margin(c)
 
     if wide(c):
-        draw_header(c, "NEXT MILESTONE", lg, color)
+        draw_header(c, "MILESTONE WATCH", lg, color)
         name = item["name"]
         choices = [["7x12", 12], ["6x8", 8]]
         if c.text_width(name, "6x8") > inner - 4:
@@ -134,14 +140,21 @@ def next_up(c, ctx):
         c.text(fit_line(c, item["w"], "4x5", inner - 4), left + 2, 25,
                font = "4x5", color = kind_color(item))
     else:
-        draw_header(c, "NEXT UP", lg, color)
+        draw_header(c, "MILESTONES", "", color)
         last = item["last"]
         chosen = pick_font(c, last, [["6x8", 8], ["4x5", 6]], 62)
         c.text(fit(c, last, chosen[0], 62), 1, 9, font = chosen[0],
                color = WHITE)
         c.text(fit(c, item["n"], "4x5", 62), 1, 19, font = "4x5",
                color = kind_color(item))
-        c.text(item["stat"], 1, 26, font = "4x5", color = color)
+        kind = item.get("t", "")
+        tail = item["stat"]
+        if kind == "team":
+            tail = "TEAM WINS"
+        elif kind == "coach":
+            tail = "COACH"
+        c.text(fit(c, lg + " " + tail, "4x5", 62), 1, 26, font = "4x5",
+               color = color)
 
 # --- league pages -----------------------------------------------------------
 
