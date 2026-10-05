@@ -10,7 +10,8 @@
 # mrnaturl-starters-scroll (192 wide). The Scroll shows two games per page,
 # the Glance LED one. The eight pages walk through the games still to come,
 # NHL first, then MLB. On a night with more games than pages, the set shown
-# moves along every 10 minutes so every game gets its turn.
+# moves along every 10 minutes so every game gets its turn. A league in its
+# offseason does not appear at all.
 
 FEED_URL = "https://mrnaturl-starters.pages.dev/api/starters.json"
 
@@ -153,22 +154,30 @@ def draw_small(c, s):
                color = name_color(lg, side))
 
 def draw_empty(c, data):
-    # Positive all-clear: nothing left to show today in either league.
-    nhl = data.get("nhl", {}).get("note", "") or "NO GAMES TODAY"
-    mlb = data.get("mlb", {}).get("note", "") or "NO GAMES TODAY"
-    if wide(c):
-        c.text("PROBABLE STARTERS", c.width // 2, 2, font = "6x8",
-               color = WHITE, align = "center")
-        c.text("NHL  " + nhl, c.width // 2, 15, font = "4x5", color = NHL_C,
-               align = "center")
-        c.text("MLB  " + mlb, c.width // 2, 23, font = "4x5", color = MLB_C,
-               align = "center")
-    else:
-        c.text("STARTERS", 32, 2, font = "6x8", color = WHITE, align = "center")
-        nhl = nhl.replace("NO GAMES TODAY", "NONE TODAY")
-        mlb = mlb.replace("NO GAMES TODAY", "NONE TODAY")
-        c.text("NHL " + fit(c, nhl, 46), 1, 15, font = "4x5", color = NHL_C)
-        c.text("MLB " + fit(c, mlb, 46), 1, 23, font = "4x5", color = MLB_C)
+    # No games left to show. Leagues in their offseason are left out; if
+    # both are, the panel says so once.
+    lines = []
+    for lg in ["NHL", "MLB"]:
+        note = data.get(lg.lower(), {}).get("note", "") or "NO GAMES TODAY"
+        if note != "OFFSEASON":
+            lines.append([lg, note])
+    title = "PROBABLE STARTERS" if wide(c) else "STARTERS"
+    cx = c.width // 2
+    c.text(title, cx, 2, font = "6x8", color = WHITE, align = "center")
+    if len(lines) == 0:
+        c.text("OFFSEASON", cx, 17, font = "4x5", color = DIM, align = "center")
+        return
+    ys = [15, 23] if len(lines) == 2 else [19]
+    for i in range(len(lines)):
+        lg = lines[i][0]
+        note = lines[i][1]
+        gap = "  "
+        if not wide(c):
+            note = note.replace("NO GAMES TODAY", "NO GAMES")
+            gap = " "
+        color = NHL_C if lg == "NHL" else MLB_C
+        c.text(fit(c, lg + gap + note, c.width - 2), cx, ys[i], font = "4x5",
+               color = color, align = "center")
 
 def draw_no_data(c):
     if wide(c):
