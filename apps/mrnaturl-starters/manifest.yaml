@@ -1,0 +1,21 @@
+gdn: 1
+id: mrnaturl-starters
+version: 0.1.0
+name: Probable Starters
+author: bbusch
+description: Today's NHL starting goalies (confirmed or expected) and MLB probable pitchers, with record and save percentage or ERA
+category: Sports
+entry: app.star
+width: 64
+height: 32
+refresh: 600
+pages:
+  - games_1
+  - games_2
+  - games_3
+  - games_4
+  - games_5
+  - games_6
+  - games_7
+  - games_8
+inputs: []
