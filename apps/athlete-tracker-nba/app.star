@@ -1276,6 +1276,16 @@ def game_line(c, x, y, parts, stop):
         c.text(txt, x, y, font = "4x5", color = col)
         x += c.text_width(txt, "4x5")
 
+def result(me, opp, ac):
+    """W / L / T and the winner's score first, the way ESPN writes a result: L 24-20, never 20-24."""
+    a, b = me.get("score") or "0", opp.get("score") or "0"
+    if not (a.isdigit() and b.isdigit()):
+        return [("%s-%s" % (a, b), ac)]
+    x, y = int(a), int(b)
+    if x == y:
+        return [("T", "gray"), ("%d-%d" % (x, y), ac)]
+    return [("W", "green") if x > y else ("L", "red"), ("%d-%d" % (max(x, y), min(x, y)), ac)]
+
 # ---------------------------------------------------------------- ESPN data
 
 LEAGUE = "nba"
@@ -1833,7 +1843,10 @@ def game(c, ctx):
         stat_block(c, 35, 19, live_stats(p, ev), "LIVE", "red", ac)
         return
     if state == "post":
-        game_line(c, 35, 12, [("FINAL", "gray"), (score, ac)], stop)
+        parts = [("FINAL", "gray")] + result(me, opp, ac)
+        if game_width(c, parts) > stop - 35:
+            parts = parts[1:]                   # the result matters more than the word
+        game_line(c, 35, 12, parts, stop)
         stat_block(c, 35, 19, live_stats(p, ev), "FINAL", "gray", ac)
         return
     day, time = when_et(ev.get("date"), ctx.now.unix, ev.get("timeValid", True))
