@@ -647,6 +647,10 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
 
     team = game["team"]
     primary = hex_color(team.get("color"), "#1F5AA6")
+    if str(team.get("id")) == "183":
+        # Syracuse's jersey is its signature orange, even when ESPN returns a
+        # stale or alternate team color for the selected team record.
+        primary = "#F76900"
     safe_team_color = darker_team_color(team)
     line_color = team_tint(safe_team_color, ILLINOIS_BORDER)
     background = team_tint(safe_team_color, ILLINOIS_PANEL)
