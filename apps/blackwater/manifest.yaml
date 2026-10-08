@@ -1,0 +1,19 @@
+gdn: 1
+id: blackwater
+name: Blackwater
+description: Logo, then a helicopter pass, then the logo again.
+author: 2K RAW
+width: 64
+height: 32
+refresh: 300
+pages: [mark, p2, p4, p6, p8, end]
+assets:
+  - logo.png
+  - pass1.png
+  - pass2.png
+  - pass3.png
+  - pass4.png
+  - pass5.png
+  - pass6.png
+  - pass7.png
+  - pass8.png
