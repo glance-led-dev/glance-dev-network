@@ -1,0 +1,14 @@
+gdn: 1
+id: blue-angels
+name: Blue Angels
+description: Four cuts from one formation photo.
+author: 2K RAW
+width: 64
+height: 32
+refresh: 300
+pages: [g, f, e, d, c1, b, a]
+assets:
+  - frame1.png
+  - frame2.png
+  - frame3.png
+  - frame4.png
