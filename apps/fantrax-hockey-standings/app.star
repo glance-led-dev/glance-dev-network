@@ -18,7 +18,7 @@ def fetch_data(ctx):
             "Authorization": "Bearer " + apikey,
             "Accept": "application/json",
         },
-        ttl_seconds = 21600,
+        ttl_seconds = 300,
     )
 
     if resp["status_code"] != 200:
