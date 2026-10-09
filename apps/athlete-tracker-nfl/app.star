@@ -252,6 +252,7 @@ PLAYERS = {
     "AJ Henning": 4429053,
     "Alec Ingold": 3917668,
     "Alec Pierce": 4360078,
+    "Alex Bachman": 3919510,
     "Alvin Kamara": 3054850,
     "Amar Johnson": 4878878,
     "Amari Cooper": 2976499,
@@ -564,6 +565,7 @@ PLAYERS = {
     "Jadarian Price": 4685512,
     "Jahan Dotson": 4361409,
     "Jahdae Walker": 5160110,
+    "Jaheim Bell": 4429262,
     "Jahmyr Gibbs": 4429795,
     "Jake Bates": 4689936,
     "Jake Bobo": 4360405,
@@ -644,6 +646,7 @@ PLAYERS = {
     "Jordan James": 4685397,
     "Jordan Love": 4036378,
     "Jordan Mason": 4360569,
+    "Jordan Mims": 4243004,
     "Jordan Travis": 4360799,
     "Jordan Watkins": 4431466,
     "Jordan Whittington": 4569382,
@@ -933,6 +936,7 @@ PLAYERS = {
     "Trey Smack": 4869461,
     "Treylon Burks": 4567156,
     "Troy Franklin": 4431280,
+    "Troy Hairston": 4274040,
     "Tua Tagovailoa": 4241479,
     "Tucker Kraft": 4572680,
     "Tutu Atwell": 4360797,
@@ -961,6 +965,7 @@ PLAYERS = {
     "Tyson Bagent": 4434153,
     "Ulysses Bentley IV": 4426689,
     "Van Jefferson": 3930066,
+    "Velus Jones Jr.": 4035693,
     "Wan'Dale Robinson": 4569587,
     "Wil Lutz": 2985659,
     "Will Howard": 4429955,
@@ -1241,6 +1246,16 @@ def game_line(c, x, y, parts, stop):
         c.text(txt, x, y, font = "4x5", color = col)
         x += c.text_width(txt, "4x5")
 
+def result(me, opp, ac):
+    """W / L / T and the winner's score first, the way ESPN writes a result: L 24-20, never 20-24."""
+    a, b = me.get("score") or "0", opp.get("score") or "0"
+    if not (a.isdigit() and b.isdigit()):
+        return [("%s-%s" % (a, b), ac)]
+    x, y = int(a), int(b)
+    if x == y:
+        return [("T", "gray"), ("%d-%d" % (x, y), ac)]
+    return [("W", "green") if x > y else ("L", "red"), ("%d-%d" % (max(x, y), min(x, y)), ac)]
+
 # ---------------------------------------------------------------- ESPN data
 
 LEAGUE = "nfl"
@@ -1475,6 +1490,80 @@ def next_event(ov, now_unix):
         return None
     return ev
 
+def ev_state(ev):
+    return ((ev.get("fullStatus") or {}).get("type") or {}).get("state") or ev.get("status")
+
+def sched_event(e):
+    """A team-schedule event reshaped like the overview's nextGame event, so the game page draws either."""
+    comp = (e.get("competitions") or [{}])[0]
+    teams = []
+    for t in comp.get("competitors") or []:
+        sc = t.get("score")
+        teams.append({
+            "id": t.get("id"),
+            "abbreviation": (t.get("team") or {}).get("abbreviation"),
+            "homeAway": t.get("homeAway"),
+            "score": sc.get("displayValue") if type(sc) == "dict" else sc,
+        })
+    return {
+        "id": e.get("id"),
+        "date": e.get("date"),
+        "timeValid": e.get("timeValid", True),
+        "season": (e.get("season") or {}).get("year"),
+        "seasonType": (e.get("seasonType") or {}).get("type"),
+        "week": (e.get("week") or {}).get("number"),
+        "competitors": teams,
+        "fullStatus": {"type": (comp.get("status") or {}).get("type") or {}},
+    }
+
+def team_games(p):
+    """(last finished game, next unplayed game) from the team schedule. The overview's nextGame
+    keeps pointing at the last game for days after it ends (a whole bye week in the NFL), so this
+    is where the real next game comes from."""
+    d = get_json("https://site.api.espn.com/apis/site/v2/sports/%s/teams/%s/schedule" % (SPORT_PATH[p["lg"]], p["team_id"]), 3600)
+    last, nxt, lt, nt = None, None, None, None
+    for e in (d or {}).get("events") or []:
+        ev = sched_event(e)
+        t = parse_iso(ev["date"])
+        st = ev["fullStatus"]["type"]
+        if t == None:
+            continue
+        if st.get("state") == "post" and st.get("completed") and (lt == None or t > lt):
+            last, lt = ev, t
+        elif st.get("state") == "pre" and (nt == None or t < nt):
+            nxt, nt = ev, t
+    return last, nxt
+
+def et_day(unix):
+    return (unix + et_offset(unix) * 3600) // 86400
+
+def game_to_show(p, ov, now_unix):
+    """The game page's game: the live one; else the last result, until the next game is today or
+    tomorrow (or for 18h after a final, so last night's line survives into game day)."""
+    ev = None
+    evs = (((ov or {}).get("nextGame") or {}).get("league") or {}).get("events") or []
+    if evs:
+        ev = evs[0]
+    if ev and ev_state(ev) == "in":
+        return ev
+    if not p["team_id"]:
+        return next_event(ov, now_unix)
+    last, nxt = team_games(p)
+    lt = parse_iso(last["date"]) if last else None
+    et = parse_iso(ev.get("date")) if ev else None
+    if ev and ev_state(ev) == "post" and et != None and (lt == None or et >= lt):
+        last, lt = ev, et                       # the overview hears about a final before the cached schedule
+    if ev and ev_state(ev) == "pre":
+        nxt = ev
+    nt = parse_iso(nxt.get("date")) if nxt else None
+    if last and now_unix - lt < 18 * 3600:
+        return last
+    if nxt and nt != None and et_day(nt) - et_day(now_unix) <= 1:
+        return nxt
+    if last and (nxt or now_unix - lt < 3 * 86400):
+        return last                             # between games: the most recent result
+    return nxt
+
 def live_stats(p, ev):
     """This player's line in the current game (ESPN core API, ~20 KB)."""
     eid = ev.get("id")
@@ -1691,12 +1780,12 @@ def game(c, ctx):
         failed(c, why)
         return
     ov = overview(p["lg"], p["id"])
-    ev = next_event(ov, ctx.now.unix)
+    ev = game_to_show(p, ov, ctx.now.unix)
     ac = accent(p["color"], p["alt"])
     c.clear()
     draw_gear(c, p["lg"], p["num"], p["color"], p["alt"], p["logo"])
     if ev == None:
-        # offseason, or nothing on the schedule yet: say so and keep the season line
+        # offseason, nothing on the schedule and no recent result: say so and keep the season line
         stop = name_and_logo(c, 35, p["last"], p["logo"], "") - 3
         game_line(c, 35, 12, [("NO NEXT GAME", "gray")], stop)
         stat_block(c, 35, 19, season_stats(ov, p) or NO_STATS, szn_tag(p, None), "gray", ac)
@@ -1717,7 +1806,10 @@ def game(c, ctx):
         stat_block(c, 35, 19, live_stats(p, ev), "LIVE", "red", ac)
         return
     if state == "post":
-        game_line(c, 35, 12, [("FINAL", "gray"), (score, ac)], stop)
+        parts = [("FINAL", "gray")] + result(me, opp, ac)
+        if game_width(c, parts) > stop - 35:
+            parts = parts[1:]                   # the result matters more than the word
+        game_line(c, 35, 12, parts, stop)
         stat_block(c, 35, 19, live_stats(p, ev), "FINAL", "gray", ac)
         return
     day, time = when_et(ev.get("date"), ctx.now.unix, ev.get("timeValid", True))
