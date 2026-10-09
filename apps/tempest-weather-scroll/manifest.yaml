@@ -5,7 +5,7 @@ description: Live conditions from your own WeatherFlow Tempest station.
 category: Weather
 width: 192
 height: 32
-refresh: 900
+refresh: 180
 pages:
   - current
   - conditions

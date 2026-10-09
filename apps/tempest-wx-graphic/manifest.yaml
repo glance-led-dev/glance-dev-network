@@ -4,7 +4,7 @@ author: cfdmb
 description: Live conditions from your own WeatherFlow Tempest station, styled after classic WeatherSTAR 4000 local weather displays.
 width: 128
 height: 32
-refresh: 300
+refresh: 180
 pages:
   - conditions
   - current
