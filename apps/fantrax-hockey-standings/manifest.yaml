@@ -22,7 +22,7 @@ inputs:
     type: string
     app_input_type: api-key
     label: Fantrax GLANCE Token
-    help: Connect Fantrax at fantrax-public.mdarpino.workers.dev/connect and paste the token shown after login.
+    help: Connect Fantrax at https://fantrax-public.mdarpino.workers.dev/connect and paste the token shown after login.
 
 pages:
   - standings1
