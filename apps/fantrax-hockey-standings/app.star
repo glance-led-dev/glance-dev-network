@@ -18,7 +18,7 @@ def fetch_data(ctx):
             "Authorization": "Bearer " + apikey,
             "Accept": "application/json",
         },
-        ttl_seconds = 300,
+        ttl_seconds = 21600,
     )
 
     if resp["status_code"] != 200:
@@ -287,5 +287,3 @@ def standings6(c, ctx):
 
 def standings7(c, ctx):
     draw_standings(c, ctx, 12)
-
-
