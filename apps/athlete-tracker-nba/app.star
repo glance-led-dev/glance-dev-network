@@ -279,6 +279,7 @@ PLAYERS = {
     "Anton Watson": 4431705,
     "Antonius Cleveland": 3064237,
     "Ariel Hukporti": 4871141,
+    "Aron Baynes": 2968439,
     "Asa Newell": 4873201,
     "Ausar Thompson": 4684742,
     "Austin Reaves": 4066457,
@@ -322,6 +323,7 @@ PLAYERS = {
     "Brooks Barnhizer": 4684208,
     "Bruce Brown": 4065670,
     "Bruce Thornton": 5105837,
+    "Bryce Cotton": 2531054,
     "Bryce Hopkins": 4565698,
     "Bryce McGowens": 4576086,
     "Bub Carrington": 4845374,
@@ -334,6 +336,7 @@ PLAYERS = {
     "Caleb Martin": 3138160,
     "Caleb Wilson": 5095151,
     "Cam Christie": 4845363,
+    "Cam Reddish": 4395627,
     "Cam Spencer": 4433083,
     "Cam Thomas": 4432174,
     "Cam Whitmore": 5105592,
@@ -366,6 +369,7 @@ PLAYERS = {
     "Coby White": 4395651,
     "Cody Williams": 4895758,
     "Cole Anthony": 4432809,
+    "Cole Swider": 4397134,
     "Colin Castleton": 4397204,
     "Collin Gillespie": 4278585,
     "Collin Murray-Boyles": 5093267,
@@ -451,6 +455,7 @@ PLAYERS = {
     "Egor Demin": 5175643,
     "Elijah Harkless": 4397449,
     "Emanuel Sharp": 5106058,
+    "Emoni Bates": 4433620,
     "Enrique Freeman": 4592699,
     "Eric Atkins": 2531045,
     "Eric Gordon": 3431,
@@ -470,6 +475,7 @@ PLAYERS = {
     "Georges Niang": 2990969,
     "Georgios Papagiannis": 4017846,
     "GG Jackson": 5105550,
+    "Gian Clavell": 3137694,
     "Giannis Antetokounmpo": 3032977,
     "Goga Bitadze": 4348700,
     "Gradey Dick": 5106258,
@@ -489,6 +495,7 @@ PLAYERS = {
     "Hunter Tyson": 4395620,
     "Ian Clark": 2489785,
     "Immanuel Quickley": 4395724,
+    "Isaac Humphries": 3926491,
     "Isaac Jones": 5107818,
     "Isaac Okoro": 4432822,
     "Isaiah Collier": 4683766,
@@ -498,12 +505,14 @@ PLAYERS = {
     "Isaiah Jackson": 4432170,
     "Isaiah Joe": 4395702,
     "Isaiah Livers": 4277957,
+    "Isaiah Mobley": 4432815,
     "Isaiah Stewart": 4432810,
     "Isaiah Taylor": 3059336,
     "Isaiah Wong": 4431727,
     "Ish Smith": 4305,
     "Ish Wainright": 3059307,
     "Ivica Zubac": 4017837,
+    "Izaiyah Nelson": 5107251,
     "J.J. Barea": 3055,
     "J.P. Tokoto": 2982331,
     "Ja Morant": 4279888,
@@ -556,6 +565,7 @@ PLAYERS = {
     "Jamil Wilson": 2488977,
     "Jamir Watkins": 4606840,
     "Jamison Battle": 4431893,
+    "JaMychal Green": 2327577,
     "Jarace Walker": 5106060,
     "Jared McCain": 4683778,
     "Jared Terrell": 3133843,
@@ -563,6 +573,7 @@ PLAYERS = {
     "Jarred Vanderbilt": 4278077,
     "Jarrett Allen": 4066328,
     "Jase Richardson": 5239561,
+    "Javin DeLaurier": 4065650,
     "Javon Freeman-Liberty": 4397511,
     "Javon Small": 4781746,
     "Javonte Green": 2596112,
@@ -647,6 +658,7 @@ PLAYERS = {
     "Kelly Olynyk": 2489663,
     "Kelly Oubre Jr.": 3133603,
     "Kennedy Chandler": 4432646,
+    "Kenneth Lofton Jr.": 4585610,
     "Kenrich Williams": 3133626,
     "Kent Bazemore": 6637,
     "Kentavious Caldwell-Pope": 2581018,
@@ -704,16 +716,20 @@ PLAYERS = {
     "Luguentz Dort": 4397020,
     "Luka Doncic": 3945274,
     "Luka Garza": 4277951,
+    "Luka Mitrovic": 3899662,
     "Luke Kennard": 3913174,
     "Luke Kornet": 3064560,
+    "Luke Travers": 4997539,
     "Mac McClung": 4397071,
     "Malachi Flynn": 4066668,
     "Malaki Branham": 4565201,
     "Malcolm Brogdon": 2566769,
+    "Malcolm Delaney": 2282205,
     "Malik Beasley": 3907822,
     "Malik Monk": 4066262,
     "Malik Williams": 4277880,
     "Maliq Brown": 5105337,
+    "Malique Lewis": 5184016,
     "Mamadi Diakite": 3947156,
     "Marcus Sasser": 4432107,
     "Marcus Smart": 2990992,
@@ -792,6 +808,7 @@ PLAYERS = {
     "Noah Clowney": 4712896,
     "Noah Penda": 5214637,
     "Nolan Traore": 5279130,
+    "Norchad Omier": 4702134,
     "Norman Powell": 2595516,
     "Obi Toppin": 4278355,
     "Ochai Agbaji": 4397018,
@@ -933,6 +950,7 @@ PLAYERS = {
     "Tyler Bilodeau": 5105626,
     "Tyler Cavanaugh": 2982349,
     "Tyler Davis": 3947078,
+    "Tyler Ennis": 3059281,
     "Tyler Herro": 4395725,
     "Tyler Kolek": 4433225,
     "Tyler Nickel": 4838721,
@@ -1258,6 +1276,16 @@ def game_line(c, x, y, parts, stop):
         c.text(txt, x, y, font = "4x5", color = col)
         x += c.text_width(txt, "4x5")
 
+def result(me, opp, ac):
+    """W / L / T and the winner's score first, the way ESPN writes a result: L 24-20, never 20-24."""
+    a, b = me.get("score") or "0", opp.get("score") or "0"
+    if not (a.isdigit() and b.isdigit()):
+        return [("%s-%s" % (a, b), ac)]
+    x, y = int(a), int(b)
+    if x == y:
+        return [("T", "gray"), ("%d-%d" % (x, y), ac)]
+    return [("W", "green") if x > y else ("L", "red"), ("%d-%d" % (max(x, y), min(x, y)), ac)]
+
 # ---------------------------------------------------------------- ESPN data
 
 LEAGUE = "nba"
@@ -1493,6 +1521,80 @@ def next_event(ov, now_unix):
         return None
     return ev
 
+def ev_state(ev):
+    return ((ev.get("fullStatus") or {}).get("type") or {}).get("state") or ev.get("status")
+
+def sched_event(e):
+    """A team-schedule event reshaped like the overview's nextGame event, so the game page draws either."""
+    comp = (e.get("competitions") or [{}])[0]
+    teams = []
+    for t in comp.get("competitors") or []:
+        sc = t.get("score")
+        teams.append({
+            "id": t.get("id"),
+            "abbreviation": (t.get("team") or {}).get("abbreviation"),
+            "homeAway": t.get("homeAway"),
+            "score": sc.get("displayValue") if type(sc) == "dict" else sc,
+        })
+    return {
+        "id": e.get("id"),
+        "date": e.get("date"),
+        "timeValid": e.get("timeValid", True),
+        "season": (e.get("season") or {}).get("year"),
+        "seasonType": (e.get("seasonType") or {}).get("type"),
+        "week": (e.get("week") or {}).get("number"),
+        "competitors": teams,
+        "fullStatus": {"type": (comp.get("status") or {}).get("type") or {}},
+    }
+
+def team_games(p):
+    """(last finished game, next unplayed game) from the team schedule. The overview's nextGame
+    keeps pointing at the last game for days after it ends (a whole bye week in the NFL), so this
+    is where the real next game comes from."""
+    d = get_json("https://site.api.espn.com/apis/site/v2/sports/%s/teams/%s/schedule" % (SPORT_PATH[p["lg"]], p["team_id"]), 3600)
+    last, nxt, lt, nt = None, None, None, None
+    for e in (d or {}).get("events") or []:
+        ev = sched_event(e)
+        t = parse_iso(ev["date"])
+        st = ev["fullStatus"]["type"]
+        if t == None:
+            continue
+        if st.get("state") == "post" and st.get("completed") and (lt == None or t > lt):
+            last, lt = ev, t
+        elif st.get("state") == "pre" and (nt == None or t < nt):
+            nxt, nt = ev, t
+    return last, nxt
+
+def et_day(unix):
+    return (unix + et_offset(unix) * 3600) // 86400
+
+def game_to_show(p, ov, now_unix):
+    """The game page's game: the live one; else the last result, until the next game is today or
+    tomorrow (or for 18h after a final, so last night's line survives into game day)."""
+    ev = None
+    evs = (((ov or {}).get("nextGame") or {}).get("league") or {}).get("events") or []
+    if evs:
+        ev = evs[0]
+    if ev and ev_state(ev) == "in":
+        return ev
+    if not p["team_id"]:
+        return next_event(ov, now_unix)
+    last, nxt = team_games(p)
+    lt = parse_iso(last["date"]) if last else None
+    et = parse_iso(ev.get("date")) if ev else None
+    if ev and ev_state(ev) == "post" and et != None and (lt == None or et >= lt):
+        last, lt = ev, et                       # the overview hears about a final before the cached schedule
+    if ev and ev_state(ev) == "pre":
+        nxt = ev
+    nt = parse_iso(nxt.get("date")) if nxt else None
+    if last and now_unix - lt < 18 * 3600:
+        return last
+    if nxt and nt != None and et_day(nt) - et_day(now_unix) <= 1:
+        return nxt
+    if last and (nxt or now_unix - lt < 3 * 86400):
+        return last                             # between games: the most recent result
+    return nxt
+
 def live_stats(p, ev):
     """This player's line in the current game (ESPN core API, ~20 KB)."""
     eid = ev.get("id")
@@ -1711,12 +1813,12 @@ def game(c, ctx):
         failed(c, why)
         return
     ov = overview(p["lg"], p["id"])
-    ev = next_event(ov, ctx.now.unix)
+    ev = game_to_show(p, ov, ctx.now.unix)
     ac = accent(p["color"], p["alt"])
     c.clear()
     draw_gear(c, p["lg"], p["num"], p["color"], p["alt"], p["logo"])
     if ev == None:
-        # offseason, or nothing on the schedule yet: say so and keep the season line
+        # offseason, nothing on the schedule and no recent result: say so and keep the season line
         stop = name_and_logo(c, 35, p["last"], p["logo"], "") - 3
         game_line(c, 35, 12, [("NO NEXT GAME", "gray")], stop)
         szn = season_stats(ov, p)
@@ -1741,7 +1843,10 @@ def game(c, ctx):
         stat_block(c, 35, 19, live_stats(p, ev), "LIVE", "red", ac)
         return
     if state == "post":
-        game_line(c, 35, 12, [("FINAL", "gray"), (score, ac)], stop)
+        parts = [("FINAL", "gray")] + result(me, opp, ac)
+        if game_width(c, parts) > stop - 35:
+            parts = parts[1:]                   # the result matters more than the word
+        game_line(c, 35, 12, parts, stop)
         stat_block(c, 35, 19, live_stats(p, ev), "FINAL", "gray", ac)
         return
     day, time = when_et(ev.get("date"), ctx.now.unix, ev.get("timeValid", True))

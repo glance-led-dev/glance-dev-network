@@ -2,8 +2,9 @@
 # rail, compact eyebrow, wrestler names as the hero. No portraits, no
 # source chrome, no full-screen header. Title matches with icons reuse
 # the WWE Champions 72x32 belt at x=10. Previous-show results reuse that
-# layout. City/time from the lineup when present. If the card omits them,
-# WWE.com events fills the dated city and the single next PLE on the overview.
+# City/time from the lineup when present. If the card omits them, WWE.com
+# events fills the dated city and the single next PLE on the overview.
+# build.py joins these files.
 BRANDS = ["RAW", "SMACKDOWN", "NXT"]
 COLORS = {"RAW": "#E10600", "SMACKDOWN": "#3D7EFF", "NXT": "#E7B43A", "WWE": "#D8DEE8"}
 DEEP = {"RAW": "#6B0000", "SMACKDOWN": "#10244A", "NXT": "#3A2E10", "WWE": "#101018"}
@@ -325,10 +326,13 @@ def between(s, start, end):
     b = s.find(end, a + len(start))
     return s[a + len(start):b] if b >= 0 else ""
 
-def plain(s):
+def plain(s, limit = 5000):
     # Bound work before walking the markup. Headings/list entries only.
     text = ""
-    for fragment in s[:5000].split("<"):
+    cap = limit
+    if cap > len(s):
+        cap = len(s)
+    for fragment in s[:cap].split("<"):
         text = text + (fragment.split(">", 1)[1] if ">" in fragment else fragment)
     pairs = [["&amp;", "&"], ["&#038;", "&"], ["&#8217;", "'"], ["&#039;", "'"], ["&#39;", "'"], ["&apos;", "'"], ["&#8216;", "'"], ["’", "'"], ["‘", "'"], ["&#8211;", "-"], ["&#8212;", "-"], ["–", "-"], ["—", "-"], ["&#8220;", '"'], ["&#8221;", '"'], ["&quot;", '"'], ["&nbsp;", " "], ["\u00a0", " "], ["é", "e"], ["á", "a"], ["í", "i"], ["ó", "o"], ["ú", "u"], ["ñ", "n"]]
     for p in pairs:
@@ -528,17 +532,52 @@ def parse_next_ple(body, nowday, year, month):
         if day < nowday:
             continue
         city = plain(between(chunk, 'le-card-meta-venue">', "</p>")).strip(" ,")
-        event = {"name": name, "date": MONTHS[m - 1][:3] + " " + str(d), "city": city, "day": day}
+        when = ""
+        if len(words) > 0 and words[0] in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
+            when = words[0][:3] + " " + MONTHS[m - 1][:3] + " " + str(d)
+        clock = time_from_prose(plain(chunk))
+        event = {"name": name, "date": MONTHS[m - 1][:3] + " " + str(d), "when": when, "city": city, "time": clock, "day": day}
         if best == None or event["day"] < best["day"]:
             best = event
+    enrich_ple(body, best)
     return best
 
-def fill_wwe_meta(shows, ctx):
-    if not shows:
+def enrich_ple(body, ple):
+    # Trending cards often omit start time. The dated events list has
+    # "Saturday, September 26th Chicago, IL 7:30 PM | Allstate Arena".
+    if ple == None:
         return
+    city = str(ple.get("city", "")).upper()
+    if city == "":
+        return
+    hay = plain(body, 80000)
+    needle = city.split(",")[0]
+    pos = 0
+    for _ in range(8):
+        i = hay.find(needle, pos)
+        if i < 0:
+            return
+        window = hay[max(0, i - 80):i + 100]
+        stamp = str(ple.get("date", "")).upper()
+        bits = stamp.split()
+        dayn = bits[len(bits) - 1] if bits else ""
+        if dayn != "" and dayn not in window:
+            pos = i + 1
+            continue
+        if ple.get("time", "") == "":
+            t = time_from_prose(window)
+            if t != "":
+                ple["time"] = t
+        if ple.get("time", "") != "":
+            return
+        pos = i + 1
+
+def fill_wwe_meta(shows, ctx):
+    # Always load WWE.com, even with no weekly lineup, so a PLE still
+    # has a date, city, and time for the overview.
     response = http.get(WWE_EVENTS, ttl_seconds = 900)
     if response["status_code"] != 200:
-        return
+        return None
     body = response.get("body", "")
     places = parse_wwe_events(body)
     ple = parse_next_ple(body, ctx.now.unix // 86400, ctx.now.year, ctx.now.month)
@@ -551,10 +590,14 @@ def fill_wwe_meta(shows, ctx):
             break
         if ple != None:
             s["ple"] = ple
+    return ple
 
 def apply_weekly_time(shows):
     # Lineup articles often omit start time. Weekly RAW/SD/NXT air at 8PM ET.
+    # Never invent a start time for a PLE-only fallback card.
     for s in shows:
+        if s.get("kind", "") == "ple":
+            continue
         if s.get("time", "") == "" and s["brand"] in BRANDS:
             s["time"] = "8PM ET"
 
@@ -571,8 +614,11 @@ def fetch_shows(cfg, ctx):
         chosen = select_show(shows, cfg)
         if cfg["brand"] != "AUTO" and chosen != None and chosen["city"] != "" and chosen["time"] != "":
             break
-    fill_wwe_meta(shows, ctx)
+    ple = fill_wwe_meta(shows, ctx)
     apply_weekly_time(shows)
+    if select_show(shows, cfg) == None and ple != None:
+        brand = cfg["brand"] if cfg["brand"] in BRANDS else "WWE"
+        shows.append({"brand": brand, "day": ple["day"], "date": ple.get("date", ""), "time": ple.get("time", ""), "city": ple.get("city", ""), "venue": "", "items": [], "kind": "ple", "ple": ple, "source": "WWE"})
     return shows
 
 
@@ -617,12 +663,13 @@ def parse_result_line(raw):
     if s == "":
         return None
     outcome = ""
+    # DEF. before DREW: "X DEF. DREW MCINTYRE" is a win, not a draw.
     if "NO CONTEST" in s:
         outcome = "nocontest"
-    elif " DREW " in s or s.endswith(" DRAW") or " A DRAW" in s:
-        outcome = "draw"
     elif " DEF. " in s:
         outcome = "win"
+    elif " DREW " in s or s.endswith(" DRAW") or " A DRAW" in s:
+        outcome = "draw"
     else:
         return None
     stakes = ""
@@ -752,30 +799,174 @@ def fetch_results(cfg, ctx, brand):
     return parse_result_feed(response.get("body", ""), ctx.now.unix // 86400, brand)
 
 
-# Clean native pixel sprites; no animation or resampling.
-def small_icon(c, kind, x, y, col):
-    arts = {
-        "mitb": ["....GGGG....", "....G..G....", ".GGGGGGGGGG.", ".GggggggggG.", ".GggGGggggG.", ".GGGGGGGGGG.", ".GggGGggggG.", ".GggggggggG.", ".GGGGGGGGGG."],
-        "ladder": [
-            "..WW....WW..",
-            "..WW....WW..",
-            "..WWWWWWWW..",
-            "..WWWWWWWW..",
-            "..WW....WW..",
-            "..WW....WW..",
-            "..WWWWWWWW..",
-            "..WWWWWWWW..",
-            "..WW....WW..",
-            "..WW....WW..",
-        ],
-        "cage": ["WWWWWWWWWWWW", "W.W.W.W.W.WW", "WW.W.W.W.W.W", "W.W.W.W.W.WW", "WW.W.W.W.W.W", "W.W.W.W.W.WW", "WW.W.W.W.W.W", "W.W.W.W.W.WW", "WWWWWWWWWWWW"],
-        "tag": [".WWW...WWW.", ".W.W...W.W.", ".WWW...WWW.", "...........", "WWWWW.WWWWW", "W...W.W...W", "W...W.W...W"],
-        "triple": [".....W.....", "....WWW....", "...........", "..W.....W..", ".WWW...WWW."],
-        "rumble": ["WWWWWWWWWWWW", "W..........W", "WWWWWWWWWWWW", "W..........W", "WWWWWWWWWWWW", "W..........W"],
-        "mic": ["...WWW...", "..WWWWW..", "..WWWWW..", "...WWW...", "....W....", "....W....", "....W....", "...WWW..."],
-    }
-    if kind in arts:
-        c.sprite(arts[kind], x, y, legend = {"W": col, "G": "#ECD36B", "g": "#167846"})
+# Pixel art. Match-type tiles are drawn at 2x so they read as chunky
+# sprites from across a room. A = white side, B = gold side, R = brand.
+ARTS = {
+    "faceoff": [
+        "..AA......BB..",
+        "..AA......BB..",
+        ".AAAAAABBBBBB.",
+        ".AAAA.AB.BBBB.",
+        ".AAAA....BBBB.",
+        ".RRRR....RRRR.",
+        ".A..A....B..B.",
+        ".A..A....B..B.",
+        "AA..AA..BB..BB",
+    ],
+    "tag": [
+        ".D..AA....BB..E.",
+        "DDD.AA....BB.EEE",
+        "DDDAAAAABBBBBEEE",
+        "DDDAAAA..BBBBEEE",
+        "DDDRRRR..RRRREEE",
+        "D.DA..A..B..BE.E",
+        "D.DA..A..B..BE.E",
+        "D.AA..AA.BB..BBE",
+    ],
+    "triple": [
+        ".A....R....B.",
+        "AAA..RRR..BBB",
+        "AAA..RRR..BBB",
+        "AAA..RRR..BBB",
+        "RRR..AAA..RRR",
+        "A.A..R.R..B.B",
+        "A.A..R.R..B.B",
+    ],
+    "rumble": [
+        ".A...B...R...A.",
+        "AAA.BBB.RRR.AAA",
+        "WWWWWWWWWWWWWWW",
+        "AAA.BBB.RRR.AAA",
+        "RRR.RRR.AAA.RRR",
+        "WWWWWWWWWWWWWWW",
+        "A.A.B.B.R.R.A.A",
+    ],
+    "mitb": [
+        "....GGGG....",
+        "....G..G....",
+        "GGGGGGGGGGGG",
+        "GggggggggggG",
+        "GggggGGggggG",
+        "GGGGGGGGGGGG",
+        "GggggGGggggG",
+        "GggggggggggG",
+        "GGGGGGGGGGGG",
+    ],
+    "ladder": [
+        "W......W",
+        "WWWWWWWW",
+        "W......W",
+        "W......W",
+        "WWWWWWWW",
+        "W......W",
+        "W......W",
+        "WWWWWWWW",
+        "W......W",
+        "W......W",
+        "WWWWWWWW",
+    ],
+    "cage": [
+        "WWWWWWWWWWWWW",
+        "W.R.R.R.R.R.W",
+        "WR.R.R.R.R.RW",
+        "W.R.R.R.R.R.W",
+        "WR.R.R.R.R.RW",
+        "W.R.R.R.R.R.W",
+        "WR.R.R.R.R.RW",
+        "W.R.R.R.R.R.W",
+        "WR.R.R.R.R.RW",
+        "WWWWWWWWWWWWW",
+    ],
+    "mic": [
+        "..WWW..",
+        ".WMWMW.",
+        ".WWWWW.",
+        ".WMWMW.",
+        "..WWW..",
+        "R..A..R",
+        ".RRARR.",
+        "...A...",
+        "...A...",
+        "..AAA..",
+    ],
+    "winner": [
+        "GGGGGGGG",
+        "B..BB..B",
+        "B..BB..B",
+        "BBBBBBBB",
+        "..BBBB..",
+        "..RRRR..",
+        "..B..B..",
+        "..B..B..",
+        ".BB..BB.",
+    ],
+}
+ART_SCALE = 2
+TILE_X = 15
+TILE_W = 32
+NAME_X = 50
+
+def big_sprite(c, rows, x, y, legend, scale = ART_SCALE):
+    for r in range(len(rows)):
+        row = rows[r]
+        for k in range(len(row)):
+            ch = row[k]
+            if ch in legend:
+                px = x + k * scale
+                py = y + r * scale
+                c.rect(px, py, px + scale - 1, py + scale - 1, fill = legend[ch])
+
+def art_legend(col):
+    return {"A": WHITE, "B": GOLD, "R": col, "D": "#6E7686", "E": "#7A5E1E", "W": "#C9CED8", "M": "#5A6273", "G": "#ECD36B", "g": "#167846"}
+
+def tile(c, kind, col):
+    # Center one 2x art in the 32px tile between the rail and the names.
+    rows = ARTS.get(kind, ARTS["faceoff"])
+    w = len(rows[0]) * ART_SCALE
+    h = len(rows) * ART_SCALE
+    big_sprite(c, rows, TILE_X + (TILE_W - w) // 2, (32 - h) // 2 + 1, art_legend(col))
+
+def item_art(item):
+    if item["kind"] == "segment":
+        return "mic"
+    icon = item.get("icon", "")
+    if icon in ARTS:
+        return icon
+    if len(item.get("names", [])) >= 3:
+        return "triple"
+    return "faceoff"
+
+RING_W = 40
+TEXT_X = 54
+
+def ring(c, x, brand):
+    # Home image: a 40x32 arena ring under the lighting truss, tinted with
+    # the brand. Two wrestlers lock up inside the ropes.
+    col = COLORS.get(brand, WHITE)
+    deep = DEEP.get(brand, "#22262F")
+    if brand not in BRANDS:
+        deep = "#2A2F3A"
+    post = "#9AA3B5"
+    c.rect(x + 3, 0, x + 36, 0, fill = "#2A2F3A")
+    for lx in [6, 14, 24, 32]:
+        c.rect(x + lx, 1, x + lx + 1, 2, fill = "#FFF3C4")
+    c.rect(x + 6, 7, x + 6, 14, fill = "#5A6273")
+    c.rect(x + 33, 7, x + 33, 14, fill = "#5A6273")
+    for ry in [8, 10, 12]:
+        c.rect(x + 7, ry, x + 32, ry, fill = deep)
+    for i in range(7):
+        grow = (i * 5) // 6
+        c.rect(x + 6 - grow, 15 + i, x + 33 + grow, 15 + i, fill = "#4A5160" if i == 0 else "#6E7686")
+    c.sprite(ARTS["faceoff"], x + 13, 11, legend = art_legend(col))
+    c.rect(x, 8, x + 1, 23, fill = post)
+    c.rect(x + 38, 8, x + 39, 23, fill = post)
+    for ry in [11, 14, 17]:
+        c.rect(x + 2, ry, x + 37, ry, fill = col)
+        c.rect(x, ry - 1, x + 1, ry + 1, fill = col)
+        c.rect(x + 38, ry - 1, x + 39, ry + 1, fill = col)
+    c.rect(x + 1, 22, x + 38, 31, fill = deep)
+    c.rect(x + 1, 22, x + 38, 22, fill = col)
+    c.text("WWE", x + RING_W // 2, 25, font = "4x5", color = WHITE, align = "center")
 
 
 
@@ -869,13 +1060,15 @@ def eyebrow(c, show, item, index, total, x0 = LEFT, x1 = RIGHT):
     pos = str(index + 1) + "/" + str(total)
     posw = c.text_width(pos, "4x5")
     text(c, pos, x1, 2, 24, ["4x5"], MUTED, "right")
-    # 'RAW MAIN EVENT' is 65px at 4x5. Brand in accent, slot in white.
+    # Brand in accent, slot in white. The rail already carries the brand,
+    # so when both do not fit the slot wins the row.
     bw = c.text_width(brand, "4x5")
-    text(c, brand, x0, 2, 70, ["4x5"], col)
-    gap = x0 + bw + 4
-    remain = x1 - posw - 4 - gap
-    if remain > 12:
-        text(c, slot, gap, 2, remain, ["4x5"], WHITE)
+    room = x1 - posw - 6 - x0
+    if bw + 4 + c.text_width(slot, "4x5") <= room:
+        text(c, brand, x0, 2, 70, ["4x5"], col)
+        text(c, slot, x0 + bw + 4, 2, room - bw - 4, ["4x5"], WHITE)
+    else:
+        text(c, slot, x0, 2, room, ["4x5"], col)
 
 def vs_join(c, names, x0, x1, y, fonts, name_col, vs_col):
     # Draw NAME VS NAME [VS NAME] on one row. Largest font that fits.
@@ -955,29 +1148,81 @@ def match_page(c, show, item, index, total, cfg):
         pair_block(c, names[0], names[1], 91, RIGHT, 9, WHITE, col)
         return
     ground(c, col)
-    eyebrow(c, show, item, index, total)
+    tile(c, item_art(item), col)
+    eyebrow(c, show, item, index, total, NAME_X)
     if item["kind"] == "segment":
         lines = item.get("texts")
         if type(lines) != "list" or len(lines) == 0:
             lines = [item["text"]]
         if len(lines) == 1:
-            text(c, lines[0], LEFT, 14, RIGHT - LEFT, ["6x8", "5x7", "4x5"], WHITE)
+            text(c, lines[0], NAME_X, 14, RIGHT - NAME_X, ["6x8", "5x7", "4x5"], WHITE)
         else:
-            text(c, lines[0], LEFT, 12, RIGHT - LEFT, ["5x7", "4x5"], WHITE)
-            text(c, lines[1], LEFT, 22, RIGHT - LEFT, ["5x7", "4x5"], WHITE)
+            text(c, lines[0], NAME_X, 12, RIGHT - NAME_X, ["5x7", "4x5"], WHITE)
+            text(c, lines[1], NAME_X, 22, RIGHT - NAME_X, ["5x7", "4x5"], WHITE)
         return
     if len(names) >= 3:
-        multi_block(c, names, LEFT, RIGHT, 14, WHITE, col)
+        multi_block(c, names, NAME_X, RIGHT, 14, WHITE, col)
         return
     if len(names) == 2:
-        pair_block(c, names[0], names[1], LEFT, RIGHT, 14, WHITE, col)
+        pair_block(c, names[0], names[1], NAME_X, RIGHT, 14, WHITE, col)
         return
-    text(c, item.get("text", item.get("label", "")), LEFT, 14, RIGHT - LEFT, ["6x8", "5x7", "4x5"], WHITE)
+    text(c, item.get("text", item.get("label", "")), NAME_X, 14, RIGHT - NAME_X, ["6x8", "5x7", "4x5"], WHITE)
+
+HOTGOLD = "#FFD24A"
+
+def ple_overview(c, show):
+    # No weekly card. Black field, gold hero type — not a gold wallpaper.
+    col = brand_col(show)
+    c.fill(BG)
+    brand = show["brand"]
+    ring(c, 10, brand)
+    ple = show.get("ple")
+    if type(ple) != "dict":
+        ple = {}
+    text(c, brand, TEXT_X, 2, 50, ["4x5"], col)
+    when = str(ple.get("when", "")).upper()
+    if when == "":
+        when = str(ple.get("date", show.get("date", ""))).upper()
+    # Date chip occupies the top-right rows 1-7; the name starts at y>=8
+    # so it may run the full width under it.
+    if when != "":
+        tw = c.text_width(when, "4x5")
+        c.rect(RIGHT - tw - 3, 1, RIGHT + 1, 7, fill = HOTGOLD)
+        text(c, when, RIGHT, 2, tw + 2, ["4x5"], "#101018", "right")
+    name = str(ple.get("name", "")).upper()
+    if name != "":
+        slot = RIGHT - TEXT_X
+        fitted = fit(c, name, slot, ["10x16", "7x12", "6x8", "5x7", "4x5"])
+        fh = FONT_HEIGHT.get(fitted[1], 8)
+        ny = 24 - fh
+        if ny < 8:
+            ny = 8
+        c.text(fitted[0], TEXT_X, ny, font = fitted[1], color = HOTGOLD)
+        star_x = TEXT_X + c.text_width(fitted[0], fitted[1]) + 3
+        if star_x + 5 <= RIGHT and fh >= 12:
+            result_star(c, star_x, ny + fh // 2 - 2, HOTGOLD)
+    place = str(show.get("city", ple.get("city", ""))).upper()
+    clock = str(show.get("time", ple.get("time", ""))).upper()
+    if clock == "TIME TBA":
+        clock = ""
+    if place != "" and clock != "":
+        cw = c.text_width(clock, "5x7")
+        text(c, place, TEXT_X, 25, RIGHT - TEXT_X - cw - 4, ["5x7", "4x5"], WHITE)
+        text(c, clock, RIGHT, 25, 50, ["5x7", "4x5"], HOTGOLD, "right")
+    elif place != "":
+        text(c, place, TEXT_X, 25, RIGHT - TEXT_X, ["5x7", "4x5"], WHITE)
+    elif clock != "":
+        text(c, clock, RIGHT, 25, 50, ["5x7", "4x5"], HOTGOLD, "right")
 
 def overview_page(c, show, cfg):
+    if show.get("kind", "") == "ple":
+        ple_overview(c, show)
+        return
     col = brand_col(show)
-    ground(c, col)
+    c.fill(BG)
     brand = show["brand"]
+    ring(c, 10, brand)
+    LEFT = TEXT_X
     text(c, brand, LEFT, 2, 110, ["6x8"], col)
     date = show.get("date", "")
     date_w = 0
@@ -996,7 +1241,8 @@ def overview_page(c, show, cfg):
     if clock == "TIME TBA":
         clock = ""
     if place != "" and clock != "":
-        text(c, place, LEFT, 12, 120, ["5x7", "4x5"], WHITE)
+        cw = c.text_width(clock, "5x7")
+        text(c, place, LEFT, 12, RIGHT - LEFT - cw - 4, ["5x7", "4x5"], WHITE)
         text(c, clock, RIGHT, 12, 44, ["5x7", "4x5"], GOLD, "right")
     elif place != "":
         text(c, place, LEFT, 12, RIGHT - LEFT, ["5x7", "4x5"], WHITE)
@@ -1008,8 +1254,8 @@ def overview_page(c, show, cfg):
     has_ple = type(ple) == "dict" and str(ple.get("name", "")) != ""
     if has_ple:
         # Gold plate, separate from the weekly card. Dark ink on #E7B43A.
-        c.rect(13, 21, 191, 31, fill = GOLD)
-        c.rect(13, 21, 191, 21, fill = "#101018")
+        c.rect(LEFT - 2, 21, 191, 31, fill = GOLD)
+        c.rect(LEFT - 2, 21, 191, 21, fill = "#101018")
         ink = "#101018"
         pdate = str(ple.get("date", "")).upper()
         pd_w = 0
@@ -1030,19 +1276,42 @@ def overview_page(c, show, cfg):
 
 def message(c, cfg, headline, sub):
     brand = cfg["brand"] if cfg["brand"] in BRANDS else "WWE"
-    col = COLORS[brand]
-    ground(c, col)
-    text(c, brand, LEFT, 2, 70, ["4x5"], col)
+    home_message(c, brand, headline, sub)
+
+def home_message(c, brand, headline, sub):
+    # Empty and error screens keep the ring so the app still identifies itself.
+    col = COLORS.get(brand, WHITE)
+    c.fill(BG)
+    ring(c, 10, brand)
+    text(c, brand, TEXT_X, 2, 70, ["4x5"], col)
     text(c, "WHATS NEXT", RIGHT, 2, 90, ["4x5"], MUTED, "right")
-    text(c, headline, LEFT, 12, RIGHT - LEFT, ["6x8", "5x7"], WHITE)
-    text(c, sub, LEFT, 24, RIGHT - LEFT, ["4x5"], MUTED)
+    text(c, headline, TEXT_X, 12, RIGHT - TEXT_X, ["6x8", "5x7", "4x5"], WHITE)
+    text(c, sub, TEXT_X, 24, RIGHT - TEXT_X, ["4x5"], MUTED)
+
+# Catalog previews only. Set True, run write_previews, set back to False.
+# Live panels never see this card.
+PREVIEW_DEMO = False
+
+def demo_show():
+    rows = [
+        "MENS MONEY IN THE BANK QUALIFIER: CM PUNK VS GUNTHER VS FINN BALOR",
+        "UNITED STATES CHAMPIONSHIP: SAMI ZAYN VS SOLO SIKOA",
+        "JIMMY USO & JEY USO VS AUSTIN THEORY & GRAYSON WALLER",
+        "STEEL CAGE MATCH: TRICK WILLIAMS VS BARON CORBIN",
+    ]
+    ple = {"name": "WORLDS COLLIDE", "date": "SEP 26", "when": "SAT SEP 26", "city": "CHICAGO, IL", "time": "7:30PM", "day": 0}
+    return {"brand": "SMACKDOWN", "day": 0, "date": "SEP 25", "time": "8PM ET", "city": "INDIANAPOLIS, IN", "venue": "", "items": [normalize_item(r) for r in rows], "kind": "weekly", "ple": ple, "source": "DEMO"}
+
+def demo_results():
+    lines = [parse_result_line("WWE CHAMPIONSHIP: CODY RHODES (C) DEF. DREW MCINTYRE TO RETAIN"), parse_result_line("LA KNIGHT DEF. JACOB FATU")]
+    return pick_result_items(lines)
 
 def draw(c, ctx, slot):
     cfg = settings(ctx)
     if not cfg["valid"]:
         message(c, cfg, "CHECK SETTINGS", "CHOOSE A WWE BRAND")
         return
-    show = select_show(fetch_shows(cfg, ctx), cfg)
+    show = demo_show() if PREVIEW_DEMO else select_show(fetch_shows(cfg, ctx), cfg)
     if show == None:
         message(c, cfg, "CARD UNAVAILABLE", "CHECK BACK SOON")
         return
@@ -1062,12 +1331,7 @@ def draw(c, ctx, slot):
     match_page(c, show, items[index], index, len(items), cfg)
 
 def leftover_page(c, show, cfg):
-    col = brand_col(show)
-    ground(c, col)
-    text(c, show["brand"], LEFT, 2, 70, ["4x5"], col)
-    text(c, "WHATS NEXT", RIGHT, 2, 90, ["4x5"], MUTED, "right")
-    text(c, "MORE MATCHES TBA", LEFT, 12, RIGHT - LEFT, ["6x8", "5x7"], WHITE)
-    text(c, "CHECK BACK SOON", LEFT, 24, RIGHT - LEFT, ["4x5"], MUTED)
+    home_message(c, show["brand"], "MORE MATCHES TBA", "CHECK BACK SOON")
 
 def result_star(c, x, y, col):
     c.sprite(["..Y..", "YYYYY", ".YYY.", "Y.Y.Y"], x, y, legend = {"Y": col})
@@ -1121,23 +1385,23 @@ def result_page(c, show, item, cfg):
             text(c, line, 91, 22, RIGHT - 91, ["5x7", "4x5"], tone)
         return
     ground(c, col)
-    bw = c.text_width(brand, "4x5")
-    text(c, brand, LEFT, 2, 50, ["4x5"], col)
-    text(c, "FINAL", RIGHT, 2, 28, ["4x5"], GOLD, "right")
+    LEFT = NAME_X
     final_w = c.text_width("FINAL", "4x5")
-    label_x = LEFT + bw + 4
-    label_w = RIGHT - final_w - 4 - label_x
+    text(c, "FINAL", RIGHT, 2, 28, ["4x5"], GOLD, "right")
+    label_w = RIGHT - final_w - 4 - LEFT
     if label_w > 12:
-        text(c, slot, label_x, 2, label_w, ["4x5"], WHITE)
+        text(c, slot, LEFT, 2, label_w, ["4x5"], col)
     if outcome in ["draw", "nocontest"] or winner == "":
+        tile(c, "faceoff", col)
         hero = "NO CONTEST" if outcome == "nocontest" else "DRAW"
         text(c, hero, LEFT, 12, RIGHT - LEFT, ["6x8", "5x7"], WHITE)
         names = item.get("losers", [])
         if names:
             text(c, " VS ".join(names), LEFT, 23, RIGHT - LEFT, ["5x7", "4x5"], MUTED)
         return
-    result_star(c, LEFT, 13, GOLD)
-    text(c, winner, LEFT + 8, 12, RIGHT - LEFT - 8, ["6x8", "5x7", "4x7", "4x5"], WHITE)
+    tile(c, "winner", col)
+    result_star(c, TILE_X + 22, 4, GOLD)
+    text(c, winner, LEFT, 12, RIGHT - LEFT, ["6x8", "5x7", "4x7", "4x5"], WHITE)
     line = result_outcome(item)
     if line == "":
         return
@@ -1160,11 +1424,11 @@ def draw_result(c, ctx, index):
     if not cfg["valid"]:
         message(c, cfg, "CHECK SETTINGS", "CHOOSE A WWE BRAND")
         return
-    show = select_show(fetch_shows(cfg, ctx), cfg)
+    show = demo_show() if PREVIEW_DEMO else select_show(fetch_shows(cfg, ctx), cfg)
     if show == None:
         message(c, cfg, "CARD UNAVAILABLE", "CHECK BACK SOON")
         return
-    found = load_results(cfg, ctx, show)
+    found = demo_results() if PREVIEW_DEMO else load_results(cfg, ctx, show)
     if index >= len(found):
         if found:
             result_empty_page(c, show, cfg)
@@ -1174,11 +1438,7 @@ def draw_result(c, ctx, index):
     result_page(c, show, found[index], cfg)
 
 def result_empty_page(c, show, cfg):
-    col = brand_col(show)
-    ground(c, col)
-    text(c, show["brand"], LEFT, 2, 70, ["4x5"], col)
-    text(c, "NO OTHER TITLES", LEFT, 12, RIGHT - LEFT, ["6x8", "5x7"], WHITE)
-    text(c, "CHECK BACK SOON", LEFT, 24, RIGHT - LEFT, ["4x5"], MUTED)
+    home_message(c, show["brand"], "NO OTHER TITLES", "CHECK BACK SOON")
 
 def overview(c, ctx):
     draw(c, ctx, -1)

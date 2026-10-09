@@ -1,0 +1,60 @@
+gdn: 1
+id: wifi-qr-scroll
+version: 0.1.0
+name: WiFi QR
+author: glance-led-dev
+description: Guest wifi as a sign on the wall - a scannable QR code a phone camera joins from, plus the network name and the password in its real case. No API.
+category: Other
+entry: app.star
+
+width: 192
+height: 32
+
+# Nothing here changes unless the settings do.
+refresh: 259200
+
+pages: [wifi]
+
+inputs:
+  - key: ssid
+    type: string
+    app_input_type: free-text
+    label: Network name
+    default: ""
+    help: The wifi network name (SSID), exactly as it appears, including case.
+  - key: password
+    type: string
+    app_input_type: api-key
+    label: Password
+    default: ""
+    help: >-
+      The wifi password. Shown on the panel in its exact case so a guest can
+      type it, and encoded into the QR so they do not have to. Leave blank for
+      an open network.
+  - key: security
+    type: choice
+    app_input_type: dropdown
+    label: Security
+    default: "WPA"
+    choices: ["WPA", "WEP", "Open"]
+    help: WPA covers WPA, WPA2 and WPA3. Open means no password.
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Sign label
+    default: "GUEST WIFI"
+    help: The small heading above the network name.
+  - key: showpw
+    type: choice
+    app_input_type: dropdown
+    label: Show the password
+    default: "Yes"
+    choices: ["Yes", "No"]
+    help: Turn off to show only the QR code, so the password is never on display.
+  - key: hidden
+    type: choice
+    app_input_type: dropdown
+    label: Hidden network
+    default: "No"
+    choices: ["No", "Yes"]
+    help: Set to Yes if the network does not broadcast its name. Costs 7 characters of QR capacity.

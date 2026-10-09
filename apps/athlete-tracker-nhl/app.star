@@ -309,6 +309,7 @@ PLAYERS = {
     "Arvid Soderblom": 4894729,
     "Auston Matthews": 4024123,
     "Axel Sandin-Pellikka": 5149192,
+    "Barclay Goodrow": 3069411,
     "Barrett Hayton": 4352699,
     "Beck Malenstyn": 4063240,
     "Beckett Sennecke": 5216858,
@@ -482,6 +483,7 @@ PLAYERS = {
     "Emmitt Finnie": 5188599,
     "Eric Robinson": 4319879,
     "Erik Cernak": 3904178,
+    "Erik Gudbranson": 5503,
     "Erik Haula": 2593311,
     "Erik Johnson": 3649,
     "Erik Karlsson": 5164,
@@ -492,6 +494,7 @@ PLAYERS = {
     "Evander Kane": 5251,
     "Evgeni Malkin": 3124,
     "Fabian Zetterlund": 4587837,
+    "Fedor Svechkov": 4874736,
     "Filip Chytil": 4233643,
     "Filip Forsberg": 2968772,
     "Filip Gustavsson": 4272674,
@@ -544,6 +547,7 @@ PLAYERS = {
     "Jack Roslovic": 3904098,
     "Jackson Blake": 5103645,
     "Jackson LaCombe": 4565262,
+    "Jackson Smith": 5291950,
     "Jacob Fowler": 5188437,
     "Jacob Markstrom": 5452,
     "Jacob Melanson": 4894747,
@@ -580,6 +584,7 @@ PLAYERS = {
     "Jayden Struble": 4565269,
     "Jean-Gabriel Pageau": 2593131,
     "Jeff Glass": 3197,
+    "Jeff Malott": 4895214,
     "Jeffrey Viel": 4588188,
     "Jeremy Lauzon": 3904185,
     "Jeremy Swayman": 4712036,
@@ -648,6 +653,7 @@ PLAYERS = {
     "Kevin Fiala": 3114743,
     "Kevin Korchinski": 5080148,
     "Kevin Lankinen": 4341584,
+    "Kevin Stenlund": 3904191,
     "Kiefer Sherwood": 4391255,
     "Kirby Dach": 4565224,
     "Kirill Kaprizov": 3942335,
@@ -706,6 +712,7 @@ PLAYERS = {
     "Markus Ruck": 5361672,
     "Martin Fehervary": 4378677,
     "Martin Necas": 4233586,
+    "Martin Pospisil": 4392883,
     "Mason Lohrei": 4697461,
     "Mason Marchment": 4272192,
     "Mason McTavish": 4874718,
@@ -802,7 +809,9 @@ PLAYERS = {
     "Oliver Kapanen": 4874943,
     "Oliver Moore": 5149194,
     "Olli Maatta": 2976850,
+    "Ondrej Palat": 2590389,
     "Oskar Back": 4894398,
+    "Owen Michaels": 5206840,
     "Owen Power": 4781556,
     "Owen Tippett": 4392072,
     "P.A. Parenteau": 2101,
@@ -901,8 +910,10 @@ PLAYERS = {
     "Simon Holmstrom": 4565244,
     "Simon Nemec": 4915344,
     "Spencer Knight": 4565234,
+    "Stephen Halliday": 5136706,
     "Steven Stamkos": 5037,
     "Stuart Skinner": 4268767,
+    "T.J. Hughes": 5136616,
     "Tage Thompson": 4024988,
     "Tanner Jeannot": 4064780,
     "Taylor Hall": 5428,
@@ -960,6 +971,7 @@ PLAYERS = {
     "Vitek Vanecek": 3114996,
     "Vladimir Tarasenko": 5837,
     "Vladislav Gavrikov": 3942292,
+    "Warren Foegele": 3151036,
     "Wiggo Sorensson": 5364138,
     "Will Borgen": 3941946,
     "Will Cuylle": 4697468,
@@ -1241,6 +1253,16 @@ def game_line(c, x, y, parts, stop):
         c.text(txt, x, y, font = "4x5", color = col)
         x += c.text_width(txt, "4x5")
 
+def result(me, opp, ac):
+    """W / L / T and the winner's score first, the way ESPN writes a result: L 24-20, never 20-24."""
+    a, b = me.get("score") or "0", opp.get("score") or "0"
+    if not (a.isdigit() and b.isdigit()):
+        return [("%s-%s" % (a, b), ac)]
+    x, y = int(a), int(b)
+    if x == y:
+        return [("T", "gray"), ("%d-%d" % (x, y), ac)]
+    return [("W", "green") if x > y else ("L", "red"), ("%d-%d" % (max(x, y), min(x, y)), ac)]
+
 # ---------------------------------------------------------------- ESPN data
 
 LEAGUE = "nhl"
@@ -1475,6 +1497,80 @@ def next_event(ov, now_unix):
         return None
     return ev
 
+def ev_state(ev):
+    return ((ev.get("fullStatus") or {}).get("type") or {}).get("state") or ev.get("status")
+
+def sched_event(e):
+    """A team-schedule event reshaped like the overview's nextGame event, so the game page draws either."""
+    comp = (e.get("competitions") or [{}])[0]
+    teams = []
+    for t in comp.get("competitors") or []:
+        sc = t.get("score")
+        teams.append({
+            "id": t.get("id"),
+            "abbreviation": (t.get("team") or {}).get("abbreviation"),
+            "homeAway": t.get("homeAway"),
+            "score": sc.get("displayValue") if type(sc) == "dict" else sc,
+        })
+    return {
+        "id": e.get("id"),
+        "date": e.get("date"),
+        "timeValid": e.get("timeValid", True),
+        "season": (e.get("season") or {}).get("year"),
+        "seasonType": (e.get("seasonType") or {}).get("type"),
+        "week": (e.get("week") or {}).get("number"),
+        "competitors": teams,
+        "fullStatus": {"type": (comp.get("status") or {}).get("type") or {}},
+    }
+
+def team_games(p):
+    """(last finished game, next unplayed game) from the team schedule. The overview's nextGame
+    keeps pointing at the last game for days after it ends (a whole bye week in the NFL), so this
+    is where the real next game comes from."""
+    d = get_json("https://site.api.espn.com/apis/site/v2/sports/%s/teams/%s/schedule" % (SPORT_PATH[p["lg"]], p["team_id"]), 3600)
+    last, nxt, lt, nt = None, None, None, None
+    for e in (d or {}).get("events") or []:
+        ev = sched_event(e)
+        t = parse_iso(ev["date"])
+        st = ev["fullStatus"]["type"]
+        if t == None:
+            continue
+        if st.get("state") == "post" and st.get("completed") and (lt == None or t > lt):
+            last, lt = ev, t
+        elif st.get("state") == "pre" and (nt == None or t < nt):
+            nxt, nt = ev, t
+    return last, nxt
+
+def et_day(unix):
+    return (unix + et_offset(unix) * 3600) // 86400
+
+def game_to_show(p, ov, now_unix):
+    """The game page's game: the live one; else the last result, until the next game is today or
+    tomorrow (or for 18h after a final, so last night's line survives into game day)."""
+    ev = None
+    evs = (((ov or {}).get("nextGame") or {}).get("league") or {}).get("events") or []
+    if evs:
+        ev = evs[0]
+    if ev and ev_state(ev) == "in":
+        return ev
+    if not p["team_id"]:
+        return next_event(ov, now_unix)
+    last, nxt = team_games(p)
+    lt = parse_iso(last["date"]) if last else None
+    et = parse_iso(ev.get("date")) if ev else None
+    if ev and ev_state(ev) == "post" and et != None and (lt == None or et >= lt):
+        last, lt = ev, et                       # the overview hears about a final before the cached schedule
+    if ev and ev_state(ev) == "pre":
+        nxt = ev
+    nt = parse_iso(nxt.get("date")) if nxt else None
+    if last and now_unix - lt < 18 * 3600:
+        return last
+    if nxt and nt != None and et_day(nt) - et_day(now_unix) <= 1:
+        return nxt
+    if last and (nxt or now_unix - lt < 3 * 86400):
+        return last                             # between games: the most recent result
+    return nxt
+
 def live_stats(p, ev):
     """This player's line in the current game (ESPN core API, ~20 KB)."""
     eid = ev.get("id")
@@ -1691,12 +1787,12 @@ def game(c, ctx):
         failed(c, why)
         return
     ov = overview(p["lg"], p["id"])
-    ev = next_event(ov, ctx.now.unix)
+    ev = game_to_show(p, ov, ctx.now.unix)
     ac = accent(p["color"], p["alt"])
     c.clear()
     draw_gear(c, p["lg"], p["num"], p["color"], p["alt"], p["logo"])
     if ev == None:
-        # offseason, or nothing on the schedule yet: say so and keep the season line
+        # offseason, nothing on the schedule and no recent result: say so and keep the season line
         stop = name_and_logo(c, 35, p["last"], p["logo"], "") - 3
         game_line(c, 35, 12, [("NO NEXT GAME", "gray")], stop)
         stat_block(c, 35, 19, season_stats(ov, p) or NO_STATS, szn_tag(p, None), "gray", ac)
@@ -1717,7 +1813,10 @@ def game(c, ctx):
         stat_block(c, 35, 19, live_stats(p, ev), "LIVE", "red", ac)
         return
     if state == "post":
-        game_line(c, 35, 12, [("FINAL", "gray"), (score, ac)], stop)
+        parts = [("FINAL", "gray")] + result(me, opp, ac)
+        if game_width(c, parts) > stop - 35:
+            parts = parts[1:]                   # the result matters more than the word
+        game_line(c, 35, 12, parts, stop)
         stat_block(c, 35, 19, live_stats(p, ev), "FINAL", "gray", ac)
         return
     day, time = when_et(ev.get("date"), ctx.now.unix, ev.get("timeValid", True))
