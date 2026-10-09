@@ -262,8 +262,6 @@ def get_conditions(obs, is_day, uv, station, apikey, unit_label,
             if rate == 0.0:
                 return "SEVERE T-STORM", "thunderstorms-bolt-extreme.png", "orange"
             return "SEVERE T-STORM", "rain-thunderstorms-bolt-extreme.png", "orange"
-        if "FLASH FLOOD WARNING" in ev:
-            return "FLASH FLOOD", "rain-extreme.png", "0055ff"
 
     # =========================================================
     # 1. Extreme anomalies
@@ -536,7 +534,7 @@ def main(c, ctx):
      # Header
      c.rect(0, 0, 191, 8, fill="red")
      c.text("PWS ERROR", 69, 1, font="5x7", color="black")
-     c.image("WUnderground.png", 4, 9, w=25, h=20)
+     c.image("wunderground.png", 4, 9, w=25, h=20)
      c.text("NO DATA FROM WEATHER UNDERGROUND", 32, 12, font="4x5", color="amber")
      c.text("ENTER API KEY + STATION ID", 32, 22, font="4x5", color="amber")
      return
@@ -555,13 +553,13 @@ def main(c, ctx):
    
 # Location
     if location:
-        loc = location.upper()[:16]
+        loc = location.upper()[:18]
     else:
         # 1. Try to grab the clean city name first
         # 2. Fall back to neighborhood if city is missing
         # 3. Fall back to "PWS" if everything is missing
         city_name = obs.get("city") or obs.get("neighborhood") or "Location N/A"
-        loc = city_name.upper()[:16]
+        loc = city_name.upper()[:18]
 
     
     # Feels-like logic
@@ -618,11 +616,8 @@ def main(c, ctx):
     c.rect(0, 0, 191, 8, fill=header_color)
     
     # Condition text on the left
-    c.text(update_text, 2, 1, font="5x7", color=text_color)
-    
-    # Location text on the right
-    update_x = 192 - (len(loc) * 6) - 2
-    c.text(loc, update_x, 1, font="5x7", color=text_color)
+    c.text(update_text, 3, 1, font="5x7", color=text_color)
+    c.text_right(loc + " ", 2, font="4x5", color=text_color)
 
     
     # ---- Icon + Temperature ----
@@ -888,34 +883,308 @@ def get_rain_status(rate, unit_label="F"):
     else:
         return "DRY", "white"
 
+# =============================================================================
+# Rain helpers
+# =============================================================================
+
+def format_storm_time(local):
+    if not local or len(local) < 16:
+        return ""
+    hour_str = local[11:13]
+    minute = local[14:16]
+    if not hour_str.isdigit():
+        return ""
+    hour = int(hour_str)
+    ampm = "AM"
+    if hour >= 12:
+        ampm = "PM"
+        if hour > 12:
+            hour = hour - 12
+    if hour == 0:
+        hour = 12
+    return str(hour) + ":" + minute + " " + ampm
+
+def format_duration(mins):
+    if mins <= 0:
+        return ""
+    if mins < 60:
+        return str(mins) + " MIN"
+    hours = mins // 60
+    rem = mins % 60
+    if rem == 0:
+        return str(hours) + " HR"
+    return str(hours) + " HR " + str(rem) + " MIN"
+
+def pick_line(lines, seed):
+    if len(lines) == 0:
+        return ""
+    i = seed % len(lines)
+    if i < 0:
+        i = 0
+    return lines[i]
+
+def get_storm_events(station, apikey, unit_label="F"):
+    if not station or not apikey:
+        return None
+
+    units = "m" if unit_label == "C" else "e"
+    key = "metric" if unit_label == "C" else "imperial"
+    gap_min = 25
+
+    url = "https://api.weather.com/v2/pws/observations/all/1day"
+    params = {
+        "stationId": station,
+        "format": "json",
+        "units": units,
+        "apiKey": apikey,
+        "numericPrecision": "decimal"
+    }
+    resp = http.get(url, params=params, ttl_seconds=180)
+    if resp["status_code"] != 200:
+        return None
+
+    observations = resp["json"].get("observations", [])
+    if len(observations) < 2:
+        return None
+
+    points = []
+    for o in observations:
+        block = o.get(key, {})
+        rate = block.get("precipRate")
+        if rate == None:
+            rate = 0
+        total = block.get("precipTotal")
+        if total == None:
+            total = 0
+        points.append({
+            "epoch": int(o.get("epoch", 0) or 0),
+            "rate": float(rate),
+            "total": float(total),
+            "local": o.get("obsTimeLocal", "")
+        })
+
+    if len(points) < 2:
+        return None
+
+    storms = []
+    cur = None
+    last_wet_epoch = 0
+
+    for p in points:
+        if p["rate"] > 0:
+            gap = 0
+            if last_wet_epoch > 0:
+                gap = (p["epoch"] - last_wet_epoch) // 60
+            if cur == None or (last_wet_epoch > 0 and gap > gap_min):
+                if cur != None:
+                    storms.append(cur)
+                cur = {
+                    "start_epoch": p["epoch"],
+                    "start_local": p["local"],
+                    "end_epoch": p["epoch"],
+                    "end_local": p["local"],
+                    "peak": p["rate"],
+                    "total_start": p["total"],
+                    "total_end": p["total"]
+                }
+            else:
+                cur["end_epoch"] = p["epoch"]
+                cur["end_local"] = p["local"]
+                if p["rate"] > cur["peak"]:
+                    cur["peak"] = p["rate"]
+                cur["total_end"] = p["total"]
+            last_wet_epoch = p["epoch"]
+
+    if cur != None:
+        storms.append(cur)
+    if len(storms) == 0:
+        return None
+
+    total_wet_min = 0
+    for s in storms:
+        d = (s["end_epoch"] - s["start_epoch"]) // 60
+        if d > 0:
+            total_wet_min = total_wet_min + d
+
+    last = storms[len(storms) - 1]
+    last_p = points[len(points) - 1]
+    active = last_p["rate"] > 0 or (last_p["epoch"] - last["end_epoch"]) < 15 * 60
+
+    storm_total = last["total_end"] - last["total_start"]
+    if storm_total < 0:
+        storm_total = last["total_end"]
+
+    duration_min = (last["end_epoch"] - last["start_epoch"]) // 60
+    if duration_min < 0:
+        duration_min = 0
+
+    return {
+        "active": active,
+        "start_local": format_storm_time(last["start_local"]),
+        "end_local": format_storm_time(last["end_local"]),
+        "duration_min": duration_min,
+        "storm_total": storm_total,
+        "peak_rate": last["peak"],
+        "count_today": len(storms),
+        "total_wet_min": total_wet_min
+    }
+
+def get_month_precip_max(station, apikey, unit_label, local_str):
+    if not station or not apikey:
+        return -1.0
+    if not local_str or len(local_str) < 10:
+        return -1.0
+
+    year = local_str[0:4]
+    month = local_str[5:7]
+    day = local_str[8:10]
+    if not year.isdigit() or not month.isdigit() or not day.isdigit():
+        return -1.0
+
+    start_date = year + month + "01"
+    end_date = year + month + day
+    units = "m" if unit_label == "C" else "e"
+    key = "metric" if unit_label == "C" else "imperial"
+
+    url = "https://api.weather.com/v2/pws/history/daily"
+    params = {
+        "stationId": station,
+        "format": "json",
+        "units": units,
+        "startDate": start_date,
+        "endDate": end_date,
+        "apiKey": apikey,
+        "numericPrecision": "decimal"
+    }
+    resp = http.get(url, params=params, ttl_seconds=3600)
+    if resp["status_code"] != 200:
+        return -1.0
+
+    data = resp["json"]
+    rows = data.get("observations", [])
+    if len(rows) == 0:
+        rows = data.get("summaries", [])
+
+    max_p = -1.0
+    for r in rows:
+        block = r.get(key, {})
+        p = block.get("precipTotal")
+        if p == None:
+            continue
+        pf = float(p)
+        if pf > max_p:
+            max_p = pf
+    return max_p
+
+def rain_header(storm, rate, today, rain_u, seed, is_month_high):
+    if today <= 0 and rate <= 0:
+        return "RAIN MONITOR"
+
+    if storm == None:
+        return "RAIN MONITOR"
+
+    active = storm["active"]
+    count = storm["count_today"]
+    start = storm["start_local"]
+    end = storm["end_local"]
+    dur = format_duration(storm["duration_min"])
+    wet = format_duration(storm.get("total_wet_min", storm["duration_min"]))
+    peak = storm.get("peak_rate", 0)
+
+    # Live rain — no month-record lines
+    if active and rate > 0:
+        if count <= 1:
+            lines = []
+            if start and dur:
+                lines.append("STARTED AT " + start + " - " + dur)
+            if start:
+                lines.append("STARTED AT " + start)
+            if dur:
+                lines.append("RAINING FOR " + dur)
+            lines.append("FIRST STORM ONGOING - " + (dur if dur else "NOW"))
+            if peak > 0:
+                lines.append("STORM PEAK RATE " + str(peak))
+            return pick_line(lines, seed)
+
+        lines = []
+        if start and dur:
+            lines.append("RESUMED AT " + start + " - " + dur)
+        if start:
+            lines.append("RESUMED AT " + start)
+        lines.append("STORM " + str(count) + " - " + (dur if dur else "NOW"))
+        if start and dur:
+            lines.append("STORM " + str(count) + " - " + start + " - " + dur)
+        if peak > 0:
+            lines.append("STORM " + str(count) + " - PEAK " + str(peak))
+        lines.append("RAIN CONTINUES - " + (dur if dur else "NOW"))
+        if wet:
+            lines.append("WET " + wet + " TODAY")
+        return pick_line(lines, seed)
+
+    # Dry after rain — month record only here
+    lines = []
+    if end:
+        lines.append("STORM ENDED AT " + end)
+        lines.append("RAIN STOPPED - " + end)
+    if count >= 1 and end:
+        lines.append("STORM " + str(count) + " ENDED - " + end)
+    if wet:
+        lines.append("RAINED FOR ABOUT " + wet)
+        lines.append("WET ABOUT " + wet + " TODAY")
+    if start:
+        lines.append("A PERIOD OF RAIN AT " + start)
+    if start and end:
+        lines.append("RAIN " + start + " - " + end)
+    if count >= 2:
+        lines.append(str(count) + " TOTAL STORMS TODAY")
+        lines.append(str(count) + " RAIN PERIODS TODAY")
+        if wet:
+            lines.append(str(count) + " STORMS - WET " + wet)
+        if dur:
+            lines.append("LAST STORM - " + dur)
+    if peak > 0:
+        lines.append("STORM PEAK RATE " + str(peak))
+    if count >= 1 and dur:
+        lines.append("STORM " + str(count) + " DURATIONS - " + dur)
+
+    if is_month_high:
+        lines.append("WETTEST DAY THIS MONTH")
+        lines.append("THIS MONTH RAIN RECORD")
+        lines.append("WETTEST SO FAR THIS MONTH")
+
+    if len(lines) == 0:
+        return "RAIN MONITOR"
+    return pick_line(lines, seed)
+
+# =============================================================================
+# Rain page (Scroll 192x32)
+# =============================================================================
+
 def rain(c, ctx):
     station = ctx.inputs.get("stationid", "")
-    apikey  = ctx.inputs.get("apikey", "")
-    
-    # ---- Unit preference ----
+    apikey = ctx.inputs.get("apikey", "")
+
     unit_pref = str(ctx.inputs.get("temperatureunit", "Fahrenheit")).lower()
-    
     if "hybrid" in unit_pref or "celsius" in unit_pref:
-        api_units  = "m" if "celsius" in unit_pref else "h"
-        data_key   = "metric"
-        rain_u     = "MM"
+        api_units = "m" if "celsius" in unit_pref else "h"
+        data_key = "metric"
+        rain_u = "MM"
         unit_label = "C"
     else:
-        api_units  = "e"
-        data_key   = "imperial"
-        rain_u     = "IN"
+        api_units = "e"
+        data_key = "imperial"
+        rain_u = "IN"
         unit_label = "F"
-    
+
     c.fill("black")
-    
+
     if not station or not apikey:
         c.rect(0, 0, 191, 8, fill="red")
         c.text("PWS ERROR", 69, 1, font="5x7", color="black")
         c.text("NO DATA FROM WEATHER UNDERGROUND", 16, 12, font="4x5", color="amber")
         c.text("ENTER API KEY + STATION ID", 31, 22, font="4x5", color="amber")
         return
-    
-    # ---- Current observation ----
+
     url = "https://api.weather.com/v2/pws/observations/current"
     params = {
         "stationId": station,
@@ -923,31 +1192,42 @@ def rain(c, ctx):
         "units": api_units,
         "apiKey": apikey
     }
-    resp = http.get(url, params=params, ttl_seconds=1800)
-    
+    resp = http.get(url, params=params, ttl_seconds=120)
+
     today = 0.0
-    rate  = 0.0
-    
+    rate = 0.0
+    local_str = ""
+
     if resp["status_code"] == 200:
-        obs = resp["json"].get("observations", [{}])[0]
-        if obs:
-            obs_data = obs.get(data_key, {})
-            today = float(obs_data.get("precipTotal", 0) or 0)
-            rate  = float(obs_data.get("precipRate", 0) or 0)
-    
-    # ---- Early exit when no rain today ----
+        obs_list = resp["json"].get("observations", [])
+        if len(obs_list) > 0:
+            obs = obs_list[0]
+            if obs:
+                obs_data = obs.get(data_key, {})
+                pt = obs_data.get("precipTotal")
+                pr = obs_data.get("precipRate")
+                today = float(pt) if pt != None else 0.0
+                rate = float(pr) if pr != None else 0.0
+                local_str = obs.get("obsTimeLocal", "") or ""
+
     if today <= 0.0 and rate <= 0.0:
         c.rect(0, 0, 191, 8, fill="0055ff")
         header_text = "RAIN MONITOR"
-        header_x = (192 - (len(header_text) * 6)) // 2
+        header_x = (192 - len(header_text) * 6) // 2
         c.text(header_text, header_x, 1, font="5x7", color="white")
-        
         msg = "NO RAIN DETECTED TODAY"
         msg_x = (192 - len(msg) * 7) // 2
         c.text(msg, msg_x, 16, font="6x8", color="cyan")
         return
-    
-    # ---- Historical data for sparklines ----
+
+    storm = get_storm_events(station, apikey, unit_label)
+
+    month_max = get_month_precip_max(station, apikey, unit_label, local_str)
+    is_month_high = False
+    min_record = 12.7 if unit_label == "C" else 0.50
+    if month_max >= 0 and today >= month_max and today >= min_record:
+        is_month_high = True
+
     hist_url = "https://api.weather.com/v2/pws/observations/hourly/7day"
     hist_params = {
         "stationId": station,
@@ -956,42 +1236,44 @@ def rain(c, ctx):
         "apiKey": apikey
     }
     hist_resp = http.get(hist_url, params=hist_params, ttl_seconds=300)
-    
-    rate_list  = [0]
+
+    rate_list = [0]
     total_list = [0]
-    
     if hist_resp["status_code"] == 200:
         observations = hist_resp["json"].get("observations", [])
-        
         recent12 = observations[-12:] if len(observations) >= 12 else observations
         total_list = []
         for o in recent12:
-            total_list.append(float(o.get(data_key, {}).get("precipTotal", 0) or 0))
-        
+            v = o.get(data_key, {}).get("precipTotal")
+            total_list.append(float(v) if v != None else 0.0)
         recent4 = observations[-4:] if len(observations) >= 4 else observations
         rate_list = []
         for o in recent4:
-            rate_list.append(float(o.get(data_key, {}).get("precipRate", 0) or 0))
-    
+            v = o.get(data_key, {}).get("precipRate")
+            rate_list.append(float(v) if v != None else 0.0)
     if len(total_list) == 0:
         total_list = [0]
     if len(rate_list) == 0:
         rate_list = [0]
-    
+
     status_text, status_color = get_rain_status(rate, unit_label)
-    
-    # ---- Header ----
+
+    seed = ctx.now.unix // 600
+    if storm != None:
+        seed = seed + storm["count_today"] * 3
+
+    header_text = rain_header(storm, rate, today, rain_u, seed, is_month_high)
+    header_text = header_text.upper()
+    if len(header_text) > 30:
+        header_text = header_text[:30]
+
     c.rect(0, 0, 191, 8, fill="0055ff")
-    header_text = "RAIN MONITOR"
-    header_x = (192 - (len(header_text) * 6)) // 2
+    header_x = (192 - len(header_text) * 6) // 2
+    if header_x < 2:
+        header_x = 2
     c.text(header_text, header_x, 1, font="5x7", color="white")
-    
-    # Color for Today total (thresholds converted for mm)
-    if unit_label == "C":
-        t = today / 25.4          # work in inches for the color decision
-    else:
-        t = today
-    
+
+    t = today / 25.4 if unit_label == "C" else today
     if t >= 5.0:
         today_color = "red"
     elif t >= 2.0:
@@ -1002,30 +1284,51 @@ def rain(c, ctx):
         today_color = "puregreen"
     else:
         today_color = "white"
-    
-    # ---- Column 1: TODAY ----
+
     c.text("TODAY", 16, 11, font="5x7", color="skyblue")
     today_str = str(today)
     c.text(today_str, 11, 20, font="6x8", color=today_color)
-    c.text(" " + rain_u, 10 + len(today_str)*7, 20, font="4x5", color="gray")
+    c.text(" " + rain_u, 10 + len(today_str) * 7, 20, font="4x5", color="gray")
     c.sparkline(total_list, 3, 28, 57, 4, color="skyblue")
-    
+
     c.rect(63, 11, 64, 29, fill="0055ff")
-    
-    # ---- Column 2: RATE ----
+
     c.text("RATE", 84, 11, font="5x7", color="skyblue")
     rate_str = str(rate)
     c.text(rate_str, 77, 20, font="6x8", color=status_color)
-    c.text(" " + rain_u, 76 + len(rate_str)*7, 20, font="4x5", color="gray")
+    c.text(" " + rain_u, 76 + len(rate_str) * 7, 20, font="4x5", color="gray")
     c.sparkline(rate_list, 68, 28, 57, 4, color="skyblue")
-    
+
     c.rect(128, 11, 129, 29, fill="0055ff")
-    
-    # ---- Column 3: STATUS ----
-    c.text("STATUS", 141, 11, font="5x7", color="skyblue")
-    status_w = len(status_text) * 6
-    status_x = 126 + ((62 - status_w) // 2)
-    c.text(status_text, status_x, 20, font="6x8", color=status_color)
+
+    c.text("STORM", 145, 11, font="5x7", color="skyblue")
+    storm_val = 0.0
+    if storm != None:
+        storm_val = storm["storm_total"]
+        if storm_val < 0:
+            storm_val = 0.0
+    storm_str = str(storm_val)
+    if len(storm_str) > 5:
+        storm_str = storm_str[:5]
+
+    st = storm_val / 25.4 if unit_label == "C" else storm_val
+    if st >= 2.0:
+        storm_color = "red"
+    elif st >= 1.0:
+        storm_color = "orange"
+    elif st >= 0.25:
+        storm_color = "amber"
+    elif st > 0:
+        storm_color = "puregreen"
+    else:
+        storm_color = "white"
+
+    sw = len(storm_str) * 7
+    sx = 125+ ((60 - sw) // 2)
+    if sx < 130:
+        sx = 130
+    c.text(storm_str, sx, 20, font="6x8", color=storm_color)
+    c.text(rain_u, sx + len(storm_str) * 7 + 1, 20, font="4x5", color="gray")
 
 
 def get_alert_style(event, severity):

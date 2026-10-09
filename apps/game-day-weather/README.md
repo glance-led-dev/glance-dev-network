@@ -33,7 +33,7 @@ Kickoff date is month/day. `P` / `A` is PM/AM. An unconfirmed kickoff shows `TBD
 
 ## Layout
 
-One page, three zones, 60-second refresh:
+One page, three zones, 10-minute refresh:
 
 | Zone | Contents |
 |------|----------|
@@ -92,6 +92,6 @@ gdn validate apps/game-day-weather
 - Relies on ESPN’s public scoreboard remaining reachable.
 - Open-Meteo’s free host is noncommercial; catalog/commercial use needs an appropriate plan or another forecast source.
 - US and a few European venue zones handle DST at kickoff; anything else falls back to labelled UTC.
-- Frames are still. The panel updates on the 60s refresh timer.
+- Frames are still. The panel updates on the 10-minute refresh timer.
 
 Built for the [Glance Developer Network](https://github.com/glance-led-dev/glance-dev-network).

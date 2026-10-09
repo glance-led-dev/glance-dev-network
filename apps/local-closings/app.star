@@ -64,57 +64,44 @@ TYPE_KEYS = [
 ]
 
 ICON_WARN = """
-...#...
-..#.#..
-..#.#..
-.#...#.
-.#.#.#.
-#.....#
-#######
-"""
-
-ICON_SCHOOL = """
-..###..
-.#####.
-#.....#
-#######
-#.#.#.#
-#.#.#.#
-#######
-"""
-
-ICON_CHECK = """
-........#
-.......##
-#.....##.
-.#...##..
-..#.##...
-...##....
-...#.....
-.........
-"""
-
-ICON_X = """
-#.......#
-.#.....#.
-..#...#..
-...#.#...
 ....#....
+...###...
 ...#.#...
-..#...#..
-.#.....#.
-#.......#
+..##.##..
+..##.##..
+.###.###.
+.#######.
+####.####
+#########
 """
 
-ICON_CLOCK = """
-...###...
-..#...#..
-.#..#..#.
-.#..##.#.
-.#.....#.
-..#...#..
-...###...
-.........
+ICON_CHECK_BIG = """
+..........##
+.........###
+........###.
+##.....###..
+###...###...
+.###.###....
+..#####.....
+...###......
+....#.......
+"""
+
+ICON_HOUSE = """
+......#......
+.....###.....
+.....#.#.....
+....#####....
+...#######...
+..#########..
+.###########.
+#############
+.###########.
+.#..##.##..#.
+.#..##.##..#.
+.#####.#####.
+.####...####.
+.####...####.
 """
 
 
@@ -314,6 +301,56 @@ def looks_like_townnews(html):
     if h.find("bloximages") >= 0 and h.find("closings") >= 0:
         return True
     return False
+
+
+def looks_like_townnews_url(url):
+    u = str(url).lower()
+    if u.find("closings-and-delays") >= 0:
+        return True
+    if u.find("/app/closings/") >= 0:
+        return True
+    return False
+
+
+def townnews_callsign(url):
+    host = host_label(url)
+    dot = host.find(".")
+    if dot >= 0:
+        host = host[:dot]
+    news = host.find("NEWS")
+    if news >= 3 and news <= 5:
+        return host[:news]
+    n = len(host)
+    if n >= 3 and n <= 5:
+        return host
+    if n >= 4:
+        return host[:4]
+    return ""
+
+
+def townnews_guess_urls(origin, page_url):
+    urls = []
+    sign = townnews_callsign(page_url)
+    if sign != "":
+        urls.append(origin + "/app/closings/" + sign + "-closingsC.xml")
+        urls.append(origin + "/app/closings/" + sign + "-closings.xml")
+    return urls
+
+
+def with_trailing_slash(url):
+    u = collapse_ws(url)
+    q = u.find("?")
+    if q >= 0:
+        path = u[:q]
+        qs = u[q:]
+    else:
+        path = u
+        qs = ""
+    if path == "" or path[len(path) - 1] == "/":
+        return u
+    if path.find(".xml") >= 0 or path.find(".json") >= 0:
+        return u
+    return path + "/" + qs
 
 
 def looks_like_nexstar(html):
@@ -713,21 +750,44 @@ def wp_rendered(data):
     return ""
 
 
-def fetch_townnews(origin, html):
+def fetch_townnews(origin, html, page_url = ""):
     urls = townnews_xml_urls(html, origin)
+    extra = townnews_guess_urls(origin, page_url if page_url != "" else origin)
+    for url in extra:
+        exists = False
+        for prev in urls:
+            if prev == url:
+                exists = True
+        if exists == False:
+            urls.append(url)
     if urls == []:
         parsed = parse_townnews_xml(html)
         if parsed != None:
             return parsed
         return {"kind": "unparseable", "rows": []}
-    xml_url = urls[0]
-    x = http_get(xml_url)
-    if x["status_code"] != 200:
-        return {"kind": "unavailable", "rows": []}
-    parsed = parse_townnews_xml(x["body"])
-    if parsed != None:
-        return parsed
-    return {"kind": "unparseable", "rows": []}
+    saw_body = False
+    for xml_url in urls:
+        x = http_get(xml_url)
+        if x["status_code"] != 200:
+            continue
+        saw_body = True
+        parsed = parse_townnews_xml(x["body"])
+        if parsed != None:
+            return parsed
+    if saw_body:
+        return {"kind": "unparseable", "rows": []}
+    return {"kind": "unavailable", "rows": []}
+
+
+def try_townnews(url):
+    origin = origin_of(url)
+    if origin == "":
+        return None
+    got = fetch_townnews(origin, "", url)
+    kind = got.get("kind", "")
+    if kind == "ok" or kind == "empty":
+        return got
+    return None
 
 
 def fetch_nexstar_wp(url):
@@ -1694,6 +1754,8 @@ def fetch_source(url):
     u = collapse_ws(url)
     if u.find("://") < 0 and u.find(".") >= 0:
         u = "https://" + u
+    if u.find("http://") == 0:
+        u = "https://" + u[7:]
     if u.find("https://") != 0 and u.find("http://") != 0:
         return {"kind": "unsupported", "rows": []}
 
@@ -1767,13 +1829,31 @@ def fetch_source(url):
             return parsed
         return {"kind": "unparseable", "rows": []}
 
+    # TownNews HTML is ~370KB and often 301s without a trailing slash. Live GDN
+    # does not follow redirects and times out at 4s through a proxy, so skip the
+    # page and hit the small BLOX XML feed first (KOAM-closingsC.xml is 83 bytes).
+    if looks_like_townnews_url(u):
+        tn = try_townnews(u)
+        if tn != None:
+            return tn
+
     r = http_get(u)
     if r["status_code"] != 200:
-        if looks_like_closings_url(u):
-            wp = fetch_nexstar_wp(u)
-            if wp != None:
-                return wp
-        return {"kind": "unavailable", "rows": []}
+        slashed = with_trailing_slash(u)
+        if slashed != u:
+            r2 = http_get(slashed)
+            if r2["status_code"] == 200:
+                u = slashed
+                r = r2
+        if r["status_code"] != 200:
+            tn = try_townnews(u)
+            if tn != None:
+                return tn
+            if looks_like_closings_url(u):
+                wp = fetch_nexstar_wp(u)
+                if wp != None:
+                    return wp
+            return {"kind": "unavailable", "rows": []}
 
     parsed = parse_gsync_json(r["json"])
     if parsed != None:
@@ -1812,7 +1892,7 @@ def fetch_source(url):
         return {"kind": "unparseable", "rows": []}
 
     if looks_like_townnews(body):
-        return fetch_townnews(origin_of(u), body)
+        return fetch_townnews(origin_of(u), body, u)
 
     if looks_like_nexstar(body) or nexstar_iframe_src(body) != "":
         return fetch_nexstar(u, body)
@@ -1871,9 +1951,10 @@ def load_state(ctx):
     school = school_query(_s(ctx, "school", ""))
     url = _s(ctx, "closingsurl", "")
     if url == "":
-        return {"kind": "missing", "school": school, "rows": [], "url": ""}
+        return {"kind": "missing", "school": school, "rows": [], "all": [], "url": ""}
     got = fetch_source(url)
-    rows = prefer_school(got.get("rows", []), school)
+    found = got.get("rows", [])
+    rows = prefer_school(found, school)
     kind = got.get("kind", "unavailable")
     if kind == "ok" and rows == []:
         kind = "empty"
@@ -1881,6 +1962,7 @@ def load_state(ctx):
         "kind": kind,
         "school": school,
         "rows": rows,
+        "all": found,
         "url": url,
     }
 
@@ -1919,79 +2001,28 @@ def wrap_words(c, text, font, maxw):
     return lines
 
 
-def fit_name(c, text, maxw, max_lines):
+def fit_name(c, text, maxw, one_line):
+    # One big line if it fits, else two smaller lines, else two clipped 4x5 lines.
+    # With a detail line to show, the name stays on one line down to 5x7.
     raw = str(text).upper()
-    one = ["6x8", "5x7", "4x5"]
-    for font in one:
+    for font in ["9x12", "8x10", "6x8"]:
         if c.text_width(raw, font) <= maxw:
             return [raw], font
-    wrap_fonts = ["4x5"]
-    for font in wrap_fonts:
+    if one_line and c.text_width(raw, "5x7") <= maxw:
+        return [raw], "5x7"
+    for font in ["6x8", "5x7"]:
         lines = wrap_words(c, raw, font, maxw)
-        if lines != [] and len(lines) <= max_lines:
-            ok = True
-            for ln in lines:
-                if c.text_width(ln, font) > maxw:
-                    ok = False
-            if ok:
-                return lines, font
-    font = "4x5"
-    lines = wrap_words(c, raw, font, maxw)
+        if lines != [] and len(lines) <= 2:
+            return lines, font
+    lines = wrap_words(c, raw, "4x5", maxw)
     if lines == []:
-        return [clip_line(c, raw, font, maxw)], font
-    n = max_lines
-    if n > len(lines):
-        n = len(lines)
+        return [clip_line(c, raw, "4x5", maxw)], "4x5"
     out = []
-    for i in range(n):
-        line = lines[i]
-        line = clip_line(c, line, font, maxw)
-        out.append(line)
-    return out, font
-
-
-def closed_count(rows):
-    n = 0
-    for r in rows:
-        if r.get("kind", "") == "closed":
-            n = n + 1
-    return n
-
-
-def draw_chrome(c, col):
-    c.gradient_rect(0, 0, c.width - 1, c.height - 1, BG, BG2, horizontal = False)
-    c.gradient_rect(0, 0, 52, c.height - 1, color.dim(col, 32), BG, horizontal = True)
-    c.rect(0, 0, 2, c.height - 1, fill = col)
-    c.rect(0, 0, c.width - 1, 0, fill = col)
-    c.rect(0, c.height - 1, c.width - 1, c.height - 1, fill = color.dim(col, 55))
-    c.pixel(c.width - 1, 4, color.dim(col, 60))
-    c.pixel(c.width - 1, 16, color.dim(col, 60))
-    c.pixel(c.width - 1, 27, color.dim(col, 60))
-
-
-def draw_brand(c, col, icon_art):
-    c.sprite(icon_art, 6, 2, color = col)
-    c.text("LOCAL CLOSINGS", 16, 2, font = "5x7", color = TITLE)
-
-
-def draw_status_pill(c, status, col, x, y):
-    t = str(status).upper()
-    font = "6x8"
-    if c.text_width(t, font) > 130:
-        font = "5x7"
-    tw = c.text_width(t, font)
-    c.round_rect(x, y, x + tw + 6, y + 9, 2, fill = col)
-    c.text(t, x + 3, y + 1, font = font, color = INK)
-    return tw + 6
-
-
-def draw_dots(c, rows, x, y):
-    i = 0
-    for r in rows:
-        if i >= WANT:
-            break
-        c.status_dot(x + i * 7, y, status_color(r.get("kind", "other")))
-        i = i + 1
+    for i in range(min(2, len(lines))):
+        out.append(lines[i])
+    if len(lines) > 2:
+        out[1] = clip_line(c, out[1] + " " + lines[2], "4x5", maxw)
+    return out, "4x5"
 
 
 def compact_school(name):
@@ -2017,193 +2048,223 @@ def compact_school(name):
     return collapse_ws(t)
 
 
-def draw_school(c, school, col):
-    q = collapse_ws(str(school)).upper()
-    if q == "":
-        return
-    maxw = 90
-    font = "4x5"
-    label = q
-    if c.text_width(label, font) > maxw:
-        label = compact_school(q)
-    if c.text_width(label, font) > maxw:
-        label = clip_line(c, label, font, maxw)
-    if label == "":
-        return
-    c.text(label, c.width - 4, 3, font = font, color = col, align = "right")
+def fit_small(c, text, maxw):
+    t = collapse_ws(str(text)).upper()
+    if c.text_width(t, "4x5") > maxw:
+        t = compact_school(t)
+    return clip_line(c, t, "4x5", maxw)
 
 
-def draw_fail(c, title, sub, col):
-    draw_chrome(c, col)
-    c.sprite(ICON_WARN, 6, 2, color = col)
-    c.text("LOCAL CLOSINGS", 16, 2, font = "5x7", color = TITLE)
-    c.badge("ALERT", c.width - 32, 2, color = INK, bg = col, font = "4x5", pad = 1)
-    t = title.upper()
-    s = sub.upper()
-    if c.text_width(t, "10x14") <= 176:
-        c.text(t, 6, 10, font = "10x14", color = col)
-    else:
-        c.text_fit(t, 6, 12, ["6x8", "5x7"], color = col, maxw = 176)
-    c.text_fit(s, 6, 25, ["5x7", "4x5"], color = MUTED, maxw = 176)
+def kind_label(kind):
+    if kind == "closed":
+        return "CLOSED"
+    if kind == "delay":
+        return "DELAYED"
+    if kind == "remote":
+        return "REMOTE"
+    return "OTHER"
 
 
-def draw_empty(c, st):
-    draw_chrome(c, GREEN)
-    draw_brand(c, GREEN, ICON_CHECK)
-    school = st.get("school", "")
-    if school != "":
-        draw_school(c, school, MUTED)
-    else:
-        c.badge("CLEAR", c.width - 32, 2, color = INK, bg = GREEN, font = "4x5", pad = 1)
-    c.text("NO REPORTED", 6, 10, font = "10x14", color = GREEN)
-    c.text("CLOSINGS", 6, 25, font = "4x5", color = color.dim(GREEN, 70))
-    i = 0
-    for _ in range(5):
-        c.status_dot(c.width - 8 - (4 - i) * 7, 27, color.dim(GREEN, 28))
-        i = i + 1
+def tally(rows):
+    counts = {"closed": 0, "delay": 0, "remote": 0, "other": 0}
+    for r in rows:
+        k = r.get("kind", "other")
+        if k not in counts:
+            k = "other"
+        counts[k] = counts[k] + 1
+    out = []
+    for k in ["closed", "delay", "remote", "other"]:
+        if counts[k] > 0:
+            out.append([k, counts[k]])
+    return out
 
 
-def draw_empty_item(c, st, idx):
-    draw_chrome(c, GREEN)
-    draw_brand(c, GREEN, ICON_CHECK)
-    draw_school(c, st.get("school", ""), MUTED)
-    if st.get("school", "") == "":
-        c.badge("CLEAR", c.width - 32, 2, color = INK, bg = GREEN, font = "4x5", pad = 1)
+def school_row(st):
+    for r in st.get("rows", []):
+        if r.get("matched", False):
+            return r
+    return None
+
+
+# ---- chrome ----------------------------------------------------------------
+
+def draw_frame(c, col):
+    c.gradient_rect(0, 0, c.width - 1, c.height - 1, BG, BG2, horizontal = False)
+    c.rect(0, 0, 1, c.height - 1, fill = col)
+    c.rect(c.width - 1, 0, c.width - 1, c.height - 1, fill = color.dim(col, 45))
+
+
+def draw_chip(c, text, x, fg, bg):
+    t = str(text).upper()
+    tw = c.text_width(t, "4x5")
+    c.round_rect(x, 1, x + tw + 3, 7, 1, fill = bg)
+    c.text(t, x + 2, 2, font = "4x5", color = fg)
+    return tw + 4
+
+
+def draw_header(c, col, chip, right):
+    w = draw_chip(c, chip, 6, INK, col)
+    c.hline(6 + w + 2, 4, c.width - 6 - (6 + w + 2) - c.text_width(right, "4x5") - 3, color.dim(col, 30))
+    if right != "":
+        c.text(right, c.width - 6, 2, font = "4x5", color = DIM, align = "right")
+
+
+def station(st):
     host = host_label(st.get("url", ""))
     if host == "":
-        host = "CONFIGURED SOURCE"
-    c.text_fit(host, 6, 12, ["6x8", "5x7", "4x5"], color = MUTED, maxw = 176)
-    c.text("NO REPORTED CLOSINGS", 6, 23, font = "5x7", color = GREEN)
+        return "LOCAL TV"
+    if len(host) > 24:
+        dot = host.find(".")
+        if dot > 0:
+            return host[:dot]
+    return host
+
+
+def bullet(c, x, y, col):
+    c.rect(x, y + 1, x + 1, y + 2, fill = col)
+
+
+# Right-hand zone of the board: your school if set, else the top listings.
+def draw_side(c, st, x0, all_clear):
+    maxw = c.width - 6 - x0
+    school = st.get("school", "")
+    if school != "":
+        # Your school in cyan over two lines, then its status underneath.
+        name = collapse_ws(school).upper()
+        lines = wrap_words(c, name, "4x5", maxw)
+        if len(lines) > 2:
+            lines = wrap_words(c, compact_school(name), "4x5", maxw)
+        if len(lines) > 2:
+            lines = [lines[0], clip_line(c, " ".join(lines[1:]), "4x5", maxw)]
+        for i in range(len(lines)):
+            c.text(lines[i], x0, 10 + i * 7, font = "4x5", color = CYAN)
+        r = school_row(st)
+        if r == None:
+            c.text("NOT LISTED", x0, 24, font = "4x5", color = GREEN)
+        else:
+            c.text(clip_line(c, r["status"], "4x5", maxw), x0, 24, font = "4x5", color = status_color(r["kind"]))
+        return
+    if all_clear:
+        c.text("NOTHING", x0, 13, font = "4x5", color = MUTED)
+        c.text("REPORTED", x0, 20, font = "4x5", color = MUTED)
+        return
+    rows = st.get("rows", [])
+    for i in range(min(3, len(rows))):
+        r = rows[i]
+        y = 10 + i * 7
+        bullet(c, x0, y, status_color(r["kind"]))
+        c.text(fit_small(c, r["name"], maxw - 5), x0 + 5, y, font = "4x5", color = TITLE)
+
+
+# ---- screens ---------------------------------------------------------------
+
+def draw_fail(c, st, title, sub):
+    draw_frame(c, FAIL)
+    host = host_label(st.get("url", ""))
+    draw_header(c, FAIL, "CLOSINGS", clip_line(c, host, "4x5", 90))
+    c.sprite(ICON_WARN, 6, 15, color = FAIL)
+    c.text_fit(title, 18, 11, ["9x12", "8x10", "6x8"], color = FAIL, maxw = 166)
+    c.text_fit(sub, 18, 25, ["4x5"], color = MUTED, maxw = 166)
 
 
 def draw_missing(c, st):
-    draw_fail(c, "SET CLOSINGS", "WEBSITE URL", FAIL)
+    draw_fail(c, st, "ADD A CLOSINGS URL", "PASTE YOUR LOCAL STATION CLOSINGS PAGE")
 
 
 def draw_unavailable(c, st):
-    draw_fail(c, "SOURCE", "UNAVAILABLE", FAIL)
+    draw_fail(c, st, "SOURCE UNAVAILABLE", "STATION DID NOT ANSWER, RETRYING")
 
 
 def draw_unsupported(c, st):
-    draw_fail(c, "SOURCE NOT", "SUPPORTED", FAIL)
+    draw_fail(c, st, "NOT SUPPORTED", "TRY ANOTHER LOCAL STATION CLOSINGS PAGE")
 
 
-def draw_unparseable(c, st):
-    draw_fail(c, "SOURCE NOT", "SUPPORTED", FAIL)
+def draw_clear(c, st):
+    draw_frame(c, GREEN)
+    draw_header(c, GREEN, "CLOSINGS", station(st))
+    c.sprite(ICON_CHECK_BIG, 6, 15, color = GREEN)
+    c.text("ALL CLEAR", 22, 13, font = "11x14_bold", color = GREEN)
+    x = 22 + c.text_width("ALL CLEAR", "11x14_bold") + 6
+    c.vline(x, 11, 18, color.dim(GREEN, 30))
+    draw_side(c, st, x + 5, True)
 
 
 def draw_board_ok(c, st):
-    rows = st["rows"]
-    n = len(rows)
-    n_closed = closed_count(rows)
-    col = RED if n_closed > 0 else AMBER
-    draw_chrome(c, col)
-    draw_brand(c, col, ICON_SCHOOL)
-    draw_school(c, st.get("school", ""), MUTED)
+    found = st.get("all", st["rows"])
+    n = len(found)
+    groups = tally(found)
+    col = RED if groups[0][0] == "closed" else status_color(groups[0][0])
+    draw_frame(c, col)
+    draw_header(c, col, "CLOSINGS", station(st))
 
-    headline = str(n) + " REPORTED"
-    if n == 1:
-        headline = "1 REPORTED"
-    c.text(headline, 6, 10, font = "10x14", color = col)
-
-    foot = "CLOSINGS"
-    n_match = 0
-    for r in rows:
-        if r.get("matched", False):
-            n_match = n_match + 1
-    if n_match > 0:
-        foot = "YOUR SCHOOL FIRST"
-    elif n_closed > 0:
-        foot = str(n_closed) + " CLOSED"
-    c.text(foot, 6, 26, font = "4x5", color = MUTED)
-    draw_dots(c, rows, c.width - 8 - n * 7, 28)
+    c.sprite(ICON_HOUSE, 6, 12, color = col)
+    num = str(n)
+    c.text(num, 22, 10, font = "16x20", color = TITLE)
+    x = 22 + c.text_width(num, "16x20") + 5
+    widest = 0
+    for i in range(min(3, len(groups))):
+        g = groups[i]
+        y = 10 + i * 7
+        label = str(g[1]) + " " + kind_label(g[0])
+        bullet(c, x, y, status_color(g[0]))
+        c.text(label, x + 5, y, font = "4x5", color = status_color(g[0]))
+        widest = max(widest, 5 + c.text_width(label, "4x5"))
+    x = x + widest + 6
+    c.vline(x, 11, 18, color.dim(col, 30))
+    draw_side(c, st, x + 5, False)
 
 
 def draw_item(c, st, idx):
     kind = st["kind"]
-    if kind == "missing":
-        draw_missing(c, st)
-        return
-    if kind == "unavailable":
-        draw_unavailable(c, st)
-        return
-    if kind == "unsupported":
-        draw_unsupported(c, st)
-        return
-    if kind == "unparseable":
-        draw_unparseable(c, st)
-        return
-    if kind == "empty" or st["rows"] == []:
-        draw_empty_item(c, st, idx)
-        return
-
     rows = st["rows"]
-    if idx >= len(rows):
-        draw_chrome(c, DIM)
-        draw_brand(c, DIM, ICON_SCHOOL)
-        c.text("NO LISTING " + str(idx + 1), 6, 13, font = "6x8", color = FAIL)
-        c.text("SOURCE HAS " + str(len(rows)), 6, 24, font = "5x7", color = DIM)
+    if kind != "ok" or idx >= len(rows):
+        board_for(c, st)
         return
 
     row = rows[idx]
     col = status_color(row["kind"])
-    draw_chrome(c, col)
-    c.sprite(ICON_SCHOOL, 6, 2, color = col)
-
-    maxw = 148
-    lines, font = fit_name(c, row["name"], maxw, 2)
-    x = 16
-    y = 2
-    lh = 8
-    if font == "5x7":
-        lh = 8
-    elif font == "4x5":
-        lh = 7
-    elif font == "6x8":
-        lh = 9
-    for i in range(len(lines)):
-        c.text(lines[i], x, y + i * lh, font = font, color = TITLE)
-
-    mark = str(idx + 1) + "/" + str(len(rows))
-    c.text(mark, c.width - 4, 2, font = "4x5", color = DIM, align = "right")
-
-    draw_status_pill(c, row["status"], col, 6, 15)
-
-    if row.get("matched", False) == False:
-        if row.get("kind", "") == "closed":
-            c.sprite(ICON_X, c.width - 16, 11, color = color.dim(col, 70))
-        elif row.get("kind", "") == "delay":
-            c.sprite(ICON_CLOCK, c.width - 16, 11, color = color.dim(col, 70))
-
-    foot = row.get("detail", "")
-    if foot != "":
-        max_foot = 176
-        if row.get("matched", False):
-            max_foot = 110
-        c.text(clip_line(c, foot, "4x5", max_foot), 6, 26, font = "4x5", color = MUTED)
+    draw_frame(c, col)
+    x = 6 + draw_chip(c, row["status"], 6, INK, col) + 2
     if row.get("matched", False):
-        c.badge("YOUR SCHOOL", c.width - 58, 23, color = INK, bg = CYAN, font = "4x5", pad = 1)
+        x = x + draw_chip(c, "YOUR SCHOOL", x, INK, CYAN) + 2
+    total = len(st.get("all", rows))
+    mark = str(idx + 1) + " OF " + str(total)
+    c.hline(x, 4, c.width - 6 - x - c.text_width(mark, "4x5") - 3, color.dim(col, 30))
+    c.text(mark, c.width - 6, 2, font = "4x5", color = DIM, align = "right")
+
+    detail = row.get("detail", "")
+    lines, font = fit_name(c, row["name"], 176, detail != "")
+    h = {"9x12": 12, "8x10": 10, "6x8": 8, "5x7": 7, "4x5": 5}[font]
+    if len(lines) == 1:
+        y = 10 + (21 - h) // 2
+        if detail != "":
+            y = 10 + (14 - h) // 2
+        c.text(lines[0], 6, y, font = font, color = TITLE)
+        if detail != "":
+            c.text(clip_line(c, detail, "4x5", 176), 6, 25, font = "4x5", color = MUTED)
+    else:
+        gap = 2
+        top = 10 + (21 - (2 * h + gap)) // 2
+        for i in range(2):
+            c.text(lines[i], 6, top + i * (h + gap), font = font, color = TITLE)
 
 
-def board(c, ctx):
-    st = load_state(ctx)
+def board_for(c, st):
     kind = st["kind"]
     if kind == "missing":
         draw_missing(c, st)
-        return
-    if kind == "unavailable":
+    elif kind == "unavailable":
         draw_unavailable(c, st)
-        return
-    if kind == "unsupported":
+    elif kind == "unsupported" or kind == "unparseable":
         draw_unsupported(c, st)
-        return
-    if kind == "unparseable":
-        draw_unparseable(c, st)
-        return
-    if kind == "empty" or st["rows"] == []:
-        draw_empty(c, st)
-        return
-    draw_board_ok(c, st)
+    elif kind == "empty" or st["rows"] == []:
+        draw_clear(c, st)
+    else:
+        draw_board_ok(c, st)
+
+
+def board(c, ctx):
+    board_for(c, load_state(ctx))
 
 
 def one(c, ctx):

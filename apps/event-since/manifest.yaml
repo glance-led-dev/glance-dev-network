@@ -13,6 +13,62 @@ refresh: 21600
 
 pages: [since]
 
+assets:
+  - arrival.png
+  - australia.png
+  - badminton.png
+  - basketball.png
+  - beach.png
+  - bicycle.png
+  - birthday.png
+  - boy.png
+  - brazil.png
+  - bronze-medal.png
+  - campfire.png
+  - canada.png
+  - car.png
+  - chess.png
+  - china.png
+  - couple-blue.png
+  - couple-pink.png
+  - couple.png
+  - departure.png
+  - fishing.png
+  - flower.png
+  - football.png
+  - france.png
+  - germany.png
+  - girl.png
+  - gold-medal.png
+  - golf.png
+  - graduation.png
+  - heart.png
+  - helicopter.png
+  - hockey.png
+  - house.png
+  - india.png
+  - italy.png
+  - japan.png
+  - mountains.png
+  - pagoda.png
+  - paraglider.png
+  - podium.png
+  - running.png
+  - russia.png
+  - silver-medal.png
+  - skiing.png
+  - soccer.png
+  - south-korea.png
+  - torii-gate.png
+  - tree.png
+  - trophy.png
+  - uae.png
+  - uk.png
+  - usa.png
+  - volleyball.png
+  - wedding.png
+  - yacht.png
+
 inputs:
   - key: event
     type: string
@@ -25,7 +81,7 @@ inputs:
     app_input_type: date-past
     label: Event date
     default: "2012-08-05"
-    help: The day it happened - counts DAYS SINCE it, and shows TODAY on the day.
+    help: The day it happened - today or earlier. Counts DAYS SINCE it, and shows TODAY on the day.
   - key: theme
     type: choice
     app_input_type: dropdown
@@ -72,6 +128,20 @@ inputs:
       - Skiing
       - Chess
       - Golf
+      - USA
+      - UK
+      - UAE
+      - "South Korea"
+      - Russia
+      - Japan
+      - Italy
+      - India
+      - Germany
+      - France
+      - China
+      - Canada
+      - Brazil
+      - Australia
   - key: numcolor
     type: choice
     app_input_type: dropdown

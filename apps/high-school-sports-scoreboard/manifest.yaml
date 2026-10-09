@@ -1,9 +1,9 @@
 gdn: 1
 id: high-school-sports-scoreboard
-version: 0.16.0
+version: 0.16.2
 name: High School Sports
 description: Recent scores and upcoming games for one high school and sport per app instance.
-author: Jacob
+author: JSW41
 category: Sports
 entry: app.star
 width: 192
@@ -523,24 +523,36 @@ inputs:
     default: Football
     choices: [Football, Boys Basketball, Girls Basketball, Baseball, Softball, Girls Volleyball, Boys Soccer, Girls Soccer]
     help: Select the sport to display.
-  - key: maxprepsurl
-    required: true
-    app_input_type: free-text
-    type: string
-    label: MaxPreps school URL
-    help: Required. Paste the main school page, not a game URL.
   - key: parsekey
     required: true
     app_input_type: api-key
     type: string
     label: Parse API key
-    help: "Required. Subscribe to the MaxPreps API at https://parse.bot/marketplace/1d510b08-d5bf-481d-aa00-82f8b510e6dd/maxpreps-com-api"
+    help: "Required. Subscribe to the MaxPreps API at https://parse.bot/marketplace/1d510b08-d5bf-481d-aa00-82f8b510e6dd/maxpreps-com-api and bump the subscription to canonical v18 if prompted."
+  - key: schoolstate
+    required: true
+    app_input_type: free-text
+    type: string
+    label: School state
+    help: "Required. Enter the two-letter state code, for example IL."
+  - key: schoolcity
+    required: true
+    app_input_type: free-text
+    type: string
+    label: MaxPreps city
+    help: "Required. Enter the city portion of the MaxPreps school page, for example springfield."
+  - key: schoolslug
+    required: true
+    app_input_type: free-text
+    type: string
+    label: MaxPreps school name
+    help: "Required. Enter only the final school portion of the MaxPreps page, for example sacred-heart-griffin-cyclones. Do not enter a URL."
   - key: gamechangerteamid
     app_input_type: free-text
     type: string
     label: GameChanger Team ID (Optional)
-    default: ""
-    help: Optional for baseball and softball.
+    default: none
+    help: Optional for baseball and softball. Leave this as none when not used.
   - key: displaytimezone
     app_input_type: dropdown
     type: choice

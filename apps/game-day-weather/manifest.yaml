@@ -1,6 +1,6 @@
 gdn: 1
 id: game-day-weather
-version: 1.4.0
+version: 1.4.1
 name: Game Day Weather
 author: community
 description: NFL matchups with stadium weather at kickoff, live scores and current
@@ -9,9 +9,8 @@ category: Sports
 entry: app.star
 width: 192
 height: 32
-refresh: 300
-pages:
-- gameday
+refresh: 600
+pages: [gameday]
 assets:
 - assets/ari.png
 - assets/atl.png
@@ -46,65 +45,28 @@ assets:
 - assets/ten.png
 - assets/wsh.png
 inputs:
-- key: team
-  type: choice
-  app_input_type: dropdown
-  label: Follow a team
-  default: ALL
-  choices:
-  - ALL
-  - ARI
-  - ATL
-  - BAL
-  - BUF
-  - CAR
-  - CHI
-  - CIN
-  - CLE
-  - DAL
-  - DEN
-  - DET
-  - GB
-  - HOU
-  - IND
-  - JAX
-  - KC
-  - LAC
-  - LAR
-  - LV
-  - MIA
-  - MIN
-  - NE
-  - 'NO'
-  - NYG
-  - NYJ
-  - PHI
-  - PIT
-  - SEA
-  - SF
-  - TB
-  - TEN
-  - WSH
-  help: ALL shows a live game first, otherwise the next kickoff. A team selection
-    follows its next game within 21 days.
-- key: timezone
-  type: choice
-  app_input_type: dropdown
-  label: Kickoff time zone
-  default: STADIUM LOCAL
-  choices:
-  - STADIUM LOCAL
-  - ET
-  - CT
-  - MT
-  - PT
-  - UTC
-  help: Converts kickoff date and time to your chosen zone and shows its label. ET, CT, MT and PT automatically follow daylight saving time. Stadium local preserves the venue time. Weather remains tied to the stadium and actual kickoff.
-- key: units
-  type: choice
-  app_input_type: dropdown
-  label: Weather units
-  default: F / MPH
-  choices:
-  - F / MPH
-  - C / KMH
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Follow a team
+    default: ALL
+    choices: [ALL, ARI, ATL, BAL, BUF, CAR, CHI, CIN, CLE, DAL, DEN, DET, GB, HOU, IND, JAX, KC, LAC, LAR, LV, MIA, MIN, NE, "NO", NYG, NYJ, PHI, PIT, SEA, SF, TB, TEN, WSH]
+    options: [ALL, ARI, ATL, BAL, BUF, CAR, CHI, CIN, CLE, DAL, DEN, DET, GB, HOU, IND, JAX, KC, LAC, LAR, LV, MIA, MIN, NE, "NO", NYG, NYJ, PHI, PIT, SEA, SF, TB, TEN, WSH]
+    help: ALL shows a live game first, otherwise the next kickoff. A team selection follows its next game within 21 days.
+
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Kickoff time zone
+    default: "STADIUM LOCAL"
+    choices: ["STADIUM LOCAL", ET, CT, MT, PT, UTC]
+    options: ["STADIUM LOCAL", ET, CT, MT, PT, UTC]
+    help: Converts kickoff date and time to your chosen zone and shows its label. ET, CT, MT and PT automatically follow daylight saving time. Stadium local preserves the venue time. Weather remains tied to the stadium and actual kickoff.
+
+  - key: units
+    type: choice
+    app_input_type: dropdown
+    label: Weather units
+    default: "F / MPH"
+    choices: ["F / MPH", "C / KMH"]
+    options: ["F / MPH", "C / KMH"]
