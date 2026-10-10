@@ -1,0 +1,17 @@
+{
+  "scenarios": 11,
+  "rendered_pages": 44,
+  "checks": [
+    "real Starlark execution",
+    "all text bounds",
+    "Scroll edge safe zones",
+    "persistent identity on four pages",
+    "all five undelivered statuses rotate at five-minute refresh",
+    "stable selection within refresh interval",
+    "delivered excluded",
+    "GDN host response schema",
+    "hostname and full HTTPS transport equivalence",
+    "invalid endpoints never request",
+    "authentication/offline/malformed responses"
+  ]
+}

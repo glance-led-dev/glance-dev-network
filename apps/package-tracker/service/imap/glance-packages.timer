@@ -1,0 +1,9 @@
+[Unit]
+Description=Discover Glance packages every 15 minutes
+[Timer]
+OnBootSec=2min
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=30
+[Install]
+WantedBy=timers.target
