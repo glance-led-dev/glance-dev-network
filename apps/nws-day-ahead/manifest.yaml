@@ -1,0 +1,31 @@
+gdn: 1
+id: nws-day-ahead
+version: 0.1.0
+name: NWS Day Ahead
+author: "Adin and Claude"
+description: "Today's high/low with hourly icons and rain chance through 10pm; after 5pm, tonight at 10pm and tomorrow."
+category: Weather
+entry: app.star
+
+width: 64
+height: 32
+refresh: 1800
+
+pages: [main]
+
+assets:
+  - SUN.png
+  - CLOUD.png
+  - PARTLY.png
+  - RAIN.png
+  - SNOW.png
+  - STORM.png
+  - FOG.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: US zip code. NWS covers the US only.
