@@ -1,0 +1,19 @@
+id: grateful-dead-history
+description: Every Grateful Dead show played on this date, 1965 to the last one in Chicago on 7/9/95 - full setlists with segues, song debuts and bust-outs, the band lineup and notes, plus tributes to the band and its family - CATEGORY - Entertainment
+author: cfdmb
+name: Today in Grateful Dead History
+category: Entertainment
+width: 192
+height: 32
+# Note for the GDN crew: the app steps to the next show in a daily shuffle
+# every hour, so any refresh up to 3600 (1 hour) shows every show in turn.
+refresh: 3600
+pages:
+  - page1
+  - page2
+  - page3
+  - page4
+  - page5
+  - page6
+  - page7
+  - page8

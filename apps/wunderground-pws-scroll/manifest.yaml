@@ -1,6 +1,6 @@
 gdn: 1
 id: wunderground-pws-scroll
-version: 1.4.2
+version: 1.5
 name: Weather Underground PWS
 author: Brayden Slater
 description: Personal Weather Station display with current conditions, wind, and rain data from Weather Underground
@@ -8,7 +8,7 @@ category: Weather
 entry: app.star
 width: 192
 height: 32
-refresh: 1800
+refresh: 900
 pages:
   - main
   - wind
@@ -30,13 +30,13 @@ inputs:
   - key: stationid
     label: PWS Station ID
     type: string
-    pp_input_type: free-text
+    app_input_type: free-text
     default: ""
     help: "Your Weather Underground station ID"
   - key: location
     label: City Label (Optional)
     type: string
-    app_input_type: optional-free-text
+    app_input_type: free-text
     default: ""
     help: "Custom name shown on the display (e.g. Home)"
   

@@ -1,0 +1,745 @@
+gdn: 1
+id: college-basketball-player-tracker
+version: 0.3.8
+name: Team Tracker (NCAAB)
+author: JSW41
+description: Men's college basketball tracker with seven player pages that switch automatically between season averages and live/final stats.
+category: Sports
+entry: app.star
+width: 128
+height: 32
+refresh: 300
+pages: [player_1, player_2, player_3, player_4, player_5, player_6, player_7]
+assets:
+  - 2.png
+  - 5.png
+  - 6.png
+  - 8.png
+  - 9.png
+  - 12.png
+  - 13.png
+  - 16.png
+  - 21.png
+  - 23.png
+  - 24.png
+  - 25.png
+  - 26.png
+  - 27.png
+  - 28.png
+  - 30.png
+  - 36.png
+  - 38.png
+  - 41.png
+  - 43.png
+  - 44.png
+  - 45.png
+  - 46.png
+  - 47.png
+  - 48.png
+  - 50.png
+  - 52.png
+  - 55.png
+  - 56.png
+  - 57.png
+  - 58.png
+  - 59.png
+  - 61.png
+  - 62.png
+  - 66.png
+  - 68.png
+  - 70.png
+  - 71.png
+  - 77.png
+  - 79.png
+  - 82.png
+  - 84.png
+  - 85.png
+  - 87.png
+  - 91.png
+  - 93.png
+  - 94.png
+  - 96.png
+  - 97.png
+  - 98.png
+  - 99.png
+  - 103.png
+  - 104.png
+  - 107.png
+  - 108.png
+  - 111.png
+  - 113.png
+  - 116.png
+  - 119.png
+  - 120.png
+  - 127.png
+  - 130.png
+  - 135.png
+  - 139.png
+  - 140.png
+  - 142.png
+  - 145.png
+  - 147.png
+  - 149.png
+  - 150.png
+  - 151.png
+  - 152.png
+  - 153.png
+  - 154.png
+  - 155.png
+  - 156.png
+  - 158.png
+  - 159.png
+  - 160.png
+  - 161.png
+  - 163.png
+  - 164.png
+  - 166.png
+  - 167.png
+  - 171.png
+  - 172.png
+  - 179.png
+  - 183.png
+  - 189.png
+  - 193.png
+  - 194.png
+  - 195.png
+  - 197.png
+  - 198.png
+  - 201.png
+  - 202.png
+  - 204.png
+  - 213.png
+  - 218.png
+  - 219.png
+  - 221.png
+  - 222.png
+  - 225.png
+  - 227.png
+  - 228.png
+  - 231.png
+  - 232.png
+  - 233.png
+  - 235.png
+  - 236.png
+  - 238.png
+  - 239.png
+  - 242.png
+  - 245.png
+  - 248.png
+  - 249.png
+  - 250.png
+  - 251.png
+  - 252.png
+  - 253.png
+  - 254.png
+  - 256.png
+  - 257.png
+  - 258.png
+  - 259.png
+  - 261.png
+  - 264.png
+  - 265.png
+  - 269.png
+  - 270.png
+  - 275.png
+  - 276.png
+  - 277.png
+  - 278.png
+  - 279.png
+  - 282.png
+  - 284.png
+  - 288.png
+  - 290.png
+  - 292.png
+  - 294.png
+  - 295.png
+  - 299.png
+  - 300.png
+  - 301.png
+  - 302.png
+  - 304.png
+  - 305.png
+  - 309.png
+  - 311.png
+  - 314.png
+  - 315.png
+  - 322.png
+  - 324.png
+  - 325.png
+  - 326.png
+  - 328.png
+  - 331.png
+  - 333.png
+  - 338.png
+  - 339.png
+  - 344.png
+  - 349.png
+  - 350.png
+  - 356.png
+  - 357.png
+  - 399.png
+  - 526.png
+  - 2000.png
+  - 2005.png
+  - 2006.png
+  - 2010.png
+  - 2011.png
+  - 2016.png
+  - 2026.png
+  - 2029.png
+  - 2031.png
+  - 2032.png
+  - 2046.png
+  - 2050.png
+  - 2057.png
+  - 2065.png
+  - 2066.png
+  - 2083.png
+  - 2084.png
+  - 2086.png
+  - 2097.png
+  - 2099.png
+  - 2110.png
+  - 2115.png
+  - 2116.png
+  - 2117.png
+  - 2127.png
+  - 2130.png
+  - 2132.png
+  - 2142.png
+  - 2154.png
+  - 2166.png
+  - 2168.png
+  - 2169.png
+  - 2172.png
+  - 2174.png
+  - 2181.png
+  - 2182.png
+  - 2184.png
+  - 2193.png
+  - 2197.png
+  - 2198.png
+  - 2199.png
+  - 2210.png
+  - 2217.png
+  - 2226.png
+  - 2229.png
+  - 2230.png
+  - 2239.png
+  - 2241.png
+  - 2244.png
+  - 2247.png
+  - 2250.png
+  - 2253.png
+  - 2261.png
+  - 2272.png
+  - 2275.png
+  - 2277.png
+  - 2287.png
+  - 2294.png
+  - 2296.png
+  - 2305.png
+  - 2306.png
+  - 2309.png
+  - 2320.png
+  - 2325.png
+  - 2329.png
+  - 2330.png
+  - 2335.png
+  - 2344.png
+  - 2348.png
+  - 2349.png
+  - 2350.png
+  - 2351.png
+  - 2352.png
+  - 2363.png
+  - 2368.png
+  - 2377.png
+  - 2378.png
+  - 2379.png
+  - 2382.png
+  - 2385.png
+  - 2390.png
+  - 2393.png
+  - 2400.png
+  - 2405.png
+  - 2413.png
+  - 2415.png
+  - 2426.png
+  - 2427.png
+  - 2428.png
+  - 2429.png
+  - 2430.png
+  - 2433.png
+  - 2437.png
+  - 2439.png
+  - 2440.png
+  - 2441.png
+  - 2443.png
+  - 2447.png
+  - 2448.png
+  - 2449.png
+  - 2450.png
+  - 2453.png
+  - 2454.png
+  - 2458.png
+  - 2459.png
+  - 2460.png
+  - 2463.png
+  - 2464.png
+  - 2466.png
+  - 2473.png
+  - 2483.png
+  - 2492.png
+  - 2501.png
+  - 2502.png
+  - 2504.png
+  - 2506.png
+  - 2507.png
+  - 2509.png
+  - 2514.png
+  - 2515.png
+  - 2520.png
+  - 2523.png
+  - 2529.png
+  - 2534.png
+  - 2535.png
+  - 2539.png
+  - 2540.png
+  - 2541.png
+  - 2545.png
+  - 2546.png
+  - 2547.png
+  - 2550.png
+  - 2561.png
+  - 2565.png
+  - 2567.png
+  - 2569.png
+  - 2571.png
+  - 2572.png
+  - 2579.png
+  - 2582.png
+  - 2599.png
+  - 2603.png
+  - 2608.png
+  - 2612.png
+  - 2617.png
+  - 2619.png
+  - 2623.png
+  - 2627.png
+  - 2628.png
+  - 2630.png
+  - 2633.png
+  - 2634.png
+  - 2635.png
+  - 2636.png
+  - 2638.png
+  - 2640.png
+  - 2641.png
+  - 2643.png
+  - 2649.png
+  - 2653.png
+  - 2655.png
+  - 2670.png
+  - 2674.png
+  - 2678.png
+  - 2681.png
+  - 2692.png
+  - 2697.png
+  - 2698.png
+  - 2710.png
+  - 2711.png
+  - 2717.png
+  - 2724.png
+  - 2729.png
+  - 2737.png
+  - 2739.png
+  - 2747.png
+  - 2750.png
+  - 2751.png
+  - 2752.png
+  - 2754.png
+  - 2755.png
+  - 2771.png
+  - 2803.png
+  - 2837.png
+  - 2856.png
+  - 2870.png
+  - 2885.png
+  - 2900.png
+  - 2908.png
+  - 2916.png
+  - 2934.png
+  - 3084.png
+  - 3101.png
+  - 112358.png
+inputs:
+  - key: team
+    app_input_type: dropdown
+    type: choice
+    label: Team
+    default: "Illinois Fighting Illini"
+    help: Search for and select any men's Division I college basketball team.
+    choices:
+      - "Abilene Christian Wildcats"
+      - "Air Force Falcons"
+      - "Akron Zips"
+      - "Alabama A&M Bulldogs"
+      - "Alabama Crimson Tide"
+      - "Alabama State Hornets"
+      - "Alcorn State Braves"
+      - "American University Eagles"
+      - "App State Mountaineers"
+      - "Arizona State Sun Devils"
+      - "Arizona Wildcats"
+      - "Arkansas Razorbacks"
+      - "Arkansas State Red Wolves"
+      - "Arkansas-Pine Bluff Golden Lions"
+      - "Army Black Knights"
+      - "Auburn Tigers"
+      - "Austin Peay Governors"
+      - "Ball State Cardinals"
+      - "Baylor Bears"
+      - "Bellarmine Knights"
+      - "Belmont Bruins"
+      - "Bethune-Cookman Wildcats"
+      - "Binghamton Bearcats"
+      - "Boise State Broncos"
+      - "Boston College Eagles"
+      - "Boston University Terriers"
+      - "Bowling Green Falcons"
+      - "Bradley Braves"
+      - "Brown Bears"
+      - "Bryant Bulldogs"
+      - "Bucknell Bison"
+      - "Buffalo Bulls"
+      - "Butler Bulldogs"
+      - "BYU Cougars"
+      - "Cal Poly Mustangs"
+      - "Cal State Bakersfield Roadrunners"
+      - "Cal State Fullerton Titans"
+      - "Cal State Northridge Matadors"
+      - "California Baptist Lancers"
+      - "California Golden Bears"
+      - "Campbell Fighting Camels"
+      - "Canisius Golden Griffins"
+      - "Central Arkansas Bears"
+      - "Central Connecticut Blue Devils"
+      - "Central Michigan Chippewas"
+      - "Charleston Cougars"
+      - "Charleston Southern Buccaneers"
+      - "Charlotte 49ers"
+      - "Chattanooga Mocs"
+      - "Chicago State Cougars"
+      - "Cincinnati Bearcats"
+      - "Clemson Tigers"
+      - "Cleveland State Vikings"
+      - "Coastal Carolina Chanticleers"
+      - "Colgate Raiders"
+      - "Colorado Buffaloes"
+      - "Colorado State Rams"
+      - "Columbia Lions"
+      - "Coppin State Eagles"
+      - "Cornell Big Red"
+      - "Creighton Bluejays"
+      - "Dartmouth Big Green"
+      - "Davidson Wildcats"
+      - "Dayton Flyers"
+      - "Delaware Blue Hens"
+      - "Delaware State Hornets"
+      - "Denver Pioneers"
+      - "DePaul Blue Demons"
+      - "Detroit Mercy Titans"
+      - "Drake Bulldogs"
+      - "Drexel Dragons"
+      - "Duke Blue Devils"
+      - "Duquesne Dukes"
+      - "East Carolina Pirates"
+      - "East Tennessee State Buccaneers"
+      - "East Texas A&M Lions"
+      - "Eastern Illinois Panthers"
+      - "Eastern Kentucky Colonels"
+      - "Eastern Michigan Eagles"
+      - "Eastern Washington Eagles"
+      - "Elon Phoenix"
+      - "Evansville Purple Aces"
+      - "Fairfield Stags"
+      - "Fairleigh Dickinson Knights"
+      - "Florida A&M Rattlers"
+      - "Florida Atlantic Owls"
+      - "Florida Gators"
+      - "Florida Gulf Coast Eagles"
+      - "Florida International Panthers"
+      - "Florida State Seminoles"
+      - "Fordham Rams"
+      - "Fresno State Bulldogs"
+      - "Furman Paladins"
+      - "Gardner-Webb Runnin' Bulldogs"
+      - "George Mason Patriots"
+      - "George Washington Revolutionaries"
+      - "Georgetown Hoyas"
+      - "Georgia Bulldogs"
+      - "Georgia Southern Eagles"
+      - "Georgia State Panthers"
+      - "Georgia Tech Yellow Jackets"
+      - "Gonzaga Bulldogs"
+      - "Grambling Tigers"
+      - "Grand Canyon Lopes"
+      - "Green Bay Phoenix"
+      - "Hampton Pirates"
+      - "Harvard Crimson"
+      - "Hawai'i Rainbow Warriors"
+      - "High Point Panthers"
+      - "Hofstra Pride"
+      - "Holy Cross Crusaders"
+      - "Houston Christian Huskies"
+      - "Houston Cougars"
+      - "Howard Bison"
+      - "Idaho State Bengals"
+      - "Idaho Vandals"
+      - "Illinois Fighting Illini"
+      - "Illinois State Redbirds"
+      - "Incarnate Word Cardinals"
+      - "Indiana Hoosiers"
+      - "Indiana State Sycamores"
+      - "Iona Gaels"
+      - "Iowa Hawkeyes"
+      - "Iowa State Cyclones"
+      - "IU Indianapolis Jaguars"
+      - "Jackson State Tigers"
+      - "Jacksonville Dolphins"
+      - "Jacksonville State Gamecocks"
+      - "James Madison Dukes"
+      - "Kansas City Roos"
+      - "Kansas Jayhawks"
+      - "Kansas State Wildcats"
+      - "Kennesaw State Owls"
+      - "Kent State Golden Flashes"
+      - "Kentucky Wildcats"
+      - "La Salle Explorers"
+      - "Lafayette Leopards"
+      - "Lamar Cardinals"
+      - "Le Moyne Dolphins"
+      - "Lehigh Mountain Hawks"
+      - "Liberty Flames"
+      - "Lipscomb Bisons"
+      - "Little Rock Trojans"
+      - "Long Beach State Beach"
+      - "Long Island University Sharks"
+      - "Longwood Lancers"
+      - "Louisiana Ragin' Cajuns"
+      - "Louisiana Tech Bulldogs"
+      - "Louisville Cardinals"
+      - "Loyola Chicago Ramblers"
+      - "Loyola Maryland Greyhounds"
+      - "Loyola Marymount Lions"
+      - "LSU New Orleans Privateers"
+      - "LSU Tigers"
+      - "Maine Black Bears"
+      - "Manhattan Jaspers"
+      - "Marist Red Foxes"
+      - "Marquette Golden Eagles"
+      - "Marshall Thundering Herd"
+      - "Maryland Eastern Shore Hawks"
+      - "Maryland Terrapins"
+      - "Massachusetts Minutemen"
+      - "McNeese Cowboys"
+      - "Memphis Tigers"
+      - "Mercer Bears"
+      - "Mercyhurst Lakers"
+      - "Merrimack Warriors"
+      - "Miami (OH) RedHawks"
+      - "Miami Hurricanes"
+      - "Michigan State Spartans"
+      - "Michigan Wolverines"
+      - "Middle Tennessee Blue Raiders"
+      - "Milwaukee Panthers"
+      - "Minnesota Golden Gophers"
+      - "Mississippi State Bulldogs"
+      - "Mississippi Valley State Delta Devils"
+      - "Missouri State Bears"
+      - "Missouri Tigers"
+      - "Monmouth Hawks"
+      - "Montana Grizzlies"
+      - "Montana State Bobcats"
+      - "Morehead State Eagles"
+      - "Morgan State Bears"
+      - "Mount St. Mary's Mountaineers"
+      - "Murray State Racers"
+      - "Navy Midshipmen"
+      - "NC State Wolfpack"
+      - "Nebraska Cornhuskers"
+      - "Nevada Wolf Pack"
+      - "New Hampshire Wildcats"
+      - "New Haven Chargers"
+      - "New Mexico Lobos"
+      - "New Mexico State Aggies"
+      - "Niagara Purple Eagles"
+      - "Nicholls Colonels"
+      - "NJIT Highlanders"
+      - "Norfolk State Spartans"
+      - "North Alabama Lions"
+      - "North Carolina A&T Aggies"
+      - "North Carolina Central Eagles"
+      - "North Carolina Tar Heels"
+      - "North Dakota Fighting Hawks"
+      - "North Dakota State Bison"
+      - "North Florida Ospreys"
+      - "North Texas Mean Green"
+      - "Northeastern Huskies"
+      - "Northern Arizona Lumberjacks"
+      - "Northern Colorado Bears"
+      - "Northern Illinois Huskies"
+      - "Northern Iowa Panthers"
+      - "Northern Kentucky Norse"
+      - "Northwestern State Demons"
+      - "Northwestern Wildcats"
+      - "Notre Dame Fighting Irish"
+      - "Oakland Golden Grizzlies"
+      - "Ohio Bobcats"
+      - "Ohio State Buckeyes"
+      - "Oklahoma Sooners"
+      - "Oklahoma State Cowboys"
+      - "Old Dominion Monarchs"
+      - "Ole Miss Rebels"
+      - "Omaha Mavericks"
+      - "Oral Roberts Golden Eagles"
+      - "Oregon Ducks"
+      - "Oregon State Beavers"
+      - "Pacific Tigers"
+      - "Penn State Nittany Lions"
+      - "Pennsylvania Quakers"
+      - "Pepperdine Waves"
+      - "Pittsburgh Panthers"
+      - "Portland Pilots"
+      - "Portland State Vikings"
+      - "Prairie View A&M Panthers"
+      - "Presbyterian Blue Hose"
+      - "Princeton Tigers"
+      - "Providence Friars"
+      - "Purdue Boilermakers"
+      - "Purdue Fort Wayne Mastodons"
+      - "Quinnipiac Bobcats"
+      - "Radford Highlanders"
+      - "Rhode Island Rams"
+      - "Rice Owls"
+      - "Richmond Spiders"
+      - "Rider Broncs"
+      - "Robert Morris Colonials"
+      - "Rutgers Scarlet Knights"
+      - "Sacramento State Hornets"
+      - "Sacred Heart Pioneers"
+      - "Saint Joseph's Hawks"
+      - "Saint Louis Billikens"
+      - "Saint Mary's Gaels"
+      - "Saint Peter's Peacocks"
+      - "Sam Houston Bearkats"
+      - "Samford Bulldogs"
+      - "San Diego State Aztecs"
+      - "San Diego Toreros"
+      - "San Francisco Dons"
+      - "San José State Spartans"
+      - "Santa Clara Broncos"
+      - "SE Louisiana Lions"
+      - "Seattle U Redhawks"
+      - "Seton Hall Pirates"
+      - "Siena Saints"
+      - "SIU Edwardsville Cougars"
+      - "SMU Mustangs"
+      - "South Alabama Jaguars"
+      - "South Carolina Gamecocks"
+      - "South Carolina State Bulldogs"
+      - "South Carolina Upstate Spartans"
+      - "South Dakota Coyotes"
+      - "South Dakota State Jackrabbits"
+      - "South Florida Bulls"
+      - "Southeast Missouri State Redhawks"
+      - "Southern Illinois Salukis"
+      - "Southern Jaguars"
+      - "Southern Miss Golden Eagles"
+      - "Southern Utah Thunderbirds"
+      - "St. Bonaventure Bonnies"
+      - "St. John's Red Storm"
+      - "St. Thomas Tommies"
+      - "Stanford Cardinal"
+      - "Stephen F. Austin Lumberjacks"
+      - "Stetson Hatters"
+      - "Stonehill Skyhawks"
+      - "Stony Brook Seawolves"
+      - "Syracuse Orange"
+      - "Tarleton State Texans"
+      - "TCU Horned Frogs"
+      - "Temple Owls"
+      - "Tennessee State Tigers"
+      - "Tennessee Tech Golden Eagles"
+      - "Tennessee Volunteers"
+      - "Texas A&M Aggies"
+      - "Texas A&M-Corpus Christi Islanders"
+      - "Texas Longhorns"
+      - "Texas Southern Tigers"
+      - "Texas State Bobcats"
+      - "Texas Tech Red Raiders"
+      - "The Citadel Bulldogs"
+      - "Toledo Rockets"
+      - "Towson Tigers"
+      - "Troy Trojans"
+      - "Tulane Green Wave"
+      - "Tulsa Golden Hurricane"
+      - "UAB Blazers"
+      - "UAlbany Great Danes"
+      - "UC Davis Aggies"
+      - "UC Irvine Anteaters"
+      - "UC Riverside Highlanders"
+      - "UC San Diego Tritons"
+      - "UC Santa Barbara Gauchos"
+      - "UCF Knights"
+      - "UCLA Bruins"
+      - "UConn Huskies"
+      - "UIC Flames"
+      - "UL Monroe Warhawks"
+      - "UMass Lowell River Hawks"
+      - "UMBC Retrievers"
+      - "UNC Asheville Bulldogs"
+      - "UNC Greensboro Spartans"
+      - "UNC Wilmington Seahawks"
+      - "UNLV Rebels"
+      - "USC Trojans"
+      - "UT Arlington Mavericks"
+      - "UT Martin Skyhawks"
+      - "UT Rio Grande Valley Vaqueros"
+      - "Utah State Aggies"
+      - "Utah Tech Trailblazers"
+      - "Utah Utes"
+      - "Utah Valley Wolverines"
+      - "UTEP Miners"
+      - "UTSA Roadrunners"
+      - "Valparaiso Beacons"
+      - "Vanderbilt Commodores"
+      - "VCU Rams"
+      - "Vermont Catamounts"
+      - "Villanova Wildcats"
+      - "Virginia Cavaliers"
+      - "Virginia Tech Hokies"
+      - "VMI Keydets"
+      - "Wagner Seahawks"
+      - "Wake Forest Demon Deacons"
+      - "Washington Huskies"
+      - "Washington State Cougars"
+      - "Weber State Wildcats"
+      - "West Florida Argonauts"
+      - "West Georgia Wolves"
+      - "West Virginia Mountaineers"
+      - "Western Carolina Catamounts"
+      - "Western Illinois Leathernecks"
+      - "Western Kentucky Hilltoppers"
+      - "Western Michigan Broncos"
+      - "Wichita State Shockers"
+      - "William & Mary Tribe"
+      - "Winthrop Eagles"
+      - "Wisconsin Badgers"
+      - "Wofford Terriers"
+      - "Wright State Raiders"
+      - "Wyoming Cowboys"
+      - "Xavier Musketeers"
+      - "Yale Bulldogs"
+      - "Youngstown State Penguins"

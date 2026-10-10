@@ -1,9 +1,13 @@
 id: sxm-now-playing
 name: SiriusXM Now Playing
 author: cfdmb
-description: What's currently playing on up to 5 SiriusXM channels, via xmplaylist.com.
-width: 128
+category: Entertainment
+description: What's playing right now on four SiriusXM channels - yours, or a genre's - via xmplaylist.com.
+width: 192
 height: 32
+# Note for the GDN crew: songs change every few minutes, so 300 keeps
+# "now playing" current. Each refresh makes at most 8 requests (4 song
+# lookups + 4 covers); covers are cached for a week.
 refresh: 300
 pages:
 - intro
@@ -11,215 +15,17 @@ pages:
 - channel_2
 - channel_3
 - channel_4
-- channel_5
 inputs:
-- key: channel1
+- key: genre
   type: string
   app_input_type: dropdown
-  label: Channel 1
-  default: (none)
-  choices: [(none), 2 - SiriusXM Hits 1, 3 - Unwell Music, 4 - Life with John Mayer, 5 - The Pulse, 6
-      - PopRocks, 7 - 70s on 7, 8 - 80s on 8, 9 - 90s on 9, 10 - Pop2K, 11 - The 10s Spot, 12 - The Kelly
-      Clarkson Connection, 13 - Pitbull's Globalization, 14 - The Bridge, 15 - Yacht Rock Radio, 16 -
-      The Blend, 17 - The Coffee House, 18 - The Beatles Channel, 19 - Bob Marley's Tuff Gong, 20 - E
-      Street Radio, 21 - Underground Garage, 22 - Pearl Jam Radio, 23 - Grateful Dead, 24 - Radio Margaritaville,
-    25 - Classic Rewind, 26 - Classic Vinyl, 27 - Alt2K, 28 - The Spectrum, 29 - Phish Radio, 30 - Dave
-      Matthews Band Radio, 31 - Tom Petty Radio, 32 - U2 X-Radio, 33 - 1st Wave, 34 - Lithium, 35 - SiriusXMU,
-    36 - Alt Nation, 37 - Octane, 38 - Ozzy's Boneyard, 39 - Hair Nation, 40 - Liquid Metal, 41 - SiriusXM
-      Turbo, 42 - Maximum Metallica, 43 - Rock The Bells Radio, 44 - Hip-Hop Nation, 45 - Shade 45, 46
-      - The Heat, 47 - Heart & Soul, 48 - The Flow, 49 - Flex2K, 50 - SiriusXM FLY, 51 - The Groove, 52
-      - BPM, 53 - Diplo's Revolution, 54 - Studio 54 Radio, 55 - SiriusXM Chill, 56 - The Highway, 57
-      - Y2Kountry, 58 - Prime Country, 59 - No Shoes Radio, 60 - Carrie's Country, 61 - Willie's Roadhouse,
-    62 - Outlaw Country, 63 - Chris Stapleton Radio, 64 - Morgan Wallen Radio, 65 - Bluegrass Junction,
-    66 - Symphony Hall, 67 - Real Jazz, 68 - Watercolors, 69 - On Broadway, 70 - Siriusly Sinatra, 71
-      - 40s Junction, 72 - 50s Gold, 73 - 60s Gold, 74 - Smokey's Soul Town, 75 - BB King's Bluesville,
-    76 - Elvis Radio, 77 - Kirk Franklin's Praise, 78 - The Message, 79 - Message Worship, 93 - Netflix
-      Is A Joke Radio, 94 - Comedy Greats, 95 - Comedy Central Radio, 96 - Kevin Hart's LOL Radio, 97
-      - Comedy Roundup, 98 - Pure Comedy, 99 - Sebastian Maniscalco's Comedy Radio, 104 - Conan O'Brien
-      Radio, 133 - Disney Hits, 134 - Kids Place, 135 - KIDZ BOP Radio, 136 - CoComelon & Friends, 140
-      - Holy Culture Radio, 149 - Escape, 150 - Bill Gaither's enLighten, 152 - Caliente, 153 - Águila,
-    155 - Latin Vault, 163 - Attitude Franco, '164 - Mixtape: North', 165 - The Indigiverse, 166 - Racines
-      Musicales, 168 - SiriusXM Comedy Club, 171 - Top of the Country Radio, 173 - The Verge, 174 - Influence
-      Franco, 300 - SiriusXM 300, 301 - Road Trip Radio, 302 - Andy Cohen's Kiki Lounge, 305 - Mosaic,
-    308 - Deep Tracks, 309 - Jam On 309, 312 - Bon Jovi Radio, 314 - Green Day's Idiot Nation, 315 - Red
-      Hot Chili Peppers, 330 - SiriusXM Silk 330, 332 - Shaggy Boombastic Radio, 340 - Radio Monaco, 341
-      - Utopia, 349 - Bakersfield Beat, 350 - Red White & Booze, 359 - North Americana, 362 - Grown Folk
-      JAMZ, 510 - Little Miss Twain Radio, 550 - Pop Top 500, 551 - 80s on 8 Top 500, 552 - 90s on 9 Top
-      500, 553 - Classic Rock Top 1000, 556 - Hip-Hop Chronicles, 558 - Country Top 1000, 560 - Billboard
-      Top 500, 602 - Holiday Traditions, 702 - Disney Jr. Radio, 703 - Pandora Now, 705 - SiriusXM K-Pop,
-    708 - SiriusXM Love, 709 - SiriusXO, 710 - The Loft, 711 - Petty's Buried Treasure, 713 - RockBar,
-    715 - Classic Rock Party, 721 - Stevie's Coolest Songs, 724 - SoundCloud Radio, 735 - Steve Aoki's
-      Remix Radio, 736 - A State of Armin, 737 - Experts Only Radio, 738 - One World Radio, 739 - Savior
-      Sunday Daily, 740 - Outsiders Radio, 741 - The Village, 744 - Met Opera Radio, 745 - SiriusXM Pops,
-    746 - Spa, 757 - The Tragically Hip Radio, 758 - Iceberg, 759 - Les Tubes Franco, 760 - Chucho's Cuba
-      & Beyond, 761 - Celia Cruz AZÚCAR!, 762 - Caricia, 763 - Viva, 764 - Latidos, 765 - Flow Nación,
-    766 - Luna, 767 - Rumbón, 768 - La Kueva, 769 - SiriusXM Dhamaka]
-  help: Pick a station, or (none) to leave this slot off.
-- key: channel2
+  label: Stations
+  default: My Channels
+  choices: [My Channels, Rock, Pop, Hip-Hop & R&B, Country, Jazz & Standards, Dance & Electronic, Latin & World, Canadian, Comedy, Christian, Kids]
+  help: My Channels uses the channel numbers below; a genre shows four of its stations, a new four each hour.
+- key: channels
   type: string
-  app_input_type: dropdown
-  label: Channel 2
-  default: (none)
-  choices: [(none), 2 - SiriusXM Hits 1, 3 - Unwell Music, 4 - Life with John Mayer, 5 - The Pulse, 6
-      - PopRocks, 7 - 70s on 7, 8 - 80s on 8, 9 - 90s on 9, 10 - Pop2K, 11 - The 10s Spot, 12 - The Kelly
-      Clarkson Connection, 13 - Pitbull's Globalization, 14 - The Bridge, 15 - Yacht Rock Radio, 16 -
-      The Blend, 17 - The Coffee House, 18 - The Beatles Channel, 19 - Bob Marley's Tuff Gong, 20 - E
-      Street Radio, 21 - Underground Garage, 22 - Pearl Jam Radio, 23 - Grateful Dead, 24 - Radio Margaritaville,
-    25 - Classic Rewind, 26 - Classic Vinyl, 27 - Alt2K, 28 - The Spectrum, 29 - Phish Radio, 30 - Dave
-      Matthews Band Radio, 31 - Tom Petty Radio, 32 - U2 X-Radio, 33 - 1st Wave, 34 - Lithium, 35 - SiriusXMU,
-    36 - Alt Nation, 37 - Octane, 38 - Ozzy's Boneyard, 39 - Hair Nation, 40 - Liquid Metal, 41 - SiriusXM
-      Turbo, 42 - Maximum Metallica, 43 - Rock The Bells Radio, 44 - Hip-Hop Nation, 45 - Shade 45, 46
-      - The Heat, 47 - Heart & Soul, 48 - The Flow, 49 - Flex2K, 50 - SiriusXM FLY, 51 - The Groove, 52
-      - BPM, 53 - Diplo's Revolution, 54 - Studio 54 Radio, 55 - SiriusXM Chill, 56 - The Highway, 57
-      - Y2Kountry, 58 - Prime Country, 59 - No Shoes Radio, 60 - Carrie's Country, 61 - Willie's Roadhouse,
-    62 - Outlaw Country, 63 - Chris Stapleton Radio, 64 - Morgan Wallen Radio, 65 - Bluegrass Junction,
-    66 - Symphony Hall, 67 - Real Jazz, 68 - Watercolors, 69 - On Broadway, 70 - Siriusly Sinatra, 71
-      - 40s Junction, 72 - 50s Gold, 73 - 60s Gold, 74 - Smokey's Soul Town, 75 - BB King's Bluesville,
-    76 - Elvis Radio, 77 - Kirk Franklin's Praise, 78 - The Message, 79 - Message Worship, 93 - Netflix
-      Is A Joke Radio, 94 - Comedy Greats, 95 - Comedy Central Radio, 96 - Kevin Hart's LOL Radio, 97
-      - Comedy Roundup, 98 - Pure Comedy, 99 - Sebastian Maniscalco's Comedy Radio, 104 - Conan O'Brien
-      Radio, 133 - Disney Hits, 134 - Kids Place, 135 - KIDZ BOP Radio, 136 - CoComelon & Friends, 140
-      - Holy Culture Radio, 149 - Escape, 150 - Bill Gaither's enLighten, 152 - Caliente, 153 - Águila,
-    155 - Latin Vault, 163 - Attitude Franco, '164 - Mixtape: North', 165 - The Indigiverse, 166 - Racines
-      Musicales, 168 - SiriusXM Comedy Club, 171 - Top of the Country Radio, 173 - The Verge, 174 - Influence
-      Franco, 300 - SiriusXM 300, 301 - Road Trip Radio, 302 - Andy Cohen's Kiki Lounge, 305 - Mosaic,
-    308 - Deep Tracks, 309 - Jam On 309, 312 - Bon Jovi Radio, 314 - Green Day's Idiot Nation, 315 - Red
-      Hot Chili Peppers, 330 - SiriusXM Silk 330, 332 - Shaggy Boombastic Radio, 340 - Radio Monaco, 341
-      - Utopia, 349 - Bakersfield Beat, 350 - Red White & Booze, 359 - North Americana, 362 - Grown Folk
-      JAMZ, 510 - Little Miss Twain Radio, 550 - Pop Top 500, 551 - 80s on 8 Top 500, 552 - 90s on 9 Top
-      500, 553 - Classic Rock Top 1000, 556 - Hip-Hop Chronicles, 558 - Country Top 1000, 560 - Billboard
-      Top 500, 602 - Holiday Traditions, 702 - Disney Jr. Radio, 703 - Pandora Now, 705 - SiriusXM K-Pop,
-    708 - SiriusXM Love, 709 - SiriusXO, 710 - The Loft, 711 - Petty's Buried Treasure, 713 - RockBar,
-    715 - Classic Rock Party, 721 - Stevie's Coolest Songs, 724 - SoundCloud Radio, 735 - Steve Aoki's
-      Remix Radio, 736 - A State of Armin, 737 - Experts Only Radio, 738 - One World Radio, 739 - Savior
-      Sunday Daily, 740 - Outsiders Radio, 741 - The Village, 744 - Met Opera Radio, 745 - SiriusXM Pops,
-    746 - Spa, 757 - The Tragically Hip Radio, 758 - Iceberg, 759 - Les Tubes Franco, 760 - Chucho's Cuba
-      & Beyond, 761 - Celia Cruz AZÚCAR!, 762 - Caricia, 763 - Viva, 764 - Latidos, 765 - Flow Nación,
-    766 - Luna, 767 - Rumbón, 768 - La Kueva, 769 - SiriusXM Dhamaka]
-  help: Pick a station, or (none) to leave this slot off.
-- key: channel3
-  type: string
-  app_input_type: dropdown
-  label: Channel 3
-  default: (none)
-  choices: [(none), 2 - SiriusXM Hits 1, 3 - Unwell Music, 4 - Life with John Mayer, 5 - The Pulse, 6
-      - PopRocks, 7 - 70s on 7, 8 - 80s on 8, 9 - 90s on 9, 10 - Pop2K, 11 - The 10s Spot, 12 - The Kelly
-      Clarkson Connection, 13 - Pitbull's Globalization, 14 - The Bridge, 15 - Yacht Rock Radio, 16 -
-      The Blend, 17 - The Coffee House, 18 - The Beatles Channel, 19 - Bob Marley's Tuff Gong, 20 - E
-      Street Radio, 21 - Underground Garage, 22 - Pearl Jam Radio, 23 - Grateful Dead, 24 - Radio Margaritaville,
-    25 - Classic Rewind, 26 - Classic Vinyl, 27 - Alt2K, 28 - The Spectrum, 29 - Phish Radio, 30 - Dave
-      Matthews Band Radio, 31 - Tom Petty Radio, 32 - U2 X-Radio, 33 - 1st Wave, 34 - Lithium, 35 - SiriusXMU,
-    36 - Alt Nation, 37 - Octane, 38 - Ozzy's Boneyard, 39 - Hair Nation, 40 - Liquid Metal, 41 - SiriusXM
-      Turbo, 42 - Maximum Metallica, 43 - Rock The Bells Radio, 44 - Hip-Hop Nation, 45 - Shade 45, 46
-      - The Heat, 47 - Heart & Soul, 48 - The Flow, 49 - Flex2K, 50 - SiriusXM FLY, 51 - The Groove, 52
-      - BPM, 53 - Diplo's Revolution, 54 - Studio 54 Radio, 55 - SiriusXM Chill, 56 - The Highway, 57
-      - Y2Kountry, 58 - Prime Country, 59 - No Shoes Radio, 60 - Carrie's Country, 61 - Willie's Roadhouse,
-    62 - Outlaw Country, 63 - Chris Stapleton Radio, 64 - Morgan Wallen Radio, 65 - Bluegrass Junction,
-    66 - Symphony Hall, 67 - Real Jazz, 68 - Watercolors, 69 - On Broadway, 70 - Siriusly Sinatra, 71
-      - 40s Junction, 72 - 50s Gold, 73 - 60s Gold, 74 - Smokey's Soul Town, 75 - BB King's Bluesville,
-    76 - Elvis Radio, 77 - Kirk Franklin's Praise, 78 - The Message, 79 - Message Worship, 93 - Netflix
-      Is A Joke Radio, 94 - Comedy Greats, 95 - Comedy Central Radio, 96 - Kevin Hart's LOL Radio, 97
-      - Comedy Roundup, 98 - Pure Comedy, 99 - Sebastian Maniscalco's Comedy Radio, 104 - Conan O'Brien
-      Radio, 133 - Disney Hits, 134 - Kids Place, 135 - KIDZ BOP Radio, 136 - CoComelon & Friends, 140
-      - Holy Culture Radio, 149 - Escape, 150 - Bill Gaither's enLighten, 152 - Caliente, 153 - Águila,
-    155 - Latin Vault, 163 - Attitude Franco, '164 - Mixtape: North', 165 - The Indigiverse, 166 - Racines
-      Musicales, 168 - SiriusXM Comedy Club, 171 - Top of the Country Radio, 173 - The Verge, 174 - Influence
-      Franco, 300 - SiriusXM 300, 301 - Road Trip Radio, 302 - Andy Cohen's Kiki Lounge, 305 - Mosaic,
-    308 - Deep Tracks, 309 - Jam On 309, 312 - Bon Jovi Radio, 314 - Green Day's Idiot Nation, 315 - Red
-      Hot Chili Peppers, 330 - SiriusXM Silk 330, 332 - Shaggy Boombastic Radio, 340 - Radio Monaco, 341
-      - Utopia, 349 - Bakersfield Beat, 350 - Red White & Booze, 359 - North Americana, 362 - Grown Folk
-      JAMZ, 510 - Little Miss Twain Radio, 550 - Pop Top 500, 551 - 80s on 8 Top 500, 552 - 90s on 9 Top
-      500, 553 - Classic Rock Top 1000, 556 - Hip-Hop Chronicles, 558 - Country Top 1000, 560 - Billboard
-      Top 500, 602 - Holiday Traditions, 702 - Disney Jr. Radio, 703 - Pandora Now, 705 - SiriusXM K-Pop,
-    708 - SiriusXM Love, 709 - SiriusXO, 710 - The Loft, 711 - Petty's Buried Treasure, 713 - RockBar,
-    715 - Classic Rock Party, 721 - Stevie's Coolest Songs, 724 - SoundCloud Radio, 735 - Steve Aoki's
-      Remix Radio, 736 - A State of Armin, 737 - Experts Only Radio, 738 - One World Radio, 739 - Savior
-      Sunday Daily, 740 - Outsiders Radio, 741 - The Village, 744 - Met Opera Radio, 745 - SiriusXM Pops,
-    746 - Spa, 757 - The Tragically Hip Radio, 758 - Iceberg, 759 - Les Tubes Franco, 760 - Chucho's Cuba
-      & Beyond, 761 - Celia Cruz AZÚCAR!, 762 - Caricia, 763 - Viva, 764 - Latidos, 765 - Flow Nación,
-    766 - Luna, 767 - Rumbón, 768 - La Kueva, 769 - SiriusXM Dhamaka]
-  help: Pick a station, or (none) to leave this slot off.
-- key: channel4
-  type: string
-  app_input_type: dropdown
-  label: Channel 4
-  default: (none)
-  choices: [(none), 2 - SiriusXM Hits 1, 3 - Unwell Music, 4 - Life with John Mayer, 5 - The Pulse, 6
-      - PopRocks, 7 - 70s on 7, 8 - 80s on 8, 9 - 90s on 9, 10 - Pop2K, 11 - The 10s Spot, 12 - The Kelly
-      Clarkson Connection, 13 - Pitbull's Globalization, 14 - The Bridge, 15 - Yacht Rock Radio, 16 -
-      The Blend, 17 - The Coffee House, 18 - The Beatles Channel, 19 - Bob Marley's Tuff Gong, 20 - E
-      Street Radio, 21 - Underground Garage, 22 - Pearl Jam Radio, 23 - Grateful Dead, 24 - Radio Margaritaville,
-    25 - Classic Rewind, 26 - Classic Vinyl, 27 - Alt2K, 28 - The Spectrum, 29 - Phish Radio, 30 - Dave
-      Matthews Band Radio, 31 - Tom Petty Radio, 32 - U2 X-Radio, 33 - 1st Wave, 34 - Lithium, 35 - SiriusXMU,
-    36 - Alt Nation, 37 - Octane, 38 - Ozzy's Boneyard, 39 - Hair Nation, 40 - Liquid Metal, 41 - SiriusXM
-      Turbo, 42 - Maximum Metallica, 43 - Rock The Bells Radio, 44 - Hip-Hop Nation, 45 - Shade 45, 46
-      - The Heat, 47 - Heart & Soul, 48 - The Flow, 49 - Flex2K, 50 - SiriusXM FLY, 51 - The Groove, 52
-      - BPM, 53 - Diplo's Revolution, 54 - Studio 54 Radio, 55 - SiriusXM Chill, 56 - The Highway, 57
-      - Y2Kountry, 58 - Prime Country, 59 - No Shoes Radio, 60 - Carrie's Country, 61 - Willie's Roadhouse,
-    62 - Outlaw Country, 63 - Chris Stapleton Radio, 64 - Morgan Wallen Radio, 65 - Bluegrass Junction,
-    66 - Symphony Hall, 67 - Real Jazz, 68 - Watercolors, 69 - On Broadway, 70 - Siriusly Sinatra, 71
-      - 40s Junction, 72 - 50s Gold, 73 - 60s Gold, 74 - Smokey's Soul Town, 75 - BB King's Bluesville,
-    76 - Elvis Radio, 77 - Kirk Franklin's Praise, 78 - The Message, 79 - Message Worship, 93 - Netflix
-      Is A Joke Radio, 94 - Comedy Greats, 95 - Comedy Central Radio, 96 - Kevin Hart's LOL Radio, 97
-      - Comedy Roundup, 98 - Pure Comedy, 99 - Sebastian Maniscalco's Comedy Radio, 104 - Conan O'Brien
-      Radio, 133 - Disney Hits, 134 - Kids Place, 135 - KIDZ BOP Radio, 136 - CoComelon & Friends, 140
-      - Holy Culture Radio, 149 - Escape, 150 - Bill Gaither's enLighten, 152 - Caliente, 153 - Águila,
-    155 - Latin Vault, 163 - Attitude Franco, '164 - Mixtape: North', 165 - The Indigiverse, 166 - Racines
-      Musicales, 168 - SiriusXM Comedy Club, 171 - Top of the Country Radio, 173 - The Verge, 174 - Influence
-      Franco, 300 - SiriusXM 300, 301 - Road Trip Radio, 302 - Andy Cohen's Kiki Lounge, 305 - Mosaic,
-    308 - Deep Tracks, 309 - Jam On 309, 312 - Bon Jovi Radio, 314 - Green Day's Idiot Nation, 315 - Red
-      Hot Chili Peppers, 330 - SiriusXM Silk 330, 332 - Shaggy Boombastic Radio, 340 - Radio Monaco, 341
-      - Utopia, 349 - Bakersfield Beat, 350 - Red White & Booze, 359 - North Americana, 362 - Grown Folk
-      JAMZ, 510 - Little Miss Twain Radio, 550 - Pop Top 500, 551 - 80s on 8 Top 500, 552 - 90s on 9 Top
-      500, 553 - Classic Rock Top 1000, 556 - Hip-Hop Chronicles, 558 - Country Top 1000, 560 - Billboard
-      Top 500, 602 - Holiday Traditions, 702 - Disney Jr. Radio, 703 - Pandora Now, 705 - SiriusXM K-Pop,
-    708 - SiriusXM Love, 709 - SiriusXO, 710 - The Loft, 711 - Petty's Buried Treasure, 713 - RockBar,
-    715 - Classic Rock Party, 721 - Stevie's Coolest Songs, 724 - SoundCloud Radio, 735 - Steve Aoki's
-      Remix Radio, 736 - A State of Armin, 737 - Experts Only Radio, 738 - One World Radio, 739 - Savior
-      Sunday Daily, 740 - Outsiders Radio, 741 - The Village, 744 - Met Opera Radio, 745 - SiriusXM Pops,
-    746 - Spa, 757 - The Tragically Hip Radio, 758 - Iceberg, 759 - Les Tubes Franco, 760 - Chucho's Cuba
-      & Beyond, 761 - Celia Cruz AZÚCAR!, 762 - Caricia, 763 - Viva, 764 - Latidos, 765 - Flow Nación,
-    766 - Luna, 767 - Rumbón, 768 - La Kueva, 769 - SiriusXM Dhamaka]
-  help: Pick a station, or (none) to leave this slot off.
-- key: channel5
-  type: string
-  app_input_type: dropdown
-  label: Channel 5
-  default: (none)
-  choices: [(none), 2 - SiriusXM Hits 1, 3 - Unwell Music, 4 - Life with John Mayer, 5 - The Pulse, 6
-      - PopRocks, 7 - 70s on 7, 8 - 80s on 8, 9 - 90s on 9, 10 - Pop2K, 11 - The 10s Spot, 12 - The Kelly
-      Clarkson Connection, 13 - Pitbull's Globalization, 14 - The Bridge, 15 - Yacht Rock Radio, 16 -
-      The Blend, 17 - The Coffee House, 18 - The Beatles Channel, 19 - Bob Marley's Tuff Gong, 20 - E
-      Street Radio, 21 - Underground Garage, 22 - Pearl Jam Radio, 23 - Grateful Dead, 24 - Radio Margaritaville,
-    25 - Classic Rewind, 26 - Classic Vinyl, 27 - Alt2K, 28 - The Spectrum, 29 - Phish Radio, 30 - Dave
-      Matthews Band Radio, 31 - Tom Petty Radio, 32 - U2 X-Radio, 33 - 1st Wave, 34 - Lithium, 35 - SiriusXMU,
-    36 - Alt Nation, 37 - Octane, 38 - Ozzy's Boneyard, 39 - Hair Nation, 40 - Liquid Metal, 41 - SiriusXM
-      Turbo, 42 - Maximum Metallica, 43 - Rock The Bells Radio, 44 - Hip-Hop Nation, 45 - Shade 45, 46
-      - The Heat, 47 - Heart & Soul, 48 - The Flow, 49 - Flex2K, 50 - SiriusXM FLY, 51 - The Groove, 52
-      - BPM, 53 - Diplo's Revolution, 54 - Studio 54 Radio, 55 - SiriusXM Chill, 56 - The Highway, 57
-      - Y2Kountry, 58 - Prime Country, 59 - No Shoes Radio, 60 - Carrie's Country, 61 - Willie's Roadhouse,
-    62 - Outlaw Country, 63 - Chris Stapleton Radio, 64 - Morgan Wallen Radio, 65 - Bluegrass Junction,
-    66 - Symphony Hall, 67 - Real Jazz, 68 - Watercolors, 69 - On Broadway, 70 - Siriusly Sinatra, 71
-      - 40s Junction, 72 - 50s Gold, 73 - 60s Gold, 74 - Smokey's Soul Town, 75 - BB King's Bluesville,
-    76 - Elvis Radio, 77 - Kirk Franklin's Praise, 78 - The Message, 79 - Message Worship, 93 - Netflix
-      Is A Joke Radio, 94 - Comedy Greats, 95 - Comedy Central Radio, 96 - Kevin Hart's LOL Radio, 97
-      - Comedy Roundup, 98 - Pure Comedy, 99 - Sebastian Maniscalco's Comedy Radio, 104 - Conan O'Brien
-      Radio, 133 - Disney Hits, 134 - Kids Place, 135 - KIDZ BOP Radio, 136 - CoComelon & Friends, 140
-      - Holy Culture Radio, 149 - Escape, 150 - Bill Gaither's enLighten, 152 - Caliente, 153 - Águila,
-    155 - Latin Vault, 163 - Attitude Franco, '164 - Mixtape: North', 165 - The Indigiverse, 166 - Racines
-      Musicales, 168 - SiriusXM Comedy Club, 171 - Top of the Country Radio, 173 - The Verge, 174 - Influence
-      Franco, 300 - SiriusXM 300, 301 - Road Trip Radio, 302 - Andy Cohen's Kiki Lounge, 305 - Mosaic,
-    308 - Deep Tracks, 309 - Jam On 309, 312 - Bon Jovi Radio, 314 - Green Day's Idiot Nation, 315 - Red
-      Hot Chili Peppers, 330 - SiriusXM Silk 330, 332 - Shaggy Boombastic Radio, 340 - Radio Monaco, 341
-      - Utopia, 349 - Bakersfield Beat, 350 - Red White & Booze, 359 - North Americana, 362 - Grown Folk
-      JAMZ, 510 - Little Miss Twain Radio, 550 - Pop Top 500, 551 - 80s on 8 Top 500, 552 - 90s on 9 Top
-      500, 553 - Classic Rock Top 1000, 556 - Hip-Hop Chronicles, 558 - Country Top 1000, 560 - Billboard
-      Top 500, 602 - Holiday Traditions, 702 - Disney Jr. Radio, 703 - Pandora Now, 705 - SiriusXM K-Pop,
-    708 - SiriusXM Love, 709 - SiriusXO, 710 - The Loft, 711 - Petty's Buried Treasure, 713 - RockBar,
-    715 - Classic Rock Party, 721 - Stevie's Coolest Songs, 724 - SoundCloud Radio, 735 - Steve Aoki's
-      Remix Radio, 736 - A State of Armin, 737 - Experts Only Radio, 738 - One World Radio, 739 - Savior
-      Sunday Daily, 740 - Outsiders Radio, 741 - The Village, 744 - Met Opera Radio, 745 - SiriusXM Pops,
-    746 - Spa, 757 - The Tragically Hip Radio, 758 - Iceberg, 759 - Les Tubes Franco, 760 - Chucho's Cuba
-      & Beyond, 761 - Celia Cruz AZÚCAR!, 762 - Caricia, 763 - Viva, 764 - Latidos, 765 - Flow Nación,
-    766 - Luna, 767 - Rumbón, 768 - La Kueva, 769 - SiriusXM Dhamaka]
-  help: Pick a station, or (none) to leave this slot off.
+  app_input_type: free-text
+  label: My Channels
+  default: 30, 23, 33, 18
+  help: Up to 4 SiriusXM channel numbers, separated by commas.

@@ -1569,8 +1569,8 @@ def et_day(unix):
     return (unix + et_offset(unix) * 3600) // 86400
 
 def game_to_show(p, ov, now_unix):
-    """The game page's game: the live one; else the last result, until the next game is today or
-    tomorrow (or for 18h after a final, so last night's line survives into game day)."""
+    """The game page's game: the live one; else the last result for 2 days after the final (18h if
+    the next game is today or tomorrow), then the next game with its projection."""
     ev = None
     evs = (((ov or {}).get("nextGame") or {}).get("league") or {}).get("events") or []
     if evs:
@@ -1591,9 +1591,13 @@ def game_to_show(p, ov, now_unix):
         return last
     if nxt and nt != None and et_day(nt) - et_day(now_unix) <= 1:
         return nxt
-    if last and (nxt or now_unix - lt < 3 * 86400):
-        return last                             # between games: the most recent result
-    return nxt
+    if last and now_unix - lt < 2 * 86400:
+        return last                             # just played: the most recent result
+    if nxt:
+        return nxt                              # then on to the next game and its projection
+    if last and now_unix - lt < 3 * 86400:
+        return last
+    return None
 
 def live_stats(p, ev):
     """This player's line in the current game (ESPN core API, ~20 KB)."""
