@@ -13,7 +13,7 @@ height: 32
 # which is what lets successive appearances show different blocks of the
 # feed. Data freshness is separate: app.star caches /board for 45s
 # (TTL_SECONDS), and the backend keeps its own data current.
-refresh: 60
+refresh: 300
 
 # One 8-page block of the programmed feed per render (Community apps are
 # limited to 8 pages). PAGE_COUNT in app.star must equal this list's length.
