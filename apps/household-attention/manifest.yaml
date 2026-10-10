@@ -1,0 +1,37 @@
+gdn: 1
+id: household-attention
+version: 0.1.0
+name: Household Attention
+author: Household Intelligence contributors
+description: Private household attention counts or explicitly shared task titles, with expiry and source warnings.
+category: Productivity
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages: [main]
+inputs:
+  - key: endpoint
+    type: string
+    app_input_type: free-text
+    label: Read-only LED feed
+    default: ""
+    help: HTTPS relay URL or hostname/path. Never enter the management address.
+  - key: readkey
+    type: string
+    app_input_type: api-key
+    label: LED read key
+    default: ""
+  - key: item
+    type: string
+    app_input_type: dropdown
+    label: Ranked item
+    default: "1"
+    choices: ["1", "2", "3", "4", "5"]
+  - key: preview
+    type: string
+    app_input_type: dropdown
+    label: Offline preview
+    default: Live
+    choices: [Live, Counts, Item, Empty, Stale, Error, Long title]
+    help: Preview modes use clearly labelled synthetic examples locally and make no network requests.
