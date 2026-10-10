@@ -1,0 +1,40 @@
+gdn: 1
+id: nutrition-at-a-glance-scroll
+version: 0.1.0
+name: Nutrition at a Glance
+author: glance-led-dev
+description: One food at a time, with what it actually gives you - protein, fat and carbohydrate, or the micronutrients like B12, B6, zinc, iron and selenium. Everything per serving, with a bar against the reference intake.
+category: Lifestyle
+entry: app.star
+
+width: 192
+height: 32
+# A new food every ten minutes. Composition does not change, so nothing
+# here goes to the network and the panel cannot fail.
+refresh: 600
+
+pages: [food, detail]
+
+inputs:
+  - key: view
+    type: choice
+    app_input_type: dropdown
+    label: Show
+    default: "MACRONUTRIENTS"
+    help: MACRONUTRIENTS shows protein, fat, carbohydrate and fibre. MICRONUTRIENTS shows B12, B6, zinc, iron, selenium and magnesium, which is where meat, seafood, eggs and dairy tend to do the heavy lifting.
+    choices:
+      - "MACRONUTRIENTS"
+      - "MICRONUTRIENTS"
+  - key: group
+    type: choice
+    app_input_type: dropdown
+    label: Food group
+    default: "ALL FOODS"
+    help: Narrow the rotation to one kind of food. The list is ordered from the most everyday foods outwards, so leaving this on ALL FOODS starts with the familiar ones.
+    choices:
+      - "ALL FOODS"
+      - "MEAT"
+      - "POULTRY"
+      - "SEAFOOD"
+      - "EGGS AND DAIRY"
+      - "PLANT"

@@ -1,0 +1,101 @@
+gdn: 1
+id: sportboards
+version: 0.1.0
+name: SportBoards
+author: "SportBoards-TT"
+description: Recent results, today's events, and upcoming events for a subscribing school's athletic department, from the SportBoards service.
+category: Sports
+entry: app.star
+width: 384
+height: 32
+
+# 60s is the GDN minimum. It is how often Glance can ask for a fresh render,
+# which is what lets successive appearances show different blocks of the
+# feed. Data freshness is separate: app.star caches /board for 45s
+# (TTL_SECONDS), and the backend keeps its own data current.
+refresh: 300
+
+# One 8-page block of the programmed feed per render (Community apps are
+# limited to 8 pages). PAGE_COUNT in app.star must equal this list's length.
+pages: [page1, page2, page3, page4, page5, page6, page7, page8]
+
+inputs:
+  - key: accesscode
+    type: string
+    app_input_type: api-key
+    label: SportBoards access code
+    default: ""
+    required: true
+    help: >-
+      The access code SportBoards gave your athletic department (letters and
+      numbers only). The code decides which school the board shows. Until a
+      code is entered, the app plays a labelled DEMO with sample data.
+
+assets:
+  - sportboards-28.png
+  # Pilot schools (also their own branding on the featured page).
+  - logo-harrison-west-lafayette.png
+  - logo-delphi.png
+  - logo-mccutcheon.png
+  - logo-west-lafayette.png
+  - logo-lafayette-central-catholic.png
+  # Statewide opponent library: the backend directory's verified logos.
+  - logo-avon.png
+  - logo-battle-ground-middle.png
+  - logo-benton-central.png
+  - logo-bishop-chatard.png
+  - logo-carmel.png
+  - logo-carroll-flora.png
+  - logo-clinton-central.png
+  - logo-clinton-prairie.png
+  - logo-covington.png
+  - logo-crawfordsville.png
+  - logo-danville.png
+  - logo-faith-christian-lafayette.png
+  - logo-fountain-central.png
+  - logo-frankfort.png
+  - logo-frontier.png
+  - logo-guerin-catholic.png
+  - logo-hamilton-heights.png
+  - logo-indianapolis-cathedral.png
+  - logo-kokomo.png
+  - logo-lafayette-jefferson.png
+  - logo-lebanon.png
+  - logo-lewis-cass.png
+  - logo-logansport-intermediate.png
+  - logo-logansport.png
+  - logo-north-miami.png
+  - logo-north-montgomery.png
+  - logo-north-newton.png
+  - logo-north-white.png
+  - logo-northwestern-kokomo.png
+  - logo-pioneer-royal-center.png
+  - logo-rensselaer-central.png
+  - logo-roncalli-indianapolis.png
+  - logo-rossville.png
+  - logo-seeger.png
+  - logo-sheridan.png
+  - logo-southmont.png
+  - logo-southwestern-middle-lafayette.png
+  - logo-taylor.png
+  - logo-tecumseh-lafayette.png
+  - logo-terre-haute-north.png
+  - logo-terre-haute-south.png
+  - logo-tipton.png
+  - logo-tri-county.png
+  - logo-twin-lakes.png
+  - logo-wainwright-middle.png
+  - logo-western-boone.png
+  - logo-western.png
+  # Sponsor logos, keyed by the backend's canonical sponsor slug.
+  - sponsor-banker-investment-group.png
+  - sponsor-christos.png
+  - sponsor-coca-cola.png
+  - sponsor-coors-remodeling.png
+  - sponsor-foley-foundations.png
+  - sponsor-huston-electric.png
+  - sponsor-indiana-national-guard.png
+  - sponsor-iu-health.png
+  - sponsor-midwest-driving-school.png
+  - sponsor-mr-fence-it.png
+  - sponsor-timberstone-homes.png

@@ -15,7 +15,7 @@ height: 32
 # MATCH's live score wants a fresher read than the others; 5 min balances
 # that against hammering the shared free API key (the other lookups cache
 # far longer via their own http.get ttl_seconds).
-refresh: 300
+refresh: 900
 
 # MATCH (live score, else next fixture) -> RESULT -> TABLE, rotating.
 pages: [match, result, table]
@@ -36,3 +36,9 @@ inputs:
     default: "UK"
     choices: ["UK", "US EASTERN", "US CENTRAL", "US MOUNTAIN", "US PACIFIC", "CENTRAL EUROPE"]
     help: Converts kickoff time from the ground's local time. Standard time only, not daylight saving.
+
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: Football-data.org API key (optional)
+    help: Optional — makes RESULT more reliable (TheSportsDB's free key can lag days behind). Free key at football-data.org, see README.md. Leave blank to use the free source as-is.

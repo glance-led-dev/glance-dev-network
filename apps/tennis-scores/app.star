@@ -1,72 +1,194 @@
-# ATP Tennis — GDN port of the Pixlet app by M0ntyP.
+# Tennis Scores - live ATP / WTA singles on a 64x32 panel.
 #
-# Original: https://github.com/tidbyt/community  (apps/atptennis)
-# Ported to the Glance Developer Network. Data logic follows the original;
-# the render tree is rewritten as c.* draw calls.
+# Started as a GDN port of M0ntyP's Pixlet ATP Tennis app
+# (tidbyt/community apps/atptennis); redesigned for Glance.
 #
-# Layout (128x32):
-#   y 0-5    title bar (tournament city/name)
-#   y 7-18   match 1  (two player rows)
-#   y 20-31  match 2  (two player rows)
+# DESIGN. One match per page, drawn like a broadcast score bug so it reads
+# from across the room. The tournament rides a strip in its own color
+# (Wimbledon green, Roland Garros clay, US Open navy; 1000-level events get a
+# gold name) with a tennis ball as the app's mark. The players get full 7 px
+# rows with set scores in fixed columns on the right: white is a set won, gray
+# a set lost, the set in play sits on a lit column, and a small ball marks the
+# server. The footer carries the round on the left (a trophy for the final)
+# and the match state on the right. Live matches come first, then today's
+# results, then what is up next; between tournaments the pages become an
+# UP NEXT card instead of going dark.
+#
+#   y 0-6    strip     ball + tournament
+#   y 8-14   player 1  name ................ 6 3 5
+#   y 17-23  player 2  name ................ 4 6 4
+#   y 26-30  footer    round ............. o LIVE
+#
+# DATA. ESPN's scoreboard *header* feed (the score strip on espn.com): today's
+# matches only, 50-150 KB. The full site scoreboard this app first read
+# carries every draw of the event and reaches ~1.75 MB by the end of a Grand
+# Slam - past the host's response cap - so the JSON arrived truncated and the
+# app went blank exactly during the biggest tournaments.
 
-SCORES_URL = "https://site.api.espn.com/apis/site/v2/sports/tennis/%s/scoreboard"
+FEED_URL = "https://site.web.api.espn.com/apis/v2/scoreboard/header"
 
-# ESPN serves ATP and WTA from separate endpoints, and each payload's
-# groupings carry both singles and doubles — so the tour picks the URL AND
-# the grouping slug.
-TOURS = {
-    "ATP": ("atp", "mens-singles"),
-    "WTA": ("wta", "womens-singles"),
-}
+# manifest.yaml refreshes every 300 s; the feed cache matches it, so each
+# refresh sees new scores and the eight page draws share one fetch.
+FEED_TTL = 300
 
-# Slam/Masters detection is by NAME, not event id. ESPN ids carry the season
-# ("154-2025"), so an id list goes stale every January; names don't.
-SLAM_NAMES = ["AUSTRALIAN OPEN", "ROLAND GARROS", "FRENCH OPEN", "WIMBLEDON", "US OPEN"]
-MASTERS_NAMES = [
-    "INDIAN WELLS", "MIAMI", "MONTE-CARLO", "MONTE CARLO", "MADRID",
-    "ROME", "ITALIAN OPEN", "CANADIAN", "TORONTO", "MONTREAL",
-    "CINCINNATI", "SHANGHAI", "PARIS",
-]
-
-SLAM_COLORS = [
-    ("AUSTRALIAN OPEN", "#0091d2"),
-    ("WIMBLEDON", "#006633"),
-    ("ROLAND GARROS", "#c84e1e"),
-    ("FRENCH OPEN", "#c84e1e"),
-    ("US OPEN", "#022686"),
-]
-DEFAULT_TITLE_BG = "#203764"
-MASTERS_GOLD = "#d1b358"
-
-def _matches_any(name, names):
-    up = name.upper()
-    for n in names:
-        if n in up:
-            return True
-    return False
-
-def is_slam(ev):
-    return _matches_any(ev.get("name", ""), SLAM_NAMES)
-
-def is_masters(ev):
-    return _matches_any(ev.get("name", ""), MASTERS_NAMES)
-
-SERVING = "green"
-SUSPENDED = "skyblue"
-SET_WON = "yellow"
-
-# The layout adapts to panel width: 64px is too tight for initials or a 6px
-# score column, so it drops to the 3x4 font and surname-only names.
-FONT = "4x5"
-FONT_NARROW = "3x4"
-ROW_H = 6
-SET_W = 6
-NAME_X = 3
+PAGE_COUNT = 8
 MAX_SETS = 5
 
-# ---------------------------------------------------------------- time helpers
-# Pixlet had time.parse_time(); GDN gives ctx.now (.unix/.year/.month/.day)
-# only, so ISO-8601 -> epoch is hand-rolled.
+TOURS = {
+    "ATP": {"league": "atp", "slug": "mens-singles", "color": "#123C73"},
+    "WTA": {"league": "wta", "slug": "womens-singles", "color": "#4E2C84"},
+}
+
+# (text in the ESPN event name, strip label, strip color)
+SLAMS = [
+    ("AUSTRALIAN OPEN", "AUS OPEN", "#0A6FC2"),
+    ("ROLAND GARROS", "ROLAND GARROS", "#B4491F"),
+    ("FRENCH OPEN", "ROLAND GARROS", "#B4491F"),
+    ("WIMBLEDON", "WIMBLEDON", "#0B6138"),
+    ("US OPEN", "US OPEN", "#0E2F7A"),
+]
+
+# Host cities of 1000-level events; their strip label is drawn in gold.
+THOUSAND_CITIES = [
+    "INDIAN WELLS", "MIAMI", "MIAMI GARDENS", "MONTE CARLO", "MONTE-CARLO",
+    "MONACO", "MADRID", "ROME", "MONTREAL", "TORONTO", "CINCINNATI", "MASON",
+    "SHANGHAI", "PARIS", "BEIJING", "WUHAN",
+]
+
+WHITE = "#FFFFFF"
+GRAY = "#6E7A94"
+BALL = "#D6F03A"
+SEAM = "#F4F7E6"
+LIVE = "green"
+AMBER = "#E8B04A"
+SKY = "skyblue"
+GOLD = "#F2C84B"
+CELL_LIVE = "#1B3352"
+CELL_PAUSED = "#3D2E0C"
+NODATA_BG = "#0B0C12"
+NODATA_SUB = "#6A7090"
+
+ROW1_Y = 8
+ROW2_Y = 17
+FOOT_Y = 26
+SERVE_GUTTER = 5
+SET_GAP = 2
+NAME_GAP = 3  # wider than SET_GAP, or a full-width 'ALCARAZ' reads as part of the score
+MIN_NAME_W = 24
+DIGIT_W = {"5x7": 5, "4x7": 4}
+NAME_FONTS = ["5x7", "4x7", "3x7"]
+FONTH = {"6x8": 8, "5x7": 7, "4x7": 7, "3x7": 7, "4x5": 5, "picopixel": 5}
+
+BALL_BODY = [
+    [0, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 0],
+]
+BALL_SEAM = [
+    [0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0],
+]
+# 4x4, not a 3x3 plus: the plus read as '+' in front of 'LIVE' and names.
+DOT = [
+    [0, 1, 1, 0],
+    [1, 1, 1, 1],
+    [1, 1, 1, 1],
+    [0, 1, 1, 0],
+]
+TROPHY = [
+    [1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 1, 1, 1, 0, 1],
+    [0, 1, 1, 1, 1, 1, 0],
+    [0, 0, 1, 1, 1, 0, 0],
+    [0, 0, 0, 1, 0, 0, 0],
+    [0, 0, 1, 1, 1, 0, 0],
+    [0, 1, 1, 1, 1, 1, 0],
+]
+
+MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+
+KIND_RANK = {"live": 0, "susp": 1, "delay": 2, "final": 3, "ret": 3, "wo": 3, "pre": 4}
+FINAL_KINDS = ["final", "ret", "wo"]
+
+ROUNDS = {
+    "FINAL": "FINAL",
+    "FINALS": "FINAL",
+    "SEMIFINAL": "SF",
+    "SEMIFINALS": "SF",
+    "QUARTERFINAL": "QF",
+    "QUARTERFINALS": "QF",
+    "ROUND OF 16": "R16",
+    "ROUND OF 32": "R32",
+    "ROUND OF 64": "R64",
+    "ROUND ROBIN": "RR",
+    "QUALIFYING 1ST ROUND": "Q1",
+    "QUALIFYING 2ND ROUND": "Q2",
+    "QUALIFYING 3RD ROUND": "Q3",
+    "QUALIFYING FINAL": "QUAL",
+}
+
+# Fonts only carry A-Z, digits and a little punctuation; an accented letter
+# would draw as a gap ("S O PAULO"), so fold them before anything is measured.
+FOLD = {
+    "À": "A", "Á": "A", "Â": "A", "Ã": "A", "Ä": "A", "Å": "A", "Ā": "A", "Ă": "A", "Ą": "A",
+    "Ç": "C", "Ć": "C", "Č": "C", "Ď": "D", "Đ": "D",
+    "È": "E", "É": "E", "Ê": "E", "Ë": "E", "Ě": "E", "Ę": "E", "Ē": "E",
+    "Ğ": "G", "Ì": "I", "Í": "I", "Î": "I", "Ï": "I", "İ": "I", "Ł": "L",
+    "Ñ": "N", "Ń": "N", "Ň": "N",
+    "Ò": "O", "Ó": "O", "Ô": "O", "Õ": "O", "Ö": "O", "Ø": "O", "Ő": "O",
+    "Ř": "R", "Ś": "S", "Š": "S", "Ş": "S", "Ș": "S", "Ť": "T", "Ț": "T", "Ţ": "T",
+    "Ù": "U", "Ú": "U", "Û": "U", "Ü": "U", "Ű": "U", "Ů": "U",
+    "Ý": "Y", "Ÿ": "Y", "Ž": "Z", "Ź": "Z", "Ż": "Z", "ß": "SS",
+}
+ALLOWED = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -.'/"
+
+# ---------------------------------------------------------------- safe reads
+
+def dget(d, key):
+    if type(d) != "dict":
+        return {}
+    v = d.get(key)
+    return v if type(v) == "dict" else {}
+
+def lget(d, key):
+    if type(d) != "dict":
+        return []
+    v = d.get(key)
+    return v if type(v) == "list" else []
+
+def sget(d, key):
+    if type(d) != "dict":
+        return ""
+    v = d.get(key)
+    return v if type(v) == "string" else ""
+
+def intval(v):
+    if type(v) == "int":
+        return v
+    if type(v) == "float":
+        return int(v)
+    return 0
+
+def clean(s):
+    """Uppercase, accent-folded, font-safe text."""
+    if type(s) != "string":
+        return ""
+    s = s.upper()
+    for src in FOLD:
+        if src in s:
+            s = s.replace(src, FOLD[src])
+    out = []
+    for ch in s.elems():
+        if ch in ALLOWED:
+            out.append(ch)
+    return " ".join("".join(out).split())
+
+# ---------------------------------------------------------------- time
 
 def _days_from_civil(y, m, d):
     y = y - 1 if m <= 2 else y
@@ -86,328 +208,499 @@ def _atoi(s):
     return n
 
 def parse_iso(s):
-    """'2026-08-15T13:00Z' -> epoch seconds. Returns 0 on anything unexpected."""
+    """'2026-09-15T13:35:00Z' -> unix seconds, 0 if unreadable."""
     if type(s) != "string" or len(s) < 16:
         return 0
     y, mo, d = _atoi(s[0:4]), _atoi(s[5:7]), _atoi(s[8:10])
     hh, mm = _atoi(s[11:13]), _atoi(s[14:16])
-    if y == 0 or mo == 0 or d == 0:
+    if y == 0 or mo < 1 or mo > 12 or d < 1 or d > 31:
         return 0
     return _days_from_civil(y, mo, d) * 86400 + hh * 3600 + mm * 60
 
-def hours_since(iso, now_unix):
-    t = parse_iso(iso)
-    return 999999 if t == 0 else (now_unix - t) / 3600.0
+# ---------------------------------------------------------------- data
 
-# ---------------------------------------------------------------- data fetch
-
-def fetch(tour_slug, ttl):
-    resp = http.get(SCORES_URL % tour_slug, ttl_seconds = ttl)
-    if resp["status_code"] != 200 or resp["json"] == None:
+def fetch_feed(league):
+    resp = http.get(FEED_URL, params = {"sport": "tennis", "league": league}, ttl_seconds = FEED_TTL)
+    if resp["status_code"] != 200:
         return None
-    return resp["json"]
-
-def find_event(data, tid):
-    for ev in data.get("events", []):
-        if ev.get("id") == tid:
-            return ev
-    return None
-
-def is_running(ev, now):
-    start = parse_iso(ev.get("date", ""))
-    end = parse_iso(ev.get("endDate", ""))
-    if start > 0 and now < start:
-        return False
-    if end > 0 and now > end:
-        return False
-    return len(ev.get("groupings", [])) > 0
-
-def tier(ev):
-    """Slams outrank Masters outrank everything else."""
-    if is_slam(ev):
-        return 2
-    if is_masters(ev):
-        return 1
-    return 0
-
-def choose_event(data, tid, now, slug):
-    """A pinned id wins. Otherwise pick the best tournament running right now."""
-    if tid != "" and tid != "auto":
-        return find_event(data, tid)
-
-    best = None
-    best_key = (-1, -1, -1)
-    for ev in data.get("events", []):
-        if not is_running(ev, now):
-            continue
-        # Prefer the event that actually has something to show.
-        n = len(collect(ev, now, True, slug)) + len(collect(ev, now, False, slug))
-        key = (1 if n > 0 else 0, tier(ev), n)
-        if key > best_key:
-            best_key = key
-            best = ev
-    return best
-
-def singles_grouping(ev, slug_want):
-    """Payloads carry singles and doubles; pick the singles draw for this tour."""
-    groups = ev.get("groupings", [])
-    if len(groups) == 0:
+    data = resp["json"]
+    if type(data) != "dict":
         return None
-    for g in groups:
-        if g.get("grouping", {}).get("slug", "") == slug_want:
-            return g
-    return groups[0]
+    return data
 
-def score_str(v):
-    """humanize.ftoa() replacement — linescore values arrive as floats."""
-    if type(v) == "int":
-        return str(v)
-    if type(v) == "float":
-        return str(int(v))
-    return str(v)
+def feed_events(data):
+    out = []
+    for sp in lget(data, "sports"):
+        for lg in lget(sp, "leagues"):
+            for ev in lget(lg, "events"):
+                if type(ev) == "dict":
+                    out.append(ev)
+    return out
 
-def read_match(comp):
-    """Flatten one competition into what the drawing code needs."""
-    cs = comp.get("competitors", [])
-    if len(cs) < 2:
+def status_kind(ev):
+    desc = sget(dget(dget(ev, "fullStatus"), "type"), "description").upper()
+    if "CANCEL" in desc or "POSTPONE" in desc or "ABANDON" in desc:
+        return ""
+    if "SUSPEND" in desc:
+        return "susp"
+    if "DELAY" in desc:
+        return "delay"
+    if "RETIRE" in desc:
+        return "ret"
+    if "WALKOVER" in desc:
+        return "wo"
+    state = sget(ev, "status")
+    if state == "in":
+        return "live"
+    if state == "post":
+        return "final"
+    if state == "pre":
+        return "pre"
+    return ""
+
+def event_style(ev, tour):
+    """(strip label, strip color, label color, tier) - tier 2 slam, 1 for 1000s."""
+    name = clean(sget(ev, "name"))
+    for key, label, col in SLAMS:
+        if key in name:
+            return (label, col, WHITE, 2)
+    tour_color = TOURS[tour]["color"]
+    if ev.get("major") == True and name != "":
+        return (name, tour_color, WHITE, 2)
+    # Split 'Chengdu, China PR' before clean(), which drops the comma.
+    loc = sget(ev, "location")
+    city = clean(loc[:loc.find(",")] if "," in loc else loc)
+    if city == "":
+        city = name if name != "" else "TENNIS"
+    if city in THOUSAND_CITIES:
+        return (city, tour_color, GOLD, 1)
+    return (city, tour_color, WHITE, 0)
+
+def round_code(ev):
+    raw = ""
+    for note in lget(ev, "notes"):
+        raw = sget(note, "type")
+        if raw != "":
+            break
+    raw = clean(raw)
+    if " - " in raw:
+        raw = raw[:raw.find(" - ")].strip()
+    if raw in ROUNDS:
+        return ROUNDS[raw]
+    if raw.startswith("ROUND "):
+        return "R" + raw[6:].strip()
+    return raw
+
+def player_name(cp):
+    """Surname: 'lastName' when the feed has it, else 'J. SINNER' minus the initial."""
+    name = clean(sget(cp, "lastName"))
+    if name == "":
+        name = clean(sget(cp, "shortName"))
+        if name == "":
+            name = clean(sget(cp, "displayName"))
+            parts = name.split(" ")
+            name = parts[len(parts) - 1] if len(parts) > 0 else ""
+        if len(name) > 2 and name[1] == ".":
+            name = name[2:].strip()
+    return name
+
+def score_text(v):
+    if type(v) == "int" or type(v) == "float":
+        n = int(v)
+        return str(n) if n >= 0 and n < 100 else ""
+    if type(v) == "string":
+        return clean(v)[:2]
+    return ""
+
+def read_match(ev, now, slug, tour):
+    if sget(dget(ev, "competitionType"), "slug") != slug:
+        return None
+    kind = status_kind(ev)
+    if kind == "":
         return None
 
-    a1 = cs[0].get("athlete", {})
-    a2 = cs[1].get("athlete", {})
-    n1 = a1.get("shortName", "")
-    n2 = a2.get("shortName", "")
-    if n1 == "" or n2 == "":
+    cps = [cp for cp in lget(ev, "competitors") if type(cp) == "dict"]
+    if len(cps) != 2:
+        return None
+    if intval(cps[0].get("order")) > intval(cps[1].get("order")):
+        cps = [cps[1], cps[0]]
+    n1 = player_name(cps[0])
+    n2 = player_name(cps[1])
+    if n1 == "" or n2 == "" or n1 == "TBD" or n2 == "TBD":
         return None
 
-    desc = comp.get("status", {}).get("type", {}).get("description", "")
-
-    ls1 = cs[0].get("linescores", [])
-    ls2 = cs[1].get("linescores", [])
+    ls1 = lget(cps[0], "linescores")
+    ls2 = lget(cps[1], "linescores")
     sets = []
     for i in range(min(len(ls1), len(ls2))):
+        a = ls1[i]
+        b = ls2[i]
+        if type(a) != "dict" or type(b) != "dict":
+            continue
         sets.append({
-            "s1": score_str(ls1[i].get("value", 0)),
-            "s2": score_str(ls2[i].get("value", 0)),
-            "w1": ls1[i].get("winner", False) == True,
-            "w2": ls2[i].get("winner", False) == True,
+            "s1": score_text(a.get("value")),
+            "s2": score_text(b.get("value")),
+            "w1": a.get("winner") == True,
+            "w2": b.get("winner") == True,
         })
+    if len(sets) > MAX_SETS:
+        sets = sets[-MAX_SETS:]
+    if kind == "pre" and len(sets) > 0:
+        kind = "live"
 
-    # possession=True means competitor 0 is serving; False means competitor 1
+    start = parse_iso(sget(ev, "date"))
+    if kind in FINAL_KINDS and start > 0 and now - start > 36 * 3600:
+        return None
+
+    winner = 0
+    if kind in FINAL_KINDS:
+        if cps[0].get("winner") == True:
+            winner = 1
+        elif cps[1].get("winner") == True:
+            winner = 2
+
     serving = 0
-    if "possession" in cs[0]:
-        serving = 1 if cs[0]["possession"] == True else 2
+    if kind == "live":
+        if cps[0].get("possession") == True:
+            serving = 1
+        elif cps[1].get("possession") == True:
+            serving = 2
 
+    label, color, label_color, tier = event_style(ev, tour)
     return {
-        "live": False,
-        "n1": n1.upper(),
-        "n2": n2.upper(),
+        "kind": kind,
+        "n1": n1,
+        "n2": n2,
         "sets": sets,
+        "winner": winner,
         "serving": serving,
-        "suspended": desc == "Suspended",
-        "date": comp.get("date", ""),
+        "start": start,
+        "time_valid": ev.get("timeValid") != False,
+        "round": round_code(ev),
+        "label": label,
+        "color": color,
+        "label_color": label_color,
+        "tier": tier,
     }
 
-def collect(ev, now_unix, want_live, slug):
-    """want_live: In Progress / Suspended / scored-but-Scheduled. Else: completed."""
-    g = singles_grouping(ev, slug)
-    if g == None:
-        return []
+def sort_key(m):
+    rank = KIND_RANK[m["kind"]]
+    when = -m["start"] if rank == 3 else m["start"]
+    return (rank, -m["tier"], when)
 
+def pick(items, slot, now):
+    """Item for page `slot`. Live matches hold the first pages; when there
+    are more matches than pages, the rest rotate each refresh so every one
+    gets its turn."""
+    n = len(items)
+    if n <= PAGE_COUNT:
+        return items[slot % n]
+    cycle = now // FEED_TTL
+    nlive = 0
+    for m in items:
+        if KIND_RANK[m["kind"]] <= 1:
+            nlive += 1
+    if nlive >= PAGE_COUNT:
+        return items[(slot + cycle * PAGE_COUNT) % nlive]
+    if slot < nlive:
+        return items[slot]
+    free = PAGE_COUNT - nlive
+    return items[nlive + (slot - nlive + cycle * free) % (n - nlive)]
+
+def upcoming_events(events, slug, tour):
+    seen = {}
     out = []
-    for comp in g.get("competitions", []):
-        desc = comp.get("status", {}).get("type", {}).get("description", "")
-        cs = comp.get("competitors", [])
-        if len(cs) < 2:
+    for ev in events:
+        if sget(dget(ev, "competitionType"), "slug") != slug or sget(ev, "status") != "pre":
             continue
-
-        scored = len(cs[0].get("linescores", [])) > 0
-        live = desc == "In Progress" or desc == "Suspended" or (desc == "Scheduled" and scored)
-        done = desc == "Final" or desc == "Retired" or desc == "Walkover"
-
-        if (live if want_live else done) and hours_since(comp.get("date", ""), now_unix) < 24:
-            m = read_match(comp)
-            if m != None:
-                m["live"] = want_live
-                out.append(m)
+        label, color, label_color, tier = event_style(ev, tour)
+        if label in seen:
+            continue
+        seen[label] = True
+        out.append({"label": label, "color": color, "date": sget(ev, "date")})
     return out
+
+# ---------------------------------------------------------------- text fitting
+
+def fit_clip(c, text, fonts, maxw):
+    """Largest font that fits; else the last font, cut at a word when that
+    keeps at least a third of the string, else cut by character. A word cut
+    never ends on a 1-2 letter word: 'CALDAS DA RAINHA' -> 'CALDAS'."""
+    for f in fonts:
+        if c.text_width(text, font = f) <= maxw:
+            return (text, f)
+    f = fonts[len(fonts) - 1]
+    words = text.split(" ")
+    for k in range(len(words) - 1, 0, -1):
+        if k > 1 and len(words[k - 1]) <= 2:
+            continue
+        t = " ".join(words[:k])
+        if c.text_width(t, font = f) <= maxw:
+            if len(t) * 3 >= len(text):
+                return (t, f)
+            break
+    for i in range(len(text) - 1, 0, -1):
+        t = text[:i].strip()
+        if c.text_width(t, font = f) <= maxw:
+            return (t, f)
+    return ("", f)
+
+def short_name(name):
+    """Last word of a multi-part surname: 'MPETSHI PERRICARD' -> 'PERRICARD'."""
+    parts = name.replace("-", " ").split(" ")
+    return parts[len(parts) - 1]
+
+def fit_names(c, n1, n2, maxw):
+    """One font for both rows, so the two names share a baseline and size.
+    Full surnames at the largest font first; then allow the last word of a
+    compound surname; then hard-clip in 3x7 (the narrowest 7 px face)."""
+    for f in NAME_FONTS:
+        if c.text_width(n1, font = f) <= maxw and c.text_width(n2, font = f) <= maxw:
+            return (f, n1, n2)
+    s1 = short_name(n1)
+    s2 = short_name(n2)
+    for f in NAME_FONTS:
+        t1 = n1 if c.text_width(n1, font = f) <= maxw else s1
+        t2 = n2 if c.text_width(n2, font = f) <= maxw else s2
+        if c.text_width(t1, font = f) <= maxw and c.text_width(t2, font = f) <= maxw:
+            return (f, t1, t2)
+    f = NAME_FONTS[len(NAME_FONTS) - 1]
+    t1, _ = fit_clip(c, s1, [f], maxw)
+    t2, _ = fit_clip(c, s2, [f], maxw)
+    return (f, t1, t2)
+
+def draw_centered(c, text, y, font, color):
+    c.text(text, (c.width - c.text_width(text, font = font)) // 2, y, font = font, color = color)
 
 # ---------------------------------------------------------------- drawing
 
-def title_text(ev, slug):
-    if is_slam(ev):
-        return ev.get("name", "TENNIS").upper()
-    g = singles_grouping(ev, slug)
-    if g != None:
-        comps = g.get("competitions", [])
-        if len(comps) > 0:
-            venue = comps[0].get("venue", {}).get("fullName", "")
-            if "," in venue:
-                return venue[:venue.index(",")].upper()
-            if venue != "":
-                return venue.upper()
-    return ev.get("name", "TENNIS").upper()
+def draw_ball(c, x, y):
+    c.bitmap(BALL_BODY, x, y, BALL)
+    c.bitmap(BALL_SEAM, x, y, SEAM)
 
-def draw_title(c, text, ev):
-    bg = DEFAULT_TITLE_BG
-    name = ev.get("name", "").upper()
-    for key, col in SLAM_COLORS:
-        if key in name:
-            bg = col
-            break
-    fg = MASTERS_GOLD if is_masters(ev) else "white"
-    c.rect(0, 0, c.width - 1, 5, fill = bg)
-    tf = FONT
-    if c.text_width(text, font = tf) > c.width - 2 and text.find(" ") == -1:
-        tf = FONT_NARROW
-    c.text(text, c.width // 2, 0, font = tf, color = fg, align = "center")
+def draw_strip(c, label, color, label_color):
+    c.rect(0, 0, c.width - 1, 6, fill = color)
+    draw_ball(c, 1, 1)
 
-def narrow(c):
-    return c.width <= 64
+    # Plain text: every strip color is dark enough for white, and a black
+    # stroke filled the whole 7 px strip, leaving slivers of color between
+    # words. 'ROLAND GARROS' is 62 px in 4x5, past the 56 px from x 8, so the
+    # ladder drops to picopixel (50 px) before anything is cut.
+    x = 8
+    text, font = fit_clip(c, label, ["4x5", "picopixel"], c.width - x)
+    c.text(text, x, 1, font = font, color = label_color)
 
-def score_font(c):
-    # Digits only, so 4x5 is safe at either width and far more legible than
-    # 3x4, whose 6 reads as a b.
-    return FONT
+def set_columns(c, sets):
+    """(digit font, sets shown, column widths, column right edges).
 
-def set_w(c):
-    return 5 if narrow(c) else SET_W
-
-def draw_match(c, m, y):
-    """Two rows: name left, set scores right-aligned in fixed columns."""
-    sets = m["sets"][-MAX_SETS:]
+    Three sets of 5x7 (5 px digits, 2 px apart) take the right 19 px. A
+    5-setter at that size would take 33 px and push even 'ALCARAZ' out of
+    3x7, so 4-5 sets drop to 4x7 (28 px). Columns are measured rather than
+    fixed, so a two-digit set ('10' in a match tiebreak) widens its own
+    column instead of drawing through its neighbor; if that would leave the
+    names under MIN_NAME_W, the oldest sets are dropped first."""
     n = len(sets)
-    sw = set_w(c)
-    sf = score_font(c)
-    # Leave a 2px gutter so a long name never touches the score columns.
-    name_max = c.width - n * sw - NAME_X - 2
+    font = "5x7" if n <= 3 else "4x7"
+    widths = []
+    for s in sets:
+        widths.append(max(c.text_width(s["s1"], font = font),
+                          c.text_width(s["s2"], font = font), DIGIT_W[font]))
+    first = 0
+    for i in range(n):
+        first = i
+        used = SET_GAP * (n - i)
+        for w in widths[i:]:
+            used += w
+        if c.width - used >= MIN_NAME_W:
+            break
+    rights = []
+    x = c.width - 1
+    for i in range(n - 1, first - 1, -1):
+        rights.insert(0, x)
+        x -= widths[i] + SET_GAP
+    return (font, sets[first:], widths[first:], rights)
 
-    c1 = SUSPENDED if m["suspended"] else ("green" if m["serving"] == 1 else "white")
-    c2 = SUSPENDED if m["suspended"] else ("green" if m["serving"] == 2 else "white")
+def draw_rows(c, m):
+    kind = m["kind"]
+    in_play = kind == "live" or kind == "susp" or kind == "delay"
 
-    t1, f1 = fit_name(c, m["n1"], name_max)
-    t2, f2 = fit_name(c, m["n2"], name_max)
-    c.text(t1, NAME_X, y, font = f1, color = c1)
-    c.text(t2, NAME_X, y + ROW_H, font = f2, color = c2)
+    dfont, sets, widths, rights = set_columns(c, m["sets"])
+    n = len(sets)
+    scores_x0 = rights[0] - widths[0] + 1 if n > 0 else c.width
+
+    # The set in play sits on a lit column running through both rows.
+    if in_play and n > 0:
+        c.rect(rights[n - 1] - widths[n - 1], ROW1_Y - 1, c.width - 1, ROW2_Y + 7,
+               fill = CELL_LIVE if kind == "live" else CELL_PAUSED)
 
     for i in range(n):
-        x = c.width - (n - i) * sw + 1
-        c.text(sets[i]["s1"], x, y, font = sf,
-               color = SET_WON if sets[i]["w1"] else "white")
-        c.text(sets[i]["s2"], x, y + ROW_H, font = sf,
-               color = SET_WON if sets[i]["w2"] else "white")
+        s = sets[i]
+        current = in_play and i == n - 1
+        for row in range(2):
+            txt = s["s1"] if row == 0 else s["s2"]
+            won = s["w1"] if row == 0 else s["w2"]
+            other_won = s["w2"] if row == 0 else s["w1"]
+            col = GRAY if (not current and other_won and not won) else WHITE
+            c.text(txt, rights[i] - c.text_width(txt, font = dfont) + 1,
+                   ROW1_Y if row == 0 else ROW2_Y, font = dfont, color = col)
 
-def surname(s):
-    """'A. DAVIDOVICH FOKINA' -> 'DAVIDOVICH FOKINA'. The initial is the first
-    thing to go: the surname is what identifies the player."""
-    if len(s) > 2 and s[1] == ".":
-        return s[2:].strip()
-    return s
+    # Names end NAME_GAP px before the first score column; the serve gutter
+    # is only reserved while a match is being played.
+    x_name = SERVE_GUTTER if in_play else 0
+    maxw = scores_x0 - NAME_GAP - x_name
+    font, t1, t2 = fit_names(c, m["n1"], m["n2"], maxw)
+    c.text(t1, x_name, ROW1_Y, font = font, color = GRAY if m["winner"] == 2 else WHITE)
+    c.text(t2, x_name, ROW2_Y, font = font, color = GRAY if m["winner"] == 1 else WHITE)
 
-def last_word(s):
-    """'VAN DE ZANDSCHULP' -> 'ZANDSCHULP'. Needed before 3x4, which has no
-    space glyph and would silently run the words together."""
-    parts = surname(s).split(" ")
-    return parts[len(parts) - 1]
+    if m["serving"] == 1:
+        c.bitmap(DOT, 0, ROW1_Y + 2, BALL)
+    elif m["serving"] == 2:
+        c.bitmap(DOT, 0, ROW2_Y + 2, BALL)
 
-def fit_name(c, s, max_px):
-    """Degrade gracefully: full name, then surname only, then a narrower font,
-    and only clip as a last resort. Returns (text, font)."""
-    # 4x5 keeps spaces, so try every wording there first. Only single-word
-    # text is ever handed to 3x4.
-    wide_opts = [surname(s), last_word(s)] if narrow(c) else [s, surname(s), last_word(s)]
-    for text in wide_opts:
-        if c.text_width(text, font = FONT) <= max_px:
-            return (text, FONT)
+def state_label(m, now):
+    k = m["kind"]
+    if k == "live":
+        return ("LIVE", LIVE)
+    if k == "susp":
+        return ("SUSP", AMBER)
+    if k == "delay":
+        return ("DELAY", AMBER)
+    if k == "ret":
+        return ("RET", GRAY)
+    if k == "wo":
+        return ("W/O", GRAY)
+    if k == "final":
+        return ("FINAL", GRAY)
 
-    word = last_word(s)
-    if c.text_width(word, font = FONT_NARROW) <= max_px:
-        return (word, FONT_NARROW)
+    # Upcoming: a countdown needs no timezone, and the 5-minute refresh
+    # keeps it honest.
+    if not m["time_valid"] or m["start"] == 0:
+        return ("LATER", SKY)
+    mins = (m["start"] - now) // 60
+    if mins <= 0:
+        return ("SOON", SKY)
+    if mins < 60:
+        return ("IN %dM" % mins, SKY)
+    if mins < 24 * 60:
+        return ("IN %dH" % (mins // 60), SKY)
+    return ("IN %dD" % (mins // 1440), SKY)
 
-    for i in range(len(word), 0, -1):
-        if c.text_width(word[:i], font = FONT_NARROW) <= max_px:
-            return (word[:i], FONT_NARROW)
-    return ("", FONT_NARROW)
+def draw_footer(c, m, now):
+    # State first, measured against the right edge, so the round can never
+    # run into it.
+    label, color = state_label(m, now)
+    lx = c.width - c.text_width(label, font = "4x5")
+    c.text(label, lx, FOOT_Y, font = "4x5", color = color)
+    left_limit = lx - 2
+    if m["kind"] == "live":
+        c.bitmap(DOT, lx - 6, FOOT_Y + 1, LIVE)
+        left_limit = lx - 8
 
-def message(c, lines, color = "white"):
-    f = FONT
-    y = 10
-    for line in lines:
-        c.text(line, c.width // 2, y, font = f, color = color, align = "center")
-        y += ROW_H + 1
+    rnd = m["round"]
+    if rnd == "FINAL":
+        # 7 px tall, so it rises a row above the footer text: y 25-31.
+        c.bitmap(TROPHY, 0, FOOT_Y - 1, GOLD)
+    elif rnd != "":
+        text, font = fit_clip(c, rnd, ["4x5"], left_limit - 1)
+        c.text(text, 0, FOOT_Y, font = font, color = GRAY)
+
+def draw_match(c, m, now):
+    draw_strip(c, m["label"], m["color"], m["label_color"])
+    draw_rows(c, m)
+    draw_footer(c, m, now)
+
+def draw_next(c, tour, ev, now):
+    """Between tournaments: the next event's name, big, and when it starts."""
+    draw_strip(c, tour + " UP NEXT", ev["color"], WHITE)
+
+    text, font = fit_clip(c, ev["label"], ["6x8", "5x7", "4x7", "3x7"], c.width - 2)
+    draw_centered(c, text, 11 + (8 - FONTH[font]), font, WHITE)
+
+    t = parse_iso(ev["date"])
+    if t == 0:
+        return
+    days = t // 86400 - now // 86400
+    iso = ev["date"]
+    if days <= 0:
+        when = "TODAY"
+    elif days == 1:
+        when = "TOMORROW"
+    else:
+        when = MONTHS[_atoi(iso[5:7]) - 1] + " " + str(_atoi(iso[8:10]))
+    sub = "STARTS " + when
+    if c.text_width(sub, font = "4x5") > c.width - 2:
+        sub = when
+    draw_centered(c, sub, 23, "4x5", GRAY)
+
+def draw_quiet(c, tour):
+    """Feed is fine, the tour just has nothing on today - not an error."""
+    draw_strip(c, tour + " TOUR", TOURS[tour]["color"], WHITE)
+    draw_centered(c, "NO MATCHES", 12, "5x7", WHITE)
+    draw_centered(c, "TODAY", 22, "4x5", GRAY)
+
+def nodata(c, title, sub):
+    c.fill(NODATA_BG)
+    draw_ball(c, (c.width - 5) // 2, 3)
+    text, font = fit_clip(c, title, ["6x8", "5x7", "4x5"], c.width - 2)
+    draw_centered(c, text, 11 + (8 - FONTH[font]) // 2, font, AMBER)
+    text, font = fit_clip(c, sub, ["4x5"], c.width - 2)
+    draw_centered(c, text, 23, font, NODATA_SUB)
 
 # ---------------------------------------------------------------- pages
-#
-# GDN declares pages statically in manifest.yaml and gives the code no page
-# index, so each slot is its own function. PAGE_COUNT slots x PER_PAGE matches
-# is the ceiling; the panel cycles them in order.
-#
-# Order is live matches first, then matches completed in the last 24h.
 
-PER_PAGE = 2
-PAGE_COUNT = 5
-
-def all_matches(ev, now, slug):
-    """Live first, then recently completed."""
-    return collect(ev, now, True, slug) + collect(ev, now, False, slug)
-
-def draw_slice(c, ctx, slot):
+def draw_page(c, ctx, slot):
     c.fill("black")
 
-    tid = ctx.inputs.get("tourneyid", "auto").strip()
-    tour = ctx.inputs.get("tour", "ATP").strip().upper()
-    tour_slug, group_slug = TOURS.get(tour, TOURS["ATP"])
+    tour = ctx.inputs.get("tour", "ATP")
+    tour = tour.strip().upper() if type(tour) == "string" else "ATP"
+    if tour not in TOURS:
+        tour = "ATP"
+    cfg = TOURS[tour]
 
-    data = fetch(tour_slug, 60)
+    data = fetch_feed(cfg["league"])
     if data == None:
-        message(c, ["NO DATA"], "red")
+        nodata(c, "NO SCORES", "RETRYING SOON")
         return
 
     now = ctx.now.unix
-    ev = choose_event(data, tid, now, group_slug)
-    if ev == None:
-        if tid != "" and tid != "auto":
-            message(c, ["TOURNAMENT", "NOT FOUND"], "gray")
+    events = feed_events(data)
+    items = []
+    for ev in events:
+        m = read_match(ev, now, cfg["slug"], tour)
+        if m != None:
+            items.append(m)
+
+    if len(items) == 0:
+        upcoming = upcoming_events(events, cfg["slug"], tour)
+        if len(upcoming) > 0:
+            draw_next(c, tour, upcoming[slot % len(upcoming)], now)
         else:
-            message(c, ["NO ACTIVE", "EVENTS"], "gray")
+            draw_quiet(c, tour)
         return
 
-    draw_title(c, title_text(ev, group_slug)[:24], ev)
-
-    matches = all_matches(ev, now, group_slug)
-    if len(matches) == 0:
-        message(c, ["NO MATCHES", "TODAY"], "gray")
-        return
-
-    # How many full slices the data fills. Fewer matches than slots means the
-    # later slots wrap and repeat rather than showing a black panel.
-    slices = (len(matches) + PER_PAGE - 1) // PER_PAGE
-    start = (slot % slices) * PER_PAGE
-
-    first = matches[start]
-    draw_match(c, first, 7)
-    mark(c, 7, first["live"])
-
-    if start + 1 < len(matches):
-        second = matches[start + 1]
-        c.line(0, 19, c.width - 1, 19, "darkgray")
-        draw_match(c, second, 20)
-        mark(c, 20, second["live"])
-
-def mark(c, y, is_live):
-    """1px rail on the left edge: green while playing, dim once final."""
-    c.line(0, y, 0, y + ROW_H * 2 - 2, "green" if is_live else "darkgray")
+    items = sorted(items, key = sort_key)
+    draw_match(c, pick(items, slot, now), now)
 
 def p1(c, ctx):
-    draw_slice(c, ctx, 0)
+    draw_page(c, ctx, 0)
 
 def p2(c, ctx):
-    draw_slice(c, ctx, 1)
+    draw_page(c, ctx, 1)
 
 def p3(c, ctx):
-    draw_slice(c, ctx, 2)
+    draw_page(c, ctx, 2)
 
 def p4(c, ctx):
-    draw_slice(c, ctx, 3)
+    draw_page(c, ctx, 3)
 
 def p5(c, ctx):
-    draw_slice(c, ctx, 4)
+    draw_page(c, ctx, 4)
+
+def p6(c, ctx):
+    draw_page(c, ctx, 5)
+
+def p7(c, ctx):
+    draw_page(c, ctx, 6)
+
+def p8(c, ctx):
+    draw_page(c, ctx, 7)

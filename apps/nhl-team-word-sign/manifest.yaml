@@ -1,0 +1,117 @@
+gdn: 1
+id: nhl-team-word-sign
+version: 0.1.0
+name: "NHL Team Word Sign"
+author: "Glance"
+description: A "Let's go" sign for any NHL team, framed by its logo.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 3600
+pages: [main]
+inputs:
+  - key: team
+    label: Team
+    app_input_type: dropdown
+    default: "Chicago Blackhawks"
+    options:
+      - "Anaheim Ducks"
+      - "Boston Bruins"
+      - "Buffalo Sabres"
+      - "Calgary Flames"
+      - "Carolina Hurricanes"
+      - "Chicago Blackhawks"
+      - "Colorado Avalanche"
+      - "Columbus Blue Jackets"
+      - "Dallas Stars"
+      - "Detroit Red Wings"
+      - "Edmonton Oilers"
+      - "Florida Panthers"
+      - "Los Angeles Kings"
+      - "Minnesota Wild"
+      - "Montreal Canadiens"
+      - "Nashville Predators"
+      - "New Jersey Devils"
+      - "New York Islanders"
+      - "New York Rangers"
+      - "Ottawa Senators"
+      - "Philadelphia Flyers"
+      - "Pittsburgh Penguins"
+      - "San Jose Sharks"
+      - "Seattle Kraken"
+      - "St. Louis Blues"
+      - "Tampa Bay Lightning"
+      - "Toronto Maple Leafs"
+      - "Utah Mammoth"
+      - "Vancouver Canucks"
+      - "Vegas Golden Knights"
+      - "Washington Capitals"
+      - "Winnipeg Jets"
+    choices:
+      - "Anaheim Ducks"
+      - "Boston Bruins"
+      - "Buffalo Sabres"
+      - "Calgary Flames"
+      - "Carolina Hurricanes"
+      - "Chicago Blackhawks"
+      - "Colorado Avalanche"
+      - "Columbus Blue Jackets"
+      - "Dallas Stars"
+      - "Detroit Red Wings"
+      - "Edmonton Oilers"
+      - "Florida Panthers"
+      - "Los Angeles Kings"
+      - "Minnesota Wild"
+      - "Montreal Canadiens"
+      - "Nashville Predators"
+      - "New Jersey Devils"
+      - "New York Islanders"
+      - "New York Rangers"
+      - "Ottawa Senators"
+      - "Philadelphia Flyers"
+      - "Pittsburgh Penguins"
+      - "San Jose Sharks"
+      - "Seattle Kraken"
+      - "St. Louis Blues"
+      - "Tampa Bay Lightning"
+      - "Toronto Maple Leafs"
+      - "Utah Mammoth"
+      - "Vancouver Canucks"
+      - "Vegas Golden Knights"
+      - "Washington Capitals"
+      - "Winnipeg Jets"
+assets:
+  - assets/ana.png
+  - assets/bos.png
+  - assets/buf.png
+  - assets/cgy.png
+  - assets/car.png
+  - assets/chi.png
+  - assets/col.png
+  - assets/cbj.png
+  - assets/dal.png
+  - assets/det.png
+  - assets/edm.png
+  - assets/fla.png
+  - assets/la.png
+  - assets/min.png
+  - assets/mtl.png
+  - assets/nsh.png
+  - assets/nj.png
+  - assets/nyi.png
+  - assets/nyr.png
+  - assets/ott.png
+  - assets/phi.png
+  - assets/pit.png
+  - assets/sj.png
+  - assets/sea.png
+  - assets/stl.png
+  - assets/tb.png
+  - assets/tor.png
+  - assets/utah.png
+  - assets/van.png
+  - assets/vgk.png
+  - assets/wsh.png
+  - assets/wpg.png
+  - assets/chi_feather.png

@@ -1,6 +1,6 @@
 gdn: 1
 id: nascar-pylon
-version: 1.0.0
+version: 1.1.0
 name: NASCAR Scoring Pylon
 author: reyos86
 description: Full-field scoring pylon for Cup, O'Reilly, and Trucks — position moves, pits, DVP, garage, fastest lap, and lead-lap status.
@@ -18,4 +18,31 @@ inputs:
     label: Series
     default: CUP
     choices: [CUP, OREILLY, TRUCKS]
+    options: [CUP, OREILLY, TRUCKS]
     help: Which NASCAR national series to follow (Cup, O'Reilly Auto Parts, Trucks).
+  - key: fav1
+    type: string
+    app_input_type: free-text
+    label: Favorite car 1
+    default: ""
+    help: Car number to highlight on the pylon (for example 24). Leave blank for none.
+  - key: fav2
+    type: string
+    app_input_type: free-text
+    label: Favorite car 2
+    default: ""
+    help: Optional second car number to highlight.
+  - key: fav3
+    type: string
+    app_input_type: free-text
+    label: Favorite car 3
+    default: ""
+    help: Optional third car number to highlight.
+  - key: favcolor
+    type: choice
+    app_input_type: dropdown
+    label: Favorite highlight color
+    default: AQUA
+    choices: [AQUA, PINK, WHITE, MAGENTA, CORAL, ORANGE, YELLOW]
+    options: [AQUA, PINK, WHITE, MAGENTA, CORAL, ORANGE, YELLOW]
+    help: Color of the favorite-car row highlight and position number.

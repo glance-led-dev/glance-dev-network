@@ -1,8 +1,9 @@
 id: billboard-anniversaries
-description: #1 songs this week for the past 50 years
-author: chris
-name: Billboard #1's
-width: 128
+description: The Billboard Hot 100 #1 song from this week 10, 20, 30, 40, 50 and 60 years ago - weeks at #1 and chart run - CATEGORY - Entertainment
+author: cfdmb
+name: Billboard Rewind
+category: Entertainment
+width: 192
 height: 32
 refresh: 86400
 pages:

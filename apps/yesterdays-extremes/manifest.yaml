@@ -3,7 +3,7 @@ id: yesterdays-extremes
 version: 0.1.0
 name: Yesterday's Extremes
 author: jeff
-description: Yesterday's top three U.S. cities for heat, cold, rain or snow, shown as a gold, silver and bronze podium.
+description: Yesterday's top four U.S. cities for heat, cold, rain or snow, shown as a podium -- or the single hottest, coldest, wettest and snowiest all at once.
 category: Weather
 entry: app.star
 
@@ -11,7 +11,7 @@ width: 64
 height: 32
 refresh: 3600
 
-pages: [gold, silver, bronze]
+pages: [gold, silver, bronze, fourth]
 
 inputs:
   - key: metric
@@ -19,9 +19,10 @@ inputs:
     app_input_type: dropdown
     label: Metric
     default: "Extreme High Temp"
-    help: Which extreme to rank cities by. Snowfall covers the last 24 hours and is empty outside snow season.
+    help: Which extreme to rank cities by. Snowfall covers the last 24 hours and is empty outside snow season. "Extremes" shows the #1 hottest, coldest, wettest and snowiest city, one per page, instead of ranking a single metric.
     choices:
       - "Extreme High Temp"
       - "Extreme Low Temp"
       - "Extreme Rain"
       - "Extreme Snowfall"
+      - "Extremes"

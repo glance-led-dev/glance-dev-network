@@ -1,0 +1,20 @@
+gdn: 1
+id: minimalist-time
+version: 0.1.0
+name: "Minimalist-time"
+author: "ShadowUTube"
+description: A minimalist clock for Eastern, Central, Mountain or Pacific time.
+category: Lifestyle
+entry: app.star
+width: 64
+height: 32
+refresh: 60
+pages: [main]
+inputs:
+  - key: timezone
+    app_input_type: dropdown
+    type: choice
+    label: Time zone
+    default: Central
+    choices: [Eastern, Central, Mountain, Pacific]
+    options: [Eastern, Central, Mountain, Pacific]

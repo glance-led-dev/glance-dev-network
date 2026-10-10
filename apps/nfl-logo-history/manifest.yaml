@@ -1,0 +1,257 @@
+gdn: 1
+id: nfl-logo-history
+version: 0.1.0
+name: NFL Logo History
+author: glance-led-dev
+description: Every primary logo an NFL club has worn, oldest to newest on a timeline with the season each one debuted and the cities along the way, flowing into today's logo, plus the club's longest-serving logo. Pick a club or rotate through all 32. No network needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 60 s: the timeline steps one frame (up to five older logos) per minute. There is
+# no network, so the refresh costs nothing; 33 dropdown choices is inside the
+# 48-combination limit for a sub-2-minute refresh.
+refresh: 3600
+
+pages: [timeline, firstnow]
+
+assets:
+  - ARI_1920.png
+  - ARI_1920_FIRST.png
+  - ARI_1947.png
+  - ARI_1960.png
+  - ARI_1962.png
+  - ARI_1970.png
+  - ATL_1966.png
+  - ATL_1966_FIRST.png
+  - BAL_1996.png
+  - BAL_1996_FIRST.png
+  - BUF_1960.png
+  - BUF_1962.png
+  - CAR_1995.png
+  - CAR_1995_FIRST.png
+  - CHI_1940.png
+  - CHI_1940_FIRST.png
+  - CHI_1946.png
+  - CHI_1962.png
+  - CHI_1974.png
+  - CIN_1968.png
+  - CIN_1968_FIRST.png
+  - CIN_1970.png
+  - CIN_1981.png
+  - CIN_1997.png
+  - CLE_1946.png
+  - CLE_1946_FIRST.png
+  - CLE_1950.png
+  - CLE_1970.png
+  - CLE_1975.png
+  - CLE_2006.png
+  - CLE_2015.png
+  - DAL_1960.png
+  - DAL_1960_FIRST.png
+  - DEN_1960.png
+  - DEN_1960_FIRST.png
+  - DEN_1962.png
+  - DEN_1968.png
+  - DET_1952.png
+  - DET_1952_FIRST.png
+  - DET_1961.png
+  - DET_1970.png
+  - DET_2003.png
+  - DET_2009.png
+  - GB_1951.png
+  - GB_1951_FIRST.png
+  - GB_1956.png
+  - IND_1953.png
+  - IND_1953_FIRST.png
+  - JAX_1995.png
+  - JAX_1995_FIRST.png
+  - KC_1960.png
+  - KC_1960_FIRST.png
+  - KC_1963.png
+  - LAC_1960.png
+  - LAC_1960_FIRST.png
+  - LAC_1961.png
+  - LAC_1974.png
+  - LAC_1988.png
+  - LAC_2002.png
+  - LAC_2007.png
+  - LAR_1941.png
+  - LAR_1941_FIRST.png
+  - LAR_1944.png
+  - LAR_1948.png
+  - LAR_1966.png
+  - LAR_1983.png
+  - LAR_1989.png
+  - LAR_1995.png
+  - LAR_2000.png
+  - LAR_2017.png
+  - LAR_2020.png
+  - LV_1960.png
+  - LV_1960_FIRST.png
+  - LV_1963.png
+  - MIA_1966.png
+  - MIA_1966_FIRST.png
+  - MIA_1974.png
+  - MIA_1980.png
+  - MIA_1997.png
+  - MIN_1961.png
+  - MIN_1961_FIRST.png
+  - MIN_1966.png
+  - MIN_1997.png
+  - NE_1960.png
+  - NE_1960_FIRST.png
+  - NE_1961.png
+  - NE_1993.png
+  - NOW_ARI.png
+  - NOW_ATL.png
+  - NOW_BAL.png
+  - NOW_BUF.png
+  - NOW_CAR.png
+  - NOW_CHI.png
+  - NOW_CIN.png
+  - NOW_CLE.png
+  - NOW_DAL.png
+  - NOW_DEN.png
+  - NOW_DET.png
+  - NOW_GB.png
+  - NOW_HOU.png
+  - NOW_IND.png
+  - NOW_JAX.png
+  - NOW_KC.png
+  - NOW_LAC.png
+  - NOW_LAR.png
+  - NOW_LV.png
+  - NOW_MIA.png
+  - NOW_MIN.png
+  - NOW_NE.png
+  - NOW_NO.png
+  - NOW_NYG.png
+  - NOW_NYJ.png
+  - NOW_PHI.png
+  - NOW_PIT.png
+  - NOW_SEA.png
+  - NOW_SF.png
+  - NOW_TB.png
+  - NOW_TEN.png
+  - NOW_WSH.png
+  - NO_1967.png
+  - NYG_1945.png
+  - NYG_1945_FIRST.png
+  - NYG_1950.png
+  - NYG_1956.png
+  - NYG_1961.png
+  - NYG_1975.png
+  - NYG_1976.png
+  - NYJ_1963.png
+  - NYJ_1963_FIRST.png
+  - NYJ_1964.png
+  - NYJ_1965.png
+  - NYJ_1978.png
+  - NYJ_1998.png
+  - NYJ_2019.png
+  - PHI_1933.png
+  - PHI_1933_FIRST.png
+  - PHI_1936.png
+  - PHI_1942.png
+  - PHI_1948.png
+  - PHI_1969.png
+  - PHI_1973.png
+  - PHI_1987.png
+  - PIT_1933.png
+  - PIT_1933_FIRST.png
+  - PIT_1940.png
+  - SEA_1976.png
+  - SEA_1976_FIRST.png
+  - SEA_2002.png
+  - SF_1946.png
+  - SF_1946_FIRST.png
+  - SF_1952.png
+  - SF_1968.png
+  - SF_1996.png
+  - TB_1976.png
+  - TB_1976_FIRST.png
+  - TB_1997.png
+  - TEN_1960.png
+  - TEN_1961.png
+  - TEN_1969.png
+  - TEN_1972.png
+  - TEN_1980.png
+  - TEN_1999.png
+
+inputs:
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Team
+    default: "ALL TEAMS"
+    help: Pick a club to see every primary logo it has used, or ALL TEAMS to rotate through the league (a new club every 3 minutes).
+    choices:
+      - "ALL TEAMS"
+      - "ARIZONA CARDINALS"
+      - "ATLANTA FALCONS"
+      - "BALTIMORE RAVENS"
+      - "BUFFALO BILLS"
+      - "CAROLINA PANTHERS"
+      - "CHICAGO BEARS"
+      - "CINCINNATI BENGALS"
+      - "CLEVELAND BROWNS"
+      - "DALLAS COWBOYS"
+      - "DENVER BRONCOS"
+      - "DETROIT LIONS"
+      - "GREEN BAY PACKERS"
+      - "HOUSTON TEXANS"
+      - "INDIANAPOLIS COLTS"
+      - "JACKSONVILLE JAGUARS"
+      - "KANSAS CITY CHIEFS"
+      - "LAS VEGAS RAIDERS"
+      - "LOS ANGELES CHARGERS"
+      - "LOS ANGELES RAMS"
+      - "MIAMI DOLPHINS"
+      - "MINNESOTA VIKINGS"
+      - "NEW ENGLAND PATRIOTS"
+      - "NEW ORLEANS SAINTS"
+      - "NEW YORK GIANTS"
+      - "NEW YORK JETS"
+      - "PHILADELPHIA EAGLES"
+      - "PITTSBURGH STEELERS"
+      - "SAN FRANCISCO 49ERS"
+      - "SEATTLE SEAHAWKS"
+      - "TAMPA BAY BUCCANEERS"
+      - "TENNESSEE TITANS"
+      - "WASHINGTON COMMANDERS"
+    options:
+      - "ALL TEAMS"
+      - "ARIZONA CARDINALS"
+      - "ATLANTA FALCONS"
+      - "BALTIMORE RAVENS"
+      - "BUFFALO BILLS"
+      - "CAROLINA PANTHERS"
+      - "CHICAGO BEARS"
+      - "CINCINNATI BENGALS"
+      - "CLEVELAND BROWNS"
+      - "DALLAS COWBOYS"
+      - "DENVER BRONCOS"
+      - "DETROIT LIONS"
+      - "GREEN BAY PACKERS"
+      - "HOUSTON TEXANS"
+      - "INDIANAPOLIS COLTS"
+      - "JACKSONVILLE JAGUARS"
+      - "KANSAS CITY CHIEFS"
+      - "LAS VEGAS RAIDERS"
+      - "LOS ANGELES CHARGERS"
+      - "LOS ANGELES RAMS"
+      - "MIAMI DOLPHINS"
+      - "MINNESOTA VIKINGS"
+      - "NEW ENGLAND PATRIOTS"
+      - "NEW ORLEANS SAINTS"
+      - "NEW YORK GIANTS"
+      - "NEW YORK JETS"
+      - "PHILADELPHIA EAGLES"
+      - "PITTSBURGH STEELERS"
+      - "SAN FRANCISCO 49ERS"
+      - "SEATTLE SEAHAWKS"
+      - "TAMPA BAY BUCCANEERS"
+      - "TENNESSEE TITANS"
+      - "WASHINGTON COMMANDERS"

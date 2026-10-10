@@ -1,0 +1,28 @@
+gdn: 1
+id: glucose-monitor-scroll
+name: Glucose Monitor (Scroll)
+description: Live CGM Dexcom glucose reading, trend arrow, and rolling average from Nightscout that uses international consensus guidelines.
+author: jkapera
+category: Lifestyle
+width: 128
+height: 32
+refresh: 300
+pages: [main]
+inputs:
+  - key: nightscouturl
+    type: string
+    app_input_type: free-text
+    label: Nightscout URL
+    default: "yoursite.onrender.com"
+    help: "Your Nightscout site domain, no https:// (e.g. yoursite.onrender.com)"
+  - key: token
+    type: string
+    app_input_type: api-key
+    label: Nightscout Access Token
+    help: "A read-only access token from your Nightscout Admin Tools"
+  - key: tzoffset
+    type: number
+    app_input_type: free-text
+    label: UTC Offset (hours)
+    default: -6
+    help: "New Mexico: -7 in winter (MST), -6 in summer (MDT). Doesn't auto-adjust for daylight saving — you'd flip this twice a year."

@@ -1,0 +1,98 @@
+gdn: 1
+id: nfl-playoff-picture
+version: 0.1.0
+name: NFL Playoff Picture
+author: glance-led-dev
+description: If the season ended today - one conference's seven playoff seeds drawn as the wild-card bracket (1 on a bye, 2 v 7, 3 v 6, 4 v 5) with logos and records, plus the teams in the hunt for the last spot and how many games back they are. No key needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# Standings change once a week at most; the ESPN call is cached for the same
+# 1800 s.
+refresh: 43200
+
+pages: [bracket, hunt]
+
+# Club logos at two authored sizes: S/ 24 x 18 for the seven-team bracket,
+# L/ 40 x 24 (hand-tuned) for the three-team hunt page.
+assets:
+  - S/ARI.png
+  - S/ATL.png
+  - S/BAL.png
+  - S/BUF.png
+  - S/CAR.png
+  - S/CHI.png
+  - S/CIN.png
+  - S/CLE.png
+  - S/DAL.png
+  - S/DEN.png
+  - S/DET.png
+  - S/GB.png
+  - S/HOU.png
+  - S/IND.png
+  - S/JAX.png
+  - S/KC.png
+  - S/LAC.png
+  - S/LAR.png
+  - S/LV.png
+  - S/MIA.png
+  - S/MIN.png
+  - S/NE.png
+  - S/NO.png
+  - S/NYG.png
+  - S/NYJ.png
+  - S/PHI.png
+  - S/PIT.png
+  - S/SEA.png
+  - S/SF.png
+  - S/TB.png
+  - S/TEN.png
+  - S/WSH.png
+  - L/ARI.png
+  - L/ATL.png
+  - L/BAL.png
+  - L/BUF.png
+  - L/CAR.png
+  - L/CHI.png
+  - L/CIN.png
+  - L/CLE.png
+  - L/DAL.png
+  - L/DEN.png
+  - L/DET.png
+  - L/GB.png
+  - L/HOU.png
+  - L/IND.png
+  - L/JAX.png
+  - L/KC.png
+  - L/LAC.png
+  - L/LAR.png
+  - L/LV.png
+  - L/MIA.png
+  - L/MIN.png
+  - L/NE.png
+  - L/NO.png
+  - L/NYG.png
+  - L/NYJ.png
+  - L/PHI.png
+  - L/PIT.png
+  - L/SEA.png
+  - L/SF.png
+  - L/TB.png
+  - L/TEN.png
+  - L/WSH.png
+
+inputs:
+  - key: conference
+    type: choice
+    app_input_type: dropdown
+    label: Conference
+    default: "AFC"
+    help: Which half of the league to show - the AFC or the NFC playoff picture.
+    choices:
+      - "AFC"
+      - "NFC"
+    options:
+      - "AFC"
+      - "NFC"

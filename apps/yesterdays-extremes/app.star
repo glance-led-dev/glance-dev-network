@@ -16,11 +16,11 @@
 # line), a hairline, and the hero right-aligned against the safe edge. Both
 # apps ship this file; the only branch is `c.width >= 128`.
 #
-# Why three fixed pages instead of cycling one city per minute: the source is
+# Why four fixed pages instead of cycling one city per minute: the source is
 # the NWS once-a-day climate report, so `refresh` is 3600, in sync with the
 # fetch ttl. At that cadence a per-minute cycle would park on a single city
 # for an hour, and a ranked list doesn't fit 64 wide ("PHILADELPHIA" alone is
-# 57px at 4x5, leaving no room for a rank and a value on the same row). Three
+# 57px at 4x5, leaving no room for a rank and a value on the same row). Four
 # pages give every city the full width and never rotate through a dead screen.
 #
 # Rain, high and low temps come from one nationwide /api/v1/yesterday call,
@@ -29,6 +29,18 @@
 # rows_for_snow() infers the per-report fields from hail/week's identical
 # "NWS Local Storm Reports via IEM" source line but hasn't been checked
 # against a live snow report. Read defensively.
+#
+# A fifth Metric choice, "Extremes", isn't a rank within one metric -- it's
+# the #1 reading from each of the other four, one per page (gold=hottest,
+# silver=coldest, bronze=wettest, the 4th spot=snowiest). Every page draws a
+# GOLD "1ST" medal in that mode regardless of its slot, because each city
+# genuinely is the #1 for its own metric -- a silver medal on the coldest
+# city would misread as "2nd coldest," which it isn't. podium()'s `slot`
+# parameter (which page position this is) and the metric/rank it actually
+# fetches are the same thing in normal mode and different things in Extremes
+# mode; see the slot/rank split there. The same reuse also gave the normal
+# mode a 4th page for free: it now runs the podium one place deeper (top 4,
+# not top 3) instead of the 4th page having nothing to show outside Extremes.
 
 BG = "#000000"
 INK = "#FFFFFF"          # hero reading
@@ -49,8 +61,12 @@ METALS = [
     ["#FFC72C", "#A8740A"],  # gold
     ["#DCE3EA", "#7F8B99"],  # silver
     ["#E3894A", "#8C4A1F"],  # bronze
+    ["#8B93A0", "#4A515C"],  # steel -- the 4th spot, off the traditional podium
 ]
-ORDINALS = ["1ST", "2ND", "3RD"]
+ORDINALS = ["1ST", "2ND", "3RD", "4TH"]
+
+# Extremes mode: page slot -> the metric it always shows rank 0 of.
+EXTREME_METRICS = ["Extreme High Temp", "Extreme Low Temp", "Extreme Rain", "Extreme Snowfall"]
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
@@ -538,20 +554,33 @@ def card_wide(c, r, rank, th, meta):
 
     draw_context(c, r, tx, 23, tw)
 
-def podium(c, ctx, rank):
+def podium(c, ctx, slot):
+    """`slot` is which page this is (0-3, gold/silver/bronze/4th). In normal
+    mode that's also the rank to fetch and the medal to draw -- gold really
+    is 1st place. In Extremes mode the two split: every slot fetches rank 0
+    of its own fixed metric (EXTREME_METRICS[slot]) and always draws a gold
+    "1ST" medal, because each is the #1 for its metric, not a 2nd/3rd/4th
+    place relative to the others."""
     metric = str(ctx.inputs.get("metric", "Extreme High Temp"))
-    th = theme(metric)
-    rows, meta, reason = fetch_rows(metric)
+    extremes = metric == "Extremes"
+    eff_metric = EXTREME_METRICS[slot] if extremes else metric
+    rank = 0 if extremes else slot
+    medal = 0 if extremes else slot
+
+    th = theme(eff_metric)
+    rows, meta, reason = fetch_rows(eff_metric)
 
     if reason == "error":
         message_card(c, NODATA_BG, "NO WEATHER DATA", NODATA_TITLE,
                      "CHECK BACK SOON", NODATA_SUB, "NO DATA", "TRY LATER")
         return
     if reason == "empty":
-        title, sub, nt, ns = empty_copy(metric)
+        title, sub, nt, ns = empty_copy(eff_metric)
         message_card(c, NODATA_BG, title, EMPTY_TITLE, sub, EMPTY_SUB, nt, ns)
         return
     if rank >= len(rows):
+        # Only reachable in normal mode -- Extremes always asks for rank 0,
+        # and reason == "ok" already guarantees at least one row.
         n = len(rows)
         noun = " REPORT" if n == 1 else " REPORTS"
         message_card(c, BG, "NO " + ORDINALS[rank] + " PLACE", SHORT_TITLE,
@@ -560,9 +589,9 @@ def podium(c, ctx, rank):
         return
 
     if c.width >= 128:
-        card_wide(c, rows[rank], rank, th, meta)
+        card_wide(c, rows[rank], medal, th, meta)
     else:
-        card_narrow(c, rows[rank], rank, th)
+        card_narrow(c, rows[rank], medal, th)
 
 def gold(c, ctx):
     podium(c, ctx, 0)
@@ -572,3 +601,6 @@ def silver(c, ctx):
 
 def bronze(c, ctx):
     podium(c, ctx, 2)
+
+def fourth(c, ctx):
+    podium(c, ctx, 3)

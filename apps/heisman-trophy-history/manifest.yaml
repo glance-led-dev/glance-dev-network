@@ -1,0 +1,209 @@
+gdn: 1
+id: heisman-trophy-history
+version: 0.1.0
+name: Heisman Trophy History
+author: glance-led-dev
+description: Every Heisman Trophy winner since 1935 as the trophy itself - the bronze statue centred on a pedestal with the winner's name on its brass plate, the year and school logo in spotlights either side - then his museum plaque with a line of history, and the trophy case of schools ranked by wins. Pick a school or a decade, or walk the whole list. No network needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# Static history. 300 s because the winner shown steps every five minutes
+# (unix // 300), so ALL WINNERS walks the whole list in about 7.5 hours.
+refresh: 300
+
+pages: [winner, plaque, count]
+
+# School logos: 40 x 24 for the winner page, S_ 24 x 18 for the trophy case.
+assets:
+  - ALA.png
+  - ARMY.png
+  - AUB.png
+  - BAY.png
+  - BC.png
+  - BYU.png
+  - COLO.png
+  - FLA.png
+  - FSU.png
+  - HOU.png
+  - IOWA.png
+  - IU.png
+  - LOU.png
+  - LSU.png
+  - MIA.png
+  - MICH.png
+  - MINN.png
+  - NAVY.png
+  - ND.png
+  - NEB.png
+  - OKST.png
+  - ORE.png
+  - ORST.png
+  - OSU.png
+  - OU.png
+  - PITT.png
+  - PSU.png
+  - SC.png
+  - SMU.png
+  - STAN.png
+  - SYR.png
+  - S_ALA.png
+  - S_ARMY.png
+  - S_AUB.png
+  - S_BAY.png
+  - S_BC.png
+  - S_BYU.png
+  - S_COLO.png
+  - S_FLA.png
+  - S_FSU.png
+  - S_HOU.png
+  - S_IOWA.png
+  - S_IU.png
+  - S_LOU.png
+  - S_LSU.png
+  - S_MIA.png
+  - S_MICH.png
+  - S_MINN.png
+  - S_NAVY.png
+  - S_ND.png
+  - S_NEB.png
+  - S_OKST.png
+  - S_ORE.png
+  - S_ORST.png
+  - S_OSU.png
+  - S_OU.png
+  - S_PITT.png
+  - S_PSU.png
+  - S_SC.png
+  - S_SMU.png
+  - S_STAN.png
+  - S_SYR.png
+  - S_TAMU.png
+  - S_TCU.png
+  - S_TEX.png
+  - S_UCLA.png
+  - S_UGA.png
+  - S_USC.png
+  - S_WIS.png
+  - TAMU.png
+  - TCU.png
+  - TEX.png
+  - UCLA.png
+  - UGA.png
+  - USC.png
+  - WIS.png
+
+inputs:
+  - key: show
+    type: choice
+    app_input_type: dropdown
+    label: Show
+    default: "ALL WINNERS"
+    help: ALL WINNERS walks every Heisman winner in turn. Pick a decade to see only its winners, or a school to see its winners and its trophy case.
+    choices:
+      - "ALL WINNERS"
+      - "1930S"
+      - "1940S"
+      - "1950S"
+      - "1960S"
+      - "1970S"
+      - "1980S"
+      - "1990S"
+      - "2000S"
+      - "2010S"
+      - "2020S"
+      - "ALABAMA"
+      - "ARMY"
+      - "AUBURN"
+      - "BAYLOR"
+      - "BOSTON COLLEGE"
+      - "BYU"
+      - "CHICAGO"
+      - "COLORADO"
+      - "FLORIDA"
+      - "FLORIDA STATE"
+      - "GEORGIA"
+      - "HOUSTON"
+      - "INDIANA"
+      - "IOWA"
+      - "LOUISVILLE"
+      - "LSU"
+      - "MIAMI"
+      - "MICHIGAN"
+      - "MINNESOTA"
+      - "NAVY"
+      - "NEBRASKA"
+      - "NOTRE DAME"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OREGON"
+      - "OREGON STATE"
+      - "PENN STATE"
+      - "PITT"
+      - "PRINCETON"
+      - "SMU"
+      - "SOUTH CAROLINA"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "UCLA"
+      - "USC"
+      - "WISCONSIN"
+      - "YALE"
+    options:
+      - "ALL WINNERS"
+      - "1930S"
+      - "1940S"
+      - "1950S"
+      - "1960S"
+      - "1970S"
+      - "1980S"
+      - "1990S"
+      - "2000S"
+      - "2010S"
+      - "2020S"
+      - "ALABAMA"
+      - "ARMY"
+      - "AUBURN"
+      - "BAYLOR"
+      - "BOSTON COLLEGE"
+      - "BYU"
+      - "CHICAGO"
+      - "COLORADO"
+      - "FLORIDA"
+      - "FLORIDA STATE"
+      - "GEORGIA"
+      - "HOUSTON"
+      - "INDIANA"
+      - "IOWA"
+      - "LOUISVILLE"
+      - "LSU"
+      - "MIAMI"
+      - "MICHIGAN"
+      - "MINNESOTA"
+      - "NAVY"
+      - "NEBRASKA"
+      - "NOTRE DAME"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OREGON"
+      - "OREGON STATE"
+      - "PENN STATE"
+      - "PITT"
+      - "PRINCETON"
+      - "SMU"
+      - "SOUTH CAROLINA"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "UCLA"
+      - "USC"
+      - "WISCONSIN"
+      - "YALE"

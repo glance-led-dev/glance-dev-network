@@ -25,18 +25,27 @@ inputs:
     label: Collection day
     default: "MONDAY"
     choices: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+  - key: garbage
+    type: choice
+    app_input_type: dropdown
+    label: Garbage
+    default: "EVERY WEEK"
+    help: If your town collects garbage every other week, pick "This Week" or "Next Week" (either one), save, then check the preview -- if the upcoming pickup it shows doesn't match your real bin schedule, switch to the other option. After that one check it stays correct on its own.
+    choices: ["EVERY WEEK", "THIS WEEK", "NEXT WEEK", "NEVER"]
   - key: recycling
     type: choice
     app_input_type: dropdown
     label: Recycling
-    default: "ALTERNATE WEEKS"
-    choices: ["EVERY WEEK", "ALTERNATE WEEKS", "NEVER"]
+    default: "THIS WEEK"
+    help: Same idea as Garbage above -- pick "This Week" or "Next Week", check the preview against your real schedule, and flip it if it's showing the wrong week.
+    choices: ["EVERY WEEK", "THIS WEEK", "NEXT WEEK", "NEVER"]
   - key: yard
     type: choice
     app_input_type: dropdown
     label: Yard waste
     default: "EVERY WEEK"
-    choices: ["EVERY WEEK", "ALTERNATE WEEKS", "NEVER"]
+    help: Same idea as Garbage above -- pick "This Week" or "Next Week", check the preview against your real schedule, and flip it if it's showing the wrong week.
+    choices: ["EVERY WEEK", "THIS WEEK", "NEXT WEEK", "NEVER"]
   - key: timezone
     type: choice
     app_input_type: dropdown

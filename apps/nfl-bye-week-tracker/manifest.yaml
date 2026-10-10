@@ -1,0 +1,128 @@
+gdn: 1
+id: nfl-bye-week-tracker
+version: 0.1.0
+name: NFL Bye Week Tracker
+author: glance-led-dev
+description: Which NFL teams are on bye this week and next, shown as a row of team logos, plus your team's bye week with a countdown, its return game and an 18-week results strip. Built for setting fantasy lineups. No key needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 300 s: a six-bye week splits into two frames that swap every 5 minutes.
+# The data itself barely moves - the current week is cached 1 h, specific
+# weeks and team schedules 12 h (byes are fixed for the season).
+refresh: 3600
+
+pages: [thisweek, nextweek, myteam]
+
+# Team logos: 40 x 24 pixel art from Fantasy Football News, named by ESPN
+# abbreviation, plus the NFL shield for weeks without byes.
+assets:
+  - ARI.png
+  - ATL.png
+  - BAL.png
+  - BUF.png
+  - CAR.png
+  - CHI.png
+  - CIN.png
+  - CLE.png
+  - DAL.png
+  - DEN.png
+  - DET.png
+  - GB.png
+  - HOU.png
+  - IND.png
+  - JAX.png
+  - KC.png
+  - LV.png
+  - LAC.png
+  - LAR.png
+  - MIA.png
+  - MIN.png
+  - NE.png
+  - NO.png
+  - NYG.png
+  - NYJ.png
+  - PHI.png
+  - PIT.png
+  - SF.png
+  - SEA.png
+  - TB.png
+  - TEN.png
+  - WSH.png
+  - NFL.png
+
+inputs:
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Your team
+    default: "KANSAS CITY CHIEFS"
+    help: The team whose bye week, countdown and season strip appear on the third page. The first two pages show every team on bye this week and next.
+    choices:
+      - "ARIZONA CARDINALS"
+      - "ATLANTA FALCONS"
+      - "BALTIMORE RAVENS"
+      - "BUFFALO BILLS"
+      - "CAROLINA PANTHERS"
+      - "CHICAGO BEARS"
+      - "CINCINNATI BENGALS"
+      - "CLEVELAND BROWNS"
+      - "DALLAS COWBOYS"
+      - "DENVER BRONCOS"
+      - "DETROIT LIONS"
+      - "GREEN BAY PACKERS"
+      - "HOUSTON TEXANS"
+      - "INDIANAPOLIS COLTS"
+      - "JACKSONVILLE JAGUARS"
+      - "KANSAS CITY CHIEFS"
+      - "LAS VEGAS RAIDERS"
+      - "LOS ANGELES CHARGERS"
+      - "LOS ANGELES RAMS"
+      - "MIAMI DOLPHINS"
+      - "MINNESOTA VIKINGS"
+      - "NEW ENGLAND PATRIOTS"
+      - "NEW ORLEANS SAINTS"
+      - "NEW YORK GIANTS"
+      - "NEW YORK JETS"
+      - "PHILADELPHIA EAGLES"
+      - "PITTSBURGH STEELERS"
+      - "SAN FRANCISCO 49ERS"
+      - "SEATTLE SEAHAWKS"
+      - "TAMPA BAY BUCCANEERS"
+      - "TENNESSEE TITANS"
+      - "WASHINGTON COMMANDERS"
+    options:
+      - "ARIZONA CARDINALS"
+      - "ATLANTA FALCONS"
+      - "BALTIMORE RAVENS"
+      - "BUFFALO BILLS"
+      - "CAROLINA PANTHERS"
+      - "CHICAGO BEARS"
+      - "CINCINNATI BENGALS"
+      - "CLEVELAND BROWNS"
+      - "DALLAS COWBOYS"
+      - "DENVER BRONCOS"
+      - "DETROIT LIONS"
+      - "GREEN BAY PACKERS"
+      - "HOUSTON TEXANS"
+      - "INDIANAPOLIS COLTS"
+      - "JACKSONVILLE JAGUARS"
+      - "KANSAS CITY CHIEFS"
+      - "LAS VEGAS RAIDERS"
+      - "LOS ANGELES CHARGERS"
+      - "LOS ANGELES RAMS"
+      - "MIAMI DOLPHINS"
+      - "MINNESOTA VIKINGS"
+      - "NEW ENGLAND PATRIOTS"
+      - "NEW ORLEANS SAINTS"
+      - "NEW YORK GIANTS"
+      - "NEW YORK JETS"
+      - "PHILADELPHIA EAGLES"
+      - "PITTSBURGH STEELERS"
+      - "SAN FRANCISCO 49ERS"
+      - "SEATTLE SEAHAWKS"
+      - "TAMPA BAY BUCCANEERS"
+      - "TENNESSEE TITANS"
+      - "WASHINGTON COMMANDERS"

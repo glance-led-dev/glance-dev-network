@@ -1,0 +1,5 @@
+# gdn build output and packaged bundles
+build/
+*.gdnapp
+.render-deps/
+__pycache__/

@@ -1,0 +1,68 @@
+gdn: 1
+id: ww2-facts-scroll
+version: 0.1.0
+name: WW2 Facts
+author: glance-led-dev
+description: A different Second World War fact every day - what happened, when, where, and why it mattered. A curated, dated roster covering every front, the home fronts, codebreaking, production, and the human cost.
+category: Education
+entry: app.star
+
+width: 192
+height: 32
+# The entry turns over once a day, on ctx.now.yday. Hourly keeps the panel
+# current through midnight without asking for anything that has changed.
+refresh: 3600
+
+pages: [event, why, timeline]
+
+inputs:
+  - key: front
+    type: choice
+    app_input_type: dropdown
+    label: Front
+    default: "ALL FRONTS"
+    help: >-
+      Which part of the war the daily entry is drawn from. ALL FRONTS uses the
+      whole roster. Each front has its own colour and its own artwork - a
+      fighter for Western Europe, a tank for the Eastern Front, a carrier for
+      the Pacific, a memorial flame for Remembrance. If a front and a period
+      together match nothing, the app falls back to the whole roster rather
+      than showing an empty panel.
+    choices:
+      - "ALL FRONTS"
+      - "WESTERN EUROPE"
+      - "EASTERN FRONT"
+      - "PACIFIC & ASIA"
+      - "NORTH AFRICA"
+      - "ATLANTIC & SEA"
+      - "HOME FRONT"
+      - "SCIENCE & CODE"
+      - "WAR PRODUCTION"
+      - "REMEMBRANCE"
+      - "CONFERENCES"
+  - key: era
+    type: choice
+    app_input_type: dropdown
+    label: Period
+    default: "WHOLE WAR"
+    help: >-
+      Which years the daily entry is drawn from. BEFORE THE WAR covers the
+      run-up, from the 1937 invasion of China to August 1939. The timeline page
+      dims the years outside the period you choose, so you can see where the
+      entry sits in the war.
+    choices:
+      - "WHOLE WAR"
+      - "BEFORE THE WAR"
+      - "1939-1941"
+      - "1942-1943"
+      - "1944-1945"
+  - key: extra
+    type: string
+    app_input_type: checkbox
+    label: Wikipedia line
+    default: true
+    help: >-
+      On by default. Adds one live line of supplementary context from Wikipedia
+      to the timeline page. Turn it off to run the app entirely from its own
+      curated text, with no network request at all. The other two pages never
+      use the network, so the panel always says something true.

@@ -1,0 +1,65 @@
+gdn: 1
+id: events-near-me-scroll
+version: 0.1.0
+name: Events Near Me
+author: glance-led-dev
+description: What is on near you - the next ticketed event around your ZIP code with its date, time and venue, then the ones after it. Concerts, games, comedy and theatre, from Ticketmaster.
+category: Entertainment
+entry: app.star
+
+width: 192
+height: 32
+# Listings move when something goes on sale or gets rescheduled, neither of
+# which is a by-the-minute event. Half an hour is honest.
+refresh: 21600
+
+pages: [next, upcoming]
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: ZIP code
+    default: "33602"
+    help: The US ZIP code to search around. Ticketmaster covers the United States here, so a postcode from elsewhere will find nothing.
+  - key: category
+    type: choice
+    app_input_type: dropdown
+    label: Event type
+    default: "ALL"
+    help: Which kind of event to show. OTHER is Ticketmaster's own miscellaneous bucket, which is where a lot of one-off local events end up.
+    choices:
+      - "ALL"
+      - "MUSIC"
+      - "SPORTS"
+      - "ARTS AND THEATRE"
+      - "FILM"
+      - "OTHER"
+  - key: radius
+    type: choice
+    app_input_type: dropdown
+    label: Search radius
+    default: "25 MILES"
+    help: How far from the ZIP code to look.
+    choices:
+      - "10 MILES"
+      - "25 MILES"
+      - "50 MILES"
+      - "100 MILES"
+  - key: window
+    type: choice
+    app_input_type: dropdown
+    label: How far ahead
+    default: "NEXT 30 DAYS"
+    help: How far into the future to look. A short window tells you what is on this week; ANYTIME will reach months out for arena shows that go on sale early.
+    choices:
+      - "NEXT 7 DAYS"
+      - "NEXT 30 DAYS"
+      - "NEXT 90 DAYS"
+      - "ANYTIME"
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: Ticketmaster API key (developer.ticketmaster.com)
+    default: ""
+    help: "Your own free Discovery API key from https://developer-acct.ticketmaster.com/user/register - no cost, and the key is issued as soon as you make an app. The panel cannot show anything without one."

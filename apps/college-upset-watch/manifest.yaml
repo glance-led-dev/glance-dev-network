@@ -1,0 +1,596 @@
+gdn: 1
+id: college-upset-watch
+version: 0.1.0
+name: College Upset Watch
+author: glance-led-dev
+description: The week's biggest college football upsets - the underdog's logo beside the ranked team it knocked off, split by a lightning strike, with the final score, the point spread and moneyline it overcame - plus how many ranked teams fell. Finals only, FBS, no key needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 300 s: one upset per 5-minute frame. The current week's scoreboard is
+# cached 10 minutes, a past week's 6 hours, and a final's closing line a day.
+refresh: 7200
+
+pages: [upsets, carnage]
+
+# FBS logos: L/ is the 40 x 24 hero size, S/ the 24 x 18 list size, named by
+# ESPN abbreviation (Texas A&M is TAM - an & is not allowed in an asset name).
+assets:
+  - L/AFA.png
+  - L/AKR.png
+  - L/ALA.png
+  - L/APP.png
+  - L/ARIZ.png
+  - L/ARK.png
+  - L/ARMY.png
+  - L/ARST.png
+  - L/ASU.png
+  - L/AUB.png
+  - L/BALL.png
+  - L/BAY.png
+  - L/BC.png
+  - L/BGSU.png
+  - L/BOIS.png
+  - L/BUFF.png
+  - L/BYU.png
+  - L/CAL.png
+  - L/CCU.png
+  - L/CIN.png
+  - L/CLEM.png
+  - L/CLT.png
+  - L/CMU.png
+  - L/COLO.png
+  - L/CONN.png
+  - L/CSU.png
+  - L/DEL.png
+  - L/DUKE.png
+  - L/ECU.png
+  - L/EMU.png
+  - L/FAU.png
+  - L/FIU.png
+  - L/FLA.png
+  - L/FRES.png
+  - L/FSU.png
+  - L/GASO.png
+  - L/GAST.png
+  - L/GT.png
+  - L/HAW.png
+  - L/HOU.png
+  - L/ILL.png
+  - L/IOWA.png
+  - L/ISU.png
+  - L/IU.png
+  - L/JMU.png
+  - L/JXST.png
+  - L/KENN.png
+  - L/KENT.png
+  - L/KSU.png
+  - L/KU.png
+  - L/LIB.png
+  - L/LOU.png
+  - L/LSU.png
+  - L/LT.png
+  - L/M-OH.png
+  - L/MASS.png
+  - L/MD.png
+  - L/MEM.png
+  - L/MIA.png
+  - L/MICH.png
+  - L/MINN.png
+  - L/MISS.png
+  - L/MIZ.png
+  - L/MOST.png
+  - L/MRSH.png
+  - L/MSST.png
+  - L/MSU.png
+  - L/MTSU.png
+  - L/NAVY.png
+  - L/NCSU.png
+  - L/ND.png
+  - L/NDSU.png
+  - L/NEB.png
+  - L/NEV.png
+  - L/NIU.png
+  - L/NMSU.png
+  - L/NU.png
+  - L/ODU.png
+  - L/OHIO.png
+  - L/OKST.png
+  - L/ORE.png
+  - L/ORST.png
+  - L/OSU.png
+  - L/OU.png
+  - L/PITT.png
+  - L/PSU.png
+  - L/PUR.png
+  - L/RICE.png
+  - L/RUTG.png
+  - L/SAC.png
+  - L/SC.png
+  - L/SDSU.png
+  - L/SHSU.png
+  - L/SJSU.png
+  - L/SMU.png
+  - L/STAN.png
+  - L/SYR.png
+  - L/TAM.png
+  - L/TCU.png
+  - L/TEM.png
+  - L/TENN.png
+  - L/TEX.png
+  - L/TLSA.png
+  - L/TOL.png
+  - L/TROY.png
+  - L/TTU.png
+  - L/TULN.png
+  - L/TXST.png
+  - L/UAB.png
+  - L/UCF.png
+  - L/UCLA.png
+  - L/UGA.png
+  - L/UK.png
+  - L/UL.png
+  - L/ULM.png
+  - L/UNC.png
+  - L/UNLV.png
+  - L/UNM.png
+  - L/UNT.png
+  - L/USA.png
+  - L/USC.png
+  - L/USF.png
+  - L/USM.png
+  - L/USU.png
+  - L/UTAH.png
+  - L/UTEP.png
+  - L/UTSA.png
+  - L/UVA.png
+  - L/VAN.png
+  - L/VT.png
+  - L/WAKE.png
+  - L/WASH.png
+  - L/WIS.png
+  - L/WKU.png
+  - L/WMU.png
+  - L/WSU.png
+  - L/WVU.png
+  - L/WYO.png
+  - S/AFA.png
+  - S/AKR.png
+  - S/ALA.png
+  - S/APP.png
+  - S/ARIZ.png
+  - S/ARK.png
+  - S/ARMY.png
+  - S/ARST.png
+  - S/ASU.png
+  - S/AUB.png
+  - S/BALL.png
+  - S/BAY.png
+  - S/BC.png
+  - S/BGSU.png
+  - S/BOIS.png
+  - S/BUFF.png
+  - S/BYU.png
+  - S/CAL.png
+  - S/CCU.png
+  - S/CIN.png
+  - S/CLEM.png
+  - S/CLT.png
+  - S/CMU.png
+  - S/COLO.png
+  - S/CONN.png
+  - S/CSU.png
+  - S/DEL.png
+  - S/DUKE.png
+  - S/ECU.png
+  - S/EMU.png
+  - S/FAU.png
+  - S/FIU.png
+  - S/FLA.png
+  - S/FRES.png
+  - S/FSU.png
+  - S/GASO.png
+  - S/GAST.png
+  - S/GT.png
+  - S/HAW.png
+  - S/HOU.png
+  - S/ILL.png
+  - S/IOWA.png
+  - S/ISU.png
+  - S/IU.png
+  - S/JMU.png
+  - S/JXST.png
+  - S/KENN.png
+  - S/KENT.png
+  - S/KSU.png
+  - S/KU.png
+  - S/LIB.png
+  - S/LOU.png
+  - S/LSU.png
+  - S/LT.png
+  - S/M-OH.png
+  - S/MASS.png
+  - S/MD.png
+  - S/MEM.png
+  - S/MIA.png
+  - S/MICH.png
+  - S/MINN.png
+  - S/MISS.png
+  - S/MIZ.png
+  - S/MOST.png
+  - S/MRSH.png
+  - S/MSST.png
+  - S/MSU.png
+  - S/MTSU.png
+  - S/NAVY.png
+  - S/NCSU.png
+  - S/ND.png
+  - S/NDSU.png
+  - S/NEB.png
+  - S/NEV.png
+  - S/NIU.png
+  - S/NMSU.png
+  - S/NU.png
+  - S/ODU.png
+  - S/OHIO.png
+  - S/OKST.png
+  - S/ORE.png
+  - S/ORST.png
+  - S/OSU.png
+  - S/OU.png
+  - S/PITT.png
+  - S/PSU.png
+  - S/PUR.png
+  - S/RICE.png
+  - S/RUTG.png
+  - S/SAC.png
+  - S/SC.png
+  - S/SDSU.png
+  - S/SHSU.png
+  - S/SJSU.png
+  - S/SMU.png
+  - S/STAN.png
+  - S/SYR.png
+  - S/TAM.png
+  - S/TCU.png
+  - S/TEM.png
+  - S/TENN.png
+  - S/TEX.png
+  - S/TLSA.png
+  - S/TOL.png
+  - S/TROY.png
+  - S/TTU.png
+  - S/TULN.png
+  - S/TXST.png
+  - S/UAB.png
+  - S/UCF.png
+  - S/UCLA.png
+  - S/UGA.png
+  - S/UK.png
+  - S/UL.png
+  - S/ULM.png
+  - S/UNC.png
+  - S/UNLV.png
+  - S/UNM.png
+  - S/UNT.png
+  - S/USA.png
+  - S/USC.png
+  - S/USF.png
+  - S/USM.png
+  - S/USU.png
+  - S/UTAH.png
+  - S/UTEP.png
+  - S/UTSA.png
+  - S/UVA.png
+  - S/VAN.png
+  - S/VT.png
+  - S/WAKE.png
+  - S/WASH.png
+  - S/WIS.png
+  - S/WKU.png
+  - S/WMU.png
+  - S/WSU.png
+  - S/WVU.png
+  - S/WYO.png
+
+inputs:
+  - key: size
+    type: choice
+    app_input_type: dropdown
+    label: Upsets to show
+    default: "ALL UPSETS"
+    help: Ranked means the AP Top 25, then the CFP Top 25 once it is out. ALL UPSETS shows every ranked team that lost to an unranked or lower-ranked opponent. BIG UPSETS ONLY keeps the winners who were 7+ point underdogs (or an unranked team over the top 10 when no line is on record).
+    choices:
+      - "ALL UPSETS"
+      - "BIG UPSETS ONLY"
+    options:
+      - "ALL UPSETS"
+      - "BIG UPSETS ONLY"
+  - key: school
+    type: choice
+    app_input_type: dropdown
+    label: Your school
+    default: "NONE"
+    help: Optional. Your school's upsets - pulled off or suffered - lead the rotation, and its logo gets gold corner brackets.
+    choices:
+      - "NONE"
+      - "AIR FORCE"
+      - "AKRON"
+      - "ALABAMA"
+      - "APP STATE"
+      - "ARIZONA"
+      - "ARIZONA STATE"
+      - "ARKANSAS"
+      - "ARKANSAS STATE"
+      - "ARMY"
+      - "AUBURN"
+      - "BALL STATE"
+      - "BAYLOR"
+      - "BOISE STATE"
+      - "BOSTON COLLEGE"
+      - "BOWLING GREEN"
+      - "BUFFALO"
+      - "BYU"
+      - "CALIFORNIA"
+      - "CENTRAL MICHIGAN"
+      - "CHARLOTTE"
+      - "CINCINNATI"
+      - "CLEMSON"
+      - "COASTAL CAROLINA"
+      - "COLORADO"
+      - "COLORADO STATE"
+      - "DELAWARE"
+      - "DUKE"
+      - "EAST CAROLINA"
+      - "EASTERN MICHIGAN"
+      - "FLORIDA"
+      - "FLORIDA ATLANTIC"
+      - "FLORIDA INTERNATIONAL"
+      - "FLORIDA STATE"
+      - "FRESNO STATE"
+      - "GEORGIA"
+      - "GEORGIA SOUTHERN"
+      - "GEORGIA STATE"
+      - "GEORGIA TECH"
+      - "HAWAI'I"
+      - "HOUSTON"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "IOWA STATE"
+      - "JACKSONVILLE STATE"
+      - "JAMES MADISON"
+      - "KANSAS"
+      - "KANSAS STATE"
+      - "KENNESAW STATE"
+      - "KENT STATE"
+      - "KENTUCKY"
+      - "LIBERTY"
+      - "LOUISIANA"
+      - "LOUISIANA TECH"
+      - "LOUISVILLE"
+      - "LSU"
+      - "MARSHALL"
+      - "MARYLAND"
+      - "MASSACHUSETTS"
+      - "MEMPHIS"
+      - "MIAMI"
+      - "MIAMI (OH)"
+      - "MICHIGAN"
+      - "MICHIGAN STATE"
+      - "MIDDLE TENNESSEE"
+      - "MINNESOTA"
+      - "MISSISSIPPI STATE"
+      - "MISSOURI"
+      - "MISSOURI STATE"
+      - "NAVY"
+      - "NC STATE"
+      - "NEBRASKA"
+      - "NEVADA"
+      - "NEW MEXICO"
+      - "NEW MEXICO STATE"
+      - "NORTH CAROLINA"
+      - "NORTH DAKOTA STATE"
+      - "NORTH TEXAS"
+      - "NORTHERN ILLINOIS"
+      - "NORTHWESTERN"
+      - "NOTRE DAME"
+      - "OHIO"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OLD DOMINION"
+      - "OLE MISS"
+      - "OREGON"
+      - "OREGON STATE"
+      - "PENN STATE"
+      - "PITTSBURGH"
+      - "PURDUE"
+      - "RICE"
+      - "RUTGERS"
+      - "SACRAMENTO STATE"
+      - "SAM HOUSTON"
+      - "SAN DIEGO STATE"
+      - "SAN JOSE STATE"
+      - "SMU"
+      - "SOUTH ALABAMA"
+      - "SOUTH CAROLINA"
+      - "SOUTH FLORIDA"
+      - "SOUTHERN MISS"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TEMPLE"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "TEXAS STATE"
+      - "TEXAS TECH"
+      - "TOLEDO"
+      - "TROY"
+      - "TULANE"
+      - "TULSA"
+      - "UAB"
+      - "UCF"
+      - "UCLA"
+      - "UCONN"
+      - "UL MONROE"
+      - "UNLV"
+      - "USC"
+      - "UTAH"
+      - "UTAH STATE"
+      - "UTEP"
+      - "UTSA"
+      - "VANDERBILT"
+      - "VIRGINIA"
+      - "VIRGINIA TECH"
+      - "WAKE FOREST"
+      - "WASHINGTON"
+      - "WASHINGTON STATE"
+      - "WEST VIRGINIA"
+      - "WESTERN KENTUCKY"
+      - "WESTERN MICHIGAN"
+      - "WISCONSIN"
+      - "WYOMING"
+    options:
+      - "NONE"
+      - "AIR FORCE"
+      - "AKRON"
+      - "ALABAMA"
+      - "APP STATE"
+      - "ARIZONA"
+      - "ARIZONA STATE"
+      - "ARKANSAS"
+      - "ARKANSAS STATE"
+      - "ARMY"
+      - "AUBURN"
+      - "BALL STATE"
+      - "BAYLOR"
+      - "BOISE STATE"
+      - "BOSTON COLLEGE"
+      - "BOWLING GREEN"
+      - "BUFFALO"
+      - "BYU"
+      - "CALIFORNIA"
+      - "CENTRAL MICHIGAN"
+      - "CHARLOTTE"
+      - "CINCINNATI"
+      - "CLEMSON"
+      - "COASTAL CAROLINA"
+      - "COLORADO"
+      - "COLORADO STATE"
+      - "DELAWARE"
+      - "DUKE"
+      - "EAST CAROLINA"
+      - "EASTERN MICHIGAN"
+      - "FLORIDA"
+      - "FLORIDA ATLANTIC"
+      - "FLORIDA INTERNATIONAL"
+      - "FLORIDA STATE"
+      - "FRESNO STATE"
+      - "GEORGIA"
+      - "GEORGIA SOUTHERN"
+      - "GEORGIA STATE"
+      - "GEORGIA TECH"
+      - "HAWAI'I"
+      - "HOUSTON"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "IOWA STATE"
+      - "JACKSONVILLE STATE"
+      - "JAMES MADISON"
+      - "KANSAS"
+      - "KANSAS STATE"
+      - "KENNESAW STATE"
+      - "KENT STATE"
+      - "KENTUCKY"
+      - "LIBERTY"
+      - "LOUISIANA"
+      - "LOUISIANA TECH"
+      - "LOUISVILLE"
+      - "LSU"
+      - "MARSHALL"
+      - "MARYLAND"
+      - "MASSACHUSETTS"
+      - "MEMPHIS"
+      - "MIAMI"
+      - "MIAMI (OH)"
+      - "MICHIGAN"
+      - "MICHIGAN STATE"
+      - "MIDDLE TENNESSEE"
+      - "MINNESOTA"
+      - "MISSISSIPPI STATE"
+      - "MISSOURI"
+      - "MISSOURI STATE"
+      - "NAVY"
+      - "NC STATE"
+      - "NEBRASKA"
+      - "NEVADA"
+      - "NEW MEXICO"
+      - "NEW MEXICO STATE"
+      - "NORTH CAROLINA"
+      - "NORTH DAKOTA STATE"
+      - "NORTH TEXAS"
+      - "NORTHERN ILLINOIS"
+      - "NORTHWESTERN"
+      - "NOTRE DAME"
+      - "OHIO"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OLD DOMINION"
+      - "OLE MISS"
+      - "OREGON"
+      - "OREGON STATE"
+      - "PENN STATE"
+      - "PITTSBURGH"
+      - "PURDUE"
+      - "RICE"
+      - "RUTGERS"
+      - "SACRAMENTO STATE"
+      - "SAM HOUSTON"
+      - "SAN DIEGO STATE"
+      - "SAN JOSE STATE"
+      - "SMU"
+      - "SOUTH ALABAMA"
+      - "SOUTH CAROLINA"
+      - "SOUTH FLORIDA"
+      - "SOUTHERN MISS"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TEMPLE"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "TEXAS STATE"
+      - "TEXAS TECH"
+      - "TOLEDO"
+      - "TROY"
+      - "TULANE"
+      - "TULSA"
+      - "UAB"
+      - "UCF"
+      - "UCLA"
+      - "UCONN"
+      - "UL MONROE"
+      - "UNLV"
+      - "USC"
+      - "UTAH"
+      - "UTAH STATE"
+      - "UTEP"
+      - "UTSA"
+      - "VANDERBILT"
+      - "VIRGINIA"
+      - "VIRGINIA TECH"
+      - "WAKE FOREST"
+      - "WASHINGTON"
+      - "WASHINGTON STATE"
+      - "WEST VIRGINIA"
+      - "WESTERN KENTUCKY"
+      - "WESTERN MICHIGAN"
+      - "WISCONSIN"
+      - "WYOMING"

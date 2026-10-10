@@ -1,0 +1,73 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: golf-team-cup
+version: 0.1.0
+name: Golf Team Cup
+author: glance-led-dev
+description: Live board for golf's team match-play cups -- the Presidents Cup (USA v International) and the Ryder Cup (USA v Europe). A broadcast-style hero with both teams' crests, points and a tug-of-war bar to the winning line, then every match of the current session with who's up and through how many holes. Between cups it counts down to the next one and shows the last result and the roll of honour.
+category: Sports
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed). Built for a 192-wide scroll panel.
+width: 192
+height: 32
+
+# Two minutes: match play moves a hole every ~15 minutes per match, so this
+# catches every change while keeping the ESPN calls light.
+refresh: 300
+
+# cup    = hero scoreboard (between cups: countdown to the next cup)
+# board1 = first half of the session's matches (between cups: last result)
+# board2 = second half of the matches (between cups: roll of honour)
+pages: [cup, board1, board2]
+
+assets: []
+
+# What the client fills in at install time.
+inputs:
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/New_York"
+    choices:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "Pacific/Honolulu"
+      - "Europe/London"
+      - "Europe/Dublin"
+      - "Europe/Paris"
+      - "Africa/Johannesburg"
+      - "Asia/Dubai"
+      - "Asia/Tokyo"
+      - "Australia/Sydney"
+      - "Pacific/Auckland"
+    options:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "Pacific/Honolulu"
+      - "Europe/London"
+      - "Europe/Dublin"
+      - "Europe/Paris"
+      - "Africa/Johannesburg"
+      - "Asia/Dubai"
+      - "Asia/Tokyo"
+      - "Australia/Sydney"
+      - "Pacific/Auckland"
+    help: Tee times and the countdown to the next cup are shown in this zone.
+
+  - key: clock
+    type: choice
+    app_input_type: dropdown
+    label: Clock
+    default: "12h"
+    choices: ["12h", "24h"]
+    options: ["12h", "24h"]
+    help: 12-hour (1:11PM) or 24-hour (13:11) tee times.

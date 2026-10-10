@@ -1,0 +1,28 @@
+gdn: 1
+id: grid-carbon-scroll
+version: 0.1.0
+name: Grid Carbon
+author: glance-led-dev
+description: How clean the power grid is right now - the carbon-free share, the carbon intensity of a kilowatt-hour, and what is actually generating it. Britain, California, Texas or New York, no key.
+category: Science
+entry: app.star
+
+width: 192
+height: 32
+# Britain republishes every half hour, the US grids every five minutes.
+refresh: 900
+
+pages: [now, mix]
+
+inputs:
+  - key: region
+    type: choice
+    app_input_type: dropdown
+    label: Grid
+    default: "GREAT BRITAIN"
+    help: Which grid to report on. GREAT BRITAIN is National Grid, which publishes a measured carbon intensity. The three US grids publish a fuel mix only, so their intensity is estimated from it and marked EST on the panel.
+    choices:
+      - "GREAT BRITAIN"
+      - "CALIFORNIA"
+      - "TEXAS"
+      - "NEW YORK"

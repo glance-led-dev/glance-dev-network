@@ -1,6 +1,6 @@
 gdn: 1
 id: bundesliga-tracked-team
-version: 0.1.0
+version: 0.2.1
 name: "Bundesliga Tracked Team"
 author: "Tim McCabe"
 description: Track a Bundesliga club's most recent match, next fixture, and league standing.
@@ -33,6 +33,24 @@ assets:
   - S0422.png
   - SCP22.png
   - ELV22.png
+  - DOR28.png
+  - MUN28.png
+  - B0428.png
+  - RBL28.png
+  - VFB28.png
+  - SGE28.png
+  - SCF28.png
+  - TSG28.png
+  - BMG28.png
+  - M0528.png
+  - FCU28.png
+  - SVW28.png
+  - FCA28.png
+  - KOE28.png
+  - HSV28.png
+  - S0428.png
+  - SCP28.png
+  - ELV28.png
 
 inputs:
   - key: team

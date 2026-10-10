@@ -1,0 +1,205 @@
+gdn: 1
+id: college-stadium-gameday
+version: 0.1.0
+name: College Stadium Gameday
+author: glance-led-dev
+description: The home stadiums of college football, drawn in pixel art - the nickname, capacity, the year it opened and the gameday stories that make it loud. For 58 FBS programs. No network needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 120 s: each refresh shows the next gameday story. With ALL SCHOOLS the
+# school changes every 20 minutes so both pages show the same one.
+refresh: 1800
+
+pages: [stadium, gameday]
+
+# School logos, the authored 24 x 18 college set, named S_<ESPN abbreviation>.
+assets:
+  - S_MICH.png
+  - S_PSU.png
+  - S_OSU.png
+  - S_TAMU.png
+  - S_LSU.png
+  - S_TENN.png
+  - S_ALA.png
+  - S_TEX.png
+  - S_UGA.png
+  - S_USC.png
+  - S_NEB.png
+  - S_FLA.png
+  - S_AUB.png
+  - S_OU.png
+  - S_CLEM.png
+  - S_ND.png
+  - S_WIS.png
+  - S_ORE.png
+  - S_WASH.png
+  - S_IOWA.png
+  - S_MSU.png
+  - S_FSU.png
+  - S_MIA.png
+  - S_MISS.png
+  - S_MSST.png
+  - S_ARK.png
+  - S_SC.png
+  - S_UK.png
+  - S_TTU.png
+  - S_BAY.png
+  - S_KSU.png
+  - S_WVU.png
+  - S_UTAH.png
+  - S_BYU.png
+  - S_ASU.png
+  - S_STAN.png
+  - S_CAL.png
+  - S_UCLA.png
+  - S_VT.png
+  - S_UNC.png
+  - S_SYR.png
+  - S_ARMY.png
+  - S_NAVY.png
+  - S_BOIS.png
+  - S_MINN.png
+  - S_ILL.png
+  - S_RUTG.png
+  - S_DUKE.png
+  - S_GT.png
+  - S_PITT.png
+  - S_ISU.png
+  - S_IU.png
+  - S_COLO.png
+  - S_TCU.png
+  - S_MIZ.png
+  - S_OKST.png
+  - S_PUR.png
+  - S_AFA.png
+
+inputs:
+  - key: school
+    type: choice
+    app_input_type: dropdown
+    label: School
+    default: "ALL SCHOOLS"
+    help: Pick a school to show its stadium and gameday stories, or ALL SCHOOLS to tour a new stadium every 20 minutes.
+    choices:
+      - "ALL SCHOOLS"
+      - "AIR FORCE"
+      - "ALABAMA"
+      - "ARIZONA STATE"
+      - "ARKANSAS"
+      - "ARMY"
+      - "AUBURN"
+      - "BAYLOR"
+      - "BOISE STATE"
+      - "BYU"
+      - "CALIFORNIA"
+      - "CLEMSON"
+      - "COLORADO"
+      - "DUKE"
+      - "FLORIDA"
+      - "FLORIDA STATE"
+      - "GEORGIA"
+      - "GEORGIA TECH"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "IOWA STATE"
+      - "KANSAS STATE"
+      - "KENTUCKY"
+      - "LSU"
+      - "MIAMI"
+      - "MICHIGAN"
+      - "MICHIGAN STATE"
+      - "MINNESOTA"
+      - "MISSISSIPPI STATE"
+      - "MISSOURI"
+      - "NAVY"
+      - "NEBRASKA"
+      - "NORTH CAROLINA"
+      - "NOTRE DAME"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OLE MISS"
+      - "OREGON"
+      - "PENN STATE"
+      - "PITTSBURGH"
+      - "PURDUE"
+      - "RUTGERS"
+      - "SOUTH CAROLINA"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "TEXAS TECH"
+      - "UCLA"
+      - "USC"
+      - "UTAH"
+      - "VIRGINIA TECH"
+      - "WASHINGTON"
+      - "WEST VIRGINIA"
+      - "WISCONSIN"
+    options:
+      - "ALL SCHOOLS"
+      - "AIR FORCE"
+      - "ALABAMA"
+      - "ARIZONA STATE"
+      - "ARKANSAS"
+      - "ARMY"
+      - "AUBURN"
+      - "BAYLOR"
+      - "BOISE STATE"
+      - "BYU"
+      - "CALIFORNIA"
+      - "CLEMSON"
+      - "COLORADO"
+      - "DUKE"
+      - "FLORIDA"
+      - "FLORIDA STATE"
+      - "GEORGIA"
+      - "GEORGIA TECH"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "IOWA STATE"
+      - "KANSAS STATE"
+      - "KENTUCKY"
+      - "LSU"
+      - "MIAMI"
+      - "MICHIGAN"
+      - "MICHIGAN STATE"
+      - "MINNESOTA"
+      - "MISSISSIPPI STATE"
+      - "MISSOURI"
+      - "NAVY"
+      - "NEBRASKA"
+      - "NORTH CAROLINA"
+      - "NOTRE DAME"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OLE MISS"
+      - "OREGON"
+      - "PENN STATE"
+      - "PITTSBURGH"
+      - "PURDUE"
+      - "RUTGERS"
+      - "SOUTH CAROLINA"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "TEXAS TECH"
+      - "UCLA"
+      - "USC"
+      - "UTAH"
+      - "VIRGINIA TECH"
+      - "WASHINGTON"
+      - "WEST VIRGINIA"
+      - "WISCONSIN"

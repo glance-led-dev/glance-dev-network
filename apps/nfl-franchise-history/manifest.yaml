@@ -1,0 +1,130 @@
+gdn: 1
+id: nfl-franchise-history
+version: 0.1.0
+name: NFL Franchise History
+author: glance-led-dev
+description: Every NFL club's logo and trophy shelf - the nickname in club colours, home market and founding year, and a Lombardi on the shelf for every Super Bowl win (a ghost for every loss) with a bronze cup for older league titles - then a new frame a minute - true history stories, the all-time series with its rival, and its most famous retired jersey. No key, no network.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 60 s because the trivia page shows a new frame every minute, and ALL TEAMS
+# moves to the next club every 10 minutes. There is no network to spare -
+# every story is baked in.
+refresh: 1800
+
+pages: [legacy, trivia]
+
+# Team logos: 40 x 24 pixel art, one per club, named by ESPN abbreviation,
+# plus the NFL shield.
+assets:
+  - assets/ARI.png
+  - assets/ATL.png
+  - assets/BAL.png
+  - assets/BUF.png
+  - assets/CAR.png
+  - assets/CHI.png
+  - assets/CIN.png
+  - assets/CLE.png
+  - assets/DAL.png
+  - assets/DEN.png
+  - assets/DET.png
+  - assets/GB.png
+  - assets/HOU.png
+  - assets/IND.png
+  - assets/JAX.png
+  - assets/KC.png
+  - assets/LV.png
+  - assets/LAC.png
+  - assets/LAR.png
+  - assets/MIA.png
+  - assets/MIN.png
+  - assets/NE.png
+  - assets/NO.png
+  - assets/NYG.png
+  - assets/NYJ.png
+  - assets/PHI.png
+  - assets/PIT.png
+  - assets/SF.png
+  - assets/SEA.png
+  - assets/TB.png
+  - assets/TEN.png
+  - assets/WSH.png
+  - assets/NFL.png
+
+inputs:
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Team
+    default: "ALL TEAMS"
+    help: ALL TEAMS moves through all 32 clubs, a new one every 10 minutes. Pick a club to see only its franchise card and its stories.
+    choices:
+      - "ALL TEAMS"
+      - "ARIZONA CARDINALS"
+      - "ATLANTA FALCONS"
+      - "BALTIMORE RAVENS"
+      - "BUFFALO BILLS"
+      - "CAROLINA PANTHERS"
+      - "CHICAGO BEARS"
+      - "CINCINNATI BENGALS"
+      - "CLEVELAND BROWNS"
+      - "DALLAS COWBOYS"
+      - "DENVER BRONCOS"
+      - "DETROIT LIONS"
+      - "GREEN BAY PACKERS"
+      - "HOUSTON TEXANS"
+      - "INDIANAPOLIS COLTS"
+      - "JACKSONVILLE JAGUARS"
+      - "KANSAS CITY CHIEFS"
+      - "LAS VEGAS RAIDERS"
+      - "LOS ANGELES CHARGERS"
+      - "LOS ANGELES RAMS"
+      - "MIAMI DOLPHINS"
+      - "MINNESOTA VIKINGS"
+      - "NEW ENGLAND PATRIOTS"
+      - "NEW ORLEANS SAINTS"
+      - "NEW YORK GIANTS"
+      - "NEW YORK JETS"
+      - "PHILADELPHIA EAGLES"
+      - "PITTSBURGH STEELERS"
+      - "SAN FRANCISCO 49ERS"
+      - "SEATTLE SEAHAWKS"
+      - "TAMPA BAY BUCCANEERS"
+      - "TENNESSEE TITANS"
+      - "WASHINGTON COMMANDERS"
+    options:
+      - "ALL TEAMS"
+      - "ARIZONA CARDINALS"
+      - "ATLANTA FALCONS"
+      - "BALTIMORE RAVENS"
+      - "BUFFALO BILLS"
+      - "CAROLINA PANTHERS"
+      - "CHICAGO BEARS"
+      - "CINCINNATI BENGALS"
+      - "CLEVELAND BROWNS"
+      - "DALLAS COWBOYS"
+      - "DENVER BRONCOS"
+      - "DETROIT LIONS"
+      - "GREEN BAY PACKERS"
+      - "HOUSTON TEXANS"
+      - "INDIANAPOLIS COLTS"
+      - "JACKSONVILLE JAGUARS"
+      - "KANSAS CITY CHIEFS"
+      - "LAS VEGAS RAIDERS"
+      - "LOS ANGELES CHARGERS"
+      - "LOS ANGELES RAMS"
+      - "MIAMI DOLPHINS"
+      - "MINNESOTA VIKINGS"
+      - "NEW ENGLAND PATRIOTS"
+      - "NEW ORLEANS SAINTS"
+      - "NEW YORK GIANTS"
+      - "NEW YORK JETS"
+      - "PHILADELPHIA EAGLES"
+      - "PITTSBURGH STEELERS"
+      - "SAN FRANCISCO 49ERS"
+      - "SEATTLE SEAHAWKS"
+      - "TAMPA BAY BUCCANEERS"
+      - "TENNESSEE TITANS"
+      - "WASHINGTON COMMANDERS"

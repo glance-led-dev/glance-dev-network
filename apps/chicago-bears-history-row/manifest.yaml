@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-bears-history-row
+version: 0.1.0
+name: "Chicago Bears History Row"
+author: "FCYC"
+description: A new Glance app.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - chicago_bears_history_row.png

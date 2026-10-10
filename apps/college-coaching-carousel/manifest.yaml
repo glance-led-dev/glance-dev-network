@@ -1,0 +1,443 @@
+gdn: 1
+id: college-coaching-carousel
+version: 0.1.0
+name: College Coaching Carousel
+author: glance-led-dev
+description: Your college football program's head coach, live from ESPN - a pixel-art coach in your school's colours, years in charge counted in pennants, this season's record and AP rank, and a trophy case of every title the coach has won. No key needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 900 s: the coach changes a few times a year and the record once a week.
+# Feeds are cached longer - record 1 h, coaching staff 6 h.
+refresh: 14400
+
+pages: [coach, resume]
+
+# 24 x 18 school logos (S/), drawn unscaled on the scoreboard, named as in the shared FBS logo set.
+assets:
+  - S/AFA.png
+  - S/AKR.png
+  - S/ALA.png
+  - S/APP.png
+  - S/ARIZ.png
+  - S/ARK.png
+  - S/ARMY.png
+  - S/ARST.png
+  - S/ASU.png
+  - S/AUB.png
+  - S/BALL.png
+  - S/BAY.png
+  - S/BC.png
+  - S/BGSU.png
+  - S/BOIS.png
+  - S/BUFF.png
+  - S/BYU.png
+  - S/CAL.png
+  - S/CCU.png
+  - S/CIN.png
+  - S/CLEM.png
+  - S/CLT.png
+  - S/CMU.png
+  - S/COLO.png
+  - S/CONN.png
+  - S/CSU.png
+  - S/DEL.png
+  - S/DUKE.png
+  - S/ECU.png
+  - S/EMU.png
+  - S/FAU.png
+  - S/FIU.png
+  - S/FLA.png
+  - S/FRES.png
+  - S/FSU.png
+  - S/GASO.png
+  - S/GAST.png
+  - S/GT.png
+  - S/HAW.png
+  - S/HOU.png
+  - S/ILL.png
+  - S/IOWA.png
+  - S/ISU.png
+  - S/IU.png
+  - S/JMU.png
+  - S/JXST.png
+  - S/KENN.png
+  - S/KENT.png
+  - S/KSU.png
+  - S/KU.png
+  - S/LIB.png
+  - S/LOU.png
+  - S/LSU.png
+  - S/LT.png
+  - S/M-OH.png
+  - S/MASS.png
+  - S/MD.png
+  - S/MEM.png
+  - S/MIA.png
+  - S/MICH.png
+  - S/MINN.png
+  - S/MISS.png
+  - S/MIZ.png
+  - S/MOST.png
+  - S/MRSH.png
+  - S/MSST.png
+  - S/MSU.png
+  - S/MTSU.png
+  - S/NAVY.png
+  - S/NCSU.png
+  - S/ND.png
+  - S/NDSU.png
+  - S/NEB.png
+  - S/NEV.png
+  - S/NIU.png
+  - S/NMSU.png
+  - S/NU.png
+  - S/ODU.png
+  - S/OHIO.png
+  - S/OKST.png
+  - S/ORE.png
+  - S/ORST.png
+  - S/OSU.png
+  - S/OU.png
+  - S/PITT.png
+  - S/PSU.png
+  - S/PUR.png
+  - S/RICE.png
+  - S/RUTG.png
+  - S/SAC.png
+  - S/SC.png
+  - S/SDSU.png
+  - S/SHSU.png
+  - S/SJSU.png
+  - S/SMU.png
+  - S/STAN.png
+  - S/SYR.png
+  - S/TAMU.png
+  - S/TCU.png
+  - S/TEM.png
+  - S/TENN.png
+  - S/TEX.png
+  - S/TLSA.png
+  - S/TOL.png
+  - S/TROY.png
+  - S/TTU.png
+  - S/TULN.png
+  - S/TXST.png
+  - S/UAB.png
+  - S/UCF.png
+  - S/UCLA.png
+  - S/UGA.png
+  - S/UK.png
+  - S/UL.png
+  - S/ULM.png
+  - S/UNC.png
+  - S/UNLV.png
+  - S/UNM.png
+  - S/UNT.png
+  - S/USA.png
+  - S/USC.png
+  - S/USF.png
+  - S/USM.png
+  - S/USU.png
+  - S/UTAH.png
+  - S/UTEP.png
+  - S/UTSA.png
+  - S/UVA.png
+  - S/VAN.png
+  - S/VT.png
+  - S/WAKE.png
+  - S/WASH.png
+  - S/WIS.png
+  - S/WKU.png
+  - S/WMU.png
+  - S/WSU.png
+  - S/WVU.png
+  - S/WYO.png
+
+inputs:
+  - key: school
+    type: choice
+    app_input_type: dropdown
+    label: School
+    default: "ALABAMA"
+    help: Any FBS program. The coach and record come live from ESPN.
+    choices:
+      - "AIR FORCE"
+      - "AKRON"
+      - "ALABAMA"
+      - "APP STATE"
+      - "ARIZONA"
+      - "ARIZONA STATE"
+      - "ARKANSAS"
+      - "ARKANSAS STATE"
+      - "ARMY"
+      - "AUBURN"
+      - "BYU"
+      - "BALL STATE"
+      - "BAYLOR"
+      - "BOISE STATE"
+      - "BOSTON COLLEGE"
+      - "BOWLING GREEN"
+      - "BUFFALO"
+      - "CALIFORNIA"
+      - "CENTRAL MICHIGAN"
+      - "CHARLOTTE"
+      - "CINCINNATI"
+      - "CLEMSON"
+      - "COASTAL CAROLINA"
+      - "COLORADO"
+      - "COLORADO STATE"
+      - "DELAWARE"
+      - "DUKE"
+      - "EAST CAROLINA"
+      - "EASTERN MICHIGAN"
+      - "FLORIDA"
+      - "FLORIDA ATLANTIC"
+      - "FLORIDA INTERNATIONAL"
+      - "FLORIDA STATE"
+      - "FRESNO STATE"
+      - "GEORGIA"
+      - "GEORGIA SOUTHERN"
+      - "GEORGIA STATE"
+      - "GEORGIA TECH"
+      - "HAWAII"
+      - "HOUSTON"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "IOWA STATE"
+      - "JACKSONVILLE STATE"
+      - "JAMES MADISON"
+      - "KANSAS"
+      - "KANSAS STATE"
+      - "KENNESAW STATE"
+      - "KENT STATE"
+      - "KENTUCKY"
+      - "LSU"
+      - "LIBERTY"
+      - "LOUISIANA"
+      - "LOUISIANA TECH"
+      - "LOUISVILLE"
+      - "MARSHALL"
+      - "MARYLAND"
+      - "MASSACHUSETTS"
+      - "MEMPHIS"
+      - "MIAMI"
+      - "MIAMI (OH)"
+      - "MICHIGAN"
+      - "MICHIGAN STATE"
+      - "MIDDLE TENNESSEE"
+      - "MINNESOTA"
+      - "MISSISSIPPI STATE"
+      - "MISSOURI"
+      - "MISSOURI STATE"
+      - "NC STATE"
+      - "NAVY"
+      - "NEBRASKA"
+      - "NEVADA"
+      - "NEW MEXICO"
+      - "NEW MEXICO STATE"
+      - "NORTH CAROLINA"
+      - "NORTH DAKOTA STATE"
+      - "NORTH TEXAS"
+      - "NORTHERN ILLINOIS"
+      - "NORTHWESTERN"
+      - "NOTRE DAME"
+      - "OHIO"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OLD DOMINION"
+      - "OLE MISS"
+      - "OREGON"
+      - "OREGON STATE"
+      - "PENN STATE"
+      - "PITTSBURGH"
+      - "PURDUE"
+      - "RICE"
+      - "RUTGERS"
+      - "SMU"
+      - "SACRAMENTO STATE"
+      - "SAM HOUSTON"
+      - "SAN DIEGO STATE"
+      - "SAN JOSE STATE"
+      - "SOUTH ALABAMA"
+      - "SOUTH CAROLINA"
+      - "SOUTH FLORIDA"
+      - "SOUTHERN MISS"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TEMPLE"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "TEXAS STATE"
+      - "TEXAS TECH"
+      - "TOLEDO"
+      - "TROY"
+      - "TULANE"
+      - "TULSA"
+      - "UAB"
+      - "UCF"
+      - "UCLA"
+      - "UCONN"
+      - "UL MONROE"
+      - "UNLV"
+      - "USC"
+      - "UTEP"
+      - "UTSA"
+      - "UTAH"
+      - "UTAH STATE"
+      - "VANDERBILT"
+      - "VIRGINIA"
+      - "VIRGINIA TECH"
+      - "WAKE FOREST"
+      - "WASHINGTON"
+      - "WASHINGTON STATE"
+      - "WEST VIRGINIA"
+      - "WESTERN KENTUCKY"
+      - "WESTERN MICHIGAN"
+      - "WISCONSIN"
+      - "WYOMING"
+    options:
+      - "AIR FORCE"
+      - "AKRON"
+      - "ALABAMA"
+      - "APP STATE"
+      - "ARIZONA"
+      - "ARIZONA STATE"
+      - "ARKANSAS"
+      - "ARKANSAS STATE"
+      - "ARMY"
+      - "AUBURN"
+      - "BYU"
+      - "BALL STATE"
+      - "BAYLOR"
+      - "BOISE STATE"
+      - "BOSTON COLLEGE"
+      - "BOWLING GREEN"
+      - "BUFFALO"
+      - "CALIFORNIA"
+      - "CENTRAL MICHIGAN"
+      - "CHARLOTTE"
+      - "CINCINNATI"
+      - "CLEMSON"
+      - "COASTAL CAROLINA"
+      - "COLORADO"
+      - "COLORADO STATE"
+      - "DELAWARE"
+      - "DUKE"
+      - "EAST CAROLINA"
+      - "EASTERN MICHIGAN"
+      - "FLORIDA"
+      - "FLORIDA ATLANTIC"
+      - "FLORIDA INTERNATIONAL"
+      - "FLORIDA STATE"
+      - "FRESNO STATE"
+      - "GEORGIA"
+      - "GEORGIA SOUTHERN"
+      - "GEORGIA STATE"
+      - "GEORGIA TECH"
+      - "HAWAII"
+      - "HOUSTON"
+      - "ILLINOIS"
+      - "INDIANA"
+      - "IOWA"
+      - "IOWA STATE"
+      - "JACKSONVILLE STATE"
+      - "JAMES MADISON"
+      - "KANSAS"
+      - "KANSAS STATE"
+      - "KENNESAW STATE"
+      - "KENT STATE"
+      - "KENTUCKY"
+      - "LSU"
+      - "LIBERTY"
+      - "LOUISIANA"
+      - "LOUISIANA TECH"
+      - "LOUISVILLE"
+      - "MARSHALL"
+      - "MARYLAND"
+      - "MASSACHUSETTS"
+      - "MEMPHIS"
+      - "MIAMI"
+      - "MIAMI (OH)"
+      - "MICHIGAN"
+      - "MICHIGAN STATE"
+      - "MIDDLE TENNESSEE"
+      - "MINNESOTA"
+      - "MISSISSIPPI STATE"
+      - "MISSOURI"
+      - "MISSOURI STATE"
+      - "NC STATE"
+      - "NAVY"
+      - "NEBRASKA"
+      - "NEVADA"
+      - "NEW MEXICO"
+      - "NEW MEXICO STATE"
+      - "NORTH CAROLINA"
+      - "NORTH DAKOTA STATE"
+      - "NORTH TEXAS"
+      - "NORTHERN ILLINOIS"
+      - "NORTHWESTERN"
+      - "NOTRE DAME"
+      - "OHIO"
+      - "OHIO STATE"
+      - "OKLAHOMA"
+      - "OKLAHOMA STATE"
+      - "OLD DOMINION"
+      - "OLE MISS"
+      - "OREGON"
+      - "OREGON STATE"
+      - "PENN STATE"
+      - "PITTSBURGH"
+      - "PURDUE"
+      - "RICE"
+      - "RUTGERS"
+      - "SMU"
+      - "SACRAMENTO STATE"
+      - "SAM HOUSTON"
+      - "SAN DIEGO STATE"
+      - "SAN JOSE STATE"
+      - "SOUTH ALABAMA"
+      - "SOUTH CAROLINA"
+      - "SOUTH FLORIDA"
+      - "SOUTHERN MISS"
+      - "STANFORD"
+      - "SYRACUSE"
+      - "TCU"
+      - "TEMPLE"
+      - "TENNESSEE"
+      - "TEXAS"
+      - "TEXAS A&M"
+      - "TEXAS STATE"
+      - "TEXAS TECH"
+      - "TOLEDO"
+      - "TROY"
+      - "TULANE"
+      - "TULSA"
+      - "UAB"
+      - "UCF"
+      - "UCLA"
+      - "UCONN"
+      - "UL MONROE"
+      - "UNLV"
+      - "USC"
+      - "UTEP"
+      - "UTSA"
+      - "UTAH"
+      - "UTAH STATE"
+      - "VANDERBILT"
+      - "VIRGINIA"
+      - "VIRGINIA TECH"
+      - "WAKE FOREST"
+      - "WASHINGTON"
+      - "WASHINGTON STATE"
+      - "WEST VIRGINIA"
+      - "WESTERN KENTUCKY"
+      - "WESTERN MICHIGAN"
+      - "WISCONSIN"
+      - "WYOMING"

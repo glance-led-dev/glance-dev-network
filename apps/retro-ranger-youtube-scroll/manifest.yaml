@@ -1,0 +1,31 @@
+gdn: 1
+id: retro-ranger-youtube-scroll
+version: 0.1.0
+name: Retro Ranger YouTube (Scroll)
+author: Jeff Mocker
+description: YouTube channel stats, latest upload, and subscriber goal on three Scroll pages.
+category: Entertainment
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [channel, latest, goal]
+inputs:
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: YouTube Data API key
+    default: ""
+    help: Enable YouTube Data API v3 in Google Cloud. Blank shows labeled sample data. Never put your key in app.star or this manifest.
+  - key: channelid
+    type: string
+    app_input_type: free-text
+    label: YouTube channel ID or @handle
+    default: "@RetroRangerTV"
+    help: Enter the UC... channel ID from YouTube advanced account settings, or the exact @handle.
+  - key: subscribergoal
+    type: string
+    app_input_type: free-text
+    label: Subscriber goal
+    default: "1500"
+    help: A positive whole number, such as 1500 or 10,000.

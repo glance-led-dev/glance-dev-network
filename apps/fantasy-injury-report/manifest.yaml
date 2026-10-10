@@ -1,0 +1,70 @@
+gdn: 1
+id: fantasy-injury-report
+version: 0.1.0
+name: Fantasy Injury Report
+author: glance-led-dev
+description: This week's NFL injury report ranked by fantasy impact - the QUESTIONABLE and DOUBTFUL calls by projected points, and who is OUT or on IR by points per game, with team logos and an X-ray skeleton that lights up the bone where each player is hurt. From Sleeper, no key needed.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# 120 s: each page moves to the next player every two minutes, the fastest
+# an app that fetches live data may refresh. Projections are cached for 30
+# minutes, season stats and the NFL week for an hour.
+refresh: 900
+
+pages: [gametime, out]
+
+# Team logos: 24 x 18 pixel art named by ESPN abbreviation, drawn unscaled.
+assets:
+  - ARI.png
+  - ATL.png
+  - BAL.png
+  - BUF.png
+  - CAR.png
+  - CHI.png
+  - CIN.png
+  - CLE.png
+  - DAL.png
+  - DEN.png
+  - DET.png
+  - GB.png
+  - HOU.png
+  - IND.png
+  - JAX.png
+  - KC.png
+  - LV.png
+  - LAC.png
+  - LAR.png
+  - MIA.png
+  - MIN.png
+  - NE.png
+  - NO.png
+  - NYG.png
+  - NYJ.png
+  - PHI.png
+  - PIT.png
+  - SF.png
+  - SEA.png
+  - TB.png
+  - TEN.png
+  - WSH.png
+
+inputs:
+  - key: position
+    type: choice
+    app_input_type: dropdown
+    label: Position
+    default: "ALL"
+    help: Show injured players at every fantasy position, or only one.
+    choices: ["ALL", "QB", "RB", "WR", "TE"]
+    options: ["ALL", "QB", "RB", "WR", "TE"]
+  - key: scoring
+    type: choice
+    app_input_type: dropdown
+    label: Scoring
+    default: "PPR"
+    help: The scoring used to rank players and show their projected points this week.
+    choices: ["PPR", "HALF PPR", "STANDARD"]
+    options: ["PPR", "HALF PPR", "STANDARD"]

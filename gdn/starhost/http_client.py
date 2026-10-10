@@ -31,11 +31,17 @@ import hashlib
 import json as _json
 import os
 import random
+import re
 import time
 from pathlib import Path
 from urllib.parse import urlsplit
 
 import requests
+
+try:
+    import fcntl  # POSIX only; used to serialise proxy-list refreshes across renders
+except ImportError:  # non-POSIX (e.g. Windows dev) — the refresh lock becomes a no-op
+    fcntl = None
 
 # Hard per-attempt timeout: an API slower than this is treated as down. A live
 # panel can't wait, so we fail fast rather than tie up a render worker. One
@@ -61,50 +67,149 @@ CACHE_DIR = Path.home() / ".gdn" / "httpcache"
 # http.get to reach the host's own network or cloud metadata. The pool is
 # DOWNLOADED from the URL in the GDN_P environment variable (a provider
 # "download list" link, kept as a host secret, never in the repo). If GDN_P is
-# unset (e.g. local dev) the request goes out directly, unchanged.
+# unset (e.g. local dev) the request goes out directly, unchanged. If GDN_P IS
+# set but no usable list can be had, requests fail closed (status_code 0) rather
+# than quietly egressing from the host's own IP.
+#
+# The list refresh has to survive the provider throttling its download link.
+# Every render is a fresh subprocess, so when the cached list expires (or a
+# deploy wipes it) dozens of concurrent renders would all re-download at once;
+# the provider answers that burst with {"detail":"Request was throttled..."}.
+# So: only one render refreshes at a time (a flock on _PROXY_LOCK; the rest keep
+# using the stale list), a failed refresh keeps the last good list and retries
+# after PROXY_RETRY, and only well-formed proxy lines are ever accepted — an
+# error body must never become a "proxy" (2026-10-08 outage: one did, was cached
+# for an hour, and every proxied request failed with InvalidURL).
 PROXY_SRC = os.environ.get("GDN_P", "")
 PROXY_TTL = 3600            # re-download the list at most hourly
+PROXY_RETRY = 120           # after a failed refresh, wait this long before trying again
+PROXY_LOCK_WAIT = 5.0       # cold start: how long a render waits for another's refresh
 PROXY_ATTEMPTS = 3          # try this many different proxies before giving up
 _PROXY_CACHE = CACHE_DIR / "proxies.json"
+_PROXY_LOCK = CACHE_DIR / "proxies.lock"
+_PROXY_HOST = re.compile(r"^[A-Za-z0-9.-]+$")
+_PROXY_CRED = re.compile(r"^[^\s:@/]+$")
 
 
 def _parse_proxy_lines(text: str) -> list:
     """Turn a provider list into requests-style proxy URLs. Accepts the two common
-    formats: `host:port:user:pass` (authenticated) and `host:port`."""
+    formats: `host:port:user:pass` (authenticated) and `host:port`. Anything else —
+    notably a provider error body — is dropped, never turned into a proxy."""
     out = []
     for line in text.splitlines():
         p = line.strip().split(":")
+        if len(p) not in (2, 4) or not _PROXY_HOST.match(p[0]) or not p[1].isdigit():
+            continue
         if len(p) == 4:
-            out.append(f"http://{p[2]}:{p[3]}@{p[0]}:{p[1]}")
-        elif len(p) == 2:
+            if _PROXY_CRED.match(p[2]) and _PROXY_CRED.match(p[3]):
+                out.append(f"http://{p[2]}:{p[3]}@{p[0]}:{p[1]}")
+        else:
             out.append(f"http://{p[0]}:{p[1]}")
     return out
 
 
-def _load_proxies() -> list:
-    """Return the proxy pool (empty if GDN_P isn't set). Cached on disk for
-    PROXY_TTL because every render is a fresh subprocess — without the disk cache
-    we'd re-download the whole list from the provider on each render."""
-    if not PROXY_SRC:
-        return []
+def _valid_proxy_url(url) -> bool:
+    try:
+        s = urlsplit(url)
+        return (s.scheme == "http" and bool(_PROXY_HOST.match(s.hostname or ""))
+                and s.port is not None)
+    except (TypeError, ValueError):
+        return False
+
+
+def _read_proxy_cache():
+    """(ts, proxies) from the disk cache, or (0.0, []) if missing/corrupt. Entries
+    are re-validated so a list cached by an older build can't carry a bad line;
+    any bad entry marks the whole file stale so it's replaced on this render."""
     try:
         entry = _json.loads(_PROXY_CACHE.read_text(encoding="utf-8"))
-        if time.time() - float(entry["ts"]) < PROXY_TTL and entry.get("proxies"):
-            return list(entry["proxies"])
-    except (OSError, ValueError, KeyError):
-        pass  # missing / stale / corrupt -> re-download
-    try:
-        text = requests.get(PROXY_SRC, timeout=10).text
-    except requests.RequestException:
-        return []
-    proxies = _parse_proxy_lines(text)
+        raw = list(entry["proxies"])
+        proxies = [p for p in raw if _valid_proxy_url(p)]
+        return (float(entry["ts"]) if len(proxies) == len(raw) else 0.0), proxies
+    except (OSError, ValueError, KeyError, TypeError):
+        return 0.0, []
+
+
+def _proxy_cache_fresh(ts: float, proxies: list) -> bool:
+    # an empty list is only "fresh" for PROXY_RETRY: that's the failed-refresh
+    # backoff, so renders don't hammer the provider while it's throttling us
+    return time.time() - ts < (PROXY_TTL if proxies else PROXY_RETRY)
+
+
+def _write_proxy_cache(ts: float, proxies: list) -> None:
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        _PROXY_CACHE.write_text(_json.dumps({"ts": time.time(), "proxies": proxies}),
-                                encoding="utf-8")
+        tmp = _PROXY_CACHE.with_name(f"proxies.{os.getpid()}.tmp")
+        tmp.write_text(_json.dumps({"ts": ts, "proxies": proxies}), encoding="utf-8")
+        os.replace(tmp, _PROXY_CACHE)  # atomic: concurrent readers never see half a file
     except OSError:
         pass
-    return proxies
+
+
+def _download_proxies() -> list:
+    try:
+        r = requests.get(PROXY_SRC, timeout=10)
+    except requests.RequestException:
+        return []
+    return _parse_proxy_lines(r.text) if r.status_code == 200 else []
+
+
+def _try_refresh_lock():
+    """Non-blocking exclusive lock on _PROXY_LOCK. Returns a handle to release()
+    (closing the file drops the flock), or None if another render holds it."""
+    if fcntl is None:
+        return True
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        f = open(_PROXY_LOCK, "w")
+    except OSError:
+        return True  # can't lock at all -> refresh unlocked rather than never
+    try:
+        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return f
+    except OSError:
+        f.close()
+        return None
+
+
+def _load_proxies() -> list:
+    """Return the proxy pool (empty if GDN_P isn't set, or no usable list). Cached
+    on disk for PROXY_TTL because every render is a fresh subprocess — without the
+    disk cache we'd re-download the whole list from the provider on each render."""
+    if not PROXY_SRC:
+        return []
+    ts, proxies = _read_proxy_cache()
+    if _proxy_cache_fresh(ts, proxies):
+        return proxies
+    deadline = time.monotonic() + PROXY_LOCK_WAIT
+    while True:
+        lock = _try_refresh_lock()
+        if lock is not None:
+            break
+        if proxies:
+            return proxies  # another render is refreshing; the stale list still works
+        if time.monotonic() >= deadline:
+            return []
+        time.sleep(0.2)
+        ts, proxies = _read_proxy_cache()
+        if _proxy_cache_fresh(ts, proxies):
+            return proxies
+    try:
+        # re-read under the lock: whoever held it may have just refreshed
+        ts, proxies = _read_proxy_cache()
+        if _proxy_cache_fresh(ts, proxies):
+            return proxies
+        fresh = _download_proxies()
+        if fresh:
+            _write_proxy_cache(time.time(), fresh)
+            return fresh
+        # refresh failed: keep the last good list and back off PROXY_RETRY
+        now = time.time()
+        _write_proxy_cache(now - PROXY_TTL + PROXY_RETRY if proxies else now, proxies)
+        return proxies
+    finally:
+        if lock is not True:
+            lock.close()
 
 
 # Hosts whose traffic must NOT go through the proxy pool. Government APIs
@@ -142,6 +247,8 @@ def _fetch(url, headers, params):
             return s.get(url, headers=headers, params=params,
                          timeout=REQUEST_TIMEOUT, allow_redirects=False)
     pool = _load_proxies()
+    if PROXY_SRC and not pool:
+        raise requests.RequestException("proxy pool unavailable (GDN_P list empty or throttled)")
     chosen = random.sample(pool, min(PROXY_ATTEMPTS, len(pool))) if pool else [None]
     last = None
     for proxy in chosen:
