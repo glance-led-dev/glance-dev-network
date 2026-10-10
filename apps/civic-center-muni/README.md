@@ -71,15 +71,12 @@ The parser has also been exercised with fixtures based on the
 ## Check and build
 
 ```sh
-.venv/bin/python -m unittest discover -s apps/civic-center-muni/tests -v
 .venv/bin/gdn check apps/civic-center-muni
 .venv/bin/gdn validate apps/civic-center-muni
 .venv/bin/gdn build apps/civic-center-muni
 ```
 
-The tests cover platform isolation, order and duplicate removal, timezone
-offsets, cancelled and stale data, HTTP failures, malformed responses, and text
-placement on the 64×32 canvas. Build output is under `build/` and ignored by Git.
+Build output is under `build/` and ignored by Git.
 
 ## Get it onto the screen
 
