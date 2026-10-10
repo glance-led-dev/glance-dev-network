@@ -18,7 +18,15 @@ pages:
   - games_6
   - games_7
   - games_8
-inputs: []
+inputs:
+  - key: league
+    app_input_type: dropdown
+    type: choice
+    label: League
+    default: "Both"
+    help: Show NHL goalies and MLB pitchers, or just one league.
+    choices: ["Both", "NHL", "MLB"]
+    options: ["Both", "NHL", "MLB"]
 assets:
   - assets/mlb_ari.png
   - assets/mlb_ath.png

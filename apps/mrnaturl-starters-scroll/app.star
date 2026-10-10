@@ -4,7 +4,7 @@
 # Data comes from MrNaturl's own static feed at /api/starters.json, rebuilt
 # every 30 minutes from the NHL's and MLB's public data and ESPN (which marks
 # each goalie Confirmed or Expected), served from Cloudflare Pages. No API
-# key, no inputs.
+# key. One setting, League: Both, NHL or MLB.
 #
 # Same app.star ships as mrnaturl-starters (64 wide) and
 # mrnaturl-starters-scroll (192 wide), one game per page on both. The eight
@@ -55,9 +55,16 @@ def name_color(lg, side):
 
 # --- screens: each is one game ----------------------------------------------
 
-def screens(c, data):
+def leagues(ctx):
+    # The League setting: Both (default), NHL or MLB.
+    choice = ctx.inputs.get("league", "Both")
+    if choice in ["NHL", "MLB"]:
+        return [choice]
+    return ["NHL", "MLB"]
+
+def screens(c, ctx, data):
     out = []
-    for lg in ["NHL", "MLB"]:
+    for lg in leagues(ctx):
         block = data.get(lg.lower(), {})
         games = block.get("games", [])
         for i in range(len(games)):
@@ -66,13 +73,19 @@ def screens(c, data):
     return out
 
 def pick(c, ctx, data, page):
-    scr = screens(c, data)
+    scr = screens(c, ctx, data)
     n = len(scr)
     if n == 0:
         return None
+    # Split the games into as few sets of at most PAGES as needed (sized
+    # evenly, one set per 10 minutes), then spread the current set across
+    # all the pages in order. Pages can't be skipped, so a short set gives
+    # each game a run of neighbouring pages, never a wrap back to the start.
     blocks = (n + PAGES - 1) // PAGES
     block = (ctx.now.unix // ROTATE_SECONDS) % blocks
-    return scr[(block * PAGES + page) % n]
+    lo = block * n // blocks
+    hi = (block + 1) * n // blocks
+    return scr[lo + page * (hi - lo) // PAGES]
 
 # --- logos ------------------------------------------------------------------
 
@@ -330,11 +343,11 @@ def draw_small(c, s):
         c.text(fit(c, side.get("n", "TBD"), 62 - w - 3), 1, yy, font = "4x5",
                color = name_color(lg, side))
 
-def draw_empty(c, data):
+def draw_empty(c, ctx, data):
     # No games left to show. Leagues in their offseason are left out; if
     # both are, the panel says so once.
     lines = []
-    for lg in ["NHL", "MLB"]:
+    for lg in leagues(ctx):
         note = data.get(lg.lower(), {}).get("note", "") or "NO GAMES TODAY"
         if note != "OFFSEASON":
             lines.append([lg, note])
@@ -377,7 +390,7 @@ def draw_page(c, ctx, page):
         return
     s = pick(c, ctx, data, page)
     if s == None:
-        draw_empty(c, data)
+        draw_empty(c, ctx, data)
         return
     if wide(c):
         draw_wide(c, s)
