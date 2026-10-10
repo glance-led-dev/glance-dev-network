@@ -14,7 +14,8 @@ from flask import Flask, Response, abort, g, jsonify, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from gdn.starhost import (StarError, StarTimeout, app_meta, app_page_count,
-                          esp_endpoint, run_star_app_sandboxed)
+                          esp_endpoint)
+from gdn.starhost.forked import run_star_app_forked
 from gdn.starhost.http_client import DIRECT_SUFFIXES
 from gdn.scene import SceneError, render_scene
 
@@ -146,7 +147,7 @@ def render(app_id):
         page = 1
     inputs = {k: v for k, v in request.args.items() if k != "page"}
     try:
-        scene = run_star_app_sandboxed(app_dir, inputs, only_page=page)
+        scene = run_star_app_forked(app_dir, inputs, only_page=page)
         canvas = next(iter(render_scene(scene, asset_dir=app_dir).values()))
         return Response(canvas.to_png_bytes(), mimetype="image/png",
                         headers={"Cache-Control": "public, max-age=60"})

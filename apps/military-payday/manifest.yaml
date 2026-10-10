@@ -1,0 +1,24 @@
+gdn: 1
+id: military-payday
+version: 0.1.0
+name: Military Payday Countdown
+author: Shayan
+description: Days until the next military payday. Pay lands on the 1st and 15th, or the business day before when that falls on a weekend or federal holiday.
+category: Finance
+entry: app.star
+
+width: 128
+height: 32
+refresh: 3600
+
+pages: [payday]
+
+inputs:
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Duty station time zone
+    default: "CENTRAL"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "ARIZONA", "PACIFIC", "ALASKA", "HAWAII", "EUROPE", "KUWAIT", "KOREA", "JAPAN", "GUAM"]
+    options: ["EASTERN", "CENTRAL", "MOUNTAIN", "ARIZONA", "PACIFIC", "ALASKA", "HAWAII", "EUROPE", "KUWAIT", "KOREA", "JAPAN", "GUAM"]
+    help: Where you're stationed, so the countdown rolls over at your midnight. Daylight saving is applied automatically.

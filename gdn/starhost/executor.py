@@ -216,11 +216,13 @@ def _clean_error(msg: str) -> str:
 
 def run_star_app(app_dir, inputs: Optional[dict] = None, *,
                  now: Optional[datetime.datetime] = None,
-                 only_page: Optional[int] = None) -> dict:
+                 only_page: Optional[int] = None, validate: bool = True) -> dict:
     """Execute app.star and return a validated (JSON-safe) scene dict.
 
     If `only_page` (1-based) is given, run just that one page — this is what the
-    render server calls per request (e.g. ?page=1 -> the first page's image)."""
+    render server calls per request (e.g. ?page=1 -> the first page's image).
+    `validate=False` skips the scene check here, for a caller that hands the scene
+    straight to render_scene(), which validates it again anyway (the render server)."""
     app_dir = Path(app_dir).resolve()
     manifest = load_manifest(app_dir)
     app_id = str(manifest.get("id") or app_dir.name)
@@ -304,8 +306,9 @@ def run_star_app(app_dir, inputs: Optional[dict] = None, *,
         "app": {"id": app_id, "width": width, "height": height, "refresh": refresh},
         "pages": [{"name": p["name"], "title": p["name"], "ops": p["ops"]} for p in rec.pages],
     }
-    validate_scene(scene, manifest=manifest, asset_dir=app_dir,
-                   check_pages=only_page is None)  # raises SceneError if bad
+    if validate:
+        validate_scene(scene, manifest=manifest, asset_dir=app_dir,
+                       check_pages=only_page is None)  # raises SceneError if bad
     return scene  # raw (JSON-safe) scene; render_scene re-validates + draws
 
 
