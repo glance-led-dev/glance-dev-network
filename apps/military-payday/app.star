@@ -1,10 +1,11 @@
 # Military Payday Countdown
 #
-# DESIGN. Army black and gold: a black ground, a stack of pixel-art bills on
-# the left as the app's identity (the cash is the label, no title needed),
+# DESIGN. Army black and gold: a black ground, a gold-strapped brick of cash
+# on the left as the app's identity (the cash is the label, no title needed),
 # the days-left count as the one gold hero, and the actual pay date on the
-# right so "3 DAYS" never has to be decoded. On payday the count gives way
-# to a gold PAYDAY.
+# right so "3 DAYS" never has to be decoded. Along the bottom, the pay period
+# as a row of day cells filling in gold toward a green payday. On payday the
+# count gives way to a gold PAYDAY.
 #
 # Pay rule (DFAS): mid-month pay on the 15th, end-of-month pay on the 1st.
 # When either lands on a weekend or a federal holiday, it posts the business
@@ -145,19 +146,69 @@ def next_payday(today):
     return [today, 1]
 
 
-def bill(c, x, y, edge, fill, mark):
-    """One 26x14 pixel-art banknote: framed, corner pips, oval with a $."""
-    c.rect(x, y, x + 25, y + 13, fill = fill, outline = edge)
-    for p in [[x + 2, y + 2], [x + 23, y + 2], [x + 2, y + 11], [x + 23, y + 11]]:
-        c.pixel(p[0], p[1], edge)
-    c.circle(x + 13, y + 7, 5, edge)
-    c.text("$", x + 11, y + 4, font = "4x7", color = mark)
+def prev_payday(nxt):
+    """The payday before day number `nxt` -- the start of the pay period."""
+    ymd = civil(nxt)
+    y = ymd[0]
+    m = ymd[1] + 1
+    if m > 12:
+        m = 1
+        y += 1
+    best = nxt - 16
+    for i in range(4):
+        for nd in [1, 15]:
+            z = pay_date(y, m, nd)
+            if z < nxt and z > best:
+                best = z
+        m -= 1
+        if m < 1:
+            m = 12
+            y -= 1
+    return best
 
 
 def cash(c, x, y):
-    """Two bills fanned: the back one dim, the front one bright."""
-    bill(c, x + 4, y, "#1F6B2E", "#06200C", "#1F6B2E")
-    bill(c, x, y + 4, "#3DDC5A", "#0B3A16", GOLD)
+    """A 26x22 brick of cash, strapped: the top bill's face (y..y+12), the
+    stacked bill edges below it (y+14..y+21), and a gold currency strap with
+    the $ running down the middle of both."""
+    c.rect(x, y, x + 25, y + 12, fill = "#0B3A16", outline = "#3DDC5A")
+    c.rect(x + 2, y + 2, x + 23, y + 10, outline = "#1F8A36")
+    for p in [[x + 4, y + 4], [x + 21, y + 4], [x + 4, y + 8], [x + 21, y + 8]]:
+        c.pixel(p[0], p[1], "#3DDC5A")
+
+    # The edges of the bills underneath, light and dark in turn, each layer
+    # a pixel narrower so the brick reads as a pile rather than a box.
+    for i in range(4):
+        col = "#2FB54A" if i % 2 == 0 else "#145A24"
+        c.line(x + 1 + i // 2, y + 14 + 2 * i, x + 24 - i // 2, y + 14 + 2 * i, col)
+        c.line(x + 1 + i // 2, y + 15 + 2 * i, x + 24 - i // 2, y + 15 + 2 * i, col)
+    c.line(x, y + 13, x + 25, y + 13, "#06200C")
+
+    # The strap, x+10..x+15, over face and edges alike.
+    c.rect(x + 10, y - 1, x + 15, y + 22, fill = GOLD)
+    c.line(x + 15, y - 1, x + 15, y + 22, "#B8860B")
+    c.text("$", x + 11, y + 3, font = "4x7", color = "black")
+
+
+def track(c, prev, nxt, today):
+    """The pay period as a row of day cells along the bottom: days gone in
+    gold, today in white, days to come dim, and payday itself green."""
+    n = nxt - prev
+    span = c.width - 12
+    w = (span - (n - 1)) // n
+    x = 6 + (span - (n * w + n - 1)) // 2
+    for i in range(1, n + 1):
+        day = prev + i
+        if day == nxt:
+            col = "#3DDC5A"
+        elif day < today:
+            col = GOLD
+        elif day == today:
+            col = "white"
+        else:
+            col = "#2A2410"
+        c.rect(x, 29, x + w - 1, 30, fill = col)
+        x += w + 1
 
 
 def payday(c, ctx):
@@ -167,39 +218,49 @@ def payday(c, ctx):
     nxt = next_payday(today)
     days = nxt[0] - today
     ymd = civil(nxt[0])
+    early = ymd[2] != nxt[1]
 
     c.fill(BG)
-    # Bills span x 6..35, y 7..24: centred in the 32 rows, inside the 6px pad.
-    cash(c, 6, 7)
+    # The cash brick, x 6..31, y 2..25 with the strap's overhang.
+    cash(c, 6, 3)
 
     right = c.width - 7
     date = "%d %s" % (ymd[2], MON[ymd[1] - 1])
     if days == 0:
         # Payday: the count gives way to the word. "PAYDAY" is 63px at 10x16,
-        # centred in the 84px between the bills (x 37) and the pad (x 121).
+        # centred in the 84px between the brick (x 37) and the pad (x 121).
         mid = (37 + right) // 2
-        c.text("PAYDAY", mid, 5, font = "10x16", color = GOLD, align = "center")
-        c.text("TODAY " + DOW[wday(nxt[0])] + " " + date, mid, 24, font = "4x5",
-               color = LABEL, align = "center")
+        c.text("PAYDAY", mid, 3, font = "10x16", color = GOLD, align = "center")
+        c.text(DOW[wday(nxt[0])] + " " + date, mid, 22, font = "5x7",
+               color = "white", align = "center")
+        # Gold glints off the brick's corners.
+        for p in [[3, 2], [34, 5], [2, 26], [35, 24]]:
+            c.pixel(p[0], p[1], GOLD)
+            c.pixel(p[0] - 1, p[1], "#6B5310")
+            c.pixel(p[0] + 1, p[1], "#6B5310")
+            c.pixel(p[0], p[1] - 1, "#6B5310")
+            c.pixel(p[0], p[1] + 1, "#6B5310")
         return
 
-    # Hero: the count, in its own 33px column (x 39..72; "17" is the worst
-    # case). DAYS sits under it rather than beside, because beside it ran
-    # into the date column whenever the count went to two digits.
-    num = str(days)
-    hx = 39 + (33 - c.text_width(num, "16x24")) // 2
-    c.text(num, hx, 1, font = "16x24", color = GOLD)
-    c.text("DAY" if days == 1 else "DAYS", 56, 26, font = "4x5", color = LABEL,
-           align = "center")
+    # Two columns under one eyebrow row (y 2..6): the count under DAYS,
+    # centred on x 54 so "17" (33px at 16x20) spans 38..70, clear of the
+    # brick; the date under PAYDAY / EARLY PAY, right-aligned to the pad.
+    # Both bottom out on y 27, a pixel above the track.
+    mid = 54
+    c.text("DAY" if days == 1 else "DAYS", mid, 2, font = "4x5",
+           color = LABEL, align = "center")
+    c.text(str(days), mid, 8, font = "16x20", color = GOLD, align = "center")
 
-    # The date column, x 78..121. "30 OCT" is 38px at 6x8; every date is
-    # that shape (3-letter day, 1-2 digit date, month). When the nominal
-    # 1st/15th falls on a weekend or holiday the label turns gold EARLY PAY
-    # (42px) so a 30 OCT payday doesn't read as a mistake.
-    if ymd[2] != nxt[1]:
-        c.text("EARLY PAY", right, 3, font = "4x5", color = GOLD, align = "right")
+    # "30 OCT" is 38px at 6x8. When the nominal 1st/15th falls on a weekend
+    # or holiday the eyebrow turns gold EARLY PAY (42px, x 80..121) so a
+    # 30 OCT payday doesn't read as a mistake.
+    if early:
+        c.text("EARLY PAY", right, 2, font = "4x5", color = GOLD, align = "right")
     else:
-        c.text("PAYDAY", right, 3, font = "4x5", color = DIMGOLD, align = "right")
-    c.text(DOW[wday(nxt[0])], right, 11, font = "6x8", color = "white",
+        c.text("PAYDAY", right, 2, font = "4x5", color = LABEL, align = "right")
+    c.text(DOW[wday(nxt[0])], right, 10, font = "6x8", color = "white",
            align = "right")
-    c.text(date, right, 21, font = "6x8", color = "white", align = "right")
+    c.text(date, right, 20, font = "6x8", color = "white", align = "right")
+
+    # The pay period, last payday to this one, along the bottom (y 29..30).
+    track(c, prev_payday(nxt[0]), nxt[0], today)
