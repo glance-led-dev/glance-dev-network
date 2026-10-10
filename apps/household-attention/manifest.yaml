@@ -8,7 +8,7 @@ category: Productivity
 entry: app.star
 width: 192
 height: 32
-refresh: 60
+refresh: 300
 pages: [main]
 inputs:
   - key: endpoint

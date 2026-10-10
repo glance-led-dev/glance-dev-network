@@ -20,7 +20,7 @@ In counts mode, `items` is empty. In titles mode, at most five items contain onl
 
 ## Preview and verify
 
-`gdn check <app-directory>` and `gdn validate <app-directory>` validate the package. `gdn build <app-directory> --input preview=Item` renders an offline example. Offline states include Counts, Item, Empty, Stale, Error and Long title; all show SAMPLE and perform no network requests. Leave preview set to Live for production.
+`gdn check <app-directory>` and `gdn validate <app-directory>` validate the package. `gdn build <app-directory> --input preview=Item` renders an offline example. Offline states include Counts, Item, Empty, Stale, Error and Long title; all show SAMPLE and perform no network requests. Leave preview set to Live for production. Until both `endpoint` and `readkey` are set, Live also shows a SAMPLE demo item (this is what the catalog preview shows) and makes no network request.
 
 Local checks cover privacy projection, rejected endpoints, authentication headers, expiry, source warnings, and safe-area text bounds. Also verify the live relay's unauthenticated denial, invalid publisher denial, expiry after publisher failure, recovery, actual rendered image, and physical display settings before calling deployment complete.
 

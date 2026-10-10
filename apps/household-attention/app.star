@@ -37,12 +37,17 @@ def endpoint(value):
 
 def main(c, ctx):
     scenario = ctx.inputs.get('preview', 'Live')
+    url = endpoint(ctx.inputs.get('endpoint', ''))
+    key = ctx.inputs.get('readkey', '')
+    if scenario == 'Live' and (not url or not key):
+        # Not configured yet: show a labelled demo instead of a setup screen.
+        scenario = 'Demo'
     sample = scenario != 'Live'
     if sample:
         data = {'schema': 1, 'generated_unix': ctx.now.unix, 'expires_unix': ctx.now.unix + 300, 'total_actionable': 3, 'degraded': False, 'privacy': 'counts', 'items': []}
-        if scenario in ['Item', 'Long title']:
+        if scenario in ['Item', 'Long title', 'Demo']:
             data['privacy'] = 'titles'
-            data['items'] = [{'title': 'CHECK FILTER' if scenario == 'Item' else 'RENEW THE VERY LONG EXAMPLE HOUSEHOLD MAINTENANCE RECORD', 'stale': False}]
+            data['items'] = [{'title': {'Item': 'CHECK FILTER', 'Demo': 'REPLACE HVAC FILTER'}.get(scenario, 'RENEW THE VERY LONG EXAMPLE HOUSEHOLD MAINTENANCE RECORD'), 'stale': False}]
         if scenario == 'Empty':
             data['total_actionable'] = 0
         if scenario == 'Stale':
@@ -51,11 +56,6 @@ def main(c, ctx):
             show(c, 'FEED UNAVAILABLE', 'CHECK CONNECTION', True, True)
             return
     else:
-        url = endpoint(ctx.inputs.get('endpoint', ''))
-        key = ctx.inputs.get('readkey', '')
-        if not url or not key:
-            show(c, 'SETUP REQUIRED', 'ADD LED FEED + KEY', True)
-            return
         response = http.get(url, headers = {'Authorization': 'Bearer ' + key}, ttl_seconds = 60)
         if response.get('status_code') != 200:
             show(c, 'FEED UNAVAILABLE', 'CHECK CONNECTION', True)
