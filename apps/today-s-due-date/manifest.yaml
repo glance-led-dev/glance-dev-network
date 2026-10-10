@@ -1,12 +1,81 @@
 gdn: 1
-id: library-due-date
+id: today-s-due-date
 version: 0.1.0
 name: Library Due Date
 author: Personal
-description: Shows the due date 21 days from today in Eastern Time.
+description: Shows the date a library book checked out today is due back, for your library's loan period and time zone.
 category: Lifestyle
 entry: app.star
 width: 64
 height: 32
 refresh: 3600
 pages: [due_date]
+inputs:
+  - key: loan
+    type: choice
+    app_input_type: dropdown
+    label: Loan period
+    default: "3 weeks"
+    help: How long your library lends a book for. The due date is today plus this many days.
+    choices: ["1 week", "10 days", "2 weeks", "3 weeks", "4 weeks", "30 days", "6 weeks"]
+    options: ["1 week", "10 days", "2 weeks", "3 weeks", "4 weeks", "30 days", "6 weeks"]
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/New_York"
+    help: Pick the city nearest you, so the date rolls over at your midnight. Daylight saving is applied automatically.
+    choices: &zones
+      - "Pacific/Honolulu"
+      - "America/Anchorage"
+      - "America/Los_Angeles"
+      - "America/Phoenix"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/Mexico_City"
+      - "America/New_York"
+      - "America/Bogota"
+      - "America/Halifax"
+      - "America/Sao_Paulo"
+      - "America/Argentina/Buenos_Aires"
+      - "UTC"
+      - "Europe/Lisbon"
+      - "Europe/Dublin"
+      - "Europe/London"
+      - "Europe/Madrid"
+      - "Europe/Paris"
+      - "Europe/Amsterdam"
+      - "Europe/Berlin"
+      - "Europe/Rome"
+      - "Europe/Stockholm"
+      - "Europe/Warsaw"
+      - "Africa/Lagos"
+      - "Europe/Athens"
+      - "Europe/Helsinki"
+      - "Africa/Johannesburg"
+      - "Europe/Moscow"
+      - "Africa/Nairobi"
+      - "Asia/Dubai"
+      - "Asia/Karachi"
+      - "Asia/Kolkata"
+      - "Asia/Dhaka"
+      - "Asia/Bangkok"
+      - "Asia/Jakarta"
+      - "Asia/Shanghai"
+      - "Asia/Singapore"
+      - "Asia/Hong_Kong"
+      - "Australia/Perth"
+      - "Asia/Tokyo"
+      - "Asia/Seoul"
+      - "Australia/Adelaide"
+      - "Australia/Brisbane"
+      - "Australia/Sydney"
+      - "Australia/Melbourne"
+      - "Pacific/Auckland"
+      - "Atlantic/Reykjavik"
+      - "Europe/Kyiv"
+      - "Europe/Istanbul"
+      - "Africa/Cairo"
+      - "Asia/Jerusalem"
+      - "Asia/Manila"
+    options: *zones
