@@ -8,6 +8,8 @@
 #
 # All chart data compiled from official Billboard charts.
 #
+# Rows show last week's position (NEW for a debut) next to this week's rank.
+#
 # Layout adapts to the panel width, so the same app reads correctly on a
 # single 64 px module and on a full 384 px chain.
 
@@ -51,6 +53,23 @@ def fit(c, text, font, maxw):
             return candidate
     return "."
 
+def draw_text(c, text, x, y, font, color):
+    # The 8x12 font draws the letter I as a solid block, so any I is drawn
+    # from 9x12 (same height, a proper I) at the exact spot 8x12 puts it.
+    if font != "8x12" or "I" not in text:
+        c.text(text, x, y, font = font, color = color)
+        return
+    start = 0
+    for i in range(len(text) + 1):
+        if i == len(text) or text[i] == "I":
+            if i > start:
+                c.text(text[start:i], x + c.text_width(text[:start], font), y,
+                       font = font, color = color)
+            if i < len(text):
+                c.text("I", x + c.text_width(text[:i], font), y, font = "9x12",
+                       color = color)
+            start = i + 1
+
 def pick_font(c, text, choices, maxw):
     # Walk from the largest font down and take the first one the string fits
     # in whole. Returns [font, height]; the caller centers on the height.
@@ -90,7 +109,7 @@ def draw_rows(c, entries, first, last):
         artist_w = (width - 16) * 38 // 100
         if artist_w > 76:
             artist_w = 76
-        title_x = 16
+        title_x = 36
         title_w = width - title_x - artist_w - 4
     else:
         artist_w = 0
@@ -124,6 +143,14 @@ def draw_rows(c, entries, first, last):
 
         c.text(str(rank), 13, y, font = ROW_FONT, color = GOLD,
                align = "right")
+
+        # Last week's position, or a gold NEW for a debut. Only on panels
+        # wide enough to also carry the artist column.
+        if show_artist:
+            lw_text = "NEW" if last_week == 0 else str(last_week)
+            lw_color = GOLD if last_week == 0 else (FLAT if last_week == rank else DIM)
+            c.text(lw_text, 32, y, font = ROW_FONT, color = lw_color,
+                   align = "right")
 
         title = entry["t"].upper()
         c.text(fit(c, title, ROW_FONT, title_w), title_x, y,
@@ -195,8 +222,8 @@ def draw_number_one(c, chart_key, label):
     chosen = pick_font(c, title, choices, width - 4)
     title_font = chosen[0]
     title_y = band_top + (band_h - chosen[1]) // 2
-    c.text(fit(c, title, title_font, width - 4), 2, title_y,
-           font = title_font, color = "white")
+    draw_text(c, fit(c, title, title_font, width - 4), 2, title_y,
+              title_font, "white")
 
     # Bottom row: artist on the left, weeks-at-number-one on the right. The
     # note is only drawn when what is left over still fits a readable slice of
@@ -210,6 +237,11 @@ def draw_number_one(c, chart_key, label):
         if weeks_at_one > 1:
             note = note + "S"
         note = note + " AT #1"
+        last_week = top.get("lw", 0)
+        if last_week == 0:
+            note = "NEW  " + note
+        else:
+            note = "LW " + str(last_week) + "  " + note
         note_w = c.text_width(note, meta_font)
         if width - 6 - note_w >= 30:
             c.text(note, width - 2, meta_y, font = meta_font, color = GOLD,
