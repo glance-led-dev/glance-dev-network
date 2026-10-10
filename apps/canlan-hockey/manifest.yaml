@@ -1,0 +1,31 @@
+gdn: 1
+id: canlan-hockey
+version: 0.2.0
+name: Canlan Hockey
+author: Mike D'Arpino
+description: ASHL team schedule, division standings, and player stats from a Canlan team page.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+
+refresh: 28800
+
+pages:
+  - schedule
+  - standings_1
+  - standings_2
+  - player_stats_1
+  - player_stats_2
+  - player_stats_3
+  - player_stats_4
+
+inputs:
+  - key: ashlurl
+    type: string
+    app_input_type: free-text
+    label: ASHL Team URL
+    default: ""
+    required: true
+    help: "Paste the normal ASHL team page URL from ashl.ca. The app finds the current division automatically."
