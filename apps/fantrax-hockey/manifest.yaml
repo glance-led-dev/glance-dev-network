@@ -1,0 +1,31 @@
+gdn: 1
+id: fantrax-hockey
+version: 0.2.1
+name: Fantrax Hockey Matchups
+author: Mike D'Arpino
+description: Live fantasy hockey matchup scores from Fantrax.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+inputs:
+- key: leagueid
+  type: string
+  app_input_type: free-text
+  label: Fantrax League ID
+  help: Your Fantrax league ID, found in the Fantrax league URL.
+- key: apikey
+  type: string
+  app_input_type: api-key
+  label: Fantrax GLANCE Token
+  help: Connect Fantrax at fantrax-public.mdarpino.workers.dev/connect and paste the
+    token shown after login.
+pages:
+- matchup1
+- matchup2
+- matchup3
+- matchup4
+- matchup5
+- matchup6
+- matchup7
