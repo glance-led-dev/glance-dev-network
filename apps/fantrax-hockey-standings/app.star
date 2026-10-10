@@ -290,7 +290,7 @@ def draw_standing_row(c, data, team, y, color):
         draw_logo_pixels(c, pixels, 20, y)
 
     # Team name
-    name = fit_team_name(c, name, 82)
+    name = fit_team_name(c, name, 74)
 
     c.text(
         name,
@@ -305,7 +305,7 @@ def draw_standing_row(c, data, team, y, color):
 
     c.text(
         record,
-        148,
+        143,
         y + 3,
         font = "6x8",
         color = color,
