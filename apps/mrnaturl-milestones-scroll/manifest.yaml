@@ -1,0 +1,21 @@
+gdn: 1
+id: mrnaturl-milestones-scroll
+version: 0.1.0
+name: Milestone Watch
+author: bbusch
+description: Active MLB, NHL, NFL, NBA and MLS players closing in on career milestones and all-time leaderboard passes, plus franchise and head coach win milestones
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 3600
+pages:
+  - next_up
+  - mlb
+  - nhl
+  - nfl
+  - nba
+  - mls
+  - teams
+  - coaches
+inputs: []
