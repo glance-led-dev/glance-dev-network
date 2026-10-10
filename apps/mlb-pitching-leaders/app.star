@@ -284,7 +284,15 @@ def fewest_games_alive(year):
         # Letting it keep rising would leave only the two Series rosters
         # (and too few pitchers to fill a board).
         return floor
-    alive = [t for t in in_round.get(current, {}) if t not in out]
+    # Still alive in the current round: everyone who has played in it, plus
+    # every winner of the round before whose series hasn't started yet (the
+    # two series of a round can start on different days).
+    cand = dict(in_round.get(current, {}))
+    if current > 0:
+        for t in in_round.get(current - 1, {}):
+            if out.get(t, 99) > current - 1:
+                cand[t] = True
+    alive = [t for t in cand if t not in out]
     if len(alive) == 0:
         alive = list(in_round.get(current, {}))
     return max(floor, min([through(t, current) for t in alive]))
