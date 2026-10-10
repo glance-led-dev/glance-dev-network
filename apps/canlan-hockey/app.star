@@ -11,11 +11,137 @@ GREEN = "#42E66C"
 YELLOW = "#FFD84D"
 
 
+
+def make_demo_logo(primary, secondary, variant):
+    pixels = []
+
+    for y in range(16):
+        for x in range(16):
+            dx = x - 7
+            dy = y - 7
+            color = ""
+
+            if dx * dx + dy * dy <= 45:
+                color = primary
+
+            if variant == 0:
+                if x == 7 or y == 7 or x == y or x + y == 14:
+                    if x >= 3 and x <= 11 and y >= 3 and y <= 11:
+                        color = secondary
+            else:
+                if (x == y and x >= 3 and x <= 11) or \
+                   (x + y == 14 and x >= 3 and x <= 11):
+                    color = secondary
+
+            if color:
+                pixels.append([x, y, color])
+
+    return {"pixels": pixels}
+
+
+def demo_stats(wins, losses, otl, points):
+    return [
+        {"abbr": "W", "value": wins},
+        {"abbr": "L", "value": losses},
+        {"abbr": "OTL", "value": otl},
+        {"abbr": "PTS", "value": points},
+    ]
+
+
+def demo_standing(team_id, name, wins, losses, otl, points):
+    return {
+        "team": {
+            "id": team_id,
+            "name": name,
+            "name_full": name,
+        },
+        "schedule": {
+            "name": "ADULT SAFE HOCKEY LEAGUE",
+        },
+        "stats": demo_stats(wins, losses, otl, points),
+    }
+
+
+def demo_player(name, number, goals, assists):
+    return {
+        "name": name,
+        "number": number,
+        "goals": goals,
+        "assists": assists,
+        "points": goals + assists,
+    }
+
+
+def demo_data():
+    return {
+        "ok": True,
+        "team": "demo-home",
+        "logos": {
+            "demo-home": make_demo_logo("#1261A0", "#FFFFFF", 0),
+            "demo-away": make_demo_logo("#9B1C31", "#FFD84D", 1),
+        },
+        "games": {
+            "data": [
+                {
+                    "game_status_id": 1,
+                    "homeTeam": {
+                        "id": "demo-home",
+                        "name": "ICE WOLVES",
+                        "name_full": "ICE WOLVES",
+                    },
+                    "visitingTeam": {
+                        "id": "demo-away",
+                        "name": "REDLINE",
+                        "name_full": "REDLINE",
+                    },
+                    "facility": {
+                        "name": "CANLAN SPORTS",
+                    },
+                    "venue": {
+                        "name_full": "RINK 2",
+                    },
+                    "local_date_label": "SAT OCT 17",
+                    "local_time": "8:15 PM",
+                },
+            ],
+        },
+        "standings": {
+            "data": [
+                demo_standing("demo-home", "ICE WOLVES", 8, 1, 1, 17),
+                demo_standing("demo2", "NORTH STARS", 7, 2, 1, 15),
+                demo_standing("demo3", "BREAKAWAY", 6, 3, 1, 13),
+                demo_standing("demo4", "TOP SHELF", 6, 4, 0, 12),
+                demo_standing("demo5", "BLUE LINE", 5, 4, 1, 11),
+                demo_standing("demo6", "PUCK DYNASTY", 4, 5, 1, 9),
+                demo_standing("demo7", "FIVE HOLE", 3, 6, 1, 7),
+                demo_standing("demo8", "BENCH WARMERS", 2, 8, 0, 4),
+            ],
+        },
+        "players": [
+            demo_player("ALEX CARTER", 91, 12, 15),
+            demo_player("RYAN MILLER", 19, 10, 14),
+            demo_player("CHRIS MARTIN", 27, 9, 13),
+            demo_player("MATT WILSON", 11, 8, 12),
+            demo_player("JASON LEE", 88, 7, 11),
+            demo_player("MIKE TURNER", 16, 6, 11),
+            demo_player("DAN ROSS", 24, 7, 9),
+            demo_player("ERIC YOUNG", 44, 5, 10),
+            demo_player("ADAM KING", 9, 6, 8),
+            demo_player("STEVE HALL", 22, 4, 9),
+            demo_player("NICK BROWN", 17, 5, 7),
+            demo_player("MARK DAVIS", 55, 3, 8),
+            demo_player("KEVIN WHITE", 14, 4, 6),
+            demo_player("PAUL GREEN", 33, 3, 6),
+            demo_player("TOM CLARK", 7, 2, 6),
+            demo_player("SAM WALKER", 18, 2, 5),
+        ],
+    }
+
 def fetch_data(ctx):
     ashlurl = ctx.inputs.get("ashlurl", "")
 
     if not ashlurl:
-        return None
+        return demo_data()
 
     # Refresh and HTTP cache are intentionally both 8 hours.
     r = http.get(
