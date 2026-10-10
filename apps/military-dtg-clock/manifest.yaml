@@ -1,0 +1,32 @@
+gdn: 1
+id: military-dtg-clock
+version: 0.1.0
+name: Military DTG Clock
+author: Shayan
+description: 24-hour military time with the time-zone letter (ROMEO, QUEBEC...), the Zulu date-time group, and the time back home.
+category: Time
+entry: app.star
+
+width: 128
+height: 32
+refresh: 60
+
+pages: [local, zulu]
+
+inputs:
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Duty station time zone
+    default: "CENTRAL"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "ARIZONA", "PACIFIC", "ALASKA", "HAWAII", "EUROPE", "KUWAIT", "KOREA", "JAPAN", "GUAM"]
+    options: ["EASTERN", "CENTRAL", "MOUNTAIN", "ARIZONA", "PACIFIC", "ALASKA", "HAWAII", "EUROPE", "KUWAIT", "KOREA", "JAPAN", "GUAM"]
+    help: Where you are now. Sets the local time and its military zone letter. Daylight saving is applied automatically.
+  - key: home
+    type: choice
+    app_input_type: dropdown
+    label: Home time zone
+    default: "EASTERN"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "ARIZONA", "PACIFIC", "ALASKA", "HAWAII", "EUROPE", "KUWAIT", "KOREA", "JAPAN", "GUAM"]
+    options: ["EASTERN", "CENTRAL", "MOUNTAIN", "ARIZONA", "PACIFIC", "ALASKA", "HAWAII", "EUROPE", "KUWAIT", "KOREA", "JAPAN", "GUAM"]
+    help: Where family is, shown beside Zulu so you know what time it is back home.
