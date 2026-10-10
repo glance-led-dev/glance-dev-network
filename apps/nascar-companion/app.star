@@ -301,6 +301,13 @@ def session_label(state):
     return flag_label(state.get("flag_state", 0))
 
 
+def is_practice_or_qual(state):
+    # CF run_type 1/2, or a 999-lap placeholder the feed uses outside races.
+    run_type = int(state.get("run_type", 0))
+    togo = int(state.get("laps_in_race", 0)) - int(state.get("lap_number", 0))
+    return run_type in [1, 2] or togo >= 500
+
+
 def series_session_title(state):
     series = SERIES_SHORT.get(state.get("series", "CUP"), "CUP")
     return series + " " + session_label(state)
@@ -979,6 +986,9 @@ def upcoming(c, ctx):
     # Practice/qual use session name; race uses flag (GREEN/YELLOW/…).
     title = series_session_title(state)
     lap = str(state["lap_number"]) + "/" + str(state["laps_in_race"])
+    if is_practice_or_qual(state):
+        # The feed reports 999 laps outside a race, so "1/999" means nothing.
+        lap = ""
     draw_chrome(c, state, title, lap)
 
     rows = state["rows"]
@@ -1014,8 +1024,7 @@ def upcoming(c, ctx):
             if c.text_width(name, "5x7") <= max_w or len(name) <= 3:
                 break
             name = name[:len(name) - 1]
-        name_color = COLORS["accent2"] if row["pos"] == 1 else COLORS["text"]
-        c.text(name, name_x, y + 2, font = "5x7", color = name_color)
+        c.text(name, name_x, y + 2, font = "5x7", color = COLORS["text"])
 
 
 def results(c, ctx):
@@ -1054,7 +1063,7 @@ def results(c, ctx):
         badge_x = cx - badge // 2
         if badge_x < left + 1:
             badge_x = left + 1
-        pos_color = COLORS["accent2"]
+        pos_color = COLORS["text"]
         if row["chase"]:
             pos_color = COLORS["chase"]
         c.text(str(row["pos"]), left + 1, 15, font = "4x5", color = pos_color)
@@ -1078,10 +1087,11 @@ def race(c, ctx):
     togo = total - lap_now if total > 0 else 0
     if togo < 0:
         togo = 0
-    run_type = int(state.get("run_type", 0))
-    practice_or_qual = run_type in [1, 2] or togo >= 500
+    practice_or_qual = is_practice_or_qual(state)
     finished = (not practice_or_qual) and (togo <= 0 or state["flag_state"] == 5 or state["flag_state"] == 9)
     lap_str = str(lap_now) + "/" + str(total) if total > 0 else str(lap_now)
+    if practice_or_qual:
+        lap_str = ""
     chrome_title = series_session_title(state) if practice_or_qual else state["race_name"]
     draw_chrome(c, state, chrome_title, lap_str)
 
@@ -1099,7 +1109,8 @@ def race(c, ctx):
     bar_x1 = c.width - 5
     bar_y = 12
     bar_h = 4
-    c.rect(bar_x0, bar_y, bar_x1, bar_y + bar_h - 1, fill = COLORS["rail"])
+    if not practice_or_qual:
+        c.rect(bar_x0, bar_y, bar_x1, bar_y + bar_h - 1, fill = COLORS["rail"])
     if total > 0 and not practice_or_qual:
         frac = float(lap_now) / float(total)
         if frac > 1:
@@ -1134,7 +1145,10 @@ def race(c, ctx):
     else:
         c.text(state["track_name"], c.width - 3, 19, font = "4x5", color = COLORS["muted"], align = "right")
 
-    # Cautions + lead changes, spelled out with a small flag icon.
+    # Cautions + lead changes, spelled out with a small flag icon. Practice
+    # and qualifying have neither, so the row is left out there.
+    if practice_or_qual:
+        return
     c.image("flag-yellow.png", 4, 26, w = 6, h = 6)
     c.text(str(state["cautions"]) + " CAUTIONS", 12, 27, font = "4x5", color = COLORS["text"])
     c.text(str(state["lead_changes"]) + " LEAD CHANGES", c.width - 3, 27, font = "4x5", color = COLORS["muted"], align = "right")
@@ -1275,6 +1289,7 @@ def fetch_updates(ctx):
         "flag_state": flag_state,
         "notes": notes,
         "chase_nums": chase_number_set(feed, race),
+        "rows": vehicle_rows(feed, int(race.get("playoff_round", 0) or 0) > 0) if feed != None else [],
     }
 
 
@@ -1288,6 +1303,24 @@ def updates(c, ctx):
 
     series = SERIES_SHORT.get(state["series"], "CUP")
     notes = state["notes"]
+    chase = state.get("chase_nums", {})
+    if chase == None:
+        chase = {}
+
+    # After the race, stop cycling: keep the final update when it names the
+    # winner, otherwise show a winner + top-5 card from the results.
+    race_over = state["source"] == "PREV" or state["flag_state"] in [5, 9]
+    if race_over:
+        if len(notes) > 0 and mentions_win(notes[len(notes) - 1]["text"]):
+            last = notes[len(notes) - 1]
+            draw_chrome(c, state, series + " FINAL", state["race_name"])
+            draw_update_note(c, last["text"], chase, note_color(last["flag"]))
+            return
+        if len(state.get("rows", [])) > 0:
+            draw_chrome(c, state, series + " FINAL", state["race_name"])
+            draw_winner_card(c, state["rows"])
+            return
+
     if len(notes) == 0:
         draw_chrome(c, state, series + " UPDATES", state["race_name"])
         c.text("NO UPDATES YET", 4, 16, font = "5x7", color = COLORS["muted"])
@@ -1306,17 +1339,57 @@ def updates(c, ctx):
     header = series + " L" + str(note["lap"])
     draw_chrome(c, state, header, state["race_name"])
 
-    # Accent by flag state on the note itself.
-    col = COLORS["text"]
-    fs = note["flag"]
-    if fs == 2:
-        col = FLAG_COLOR[2]
-    elif fs == 3:
-        col = FLAG_COLOR[3]
-    elif fs == 4 or fs == 5 or fs == 9:
-        col = COLORS["accent2"]
+    draw_update_note(c, note["text"], chase, note_color(note["flag"]))
 
-    chase = state.get("chase_nums", {})
-    if chase == None:
-        chase = {}
-    draw_update_note(c, note["text"], chase, col)
+
+def note_color(fs):
+    # Accent by flag state on the note itself.
+    if fs == 2:
+        return FLAG_COLOR[2]
+    if fs == 3:
+        return FLAG_COLOR[3]
+    return COLORS["text"]
+
+
+def mentions_win(text):
+    # Whole words only, so "WINDY" or "WINSTON" don't count.
+    for word in str(text).upper().split(" "):
+        word = word.strip(".,!?;:'\"()")
+        if word == "WIN" or word == "WINS" or word == "WINNER":
+            return True
+    return False
+
+
+def clip_to(c, text, font, max_w):
+    for _i in range(24):
+        if len(text) <= 1 or c.text_width(text, font) <= max_w:
+            break
+        text = text[:len(text) - 1]
+    return text
+
+
+def draw_winner_card(c, rows):
+    # "#17 DAY WINS" plus the margin, then P2-P5 in two columns. Chase
+    # drivers green, everyone else white.
+    win = rows[0]
+    win_color = COLORS["chase"] if win["chase"] else COLORS["text"]
+    margin = ""
+    if len(rows) > 1 and rows[1]["delta"] != None and float(rows[1]["delta"]) > 0:
+        # A negative delta is laps down, not seconds, so it gets no margin.
+        margin = "BY " + format_gap(rows[1]["delta"], 2)[1:] + "S"
+    margin_w = c.text_width(margin, "4x5") + 4 if margin != "" else 0
+    line = clip_to(c, "#" + win["num"] + " " + win["name"] + " WINS", "5x7", c.width - 6 - margin_w)
+    c.text(line, 3, 13, font = "5x7", color = win_color)
+    if margin != "":
+        c.text(margin, c.width - 3, 14, font = "4x5", color = COLORS["muted"], align = "right")
+    col_w = c.width // 2
+    for i in range(1, 5):
+        if i >= len(rows):
+            break
+        r = rows[i]
+        x = 3 + ((i - 1) % 2) * col_w
+        y = 21 + ((i - 1) // 2) * 6
+        c.text(str(r["pos"]), x, y, font = "4x5", color = COLORS["muted"])
+        name_color = COLORS["chase"] if r["chase"] else COLORS["text"]
+        label = clip_to(c, "#" + r["num"] + " " + r["name"], "4x5", col_w - 12)
+        c.text(label, x + 7, y, font = "4x5", color = name_color)
