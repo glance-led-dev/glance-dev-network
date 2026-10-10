@@ -24,7 +24,7 @@ If the `gdn` executable is not on `PATH`, use `python -m gdn.cli` in its place.
 ## Configuration
 
 - **Series** — `CUP`, `OREILLY`, or `TRUCKS` (default `CUP`). Selects which national series schedule and live feed to follow (Cup, O’Reilly Auto Parts, Trucks). The code still accepts a legacy `XFINITY` alias and maps it to the same series ID / `ORL` short label.
-- **Favorite car 1–3** — optional car numbers to highlight (for example `24`). Type the number exactly as it appears on the car: `02` and `2` are different cars. A leading `#` is ignored. Leave blank for none; a number that is not in the field simply shows nothing.
+- **Favorite car 1–3** — optional car numbers to highlight (for example `24`). Type the number exactly as it appears on the car: `02` and `2` are different cars. A leading `#` is ignored. Each slot defaults to `NONE`; leave any slot as `NONE` (or blank) to skip it, so one or two favorites work without filling all three. (The default is `NONE` rather than blank because the Glance mobile form won't save a blank free-text field.) A number that is not in the field simply shows nothing.
 - **Favorite highlight color** — `AQUA` (default), `PINK`, `WHITE`, `MAGENTA`, `CORAL`, `ORANGE`, or `YELLOW`. Only the favorite's position number and a dim row wash take the color, so status ticks and car-number colors never change. Greens, red, blue, and purple are left out because they blend with the gain/loss numbers, Chase bar, or fastest-lap tick, or are too dark on the LEDs.
 
 ## Pages
