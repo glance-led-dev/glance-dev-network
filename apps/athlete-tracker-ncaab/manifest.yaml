@@ -8,7 +8,7 @@ category: Sports
 entry: app.star
 width: 128
 height: 32
-refresh: 60
+refresh: 300
 pages: [season_average, live_final]
 assets:
   - 2.png
