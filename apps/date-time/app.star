@@ -4,15 +4,17 @@
 # on the left, so the panel reads as a date app first rather than as another
 # weather app, and gives the right zone to the weather at a glance: the place,
 # the drawn condition, a 10x16 temperature, today's high and low, and the
-# condition by name. SKY gives the rest of today three even columns -- chance
-# of rain, sunrise, sunset -- each a small drawn icon and label over a big value.
+# condition by name. SKY shows the next six hours, three over three, each an
+# hour, drawn condition, temperature, and chance of rain, with sunrise stacked
+# over sunset on the right.
 #
-# No clock: the app re-renders every 30 minutes (refresh 1800), and a time
-# drawn at that rate would sit up to 30 minutes stale. Sunrise and sunset are
+# No clock: the app re-renders every 15 minutes (refresh 900), and a time
+# drawn at that rate would sit up to 15 minutes stale. Sunrise and sunset are
 # fixed times for the day, so the slow refresh never makes them wrong.
 #
-# Colors come from three five-way dropdowns (date, weather, temperature); the
-# place name and labels are gray, the dividers dim gray.
+# Colors come from three dropdowns (date, weather, temperature); temperatures
+# default to weather-map colors by value. The place name and labels are gray,
+# the dividers dim gray.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -85,17 +87,7 @@ RING = [
     [0, 1, 1, 1, 0],
 ]
 
-# SKY icons, 1x. A drop for rain:
-DROP = [
-    [0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-    [0, 1, 1, 1, 0],
-    [0, 1, 1, 1, 0],
-    [1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1],
-    [0, 1, 1, 1, 0],
-]
-# and a half sun with rays on a gray horizon, yellow for sunrise and orange
+# SKY icons, 1x: a half sun with rays on a gray horizon, yellow for sunrise and orange
 # for sunset. (An up/down arrow stacked on the sun read as a cross on a grave.)
 SUN_RAYS = [
     [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
@@ -125,6 +117,37 @@ TEXT_COLORS = {"White": "#FFFFFF", "Amber": "#FFBF00", "Green": "#00DC46",
 
 def _color(ctx, key):
     return TEXT_COLORS.get(_s(ctx, key, "White"), "#FFFFFF")
+
+# Meteorological temperature colors: the 10-degree bands of a TV/NWS
+# temperature map, Fahrenheit, purple when frigid through blue, green, yellow
+# and orange to red when hot.
+TEMP_BANDS = [
+    [0, "#CC66FF"],     # below 0
+    [10, "#9966FF"],    # 0s
+    [20, "#3366FF"],    # 10s
+    [32, "#3399FF"],    # 20s to freezing
+    [40, "#33CCFF"],    # 32-39
+    [50, "#33FFCC"],    # 40s
+    [60, "#33FF66"],    # 50s
+    [70, "#99FF33"],    # 60s
+    [80, "#FFFF33"],    # 70s
+    [90, "#FFAA00"],    # 80s
+    [100, "#FF5500"],   # 90s
+]
+TEMP_HOT = "#FF0000"    # 100 and up
+
+def temp_scale_color(f):
+    for band in TEMP_BANDS:
+        if f < band[0]:
+            return band[1]
+    return TEMP_HOT
+
+def temp_color(ctx, f):
+    # "Weather map" colors the reading by its value; a named color is fixed.
+    mode = _s(ctx, "tempcolormode", "Weather map")
+    if mode == "Weather map":
+        return temp_scale_color(f)
+    return TEXT_COLORS.get(mode, "#FFFFFF")
 
 # ---------- calendar ----------
 
@@ -285,12 +308,13 @@ def fetch_weather(lat, lon):
             "latitude": str(lat),
             "longitude": str(lon),
             "current": "temperature_2m,weather_code,is_day",
+            "hourly": "temperature_2m,weather_code,precipitation_probability,is_day",
             "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset",
-            "forecast_days": "1",
+            "forecast_days": "2",   # so late-evening hours reach past midnight
             "temperature_unit": "fahrenheit",
             "timezone": "auto",
         },
-        ttl_seconds = 1800,   # matches refresh: 1800 in manifest.yaml
+        ttl_seconds = 900,    # matches refresh: 900 in manifest.yaml
     )
     if r["status_code"] != 200:
         return None
@@ -331,6 +355,41 @@ def sun_time(s):
     if h12 == 0:
         h12 = 12
     return str(h12) + ":" + s[14:16]
+
+def hour_label(s):
+    # "2026-09-14T15:00" -> "3P"; "PM" ran into the next cell.
+    h = int(s[11:13])
+    h12 = h % 12
+    if h12 == 0:
+        h12 = 12
+    return str(h12) + ("A" if h < 12 else "P")
+
+def next_hours(wxj, n):
+    # The n hours after the current one, from Open-Meteo's hourly arrays
+    # (local times under timezone=auto). Each is [label, temp, code, rain, is_day].
+    cur = wxj.get("current", None)
+    hourly = wxj.get("hourly", None)
+    if cur == None or hourly == None:
+        return []
+    now = str(cur.get("time", ""))[:13]
+    times = hourly.get("time", [])
+    start = -1
+    for i in range(len(times)):
+        if str(times[i])[:13] == now:
+            start = i + 1
+            break
+    if start < 0:
+        return []
+    out = []
+    for i in range(start, min(start + n, len(times))):
+        t = hourly["temperature_2m"][i]
+        code = hourly["weather_code"][i]
+        rain = hourly["precipitation_probability"][i]
+        if t == None or code == None:
+            continue
+        out.append([hour_label(str(times[i])), whole(t), int(code),
+                    rain, int(hourly["is_day"][i] or 0) == 1])
+    return out
 
 # ---------- weather icon + condition text ----------
 
@@ -512,12 +571,12 @@ def today(c, ctx):
     is_day = int(cur.get("is_day", 1)) == 1
     draw_condition(c, code, is_day, _moon_phase(ctx), rx, 7, 2)
 
-    temp_color = _color(ctx, "tempcolormode")
+    tcolor = temp_color(ctx, whole(temp))
     ts = str(whole(temp))
     tx = rx + 18 + 4
-    c.text(ts, tx, 8, font = "10x16", color = temp_color)
+    c.text(ts, tx, 8, font = "10x16", color = tcolor)
     ring_x = tx + c.text_width(ts, "10x16") + 1
-    _bmp(c, RING, ring_x, 8, temp_color, 1)
+    _bmp(c, RING, ring_x, 8, tcolor, 1)
 
     daily = wxj.get("daily", None)
     hi = _first(daily, "temperature_2m_max")
@@ -527,39 +586,38 @@ def today(c, ctx):
         for row in [["H", hi, 10], ["L", lo, 17]]:
             c.text(row[0], hx, row[2], font = "4x5", color = LABEL)
             c.text(str(whole(row[1])), hx + c.text_width(row[0], "4x5") + 2, row[2],
-                   font = "4x5", color = weather_color)
+                   font = "4x5", color = "white")
 
     c.text(clip(c, condition_label(code, is_day), "4x5", rw), rx, 26,
            font = "4x5", color = weather_color)
 
-def sky_value(c, text, kind, cx, maxw, color):
-    # 10x16 digits with hand-set punctuation, y 13-28. The font's colon is a
-    # full digit wide ('6 : 36') and its % crowds the number, so the colon is
-    # two 2x2 dots and the % is 6x8 sitting on the digits' baseline.
-    y = 13
-    if text == "--":
-        c.text("--", cx, y, font = "10x16", color = LABEL, align = "center")
-        return
-    if kind == "pct":
-        nw = c.text_width(text, "10x16")
-        x = cx - (nw + 1 + c.text_width("%", "6x8")) // 2
-        c.text(text, x, y, font = "10x16", color = color)
-        c.text("%", x + nw + 1, y + 8, font = "6x8", color = color)
-        return
-    parts = text.split(":")
-    hw = c.text_width(parts[0], "10x16")
-    w = hw + 1 + 2 + 2 + c.text_width(parts[1], "10x16")
-    if w > maxw:
-        # '10:15' (an Alaska winter sunrise) steps down rather than crossing
-        # a divider.
-        c.text(text, cx, y + 2, font = "8x12", color = color, align = "center")
-        return
-    x = cx - w // 2
-    c.text(parts[0], x, y, font = "10x16", color = color)
-    kx = x + hw + 1
-    c.rect(kx, y + 4, kx + 1, y + 5, fill = color)
-    c.rect(kx, y + 10, kx + 1, y + 11, fill = color)
-    c.text(parts[1], kx + 2 + 2, y, font = "10x16", color = color)
+# A 3x3 degree ring for the small hourly temperatures.
+RING_SMALL = [
+    [1, 1, 1],
+    [1, 0, 1],
+    [1, 1, 1],
+]
+
+def hour_cell(c, ctx, h, phase, x, y):
+    # One hour, 15px tall from y: the hour over its drawn condition (1x, 9x9)
+    # on the left; the 5x7 temperature over the 4x5 chance of rain beside it.
+    c.text(h[0], x, y, font = "4x5", color = "white")
+    draw_condition(c, h[2], h[4], phase, x, y + 6, 1)
+    tx = x + c.text_width("12A", "4x5") + 2
+    ts = str(h[1])
+    c.text(ts, tx, y + 1, font = "5x7", color = "white")
+    _bmp(c, RING_SMALL, tx + c.text_width(ts, "5x7") + 1, y + 1, "white", 1)
+    rain = "--" if h[3] == None else str(whole(h[3])) + "%"
+    c.text(rain, tx, y + 10, font = "4x5", color = "cyan")
+
+def sun_row(c, label, value, x, y, sun_color):
+    # One stacked sun row, 14px tall from y: the horizon icon, then the gray
+    # label over the 6x8 time in the sun's own color.
+    _bmp(c, SUN_RAYS, x, y + 4, sun_color, 1)
+    _bmp(c, HORIZON, x, y + 9, "gray", 1)
+    tx = x + len(SUN_RAYS[0]) + 3
+    c.text(label, tx, y, font = "4x5", color = LABEL)
+    c.text(value, tx, y + 6, font = "6x8", color = LABEL if value == "--" else sun_color)
 
 def sky(c, ctx):
     c.fill("black")
@@ -573,35 +631,21 @@ def sky(c, ctx):
         nodata(c, "NO WEATHER", "CHECK BACK SOON")
         return
 
-    weather_color = _color(ctx, "weathercolor")
-    rain = _first(daily, "precipitation_probability_max")
-    cols = [
-        ["RAIN", "--" if rain == None else str(whole(rain))],
-        ["SUNRISE", sun_time(_first(daily, "sunrise"))],
-        ["SUNSET", sun_time(_first(daily, "sunset"))],
-    ]
+    # Right zone, sized to its widest text: sunrise stacked over sunset.
+    sw = len(SUN_RAYS[0]) + 3 + max(c.text_width("SUNRISE", "4x5"), c.text_width("10:15", "6x8"))
+    rx = RIGHT - sw + 1
+    dx = rx - GAP - 1
+    c.line(dx, 3, dx, 28, DIVIDER)
+    sun_row(c, "SUNRISE", sun_time(_first(daily, "sunrise")), rx, 1, "yellow")
+    sun_row(c, "SUNSET", sun_time(_first(daily, "sunset")), rx, 17, "orange")
 
-    # Three even columns across the safe zone, a divider between each.
-    colw = (RIGHT - LEFT + 1 - 2 * (2 * GAP + 1)) // 3
-    x = LEFT
-    for i in range(3):
-        if i > 0:
-            c.line(x + GAP, 3, x + GAP, 28, DIVIDER)
-            x += 2 * GAP + 1
-        label = cols[i][0]
-        value = cols[i][1]
-        cx = x + colw // 2
-
-        # Top row, y 2-8: icon + label, centered as one unit.
-        icon_w = len(DROP[0]) if i == 0 else len(SUN_RAYS[0])
-        w = icon_w + 3 + c.text_width(label, "4x5")
-        ix = cx - w // 2
-        if i == 0:
-            _bmp(c, DROP, ix, 2, "cyan", 1)
-        else:
-            _bmp(c, SUN_RAYS, ix, 3, "yellow" if i == 1 else "orange", 1)
-            _bmp(c, HORIZON, ix, 8, "gray", 1)
-        c.text(label, ix + icon_w + 3, 4, font = "4x5", color = LABEL)
-
-        sky_value(c, value, "pct" if i == 0 else "time", cx, colw, weather_color)
-        x += colw
+    # Left zone: the next six hours, three over three.
+    hours = next_hours(wxj, 6)
+    lw = dx - GAP - LEFT
+    if not hours:
+        c.text("NO FORECAST", LEFT + lw // 2, 13, font = "4x5", color = LABEL, align = "center")
+        return
+    phase = _moon_phase(ctx)
+    cw = lw // 3
+    for i in range(len(hours)):
+        hour_cell(c, ctx, hours[i], phase, LEFT + (i % 3) * cw, 0 if i < 3 else 16)
