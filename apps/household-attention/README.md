@@ -16,14 +16,18 @@ Each installation needs its own authenticated relay implementing the contract be
 
 The response is a JSON object with `schema: 1`, UTC epoch-second `generated_unix` and `expires_unix`, nonnegative integer `total_actionable`, boolean `degraded`, `source_count`, privacy mode `counts` or `titles`, and an `items` list. Expiry may be no more than 300 seconds after generation. Reject missing timestamps; do not substitute the renderer time for an old source snapshot.
 
-In counts mode, `items` is empty. In titles mode, at most five items contain only `title` and `stale`. Do not add notes, record IDs, source IDs, home addresses, account names, calendars, precise locations, device identifiers, links, or credentials. The household service's projection defaults to counts mode; title sharing requires an explicit choice.
+In counts mode, `items` is empty. In titles mode, at most five items contain `title` and `stale`, plus optional `source_label` and `context` strings (maximum 64 uppercase ASCII characters). Context sharing requires an explicit opt-in in the publisher, separate from titles. Labels are generic provider names, not account or device identifiers. Due dates and relative overdue timing must derive from the actual record and household timezone, never guessed dates. Do not add notes, record IDs, source IDs, home addresses, account names, calendars, precise locations, device identifiers, links, or credentials. The household service's projection defaults to counts mode; title sharing requires an explicit choice.
 
 ## Preview and verify
 
-`gdn check <app-directory>` and `gdn validate <app-directory>` validate the package. `gdn build <app-directory> --input preview=Item` renders an offline example. Offline states include Counts, Item, Empty, Stale, Error and Long title; all show SAMPLE and perform no network requests. Leave preview set to Live for production. Until both `endpoint` and `readkey` are set, Live also shows a SAMPLE demo item (this is what the catalog preview shows) and makes no network request.
+`gdn check <app-directory>` and `gdn validate <app-directory>` validate the package. `gdn build <app-directory> --input preview=Item` renders an offline example. Offline states include Counts, Item, Empty, Stale, Error and Long title; all show SAMPLE and perform no network requests. Leave preview set to Live for production.
 
 Local checks cover privacy projection, rejected endpoints, authentication headers, expiry, source warnings, and safe-area text bounds. Also verify the live relay's unauthenticated denial, invalid publisher denial, expiry after publisher failure, recovery, actual rendered image, and physical display settings before calling deployment complete.
 
 ## Extending
 
 Add household sources and rules in the private application. Preserve this small display contract so new devices do not require a different LED app. The renderer stays read-only and contains no device-control operation. Longer explanations, evidence and actions belong in the authenticated household GUI.
+
+## Version 0.2.0 rollout
+
+Update the relay to accept optional context before enabling `--context` on the publisher. Old readers ignore the additional fields. Existing app installations must receive the new catalogue version to render five pages; publisher success alone does not prove the panel upgraded. Keep Offline preview on Live. The five pages retain 192x32 dimensions and a 60-second refresh. No simulated in-frame animation is used.

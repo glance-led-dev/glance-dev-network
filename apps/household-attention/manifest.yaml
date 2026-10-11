@@ -1,6 +1,6 @@
 gdn: 1
 id: household-attention
-version: 0.1.0
+version: 0.2.0
 name: Household Attention
 author: Household Intelligence contributors
 description: Private household attention counts or explicitly shared task titles, with expiry and source warnings.
@@ -8,8 +8,8 @@ category: Productivity
 entry: app.star
 width: 192
 height: 32
-refresh: 300
-pages: [main]
+refresh: 60
+pages: [main, second, third, fourth, fifth]
 inputs:
   - key: endpoint
     type: string
@@ -22,10 +22,16 @@ inputs:
     app_input_type: api-key
     label: LED read key
     default: ""
+  - key: mode
+    type: string
+    app_input_type: dropdown
+    label: Items to show
+    default: All five
+    choices: [All five, Fixed rank]
   - key: item
     type: string
     app_input_type: dropdown
-    label: Ranked item
+    label: Ranked item (Fixed rank mode only)
     default: "1"
     choices: ["1", "2", "3", "4", "5"]
   - key: preview
