@@ -1,8 +1,8 @@
 # Date & Weather — today's date and weather for a US zip code. (192x32)
 
 **TODAY:** the weekday over a big date on the left; on the right, the place,
-a drawn condition icon, the temperature, today's high and low over the
-current humidity, and the condition by name.
+a drawn condition icon, the temperature, today's high, low, and
+current humidity in a column, and the condition by name.
 
 **SKY:** the next six hours, three over three, each with its hour, a drawn
 condition, the temperature, and the chance of rain that hour; sunrise (yellow)

@@ -3,8 +3,8 @@
 # DESIGN. The date is the anchor. TODAY puts the weekday over a big 10x16 date
 # on the left, so the panel reads as a date app first rather than as another
 # weather app, and gives the right zone to the weather at a glance: the place,
-# the drawn condition, a 10x16 temperature, today's high and low over the
-# humidity, and the condition by name. SKY shows the next six hours, three
+# the drawn condition, a 10x16 temperature, today's high, low, and humidity
+# in a column, and the condition by name. SKY shows the next six hours, three
 # over three, each an hour, drawn condition, temperature, and chance of rain,
 # with sunrise stacked over sunset on the right.
 #
@@ -97,15 +97,6 @@ SUN_RAYS = [
     [1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1],
 ]
 HORIZON = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-
-# Humidity mark on TODAY, 1x: a raindrop the height of the 4x5 H and L.
-DROP = [
-    [0, 1, 0],
-    [0, 1, 0],
-    [1, 1, 1],
-    [1, 1, 1],
-    [0, 1, 0],
-]
 
 # ---------- input ----------
 
@@ -451,13 +442,14 @@ def draw_condition(c, code, is_day, phase, x, y, scale):
         _bmp(c, CLOUD, x, y + 2 * scale, "gray", scale)
 
 def condition_label(code, is_day):
+    # Each fits the ~54px left of the humidity on TODAY's bottom row.
     # Clear sky at night: moon icon, "CLEAR" text (same slot FOG etc. use).
     if code == 0:
         return "SUNNY" if is_day else "CLEAR"
     if code == 1:
-        return "MOSTLY SUNNY" if is_day else "MOSTLY CLEAR"
+        return "MOSTLY SUN" if is_day else "MOSTLY CLR"
     if code == 2:
-        return "PARTLY CLOUDY"
+        return "PTLY CLOUDY"
     if code == 3:
         return "CLOUDY"
     if code == 45:
@@ -465,13 +457,13 @@ def condition_label(code, is_day):
     if code == 48:
         return "ICY FOG"
     if code == 51:
-        return "LIGHT DRIZZLE"
+        return "LT DRIZZLE"
     if code == 53:
         return "DRIZZLE"
     if code == 55:
-        return "HEAVY DRIZZLE"
+        return "HVY DRIZZLE"
     if code == 56:
-        return "LIGHT FZ DRIZZLE"
+        return "LT FZ DRZL"
     if code == 57:
         return "FZ DRIZZLE"
     if code == 61:
@@ -481,7 +473,7 @@ def condition_label(code, is_day):
     if code == 65:
         return "HEAVY RAIN"
     if code == 66:
-        return "LIGHT FZ RAIN"
+        return "LT FZ RAIN"
     if code == 67:
         return "FZ RAIN"
     if code == 71:
@@ -493,21 +485,21 @@ def condition_label(code, is_day):
     if code == 77:
         return "SNOW GRAINS"
     if code == 80:
-        return "LIGHT SHOWERS"
+        return "LT SHOWERS"
     if code == 81:
         return "SHOWERS"
     if code == 82:
-        return "HEAVY SHOWERS"
+        return "HVY SHOWERS"
     if code == 85:
-        return "LIGHT SNOW SHW"
+        return "LT SNOW SHW"
     if code == 86:
-        return "SNOW SHOWERS"
+        return "SNOW SHWRS"
     if code == 95:
-        return "THUNDERSTORMS"
+        return "T-STORMS"
     if code == 96:
         return "STORM + HAIL"
     if code == 99:
-        return "SEVERE STORMS"
+        return "SVR STORMS"
     return "CLOUDY"
 
 # ---------- text helpers ----------
@@ -587,24 +579,31 @@ def today(c, ctx):
     ring_x = tx + c.text_width(ts, "10x16") + 1
     _bmp(c, RING, ring_x, 8, tcolor, 1)
 
-    # High, low, and humidity stack beside the temperature, rows at y 8, 14, 20
-    # so the three span the 10x16 digits.
+    # High, low, and humidity share one right-hand column at an even 8px
+    # pitch: labels right-aligned on HUM's M, values left-aligned after them.
+    # The column is sized for "HUM 100%"; the condition gets everything left
+    # of it.
+    col = max(RIGHT + 1 - c.text_width("HUM 100%", "4x5"), ring_x + len(RING[0]) + 4)
     daily = wxj.get("daily", None)
     hi = _first(daily, "temperature_2m_max")
     lo = _first(daily, "temperature_2m_min")
-    hx = ring_x + len(RING[0]) + 5
-    vx = hx + c.text_width("H", "4x5") + 2
+    rows = []
     if hi != None and lo != None:
-        for row in [["H", hi, 8], ["L", lo, 14]]:
-            c.text(row[0], hx, row[2], font = "4x5", color = LABEL)
-            c.text(str(whole(row[1])), vx, row[2], font = "4x5", color = "white")
+        rows.append(["H", str(whole(hi)), 10])
+        rows.append(["L", str(whole(lo)), 18])
     hum = cur.get("relative_humidity_2m", None)
     if hum != None:
-        _bmp(c, DROP, hx, 20, "cyan", 1)
-        c.text(str(whole(hum)) + "%", vx, 20, font = "4x5", color = "white")
+        rows.append(["HUM", str(whole(hum)) + "%", 26])
+    vx = RIGHT + 1 - c.text_width("100%", "4x5")
+    for row in rows:
+        c.text(row[0], vx - 2 - c.text_width(row[0], "4x5"), row[2],
+               font = "4x5", color = LABEL)
+        c.text(row[1], vx, row[2], font = "4x5", color = "white")
+    cw = (col - 4 - rx) if hum != None else rw
 
-    c.text(clip(c, condition_label(code, is_day), "4x5", rw), rx, 26,
+    c.text(clip(c, condition_label(code, is_day), "4x5", cw), rx, 26,
            font = "4x5", color = weather_color)
+
 
 # A 3x3 degree ring for the small hourly temperatures.
 RING_SMALL = [
