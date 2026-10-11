@@ -180,20 +180,38 @@ def local_date(ctx):
     return civil_from_days((ctx.now.unix + off * 60) // 86400)
 
 # ---- profile id ----------------------------------------------------------------
+# A Scholar ID is 12 characters of letters, digits, '-' and '_', and either of
+# the last two can come first. On the panel, settings ride a render descriptor
+# (GDN:W:H:app:pages:ttl:key-value_key-value). '_' separates one setting from
+# the next, so an ID containing '_' is split apart before the app runs and the
+# panel shows E500 -- while the IDE, which hands the value over whole, works.
+# '-' is safe: a setting is split from its value at the FIRST '-' only, which
+# is how a date like 2026-08-13 arrives intact. So '_' alone is typed as a
+# stand-in, '.', which survives the descriptor (hostnames rely on it) and,
+# unlike a space, still counts as the first character. It is turned back here;
+# a real '_' is still accepted, for the IDE and anywhere the value arrives whole.
 IDCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
+STANDIN = {".": "_"}
 
 def scholar_id(raw):
-    """Accept the bare ID or a whole profile link (…?user=ID&hl=en)."""
+    """The ID from what was entered: the bare ID with or without the stand-in,
+    or, where the value arrives whole, a profile link (…?user=ID&hl=en)."""
     s = str(raw).strip()
     at = s.find("user=")
     if at >= 0:
         s = s[at + 5:]
     out = ""
     for ch in s.elems():
+        ch = STANDIN.get(ch, ch)
         if ch not in IDCHARS:
             break
         out += ch
     return out
+
+def cut_link(raw):
+    """True when a pasted profile link reached the app cut at its first ':' --
+    all that is left of "https://scholar.google.com/..." on the panel."""
+    return str(raw).strip().lower() in ["http", "https"]
 
 # ---- data ----------------------------------------------------------------------
 def lookup(apikey, sid):
@@ -378,6 +396,7 @@ CARDS = {
     "badkey": ["KEY REJECTED", "CHECK YOUR SERPAPI KEY", RED],
     "limit": ["SEARCH LIMIT HIT", "SERPAPI QUOTA USED UP", RED],
     "noid": ["NO PROFILE ID", "ADD YOUR SCHOLAR ID", AMBER],
+    "link": ["ID, NOT THE LINK", "ENTER THE PROFILE ID ONLY", AMBER],
     "notfound": ["PROFILE NOT FOUND", "CHECK THE SCHOLAR ID", AMBER],
 }
 
@@ -387,7 +406,8 @@ def profile(c, ctx):
     year = today[0]           # local, so New Year's Eve in Eastern is still last year
     datestr = MONTH[today[1] - 1] + " " + str(today[2]) + " " + str(today[0])
     apikey = str(ctx.inputs.get("apikey", "")).strip()
-    sid = scholar_id(ctx.inputs.get("scholarid", ""))
+    rawid = ctx.inputs.get("scholarid", "")
+    sid = scholar_id(rawid)
     dbg = str(ctx.inputs.get("_debugstate", "")).strip().lower()
     hl = highlight(ctx)
 
@@ -399,6 +419,9 @@ def profile(c, ctx):
         return
     if apikey == "" or dbg == "demo":
         draw(c, DEMO, year, datestr, hl)
+        return
+    if cut_link(rawid):
+        card(c, CARDS["link"][0], CARDS["link"][1], CARDS["link"][2])
         return
     if sid == "":
         card(c, CARDS["noid"][0], CARDS["noid"][1], CARDS["noid"][2])

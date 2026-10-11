@@ -1,0 +1,25 @@
+id: where-in-the-sky
+name: Where in the Sky is...
+author: cfdmb
+description: Which direction and how high to look for a planet or the Moon from your zip code right now, or when it's next visible if it isn't.
+category: Science
+width: 128
+height: 32
+refresh: 3600
+pages:
+  - look
+  - info
+  - aim
+inputs:
+  - key: body
+    type: string
+    app_input_type: dropdown
+    label: Body
+    choices: [Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune]
+    default: Moon
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "10001"
+    help: A US zip code - used to look up your latitude/longitude.

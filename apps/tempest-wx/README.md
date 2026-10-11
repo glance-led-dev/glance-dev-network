@@ -20,7 +20,6 @@ sitting blank, and the alerts page tells you what to do.
 | setting | what it is |
 |---|---|
 | **Tempest API token** *(credential)* | Personal token from tempestwx.com — Settings, then Data Authorizations, then Create Token. |
-| **Station** | Which station on your account to read, in the order tempestwx.com lists them. Leave on `first` unless you own more than one. |
 | **Units** | `imperial` shows Fahrenheit, inches and mph; `metric` shows Celsius, millimetres and km/h. The colour coding follows the actual conditions, not the numbers on screen, so it means the same thing either way. |
 | **Pressure** | Chosen separately from the other units, since plenty of people want Fahrenheit alongside millibars. `mb` shows 1016, `inhg` shows 30.00. |
 | **Wind arrow points** | `from` aims the arrow back along the bearing the wind is coming from, the way a weather vane sits. `to` aims it the way the wind is blowing. |
@@ -65,6 +64,13 @@ from temperature and humidity rather than measured directly.
 
 ## Notes
 
+- The app reads one station: the lowest station id on the account the token belongs
+  to. A WeatherFlow token is issued per account rather than per station, so an account
+  with more than one station cannot point this app at a different one. Almost nobody
+  has more than one, and a setting that picked a station by its position in the API's
+  list turned out to swap stations on its own whenever that list came back in a
+  different order — so the app now makes one stable choice instead of offering an
+  unreliable one.
 - Everything on the Now and Outlook pages comes from WeatherFlow's `better_forecast`
   endpoint plus your station's raw device observations. Alerts come from
   `api.weather.gov`, which covers the United States only.

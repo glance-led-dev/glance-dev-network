@@ -1,0 +1,22 @@
+gdn: 1
+id: civic-center-muni
+version: 0.1.0
+name: Civic Center Muni
+author: Dmitry
+description: Next Muni Metro trains at San Francisco Civic Center, with separate outbound
+  and inbound pages.
+category: Transportation
+entry: app.star
+width: 64
+height: 32
+refresh: 300
+pages:
+- outbound
+- inbound
+inputs:
+- key: apikey
+  type: string
+  app_input_type: api-key
+  label: 511 API token
+  default: ''
+  help: Free at https://511.org/open-data/token. Leave blank for sample preview.

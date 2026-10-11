@@ -14,10 +14,10 @@ inputs:
   - key: endpoint
     type: string
     app_input_type: free-text
-    label: Status endpoint URL
+    label: Status endpoint (without https://)
     default: ""
     required: true
-    help: "Enter the full HTTPS /status URL from your Bambu Glance bridge, for example: https://your-worker.your-subdomain.workers.dev/status"
+    help: "Enter your bridge hostname and /status path without https://, for example: your-worker.your-subdomain.workers.dev/status. The app adds HTTPS automatically."
   - key: readkey
     type: string
     app_input_type: api-key

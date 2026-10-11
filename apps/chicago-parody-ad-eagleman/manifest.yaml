@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-parody-ad-eagleman
+version: 0.1.0
+name: "Chicago Parody Ad Eagleman"
+author: "FCYC"
+description: Eagleman parody with a mascot, egg, and his classic slogan.
+category: Art
+entry: app.star
+width: 192
+height: 32
+refresh: 86400
+pages: [main]
+assets:
+  - chicago-parody-ad-eagleman.png

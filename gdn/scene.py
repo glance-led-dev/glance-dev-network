@@ -64,7 +64,26 @@ def _schema() -> dict:
 @lru_cache(maxsize=1)
 def _validator():
     from jsonschema import Draft202012Validator
-    return Draft202012Validator(_schema())
+    return Draft202012Validator(_inline_refs(_schema()))
+
+
+def _inline_refs(schema: dict) -> dict:
+    """The schema with every `{"$ref": "#/$defs/x"}` replaced by its definition.
+    Same rules, but jsonschema no longer resolves a reference per field per op,
+    which was half the cost of validating a scene. The schema has no recursive
+    definitions, so this terminates."""
+    defs = schema.get("$defs", {})
+
+    def walk(node):
+        if isinstance(node, dict):
+            if set(node) == {"$ref"} and node["$ref"].startswith("#/$defs/"):
+                return walk(defs[node["$ref"][len("#/$defs/"):]])
+            return {k: walk(v) for k, v in node.items() if k != "$defs"}
+        if isinstance(node, list):
+            return [walk(v) for v in node]
+        return node
+
+    return walk(schema)
 
 
 @lru_cache(maxsize=1)

@@ -21,8 +21,11 @@ Bambu printer(s) -> Bambu Cloud -> local Bambu Glance Bridge -> user's
 Cloudflare Worker -> Bambu Print Status GDN app
 
 1. Configure your compatible bridge and Worker (see Backend setup below).
-2. Enter the full HTTPS `/status` URL in **Status endpoint URL** (`endpoint`),
-   for example `https://your-worker.your-subdomain.workers.dev/status`.
+2. Enter your hostname and `/status` path in **Status endpoint (without https://)**
+   (`endpoint`), for example `your-worker.your-subdomain.workers.dev/status`.
+   Omit `https://` in the Glance Setup App: colons can truncate device settings.
+   The app adds HTTPS before making the request. Full HTTPS URLs remain supported
+   when passed directly by Studio or other tools.
    This is a placeholder; replace it with your own endpoint.
 3. Enter your bridge's `READ_KEY` in **Bambu status read API key** (`readkey`).
    Glance stores this through its encrypted `app_input_type: api-key` setting.
@@ -33,8 +36,8 @@ Cloudflare Worker -> Bambu Print Status GDN app
 
 Refresh and HTTP cache TTL are both 300 seconds for the free-text and api-key
 inputs. There is no default backend. Endpoint and key are never drawn on the
-panel. Missing settings show SETUP REQUIRED / ADD ENDPOINT + KEY; a configured
-endpoint without the `https://` prefix shows INVALID ENDPOINT / HTTPS REQUIRED.
+panel. Missing settings show SETUP REQUIRED / ADD ENDPOINT + KEY; an invalid
+endpoint or an explicit HTTP URL shows INVALID ENDPOINT / HTTPS REQUIRED.
 A failed request shows NO PRINTER DATA / CHECK CONNECTION.
 
 All named demo scenarios work without an endpoint or key and never request
@@ -154,21 +157,7 @@ is used only when exactly one printing/preparing/finished printer is present.
 
 ## Verification
 
-Run `py -3.14 apps/bambu-print-status/tests/check_behavior.py` for behavioral
-checks, including configuration states, authenticated transport, and every demo
-scenario without network access. The Python-compatible harness complements
-actual Starlark rendering and full validation with Glance MCP.
-
-Run `py -3.14 apps/bambu-print-status/tests/render_v2.py` with the repository's
-Python dependencies installed to render all 32 demos, validate asset references
-against the manifest, assert 192x32 dimensions and x=10..181 pixel bounds, and
-regenerate the catalog and scenario gallery. `tests/build_assets.py` rebuilds
-the 13 runtime PNG assets offline from the retained reference artwork.
-If using the optional app-local dependencies on this workstation, first set
-`$env:PYTHONPATH = (Resolve-Path apps/bambu-print-status/.render-deps).Path`.
-That ignored directory is tooling only, not part of the app or its configuration.
-
-Render setup required, invalid endpoint, simulated HTTP failure, both idle,
+Run `gdn validate apps/bambu-print-status`, then render setup required, invalid endpoint, simulated HTTP failure, both idle,
 P2S printing, both printing, AMS inventory, and diagnostics with Glance MCP.
 Authenticated retrieval requires your own running backend and key.
 

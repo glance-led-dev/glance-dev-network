@@ -123,6 +123,9 @@ EDGE = 4
 # wide as the NEXT RACE tag under it (41 px in 4x5).
 LOGO_W, LOGO_H = 44, 12
 
+# Race date/time on the next-race page and the calendar: F1 red.
+DATE_COLOR = "#E10600"
+
 # Bitmap fonts have no accented glyphs and skip them silently -- "Hülkenberg"
 # drew as HLKENBERG. Fold to plain ASCII after upper-casing.
 ASCII_FOLD = {
@@ -274,6 +277,10 @@ def race_variants(name):
         out.append(base)
         if "-" in base:
             out.append(base.split("-")[0])
+    elif " GRAND PRIX " in name:
+        # "BAHRAIN GRAND PRIX IN SEPANG" -> "BAHRAIN GP IN SEPANG": keep the
+        # whole name and let the font ladder shrink it rather than cut it off.
+        out.append(name.replace(" GRAND PRIX ", " GP "))
     return out
 
 def up(s):
@@ -1032,7 +1039,7 @@ def event(c, ctx):
     trx = tx0 + text_w + gap
     draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
 
-    name, nf = fit_ladder(c, race_variants(st["race_name"]), ["6x8", "5x7", "4x5"], text_w)
+    name, nf = fit_ladder(c, race_variants(st["race_name"]), ["6x8", "5x7", "4x5", "picopixel"], text_w)
     # Row bottoms on this page: 9 (race / flag), 16 (circuit / lap),
     # 27 (date / flag row / session / temp / the logo tag).
     c.text(name, cx, top_for(nf, 9), font = nf, color = COLORS["text"], align = "center")
@@ -1041,7 +1048,7 @@ def event(c, ctx):
         c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
         when = local_dt(ctx, st["race_date"], st.get("race_time", ""))
         wf = "5x7" if c.text_width(when, "5x7") <= text_w else "4x5"
-        c.text(fit_text(c, when, wf, text_w), cx, top_for(wf, 27), font = wf, color = COLORS["text"], align = "center")
+        c.text(fit_text(c, when, wf, text_w), cx, top_for(wf, 27), font = wf, color = DATE_COLOR, align = "center")
         return
 
     session = st.get("session", "RACE")
@@ -1201,7 +1208,7 @@ def cal_per_page(width):
     return 6 if width >= 320 else 4
 
 def _draw_calendar(c, ctx, skip):
-    date_color = COLORS["muted"]
+    date_color = DATE_COLOR
     draw_page_tab(c, "CALENDAR", "#E2E8F0")
     upcoming = fetch_f1_upcoming(ctx)
     per = cal_per_page(c.width)

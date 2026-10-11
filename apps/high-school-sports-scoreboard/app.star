@@ -14,7 +14,7 @@
 
 PARSE_BASE = "https://api.parse.bot/scraper/e0a033cc-4c08-49d5-8417-81682c9b3dbf"
 PARSE_LIVE_BASE = "https://api.parse.bot/scraper/e0a033cc-4c08-49d5-8417-81682c9b3dbf"
-PARSE_SNAPSHOT_VERSION = "15"
+PARSE_SNAPSHOT_VERSION = "18"
 GAMECHANGER_TEAM_BASE = "https://api.team-manager.gc.com/public/teams/"
 
 SMALL_FONT = "4x5"   # defaults used when creating each box below
@@ -9797,15 +9797,24 @@ def school_timezone_from_url(maxpreps_url):
     return "Eastern"
 
 def school_settings(ctx):
-    maxpreps_url = ctx.inputs.get("maxprepsurl", "")
-    if maxpreps_url == None:
-        maxpreps_url = ""
+    state = school_path_segment(ctx.inputs.get("schoolstate", ""))
+    city = school_path_segment(ctx.inputs.get("schoolcity", ""))
+    school = school_path_segment(ctx.inputs.get("schoolslug", ""))
+    maxpreps_url = ""
+    if state != "" and city != "" and school != "":
+        maxpreps_url = "/" + state + "/" + city + "/" + school + "/"
     return {
-        "school": "",
-        "state": "",
-        "maxpreps_url": maxpreps_url.strip(),
+        "school": school,
+        "state": state,
+        "maxpreps_url": maxpreps_url,
         "timezone": school_timezone_from_url(maxpreps_url),
     }
+
+def school_path_segment(value):
+    raw = str(value if value != None else "").strip().lower()
+    raw = raw.replace("https://", "").replace("http://", "")
+    raw = raw.replace("www.maxpreps.com", "").strip("/")
+    return raw.replace(" ", "-")
 
 def maxpreps_game_url(value):
     raw = str(value).strip()
@@ -9824,6 +9833,7 @@ def maxpreps_school_path(value):
     raw = raw.split("?")[0].split("#")[0]
     raw = raw.replace("https://www.maxpreps.com", "")
     raw = raw.replace("http://www.maxpreps.com", "")
+    raw = raw.replace("www.maxpreps.com", "")
     if not raw.startswith("/"):
         raw = "/" + raw
     pieces = []
@@ -11203,6 +11213,8 @@ def fetch_game_adaptive(ctx, kind, slot):
     source_timezone = schools["timezone"]
     display_timezone = ctx.inputs.get("displaytimezone", "Eastern")
     gamechanger_team_id = ctx.inputs.get("gamechangerteamid", "")
+    if str(gamechanger_team_id).strip().lower() in ["", "none", "n/a", "na"]:
+        gamechanger_team_id = ""
     gamechanger_live_enabled = live_pulls_enabled(ctx) and sport["code"] in ["BSB", "SB"] and str(gamechanger_team_id).strip() != "" and str(schools.get("maxpreps_url", "")).strip() != "" and kind in ["dynamic", "live"]
     if not sport_is_active(ctx, source_timezone):
         return None

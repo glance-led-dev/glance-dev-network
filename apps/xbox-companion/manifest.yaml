@@ -1,0 +1,72 @@
+gdn: 1
+id: xbox-companion
+name: Xbox Companion
+version: 0.1.0
+author: Xbox Companion contributors
+description: Xbox profile, current activity, Gamerscore and recent achievements in an artwork-led display.
+category: Gaming
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [main]
+assets: [xbox-symbol.png, xbox-small.png]
+inputs:
+  - key: endpoint
+    type: string
+    app_input_type: free-text
+    label: Companion status host/path
+    default: ""
+    help: Enter your companion hostname/path without the HTTPS prefix, for example xbox.example.com/status. HTTPS is added automatically. Microsoft tokens never belong here.
+  - key: readkey
+    type: string
+    app_input_type: api-key
+    label: Device read key
+    default: ""
+    help: A device-scoped key issued by the companion service, not your Microsoft client secret.
+  - key: viewmode
+    type: string
+    app_input_type: dropdown
+    label: Display
+    default: Auto
+    choices: [Auto, Profile, Now Playing, Gamerscore, Recent Achievement, Recent Activity, Friend Activity]
+    options: [Auto, Profile, Now Playing, Gamerscore, Recent Achievement, Recent Activity, Friend Activity]
+  - key: showfriends
+    type: boolean
+    app_input_type: checkbox
+    label: Show friend activity
+    default: false
+    help: Also requires friend activity enabled in your companion service. Only activity shared by Xbox is shown.
+  - key: showpic
+    type: boolean
+    app_input_type: checkbox
+    label: Show gamerpic
+    default: true
+  - key: showart
+    type: boolean
+    app_input_type: checkbox
+    label: Show game and achievement artwork
+    default: true
+  - key: showscore
+    type: boolean
+    app_input_type: checkbox
+    label: Show Gamerscore
+    default: true
+  - key: showgame
+    type: boolean
+    app_input_type: checkbox
+    label: Show current game
+    default: true
+  - key: showachievements
+    type: boolean
+    app_input_type: checkbox
+    label: Show achievements
+    default: true
+  - key: demo
+    type: string
+    app_input_type: dropdown
+    label: Preview scenario
+    default: Live
+    choices: [Live, Profile, Playing, Last Played, Achievement, Score, Activity, Friends, Friends Empty, Friends Unavailable, Offline, Empty, Stale, Reconnect, Service Error, Long Names]
+    options: [Live, Profile, Playing, Last Played, Achievement, Score, Activity, Friends, Friends Empty, Friends Unavailable, Offline, Empty, Stale, Reconnect, Service Error, Long Names]
+    help: Every preview uses fictional data, is labeled DEMO, and makes no network requests.

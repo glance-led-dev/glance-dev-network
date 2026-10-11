@@ -1,47 +1,28 @@
-# Box Office Rewind for Glance LED Panels.
+# Box Office Rewind for Glance LED Panels (192x32).
 #
-# The top 3 domestic box office movies for "N years ago this week" are
-# fetched live from the-numbers.com's weekend chart pages
-# (the-numbers.com/box-office-chart/weekend/YYYY/MM/DD). There's no
-# Billboard-style community JSON mirror for box office history - every
-# option was checked first:
-#   - boxofficemojo.com: has the real archive (weekend charts back to
-#     1982), but its robots.txt explicitly states "Use of any device,
-#     tool, or process designed to data mine or scrape the content using
-#     automated means is prohibited without prior written permission from
-#     IMDb", plus a blanket Disallow: / for all other user-agents. Ruled
-#     out entirely - this is a stated policy, not just a missing API.
-#   - rottentomatoes.com: robots.txt is permissive, but they don't have a
-#     structured historical archive at all - just weekly prose editorial
-#     articles with no consistent per-date URL or extractable format.
-#   - the-numbers.com: robots.txt only blocks Amazon's own bots (a
-#     competitor-dispute rule, not an anti-automation stance) and has no
-#     "no scraping" statement. Confirmed real chart data back to at least
-#     1985. This is the one we use.
+# Shows the top 3 domestic box office movies from this weekend 10, 15, 20,
+# 25, 30, 35 and 40 years ago, with each one's weekend gross and how long
+# it had been in theaters.
 #
-# There's still no JSON endpoint, so this parses the HTML chart table
-# directly with plain string search/slice (Starlark has no regex or HTML
-# parser) - fragile in the sense that a markup change would break it, but
-# the table structure has been extremely consistent across 40 years of
-# archived pages checked.
+# Chart data comes from the-numbers.com's weekend charts
+# (the-numbers.com/box-office-chart/weekend/YYYY/MM/DD). There's no JSON
+# endpoint, so the HTML chart table is parsed with plain string search
+# (Starlark has no regex or HTML parser); if the markup ever changes the
+# app shows "CHART DATA UNAVAILABLE" rather than crashing. Full weekend
+# charts exist from the early 1980s on, which is why the oldest page is 40
+# years ago.
 #
-# The site's WAF 403s the default User-Agent of common HTTP libraries
-# (python-requests, python-urllib) but allows a plain, honestly-labeled
-# one - this isn't spoofing a browser, just not tripping a blunt
-# script-signature filter that a real crawler (Googlebot, etc.) wouldn't
-# trip either.
+# The site rejects the default User-Agent of common HTTP libraries, so
+# requests send a plain, honestly-labeled one.
 #
-# Like Billboard's chart, the weekend date is always a Friday, so
-# "N years ago" resolves to the nearest Friday to today shifted back N
-# years, not a literal same-day-N-years-back lookup.
+# Weekend charts cover Friday-Sunday, so "N years ago" uses the weekend
+# whose Friday is nearest to today's date N years back.
 
 USER_AGENT = "Mozilla/5.0 (compatible; glance-dev-network/1.0)"
 
 def fetch_boxoffice_chart(date_path):
-    # A past chart's contents never change once published, so this is
-    # cached essentially permanently (30 days) - no reason to refetch a
-    # 1995 chart every render cycle, and it keeps our footprint on their
-    # server light.
+    # A past chart never changes once published, so it's cached for 30
+    # days, which also keeps the load on their server light.
     return http.get(
         "https://www.the-numbers.com/box-office-chart/weekend/" + date_path,
         headers = {"User-Agent": USER_AGENT},
@@ -107,11 +88,44 @@ def html_unescape(s):
     s = s.replace("&rsquo;", "'")
     s = s.replace("&lsquo;", "'")
     s = s.replace("&quot;", "\"")
+    # Curly quotes and dashes have no glyph in the panel fonts (c.text
+    # silently drops them), so fold them to plain ASCII.
+    s = s.replace("\u2019", "'").replace("\u2018", "'")
+    s = s.replace("\u201c", "\"").replace("\u201d", "\"")
+    s = s.replace("\u2013", "-").replace("\u2014", "-")
+    s = s.replace("\u00e9", "e").replace("\u00c9", "E")
     return s
+
+def cell_text(row, start):
+    # Text inside the next <td ...>...</td> at or after `start`, plus the
+    # position just past it. Returns ("", -1) if there's no further cell.
+    td = row.find("<td", start)
+    if td < 0:
+        return ("", -1)
+    gt = row.find(">", td)
+    end = row.find("</td>", gt)
+    if gt < 0 or end < 0:
+        return ("", -1)
+    return (row[gt + 1:end].strip(), end + 5)
+
+def title_from_slug(slug):
+    # A few chart rows have an empty link (e.g. The Amazing Spider-Man,
+    # July 2012), so rebuild the title from the URL slug:
+    # "Amazing-Spider-Man-The" -> "The Amazing Spider Man". A trailing
+    # "-(2012)" year tag is dropped and a trailing article moves to the front.
+    paren = slug.find("-(")
+    if paren > 0:
+        slug = slug[:paren]
+    words = slug.split("-")
+    if len(words) > 1 and words[len(words) - 1] in ("The", "A", "An"):
+        words = [words[len(words) - 1]] + words[:len(words) - 1]
+    return " ".join(words)
 
 def extract_top3(html):
     # The desktop and mobile tables both list the same chart - isolate just
-    # the desktop one so nothing gets double-counted.
+    # the desktop one so nothing gets double-counted. Columns: rank, prev
+    # rank ("(new)" or "(3)"), title, weekend gross, weekly change,
+    # theaters, theater average, total gross, days in release.
     table_start = html.find('<table class="chart-desktop">')
     if table_start < 0:
         return []
@@ -121,29 +135,50 @@ def extract_top3(html):
     section = html[table_start:table_end]
 
     movies = []
-    pos = 0
+    pos = section.find("<tbody>")
+    if pos < 0:
+        pos = 0
     for _ in range(3):
-        a_start = section.find('<a href="/movie/', pos)
-        if a_start < 0:
+        tr = section.find("<tr>", pos)
+        if tr < 0:
             break
-        gt = section.find(">", a_start)
-        if gt < 0:
+        tr_end = section.find("</tr>", tr)
+        if tr_end < 0:
             break
-        title_start = gt + 1
-        title_end = section.find("</a>", title_start)
-        if title_end < 0:
-            break
-        title = html_unescape(section[title_start:title_end])
+        row = section[tr:tr_end]
+        pos = tr_end
 
-        dollar_start = section.find("$", title_end)
-        gross = ""
-        if dollar_start >= 0:
-            dollar_end = section.find("<", dollar_start)
-            if dollar_end >= 0:
-                gross = section[dollar_start:dollar_end]
+        cells = []
+        p = 0
+        for _ in range(9):
+            txt, p = cell_text(row, p)
+            if p < 0:
+                break
+            cells.append(txt)
+        if len(cells) < 3:
+            break
 
-        movies.append({"title": title, "gross": gross})
-        pos = title_end
+        title = cells[2]
+        slug = ""
+        a_start = title.find("<a ")
+        if a_start >= 0:
+            href = title.find('href="/movie/', a_start)
+            if href >= 0:
+                slug_end = title.find('"', href + 13)
+                if slug_end >= 0:
+                    slug = title[href + 13:slug_end]
+            gt = title.find(">", a_start)
+            a_end = title.find("</a>", gt)
+            if gt >= 0 and a_end >= 0:
+                title = title[gt + 1:a_end]
+        if title.strip() == "" and slug != "":
+            title = title_from_slug(slug)
+        movies.append({
+            "title": html_unescape(title),
+            "prev": cells[1] if len(cells) > 1 else "",
+            "gross": cells[3] if len(cells) > 3 else "",
+            "days": cells[8] if len(cells) > 8 else "",
+        })
     return movies
 
 def _all_digits(s):
@@ -188,29 +223,26 @@ def medal_color(rank):
     return "white"
 
 def decade_color(year):
-    # Same era palette as billboard-anniversaries, so the two "anniversary"
-    # apps read as a matched set.
+    # A loose era palette with two shades per decade - early (years ending
+    # 0-4) and late (5-9) - so pages five years apart in the same decade
+    # still get their own color: 80s hot pink / neon orange, 90s turquoise /
+    # purple, 2000s Y2K blue / lime, 2010s orchid / coral, 2020s spring
+    # green / lavender.
     decade = (year // 10) * 10
-    if decade <= 1960:
-        return "#FFA500"
-    elif decade == 1970:
-        return "#FFD700"
-    elif decade == 1980:
-        return "#FF69B4"
+    late = year % 10 >= 5
+    if decade <= 1980:
+        return "#FFA040" if late else "#FF69B4"
     elif decade == 1990:
-        return "#40E0D0"
+        return "#B57BFF" if late else "#40E0D0"
     elif decade == 2000:
-        return "#1E90FF"
+        return "#9ACD32" if late else "#1E90FF"
     elif decade == 2010:
-        return "#DA70D6"
+        return "#FF7F66" if late else "#DA70D6"
     else:
-        return "#00FF7F"
+        return "#B9A3E3" if late else "#00FF7F"
 
 def fit_text(c, text, font, maxw):
-    # Truncates on actual pixel width (via c.text_width), not a guessed
-    # character count - a fixed char-count cutoff still overflows once the
-    # font's actual glyph+gap width is accounted for, and doesn't adapt if
-    # the font ever changes.
+    # Truncates with "..." to fit maxw pixels.
     if c.text_width(text, font) <= maxw:
         return text
     for i in range(len(text), 0, -1):
@@ -219,18 +251,65 @@ def fit_text(c, text, font, maxw):
             return candidate
     return "..."
 
+MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+
 def draw_chart_unavailable(c):
-    c.text("CHART DATA".upper(), 64, 14, font = "4x5", color = "#888888", align = "center")
-    c.text("UNAVAILABLE".upper(), 64, 20, font = "4x5", color = "#888888", align = "center")
+    c.text("CHART DATA", 96, 14, font = "4x5", color = "#888888", align = "center")
+    c.text("UNAVAILABLE", 96, 20, font = "4x5", color = "#888888", align = "center")
+
+def weekend_label(fy, fm, fd):
+    # Friday-Sunday span, e.g. "SEP 30-OCT 2, 2016" or "OCT 7-9, 2016".
+    sy, sm, sd = civil_from_days(days_from_civil(fy, fm, fd) + 2)
+    if sm == fm:
+        span = MONTHS[fm - 1] + " " + str(fd) + "-" + str(sd)
+    else:
+        span = MONTHS[fm - 1] + " " + str(fd) + "-" + MONTHS[sm - 1] + " " + str(sd)
+    return span + ", " + str(sy)
+
+def status_tag(m):
+    # "NEW" in its opening weekend, else which week of release it's in.
+    # Days in release count from the original release, so a re-release
+    # (The Lion King in 2011: 6,319 days) gets "RE-REL" instead of "WK 903".
+    if m["prev"].lower() == "(new)":
+        return ("NEW", "#00FF7F", "4x5")
+    days = m["days"].replace(",", "")
+    if _all_digits(days):
+        if int(days) > 365:
+            return ("RE-REL", "#888888", "picopixel")
+        return ("WK " + str(int(days) // 7 + 1), "#888888", "4x5")
+    return ("", "#888888", "4x5")
+
+GROSS_R = 164   # right edge of the weekend-gross column
+TAG_X = 168     # left edge of the NEW / WK N column
+GROSS_W = 34    # widest gross ("$105.3M") in 4x5
+
+# picopixel is narrower but has no apostrophe or parentheses, so it's only
+# used for a long title it can draw completely.
+PICO_MISSING = "'()\",;?@*"
+
+def title_fit(c, title, maxw):
+    if c.text_width(title, "4x5") <= maxw:
+        return (title, "4x5")
+    ok = True
+    for i in range(len(PICO_MISSING)):
+        if PICO_MISSING[i] in title:
+            ok = False
+    if ok and c.text_width(title, "picopixel") <= maxw:
+        return (title, "picopixel")
+    return (fit_text(c, title, "4x5", maxw), "4x5")
 
 def render_chart_page(c, ctx, years_ago):
     c.clear()
 
-    year = ctx.now.year - years_ago
-    label = str(years_ago) + " YRS AGO (" + str(year) + ")"
-    content_y = c.header(label.upper(), bg = decade_color(year))
-
     date_path = anniversary_chart_date(ctx, years_ago)
+    fy, fm, fd = int(date_path[0:4]), int(date_path[5:7]), int(date_path[8:10])
+
+    # Header bar in the weekend's decade color: "N YEARS AGO" left, the
+    # Friday-Sunday weekend right.
+    c.rect(0, 0, 191, 8, fill = decade_color(fy))
+    c.text(str(years_ago) + " YEARS AGO", 2, 1, font = "5x7", color = "black")
+    c.text(weekend_label(fy, fm, fd), 189, 1, font = "5x7", color = "black", align = "right")
+
     resp = fetch_boxoffice_chart(date_path)
     if resp["status_code"] != 200:
         draw_chart_unavailable(c)
@@ -241,53 +320,49 @@ def render_chart_page(c, ctx, years_ago):
         draw_chart_unavailable(c)
         return
 
-    # A 10px header plus 3 fixed rows leaves ~10px for the last row - never
-    # enough room for a genuine 2nd line (6px/line), so wrapping here would
-    # just cut a title off mid-word with no "..." to show it happened. Every
-    # row stays single-line and truncates instead, which is always legible.
-    # Row height is set by the rank badge (picopixel: 5px text + 2px pad =
-    # 7px) since it's taller than the 6px title font it sits beside.
-    line_h = 7
-    y = content_y
+    # Three 7px rows (the picopixel rank badge sets the height): rank badge,
+    # title, weekend gross, then a NEW / WK N tag.
+    y = 10
     rank = 1
     for m in movies:
-        gross_str = format_gross(m["gross"])
-        gross_w = (c.text_width(gross_str, "4x5") + 2) if gross_str else 0
-
         badge_w = c.badge(str(rank), 1, y, color = "black", bg = medal_color(rank), font = "picopixel", pad = 2)
-
-        title = m["title"].upper()
-        title_x = 1 + badge_w + 2
-        title_maxw = 127 - title_x - gross_w
-        c.text(fit_text(c, title, "4x5", title_maxw), title_x, y, font = "4x5", color = "white")
+        title_x = 1 + badge_w + 3
+        gross_str = format_gross(m["gross"])
+        title, tf = title_fit(c, m["title"].upper(), GROSS_R - GROSS_W - 3 - title_x)
+        c.text(title, title_x, y + 1, font = tf, color = "white")
         if gross_str:
-            c.text(gross_str, 127, y, font = "4x5", color = "#888888", align = "right")
-        y += line_h
+            c.text(gross_str, GROSS_R, y + 1, font = "4x5", color = medal_color(rank), align = "right")
+        tag, tag_color, tag_font = status_tag(m)
+        if tag:
+            c.text(tag, TAG_X, y + 1, font = tag_font, color = tag_color)
+        y += 7
         rank += 1
 
-def draw_spotlights(c):
-    # A pair of premiere-night searchlight fans, sweeping up from each
-    # lower corner and converging behind the title - kept above the
-    # divider line so they don't cut across the subtitle underneath.
-    color = "#4A3B00"
-    c.line(0, 19, 30, 0, color)
-    c.line(0, 19, 45, 0, color)
-    c.line(0, 19, 60, 0, color)
-    c.line(127, 19, 97, 0, color)
-    c.line(127, 19, 82, 0, color)
-    c.line(127, 19, 67, 0, color)
+DECADES = [(1980, "80S"), (1990, "90S"), (2000, "00S"), (2010, "10S"), (2020, "20S")]
+
+def draw_spotlights(c, color):
+    # Premiere-night searchlight fans sweeping up from both lower corners.
+    for dx in (30, 45, 60, 75):
+        c.line(0, 21, dx, 0, color)
+        c.line(191, 21, 191 - dx, 0, color)
 
 def intro(c, ctx):
-    # An original title card, not a reproduction of any real logo/wordmark -
-    # just this app's own bitmap-font styling.
     c.clear()
-    draw_spotlights(c)
-    c.text("BOX OFFICE".upper(), 64, 2, font = "10x16_bold", color = "amber", align = "center")
-    c.line(24, 20, 104, 20, "#555555")
-    c.text("TOP 3 FROM YESTERYEAR".upper(), 64, 23, font = "4x7", color = "gray", align = "center")
-
-def years_5(c, ctx):
-    render_chart_page(c, ctx, 5)
+    draw_spotlights(c, "#4A3B00")
+    tx = (192 - c.text_width("BOX OFFICE", "16x20_bold")) // 2
+    c.text("BOX OFFICE", tx + 1, 1, font = "16x20_bold", color = "#7A3E00")
+    c.text("BOX OFFICE", tx, 0, font = "16x20_bold", color = "#FFC000")
+    # Decade tiles, each split into that decade's early and late shades -
+    # the colors of the chart pages' header bars.
+    bw = 38
+    x_start = (192 - bw * len(DECADES)) // 2
+    for i in range(len(DECADES)):
+        year, lbl = DECADES[i]
+        x0 = x_start + i * bw
+        half = (bw - 1) // 2
+        c.rect(x0, 22, x0 + half - 1, 31, fill = decade_color(year))
+        c.rect(x0 + half, 22, x0 + bw - 2, 31, fill = decade_color(year + 5))
+        c.text(lbl, x0 + (bw - 1) // 2, 24, font = "5x7", color = "black", align = "center")
 
 def years_10(c, ctx):
     render_chart_page(c, ctx, 10)
@@ -306,3 +381,6 @@ def years_30(c, ctx):
 
 def years_35(c, ctx):
     render_chart_page(c, ctx, 35)
+
+def years_40(c, ctx):
+    render_chart_page(c, ctx, 40)

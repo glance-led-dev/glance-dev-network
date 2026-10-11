@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-parody-ad-wieners-circle
+version: 0.1.0
+name: "Chicago Parody ad Wieners Circle"
+author: "FCYC"
+description: A Wieners Circle parody sign with a Chicago hot dog on light blue.
+category: Art
+entry: app.star
+width: 192
+height: 32
+refresh: 86400
+pages: [main]
+assets:
+  - chicago-parody-ad-wieners-circle.png

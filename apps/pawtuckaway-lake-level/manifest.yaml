@@ -1,0 +1,24 @@
+gdn: 1
+id: pawtuckaway-lake-level
+version: 0.1.0
+name: Pawtuckaway Lake Level
+author: Craig
+description: Pawtuckaway Lake elevation and drawdown from normal pool.
+entry: app.star
+width: 192
+height: 32
+refresh: 1800
+pages: [level, trend]
+inputs:
+  - key: timeseriesid
+    type: string
+    app_input_type: free-text
+    label: Amanzi timeseries ID
+    default: "8d9ffbcf-99b2-43ac-9c62-daff97787408"
+    help: "PAWNH.NHDES.PELV.PT1H - Observed Reservoir Pool Elevation, hourly."
+  - key: normalpool
+    type: number
+    app_input_type: free-text
+    label: Normal pool elevation (ft)
+    default: 250.4
+    help: "Summer full-pool elevation for Pawtuckaway Lake, per NHDES/PLIA."

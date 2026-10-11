@@ -370,9 +370,28 @@ def demo(s):
         q["ams_slots"][-1].update({"type": "", "loaded": False})
     return data
 
-def fetch(ctx):
+def endpoint_url(value):
+    if type(value) != "string":
+        return ""
+    value = value.strip()
+    if value.startswith("https://"):
+        return value
+    # Colons terminate the device's settings descriptor. Accept host/path here
+    # and add the HTTPS scheme only after the settings reach the renderer.
+    if not value or ":" in value or any([x in value for x in [" ", "\t", "\r", "\n", "\\", "@", "#"]]):
+        return ""
+    host = value.split("/")[0].split("?")[0]
+    if "." not in host or host.startswith(".") or host.endswith("."):
+        return ""
+    if any([x not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-." for x in host.elems()]):
+        return ""
+    if any([not label or label.startswith("-") or label.endswith("-") for label in host.split(".")]):
+        return ""
+    return "https://" + value
+
+def fetch(ctx, endpoint):
     # Keep the main fetch cache in sync with the 300-second manifest refresh.
-    resp = http.get(ctx.inputs.get("endpoint", ""), headers = {"x-api-key": ctx.inputs.get("readkey", "")}, ttl_seconds = 300)
+    resp = http.get(endpoint, headers = {"x-api-key": ctx.inputs.get("readkey", "")}, ttl_seconds = 300)
     return resp["json"] if resp["status_code"] == 200 else None
 
 def iso_epoch(v):
@@ -435,10 +454,11 @@ def render(c, ctx):
         if not endpoint or not readkey:
             message(c, "SETUP REQUIRED", "ADD ENDPOINT + KEY")
             return
-        if not endpoint.startswith("https://"):
+        endpoint = endpoint_url(endpoint)
+        if not endpoint:
             message(c, "INVALID ENDPOINT", "HTTPS REQUIRED")
             return
-    data = demo(scenario.upper()) if scenario != "Live" else fetch(ctx)
+    data = demo(scenario.upper()) if scenario != "Live" else fetch(ctx, endpoint)
     if type(data) != "dict":
         message(c, "NO PRINTER DATA", "CHECK CONNECTION", "red")
         return

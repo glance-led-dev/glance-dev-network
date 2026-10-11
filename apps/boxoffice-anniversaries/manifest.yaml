@@ -1,17 +1,18 @@
 id: boxoffice-anniversaries
-description: Top 3 box office movies this week for the past decades
+description: The top 3 weekend box office movies from this weekend 10, 15, 20, 25, 30, 35 and 40 years ago - weekend gross and weeks in release - CATEGORY - Entertainment
 author: cfdmb
 name: Box Office Rewind
-width: 128
+category: Entertainment
+width: 192
 height: 32
 refresh: 86400
 pages:
   - intro
-  - years_5
   - years_10
   - years_15
   - years_20
   - years_25
   - years_30
   - years_35
+  - years_40
 inputs: []

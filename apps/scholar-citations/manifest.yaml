@@ -3,7 +3,7 @@ id: scholar-citations
 version: 0.1.0
 name: Scholar Citations
 author: ShulinZhou
-description: Show researcher's Google Scholar profile. Enter your own SerpApi key and Scholar profile ID.
+description: Show researcher's Google Scholar profile. Enter your own SerpApi key and Scholar profile ID (replace all underscore with dot).
 category: Education
 entry: app.star
 
@@ -32,7 +32,7 @@ inputs:
     app_input_type: free-text
     label: Google Scholar profile ID
     default: ""
-    help: The user= part of the profile address, like tyJLhv4AAAAJ. Pasting the whole profile link also works.
+    help: The user= part of the profile address, like tyJLhv4AAAAJ - not the whole link. Type each underscore in the ID as a dot (_Ab-Cd_EAAAJ becomes .Ab-Cd.EAAAJ); the panel can't carry underscores. Dashes are fine as they are.
 
   - key: color
     type: choice

@@ -1,0 +1,23 @@
+gdn: 1
+id: chicago-parody-ad-malort
+version: 0.1.0
+name: "Chicago Parody Ads"
+author: "FCYC"
+description: Fictional Chicago parody ads. Pick Malort or Cell Block.
+category: Art
+entry: app.star
+width: 192
+height: 32
+refresh: 86400
+pages: [main]
+assets:
+  - chicago-parody-ad-malort.png
+  - chicago-parody-ad-cell-block.png
+inputs:
+  - key: ad
+    type: choice
+    app_input_type: dropdown
+    label: Ad
+    default: "MALORT"
+    choices: ["MALORT", "CELL BLOCK"]
+    options: ["MALORT", "CELL BLOCK"]

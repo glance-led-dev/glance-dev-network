@@ -21,7 +21,7 @@ and dimensions no larger than 384x64. No image URL is fetched at runtime.
 
 The printer and loaded AMS artwork was generated with built-in imagegen using
 the official product photos below as references, then cropped, downsampled,
-contrast-adjusted and palette-reduced by `../tests/build_assets.py`. It is an
+contrast-adjusted and palette-reduced. It is an
 illustrative pixel adaptation, not an official product render. X2D has a wider
 body, side vent and distinct toolhead. AMS HT has exactly one spool; AMS 2 Pro
 has four. HT uses the same hardware silhouette for active, loaded and empty

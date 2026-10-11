@@ -322,7 +322,7 @@ def is_positive(v):
     # stat at all, otherwise a plain number, possibly decimal).
     if type(v) == "int":
         return v > 0
-    s = str(v)
+    s = str(v).replace(",", "")
     if s == "" or s == "-":
         return False
     return float(s) > 0.0

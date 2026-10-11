@@ -557,17 +557,22 @@ def pick_device(devices):
 def token_of(ctx):
     return trim(ctx.inputs.get("apikey", ""))
 
-STATION_ORDER = ["first", "second", "third", "fourth"]
-
-def station_index(ctx, count):
-    """Which station on the account to read, by position. Anything out of
-    range falls back to the first, so an account that loses a station keeps
-    showing weather instead of an error."""
-    want = choice_of(ctx, "station", "first")
-    for i in range(len(STATION_ORDER)):
-        if STATION_ORDER[i] == want and i < count:
-            return i
-    return 0
+def by_station_id(stations):
+    """WeatherFlow does not promise an order for the station list, and it has
+    been seen to change between calls - so "first" has to mean a station, not
+    a position in whatever order the array happened to arrive in. Ordering by
+    station id makes the choice the same on every render. Without this the
+    panel silently swaps to a different station mid-rotation."""
+    ids = []
+    for st in stations:
+        ids.append(int(num(st.get("station_id", 0), 0)))
+    out = []
+    for sid in sorted(ids):
+        for st in stations:
+            if int(num(st.get("station_id", 0), 0)) == sid and st not in out:
+                out.append(st)
+                break
+    return out if len(out) == len(stations) else stations
 
 def fetch_station(ctx):
     """One lookup gives the station's coordinates, its name and its devices,
@@ -595,7 +600,12 @@ def fetch_station(ctx):
     if stations == None or len(stations) == 0:
         return {"err": "NO STATIONS"}
 
-    chosen = stations[station_index(ctx, len(stations))]
+    # The app reads one station: the account's lowest station id. A token is
+    # issued per ACCOUNT, not per station, so an account with several has no
+    # way to point this at a different one - deliberate, because a picker that
+    # indexed into the list by position silently swapped stations mid-rotation
+    # whenever the API returned the array in a different order.
+    chosen = by_station_id(stations)[0]
 
     device, dtype = pick_device(chosen.get("devices", []))
     return {

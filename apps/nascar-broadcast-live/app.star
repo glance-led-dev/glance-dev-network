@@ -65,47 +65,47 @@ FLAG_COLOR = {
 # changes livery. Each series keeps its own table; never share one across
 # series or a same-numbered car picks up the wrong colors.
 NASCAR_DRIVER_COLOR = {
-    "1": ("#00A4DA", "#204C85"),
+    "1": ("#00A4DA", "#000000"),
     "2": ("#FFF200", "#006400"),
     "3": ("#C0C0C0", "#000000"),
     "4": ("#ECB11F", "#000000"),
     "5": ("#015998", "#FFFFFF"),
     "6": ("#009343", "#FFFFFF"),
-    "7": ("#2475D1", "#72D669"),
+    "7": ("#2475D1", "#FFFFFF"),
     "9": ("#0A0094", "#FFC836"),
     "10": ("#FF4500", "#000000"),
     "11": ("#2D95E5", "#FFFFFF"),
     "12": ("#FFF200", "#000000"),
-    "16": ("#000000", "#FDFF45"),
+    "16": ("#FDFF45", "#000000"),
     "17": ("#FF6700", "#000000"),
-    "19": ("#000000", "#FF5F1F"),
+    "19": ("#FF5F1F", "#000000"),
     "20": ("#EA0021", "#FFFFFF"),
     "21": ("#FFFFFF", "#D40000"),
-    "22": ("#FFCF1D", "#ED1C24"),
-    "23": ("#6138F5", "#04C785"),
-    "24": ("#D91C2B", "#005596"),
-    "33": ("#0A192F", "#CE714C"),
+    "22": ("#FFCF1D", "#000000"),
+    "23": ("#6138F5", "#FFFFFF"),
+    "24": ("#D91C2B", "#FFFFFF"),
+    "33": ("#CE714C", "#0A192F"),
     "34": ("#FFE100", "#000000"),
     "35": ("#95D600", "#000000"),
-    "38": ("#3472BD", "#32CD32"),
-    "41": ("#505359", "#000000"),
+    "38": ("#3472BD", "#FFFFFF"),
+    "41": ("#505359", "#FFFFFF"),
     "42": ("#FFFFFF", "#235DAB"),
-    "43": ("#D3AF37", "#6FBE4A"),
+    "43": ("#D3AF37", "#000000"),
     "45": ("#D3D3D3", "#CF1A2B"),
-    "47": ("#005A9C", "#FF5F1F"),
+    "47": ("#005A9C", "#FFFFFF"),
     "48": ("#650360", "#FFFFFF"),
     "51": ("#D3AF37", "#000000"),
-    "54": ("#000000", "#95D600"),
-    "60": ("#000000", "#50AD9A"),
+    "54": ("#95D600", "#000000"),
+    "60": ("#50AD9A", "#000000"),
     "71": ("#0058AA", "#81D9AC"),
     "77": ("#000080", "#E32227"),
     "88": ("#1E5BC6", "#F7C300"),
-    "97": ("#1E5BC6", "#DC052D"),
+    "97": ("#1E5BC6", "#FFFFFF"),
 }
 
 ORS_DRIVER_COLOR = {
-    "00": ("#FFCF1D", "#ED1C24"),
-    "0": ("#0088D8", "#4BB92C"),
+    "00": ("#FFCF1D", "#000000"),
+    "0": ("#0088D8", "#000000"),
     "1": ("#FF5F1F", "#000000"),
     "02": ("#000096", "#4D9DFF"),
     "2": ("#FFFFFF", "#FF0000"),
@@ -113,12 +113,12 @@ ORS_DRIVER_COLOR = {
     "7": ("#ED1B24", "#FFFFFF"),
     "8": ("#EF4138", "#000000"),
     "17": ("#015998", "#FFFFFF"),
-    "18": ("#666666", "#003E6F"),
-    "19": ("#0047BA", "#D42E12"),
+    "18": ("#666666", "#FFFFFF"),
+    "19": ("#0047BA", "#FFFFFF"),
     "20": ("#FFF200", "#006400"),
     "21": ("#FFFFFF", "#015998"),
     "24": ("#FFFFFF", "#ED1B2E"),
-    "26": ("#000000", "#52D1FF"),
+    "26": ("#52D1FF", "#000000"),
     "27": ("#FEC85A", "#B82C0F"),
     "28": ("#4169E1", "#000000"),
     "31": ("#174A7C", "#FDB913"),
@@ -126,9 +126,9 @@ ORS_DRIVER_COLOR = {
     "41": ("#44C744", "#000000"),
     "44": ("#0205C7", "#CCFF00"),
     "45": ("#155289", "#FFE600"),
-    "48": ("#006499", "#D62D2D"),
+    "48": ("#006499", "#FFFFFF"),
     "51": ("#D3AF37", "#000000"),
-    "54": ("#FFDD42", "#FFFFFF"),
+    "54": ("#FFDD42", "#000000"),
     "87": ("#FFFF73", "#FF0000"),
     "88": ("#FFFFFF", "#015998"),
     "92": ("#C9AC34", "#000000"),
@@ -138,37 +138,37 @@ ORS_DRIVER_COLOR = {
 
 TRUCK_DRIVER_COLOR = {
     "1": ("#0047BA", "#FFFFFF"),
-    "2": ("#E41D38", "#160BE6"),
+    "2": ("#E41D38", "#FFFFFF"),
     "5": ("#FFFFFF", "#0047BA"),
-    "7": ("#808080", "#FF5B00"),
-    "9": ("#8B3A3A", "#000000"),
+    "7": ("#808080", "#000000"),
+    "9": ("#8B3A3A", "#FFFFFF"),
     "10": ("#0066CC", "#FFFFFF"),
     "11": ("#DB0020", "#FFFFFF"),
     "12": ("#EE2E24", "#000000"),
-    "13": ("#000000", "#FF0000"),
+    "13": ("#FF0000", "#000000"),
     "14": ("#F6DE0F", "#000000"),
-    "15": ("#89CFF0", "#FFFFFF"),
-    "16": ("#FFFFFF", "#FF8D2E"),
+    "15": ("#89CFF0", "#000000"),
+    "16": ("#FFFFFF", "#000000"),
     "17": ("#FF6600", "#000000"),
     "18": ("#003F72", "#F8981C"),
     "19": ("#0A0094", "#FFC836"),
     "22": ("#FFFFFF", "#000000"),
-    "25": ("#000000", "#F6DE0F"),
-    "26": ("#5D8AAA", "#A9A9A9"),
+    "25": ("#F6DE0F", "#000000"),
+    "26": ("#5D8AAA", "#000000"),
     "33": ("#FFF836", "#000000"),
     "34": ("#FFE100", "#000000"),
     "38": ("#8ACF00", "#000000"),
     "42": ("#FFFFFF", "#0000B8"),
     "44": ("#0000B8", "#32CD32"),
-    "45": ("#C70000", "#0000B8"),
-    "52": ("#006499", "#D62D2D"),
+    "45": ("#C70000", "#FFFFFF"),
+    "52": ("#006499", "#FFFFFF"),
     "62": ("#FFFFFF", "#E30614"),
-    "76": ("#8C8B88", "#FFBF00"),
+    "76": ("#8C8B88", "#000000"),
     "77": ("#0058AA", "#81D9AC"),
-    "81": ("#00396F", "#B5160B"),
+    "81": ("#00396F", "#FFFFFF"),
     "88": ("#FFF200", "#000000"),
     "91": ("#FFC836", "#0A0094"),
-    "98": ("#8C8B88", "#F0941C"),
+    "98": ("#8C8B88", "#000000"),
     "99": ("#C71121", "#FFFFFF"),
 }
 
@@ -199,6 +199,17 @@ def chase_name_color(series, chase):
         return ""
     entry = CHASE_COLOR.get(series)
     return entry[0] if entry else ""
+
+# Race dates on the next-race page and the schedule, in each series' own
+# colour: NASCAR yellow for Cup, O'Reilly green, Craftsman red for Trucks.
+SERIES_DATE_COLOR = {
+    "NASCAR": "#FFD100",
+    "NASCAR - O'Reilly": "#009D57",
+    "NASCAR - Trucks": "#E20514",
+}
+
+def date_color(series):
+    return SERIES_DATE_COLOR.get(series, SERIES_DATE_COLOR["NASCAR"])
 
 MONTHS_FULL = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
                "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
@@ -1031,38 +1042,57 @@ def event(c, ctx):
         extra = str(st.get("cautions", 0)) + " CAU   " + str(st.get("lead_changes", 0)) + " LEAD CHG"
         c.text(fit_text(c, extra, "picopixel", smw), sx, 25, font = "picopixel", color = COLORS["muted"])
 
-# 192: no room for the text | track | status trio, so stack the text and tuck
-# a small track outline against the right edge.
+# 192: the same text | track pairing as F1 -- four centred text rows on the
+# left, the track outline beside them on the right, sized to the panel height
+# and vertically centred. EDGE 4 + text + 8 + track (max 46x26) + EDGE 4.
 def _event_narrow(c, st):
     is_race = st["is_race"]
     session = st.get("session", "RACE")
 
     track_asset, nw, nh = nascar_track_dims(st["track_key"])
-    track_w, track_h = cap_track_dims(nw, nh, 30, 22)
-    trx = c.width - track_w - 3
+    track_w, track_h = cap_track_dims(nw, nh, 46, 26)
+    trx = c.width - 4 - track_w
     draw_nascar_track(c, st["track_key"], track_asset, trx, (32 - track_h) // 2, track_w, track_h)
-    tzw = trx - 6
+    tx0 = 4
+    tzw = trx - 8 - tx0
+    cx = tx0 + tzw // 2
 
-    c.text(fit_text(c, st["race_name"], "6x8", tzw), 3, 1, font = "6x8", color = COLORS["text"])
-    c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), 3, 12, font = "4x5", color = COLORS["muted"])
+    # Long race names step down to 5x7 before truncating (same as F1).
+    nf = "6x8" if c.text_width(st["race_name"], "6x8") <= tzw else "5x7"
+    c.text(fit_text(c, st["race_name"], nf, tzw), cx, 1 if nf == "6x8" else 2, font = nf, color = COLORS["text"], align = "center")
 
     if not is_race:
-        c.text(fit_text(c, session, "5x7", tzw), 3, 21, font = "5x7", color = COLORS["accent2"])
+        c.text(fit_text(c, st["track_name"], "4x5", tzw), cx, 12, font = "4x5", color = COLORS["muted"], align = "center")
+        c.text(fit_text(c, session, "5x7", tzw), cx, 21, font = "5x7", color = COLORS["accent2"], align = "center")
         return
 
-    flag_s = fit_text(c, FLAG_LABEL.get(st["flag"], "FLAG"), "5x7", tzw)
-    c.text(flag_s, 3, 19, font = "5x7", color = flag_color(st["flag"]))
-    fx = 3 + c.text_width(flag_s, "5x7") + 6
-    if fx < tzw:
-        lap_txt = "LAP " + str(st["lap"]) + "/" + str(st["laps_total"])
-        c.text(fit_text(c, lap_txt, "4x5", tzw - fx + 3), fx, 20, font = "4x5", color = COLORS["text"])
+    c.text(fit_text(c, st["track_name"] + "  " + session, "4x5", tzw), cx, 11, font = "4x5", color = COLORS["muted"], align = "center")
 
+    # Flag + lap, centred as one group.
+    flag_s = fit_text(c, FLAG_LABEL.get(st["flag"], "FLAG"), "5x7", tzw)
+    fw = c.text_width(flag_s, "5x7")
+    lap_txt = "LAP " + str(st["lap"]) + "/" + str(st["laps_total"])
+    lw = c.text_width(lap_txt, "4x5")
+    if fw + 6 + lw > tzw:
+        lap_txt, lw = "", 0
+    gw = fw + (6 + lw if lw > 0 else 0)
+    gx = cx - gw // 2
+    c.text(flag_s, gx, 18, font = "5x7", color = flag_color(st["flag"]))
+    if lw > 0:
+        c.text(lap_txt, gx + fw + 6, 19, font = "4x5", color = COLORS["text"])
+
+    # Stage + cautions / lead changes, centred as one group.
     stage_txt = "STAGE " + str(st["stage_num"]) + "/3" if st["stage_num"] > 0 else "FINAL STAGE"
-    c.text(fit_text(c, stage_txt, "4x5", tzw), 3, 26, font = "4x5", color = COLORS["accent2"])
-    ex = 3 + c.text_width(stage_txt, "4x5") + 6
-    if ex < tzw:
-        extra = str(st.get("cautions", 0)) + " CAU  " + str(st.get("lead_changes", 0)) + " LEAD CHG"
-        c.text(fit_text(c, extra, "picopixel", tzw - ex + 3), ex, 27, font = "picopixel", color = COLORS["muted"])
+    sw = c.text_width(stage_txt, "4x5")
+    extra = str(st.get("cautions", 0)) + " CAU  " + str(st.get("lead_changes", 0)) + " LEAD CHG"
+    ew = c.text_width(extra, "picopixel")
+    if sw + 6 + ew > tzw:
+        extra, ew = "", 0
+    gw = sw + (6 + ew if ew > 0 else 0)
+    gx = cx - gw // 2
+    c.text(stage_txt, gx, 26, font = "4x5", color = COLORS["accent2"])
+    if ew > 0:
+        c.text(extra, gx + sw + 6, 26, font = "picopixel", color = COLORS["muted"])
 
 # ---------- pages: order / leaders / pit road ----------
 # Every page has one fixed job and a permanent tab label. The manifest page
@@ -1154,7 +1184,7 @@ def _draw_gains_losses(c, st):
             moved.append((r, r["start_pos"] - r["pos"]))
     gainers = sorted([m for m in moved if m[1] > 0], key = lambda e: -e[1])[:4]
     losers = sorted([m for m in moved if m[1] < 0], key = lambda e: e[1])[:4]
-    draw_page_tab(c, "MOVERS", GREEN)
+    draw_page_tab(c, "MOVERS", "#FFFFFF")
     if len(gainers) == 0 and len(losers) == 0:
         c.text("NO POSITIONS CHANGED YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
@@ -1200,10 +1230,10 @@ def _draw_next_card(c, ctx, st, big):
         draw_page_tab(c, "NEXT RACE", COLORS["accent"])
     c.text(fit_text(c, st["race_name"], "6x8", text_w), cx, 2, font = "6x8", color = COLORS["text"], align = "center")
     c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
-    c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = COLORS["accent2"], align = "center")
+    c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = date_color(st["series"]), align = "center")
 
 def _draw_schedule(c, ctx, st, skip):
-    draw_page_tab(c, "SCHEDULE", COLORS["accent2"])
+    draw_page_tab(c, "SCHEDULE", date_color(st["series"]))
     up = upcoming_races(st["schedule"], st["series"])
     # up[0] is the immediate next race -- that's the `event` page.
     races = up[1 + skip:1 + skip + 3]
@@ -1215,7 +1245,7 @@ def _draw_schedule(c, ctx, st, skip):
     y = 8
     for r in races:
         dt = local_race_daydate(ctx, r.get("race_date", r.get("date_scheduled", "")))
-        c.text(dt, 4, y, font = "5x7", color = COLORS["accent2"])
+        c.text(dt, 4, y, font = "5x7", color = date_color(st["series"]))
         nm = short_race(r.get("race_name", "RACE")) + "  -  " + short_track(r.get("track_name", ""))
         c.text(fit_text(c, nm, "5x7", c.width - dx - 4), dx, y, font = "5x7", color = COLORS["text"])
         y += 8

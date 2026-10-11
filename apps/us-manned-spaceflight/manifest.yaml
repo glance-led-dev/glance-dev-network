@@ -1,0 +1,20 @@
+id: us-manned-spaceflight
+description: US crewed spaceflight launches and landings that happened on this date
+author: cfdmb
+name: Today in US Manned Space Flight
+category: Science
+width: 192
+height: 32
+# Note for the GDN crew: the app steps to the next event (busy days) or
+# astronaut profile (empty days) in a daily shuffle every hour, so any
+# refresh up to 3600 (1 hour) shows every event in turn.
+refresh: 3600
+pages:
+  - title
+  - flight
+  - duration
+  - crew
+  - details1
+  - details2
+  - details3
+  - details4

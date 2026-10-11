@@ -44,7 +44,6 @@ COLORS = {
     "panel": "#0A0D12",
     "text": "#F4F7FB",
     "muted": "#4B5563",
-    "accent2": "#FFD166",
     "up": "#22C55E",
     "down": "#EF4444",
     "out": "#FF2020",
@@ -58,8 +57,24 @@ COLORS = {
     "lapped": "#5C6674",
     # Soft amber lead-lap cut (quieter than bright caution yellow).
     "lead_line": "#8A6A2A",
+    # Chase tick. Bright green, kept off the position-gain number green.
+    "chase": "#00E640",
     "error": "#FF5D73",
     "dark": "#0B0D10",
+}
+
+# Favorite-car highlight: [position number color, dim row wash]. Picked from
+# a 16-color render on real results. Greens blend with the green numbers and
+# Chase bar, red reads as an alarm, blue is too dark on the LEDs, and purple
+# sits on top of the fastest-lap tick, so those are left out.
+FAV_COLORS = {
+    "AQUA": ["#22E5FF", "#06303A"],
+    "PINK": ["#FF4FA3", "#3D0F28"],
+    "WHITE": ["#FFFFFF", "#2A2D34"],
+    "MAGENTA": ["#FF2BD6", "#33082A"],
+    "CORAL": ["#FF8A65", "#331B14"],
+    "ORANGE": ["#FF8C1A", "#331C05"],
+    "YELLOW": ["#FFE600", "#332E00"],
 }
 
 
@@ -68,6 +83,17 @@ def safe_input(ctx, key, fallback):
     if value == None or value == "":
         return fallback
     return value
+
+
+def favorite_numbers(ctx):
+    # Up to three car numbers, matched exactly as the feed prints them
+    # ("02" and "2" are different cars). A leading "#" is forgiven.
+    favs = []
+    for key in ["fav1", "fav2", "fav3"]:
+        num = str(ctx.inputs.get(key, "")).strip().replace("#", "")
+        if num != "":
+            favs.append(num)
+    return favs
 
 
 def series_key(name):
@@ -126,7 +152,7 @@ def pick_races(schedule, series_name, mode):
     return None, "NO RACES"
 
 
-def recent_pit(car, race_lap):
+def recent_pit(car, race_lap, final_lap):
     # True if this car pitted within the last five leader laps.
     pits = car.get("pit_stops", [])
     if pits == None:
@@ -134,6 +160,11 @@ def recent_pit(car, race_lap):
     for pit in pits:
         pit_lap = int(pit.get("pit_in_leader_lap", 0))
         if pit_lap <= 0:
+            continue
+        # After the checkered flag the field drives down pit road to the
+        # garage, and CF logs it as a stop on the final lap (type OTHER,
+        # duration -1). final_lap is 0 while the race is still running.
+        if final_lap > 0 and pit_lap >= final_lap:
             continue
         age = race_lap - pit_lap
         if age >= 0 and age <= 5:
@@ -217,9 +248,27 @@ def is_on_lead_lap(laps, leader_laps, cf_delta):
     return laps >= leader_laps - 1
 
 
-def vehicle_rows(feed):
+def is_race_session(feed):
+    # Practice and qualifying park most of the field off track, so
+    # "not on track" says nothing about repairs there.
+    run_type = int(feed.get("run_type", 0))
+    run_name = str(feed.get("run_name", "")).upper()
+    if run_type in [1, 2] or "QUAL" in run_name or "PRACTICE" in run_name:
+        return False
+    return True
+
+
+def vehicle_rows(feed, chase_on):
     vehicles = feed.get("vehicles", [])
     race_lap = int(feed.get("lap_number", 0))
+    in_race = is_race_session(feed)
+    final_lap = 0
+    if int(feed.get("flag_state", 0)) in [5, 9]:
+        final_lap = int(feed.get("laps_in_race", 0))
+    # Before the green flag (lap 0, or the warm-up flag) CF's is_on_track is
+    # unreliable: the pole sitter has shown as off track while gridded. Only
+    # garage status counts as a repair until the race is under way.
+    pre_green = in_race and (race_lap <= 0 or int(feed.get("flag_state", 0)) == 8)
     fastest_num = fastest_last_lap_num(vehicles)
     leader_laps = 0
     for car in vehicles:
@@ -229,11 +278,20 @@ def vehicle_rows(feed):
     rows = []
     for car in vehicles:
         status = int(car.get("status", 1))
-        on_track = bool(car.get("is_on_track", True))
+        on_track = bool(car.get("is_on_track", True)) or pre_green
         num = str(car.get("vehicle_number", "?"))
         out = is_retired(status)
-        repair = is_repairing(status, on_track)
+        # Off track outside a race keeps its dim number but drops the
+        # yellow repair dot.
+        idle = is_repairing(status, on_track)
+        repair = in_race and idle
         laps = int(car.get("laps_completed", 0))
+        driver = car.get("driver", {})
+        if driver == None:
+            driver = {}
+        in_chase = False
+        if chase_on and bool(driver.get("is_in_chase", False)):
+            in_chase = True
         rows.append({
             "pos": int(car.get("running_position", 0)),
             "num": num,
@@ -241,10 +299,12 @@ def vehicle_rows(feed):
             "on_lead": is_on_lead_lap(laps, leader_laps, car.get("delta")),
             "out": out,
             "repair": repair,
+            "idle": idle,
             "dvp": bool(car.get("is_on_dvp", False)),
-            "pit": recent_pit(car, race_lap),
+            "pit": recent_pit(car, race_lap, final_lap),
             "fastest": num == fastest_num and fastest_num != "",
             "delta": position_delta(car),
+            "chase": in_chase,
         })
     n = len(rows)
     for i in range(n):
@@ -335,7 +395,7 @@ def build_state(series, race, feed):
         "stage3": stage3,
         "run_type": int(feed.get("run_type", 0)),
         "session": session_label(feed, stage_num),
-        "rows": vehicle_rows(feed),
+        "rows": vehicle_rows(feed, int(race.get("playoff_round", 0) or 0) > 0),
     }
 
 
@@ -391,7 +451,7 @@ def draw_error(c, title, sub):
 
 def car_number_color(row, on_lead):
     # Out / garage-repair cars stay dim — colored squares carry that signal.
-    if row["out"] or row["repair"]:
+    if row["out"] or row["repair"] or row["idle"]:
         return COLORS["muted"]
     # Off the lead lap: quiet grey instead of a yellow divider line.
     if not on_lead:
@@ -401,8 +461,6 @@ def car_number_color(row, on_lead):
         return COLORS["up"]
     if row["delta"] < 0:
         return COLORS["down"]
-    if row["pos"] == 1:
-        return COLORS["accent2"]
     return COLORS["text"]
 
 
@@ -450,6 +508,8 @@ def pylon(c, ctx):
         togo = 0
 
     rows = state["rows"]
+    favs = favorite_numbers(ctx)
+    fav_color = FAV_COLORS.get(str(safe_input(ctx, "favcolor", "AQUA")).upper(), FAV_COLORS["AQUA"])
     if len(rows) == 0:
         c.text("NO FIELD", 4, 12, font = "4x5", color = COLORS["muted"])
         return
@@ -535,15 +595,31 @@ def pylon(c, ctx):
         if col > 0 and r == 0:
             c.rect(x - 2, 0, x - 2, c.height - 1, fill = COLORS["muted"])
 
+        is_fav = row["num"] in favs
+        if is_fav:
+            # Dim wash behind the whole cell, drawn before the lead-lap cut so
+            # the amber line stays on top, and kept one pixel off the cut's
+            # vertical stroke so it never covers it.
+            wash_x = x - 1
+            if first_lapped >= 0 and i > first_lapped and col == first_lapped // rows_per_col:
+                wash_x = x
+            c.rect(wash_x, y - 1, x + col_w - 4, y + 5, fill = fav_color[1])
+
         if i == first_lapped:
             c.rect(x - 2, y - 1, x + col_w - 4, y - 1, fill = COLORS["lead_line"])
             c.rect(x - 2, y - 1, x - 1, c.height - 1, fill = COLORS["lead_line"])
         elif first_lapped >= 0 and i > first_lapped and col == (first_lapped // rows_per_col):
             c.rect(x - 2, y, x - 1, y + 4, fill = COLORS["lead_line"])
 
-        c.text(zero_pad2(row["pos"]), x, y, font = "4x5", color = COLORS["muted"])
+        pos_color = fav_color[0] if is_fav else COLORS["muted"]
+        c.text(zero_pad2(row["pos"]), x, y, font = "4x5", color = pos_color)
         color = car_number_color(row, on_lead)
-        c.text(row["num"], x + 11, y, font = "4x5", color = color)
+        # Widest position glyphs reach x+8. One black pixel, a 1px bar, then
+        # one black pixel, so the number starts at x+12 instead of x+11.
+        num_x = x + 12
+        if row["chase"]:
+            c.rect(x + 10, y, x + 10, y + 4, fill = COLORS["chase"])
+        c.text(row["num"], num_x, y, font = "4x5", color = color)
 
         num_w = c.text_width(row["num"], "4x5")
-        draw_status_dots(c, x + 11 + num_w + 2, y, row)
+        draw_status_dots(c, num_x + num_w + 2, y, row)

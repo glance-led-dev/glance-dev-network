@@ -1,0 +1,20 @@
+id: snl-history
+description: Saturday Night Live episodes and anniversary specials that aired on this date - host, musical guest, songs, cast and who they played, plus the Saturday Night Network (SNN) fan-voted top sketches, episodes, hosts, cast and impressions - CATEGORY - Entertainment
+author: cfdmb
+name: Today in SNL History
+category: Entertainment
+width: 192
+height: 32
+# Note for the GDN crew: refresh is 300 (5 min) on purpose. Each render
+# picks which episode (busy days) or cast profile (empty days) to show,
+# so each refresh brings a new pick. Please keep it at or below 300.
+refresh: 900
+pages:
+  - title
+  - episode
+  - host
+  - season
+  - more1
+  - more2
+  - more3
+  - more4

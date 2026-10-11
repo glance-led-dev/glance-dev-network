@@ -1,0 +1,29 @@
+gdn: 1
+id: chicago-white-sox-win-pinwheels
+version: 0.2.0
+name: "Chicago White Sox Win Pinwheels"
+author: "FCYC"
+description: Seven illuminated White Sox win pinwheels on black. Pick a straight row, a stepped arch, or the arch with fireworks.
+category: Sports
+entry: app.star
+width: 384
+height: 32
+refresh: 900
+pages: [main]
+inputs:
+  - key: style
+    label: Pinwheel style
+    app_input_type: dropdown
+    default: "Straight row, seven big pinwheels side by side"
+    options:
+      - "Straight row, seven big pinwheels side by side"
+      - "Stepped arch, pinwheels on sticks rising to the center"
+      - "Fireworks, stepped arch with fireworks bursting behind"
+    choices:
+      - "Straight row, seven big pinwheels side by side"
+      - "Stepped arch, pinwheels on sticks rising to the center"
+      - "Fireworks, stepped arch with fireworks bursting behind"
+assets:
+  - pinwheels-row.png
+  - pinwheels-arch.png
+  - pinwheels-fireworks.png

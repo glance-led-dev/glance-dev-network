@@ -1,0 +1,41 @@
+id: tropical-update
+name: Tropical Update
+author: cfdmb
+category: Weather
+description: Tropical storms and hurricanes from the National Hurricane Center - forecast track and cone on a real map with the forecast landfall, intensity forecast, warnings, the 7-day outlook, the season so far and storms from this date in history, plus how close a storm comes to your zip code.
+width: 192
+height: 32
+# Note for the GDN crew: NHC posts advisories every 3-6 hours and hourly
+# Tropical Cyclone Updates near landfall; 600 catches each update within
+# ten minutes, and every NHC product is cached until a newer one is listed.
+refresh: 3600
+pages:
+- intro
+- advisory
+- storm
+- track
+- local
+- intensity
+- outlook
+- season
+inputs:
+- key: basin
+  type: string
+  app_input_type: dropdown
+  label: Basin
+  default: Atlantic
+  choices: [Atlantic, East Pacific, Both]
+  help: Which ocean's storms to follow. Both shows everything, featuring the storm closest to you.
+- key: region
+  type: string
+  app_input_type: dropdown
+  label: Track map
+  default: Follow the storm
+  choices: [Follow the storm, Texas, Gulf Coast, Florida, Southeast, Mid-Atlantic, New England, Caribbean, Puerto Rico & USVI, Hawai'i, Baja & Mexico, Southern California]
+  help: Follow the storm frames the whole forecast track. A region keeps the map fixed on that coast, with state lines, so you can watch storms approach - and features the storm closest to it. For Hawai'i, Baja or Southern California, set Basin to East Pacific or Both.
+- key: zip
+  type: string
+  app_input_type: free-text
+  label: Your zip code (optional)
+  default: ""
+  help: A 5-digit US zip code, e.g. 32501. Shows whether you're in the forecast cone, how close the storm comes and your NWS alerts. Leave blank to show the coastal warning areas instead.
