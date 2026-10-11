@@ -21,7 +21,7 @@ A 192x32 GDN app for package status. Each view retains the carrier logo, sender 
 4. Enter its hostname and `/status` path **without `https://`**, for example `example.invalid/status`, and the separate read-only key. The app adds HTTPS automatically. The key input uses GDN's encrypted `api-key` type.
 5. Switch Preview scenario to **Live**.
 
-Production defaults are Live with empty connection settings. Each user supplies their own authenticated feed. See [service setup](service/README.md) for the free direct-carrier and Gmail options.
+Production defaults are Live with empty connection settings. Each user supplies their own authenticated feed. See [service setup](https://github.com/nickolbp21-web/glance-dev-network/tree/591c39a317a118d493d8516b96e76f702f05d6d6/apps/package-tracker/service/README.md) for the free direct-carrier and Gmail options.
 
 Glance device settings use colons as separators, so a pasted full URL can be truncated. Full HTTPS URLs remain supported for Studio and existing direct-render integrations; use hostname/path in device settings. Displayed status is a snapshot until the next refresh; the HTTP response cache remains 60 seconds.
 
@@ -59,3 +59,13 @@ gdn validate .
 ```
 
 The render harness checks all demo scenarios through the real Starlark host, text bounds, edge padding, persistent identity, rotation, delivered filtering and error handling. `preview/carrier-gallery.png` contains the actual rendered pixels. Live mailbox authorization, tracking availability and deployment require the user's accounts and are not validated by these offline tests.
+
+
+## Companion service and developer tests
+
+The independently deployed companion is maintained outside the catalogue package.
+
+- [Companion source and setup](https://github.com/nickolbp21-web/glance-dev-network/tree/591c39a317a118d493d8516b96e76f702f05d6d6/apps/package-tracker/service)
+- [Renderer regression tests](https://github.com/nickolbp21-web/glance-dev-network/tree/591c39a317a118d493d8516b96e76f702f05d6d6/apps/package-tracker/tests)
+
+These immutable links preserve the reviewed version; each user deploys their own service and credentials. The `package-tracker-companion` branch retains the companion source.
