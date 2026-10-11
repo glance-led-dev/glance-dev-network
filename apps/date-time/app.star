@@ -3,10 +3,10 @@
 # DESIGN. The date is the anchor. TODAY puts the weekday over a big 10x16 date
 # on the left, so the panel reads as a date app first rather than as another
 # weather app, and gives the right zone to the weather at a glance: the place,
-# the drawn condition, a 10x16 temperature, today's high and low, and the
-# condition by name. SKY shows the next six hours, three over three, each an
-# hour, drawn condition, temperature, and chance of rain, with sunrise stacked
-# over sunset on the right.
+# the drawn condition, a 10x16 temperature, today's high and low over the
+# humidity, and the condition by name. SKY shows the next six hours, three
+# over three, each an hour, drawn condition, temperature, and chance of rain,
+# with sunrise stacked over sunset on the right.
 #
 # No clock: the app re-renders every 15 minutes (refresh 900), and a time
 # drawn at that rate would sit up to 15 minutes stale. Sunrise and sunset are
@@ -97,6 +97,15 @@ SUN_RAYS = [
     [1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1],
 ]
 HORIZON = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+
+# Humidity mark on TODAY, 1x: a raindrop the height of the 4x5 H and L.
+DROP = [
+    [0, 1, 0],
+    [0, 1, 0],
+    [1, 1, 1],
+    [1, 1, 1],
+    [0, 1, 0],
+]
 
 # ---------- input ----------
 
@@ -307,7 +316,7 @@ def fetch_weather(lat, lon):
         params = {
             "latitude": str(lat),
             "longitude": str(lon),
-            "current": "temperature_2m,weather_code,is_day",
+            "current": "temperature_2m,relative_humidity_2m,weather_code,is_day",
             "hourly": "temperature_2m,weather_code,precipitation_probability,is_day",
             "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset",
             "forecast_days": "2",   # so late-evening hours reach past midnight
@@ -563,7 +572,7 @@ def today(c, ctx):
         return
 
     # Right zone rows: place y 1-5 · icon y 7-24 beside the 10x16 temperature
-    # (y 8-23) and high/low · condition y 26-30.
+    # (y 8-23) and high/low/humidity · condition y 26-30.
     weather_color = _color(ctx, "weathercolor")
     c.text(place_text(c, geo, rw), rx, 1, font = "4x5", color = LABEL)
 
@@ -578,15 +587,21 @@ def today(c, ctx):
     ring_x = tx + c.text_width(ts, "10x16") + 1
     _bmp(c, RING, ring_x, 8, tcolor, 1)
 
+    # High, low, and humidity stack beside the temperature, rows at y 8, 14, 20
+    # so the three span the 10x16 digits.
     daily = wxj.get("daily", None)
     hi = _first(daily, "temperature_2m_max")
     lo = _first(daily, "temperature_2m_min")
+    hx = ring_x + len(RING[0]) + 5
+    vx = hx + c.text_width("H", "4x5") + 2
     if hi != None and lo != None:
-        hx = ring_x + len(RING[0]) + 5
-        for row in [["H", hi, 10], ["L", lo, 17]]:
+        for row in [["H", hi, 8], ["L", lo, 14]]:
             c.text(row[0], hx, row[2], font = "4x5", color = LABEL)
-            c.text(str(whole(row[1])), hx + c.text_width(row[0], "4x5") + 2, row[2],
-                   font = "4x5", color = "white")
+            c.text(str(whole(row[1])), vx, row[2], font = "4x5", color = "white")
+    hum = cur.get("relative_humidity_2m", None)
+    if hum != None:
+        _bmp(c, DROP, hx, 20, "cyan", 1)
+        c.text(str(whole(hum)) + "%", vx, 20, font = "4x5", color = "white")
 
     c.text(clip(c, condition_label(code, is_day), "4x5", rw), rx, 26,
            font = "4x5", color = weather_color)

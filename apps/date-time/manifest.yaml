@@ -5,7 +5,7 @@ id: date-time
 version: 0.3.0
 name: Date & Weather
 author: jdhine02
-description: Today's date for a US zip code, big, beside the weather at a glance (place, condition icon, temperature, high and low), then a second page with the next six hours (icon, temperature, chance of rain) beside sunrise stacked over sunset. Temperatures take weather-map colors by default. Pick a date style and colors for the date, weather, and temperature.
+description: Today's date for a US zip code, big, beside the weather at a glance (place, condition icon, temperature, high and low, humidity), then a second page with the next six hours (icon, temperature, chance of rain) beside sunrise stacked over sunset. Temperatures take weather-map colors by default. Pick a date style and colors for the date, weather, and temperature.
 category: Time
 entry: app.star
 
@@ -60,5 +60,5 @@ inputs:
     app_input_type: dropdown
     label: Temperature color
     default: "Weather map"
-    help: Weather map colors the current temperature by its value (purple when frigid to red when hot). The high, low, and hourly temperatures stay white.
+    help: Weather map colors the current temperature by its value (purple when frigid to red when hot). The high, low, humidity, and hourly temperatures stay white.
     choices: ["Weather map", "White", "Amber", "Green", "Cyan", "Red"]

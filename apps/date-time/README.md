@@ -1,8 +1,8 @@
 # Date & Weather — today's date and weather for a US zip code. (192x32)
 
 **TODAY:** the weekday over a big date on the left; on the right, the place,
-a drawn condition icon, the temperature, today's high and low, and the
-condition by name.
+a drawn condition icon, the temperature, today's high and low over the
+current humidity, and the condition by name.
 
 **SKY:** the next six hours, three over three, each with its hour, a drawn
 condition, the temperature, and the chance of rain that hour; sunrise (yellow)
@@ -12,8 +12,8 @@ Settings: a zip code, a date style (SEP 14 / 14 SEP / 09/14 / 14/09), and one
 of five colors (white, amber, green, cyan, red) each for the date and the
 weather. The current temperature defaults to weather-map colors (purple
 when frigid through blue, green, yellow, and orange to red when hot), or takes
-one of the five fixed colors. Today's high and low and the hourly hours and
-temperatures are always white.
+one of the five fixed colors. Today's high and low, the humidity, and the hourly
+hours and temperatures are always white.
 
 It refreshes every 15 minutes, so it shows no clock: a time drawn at that rate
 would be up to 15 minutes stale. Sunrise and sunset are fixed for the day.
