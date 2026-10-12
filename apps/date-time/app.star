@@ -21,14 +21,16 @@ MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
 WEEKDAYS_FULL = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY",
                   "SATURDAY", "SUNDAY"]
 
-# 192 scroll safe zone: content lives in x 10..181 so the app reads as its own
-# unit when a neighbouring app is on the glass beside it.
-LEFT = 10
-RIGHT = 181
+# Content lives in x 4..187: a narrow margin still sets the app apart from a
+# neighbouring app on the glass, and gives the weather the extra width.
+LEFT = 4
+RIGHT = 187
 GAP = 6              # empty space on each side of a divider
 DIVIDER = "#444444"  # dim gray rule between zones; fixed, not a setting
 LABEL = "#969696"    # gray, for the place name and the SKY labels
-MOON_DIM = "#2A3A4A" # the moon's unlit side
+MOON_LIT = "#FFF4C8"   # the moon's lit side, a pale cream
+MOON_MARE = "#9C9682"  # the dark seas on the lit side
+MOON_DIM = "#2C2C30"   # the moon's unlit side
 
 # Compact weather glyphs, drawn at 2x (18px) beside the temperature.
 SUN = [
@@ -216,7 +218,10 @@ def _moon_bitmaps(p):
     # A 9x9 disc split by the real terminator ellipse, so the icon shows the
     # actual current phase (crescent/quarter/gibbous/full) rather than a
     # fixed crescent glyph. Returns [lit part, whole disc].
+    # Radius 4.5 rounds the disc (rows 5, 7, 9 ... 9, 7, 5 wide); at 4 its
+    # edge-centre pixels stuck out as points.
     r = 4
+    rr = 20.25
     t = math.cos(2.0 * math.pi * p)
     waxing = p < 0.5
     lit_grid = []
@@ -225,11 +230,11 @@ def _moon_bitmaps(p):
         lit_row = []
         disc_row = []
         for dx in range(-r, r + 1):
-            if dx * dx + dy * dy > r * r:
+            if float(dx * dx + dy * dy) > rr:
                 lit_row.append(0)
                 disc_row.append(0)
             else:
-                w = math.sqrt(float(r * r - dy * dy))
+                w = math.sqrt(rr - float(dy * dy))
                 xf = float(dx)
                 lit = (xf >= t * w) if waxing else (xf <= -t * w)
                 lit_row.append(1 if lit else 0)
@@ -238,12 +243,31 @@ def _moon_bitmaps(p):
         disc_grid.append(disc_row)
     return [lit_grid, disc_grid]
 
+# The near side's dark seas on the 9x9 disc, roughly where they sit on the
+# real moon: Imbrium upper left, Serenitatis and Tranquillitatis upper right,
+# Procellarum down the left, Fecunditatis and Nubium lower. They are drawn on
+# the lit part only, so more of the face fills in as the moon waxes.
+MARIA = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 0, 1, 1, 0, 0],
+    [0, 1, 1, 0, 0, 1, 1, 1, 0],
+    [0, 1, 0, 0, 0, 0, 1, 1, 0],
+    [0, 1, 1, 0, 0, 0, 0, 1, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+]
+
 def _moon(c, phase, x, y, scale):
     # The unlit side is drawn dim: a few days from new moon the lit sliver
     # alone read as a stray bracket, not a moon.
     grids = _moon_bitmaps(phase)
+    lit = grids[0]
+    seas = [[lit[r][k] * MARIA[r][k] for k in range(9)] for r in range(9)]
     _bmp(c, grids[1], x, y, MOON_DIM, scale)
-    _bmp(c, grids[0], x, y, "skyblue", scale)
+    _bmp(c, lit, x, y, MOON_LIT, scale)
+    _bmp(c, seas, x, y, MOON_MARE, scale)
 
 # ---------- lookups ----------
 
@@ -644,7 +668,7 @@ RING_SMALL = [
 def hour_cell(c, ctx, h, phase, x, y):
     # One hour, 15px tall from y: the hour over its drawn condition (1x, 9x9)
     # on the left; the 5x7 temperature over the 4x5 chance of rain beside it.
-    c.text(h[0], x, y, font = "4x5", color = "white")
+    c.text(h[0], x, y, font = "4x5", color = LABEL)
     draw_condition(c, h[2], h[4], phase, h[5], x, y + 6, 1)
     tx = x + c.text_width("12A", "4x5") + 2
     ts = str(h[1])
@@ -682,13 +706,18 @@ def sky(c, ctx):
     sun_row(c, "SUNRISE", sun_time(_first(daily, "sunrise")), rx, 1, "yellow")
     sun_row(c, "SUNSET", sun_time(_first(daily, "sunset")), rx, 17, "orange")
 
-    # Left zone: the next six hours, three over three.
+    # Left zone: the next six hours, three over three. Each row is 15px
+    # tall; the second starts at 17, leaving 2px between them and ending on
+    # the panel's last row.
     hours = next_hours(wxj, 6)
     lw = dx - GAP - LEFT
     if not hours:
         c.text("NO FORECAST", LEFT + lw // 2, 13, font = "4x5", color = LABEL, align = "center")
         return
+    # Columns spread so the third ends one gap before the divider, the
+    # spare width going between them rather than all to the right.
     phase = _moon_phase(ctx)
-    cw = lw // 3
+    cellw = c.text_width("12A", "4x5") + 2 + c.text_width("100", "5x7") + 1 + len(RING_SMALL[0])
+    cw = (lw - cellw) // 2
     for i in range(len(hours)):
-        hour_cell(c, ctx, hours[i], phase, LEFT + (i % 3) * cw, 0 if i < 3 else 16)
+        hour_cell(c, ctx, hours[i], phase, LEFT + (i % 3) * cw, 0 if i < 3 else 17)

@@ -13,11 +13,12 @@ of five colors (white, amber, green, cyan, red) each for the date and the
 weather. The current temperature defaults to weather-map colors (purple
 when frigid through blue, green, yellow, and orange to red when hot), or takes
 one of the five fixed colors. Today's high and low, the humidity, and the hourly
-hours and temperatures are always white.
+temperatures are always white; the hours are gray, like the sun labels.
 
-At night the icon is the moon in its current phase. Partly cloudy puts a low
-cloud under it; mostly cloudy (under 88% cloud cover) leaves only its top
-peeking over a big cloud; overcast is cloud alone.
+At night the icon is the moon in its current phase, pale cream with its dark
+seas filling in as it waxes. Partly cloudy puts a low cloud under it; mostly
+cloudy (under 88% cloud cover) leaves only its top peeking over a big cloud;
+overcast is cloud alone.
 
 It refreshes every 15 minutes, so it shows no clock: a time drawn at that rate
 would be up to 15 minutes stale. Sunrise and sunset are fixed for the day.
