@@ -17,38 +17,51 @@ block. A day that fits in 8 pages uses Block A only.
 | page type | width | what it shows |
 |---|---|---|
 | Event cards | two per page | Sport icon, event, opponent logo, and a `FINAL` / `TODAY` / `UPCOMING` chip |
-| Schedule change | full | A priority announcement, for example a postponement |
-| Sponsor | full | A school sponsor's logo, with its name set beside it when the logo's own lettering is too small to read |
-| Featured | full | The featured event: school logo vs. opponent, the occasion, the time, and a ticket QR when one is available |
+| Announcement | full | One of four kinds, each with its own icon and color: `ALERT` (warning triangle, red), `SCHEDULE UPDATE` (calendar and clock, amber), `CELEBRATION` (trophy, gold) and `ANNOUNCEMENT` (megaphone, school colors) |
+| Sponsor | full | The school's logo and a `<MASCOT> SPONSOR` label (for example `RAIDER SPONSOR`), the sponsor's logo when the app has it, and the business name with its web address beneath |
+| Featured | full | The featured event: school logo vs. opponent, the occasion, the time, and a ticket QR when one is available. Both schools are always named; a long matchup steps down to smaller text rather than dropping the school |
 
 **What gets in**, most important first:
 
-1. Priority announcements (up to two pages).
+1. Announcements, at most two, chosen in this order: alerts, schedule
+   updates, celebrations, then general announcements.
 2. Every one of today's events.
-3. The four most recent **varsity** results. Each schedule-change page takes
-   the place of two of them.
+3. The four most recent **varsity** results.
 4. Upcoming events, earliest first.
 5. Remaining results, most recent first.
 
-When there is more than 16 pages of content, the list is cut from the bottom.
+When the event cards don't fit in the pages left over, the list is cut from
+the bottom, so the oldest results go first. Announcements, sponsors and the
+featured event are never cut.
 
-**Where it goes:** schedule changes open the feed. Today's events and the
-lead results then alternate in pairs, followed by upcoming events and older
-results. Sponsors take pages 3 and 6 of each block, and the featured event
-takes page 8 of each block. These pages are reserved only when the content
-exists. Otherwise athletics fill them, so a page is never left blank.
+**Where it goes:** announcements open a block (pages 1–2). Alerts and
+schedule updates open **every** block, so they are on screen whichever block
+Glance shows. Celebrations and general announcements open Block A only. No
+announcement appears twice in one block. Sponsors take pages 3 and 6 of each
+block, and the featured event takes page 8 of each block. These pages are
+reserved only when the content exists. Otherwise athletics fill them, so a
+page is never left blank. Today's events and the lead results then alternate
+in pairs in the remaining pages, followed by upcoming events and older
+results.
+
+On a two-block day an alert or schedule update uses two of the 16 pages, and
+a celebration or general announcement uses one, which leaves room for fewer
+event cards on a busy day. With two alerts, two sponsors and a featured
+event, there is room for 12 cards (six pages) across the two blocks.
 
 Each sponsor appears at most once per block. With one sponsor it takes page 3
 of each block; with two or more, both sponsor pages are used. Which sponsors
 appear moves on with every refresh, so every sponsor on the list gets its turn.
-A sponsor whose logo is bundled with the app shows that logo; one without
-shows its name as text. The featured event is the first upcoming event (today counts) that
-the athletic department marked as featured. It is not repeated as a normal
+A sponsor whose logo is bundled with the app shows that logo; without one, the
+business name takes the whole space. With no web address the name is set
+larger, and a long name wraps onto two lines. The featured event is the first upcoming event (today counts) that
+the athletic department marked as featured and that is not canceled. It is not repeated as a normal
 card. If a block runs out of new content, it shows the school's name page
 once, then repeats events from the top of the feed.
 
 **Which block shows:** every page of one appearance reads the same cached
-schedule response (cached 45 seconds, with a 60-second refresh), so all
+schedule response (cached 45 seconds; the app is configured to refresh
+every five minutes), so all
 eight pages always agree. The block is chosen from that response's timestamp,
 so each fresh render is effectively a coin flip between A and B. It can never
 lock out Block B, but it does not strictly alternate. Strict
@@ -57,8 +70,17 @@ A → B → A → B needs a block number from the SportBoards service. Only
 
 Cards carry the school through its colors: the sport icons keep the sport's
 own colors with the school's colors as accents, and cards are separated by a
-stripe in the school's primary color (color | white | white | color). The
-school logo appears on the featured page rather than on every card.
+stripe in the school's primary color (color | white | white | color). Every
+page has matching outer borders: white | color at the left and color | white
+at the right. A primary color too close to black to show on the panel (for
+example black) is replaced on the panel by the school's second color. The school logo appears on the featured page rather than on
+every card.
+
+When an event has no named opponent and is part of the IHSAA tournament
+series (Sectional, Regional, Semi-State or State), a gold trophy takes the
+opponent logo's place. An ordinary game whose opponent logo is missing shows
+the SportBoards mark, never a trophy. A sport the app doesn't recognize shows a coach's
+whistle; the trophy is kept for tournaments and celebrations.
 
 ## Demo
 
@@ -97,12 +119,18 @@ one. Each school's code is private to that school.
 
 ## What the SportBoards service will need to add
 
-- **Schedule-change type:** urgency comes from an announcement's priority
-  flag. The header reads `SCHEDULE CHANGE`, `CANCELLED`, `POSTPONED`,
-  `TIME CHANGE` or `LOCATION CHANGE` when `announcement_type` is one of the
-  agreed values (`schedule_change`, `cancellation`, `postponement`,
-  `time_change`, `venue_change`), and `ALERT` otherwise. Those values need to
-  be standardized in the service.
+- **Announcement categories:** the category comes from `announcement_type`.
+  Today's values already work (`general` is an announcement; `cancellation`,
+  `postponement` and `schedule_change` are schedule updates, headed
+  `CANCELLED`, `POSTPONED` and `SCHEDULE UPDATE`), and the app
+  also accepts `urgent_alert` and `celebration`. Anything else shows as an
+  `ALERT`. The service needs to offer the four categories.
+- **Tournament events:** the trophy reads the event title. An explicit
+  `tournament_stage`, or the Eventlink `event_type`, from the service would
+  replace the title check.
+- **Display colors:** a school color that is too dark on the panel can be
+  given an LED-calibrated `display_primary_color`; the official color is
+  never changed.
 - **Ticket QR:** GDN cannot generate QR codes, and the service has no
   per-event ticket link. The featured page draws a QR from an event's
   `ticket_qr.modules` (a square grid of 21–29 rows of `0`/`1`), with an
@@ -110,4 +138,4 @@ one. Each school's code is private to that school.
 - **Strict block alternation:** a block number from the service would
   replace the timestamp coin flip.
 - **Sponsor logos:** sponsor logos are remote images, which GDN cannot draw,
-  so sponsor pages are text only.
+  so a sponsor's logo shows only when it is bundled with the app.
