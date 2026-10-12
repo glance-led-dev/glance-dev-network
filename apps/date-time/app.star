@@ -50,6 +50,14 @@ CLOUD = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1],
     [0, 1, 1, 1, 1, 1, 1, 1, 0],
 ]
+# A low cloud for partly cloudy nights: it covers only the bottom of the moon,
+# so the phase still reads above it.
+LOW_CLOUD = [
+    [0, 0, 0, 0, 0, 1, 1, 0, 0],
+    [0, 1, 1, 0, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 1, 0],
+]
 RAINDROPS = [
     [0, 1, 0, 0, 1, 0, 0, 1, 0],
     [1, 0, 0, 1, 0, 0, 1, 0, 0],
@@ -307,8 +315,8 @@ def fetch_weather(lat, lon):
         params = {
             "latitude": str(lat),
             "longitude": str(lon),
-            "current": "temperature_2m,relative_humidity_2m,weather_code,is_day",
-            "hourly": "temperature_2m,weather_code,precipitation_probability,is_day",
+            "current": "temperature_2m,relative_humidity_2m,weather_code,is_day,cloud_cover",
+            "hourly": "temperature_2m,weather_code,precipitation_probability,is_day,cloud_cover",
             "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset",
             "forecast_days": "2",   # so late-evening hours reach past midnight
             "temperature_unit": "fahrenheit",
@@ -366,7 +374,8 @@ def hour_label(s):
 
 def next_hours(wxj, n):
     # The n hours after the current one, from Open-Meteo's hourly arrays
-    # (local times under timezone=auto). Each is [label, temp, code, rain, is_day].
+    # (local times under timezone=auto). Each is
+    # [label, temp, code, rain, is_day, cloud cover %].
     cur = wxj.get("current", None)
     hourly = wxj.get("hourly", None)
     if cur == None or hourly == None:
@@ -387,11 +396,21 @@ def next_hours(wxj, n):
         rain = hourly["precipitation_probability"][i]
         if t == None or code == None:
             continue
+        cover = hourly.get("cloud_cover", [])
         out.append([hour_label(str(times[i])), whole(t), int(code),
-                    rain, int(hourly["is_day"][i] or 0) == 1])
+                    rain, int(hourly["is_day"][i] or 0) == 1,
+                    cover[i] if i < len(cover) else None])
     return out
 
 # ---------- weather icon + condition text ----------
+
+# Open-Meteo has no "mostly cloudy" code: 3 covers everything from mostly
+# cloudy to overcast. Below this cloud cover (the NWS overcast line, 7/8 of
+# the sky) a code 3 night still lets the moon through.
+OVERCAST_COVER = 88
+
+def mostly_cloudy(code, cover):
+    return code == 3 and cover != None and cover < OVERCAST_COVER
 
 RAIN_CODES = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]
 SNOW_CODES = [71, 73, 75, 77, 85, 86]
@@ -409,7 +428,7 @@ def _bmp(c, bitmap, x, y, color, scale):
                        x + rx * scale + scale - 1, y + ry * scale + scale - 1,
                        fill = color)
 
-def draw_condition(c, code, is_day, phase, x, y, scale):
+def draw_condition(c, code, is_day, phase, cover, x, y, scale):
     # Every glyph stays inside 9 rows x scale, so nothing reaches the
     # condition text drawn one gap below the icon.
     if code == 0 or code == 1:
@@ -418,12 +437,19 @@ def draw_condition(c, code, is_day, phase, x, y, scale):
         else:
             _moon(c, phase, x, y, scale)
     elif code == 2:
-        # Partly cloudy: sun or moon peeking out from behind the cloud.
+        # Partly cloudy: sun peeking out from behind the cloud, or the moon
+        # over a low cloud.
         if is_day:
             _bmp(c, SUN, x, y, "yellow", scale)
+            _bmp(c, CLOUD, x, y + 3 * scale, "gray", scale)
         else:
             _moon(c, phase, x, y, scale)
-        _bmp(c, CLOUD, x, y + 3 * scale, "gray", scale)
+            _bmp(c, LOW_CLOUD, x, y + 5 * scale, "gray", scale)
+    elif mostly_cloudy(code, cover) and not is_day:
+        # Mostly cloudy at night: the cloud rides higher, so only the top of
+        # the moon shows over it.
+        _moon(c, phase, x, y, scale)
+        _bmp(c, CLOUD, x, y + 2 * scale, "gray", scale)
     elif code == 45 or code == 48:
         _bmp(c, FOG, x, y + scale, "gray", scale)
     elif code in RAIN_CODES:
@@ -441,7 +467,7 @@ def draw_condition(c, code, is_day, phase, x, y, scale):
         # 3 = overcast, and any unmapped code.
         _bmp(c, CLOUD, x, y + 2 * scale, "gray", scale)
 
-def condition_label(code, is_day):
+def condition_label(code, is_day, cover):
     # Each fits the ~54px left of the humidity on TODAY's bottom row.
     # Clear sky at night: moon icon, "CLEAR" text (same slot FOG etc. use).
     if code == 0:
@@ -450,6 +476,8 @@ def condition_label(code, is_day):
         return "MOSTLY SUN" if is_day else "MOSTLY CLR"
     if code == 2:
         return "PTLY CLOUDY"
+    if mostly_cloudy(code, cover) and not is_day:
+        return "MOSTLY CLDY"
     if code == 3:
         return "CLOUDY"
     if code == 45:
@@ -570,7 +598,8 @@ def today(c, ctx):
 
     code = int(cur.get("weather_code", 3))
     is_day = int(cur.get("is_day", 1)) == 1
-    draw_condition(c, code, is_day, _moon_phase(ctx), rx, 7, 2)
+    cover = cur.get("cloud_cover", None)
+    draw_condition(c, code, is_day, _moon_phase(ctx), cover, rx, 7, 2)
 
     tcolor = temp_color(ctx, whole(temp))
     ts = str(whole(temp))
@@ -601,7 +630,7 @@ def today(c, ctx):
         c.text(row[1], vx, row[2], font = "4x5", color = "white")
     cw = (col - 4 - rx) if hum != None else rw
 
-    c.text(clip(c, condition_label(code, is_day), "4x5", cw), rx, 26,
+    c.text(clip(c, condition_label(code, is_day, cover), "4x5", cw), rx, 26,
            font = "4x5", color = weather_color)
 
 
@@ -616,7 +645,7 @@ def hour_cell(c, ctx, h, phase, x, y):
     # One hour, 15px tall from y: the hour over its drawn condition (1x, 9x9)
     # on the left; the 5x7 temperature over the 4x5 chance of rain beside it.
     c.text(h[0], x, y, font = "4x5", color = "white")
-    draw_condition(c, h[2], h[4], phase, x, y + 6, 1)
+    draw_condition(c, h[2], h[4], phase, h[5], x, y + 6, 1)
     tx = x + c.text_width("12A", "4x5") + 2
     ts = str(h[1])
     c.text(ts, tx, y + 1, font = "5x7", color = "white")

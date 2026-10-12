@@ -15,6 +15,10 @@ when frigid through blue, green, yellow, and orange to red when hot), or takes
 one of the five fixed colors. Today's high and low, the humidity, and the hourly
 hours and temperatures are always white.
 
+At night the icon is the moon in its current phase. Partly cloudy puts a low
+cloud under it; mostly cloudy (under 88% cloud cover) leaves only its top
+peeking over a big cloud; overcast is cloud alone.
+
 It refreshes every 15 minutes, so it shows no clock: a time drawn at that rate
 would be up to 15 minutes stale. Sunrise and sunset are fixed for the day.
 Weather is from Open-Meteo and the place from Zippopotam; neither needs a key.
