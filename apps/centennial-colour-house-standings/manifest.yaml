@@ -1,0 +1,12 @@
+gdn: 1
+id: centennial-colour-house-standings
+version: 0.1.0
+name: Colour House Standings
+author: Community
+description: Centennial Colour House points standings.
+category: Fun
+entry: app.star
+width: 192
+height: 32
+refresh: 3600
+pages: [live]
