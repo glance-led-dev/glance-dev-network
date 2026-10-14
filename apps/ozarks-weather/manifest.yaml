@@ -13,7 +13,7 @@ width: 192
 height: 32
 
 # Refresh weather data every 5 minutes
-refresh: 300
+refresh: 900
 
 # Pages shown in order
 pages: [current, forecast, around1, around2, around3, around4, outlook]
