@@ -4,12 +4,11 @@ Displays one high school's current sports matchup on a 192x32 Glance display. Th
 
 ## Setup
 
-1. **Choose a sport.** Select Football, Boys Basketball, Girls Basketball, Baseball, Softball, Girls Volleyball, Boys Soccer, or Girls Soccer.
-2. **Add the MaxPreps school location.** Open the school's main MaxPreps page and copy its three path portions into the separate settings. For `www.maxpreps.com/nc/charlotte/myers-park-mustangs/`, enter state `NC`, city `charlotte`, and school name `myers-park-mustangs`. Do not enter a complete URL, sport schedule, matchup, recap, or individual game page.
+1. **Choose a sport code.** Use `F` Football, `B` Boys Basketball, `G` Girls Basketball, `A` Baseball, `S` Softball, `V` Girls Volleyball, `M` Boys Soccer, or `W` Girls Soccer. The short code is only used in settings; the display continues to use the normal sport abbreviations.
+2. **Add the MaxPreps school location.** Open the school's main MaxPreps page and copy its three path portions into the separate settings using uppercase letters. For `www.maxpreps.com/nc/charlotte/myers-park-mustangs/`, enter state `NC`, city `CHARLOTTE`, and school name `MYERS-PARK-MUSTANGS`. Do not enter a complete URL, sport schedule, matchup, recap, or individual game page.
 3. **Connect Parse.** Create a [Parse account](https://parse.bot), then [subscribe to the public MaxPreps API](https://parse.bot/marketplace/1d510b08-d5bf-481d-aa00-82f8b510e6dd/maxpreps-com-api). If the subscription page offers **Bump to v18**, use it so the subscription matches the API snapshot requested by the app. Do not fork, merge, or edit the scraper. Copy your personal Parse API key into the app's encrypted **Parse API key** setting. Each user's requests and credits remain on their own Parse account; the app never includes, shares, or falls back to someone else's key.
-4. **Choose the display time zone.** The school timezone is detected automatically from its MaxPreps location. Display time zone controls the time shown on your Glance.
-5. **Choose a live frequency.** The default is every 30 minutes. Select **No live pulls** when you only want upcoming and final results, or select a faster interval while actively following a game.
-6. **Optional for baseball and softball:** enter the short GameChanger team ID to supplement live information without using Parse credits. MaxPreps and Parse are still required for the complete schedule, matchup, branding, and fallback data.
+4. **Choose the display time-zone code.** Use `E` Eastern, `C` Central, `M` Mountain, `P` Pacific, `Z` Arizona, `A` Alaska, or `H` Hawaii. The school timezone is detected automatically from its MaxPreps location.
+5. **Choose a live frequency.** The number is the update interval in minutes. The default is `30`; choose `0` to disable recurring live pulls.
 
 ## What the display shows
 
@@ -60,12 +59,10 @@ For live baseball and softball, the diamond shows occupied bases in the batting 
 ## Data and credits
 
 - MaxPreps supplies schedules, matchups, records, scores, and available box-score details.
-- For baseball and softball, an optional GameChanger Team ID lets the app use GameChanger's public feed for available live details. If the ID is blank, invalid, or temporarily unavailable, the normal MaxPreps path continues.
-- GameChanger availability varies by game. Its public feed may provide only team names and scores; inning, outs, occupied bases, hits, and errors appear only when the source supplies them.
 - The app uses MaxPreps Scoretracker as its only football live-score source.
 - Each successful live Scoretracker request currently costs one Parse credit. The frequency selector shows the corresponding hourly rate.
 - The default 30-minute frequency uses at most two live Scoretracker credits per hour.
-- **No live pulls** uses zero in-game Scoretracker credits. Schedule, matchup, upcoming-game, and final-result updates continue normally; one completed-game request may still retrieve the final quarter breakdown.
+- A live frequency of `0` uses zero in-game Scoretracker credits. Schedule, matchup, upcoming-game, and final-result updates continue normally; one completed-game request may still retrieve the final quarter breakdown.
 - At Tuesday's 8:00 AM football rollover, the app refreshes both teams' schedules: two credits for the selected school and two for its opponent. The opponent schedule supplies the opposing streak when available.
 - On a football game day, one `get_live_and_upcoming_games` request after 8:00 AM local confirms that the Tuesday matchup is still correct. It costs one credit and is cached for the entire date.
 - The matchup request normally costs one additional credit. Football Scoretracker then costs one credit per selected live update after the game starts.
@@ -86,4 +83,4 @@ Parse pricing and endpoint costs can change; check the usage page in your own Pa
 
 ## Updating settings
 
-The school timezone is detected automatically from its MaxPreps location. You can change the sport, school-location fields, display timezone, or live frequency without deleting and re-adding the app. Select **No live pulls** for upcoming and final results without recurring in-game checks, or use a faster frequency only when you want closer live updates.
+The school timezone is detected automatically from its MaxPreps location. You can change the sport, school-location fields, display timezone, or live frequency without deleting and re-adding the app. Select `0` for upcoming and final results without recurring in-game checks, or use a faster frequency only when you want closer live updates.

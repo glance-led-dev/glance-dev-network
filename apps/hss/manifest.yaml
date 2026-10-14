@@ -1,6 +1,6 @@
 gdn: 1
-id: high-school-sports-scoreboard
-version: 0.16.2
+id: hss
+version: 0.17.0
 name: High School Sports
 description: Recent scores and upcoming games for one high school and sport per app instance.
 author: JSW41
@@ -516,54 +516,49 @@ assets:
   - dcrank26-st-john-s-maxpreps-led.png
   - allrank26-ky-basketball-george-rogers-clark-maxpreps-led.png
 inputs:
-  - key: sport
+  - key: s
     app_input_type: dropdown
     type: choice
-    label: Choose a sport
-    default: Football
-    choices: [Football, Boys Basketball, Girls Basketball, Baseball, Softball, Girls Volleyball, Boys Soccer, Girls Soccer]
-    help: Select the sport to display.
-  - key: parsekey
+    label: "Sport: F= Football, B= Boys BB, G= Girls BB, A= Baseball, S= Softball, V= Volleyball, M= Boys Soccer, W= Girls Soccer"
+    default: F
+    choices: [F, B, G, A, S, V, M, W]
+    help: "F Football; B Boys Basketball; G Girls Basketball; A Baseball; S Softball; V Girls Volleyball; M Boys Soccer; W Girls Soccer."
+  - key: k
     required: true
     app_input_type: api-key
     type: string
-    label: Parse API key
+    label: "Parse API Key: https://parse.bot/marketplace/1d510b08-d5bf-481d-aa00-82f8b510e6dd/maxpreps-com-api"
     help: "Required. Subscribe to the MaxPreps API at https://parse.bot/marketplace/1d510b08-d5bf-481d-aa00-82f8b510e6dd/maxpreps-com-api and bump the subscription to canonical v18 if prompted."
-  - key: schoolstate
+  - key: a
     required: true
-    app_input_type: free-text
-    type: string
-    label: School state
-    help: "Required. Enter the two-letter state code, for example IL."
-  - key: schoolcity
-    required: true
-    app_input_type: free-text
-    type: string
-    label: MaxPreps city
-    help: "Required. Enter the city portion of the MaxPreps school page, for example springfield."
-  - key: schoolslug
-    required: true
-    app_input_type: free-text
-    type: string
-    label: MaxPreps school name
-    help: "Required. Enter only the final school portion of the MaxPreps page, for example sacred-heart-griffin-cyclones. Do not enter a URL."
-  - key: gamechangerteamid
-    app_input_type: free-text
-    type: string
-    label: GameChanger Team ID (Optional)
-    default: none
-    help: Optional for baseball and softball. Leave this as none when not used.
-  - key: displaytimezone
     app_input_type: dropdown
     type: choice
-    label: Display time zone
-    default: Eastern
-    choices: [Eastern, Central, Mountain, Pacific, Arizona, Alaska, Hawaii]
-    help: Time zone shown on your display.
-  - key: livefrequency
+    label: State
+    choices: [AL, AK, AZ, AR, CA, CO, CT, DE, FL, GA, HI, ID, IL, IN, IA, KS, KY, LA, ME, MD, MA, MI, MN, MS, MO, MT, NE, NV, NH, NJ, NM, NY, NC, ND, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT, VT, VA, WA, WV, WI, WY, DC]
+    help: "Required. Select the school's two-letter state code."
+  - key: c
+    required: true
+    app_input_type: free-text
+    type: string
+    label: "City: uppercase, for example SPRINGFIELD"
+    help: "Required. Enter the uppercase city portion of the MaxPreps school page, for example SPRINGFIELD."
+  - key: n
+    required: true
+    app_input_type: free-text
+    type: string
+    label: "School Name: enter only the final part of the MaxPreps URL in uppercase, keeping all dashes. Example: SACRED-HEART-GRIFFIN-CYCLONES. Do not enter a URL or include / before or after the name."
+    help: "Required. Enter only the final part of the MaxPreps URL in uppercase, keeping all dashes. Example: SACRED-HEART-GRIFFIN-CYCLONES. Do not enter a URL or include / before or after the name."
+  - key: z
     app_input_type: dropdown
     type: choice
-    label: Live update frequency
-    default: Every 30 minutes (2 credits/hour)
-    choices: [No live pulls (0 credits/hour), Every 5 minutes (12 credits/hour), Every 10 minutes (6 credits/hour), Every 15 minutes (4 credits/hour), Every 20 minutes (3 credits/hour), Every 30 minutes (2 credits/hour)]
-    help: Disable live pulls or choose how often live scores update.
+    label: "Time zone: E Eastern, C Central, M Mountain, P Pacific, Z Arizona, A Alaska, H Hawaii"
+    default: E
+    choices: [E, C, M, P, Z, A, H]
+    help: "E Eastern; C Central; M Mountain; P Pacific; Z Arizona; A Alaska; H Hawaii."
+  - key: f
+    app_input_type: dropdown
+    type: choice
+    label: "Live update minutes: 0 off, or 5, 10, 15, 20, 30"
+    default: "30"
+    choices: ["0", "5", "10", "15", "20", "30"]
+    help: "0 disables live pulls. Other values are minutes between live Scoretracker requests."
