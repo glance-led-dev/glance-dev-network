@@ -1,0 +1,14 @@
+gdn: 1
+id: chicago-cubs-word-sign
+version: 0.1.0
+name: "Chicago Cubs Word Sign"
+author: "FCYC"
+description: Cubs C, Chicago Cubs pennant, and clock on blue.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 900
+pages: [main]
+assets:
+  - chicago_cubs_word_sign.png
