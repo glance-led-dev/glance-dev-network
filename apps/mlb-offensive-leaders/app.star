@@ -1,20 +1,33 @@
-# MLB Offensive Leaders (128x32)
+# MLB Offensive Leaders (192x32)
 #
 # The top 3 hitters in one stat per page (AVG/HR/RBI/SB/Hits/Runs/SLG/OPS),
-# for MLB overall, the AL, or the NL. Data from MLB's own public Stats API
-# (statsapi.mlb.com) - no key required. Sibling app to mlb-pitching-leaders
-# and mlb-playoff-picture.
+# for MLB overall, the AL, or the NL - regular season or postseason. Data
+# from MLB's own public Stats API (statsapi.mlb.com) - no key required.
+# Sibling app to mlb-pitching-leaders and mlb-playoff-picture.
 #
 # Pages in this SDK are a fixed list declared in the manifest, so all 8
 # category pages always exist.
 #
+# STATS. Auto (the default) shows the postseason while it's on and the
+# regular season otherwise; Regular season and Postseason pin one, so a fan
+# can add the app twice and see both in October. MLB's own postseason
+# leaderboard qualifies hitters at 3.1 plate appearances per game *their own
+# team* played, so a regular on a club knocked out in two Wild Card games
+# needs only 7 PA and can sit on top all month. Here the bar is one number
+# for everyone: 3.1 PA times the fewest games played by a club still alive
+# in the current round, frozen when the World Series starts (31 PA in
+# 2025). Clubs with a first-round bye count from the
+# Division Series, so their regulars always clear it; a club that went home
+# early drops off as the bar rises.
+#
 # DESIGN. The mlb-pitching-leaders scorebook, on a black ground. The top row
 # opens on the MLB batterman in 16x8 pixel art - blue field, red corner, the
 # white batter, bat and ball - then an AL red / NL blue chip when a league is
-# picked, the stat in white and the season in gray. Under it, three rows: the
-# rank in gray, a team badge, the last name in white, and the number in white
-# against the right edge. The badge is how a fan spots their team across a
-# room: the team's code in its own two colors - orange on navy for the
+# picked, the stat in white and the season in gray (with POSTSEASON in gold).
+# Under it, three rows: the rank in gray, a team badge, the hitter's name in
+# white (initial and last name if the full name won't fit), and the number in
+# white against the right edge. The badge is how a fan spots their team across
+# a room: the team's code in its own two colors - orange on navy for the
 # Tigers, gold on brown for the Padres, black on gold for the Pirates - like a
 # cap patch. Everything stays 6px inside both edges so the app reads as its
 # own unit in the stream.
@@ -62,8 +75,9 @@ LEAGUE_ID = {"AL": "103", "NL": "104"}
 # ---------- palette & grid ----------
 
 INK = "#F4F7FF"     # names, live numbers, the stat title
-DIM = "#6E7A94"     # ranks, season, sub-lines
+DIM = "#6E7A94"     # ranks, season, samples, sub-lines
 AMBER = "#E8B04A"   # the one attention state (feed offline)
+GOLD = "#F2C14E"    # POSTSEASON in the header
 AL_RED = "#D22D3A"
 NL_BLUE = "#2A66D9"
 
@@ -72,7 +86,7 @@ RANK_W = 5          # one 5x7 digit
 BADGE_X = PAD + RANK_W + 2  # 13
 BADGE_H = 7
 NAME_GAP = 2
-GAP = 3             # blank px between a name and its value
+GAP = 4             # blank px between a name, its sample and its value
 ROW_Y = [9, 17, 25] # three 7px rows, 1px apart, under the 8px logo row
 HEAD_Y = 2          # 4x5 header text, centered on the logo
 
@@ -147,37 +161,160 @@ def blend(a, b, pct):
 
 # ---------- network (keyless) ----------
 
+API = "https://statsapi.mlb.com/api/v1"
+TTL = 14400         # matches manifest.yaml's refresh - keep in sync
+DEFAULT_PA_RATE = 3.1   # plate appearances per team game to qualify (MLB's rule)
+# Only the fields the boards read: the full player list is ~770 KB, this ~190 KB.
+FIELDS = "stats,splits,player,fullName,lastName,team,id,stat,gamesPlayed,plateAppearances,atBats,hits,avg,homeRuns,rbi,stolenBases,runs,slg,ops"
+SCHEDULE_FIELDS = "dates,games,gameType,status,abstractGameState,teams,home,away,team,id,isWinner,seriesStatus,isOver"
+ROUNDS = ["F", "D", "L", "W"]   # Wild Card, Division Series, LCS, World Series
+MODES = ["Auto", "Regular season", "Postseason"]
+
 def league_choice(ctx):
     v = ctx.inputs.get("league", "MLB")
     return v if v in LEAGUE_ID else "MLB"
 
-def fetch_leaders(stat_key, lg, season):
+def mode_choice(ctx):
+    v = ctx.inputs.get("stats", "Auto")
+    return v if v in MODES else "Auto"
+
+def get_json(path, params):
+    resp = http.get(API + path, params = params, ttl_seconds = TTL)
+    if resp["status_code"] != 200 or type(resp["json"]) != "dict":
+        return None
+    return resp["json"]
+
+def season_dates(year):
+    d = get_json("/seasons/" + str(year), {"sportId": "1"})
+    if d == None:
+        return None
+    s = d.get("seasons") or []
+    return s[0] if len(s) > 0 and type(s[0]) == "dict" else {}
+
+def today(ctx):
+    m = ctx.now.month
+    dd = ctx.now.day
+    return str(ctx.now.year) + "-" + ("0" if m < 10 else "") + str(m) + "-" + ("0" if dd < 10 else "") + str(dd)
+
+def which_season(ctx):
+    # [year, "R" or "P", season dates] for this panel, or None offline.
+    # Auto: the postseason from its first day to its last, the regular
+    # season otherwise. Before a season's opening day the latest one is last
+    # year's; the Postseason setting shows last October's until this one
+    # starts.
+    t = today(ctx)
+    year = ctx.now.year
+    info = season_dates(year)
+    if info == None:
+        return None
+    if info.get("regularSeasonStartDate", "9999") > t:
+        year -= 1
+        info = season_dates(year)
+        if info == None:
+            return None
+    post_start = info.get("postSeasonStartDate", "9999")
+    post_end = info.get("postSeasonEndDate", "0000")
+    mode = mode_choice(ctx)
+    if mode == "Regular season":
+        return [year, "R", info]
+    if mode == "Postseason":
+        if post_start > t:
+            prev = season_dates(year - 1)
+            return [year - 1, "P", prev or {}]
+        return [year, "P", info]
+    return [year, "P" if post_start <= t and t <= post_end else "R", info]
+
+def fetch_players(year, kind, lg, pool):
     params = {
-        "leaderCategories": stat_key,
-        "statGroup": "hitting",
-        "season": str(season),
+        "stats": "season",
+        "group": "hitting",
+        "gameType": kind,
+        "season": str(year),
         "sportId": "1",
-        "limit": str(len(ROW_Y)),
+        "limit": "2000",
+        "playerPool": pool,
+        "fields": FIELDS,
     }
     if lg in LEAGUE_ID:
         params["leagueId"] = LEAGUE_ID[lg]
-    resp = http.get(
-        "https://statsapi.mlb.com/api/v1/stats/leaders",
-        params = params,
-        # matches manifest.yaml's refresh - keep in sync
-        ttl_seconds = 14400,
-    )
-
-    # [season, leaders]. The season comes from the feed, not the clock: ask
-    # for a season that hasn't started and statsapi quietly answers with the
-    # last one, so a February panel labelled "2027" would show 2026's board.
-    if resp["status_code"] != 200 or type(resp["json"]) != "dict":
+    d = get_json("/stats", params)
+    if d == None:
         return None
-    blocks = resp["json"].get("leagueLeaders") or []
-    if len(blocks) == 0 or type(blocks[0]) != "dict":
-        return ["", []]
-    block = blocks[0]
-    return [str(block.get("season") or ""), (block.get("leaders") or [])[:len(ROW_Y)]]
+    st = d.get("stats") or []
+    if len(st) == 0 or type(st[0]) != "dict":
+        return []
+    return st[0].get("splits") or []
+
+def fewest_games_alive(year):
+    # The bar's game count: the fewest postseason games played by a club
+    # still alive in the current round. A club with a bye isn't in the Wild
+    # Card round, so it only counts from the Division Series on. When a new
+    # round opens, its bye clubs have played 0 games, so the count never
+    # drops below where an earlier round ended: the fewest games any club
+    # that won that round had played through it (2 after the Wild Card
+    # round), which keeps a 3-for-3 Wild Card loser off the top on Division
+    # Series day 1. The count stops rising when the World Series starts.
+    d = get_json("/schedule", {"sportId": "1", "season": str(year), "gameType": "F,D,L,W",
+                               "hydrate": "seriesStatus", "fields": SCHEDULE_FIELDS})
+    if d == None:
+        return None
+    played = {}     # round -> {club: games played in that round}
+    out = {}        # club -> round it went out in
+    in_round = {}   # round -> {club: True}
+    current = -1
+    for dt in d.get("dates") or []:
+        for g in dt.get("games") or []:
+            r = ROUNDS.index(g.get("gameType")) if g.get("gameType") in ROUNDS else -1
+            state = (g.get("status") or {}).get("abstractGameState", "")
+            sides = g.get("teams") or {}
+            ids = [((sides.get(k) or {}).get("team") or {}).get("id", 0) for k in ("home", "away")]
+            if r < 0 or ids[0] not in TEAMS or ids[1] not in TEAMS:
+                continue   # "AL Champion" placeholders before a round is set
+            for tid in ids:
+                in_round.setdefault(r, {})[tid] = True
+            if state in ("Final", "Live"):
+                current = max(current, r)
+            if state != "Final":
+                continue
+            for k in ("home", "away"):
+                side = sides.get(k) or {}
+                tid = (side.get("team") or {}).get("id", 0)
+                played.setdefault(r, {})[tid] = played.get(r, {}).get(tid, 0) + 1
+                if (g.get("seriesStatus") or {}).get("isOver") and not side.get("isWinner"):
+                    out[tid] = r
+    if current < 0:
+        return 0
+
+    def through(tid, r):
+        # Games a club has played in rounds 0..r.
+        n = 0
+        for x in range(r + 1):
+            n += played.get(x, {}).get(tid, 0)
+        return n
+
+    floor = 0
+    for r in range(current):
+        winners = [t for t in in_round.get(r, {}) if out.get(t, 99) > r]
+        if len(winners) > 0:
+            floor = max(floor, min([through(t, r) for t in winners]))
+    if current == len(ROUNDS) - 1:
+        # Frozen for the World Series: the fewest games either pennant
+        # winner played through the LCS (10 in 2025, so 31 PA / 10 IP).
+        # Letting it keep rising would leave only the two Series rosters
+        # (and too few pitchers to fill a board).
+        return floor
+    # Still alive in the current round: everyone who has played in it, plus
+    # every winner of the round before whose series hasn't started yet (the
+    # two series of a round can start on different days).
+    cand = dict(in_round.get(current, {}))
+    if current > 0:
+        for t in in_round.get(current - 1, {}):
+            if out.get(t, 99) > current - 1:
+                cand[t] = True
+    alive = [t for t in cand if t not in out]
+    if len(alive) == 0:
+        alive = list(in_round.get(current, {}))
+    return max(floor, min([through(t, current) for t in alive]))
 
 # ---------- text helpers ----------
 
@@ -221,20 +358,28 @@ def league_chip(c, lg, x):
     c.text(lg, x + 2, HEAD_Y, font = "4x5", color = "white")
     return x + w
 
-def header(c, lg, titles, season):
+def header(c, lg, titles, season, post):
     # titles runs longest first; the header takes the first that fits beside
     # the logo, chip and season ("BATTING AVERAGE" with MLB, "BATTING AVG"
-    # once an AL/NL chip takes 15px).
+    # once an AL/NL chip takes 15px). A postseason board says so in gold
+    # after the year.
     right = c.width - PAD - 1
     c.sprite(LOGO, PAD, 0, legend = LOGO_LEGEND)
     x = PAD + LOGO_W + 3
     if lg in LEAGUE_ID:
         x = league_chip(c, lg, x) + 3
     sw = 0
-    if season != "":
+    if post:
+        pw = c.text_width("POSTSEASON", "4x5")
+        c.text("POSTSEASON", right, HEAD_Y, font = "4x5", color = GOLD, align = "right")
+        sw = pw
+        if season != "":
+            sw += 4 + c.text_width(season, "4x5")
+            c.text(season, right - pw - 4, HEAD_Y, font = "4x5", color = DIM, align = "right")
+    elif season != "":
         sw = c.text_width(season, "4x5")
         c.text(season, right, HEAD_Y, font = "4x5", color = DIM, align = "right")
-    room = right - sw - 2 - x
+    room = right - sw - 3 - x
     title = clip(c, titles[-1], "4x5", room)
     for t in titles:
         if c.text_width(t, "4x5") <= room:
@@ -279,44 +424,116 @@ def badge(c, x, y, w, style):
 
 # ---------- the leaderboard ----------
 
-def leaderboard(c, ctx, stat_key, titles):
+def to_num(v):
+    # ".421", "1.054", "12" -> a number; anything else ("-.--", "") -> None.
+    t = str(v)
+    if t == "" or t == "." or t == "-":
+        return None
+    for i in range(len(t)):
+        if t[i] not in "0123456789.":
+            return None
+    return float(t) if "." in t else int(t)
+
+def sample(stat, kind):
+    # The gray sample beside each number ("" = none).
+    if kind == "":
+        return ""
+    if kind == "pa":
+        return str(stat.get("plateAppearances", 0)) + " PA"
+    return str(stat.get("gamesPlayed", 0)) + " G"
+
+def leaders(players, field, need_pa):
+    # Top 3 by field (higher is better) among players with at least need_pa
+    # plate appearances; ties share a rank, more PA listed first.
+    rows = []
+    for p in players:
+        st = p.get("stat") or {}
+        v = to_num(st.get(field))
+        if v == None or st.get("plateAppearances", 0) < need_pa:
+            continue
+        rows.append([v, st.get("plateAppearances", 0), p])
+    rows = sorted(rows, key = lambda r: (-r[0], -r[1]))
+    out = []
+    for i in range(min(len(ROW_Y), len(rows))):
+        better = len([r for r in rows if r[0] > rows[i][0]])
+        out.append([better + 1, rows[i][2]])
+    return out
+
+def display_name(c, person, room):
+    # The longest form that fits in the main font: "JACOB MISIOROWSKI",
+    # then "J. MISIOROWSKI", then "MISIOROWSKI"; a double-barrelled last
+    # name that still won't fit keeps its last half ("C-ARMSTRONG").
+    last = strip_accents(str(person.get("lastName", "?"))).upper()
+    full = strip_accents(str(person.get("fullName", ""))).upper()
+    forms = [full, full[:1] + ". " + last] if full != "" else []
+    for f in forms:
+        if c.text_width(f, NAME_FONTS[0]) <= room:
+            return f
+    return short_name(c, last, room)
+
+def leaderboard(c, ctx, field, rate, sample_kind, titles):
     c.clear()
     lg = league_choice(ctx)
-    data = fetch_leaders(stat_key, lg, ctx.now.year)
-    if data == None:
+    which = which_season(ctx)
+    if which == None:
         # No feed, so no season to vouch for - the logo and stat still say
         # which page this is.
-        header(c, lg, titles, "")
+        header(c, lg, titles, "", False)
         return message(c, "STATS OFFLINE", "TRYING AGAIN SOON", AMBER)
-    header(c, lg, titles, data[0])
-    leaders = data[1]
-    if len(leaders) == 0:
-        # Before a first-ever season there's simply no leaderboard - not an
-        # error.
+    year, kind, info = which[0], which[1], which[2]
+    post = kind == "P"
+    need_pa = 0
+    label = str(year)
+    if post:
+        players = fetch_players(year, "P", lg, "ALL")
+        if rate and players != None:
+            games = fewest_games_alive(year)
+            if games == None:
+                players = None
+            else:
+                need_pa = games * float(info.get("qualifierPlateAppearances") or DEFAULT_PA_RATE)
+                # The bar, rounded up, where the year would be: "10+ PA".
+                label = str(int(need_pa) + (1 if need_pa > int(need_pa) else 0)) + "+ PA"
+    header(c, lg, titles, label, post)
+    if not post:
+        # MLB's own qualified list (3.1 PA per team game) for the rate stats.
+        players = fetch_players(year, "R", lg, "QUALIFIED" if rate else "ALL")
+    if players == None:
+        return message(c, "STATS OFFLINE", "TRYING AGAIN SOON", AMBER)
+    top = leaders(players, field, need_pa)
+    if len(top) == 0:
+        # Before a first-ever season, or the first postseason pitch, there's
+        # simply no leaderboard - not an error.
+        if post:
+            return message(c, "NO POSTSEASON STATS YET", "FIRST PITCH SOON", INK)
         return message(c, "NO STATS YET", "BACK ON OPENING DAY", INK)
 
     rows = []
-    for i in range(len(leaders)):
-        e = leaders[i]
-        team = e.get("team") or {}
+    for rank, p in top:
+        st = p.get("stat") or {}
+        team = p.get("team") or {}
         rows.append({
-            "rank": str(e.get("rank", i + 1)),
+            "rank": str(rank),
             "style": team_style(team.get("id", -1), str(team.get("name", ""))),
-            "name": strip_accents(str((e.get("person") or {}).get("lastName", "?"))).upper(),
-            "value": str(e.get("value", "-")).upper(),
+            "person": p.get("player") or {},
+            "sample": sample(st, sample_kind),
+            "value": str(st.get(field, "-")).upper(),
         })
 
-    # Values right-aligned on the edge and measured first; the names get
-    # what's left.
+    # Values right-aligned on the edge and measured first, then the gray
+    # samples beside them; the names get what's left.
     right = c.width - PAD - 1
     bw = badge_width(c)
     name_x = BADGE_X + bw + NAME_GAP
     valw = 0
+    smpw = 0
     for r in rows:
         valw = max(valw, c.text_width(r["value"], VALUE_FONT))
-    room = right - valw - GAP - name_x + 1
+        smpw = max(smpw, c.text_width(r["sample"], "4x5"))
+    sample_right = right - valw - GAP
+    room = (sample_right - smpw - GAP if smpw > 0 else right - valw - GAP) - name_x + 1
     for r in rows:
-        r["name"] = short_name(c, r["name"], room)
+        r["name"] = display_name(c, r["person"], room)
     font = page_font(c, [r["name"] for r in rows], room)
 
     for i in range(len(rows)):
@@ -325,30 +542,32 @@ def leaderboard(c, ctx, stat_key, titles):
         c.text(clip(c, r["rank"], "5x7", RANK_W), PAD + RANK_W // 2, y, font = "5x7", color = DIM, align = "center")
         badge(c, BADGE_X, y, bw, r["style"])
         c.text(clip(c, r["name"], font, room), name_x, y, font = font, color = INK)
+        if r["sample"] != "":
+            c.text(r["sample"], sample_right, y + 1, font = "4x5", color = DIM, align = "right")
         c.text(clip(c, r["value"], VALUE_FONT, valw), right, y, font = VALUE_FONT, color = INK, align = "right")
 
 # ---------- pages ----------
 
 def avg(c, ctx):
-    leaderboard(c, ctx, "battingAverage", ["BATTING AVERAGE", "BATTING AVG"])
+    leaderboard(c, ctx, "avg", True, "", ["BATTING AVERAGE", "BATTING AVG"])
 
 def hr(c, ctx):
-    leaderboard(c, ctx, "homeRuns", ["HOME RUNS"])
+    leaderboard(c, ctx, "homeRuns", False, "", ["HOME RUNS"])
 
 def rbi(c, ctx):
-    leaderboard(c, ctx, "rbi", ["RUNS BATTED IN", "RBI"])
+    leaderboard(c, ctx, "rbi", False, "", ["RUNS BATTED IN", "RBI"])
 
 def sb(c, ctx):
-    leaderboard(c, ctx, "stolenBases", ["STOLEN BASES"])
+    leaderboard(c, ctx, "stolenBases", False, "", ["STOLEN BASES"])
 
 def hits(c, ctx):
-    leaderboard(c, ctx, "hits", ["HITS"])
+    leaderboard(c, ctx, "hits", False, "", ["HITS"])
 
 def runs(c, ctx):
-    leaderboard(c, ctx, "runs", ["RUNS"])
+    leaderboard(c, ctx, "runs", False, "", ["RUNS"])
 
 def slg(c, ctx):
-    leaderboard(c, ctx, "sluggingPercentage", ["SLUGGING PCT"])
+    leaderboard(c, ctx, "slg", True, "", ["SLUGGING PERCENTAGE", "SLUGGING PCT"])
 
 def ops(c, ctx):
-    leaderboard(c, ctx, "onBasePlusSlugging", ["OPS"])
+    leaderboard(c, ctx, "ops", True, "", ["ON-BASE PLUS SLUGGING", "OPS"])

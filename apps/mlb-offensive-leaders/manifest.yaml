@@ -1,9 +1,9 @@
 id: mlb-offensive-leaders
 name: MLB Offensive Leaders
 author: cfdmb
-description: Top 3 batting leaders by category, for MLB, AL, or NL.
+description: Top 3 batting leaders by category, for MLB, AL, or NL - regular season or postseason, switching on its own in October.
 category: Sports
-width: 128
+width: 192
 height: 32
 refresh: 14400
 pages:
@@ -22,3 +22,10 @@ inputs:
     label: League
     choices: [MLB, AL, NL]
     default: MLB
+  - key: stats
+    type: string
+    app_input_type: dropdown
+    label: Stats
+    choices: [Auto, Regular season, Postseason]
+    default: Auto
+    help: "Auto: postseason in October, regular season otherwise. Postseason AVG/SLG/OPS need 3.1 PA x the fewest games played by a team still alive (shown as 10+ PA)."
