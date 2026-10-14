@@ -1,6 +1,6 @@
 gdn: 1
 id: college-basketball-player-tracker
-version: 0.3.8
+version: 0.4.0
 name: Team Tracker (NCAAB)
 author: JSW41
 description: Men's college basketball tracker with seven player pages that switch automatically between season averages and live/final stats.
@@ -55,6 +55,7 @@ assets:
   - 84.png
   - 85.png
   - 87.png
+  - 88.png
   - 91.png
   - 93.png
   - 94.png
@@ -297,6 +298,7 @@ assets:
   - 2506.png
   - 2507.png
   - 2509.png
+  - 2511.png
   - 2514.png
   - 2515.png
   - 2520.png
@@ -362,6 +364,7 @@ assets:
   - 2755.png
   - 2771.png
   - 2803.png
+  - 2815.png
   - 2837.png
   - 2856.png
   - 2870.png
@@ -374,6 +377,13 @@ assets:
   - 3101.png
   - 112358.png
 inputs:
+  - key: preview
+    app_input_type: dropdown
+    type: string
+    label: Studio layout preview
+    default: "AUTO"
+    choices: ["AUTO", "LIVE DEMO", "NORMAL FINAL DEMO", "OT FINAL DEMO"]
+    help: AUTO uses the real feed. Demo modes show illustrative game stats to review the layout only.
   - key: team
     app_input_type: dropdown
     type: choice
@@ -522,6 +532,7 @@ inputs:
       - "Le Moyne Dolphins"
       - "Lehigh Mountain Hawks"
       - "Liberty Flames"
+      - "Lindenwood Lions"
       - "Lipscomb Bisons"
       - "Little Rock Trojans"
       - "Long Beach State Beach"
@@ -619,6 +630,7 @@ inputs:
       - "Providence Friars"
       - "Purdue Boilermakers"
       - "Purdue Fort Wayne Mastodons"
+      - "Queens University Royals"
       - "Quinnipiac Bobcats"
       - "Radford Highlanders"
       - "Rhode Island Rams"
@@ -656,6 +668,7 @@ inputs:
       - "Southeast Missouri State Redhawks"
       - "Southern Illinois Salukis"
       - "Southern Jaguars"
+      - "Southern Indiana Screaming Eagles"
       - "Southern Miss Golden Eagles"
       - "Southern Utah Thunderbirds"
       - "St. Bonaventure Bonnies"
@@ -743,3 +756,9 @@ inputs:
       - "Xavier Musketeers"
       - "Yale Bulldogs"
       - "Youngstown State Penguins"
+  - key: event
+    app_input_type: text
+    type: string
+    label: Game ID Override
+    default: "AUTO"
+    help: Leave AUTO to find the team's current game. Enter an ESPN event ID to test or display a specific game.

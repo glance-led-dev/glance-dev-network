@@ -1,25 +1,30 @@
 # Team Tracker (NCAAB)
 
-Track a men's Division I college basketball team across seven consecutive player pages. During games, the rotation contains the five starters plus the two highest-scoring bench players, ordered from highest to lowest scorer. Between games, the same pages show season averages.
+Seven 128×32 player cards for a selected men's Division I basketball team. During games, the rotation includes the five starters and two highest-scoring bench players, sorted by points. Between games it shows season averages.
 
-## Preview
+## Display
 
-The same A. Stojakovic player page in each automatic display state. Position, height, and class remain visible in every state.
+School-colored backgrounds, editable jersey artwork with centered numbers and white collars, team logos, and a prominent points column. Player surnames take priority over optional position, height and class details; initials distinguish duplicate surnames.
 
-### Season average
+Live scores sit beneath REB/AST/STL/BLK. Regulation finals and overtime finals have separate spacing. Status labels include HALFTIME, OT, OT2 and FINAL OT2. Longer score rows remain on one line; the points column adjusts only when needed to avoid overlap.
 
-![A. Stojakovic season-average page](preview/stojakovic-average.png)
+## Illustrative previews
 
-### Live game
+These are layout examples with demonstration statistics, not current game results.
 
-![A. Stojakovic live-game page](preview/stojakovic-live.png)
-
-### Final game
-
-![A. Stojakovic final-game page](preview/stojakovic-final.png)
+![Season averages](preview/stojakovic-average.png)
+![Live](preview/stojakovic-live.png)
+![Regulation final](preview/stojakovic-final.png)
+![Overtime final](preview/overtime-final.png)
 
 ## Settings
 
-- **Team:** Enter a men's college basketball school or team name, such as Illinois, Duke, or North Carolina. No team or game ID is required.
+- **Team:** Select from 365 teams, cross-checked against the NCAA's 2026–27 men's Division I basketball directory.
+- **Preview:** Keep AUTO for real data. LIVE DEMO, NORMAL FINAL DEMO and OT FINAL DEMO are explicitly simulated layout previews.
+- **Event:** Leave AUTO for automatic game selection; an ESPN event ID can select a specific game.
 
-The app automatically switches between season averages and live/final game statistics using ESPN's public basketball data.
+The existing five-minute refresh interval is unchanged. ESPN supplies rosters, season statistics and game data. An alternate ESPN API host is tried when the primary request fails; this is not an independent data provider. Missing statistics show `--`, and unavailable data produces an explicit status rather than invented numbers. A roster with fewer than seven players shows LINEUP NOT POSTED on unfilled cards. During the release audit, LSU and Oregon State each returned six players.
+
+## Release checks
+
+All 365 dropdown entries resolve to team metadata and have logo assets. Added 64 custom team marks from the bracketology collection. Automated foreground-text bounds checks covered 20,440 synthetic stress cases and 41,752 actual-roster-name cases, including triple-digit scores/statistics, halftime and overtime. These checks supplement sampled rendered previews; they cannot guarantee every future provider payload. No credentials, cached rosters or local audit artifacts are included.
