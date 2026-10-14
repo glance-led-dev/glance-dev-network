@@ -2,10 +2,10 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: date-time
-version: 0.2.0
+version: 0.3.0
 name: Date & Weather
 author: jdhine02
-description: Today's date for a US zip code, big, beside the weather at a glance (place, condition icon, temperature, high and low), then a second page with chance of rain, sunrise, and sunset. Pick a date style and one of five colors each for the date, weather, and temperature.
+description: Today's date for a US zip code, big, beside the weather at a glance (place, condition icon, temperature, high and low, humidity), then a second page with the next six hours (icon, temperature, chance of rain) beside sunrise stacked over sunset. Temperatures take weather-map colors by default. Pick a date style and colors for the date, weather, and temperature.
 category: Time
 entry: app.star
 
@@ -13,9 +13,9 @@ entry: app.star
 width: 192
 height: 32
 
-# Weather moves on a 30-minute scale and there is no clock, so nothing needs a
-# faster rate. The weather fetch's ttl_seconds matches (1800).
-refresh: 3600
+# 15 minutes keeps the next-six-hours strip current as each hour rolls over.
+# The weather fetch's ttl_seconds matches (900).
+refresh: 900
 
 # Pages the panel rotates through, in order. app.star must define a function per name.
 pages: [today, sky]
@@ -59,5 +59,6 @@ inputs:
     type: choice
     app_input_type: dropdown
     label: Temperature color
-    default: "White"
-    choices: ["White", "Amber", "Green", "Cyan", "Red"]
+    default: "Weather map"
+    help: Weather map colors the current temperature by its value (purple when frigid to red when hot). The high, low, humidity, and hourly temperatures stay white.
+    choices: ["Weather map", "White", "Amber", "Green", "Cyan", "Red"]

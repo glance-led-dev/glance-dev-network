@@ -11,6 +11,12 @@
 # pages walk through the games still to come, NHL first, then MLB. On a night with more games than pages, the set shown
 # moves along every 10 minutes so every game gets its turn. A league in its
 # offseason does not appear at all.
+#
+# On a light night, last night's results follow today's games: the final
+# score and each team's goalie or pitcher of record (win, loss or OT loss),
+# with saves/shots and save percentage (NHL) or innings and earned runs
+# (MLB). A list shorter than the pages runs through again in order, so one
+# card never fills the panel.
 
 FEED_URL = "https://mrnaturl-starters.pages.dev/api/starters.json"
 
@@ -18,6 +24,7 @@ GREEN = "#3fb950"    # goalie confirmed
 AMBER = "#e8b020"    # goalie expected
 DIM = "#8a8a8a"
 RULE = "#5a6270"
+RED = "#f0504a"      # loss
 WHITE = "white"
 TEAM = "#8fb8ff"
 NHL_C = "#c8d0d8"
@@ -62,30 +69,52 @@ def leagues(ctx):
         return [choice]
     return ["NHL", "MLB"]
 
-def screens(c, ctx, data):
+def screens(c, ctx, data, part = "games"):
+    # part "games" is today's starters; part "results" is last night's finals.
     out = []
     for lg in leagues(ctx):
         block = data.get(lg.lower(), {})
-        games = block.get("games", [])
+        if part == "results":
+            res = block.get("results", {})
+            games = res.get("games", [])
+            date = res.get("date", "")
+        else:
+            games = block.get("games", [])
+            date = block.get("date", "")
         for i in range(len(games)):
-            out.append({"lg": lg, "date": block.get("date", ""),
+            out.append({"lg": lg, "date": date, "kind": part,
                         "games": [games[i]]})
     return out
 
 def pick(c, ctx, data, page):
     scr = screens(c, ctx, data)
     n = len(scr)
-    if n == 0:
+    if n >= PAGES:
+        # Split the games into as few sets of at most PAGES as needed (sized
+        # evenly, one set per 10 minutes), then spread the current set across
+        # all the pages in order.
+        blocks = (n + PAGES - 1) // PAGES
+        block = (ctx.now.unix // ROTATE_SECONDS) % blocks
+        lo = block * n // blocks
+        hi = (block + 1) * n // blocks
+        return scr[lo + page * (hi - lo) // PAGES]
+    # A light night: today's games once each, then last night's results.
+    results = screens(c, ctx, data, "results")
+    both = scr + results
+    if len(both) == 0:
         return None
-    # Split the games into as few sets of at most PAGES as needed (sized
-    # evenly, one set per 10 minutes), then spread the current set across
-    # all the pages in order. Pages can't be skipped, so a short set gives
-    # each game a run of neighbouring pages, never a wrap back to the start.
-    blocks = (n + PAGES - 1) // PAGES
-    block = (ctx.now.unix // ROTATE_SECONDS) % blocks
-    lo = block * n // blocks
-    hi = (block + 1) * n // blocks
-    return scr[lo + page * (hi - lo) // PAGES]
+    if len(both) <= PAGES:
+        # Pages can't be skipped, so a short list runs through again in
+        # order: a card never shows twice in a row unless it's the only one.
+        return both[page % len(both)]
+    # More results than the pages left: a new set of them every 10 minutes.
+    if page < n:
+        return scr[page]
+    slots = PAGES - n
+    nr = len(results)
+    sets = (nr + slots - 1) // slots
+    cur = (ctx.now.unix // ROTATE_SECONDS) % sets
+    return results[(cur * slots + page - n) % nr]
 
 # --- logos ------------------------------------------------------------------
 
@@ -316,6 +345,117 @@ def draw_wide(c, s):
     c.text(lg, cx, 26, font = "4x5", color = NHL_C if lg == "NHL" else MLB_C,
            align = "center")
 
+def decision(side):
+    # [short, long, color] for the goalie or pitcher of record.
+    d = side.get("d", "")
+    if d == "W":
+        return ["W", "WIN", GREEN]
+    if d == "L":
+        return ["L", "LOSS", RED]
+    if d == "OT":
+        return ["OT", "OT LOSS", AMBER]
+    return ["", "", DIM]
+
+def result_lines(lg, side):
+    # Two [value, label] stat lines under the name.
+    x = side.get("x", "")
+    if x == "":
+        return []
+    if lg == "NHL":
+        bits = x.split("/")
+        if len(bits) == 2 and bits[1] not in ["", "0"]:
+            pct = (int(bits[0]) * 1000 + int(bits[1]) // 2) // int(bits[1])
+            pct_txt = "1.000" if pct >= 1000 else "." + str(1000 + pct)[1:]
+            return [[x, "SV"], [pct_txt, "SV%"]]
+        return [[x, "SV"]]
+    bits = x.split(" ")
+    if len(bits) == 4:
+        return [[bits[0], bits[1]], [bits[2], bits[3]]]
+    return [[x, ""]]
+
+def score_text(g):
+    return str(g.get("away", {}).get("sc", "")) + "-" + str(g.get("home", {}).get("sc", ""))
+
+def draw_result_wide(c, s):
+    # Same face-off as a game page: logos at the ends, each team's goalie or
+    # pitcher of record facing the middle, final score between.
+    lg = s["lg"]
+    g = s["games"][0]
+    away = g.get("away", {})
+    home = g.get("home", {})
+    left = 6
+    right = c.width - 1 - left
+    box = 26
+    draw_logo(c, lg, away.get("ab", ""), left, 1, box, 21, "center")
+    draw_logo(c, lg, home.get("ab", ""), right - box + 1, 1, box, 21, "center")
+    c.text(away.get("ab", ""), left + box // 2, 25, font = "4x5", color = DIM,
+           align = "center")
+    c.text(home.get("ab", ""), right - box // 2 + 1, 25, font = "4x5",
+           color = DIM, align = "center")
+
+    ax = left + box + 5
+    hx = right - box - 5
+    namew = (hx - ax - 6) // 2
+    for side, x, al in [[away, ax, "left"], [home, hx, "right"]]:
+        c.text(fit(c, side.get("n", ""), namew, "5x7"), x, 2, font = "5x7",
+               color = WHITE, align = al)
+        lines = result_lines(lg, side)
+        for i in range(len(lines)):
+            v = lines[i][0]
+            lab = lines[i][1]
+            y = 12 + 7 * i
+            vw = c.text_width(v, "4x5")
+            lw = c.text_width(lab, "4x5")
+            if al == "left":
+                c.text(v, x, y, font = "4x5", color = WHITE)
+                c.text(lab, x + vw + 3, y, font = "4x5", color = DIM)
+            else:
+                c.text(lab, x, y, font = "4x5", color = DIM, align = "right")
+                c.text(v, x - lw - 3, y, font = "4x5", color = WHITE,
+                       align = "right")
+        dec = decision(side)
+        if dec[1] != "":
+            c.text(dec[1], x, 26, font = "4x5", color = dec[2], align = al)
+
+    cx = (ax + hx) // 2
+    c.text(score_text(g), cx, 11, font = "5x7", color = WHITE, align = "center")
+    c.text(s["date"], cx, 20, font = "4x5", color = DIM, align = "center")
+    c.text(g.get("st", "FINAL"), cx, 26, font = "4x5",
+           color = NHL_C if lg == "NHL" else MLB_C, align = "center")
+
+def draw_result_small(c, s):
+    # Logo vs logo with the final score between, then each team's goalie or
+    # pitcher of record with W, L or OT and saves/shots or innings.
+    lg = s["lg"]
+    g = s["games"][0]
+    away = g.get("away", {})
+    home = g.get("home", {})
+    aw = draw_logo(c, lg, away.get("ab", ""), 0, 0, 30, 19, "left")
+    hw = draw_logo(c, lg, home.get("ab", ""), 34, 0, 30, 19, "right")
+    cx = (aw + 64 - hw) // 2
+    sc = score_text(g)
+    font = "4x5" if c.text_width(sc, "4x5") <= 64 - hw - aw - 2 else "3x4"
+    c.text(sc, cx, 4, font = font, color = WHITE, align = "center")
+    st = g.get("st", "FINAL")
+    font = "4x5" if c.text_width(st, "4x5") <= 64 - hw - aw - 2 else "3x4"
+    c.text(st, cx, 11, font = font, color = DIM, align = "center")
+    rows = [away, home]
+    for j in range(2):
+        side = rows[j]
+        yy = 20 + 6 * j
+        lines = result_lines(lg, side)
+        stat = lines[0][0] if len(lines) > 0 else ""
+        w = c.text_width(stat, "4x5") if stat != "" else 0
+        if stat != "":
+            c.text(stat, 63, yy, font = "4x5", color = WHITE, align = "right")
+        dec = decision(side)
+        nx = 1
+        if dec[0] != "":
+            c.text(dec[0], 1, yy, font = "4x5", color = dec[2])
+            nx = 1 + c.text_width(dec[0], "4x5") + 3
+        c.text(fit(c, side.get("n", ""), 62 - w - 3 - nx), nx, yy, font = "4x5",
+               color = WHITE)
+
 def draw_small(c, s):
     # Logo vs logo on top with the game time between, then one row per
     # starter: name (green/amber = confirmed/expected goalie) and stat.
@@ -392,7 +532,12 @@ def draw_page(c, ctx, page):
     if s == None:
         draw_empty(c, ctx, data)
         return
-    if wide(c):
+    if s.get("kind", "") == "results":
+        if wide(c):
+            draw_result_wide(c, s)
+        else:
+            draw_result_small(c, s)
+    elif wide(c):
         draw_wide(c, s)
     else:
         draw_small(c, s)

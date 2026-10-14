@@ -1,12 +1,18 @@
-# NHL Offensive Leaders (128x32)
+# NHL Offensive Leaders (192x32)
 #
 # The top 3 offensive leaders in one stat per page (Points, Goals, Assists,
 # Power Play Points, Game-Winning Goals, Shots, Faceoffs Won, Penalty
 # Minutes), for the NHL overall, the Eastern Conference, or the Western
-# Conference. Data from ESPN's public stats-by-athlete API
+# Conference - regular season or playoffs. Data from ESPN's public stats-by-athlete API
 # (site.web.api.espn.com) - no key required. Same scorebook layout and
 # team-badge system as the MLB/NFL sibling apps, with hockey colors and
 # stats.
+#
+# STATS. Auto (the default) shows the playoffs while they're on and the
+# regular season the rest of the year (ESPN's postseason window, one tiny
+# request); Regular season and Playoffs pin one, so a fan can add the app
+# twice and see both in the spring. Playoffs before the spring shows last
+# spring's.
 #
 # Left off: Shooting Pct and Faceoff Pct (flukey 100% leaders even with
 # isqualified=true), Plus/Minus (mostly team-driven), and Short-Handed
@@ -17,16 +23,17 @@
 # completed season's totals; the header shows whatever season it reports.
 #
 # Layout: league/conference pill (red EAST, blue WEST, split for NHL),
-# stat and season, then three rows of rank, team badge, last name, value.
+# stat and season (PLAYOFFS in gold), then three rows of rank, team badge,
+# name (initial and last name if the full name won't fit), value.
 # Everything stays 6px inside both edges.
 
 # id: [code, fill, ink] from ESPN's team colors; a few inks are swapped
 # for a brighter accent where the ESPN pair was too low-contrast at 4x5.
 TEAMS = {
     25: ["ANA", "#FC4C02", "#000000"],   # Ducks: orange, black
-    1: ["BOS", "#231F20", "#FDB71A"],    # Bruins: black, gold
+    1: ["BOS", "#FDB71A", "#000000"],    # Bruins: gold, black (flipped - a black badge vanishes on the panel)
     2: ["BUF", "#00468B", "#FDB71A"],    # Sabres: navy, gold
-    3: ["CGY", "#DD1A32", "#000000"],    # Flames: red, black
+    3: ["CGY", "#DD1A32", "#FAAF19"],    # Flames: red, gold
     7: ["CAR", "#E30426", "#000000"],    # Hurricanes: red, black
     4: ["CHI", "#E31937", "#000000"],    # Blackhawks: red, black
     17: ["COL", "#860038", "#8FBCE6"],   # Avalanche: burgundy, light blue
@@ -35,7 +42,7 @@ TEAMS = {
     5: ["DET", "#E30526", "#FFFFFF"],    # Red Wings: red, white
     6: ["EDM", "#00205B", "#FF4C00"],    # Oilers: navy, orange
     26: ["FLA", "#E51937", "#FFFFFF"],   # Panthers: red, white
-    8: ["LA", "#121212", "#A2AAAD"],     # Kings: black, silver
+    8: ["LA", "#A2AAAD", "#000000"],     # Kings: silver, black (flipped)
     30: ["MIN", "#124734", "#DDCBA4"],   # Wild: forest green, wheat
     10: ["MTL", "#C41230", "#FFFFFF"],   # Canadiens: red, white
     27: ["NSH", "#FDBA31", "#002D62"],   # Predators: gold, navy
@@ -44,13 +51,13 @@ TEAMS = {
     13: ["NYR", "#0056AE", "#FFFFFF"],   # Rangers: blue, white
     14: ["OTT", "#DD1A32", "#B79257"],   # Senators: red, gold
     15: ["PHI", "#FE5823", "#000000"],   # Flyers: orange, black
-    16: ["PIT", "#000000", "#FDB71A"],   # Penguins: black, gold
+    16: ["PIT", "#FDB71A", "#000000"],   # Penguins: gold, black (flipped)
     18: ["SJ", "#00788A", "#070707"],    # Sharks: teal, black
-    124292: ["SEA", "#000D33", "#A3DCE4"],  # Kraken: navy, ice blue
+    124292: ["SEA", "#A3DCE4", "#001628"],  # Kraken: ice blue, deep-sea navy (flipped)
     19: ["STL", "#0070B9", "#FDB71A"],   # Blues: blue, gold
     20: ["TB", "#003E7E", "#FFFFFF"],    # Lightning: blue, white
     21: ["TOR", "#003E7E", "#FFFFFF"],   # Maple Leafs: blue, white
-    129764: ["UTAH", "#000000", "#7AB2E1"],  # Mammoth: black, ice blue
+    129764: ["UTAH", "#7AB2E1", "#000000"],  # Mammoth: ice blue, black (flipped)
     22: ["VAN", "#003E7E", "#FFFFFF"],   # Canucks: navy, white
     37: ["VGK", "#344043", "#B4975A"],   # Golden Knights: steel gray, gold
     23: ["WSH", "#D71830", "#FFFFFF"],   # Capitals: red, white
@@ -71,6 +78,7 @@ TEAM_CONFERENCE = {
 INK = "#F4F7FF"      # names, live numbers, the stat title
 DIM = "#6E7A94"       # ranks, season, sub-lines
 AMBER = "#E8B04A"     # the one attention state (feed offline)
+GOLD = "#F2C14E"      # PLAYOFFS in the header
 EAST_RED = "#D22D3A"
 WEST_BLUE = "#2A66D9"
 
@@ -135,30 +143,37 @@ def blend(a, b, pct):
 
 # ---------- network (keyless) ----------
 
-def fetch_leaders(sort_key, limit = 32):
+def fetch_leaders(ctx, sort_key, limit = 32):
+    # One request per sort, sorted server-side. Each athlete is ~15 KB of
+    # JSON, so about 60 fit under the 1 MB body cap.
+    params = {
+        "region": "us",
+        "lang": "en",
+        "contentorigin": "espn",
+        "isqualified": "false",
+        "seasontype": "2",
+        "sort": sort_key + ":desc",
+        "limit": str(limit),
+    }
+    sp = season_params(ctx)
+    params["seasontype"] = sp[0]
+    if sp[1] != "":
+        params["season"] = sp[1]
     return http.get(
         "https://site.web.api.espn.com/apis/common/v3/sports/hockey/nhl/statistics/byathlete",
-        params = {
-            "region": "us",
-            "lang": "en",
-            "contentorigin": "espn",
-            "isqualified": "false",
-            "seasontype": "2",
-            "sort": sort_key + ":desc",
-            "limit": str(limit),
-        },
+        params = params,
         # matches manifest.yaml's refresh - keep in sync
         ttl_seconds = 10800,
     )
 
-def fetch_pool(specs):
+def fetch_pool(ctx, specs):
     # specs: list of (sort_key, limit). Merged by athlete id. Returns
     # (ok, season, athletes); ok is False only if every fetch failed.
     seen = {}
     ok = False
     season = ""
     for spec in specs:
-        resp = fetch_leaders(spec[0], limit = spec[1])
+        resp = fetch_leaders(ctx, spec[0], limit = spec[1])
         if resp["status_code"] != 200 or resp["json"] == None:
             continue
         ok = True
@@ -192,7 +207,8 @@ def neg_value(entry):
     return -entry["value"]
 
 def season_of(resp):
-    return str((resp.get("json") or {}).get("currentSeason", {}).get("displayName") or "")
+    j = resp.get("json") or {}
+    return str((j.get("requestedSeason") or j.get("currentSeason") or {}).get("displayName") or "")
 
 def league_choice(ctx):
     v = ctx.inputs.get("league", "NHL")
@@ -200,6 +216,56 @@ def league_choice(ctx):
 
 def conference_for(lg):
     return lg if lg in ("EAST", "WEST") else None
+
+# ---------- stats setting ----------
+# Auto (the default) shows the playoffs while they're on and the regular
+# season the rest of the year; Regular season and Playoffs pin one, so a fan
+# can add the app twice and see both in the spring. "While they're on" is
+# ESPN's own postseason window for the season (mid-April to July 1), one
+# ~700-byte request.
+
+MODES = ["Auto", "Regular season", "Playoffs"]
+
+def mode_choice(ctx):
+    v = ctx.inputs.get("stats", "Auto")
+    return v if v in MODES else "Auto"
+
+def season_year(ctx):
+    # ESPN names an NHL season by the year it ends: 2026-27 is 2027.
+    return ctx.now.year + 1 if ctx.now.month >= 9 else ctx.now.year
+
+def today(ctx):
+    m = ctx.now.month
+    dd = ctx.now.day
+    return str(ctx.now.year) + "-" + ("0" if m < 10 else "") + str(m) + "-" + ("0" if dd < 10 else "") + str(dd)
+
+def playoff_window(year):
+    # [first day, last day] of ESPN's postseason for a season, or None.
+    resp = http.get("https://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/seasons/" + str(year) + "/types/3",
+                    ttl_seconds = 86400)
+    if resp["status_code"] != 200 or type(resp["json"]) != "dict":
+        return None
+    j = resp["json"]
+    return [str(j.get("startDate") or "9999")[:10], str(j.get("endDate") or "0000")[:10]]
+
+def season_params(ctx):
+    # [ESPN seasontype, season ("" = the current one)]. Playoffs before this
+    # spring's start shows last spring's.
+    mode = mode_choice(ctx)
+    if mode == "Regular season":
+        return ["2", ""]
+    y = season_year(ctx)
+    w = playoff_window(y)
+    t = today(ctx)
+    started = w != None and w[0] <= t
+    if mode == "Playoffs":
+        return ["3", str(y if started else y - 1)]
+    if started and t <= w[1]:
+        return ["3", str(y)]
+    return ["2", ""]
+
+def is_post(ctx):
+    return season_params(ctx)[0] == "3"
 
 # ---------- text helpers ----------
 
@@ -247,16 +313,23 @@ def league_chip(c, lg, x):
     c.text(lg, x + 2, HEAD_Y, font = "4x5", color = "white")
     return x + w
 
-def header(c, lg, titles, season):
+def header(c, lg, titles, season, post = False):
     # titles runs longest first; the header takes the first that fits beside
-    # the badge and season.
+    # the badge and season. A playoff board adds PLAYOFFS in gold after it.
     right = c.width - PAD - 1
     x = league_chip(c, lg, PAD) + 3
     sw = 0
-    if season != "":
+    if post:
+        pw = c.text_width("PLAYOFFS", "4x5")
+        c.text("PLAYOFFS", right, HEAD_Y, font = "4x5", color = GOLD, align = "right")
+        sw = pw
+        if season != "":
+            sw += 4 + c.text_width(season, "4x5")
+            c.text(season, right - pw - 4, HEAD_Y, font = "4x5", color = DIM, align = "right")
+    elif season != "":
         sw = c.text_width(season, "4x5")
         c.text(season, right, HEAD_Y, font = "4x5", color = DIM, align = "right")
-    room = right - sw - 2 - x
+    room = right - sw - 3 - x
     title = clip(c, titles[-1], "4x5", room)
     for t in titles:
         if c.text_width(t, "4x5") <= room:
@@ -298,10 +371,23 @@ def badge(c, x, y, w, style):
 
 # ---------- the leaderboard ----------
 
-def render_leaders(c, lg, titles, season, leaders):
-    header(c, lg, titles, season)
+def display_name(c, full, last, room):
+    # The longest form that fits in the main font: the full name, then
+    # initial and last name, then the last name alone.
+    full = strip_accents(full).upper()
+    last = strip_accents(last).upper()
+    forms = [full, full[:1] + ". " + last] if full != "" else []
+    for f in forms:
+        if c.text_width(f, NAME_FONTS[0]) <= room:
+            return f
+    return short_name(c, last, room)
+
+def render_leaders(c, lg, titles, season, leaders, post = False):
+    header(c, lg, titles, season, post)
     if len(leaders) == 0:
-        return message(c, "NO STATS YET", "CHECK BACK IN SEASON", INK)
+        # The stat just hasn't happened yet (no return TD in these playoffs,
+        # nobody past a rate page's bar in Week 1) - not a missing feed.
+        return message(c, "NONE SO FAR", "THESE PLAYOFFS" if post else "THIS SEASON", INK)
 
     rows = []
     for i in range(len(leaders)):
@@ -309,6 +395,7 @@ def render_leaders(c, lg, titles, season, leaders):
         rows.append({
             "rank": str(e["rank"]),
             "style": team_style(e["team_id"], e["team_abbr"]),
+            "full": e.get("full", ""),
             "name": strip_accents(e["name"]).upper(),
             "value": str(e["value"]).upper(),
         })
@@ -323,7 +410,7 @@ def render_leaders(c, lg, titles, season, leaders):
         valw = max(valw, c.text_width(r["value"], VALUE_FONT))
     room = right - valw - GAP - name_x + 1
     for r in rows:
-        r["name"] = short_name(c, r["name"], room)
+        r["name"] = display_name(c, r["full"], r["name"], room)
     font = page_font(c, [r["name"] for r in rows], room)
 
     for i in range(len(rows)):
@@ -361,14 +448,15 @@ def rank_candidates(candidates):
             break
     return leaders
 
-def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles):
+def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles, limit = 32):
     c.clear()
     lg = league_choice(ctx)
     conf = conference_for(lg)
+    post = is_post(ctx)
 
-    resp = fetch_leaders(sort_key)
+    resp = fetch_leaders(ctx, sort_key, limit = limit)
     if resp["status_code"] != 200 or resp["json"] == None:
-        header(c, lg, titles, "")
+        header(c, lg, titles, "", post)
         return message(c, "STATS OFFLINE", "TRYING AGAIN SOON", AMBER)
 
     athletes = resp["json"].get("athletes", [])
@@ -386,6 +474,7 @@ def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles):
                 if idx < len(totals):
                     value = totals[idx]
         candidates.append({
+            "full": athlete.get("displayName", ""),
             "name": strip_accents(athlete.get("lastName", "?")),
             "team_id": team_id,
             "team_abbr": athlete.get("teamShortName", ""),
@@ -394,16 +483,17 @@ def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles):
         if len(candidates) >= len(ROW_Y):
             break
 
-    render_leaders(c, lg, titles, season_of(resp), rank_candidates(candidates))
+    render_leaders(c, lg, titles, season_of(resp), rank_candidates(candidates), post)
 
 def draw_leaderboard_computed(c, ctx, pool_specs, value_fn, titles):
     c.clear()
     lg = league_choice(ctx)
     conf = conference_for(lg)
+    post = is_post(ctx)
 
-    ok, season, pool = fetch_pool(pool_specs)
+    ok, season, pool = fetch_pool(ctx, pool_specs)
     if not ok:
-        header(c, lg, titles, "")
+        header(c, lg, titles, "", post)
         return message(c, "STATS OFFLINE", "TRYING AGAIN SOON", AMBER)
 
     candidates = []
@@ -414,6 +504,7 @@ def draw_leaderboard_computed(c, ctx, pool_specs, value_fn, titles):
         if conf != None and TEAM_CONFERENCE.get(team_id) != conf:
             continue
         candidates.append({
+            "full": athlete.get("displayName", ""),
             "name": strip_accents(athlete.get("lastName", "?")),
             "team_id": team_id,
             "team_abbr": athlete.get("teamShortName", ""),
@@ -421,12 +512,14 @@ def draw_leaderboard_computed(c, ctx, pool_specs, value_fn, titles):
         })
 
     candidates = sorted(candidates, key = neg_value)[:len(ROW_Y)]
-    render_leaders(c, lg, titles, season, rank_candidates(candidates))
+    render_leaders(c, lg, titles, season, rank_candidates(candidates), post)
 
-# One fetch, not two: with one request per page the app is already at the
-# 8-uncached-requests-per-render cap. The top 100 by points catch every real
-# PP points leader, and stay ~700 KB, under the 1 MB response cap.
-PP_POOL = [("offensive.points", 100)]
+# One fetch, not two: with one request per page (Points shares this one) plus
+# the playoff-window check, the app is at the 8-uncached-requests-per-render
+# cap. The top 70 by points catch every real
+# PP points leader: ~0.5 MB in the regular season, ~0.9 MB in the playoffs
+# (ESPN's playoff athletes run larger), under the 1 MB response cap.
+PP_POOL = [("offensive.points", 70)]
 
 # ---------- pages ----------
 
@@ -437,7 +530,8 @@ def assists(c, ctx):
     draw_leaderboard(c, ctx, "offensive.assists", "offensive", 1, ["ASSISTS"])
 
 def points(c, ctx):
-    draw_leaderboard(c, ctx, "offensive.points", "offensive", 2, ["POINTS"])
+    # Same request as the PP Points pool.
+    draw_leaderboard(c, ctx, "offensive.points", "offensive", 2, ["POINTS"], limit = 70)
 
 def pppoints(c, ctx):
     draw_leaderboard_computed(c, ctx, PP_POOL, value_pp_points, ["POWER PLAY POINTS", "PP POINTS"])

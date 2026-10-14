@@ -1,0 +1,25 @@
+id: tempest-wx-led
+name: Tempest Wx LED
+author: cfdmb
+category: Weather
+description: Your own WeatherFlow Tempest station on a 64x32 panel - a live sky scene that follows the time of day and the weather with the temperature, today's real high and low and the next sunrise or sunset; humidity, dew point, pressure and UV; a wind rose with speed and gusts; and a rain gauge that turns into a lightning card during storms. NWS warnings take over the display.
+width: 64
+height: 32
+refresh: 180
+pages:
+  - now
+  - air
+  - wind
+  - rain
+inputs:
+  - key: token
+    type: string
+    app_input_type: api-key
+    label: Tempest API token (tempestwx.com > Settings > Data Authorizations)
+  - key: units
+    type: string
+    app_input_type: dropdown
+    label: Units
+    choices: [Imperial, Metric]
+    default: Imperial
+    help: Imperial shows F, mph, inches and miles; Metric shows C, km/h, mm, hPa and km.

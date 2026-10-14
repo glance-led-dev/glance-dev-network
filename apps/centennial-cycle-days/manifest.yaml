@@ -1,0 +1,12 @@
+gdn: 1
+id: centennial-cycle-days
+version: 1.0.0
+name: Centennial Cycle Day
+author: Centennial
+description: Shows the current school cycle day from October 27, 2026 through January 14, 2027.
+category: Education
+entry: app.star
+width: 64
+height: 32
+refresh: 3600
+pages: [live]
