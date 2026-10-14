@@ -1,8 +1,11 @@
-# NFL Defensive Leaders (128x32)
+# NFL Defensive Leaders (192x32)
 #
 # The top 3 defensive leaders in one stat per page (Total Tackles, Solo
 # Tackles, Sacks, Interceptions, Passes Defended, TFL, Forced Fumbles,
-# Defensive TDs), for NFL overall, the AFC, or the NFC. Assisted Tackles was
+# Defensive TDs), for NFL overall, the AFC, or the NFC - regular season or
+# playoffs (the Stats setting; nothing switches on its own, since NFL playoff
+# stats come from one to four games). Every page is a count, so none needs a
+# minimum. Assisted Tackles was
 # dropped (2026-09-16, Chris's call) - Total already equals Solo + Assisted,
 # so all three was redundant, and Assisted alone is the least-looked-up of
 # the three; Solo stayed as the one meaningful individual cut beside Total.
@@ -37,7 +40,8 @@
 # (white rim, navy star band over red) for plain "NFL" with no conference
 # filter, which reads as the league at a glance where a red/blue split pill
 # didn't - then the stat in white and the season in gray. Under it, three
-# rows: the rank in gray, a team badge, the last name in white, and the number in white against the
+# rows: the rank in gray, a team badge, the player's name in white (initial
+# and last name if the full name won't fit), and the number in white against the
 # right edge. The badge is how a fan spots
 # their team across a room: the team's code in its own two colors, like a
 # helmet decal. Everything stays 6px inside both edges so the app reads as
@@ -64,11 +68,11 @@ TEAMS = {
     7: ["DEN", "#0A2343", "#FC4C02"],   # Broncos: navy, orange
     8: ["DET", "#0076B6", "#BBBBBB"],   # Lions: blue, silver
     9: ["GB", "#204E32", "#FFB612"],    # Packers: green, gold
-    34: ["HOU", "#021018", "#FF3B47"],  # Texans: navy/black, red
+    34: ["HOU", "#C8102E", "#FFFFFF"],  # Texans: battle red, white (their navy is near-black on the panel)
     11: ["IND", "#003B75", "#FFFFFF"],  # Colts: navy, white
     30: ["JAX", "#007487", "#D7A22A"],  # Jaguars: teal, gold
     12: ["KC", "#E31837", "#FFB612"],   # Chiefs: red, gold
-    13: ["LV", "#000000", "#A5ACAF"],   # Raiders: black, silver
+    13: ["LV", "#A5ACAF", "#000000"],   # Raiders: silver, black (flipped - a black badge vanishes on the panel)
     24: ["LAC", "#0080C6", "#FFC20E"],  # Chargers: powder blue, gold
     14: ["LAR", "#003594", "#FFD100"],  # Rams: royal blue, gold
     15: ["MIA", "#008E97", "#FC4C02"],  # Dolphins: aqua, orange
@@ -78,7 +82,7 @@ TEAMS = {
     19: ["NYG", "#003C7F", "#C9243F"],  # Giants: navy, red
     20: ["NYJ", "#115740", "#FFFFFF"],  # Jets: green, white
     21: ["PHI", "#06424D", "#A5ACAF"],  # Eagles: midnight green, silver
-    23: ["PIT", "#000000", "#FFB612"],  # Steelers: black, gold
+    23: ["PIT", "#FFB612", "#000000"],  # Steelers: gold, black (flipped, same reason)
     25: ["SF", "#AA0000", "#B3995D"],   # 49ers: red, gold
     26: ["SEA", "#002A5C", "#69BE28"],  # Seahawks: navy, action green
     27: ["TB", "#BD1C36", "#FFFFFF"],   # Buccaneers: red, white
@@ -100,6 +104,7 @@ TEAM_CONFERENCE = {
 INK = "#F4F7FF"      # names, live numbers, the stat title
 DIM = "#6E7A94"       # ranks, season, sub-lines
 AMBER = "#E8B04A"     # the one attention state (feed offline)
+GOLD = "#F2C14E"      # PLAYOFFS in the header
 AFC_RED = "#D22D3A"
 NFC_BLUE = "#2A66D9"
 
@@ -191,23 +196,30 @@ def blend(a, b, pct):
 # of those) and ranks that pool client-side using the recoveries number ESPN
 # still hands back for every athlete regardless of sort field.
 
-def fetch_leaders(sort_key, limit = 32):
+def fetch_leaders(ctx, sort_key, limit = 32):
+    # One request per sort, sorted server-side. Each athlete is ~15 KB of
+    # JSON, so about 60 fit under the 1 MB body cap.
+    params = {
+        "region": "us",
+        "lang": "en",
+        "contentorigin": "espn",
+        "isqualified": "false",
+        "seasontype": "2",
+        "sort": sort_key + ":desc",
+        "limit": str(limit),
+    }
+    sp = season_params(ctx)
+    params["seasontype"] = sp[0]
+    if sp[1] != "":
+        params["season"] = sp[1]
     return http.get(
         "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/statistics/byathlete",
-        params = {
-            "region": "us",
-            "lang": "en",
-            "contentorigin": "espn",
-            "isqualified": "false",
-            "seasontype": "2",
-            "sort": sort_key + ":desc",
-            "limit": str(limit),
-        },
+        params = params,
         # matches manifest.yaml's refresh - keep in sync
         ttl_seconds = 14400,
     )
 
-def fetch_pool(specs):
+def fetch_pool(ctx, specs):
     # specs: list of (sort_key, limit) tuples. Merges by athlete id so the
     # same player pulled in by two different sorts is only counted once.
     # Returns (ok, season, athletes) - ok is False only if every fetch
@@ -216,7 +228,7 @@ def fetch_pool(specs):
     ok = False
     season = ""
     for spec in specs:
-        resp = fetch_leaders(spec[0], limit = spec[1])
+        resp = fetch_leaders(ctx, spec[0], limit = spec[1])
         if resp["status_code"] != 200 or resp["json"] == None:
             continue
         ok = True
@@ -229,7 +241,8 @@ def fetch_pool(specs):
     return ok, season, seen.values()
 
 def season_of(resp):
-    return str((resp.get("json") or {}).get("currentSeason", {}).get("displayName") or "")
+    j = resp.get("json") or {}
+    return str((j.get("requestedSeason") or j.get("currentSeason") or {}).get("displayName") or "")
 
 def stat_total_str(a, category_name, idx):
     # Raw formatted value as ESPN sends it (e.g. "16.5" for a half-sack) -
@@ -273,6 +286,66 @@ def league_choice(ctx):
 
 def conference_for(lg):
     return lg if lg in ("AFC", "NFC") else None
+
+# ---------- stats setting & minimums ----------
+# Regular season (the default) or Playoffs. NFL playoff stats come from a
+# handful of games, so nothing switches on its own: a fan who wants them
+# picks Playoffs (or adds the app twice). Playoffs shows the latest
+# postseason - the January after a season - so in October it's last
+# January's.
+
+MODES = ["Regular season", "Playoffs"]
+
+def mode_choice(ctx):
+    v = ctx.inputs.get("stats", "Regular season")
+    return v if v in MODES else "Regular season"
+
+def playoff_season(ctx):
+    # The 2026 season's playoffs are played in January 2027, so the latest
+    # finished-or-running postseason always belongs to last calendar year's
+    # season.
+    return ctx.now.year - 1
+
+def is_post(ctx):
+    return mode_choice(ctx) == "Playoffs"
+
+def season_params(ctx):
+    # [ESPN seasontype, season ("" = the current one)].
+    if is_post(ctx):
+        return ["3", str(playoff_season(ctx))]
+    return ["2", ""]
+
+def total_of(a, category_name, idx):
+    # One of an athlete's ESPN totals as a number (commas dropped); 0 when
+    # missing or "-".
+    for cat in a.get("categories", []):
+        if cat.get("name") == category_name:
+            totals = cat.get("totals", [])
+            if idx < len(totals):
+                s = str(totals[idx]).replace(",", "")
+                ok = s != "" and s != "-"
+                for i in range(len(s)):
+                    if s[i] not in "0123456789.-":
+                        ok = False
+                if ok:
+                    return float(s)
+    return 0.0
+
+def most_games(athletes):
+    # Games behind the minimum: the most any player in this list has played
+    # - in practice the clubs that haven't had their bye yet (or, in the
+    # playoffs, have gone deepest). A club that just had its bye is counted
+    # one game high, which a regular clears easily (starting quarterbacks
+    # average twice the 14 attempts a game the bar asks for).
+    g = 0
+    for a in athletes:
+        g = max(g, int(total_of(a, "general", 0)))
+    return g
+
+def bar_label(need, unit):
+    # The minimum, rounded up, for the header: "42+ ATT".
+    n = int(need) + (1 if need > int(need) else 0)
+    return str(n) + "+ " + unit
 
 # ---------- text helpers ----------
 
@@ -319,16 +392,23 @@ def league_chip(c, lg, x):
     c.text(lg, x + 2, HEAD_Y, font = "4x5", color = "white")
     return x + w
 
-def header(c, lg, titles, season):
+def header(c, lg, titles, season, post = False):
     # titles runs longest first; the header takes the first that fits beside
-    # the badge and season.
+    # the badge and season. A playoff board adds PLAYOFFS in gold after it.
     right = c.width - PAD - 1
     x = league_chip(c, lg, PAD) + 3
     sw = 0
-    if season != "":
+    if post:
+        pw = c.text_width("PLAYOFFS", "4x5")
+        c.text("PLAYOFFS", right, HEAD_Y, font = "4x5", color = GOLD, align = "right")
+        sw = pw
+        if season != "":
+            sw += 4 + c.text_width(season, "4x5")
+            c.text(season, right - pw - 4, HEAD_Y, font = "4x5", color = DIM, align = "right")
+    elif season != "":
         sw = c.text_width(season, "4x5")
         c.text(season, right, HEAD_Y, font = "4x5", color = DIM, align = "right")
-    room = right - sw - 2 - x
+    room = right - sw - 3 - x
     title = clip(c, titles[-1], "4x5", room)
     for t in titles:
         if c.text_width(t, "4x5") <= room:
@@ -372,10 +452,23 @@ def badge(c, x, y, w, style):
 
 # ---------- the leaderboard ----------
 
-def render_leaders(c, lg, titles, season, leaders):
-    header(c, lg, titles, season)
+def display_name(c, full, last, room):
+    # The longest form that fits in the main font: the full name, then
+    # initial and last name, then the last name alone.
+    full = strip_accents(full).upper()
+    last = strip_accents(last).upper()
+    forms = [full, full[:1] + ". " + last] if full != "" else []
+    for f in forms:
+        if c.text_width(f, NAME_FONTS[0]) <= room:
+            return f
+    return short_name(c, last, room)
+
+def render_leaders(c, lg, titles, season, leaders, post = False):
+    header(c, lg, titles, season, post)
     if len(leaders) == 0:
-        return message(c, "NO STATS YET", "CHECK BACK IN SEASON", INK)
+        # The stat just hasn't happened yet (no return TD in these playoffs,
+        # nobody past a rate page's bar in Week 1) - not a missing feed.
+        return message(c, "NONE SO FAR", "THESE PLAYOFFS" if post else "THIS SEASON", INK)
 
     rows = []
     for i in range(len(leaders)):
@@ -383,6 +476,7 @@ def render_leaders(c, lg, titles, season, leaders):
         rows.append({
             "rank": str(e["rank"]),
             "style": team_style(e["team_id"], e["team_abbr"]),
+            "full": e.get("full", ""),
             "name": strip_accents(e["name"]).upper(),
             "value": str(e["value"]).upper(),
         })
@@ -397,7 +491,7 @@ def render_leaders(c, lg, titles, season, leaders):
         valw = max(valw, c.text_width(r["value"], VALUE_FONT))
     room = right - valw - GAP - name_x + 1
     for r in rows:
-        r["name"] = short_name(c, r["name"], room)
+        r["name"] = display_name(c, r["full"], r["name"], room)
     font = page_font(c, [r["name"] for r in rows], room)
 
     for i in range(len(rows)):
@@ -444,14 +538,15 @@ def rank_candidates(candidates):
             break
     return leaders
 
-def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles):
+def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles, limit = 32):
     c.clear()
     lg = league_choice(ctx)
     conf = conference_for(lg)
+    post = mode_choice(ctx) == "Playoffs"
 
-    resp = fetch_leaders(sort_key)
+    resp = fetch_leaders(ctx, sort_key, limit = limit)
     if resp["status_code"] != 200 or resp["json"] == None:
-        header(c, lg, titles, "")
+        header(c, lg, titles, "", post)
         return message(c, "STATS OFFLINE", "TRYING AGAIN SOON", AMBER)
 
     athletes = resp["json"].get("athletes", [])
@@ -464,6 +559,7 @@ def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles):
             continue
         value = stat_total_str(a, category_name, idx)
         candidates.append({
+            "full": athlete.get("displayName", ""),
             "name": strip_accents(athlete.get("lastName", "?")),
             "team_id": team_id,
             "team_abbr": athlete.get("teamShortName", ""),
@@ -472,16 +568,17 @@ def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles):
         if len(candidates) >= len(ROW_Y):
             break
 
-    render_leaders(c, lg, titles, season_of(resp), rank_candidates(candidates))
+    render_leaders(c, lg, titles, season_of(resp), rank_candidates(candidates), post)
 
 def draw_leaderboard_computed(c, ctx, pool_specs, value_fn, titles):
     c.clear()
     lg = league_choice(ctx)
     conf = conference_for(lg)
+    post = mode_choice(ctx) == "Playoffs"
 
-    ok, season, pool = fetch_pool(pool_specs)
+    ok, season, pool = fetch_pool(ctx, pool_specs)
     if not ok:
-        header(c, lg, titles, "")
+        header(c, lg, titles, "", post)
         return message(c, "STATS OFFLINE", "TRYING AGAIN SOON", AMBER)
 
     candidates = []
@@ -492,6 +589,7 @@ def draw_leaderboard_computed(c, ctx, pool_specs, value_fn, titles):
         if conf != None and TEAM_CONFERENCE.get(team_id) != conf:
             continue
         candidates.append({
+            "full": athlete.get("displayName", ""),
             "name": strip_accents(athlete.get("lastName", "?")),
             "team_id": team_id,
             "team_abbr": athlete.get("teamShortName", ""),
@@ -499,29 +597,32 @@ def draw_leaderboard_computed(c, ctx, pool_specs, value_fn, titles):
         })
 
     candidates = sorted(candidates, key = neg_value)[:len(ROW_Y)]
-    render_leaders(c, lg, titles, season, rank_candidates(candidates))
+    render_leaders(c, lg, titles, season, rank_candidates(candidates), post)
 
 # Wide pool for the one field ESPN won't let us sort by directly. Any player
 # who forces a fumble is, in practice, already near the top of tackles or
 # sacks - these two sorts together catch essentially the whole relevant pool.
-FORCED_FUMBLE_POOL = [("defensive.totalTackles", 150), ("defensive.sacks", 50)]
+# (60 by tackles is ~870 KB; each athlete is ~15 KB, and 150 ran past the
+# 1 MB body cap, so that list never arrived.)
+FORCED_FUMBLE_POOL = [("defensive.totalTackles", 60), ("defensive.sacks", 50)]
 
 # Wide pool for Defensive TDs: interceptionTouchdowns sorts correctly on its
 # own, so that sort alone already surfaces every pick-six scorer; unioned
 # with the same tackles/sacks proxy pool FORCED_FUMBLE_POOL uses to also
 # catch anyone whose only defensive TD came from a fumble return.
-DEF_TD_POOL = [("defensiveInterceptions.interceptionTouchdowns", 32), ("defensive.totalTackles", 150), ("defensive.sacks", 50)]
+DEF_TD_POOL = [("defensiveInterceptions.interceptionTouchdowns", 32), ("defensive.totalTackles", 60), ("defensive.sacks", 50)]
 
 # ---------- pages ----------
 
 def tackles(c, ctx):
-    draw_leaderboard(c, ctx, "defensive.totalTackles", "defensive", 2, ["TOTAL TACKLES"])
+    # Same request as the Forced Fumbles / Defensive TDs pools.
+    draw_leaderboard(c, ctx, "defensive.totalTackles", "defensive", 2, ["TOTAL TACKLES"], limit = 60)
 
 def solo(c, ctx):
     draw_leaderboard(c, ctx, "defensive.soloTackles", "defensive", 0, ["SOLO TACKLES"])
 
 def sacks(c, ctx):
-    draw_leaderboard(c, ctx, "defensive.sacks", "defensive", 3, ["SACKS"])
+    draw_leaderboard(c, ctx, "defensive.sacks", "defensive", 3, ["SACKS"], limit = 50)
 
 def ints(c, ctx):
     draw_leaderboard(c, ctx, "defensiveInterceptions.interceptions", "defensiveinterceptions", 0, ["INTERCEPTIONS"])
