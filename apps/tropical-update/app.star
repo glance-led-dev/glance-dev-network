@@ -4120,7 +4120,7 @@ def intensity_page(c, ctx, w):
     lf = forecast_landfall(tr)
     lbox = None
     for i in range(1, len(pts)):
-        if (lf != None and lf["i"] == i) or (lf == None and "INLAND" in pts[i]["flag"] and "INLAND" not in pts[i - 1]["flag"]):
+        if (lf != None and lf.get("i") == i) or (lf == None and "INLAND" in pts[i]["flag"] and "INLAND" not in pts[i - 1]["flag"]):
             lx = gx(lf["hr"]) if lf != None else (gx(pts[i - 1]["hr"]) + gx(pts[i]["hr"])) // 2
             for yy in range(Y0, Y1 + 1, 2):
                 c.pixel(lx, yy, "#FFFFFF")
@@ -4140,7 +4140,7 @@ def intensity_page(c, ctx, w):
     # peak, the last point before landfall, and the end of the forecast.
     land = None
     for i in range(1, len(pts)):
-        if (lf != None and lf["i"] == i) or (lf == None and "INLAND" in pts[i]["flag"] and "INLAND" not in pts[i - 1]["flag"]):
+        if (lf != None and lf.get("i") == i) or (lf == None and "INLAND" in pts[i]["flag"] and "INLAND" not in pts[i - 1]["flag"]):
             land = i - 1
             break
     # Peak first, so it always gets its label.
