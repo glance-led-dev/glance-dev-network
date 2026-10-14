@@ -1,0 +1,20 @@
+id: rain-watch
+name: Rain Watch
+author: cfdmb
+description: Live rain around your zip code - how far away, how hard, and whether it's closing in or moving off - with a 70-mile radar map, the next 12 hours, the week ahead and rain totals.
+category: Weather
+width: 192
+height: 32
+refresh: 300
+pages:
+  - now
+  - next12
+  - week
+  - totals
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: US ZIP code
+    default: "10101"
+    help: The radar map is centered here and covers 35 miles in every direction.

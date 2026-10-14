@@ -233,7 +233,8 @@ def fit_font(c, texts, fonts, maxw):
 # Every `city` dropdown choice in manifest.yaml, mapped to its state and
 # downtown / city hall coordinates. Each point was checked against the
 # Census geocoder to land inside its own state with a congressional
-# district. Keys must match the manifest choices exactly.
+# district. Keys match the manifest choices; the viewer's value is matched
+# loosely (see resolve_city), since devices can deliver it uppercased.
 DEFAULT_CITY = "Miami, Florida"
 
 CITIES = {
@@ -427,10 +428,33 @@ CITIES = {
     "Laramie, Wyoming": {"state": "WY", "lat": "41.3114", "lon": "-105.5911"},
 }
 
+def city_key(s):
+    # "  TAMPA ,Florida" -> "tampa,florida": case, outer spaces, runs of
+    # spaces and the spacing around the comma don't matter.
+    return ",".join([" ".join(p.split()) for p in s.lower().split(",")])
+
+def city_only_keys():
+    # The city name alone ("TAMPA") is accepted when only one state has it -
+    # "SPRINGFIELD" or "PORTLAND" stays ambiguous and isn't matched.
+    seen = {}
+    for name in CITIES:
+        k = city_key(name.split(",")[0])
+        seen[k] = None if k in seen else name
+    return {k: v for k, v in seen.items() if v != None}
+
+CITY_KEYS = {city_key(name): name for name in CITIES}
+CITY_ONLY_KEYS = city_only_keys()
+
 def resolve_city(ctx):
-    name = str(ctx.inputs.get("city", DEFAULT_CITY))
-    if name not in CITIES:
-        name = DEFAULT_CITY
+    # None for a value that matches no city, so the page can say so instead
+    # of quietly showing DEFAULT_CITY. Only a missing / blank value defaults.
+    raw = str(ctx.inputs.get("city", "") or "").strip()
+    if raw == "":
+        raw = DEFAULT_CITY
+    key = city_key(raw)
+    name = CITY_KEYS.get(key) or CITY_ONLY_KEYS.get(key)
+    if name == None:
+        return None
     c = CITIES[name]
     parts = name.split(", ")
     return {
@@ -964,6 +988,11 @@ def nodata(c, title, sub):
     c.text(clip(c, title, f, maxw), mid, 12 - FONTH[f] // 2, font = f, color = "#E8B04A", align = "center")
     c.text(clip(c, sub, "4x5", maxw), mid, 23, font = "4x5", color = "#6A7090", align = "center")
 
+def unknown_city(c, ctx):
+    # The city setting matched nothing in CITIES - name what was received.
+    raw = " ".join(str(ctx.inputs.get("city", "")).split()).upper()
+    nodata(c, "UNKNOWN CITY", raw + " - PICK FROM LIST")
+
 def draw_all_clear(c, geo):
     # Empty is an answer, not an error: green check, positive line.
     mid = c.width // 2
@@ -998,6 +1027,9 @@ def current_index(ctx, count):
 def race(c, ctx):
     c.clear()
     geo = resolve_city(ctx)
+    if geo == None:
+        unknown_city(c, ctx)
+        return
     races, err = load_races(ctx, geo)
     if err != None:
         nodata(c, "ELECTION DATA OFFLINE", "TRYING AGAIN SOON")
@@ -1044,6 +1076,9 @@ def intro_countdown(races, err, now_unix):
 def intro(c, ctx):
     c.clear()
     geo = resolve_city(ctx)
+    if geo == None:
+        unknown_city(c, ctx)
+        return
     races, err = load_races(ctx, geo)
 
     draw_ballot_box(c, PAD, 6)

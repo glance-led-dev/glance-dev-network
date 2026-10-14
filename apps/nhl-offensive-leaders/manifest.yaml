@@ -1,9 +1,9 @@
 id: nhl-offensive-leaders
 name: NHL Offensive Leaders
 author: cfdmb
-description: Top 3 offensive leaders by category, for NHL, Eastern, or Western Conference.
+description: Top 3 offensive leaders by category, for NHL, Eastern, or Western Conference - regular season or playoffs, switching on its own in the spring.
 category: Sports
-width: 128
+width: 192
 height: 32
 refresh: 10800
 pages:
@@ -22,3 +22,10 @@ inputs:
     label: Conference
     choices: [NHL, EAST, WEST]
     default: NHL
+  - key: stats
+    type: string
+    app_input_type: dropdown
+    label: Stats
+    choices: [Auto, Regular season, Playoffs]
+    default: Auto
+    help: "Auto: playoffs while they're on, regular season otherwise."

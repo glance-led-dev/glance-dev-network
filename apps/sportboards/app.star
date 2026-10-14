@@ -3,12 +3,12 @@
 # a school, never scrapes, and never matches opponent names.
 #
 # One programmed feed, delivered in blocks. Every render builds the same
-# logical feed of up to 16 pages from all the content pools (urgent schedule
-# changes, Today, the featured event, sponsors, results, upcoming), then shows
+# logical feed of up to 16 pages from all the content pools (announcements,
+# Today, the featured event, sponsors, results, upcoming), then shows
 # one 8-page block of it: Block A = logical pages 1-8, Block B = 9-16.
 # Athletics pages hold two compact event cards (sport icon, event text,
 # opponent logo, a bright FINAL / TODAY / UPCOMING chip); sponsor, featured
-# and urgent pages are full width. See build_feed() and select_block().
+# and announcement pages are full width. See build_feed() and select_block().
 #
 # Page lifecycle (the Harrison lesson): the render server renders every page
 # in its own process, and a page that errors shows black on the board. So
@@ -19,11 +19,11 @@
 
 API_URL = "https://sportboards-backend.onrender.com/board"
 
-# Shorter than the manifest refresh (60s) on purpose. One render of the 8
+# Shorter than the manifest refresh (300s) on purpose. One render of the 8
 # pages finishes in seconds, well inside 45s, so pages 2-8 reuse page 1's
-# cached response and agree on the block; the next render, 60s later, finds
-# the entry expired and fetches once. About one /board request per school
-# per minute per render host, however many boards show it.
+# cached response and agree on the block; the next render, five minutes
+# later, finds the entry expired and fetches once. About one /board request
+# per school per refresh per render host, however many boards show it.
 TTL_SECONDS = 45
 
 # ---- programmed feed ----------------------------------------------------------
@@ -31,12 +31,14 @@ TTL_SECONDS = 45
 PAGE_COUNT = 8
 CARDS_PER_PAGE = 2
 # Beats within each 8-page block, kept only when that content exists.
+# Announcements open a block (pages 1-2): alerts and schedule updates open
+# every block, celebrations and general announcements Block A only.
+ANNOUNCEMENT_SLOTS = [1, 2]
 SPONSOR_SLOTS = [3, 6]
 FEATURED_SLOTS = [8]
-# The most recent varsity results promoted into the early feed. Each urgent
-# page takes the place of one page (two) of them.
+# The most recent varsity results promoted into the early feed.
 LEAD_RESULTS = 4
-MAX_URGENT_PAGES = 2
+MAX_ANNOUNCEMENTS = len(ANNOUNCEMENT_SLOTS)
 
 # Outer padding so the app reads as its own unit in the scroll sequence.
 EDGE = 6
@@ -134,9 +136,8 @@ SPONSOR_LOGOS = {
     "timberstone-homes": ["sponsor-timberstone-homes.png", 59],
 }
 SPONSOR_LOGO_H = 28
-# Narrower than this, a logo's own lettering is too small to read at 28px, so
-# the sponsor's name is set beside it.
-SPONSOR_NAME_BELOW_W = 60
+# The "<MASCOT> / SPONSOR" label column on sponsor pages: ten 4x5 characters.
+SPONSOR_LABEL_W = 50
 
 # ---- sport icons --------------------------------------------------------------
 # A word in the sport name -> an ICON_ART key (the art is at the bottom of this
@@ -159,7 +160,7 @@ SPORT_ICONS = [
     ["WRESTLING", "wrestling"],
     ["CHEER", "cheer"],
 ]
-FALLBACK_ICON = "generic"
+FALLBACK_ICON = "athletics"
 ICON = 24
 
 # Icons are c.sprite() art: each character is a pixel, colored through a
@@ -213,6 +214,7 @@ CHIP_UPCOMING = "#C8A0FF"
 CHIP_FEATURED = "#FFC21A"
 URGENT_RED = "#E01818"
 URGENT_AMBER = "#FFB000"
+CELEBRATION_GOLD = "#FFC21A"
 ERROR_HEAD = "#E8B04A"
 BRAND_FALLBACK = "amber"
 
@@ -302,13 +304,20 @@ def readable_brand(school):
     return BRAND_FALLBACK
 
 def stripe_color(school):
-    """The school's primary color for the divider stripe, dark or not: navy
-    and black are still the school's stripe, framing the white center."""
+    """The school's color for the borders, the divider stripe and the frame
+    rules. The primary leads, dark or not (navy still frames the white
+    center), unless it is near-black and would vanish on the black panel;
+    then the secondary (Delphi: black -> its gold). Display only: the
+    official colors are untouched."""
     for key in ["primary_color", "secondary_color"]:
         col = safe_color(school.get(key))
-        if col != "":
+        if col != "" and not is_near_black(col):
             return col
     return BRAND_FALLBACK
+
+def is_near_black(col):
+    """Every channel at or below 0x28: indistinguishable from the panel."""
+    return max(int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16)) <= 40
 
 def to_hex(r, g, b):
     out = "#"
@@ -485,6 +494,42 @@ def opponent_name(event):
         if name != "":
             return panel_text(name)
     return panel_text(raw)
+
+# Title words that mark the IHSAA tournament series. "STATE" alone counts
+# only as the whole title or before one of STATE_FOLLOWERS.
+TOURNAMENT_WORDS = ["SECTIONAL", "SECTIONALS", "REGIONAL", "REGIONALS",
+                    "SEMISTATE", "IHSAA"]
+STATE_FOLLOWERS = ["FINAL", "FINALS", "CHAMPIONSHIP", "CHAMPIONSHIPS",
+                   "TOURNAMENT", "MEET"]
+
+def is_tournament(event):
+    """True for an IHSAA tournament-series event (Sectional, Regional,
+    Semi-State, State). Uses the backend's tournament_stage or event_type
+    when it sends them, otherwise the title. Invitationals, conference meets
+    and ordinary games are not tournaments here."""
+    if get_str(event, "tournament_stage").strip() != "":
+        return True
+    if get_str(event, "event_type").strip().lower() == "state tournament":
+        return True
+    words = panel_text(get_str(event, "title")).replace("-", " ").replace(".", " ").split(" ")
+    words = [w for w in words if w != ""]
+    for i in range(len(words)):
+        w = words[i]
+        if w in TOURNAMENT_WORDS:
+            return True
+        if w == "STATE":
+            if len(words) == 1:
+                return True
+            if i > 0 and words[i - 1] == "SEMI":
+                return True
+            if i + 1 < len(words) and words[i + 1] in STATE_FOLLOWERS:
+                return True
+    return False
+
+def draw_trophy(c, x, y):
+    """A gold trophy in a 28px logo slot, for a tournament with no named
+    opponent: the same on every school's board."""
+    c.sprite(ICON_ART["trophy"], x + (LOGO - ICON) // 2, y + (LOGO - ICON) // 2, legend = TROPHY_LEGEND)
 
 def opponent_logo(event):
     """None when there is no opponent: never draw a fake logo for TBD."""
@@ -760,6 +805,7 @@ def event_card(event, kind, zone):
         "labels": team_label_ladder(event),
         "opponent": opponent_ladder(event),
         "opp_logo": opponent_logo(event),
+        "opp_trophy": opponent_name(event) == "" and is_tournament(event),
         "bottom": bottom,
     }
 
@@ -786,8 +832,19 @@ def sections_on(data):
     settings = get_dict(data, "settings")
     return [sec for sec in SECTIONS if get_bool(settings, sec[1], True)]
 
+def display_colors(school):
+    """The school's colors as the panel shows them. A backend-supplied
+    display_primary_color (an LED-calibrated stand-in for a primary color
+    that reads too dark on the panel) replaces primary_color for display
+    only; the official colors are never changed."""
+    out = dict(school)
+    led = safe_color(school.get("display_primary_color"))
+    if led != "":
+        out["primary_color"] = led
+    return out
+
 def school_info(data):
-    school = get_dict(data, "school")
+    school = display_colors(get_dict(data, "school"))
     name = panel_text(get_str(school, "name"))
     return {
         "name": name if name != "" else "ATHLETICS",
@@ -817,12 +874,24 @@ def school_short(name):
     forms = name_forms(name)
     return forms[len(forms) - 1]
 
+def is_canceled(event):
+    """Canceled by the backend's status, which comes from Eventlink's own
+    canceled marker. Only when an event carries no status at all does a
+    "CANCELED:" title prefix count. Postponed and rescheduled events stay
+    eligible: they have no status of their own."""
+    status = get_str(event, "status").strip().lower()
+    if status != "":
+        return status in ["canceled", "cancelled"]
+    title = panel_text(get_str(event, "title"))
+    return title.startswith("CANCELED:") or title.startswith("CANCELLED:")
+
 def pick_featured(data, zone):
-    """The first featured event that hasn't happened yet (today counts).
-    The backend's `featured` list is ordered by date, then start time."""
+    """The first featured event that hasn't happened yet (today counts) and
+    isn't canceled. The backend's `featured` list is ordered by date, then
+    start time; a canceled event is skipped for the next one in that order."""
     today = get_str(data, "local_date")
     for event in get_list(data, "featured"):
-        if not has_content(event):
+        if not has_content(event) or is_canceled(event):
             continue
         day = get_str(event, "event_date")
         if today != "" and day != "" and day < today:
@@ -856,24 +925,60 @@ def ticket_qr(event):
                 return None
     return {"rows": rows, "label": panel_text(get_str(qr, "label"))}
 
-# announcement_type values that name a schedule change. The backend stores
-# the type as free text today; these are the values the renderer will label
-# as schedule changes once the backend standardizes them.
-SCHEDULE_TYPES = {
-    "schedule_change": "SCHEDULE CHANGE",
+# announcement_type -> display category. The backend's current values
+# (general, cancellation, postponement, schedule_change) and the four
+# category names both map, so the app works before and after the backend
+# adopts the categories. Anything else shows as an ALERT: an announcement
+# the app can't classify is never quieter than one it can.
+ANNOUNCEMENT_CATEGORIES = {
+    "urgent_alert": "alert",
+    "urgent": "alert",
+    "alert": "alert",
+    "schedule_change": "schedule",
+    "schedule_update": "schedule",
+    "cancellation": "schedule",
+    "cancelled": "schedule",
+    "canceled": "schedule",
+    "postponement": "schedule",
+    "postponed": "schedule",
+    "time_change": "schedule",
+    "venue_change": "schedule",
+    "location_change": "schedule",
+    "celebration": "celebration",
+    "achievement": "celebration",
+    "general": "general",
+    "general_announcement": "general",
+    "announcement": "general",
+}
+# Priority order: which two show when more are active, and their order on
+# the page slots.
+CATEGORY_ORDER = ["alert", "schedule", "celebration", "general"]
+# Categories that open every block; the rest open Block A only.
+EVERY_BLOCK = ["alert", "schedule"]
+# Legacy schedule types keep their specific heading; every other type in a
+# category uses the category's heading.
+TYPE_HEADERS = {
     "cancellation": "CANCELLED",
     "cancelled": "CANCELLED",
+    "canceled": "CANCELLED",
     "postponement": "POSTPONED",
     "postponed": "POSTPONED",
-    "time_change": "TIME CHANGE",
-    "venue_change": "LOCATION CHANGE",
-    "location_change": "LOCATION CHANGE",
+}
+CATEGORY_HEADERS = {
+    "alert": "ALERT",
+    "schedule": "SCHEDULE UPDATE",
+    "celebration": "CELEBRATION",
+    "general": "ANNOUNCEMENT",
 }
 
-def urgent_pages(data):
-    """Priority announcements, as full-width urgent pages. Urgency is the
-    backend's explicit is_priority flag; announcement_type only picks the
-    header, falling back to a generic ALERT for any other type."""
+def announcement_category(item):
+    kind = get_str(item, "announcement_type").strip().lower()
+    return ANNOUNCEMENT_CATEGORIES.get(kind, "alert")
+
+def announcement_pages(data):
+    """Display announcements as full-width pages, highest category first,
+    at most MAX_ANNOUNCEMENTS. Only the backend's is_priority announcements
+    are display announcements; the category comes from announcement_type."""
     out = []
     for item in get_list(data, "announcements"):
         if not get_bool(item, "is_priority", False):
@@ -882,14 +987,19 @@ def urgent_pages(data):
         message = panel_text(get_str(item, "message"))
         if headline == "" and message == "":
             continue
-        kind = get_str(item, "announcement_type").lower()
+        category = announcement_category(item)
+        kind = get_str(item, "announcement_type").strip().lower()
         out.append({
-            "type": "urgent",
-            "header": SCHEDULE_TYPES.get(kind, "ALERT"),
+            "type": "announcement",
+            "category": category,
+            "header": TYPE_HEADERS.get(kind, CATEGORY_HEADERS[category]),
             "headline": headline,
             "message": message,
         })
-    return out
+    ranked = []
+    for category in CATEGORY_ORDER:
+        ranked.extend([p for p in out if p["category"] == category])
+    return ranked[:MAX_ANNOUNCEMENTS]
 
 def sponsor_pages(data):
     out = []
@@ -903,7 +1013,6 @@ def sponsor_pages(data):
             "name": name,
             "slug": slug,
             "logo": SPONSOR_LOGOS.get(slug),
-            "message": panel_text(get_str(item, "message")),
             "site": site_text(get_str(item, "website_url")),
         })
     return out
@@ -982,15 +1091,16 @@ def card_pages(cards):
 def build_feed(data, zone):
     """The logical feed: {"pages": [...], "blocks": 1 or 2}.
 
-    Allocation (what gets in), by importance: urgent pages, every Today
-    event, the four most recent varsity results (less two per urgent page),
-    upcoming in date order, then the remaining results. Placement: urgent
-    pages first, Today and the lead results interleaved in pairs, then
-    upcoming, then deeper results, with sponsors on pages 3 and 6 and the
-    featured event on page 8 of every block."""
+    Allocation (what gets in), by importance: announcements, every Today
+    event, the four most recent varsity results, upcoming in date order,
+    then the remaining results. Placement: announcements open a block
+    (pages 1-2; see announcement_plan), sponsors take pages 3 and 6 and the
+    featured event page 8 of every block; the rest is Today and the lead
+    results interleaved in pairs, then upcoming, then deeper results. When
+    the cards don't fit, the cut comes from the bottom of that order."""
     featured = pick_featured(data, zone)
     fkey = event_key(featured["event"]) if featured != None else ""
-    urgent = urgent_pages(data)[:MAX_URGENT_PAGES]
+    announcements = announcement_pages(data)
     sponsors = sponsor_pages(data)
 
     def cards_for(key, kind):
@@ -1006,12 +1116,11 @@ def build_feed(data, zone):
     results = []
     lead = []
     if "results" in on:
-        lead_n = max(0, LEAD_RESULTS - CARDS_PER_PAGE * len(urgent))
         for event in get_list(data, "results"):
             if not has_content(event):
                 continue
             card = event_card(event, "result", zone)
-            if is_varsity(event) and len(lead) < lead_n:
+            if is_varsity(event) and len(lead) < LEAD_RESULTS:
                 lead.append(card)
             else:
                 results.append(card)
@@ -1022,10 +1131,12 @@ def build_feed(data, zone):
         blocks = attempt
         reserved = dict(sponsor_plan(sponsors, blocks, sponsor_offset(data)))
         reserved.update(featured_plan(featured, blocks))
+        reserved.update(announcement_plan(announcements, blocks))
         free = blocks * PAGE_COUNT - len(reserved)
-        cap = max(0, free - len(urgent)) * CARDS_PER_PAGE
+        cap = free * CARDS_PER_PAGE
 
-        # Allocation by importance.
+        # Allocation by importance. Announcement, sponsor and featured pages
+        # are already reserved, so the cards share what is left.
         t = today[:cap]
         room = cap - len(t)
         l = lead[:room]
@@ -1033,19 +1144,31 @@ def build_feed(data, zone):
         u = upcoming[:room]
         room -= len(u)
         r = results[:room]
-        units = urgent[:free] + card_pages(interleave_pairs(t, l) + u + r)
+        units = card_pages(interleave_pairs(t, l) + u + r)
         needed = len(today) + len(lead) + len(upcoming) + len(results)
-        if attempt == 1 and len(t) + len(l) + len(u) + len(r) == needed and \
-           len(urgent) <= free:
+        if attempt == 1 and len(t) + len(l) + len(u) + len(r) == needed:
             break
 
     return {"pages": place(units, reserved, blocks), "blocks": blocks}
+
+def announcement_plan(announcements, block_count):
+    """Logical slot -> announcement page. Block A opens with every
+    announcement; later blocks open with the alerts and schedule updates
+    only. The list is already in category order, so each block keeps that
+    order and no announcement appears twice in one block."""
+    plan = {}
+    for b in range(block_count):
+        shown = [a for a in announcements if b == 0 or a["category"] in EVERY_BLOCK]
+        for i in range(len(shown)):
+            plan[b * PAGE_COUNT + ANNOUNCEMENT_SLOTS[i]] = shown[i]
+    return plan
 
 def place(units, reserved, blocks):
     """Lay pages into blocks * 8 slots. Reserved beats keep their slots;
     athletics fill the rest in order. A slot left over shows the school's
     identity page once per block, then reruns the athletics from the top,
-    so no page is ever blank and nothing repeats while new content waits."""
+    so no page is ever blank and nothing repeats while new content waits.
+    Announcements are never rerun, so none appears twice in a block."""
     pages = []
     u = 0
     rerun = 0
@@ -1137,7 +1260,7 @@ def text_row(c, ladder, cx, y, maxw, color, fonts = FONTS, box = 7):
     c.text(pick[0], cx, y + dy, font = pick[1], color = color, align = "center")
 
 def font_px(font):
-    return {"4x5": 5, "5x7": 7, "9x12": 12, "11x14": 14}.get(font, 7)
+    return {"4x5": 5, "5x7": 7, "8x10": 10, "7x12": 12, "9x12": 12, "10x14": 14, "11x14": 14}.get(font, 7)
 
 def part_width(c, p):
     w = c.text_width(p["t"], p["f"])
@@ -1197,6 +1320,8 @@ def draw_card(c, card, school, x0, w):
     c.sprite(ICON_ART[card["icon"]], x0 + 1, 2 + (LOGO - ICON) // 2, legend = school["legend"])
     if card["opp_logo"] != None:
         c.image(card["opp_logo"], x0 + w - LOGO - 1, 2, w = LOGO, h = LOGO)
+    elif card["opp_trophy"]:
+        draw_trophy(c, x0 + w - LOGO - 1, 2)
     tx0 = x0 + 1 + ICON + 2
     tw = w - (1 + ICON + 2) - (2 + LOGO + 1)
     cx = tx0 + tw // 2
@@ -1234,9 +1359,12 @@ def draw_cards_page(c, page, school):
             draw_divider(c, x0 - DIVIDER_PAD - DIVIDER_W, school["stripe"])
 
 def frame_lines(c, color):
-    """Full-width pages: a school-color rule along the top and bottom."""
-    c.hline(EDGE, 0, c.width - 2 * EDGE, color)
-    c.hline(EDGE, 31, c.width - 2 * EDGE, color)
+    """Full-width pages: a rule along the top and bottom, running out to the
+    color line of each side border (draw_edges) so the corners join."""
+    x0 = EDGE - 3
+    w = c.width - 2 * x0
+    c.hline(x0, 0, w, color)
+    c.hline(x0, 31, w, color)
 
 def draw_featured(c, page, school):
     """Full width, three lines in priority order: the occasion (HOMECOMING)
@@ -1271,6 +1399,8 @@ def draw_featured(c, page, school):
     logo_x = right - LOGO - 1
     if card["opp_logo"] != None:
         c.image(card["opp_logo"], logo_x, 2, w = LOGO, h = LOGO)
+    elif card["opp_trophy"]:
+        draw_trophy(c, logo_x, 2)
     tx0 = EDGE + 1 + LOGO + 4
     tw = logo_x - 4 - tx0
     cx = tx0 + tw // 2
@@ -1357,32 +1487,45 @@ def draw_dot_row(c, items, cx, y):
             c.rect(x + DOT_GAP, y + 3, x + DOT_GAP + 1, y + 4, fill = LABEL)
             x += 2 * DOT_GAP + 2
 
+# Matchup fonts, largest first, all fitting the 12px hero row. Both schools
+# step down through these before either name is dropped.
+MATCHUP_FONTS = ["9x12", "7x12", "8x10", "5x7", "4x5"]
+
 def draw_matchup(c, us, joint, opp, cx, y, maxw):
-    """HARRISON vs RONCALLI: names in 9x12, a smaller VS between them, the
-    opponent's short name first (the school logo sits right beside it, so
-    "RONCALLI" says enough). If both names can't fit, the school name goes
-    (its logo is on the left) before the hero font does. Returns False,
-    drawing nothing, when no form fits."""
+    """HARRISON vs RONCALLI: names in the largest font that fits both, a
+    smaller VS between them, the opponent's shortest form first. Both
+    schools are kept whenever they fit in any matchup font, so
+    MCCUTCHEON AT TERRE HAUTE SOUTH VIGO steps down a font rather than
+    losing MCCUTCHEON. Only if no font fits both does the school name go
+    (its logo is on the left). Returns False, drawing nothing, when no form
+    fits."""
     if opp == "":
         return False
-    gap = 5
-    jw = c.text_width(joint, "5x7")
     forms = name_forms(opp)
     shortest_first = [forms[len(forms) - 1 - i] for i in range(len(forms))]
-    lead = [us, ""] if drawable(c, us, "9x12") else [""]
-    for u in lead:
-        uw = c.text_width(u, "9x12") + gap if u != "" else 0
-        for n in shortest_first:
-            if not drawable(c, n, "9x12"):
+    leads = [us, ""] if us != "" else [""]
+    for u in leads:
+        for font in MATCHUP_FONTS:
+            if u != "" and not drawable(c, u, font):
                 continue
-            nw = c.text_width(n, "9x12")
-            total = uw + jw + gap + nw
-            if total <= maxw:
+            h = font_px(font)
+            jfont = "5x7" if h >= 10 else "4x5"
+            jw = c.text_width(joint, jfont)
+            gap = 5 if h >= 10 else 3
+            uw = c.text_width(u, font) + gap if u != "" else 0
+            for n in shortest_first:
+                if not drawable(c, n, font):
+                    continue
+                nw = c.text_width(n, font)
+                total = uw + jw + gap + nw
+                if total > maxw:
+                    continue
                 x = cx - total // 2
+                ny = y + (12 - h) // 2
                 if u != "":
-                    c.text(u, x, y, font = "9x12", color = TEXT)
-                c.text(joint, x + uw, y + 4, font = "5x7", color = LABEL)
-                c.text(n, x + uw + jw + gap, y, font = "9x12", color = TEXT)
+                    c.text(u, x, ny, font = font, color = TEXT)
+                c.text(joint, x + uw, ny + max(0, h - font_px(jfont) - 1), font = jfont, color = LABEL)
+                c.text(n, x + uw + jw + gap, ny, font = font, color = TEXT)
                 return True
     return False
 
@@ -1400,113 +1543,123 @@ def featured_occasion(event):
                 return ""
     return title
 
-def draw_sponsor(c, page, school):
-    """The sponsor's bundled logo as the hero when there is one; otherwise
-    the text billboard."""
-    if page.get("logo") != None:
-        draw_sponsor_logo(c, page, school)
-    else:
-        draw_sponsor_text(c, page, school)
+def sponsor_labels(school):
+    """The identifier over SPONSOR: the singular mascot (RAIDERS -> RAIDER),
+    then the school's short name when there is no mascot or it won't fit."""
+    mascot = school["mascot"]
+    if mascot.endswith("S") and not mascot.endswith("SS"):
+        mascot = mascot[:len(mascot) - 1]
+    return [l for l in [mascot, school["short"]] if l != ""] or ["SCHOOL"]
 
-def draw_sponsor_logo(c, page, school):
-    """A small three-line support note at the left, the school stripe, then
-    the logo centered in the rest of the page. A narrow logo's own lettering
-    is unreadable at 28px, so its name is set beside it."""
+def draw_sponsor(c, page, school):
+    """School logo and "<MASCOT> SPONSOR" at the far left, the school
+    stripe, the sponsor's logo when the app bundles one, then the business
+    name centered in the space left with the web address beneath it. With no
+    web address the name gets the full height."""
     frame_lines(c, school["stripe"])
-    lw = 92
-    lcx = EDGE + 2 + lw // 2
-    support = page.get("support") or [
-        ["PROUD SUPPORTER OF"],
-        [school["short"], school["mascot"], "OUR SCHOOL"],
-        ["ATHLETICS"],
-    ]
-    colors = [LABEL, school["brand"], LABEL]
-    for i in range(3):
-        text_row(c, support[i], lcx, 7 + i * 6, lw, colors[i], ["4x5"], 5)
-    dx = EDGE + 2 + lw + 4
+    x = EDGE + 2
+    c.image(school["logo"], x, 2, w = LOGO, h = LOGO)
+    label_x = x + LOGO + 3
+    lcx = label_x + SPONSOR_LABEL_W // 2
+    labels = page.get("label") or sponsor_labels(school)
+    text_row(c, labels, lcx, 9, SPONSOR_LABEL_W, school["brand"], ["4x5"], 5)
+    text_row(c, ["SPONSOR"], lcx, 17, SPONSOR_LABEL_W, LABEL, ["4x5"], 5)
+    dx = label_x + SPONSOR_LABEL_W + 3
     draw_divider(c, dx, school["stripe"])
 
     ax0 = dx + DIVIDER_W + 6
-    aw = c.width - EDGE - 2 - ax0
-    asset = page["logo"][0]
-    w = page["logo"][1]
-    y0 = 2 + (28 - SPONSOR_LOGO_H) // 2
-    if w >= SPONSOR_NAME_BELOW_W:
-        c.image(asset, ax0 + (aw - w) // 2, y0)
-        return
+    logo = page.get("logo")
+    if logo != None:
+        c.image(logo[0], ax0, 2 + (28 - SPONSOR_LOGO_H) // 2)
+        ax0 += logo[1] + 8
+    aw = c.width - EDGE - 6 - ax0
+    cx = ax0 + aw // 2
+    for line in sponsor_name_layout(c, page["name"], aw, page["site"] != ""):
+        c.text(line[0], cx, line[2], font = line[1], color = TEXT, align = "center")
+    if page["site"] != "":
+        text_row(c, [page["site"]], cx, 21, aw, school["brand"], ["5x7", "4x5"])
 
-    gap = 8
-    room = aw - w - gap
-    lines = sponsor_name_lines(c, page["name"], room)
-    tw = 0
-    for l in lines:
-        tw = max(tw, c.text_width(l[0], l[1]))
-    x = ax0 + (aw - (w + gap + tw)) // 2
-    c.image(asset, x, y0)
-    tx = x + w + gap
-    if len(lines) == 2:
-        c.text(lines[0][0], tx, 3, font = lines[0][1], color = TEXT)
-        c.text(lines[1][0], tx, 17, font = lines[1][1], color = TEXT)
-    else:
-        h = font_px(lines[0][1])
-        c.text(lines[0][0], tx, 2 + (28 - h) // 2, font = lines[0][1], color = TEXT)
-
-def sponsor_name_lines(c, name, room):
-    """The name as large as it reads: one 9x12 line, two balanced 9x12
-    lines, then one smaller line (fitted, clipped as a last resort)."""
-    if drawable(c, name, "9x12") and c.text_width(name, "9x12") <= room:
-        return [[name, "9x12"]]
+def balanced_split(c, name, font, room):
+    """The name as two lines in `font`, as even as possible, or None."""
+    if not drawable(c, name, font):
+        return None
     words = name.split(" ")
     best = None
     for i in range(1, len(words)):
         a = " ".join(words[:i])
         b = " ".join(words[i:])
-        if drawable(c, name, "9x12") and max(c.text_width(a, "9x12"), c.text_width(b, "9x12")) <= room:
+        if max(c.text_width(a, font), c.text_width(b, font)) <= room:
             score = abs(len(a) - len(b))
             if best == None or score < best[0]:
                 best = [score, a, b]
-    if best != None:
-        return [[best[1], "9x12"], [best[2], "9x12"]]
+    return None if best == None else [best[1], best[2]]
+
+def sponsor_name_layout(c, name, room, has_site):
+    """The business name as large as it reads, as [text, font, y] lines.
+    Above a web address (rows 2-17): one 9x12 line, two 5x7 lines, then one
+    fitted line. On its own (rows 2-29): one 10x14 line, one 9x12 line, two
+    9x12 lines, then one fitted line. A last-resort line is clipped with
+    ".." rather than run off the page."""
+    def fits(font):
+        return drawable(c, name, font) and c.text_width(name, font) <= room
+    if has_site:
+        if fits("9x12"):
+            return [[name, "9x12", 4]]
+        two = balanced_split(c, name, "5x7", room)
+        if two != None:
+            return [[two[0], "5x7", 2], [two[1], "5x7", 11]]
+        pick = fit(c, [name], room)
+        return [[pick[0], pick[1], 7]]
+    for font in ["10x14", "9x12"]:
+        if fits(font):
+            return [[name, font, 2 + (28 - font_px(font)) // 2]]
+    two = balanced_split(c, name, "9x12", room)
+    if two != None:
+        return [[two[0], "9x12", 3], [two[1], "9x12", 17]]
+    two = balanced_split(c, name, "5x7", room)
+    if two != None:
+        return [[two[0], "5x7", 7], [two[1], "5x7", 18]]
     pick = fit(c, [name], room)
-    return [[pick[0], pick[1]]]
+    return [[pick[0], pick[1], 2 + (28 - font_px(pick[1])) // 2]]
 
-def draw_sponsor_text(c, page, school):
-    """Full-width billboard: who it supports, the sponsor's name as the
-    hero, and their message (or web address)."""
-    frame_lines(c, school["stripe"])
-    accent = school["brand"]
-    cx = c.width // 2
-    tw = c.width - 2 * EDGE - 40
-    # Side ornaments: a small school-color star in each margin.
-    for x in [EDGE + 6, c.width - EDGE - 6 - 9]:
-        c.sprite(STAR_ART, x, 12, legend = {"A": accent, "W": "white"})
-    text_row(c, ["PROUD SPONSOR OF " + school["short"] + " ATHLETICS",
-                 "PROUD SPONSOR OF " + school["short"], "PROUD SPONSOR"],
-             cx, 2, tw, LABEL, ["4x5"], 5)
-    text_row(c, [page["name"]], cx, 8, tw, TEXT, ["11x14", "9x12", "5x7", "4x5"], 14)
-    sub = page["message"] if page["message"] != "" else page["site"]
-    if sub != "":
-        text_row(c, [sub], cx, 23, tw, accent, ["5x7", "4x5"])
+def announcement_style(category, school):
+    """Accent, icon and colors per category. ALERT keeps the original urgent
+    page exactly (red rules and chip, white headline, amber message)."""
+    if category == "alert":
+        return {"accent": URGENT_RED, "chip_text": "white", "hero": URGENT_AMBER,
+                "art": ALERT_ART, "legend": {"R": URGENT_RED, "W": "white"}}
+    if category == "schedule":
+        return {"accent": URGENT_AMBER, "chip_text": "black", "hero": URGENT_AMBER,
+                "art": CALENDAR_ART, "legend": dict(ICON_COLORS, a = URGENT_AMBER)}
+    if category == "celebration":
+        return {"accent": CELEBRATION_GOLD, "chip_text": "black", "hero": CELEBRATION_GOLD,
+                "art": ICON_ART["trophy"], "legend": TROPHY_LEGEND}
+    brand = school["brand"]
+    return {"accent": brand, "chip_text": "black" if brightness(brand) >= 140 else "white",
+            "hero": brand, "art": MEGAPHONE_ART, "legend": school["legend"]}
 
-def draw_urgent(c, page, school):
-    """Full width, unmistakable: alert icons, a red header chip, the event,
-    and the change itself as the hero."""
-    c.hline(EDGE, 0, c.width - 2 * EDGE, URGENT_RED)
-    c.hline(EDGE, 31, c.width - 2 * EDGE, URGENT_RED)
+def draw_announcement(c, page, school):
+    """Full width: the category's icon at both ends, its header chip, then
+    the headline (white) and the message as the hero in the accent color."""
+    style = announcement_style(page["category"], school)
+    accent = style["accent"]
+    frame_lines(c, accent)
+    art = style["art"]
+    y = (32 - len(art)) // 2
     for x in [EDGE + 2, c.width - EDGE - 2 - ICON]:
-        c.sprite(ALERT_ART, x, 4, legend = {"R": URGENT_RED, "W": "white"})
+        c.sprite(art, x, y, legend = style["legend"])
     cx = c.width // 2
     tw = c.width - 2 * (EDGE + 2 + ICON + 6)
     head = page["header"]
     hw = c.text_width(head, "4x5") + 6
-    c.rect(cx - hw // 2, 2, cx - hw // 2 + hw - 1, 8, fill = URGENT_RED)
-    c.text(head, cx - hw // 2 + 3, 3, font = "4x5", color = "white")
+    c.rect(cx - hw // 2, 2, cx - hw // 2 + hw - 1, 8, fill = accent)
+    c.text(head, cx - hw // 2 + 3, 3, font = "4x5", color = style["chip_text"])
     lines = [l for l in [page["headline"], page["message"]] if l != ""]
     if len(lines) == 1:
-        text_row(c, [lines[0]], cx, 13, tw, URGENT_AMBER, ["9x12", "5x7", "4x5"], 12)
+        text_row(c, [lines[0]], cx, 13, tw, style["hero"], ["9x12", "5x7", "4x5"], 12)
         return
     text_row(c, [lines[0]], cx, 10, tw, TEXT, ["5x7", "4x5"])
-    text_row(c, [lines[1]], cx, 18, tw, URGENT_AMBER, ["9x12", "5x7", "4x5"], 12)
+    text_row(c, [lines[1]], cx, 18, tw, style["hero"], ["9x12", "5x7", "4x5"], 12)
 
 def draw_identity(c, school, line):
     """School identity: shown once in a block that runs out of new content,
@@ -1563,12 +1716,22 @@ def draw_feed_page(c, page, school, data, feed):
         draw_sponsor(c, page, school)
     elif kind == "featured":
         draw_featured(c, page, school)
-    elif kind == "urgent":
-        draw_urgent(c, page, school)
+    elif kind == "announcement":
+        draw_announcement(c, page, school)
     else:
         any_on = len(sections_on(data)) > 0
         empty = feed_is_empty(feed)
         draw_identity(c, school, "NO EVENTS TO SHOW" if empty and any_on else school["mascot"])
+    draw_edges(c, school["stripe"])
+
+def draw_edges(c, color):
+    """The page's outer borders, matching the stripe between cards: white |
+    school color at the left, school color | white at the right, each 2px
+    outside the content, on every page type."""
+    c.vline(EDGE - 4, 1, 30, color = "white")
+    c.vline(EDGE - 3, 1, 30, color = color)
+    c.vline(c.width - EDGE + 2, 1, 30, color = color)
+    c.vline(c.width - EDGE + 3, 1, 30, color = "white")
 
 def feed_is_empty(feed):
     for p in feed["pages"]:
@@ -1682,8 +1845,10 @@ def draw_demo(c, ctx, page_index):
         page = pages[(page_index - 1) % len(pages)]
         if page["type"] == "sponsor":
             page = dict(page)
-            page["support"] = [["SAMPLE"], ["SPONSOR"], ["PAGE"]]
+            page["label"] = ["SAMPLE"]
         draw_feed_page(c, page, school, data, feed)
+        # The DEMO letters take the left margin, so the left border gives way.
+        c.rect(0, 0, EDGE - 1, 31, fill = "black")
     # DEMO, stacked in the left margin of every page.
     for i in range(len(DEMO_LETTERS)):
         c.text(DEMO_LETTERS[i], 1, 4 + i * 6, font = "4x5", color = CHIP_FEATURED)
@@ -1713,16 +1878,66 @@ def page8(c, ctx):
     render_page(c, ctx, 7)
 
 # Small pixel art for the full-width pages (same legend scheme as ICON_ART).
-STAR_ART = [
-    "....A....",
-    "....A....",
-    "...AWA...",
-    "AAAAWAAAA",
-    ".AAWWWAA.",
-    "..AAWAA..",
-    "..AA.AA..",
-    ".AA...AA.",
+# Announcement icons (24x24, same legend scheme as the sport icons).
+# Megaphone: school colors (A, C) through the school's icon legend.
+MEGAPHONE_ART = [
+    "........................",
+    "........................",
+    "........................",
+    ".................W......",
+    "................AW......",
+    "..............AAAW......",
+    "............AAAAAW......",
+    "...........AAAAAAW...W..",
+    ".........AAAAAAAAW....W.",
+    ".......AAAAAAAAAAW.W..WW",
+    "..WWWWAAAAAAAAAAAW..W..W",
+    "..WWWWAAAAAAAAAAAW..W..W",
+    "..WWWWAAAAAAAAAAAW..W..W",
+    "..WWWWAAAAAAAAAAAW..W..W",
+    ".......CwwAAAAAAAW.W..WW",
+    "........wwCAAAAAAW....W.",
+    "........ww.CAAAAAW...W..",
+    "........ww..CCAAAW......",
+    "........ww....CCAW......",
+    "................AW......",
+    ".................W......",
+    "........................",
+    "........................",
+    "........................",
 ]
+
+# Calendar page with a clock badge: "a" is the schedule amber.
+CALENDAR_ART = [
+    "........................",
+    ".....w........w.........",
+    ".....w........w.........",
+    ".aaaawaaaaaaaawaaaa.....",
+    ".aaaawaaaaaaaawaaaa.....",
+    ".aaaaaaaaaaaaaaaaaa.....",
+    ".aaaaaaaaaaaaaaaaaa.....",
+    ".WWWWWWWWWWWWWWWWWW.....",
+    ".WWWWWWWWWWWWWWWWWW.....",
+    ".WWWWWWWWWWWWWWWWWW.....",
+    ".WWddWddWddWddWddWW.....",
+    ".WWWWWWWWWWWWWWWWWW.....",
+    ".WWWWWWWWWWWWWWaaaaaa...",
+    ".WWddWddWddWdaaaaWWaaaa.",
+    ".WWWWWWWWWWWWaaWWkWWWaa.",
+    ".WWWWWWWWWWWaaWWWkWWWWaa",
+    ".WWddWddWddWaaWWWkWWWWaa",
+    ".WWWWWWWWWWWaWWWWkWWWWWa",
+    ".WWWWWWWWWWWaWWWWkkkkWWa",
+    ".WWWWWWWWWWWaaWWWWWWWWaa",
+    ".WWWWWWWWWWWaaWWWWWWWWaa",
+    ".............aaWWWWWWaa.",
+    ".............aaaaWWaaaa.",
+    "...............aaaaaa...",
+]
+
+# The trophy (ICON_ART["trophy"]) in fixed gold with a white band: the
+# CELEBRATION icon and the tournament fallback, the same on every board.
+TROPHY_LEGEND = dict(ICON_COLORS, A = "#FFFFFF", C = "#FFE08A")
 
 ALERT_ART = [
     "...........RR...........",
@@ -1807,55 +2022,55 @@ ICON_ART = {
     ],
     "volleyball": [
         "........................",
-        "........dddddddd........",
-        "......dddWWWWWWWdd......",
-        ".....dAAddWWWWWWWdd.....",
-        "....dAAAAddWWWWWWdAd....",
-        "...dAAAAAAddWWWWWdAAd...",
-        "..dAAAAAAAAdWWWWWdAAAd..",
-        "..dAAAAAAAAddWWWWdAAAd..",
-        ".dAAAddddAAAdWWWdAAAAAd.",
-        ".dAddWWWdddAdWWWdAAAAAd.",
-        ".ddWWWWWWWdddWddAAAAAAd.",
-        ".dWWWWWWWWdWWdAAAAAAAAd.",
-        ".dWWWWWWddCCAAAAAAAAAdd.",
-        ".dWWWWWdCCdWdddAAAAddWd.",
-        ".dWWWWdCCCdWWWdddddWWWd.",
-        ".dWWWWdCCCddWWWWWWWWWWd.",
-        "..dWWdCCCCCdWWWWWWWWWd..",
-        "..dWWdCCCCCddWWWWWWWWd..",
-        "...dWdCCCCCCddWWWWWWd...",
-        "....ddCCCCCCCddWWWWd....",
-        ".....ddCCCCCCCddddd.....",
-        "......ddCCCCCCCCdd......",
-        "........dddddddd........",
+        "........wwwwwwww........",
+        "......wwkkkWWkkWww......",
+        "....wwkWWkkWWWkkWWww....",
+        "...wwWWWWWkWWWWkWWWww...",
+        "...wWWWWkkkkWWWWkWWWw...",
+        "..wWWWkkAAAkWWWWkWWWWw..",
+        "..wWkkAAAAAkWWWWWkWWWw..",
+        ".wWkAAAAAAAAkWWWWkWWWWw.",
+        ".wkAAAAAAAAAkWWWWkWWWWw.",
+        ".wAAAAAAAAAkkkWWWkWWWWw.",
+        ".wAAAAAAAkkWWkWWWWWWWWw.",
+        ".wAAAAAAkkWWWkWWWWkWWWw.",
+        ".wAAAAAkkWWWWWkWWWkWWWw.",
+        ".wAAAkkWWWWWWkkkkkkkkkw.",
+        ".wAAkkWWWWWWkkWWWWWWWWw.",
+        "..wkkWWWWWWkkWWWWWWWWw..",
+        "..wkWWWWWWkkkWWWWWWWWw..",
+        "...wWWWWWkCCCkkkWWWWw...",
+        "...wwWWkkCCCCCCCkkkww...",
+        "....wwkkkCCCCCCCCCww....",
+        "......wwWkkCCCCCww......",
+        "........wwwwwwww........",
         "........................",
     ],
     "soccer": [
-        "........................",
-        "........AAAAAAAA........",
-        "......AAWWkkkkWWAA......",
-        ".....AWWWWWWdWWWWWA.....",
-        "....AWWWWWWWdWWWWWWA....",
-        "...AWWWWWWWWdWWWWWWWA...",
-        "..AWWWWWWWWWdWWWWWWWWA..",
-        "..AWWWWWWWWWdWWWWWWWWA..",
-        ".AkWWWWWWWWkdWWWWWWWWkA.",
-        ".AkddWWWWWkkkkWWWWWddkA.",
-        ".AkWddddWkkkkkkWddddWkA.",
-        ".AkWWWWddkkkkkkddWWWWkA.",
-        ".AWWWWWWWkkkkkkWWWWWWWA.",
-        ".AWWWWWWWdkkkkdWWWWWWWA.",
-        ".AWWWWWWddWWWWddWWWWWwA.",
-        ".AWWWWWWdWWWWWWdWWWWWwA.",
-        "..AWWWWddWWWWWWddWWWwA..",
-        "..AWWWWdWWWWWWWWdWWWwA..",
-        "...AWWddWWWWWWWWddWwA...",
-        "....AkkWWWWWWWWWWkkA....",
-        "....AkkWWWWWWWWWwkkA....",
-        "....AAAAWWWWWWwwAAAA....",
-        "........AAAAAAAA........",
-        "........................",
+        "..........AAAA..........",
+        ".......AAAAkkAAAA.......",
+        ".....AAWWkkkkkkWWAA.....",
+        "....AAWWWWkkkkWWWWAA....",
+        "...AAWWWWWWWWWWWWWWAA...",
+        "..AAWWWWWWWWWWWWWWWWAA..",
+        "..AkWWWWWWWWWWWWWWWWkA..",
+        ".AkkWWWWWWWWWWWWWWWWkkA.",
+        ".AkkkWWWWWWkkWWWWWWkkkA.",
+        ".AkkkWWWWWkkkkWWWWWkkkA.",
+        "AAkkWWWWkkkkkkkkWWWWkkAA",
+        "AkkWWWWWkkkkkkkkWWWWWkkA",
+        "AWWWWWWWWkkkkkkWWWWWWwwA",
+        "AAWWWWWWWkkkkkkWWWWWWwAA",
+        ".AWWWWWWWkkkkkkWWWWWWwA.",
+        ".AWWWWWWWWWWWWWWWWWWWwA.",
+        ".AWWWWWWWWWWWWWWWWWWwwA.",
+        "..AWWWWWWWWWWWWWWWWWwA..",
+        "..AAkkkkWWWWWWWWkkkkAA..",
+        "...AAkkkWWWWWWWWkkkAA...",
+        "....AAkkkWWWWWWkkkAA....",
+        ".....AAkkwwwwwwkkAA.....",
+        ".......AAAAwwAAAA.......",
+        "..........AAAA..........",
     ],
     "tennis": [
         "........................",
@@ -2117,7 +2332,35 @@ ICON_ART = {
         ".........ww.............",
         "........................",
     ],
-    "generic": [
+    # Unrecognized sports: a coach's whistle on a school-color lanyard. The
+    # trophy is kept for tournaments and CELEBRATION announcements.
+    "athletics": [
+        "......................A.",
+        "......................A.",
+        ".....................A..",
+        ".....................A..",
+        ".....................A..",
+        "...................AA...",
+        "..................A..A..",
+        "..............dd.....A..",
+        "..dddddddddddddddddAA...",
+        "..dwwwwwwwwwwwwwwwdd....",
+        "..dwwwwwwwwkkwWWwwwdd...",
+        "..dwwwwwwwwwwWwwwwwwd...",
+        "..ddddddddddWwwwwwwwwd..",
+        "........dwwWwwwwwwwwwd..",
+        "........dwwwwwwwwwwwwd..",
+        "........dwwwwwwwwwwwwd..",
+        "........dwwwwwwwwwwwwd..",
+        ".........dwwwwwwwwwwd...",
+        ".........ddwwwwwwwwdd...",
+        "..........ddwwwwwwdd....",
+        "...........dddddddd.....",
+        "..............dd........",
+        "........................",
+        "........................",
+    ],
+    "trophy": [
         "........................",
         "........................",
         "...NNNNNNNNNNNNNNNNNN...",

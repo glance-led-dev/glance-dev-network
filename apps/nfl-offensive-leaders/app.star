@@ -1,27 +1,32 @@
-# NFL Offensive Leaders (128x32)
+# NFL Offensive Leaders (192x32)
 #
 # The top 3 offensive leaders in one stat per page (Pass Yds/TD/Rating, Rush
-# Yds/TD, Receptions/Yds/TD), for NFL overall, the AFC, or the NFC. Data from
-# ESPN's public stats-by-athlete API (site.web.api.espn.com) - no key
-# required. Sibling app to nfl-defensive-leaders and
-# nfl-special-teams-leaders, ported from mlb-offensive-leaders's own
-# redesign (2026-09-15 review, PR #542) - same scorebook layout, a
-# league/conference badge and football colors instead of baseball/league.
+# Yds/TD, Receptions/Yds/TD), for NFL overall, the AFC, or the NFC - regular
+# season or playoffs. Data from ESPN's public stats-by-athlete API
+# (site.web.api.espn.com) - no key required. Sibling app to
+# nfl-defensive-leaders and nfl-special-teams-leaders, and the same
+# scorebook as mlb-offensive-leaders.
 #
 # Pages in this SDK are a fixed list declared in the manifest, so all 8
 # category pages always exist.
 #
-# DESIGN. Same scorebook as mlb-offensive-leaders, on a black ground. The top
-# row opens directly on the league badge (2026-09-16, Chris's call, replacing
-# an earlier football/shield pixel-art logo) - AFC red or NFC blue solid when
-# a conference is picked, a red/blue SPLIT pill (half each) for plain "NFL"
-# with no conference filter, since there's no natural third color of its own
-# to reach for - then the stat in white and the season in gray. Under it,
-# three rows: the rank in gray, a team badge, the last name in white, and the
-# number in white against the right edge. The badge is how a fan spots their
-# team across a room: the team's code in its own two colors, like a helmet
-# decal. Everything stays 6px inside both edges so the app reads as its own
-# unit in the stream.
+# STATS. Regular season (the default) or Playoffs. NFL playoff stats come
+# from one to four games, so nothing switches on its own in January; a fan
+# who wants them picks Playoffs, or adds the app twice. Passer rating uses
+# the NFL's own minimum, 14 attempts per team game, rather than ESPN's
+# isqualified flag (which in the playoffs lets almost anyone in): the page
+# fetches the top passers by attempts and ranks the ones who clear the bar.
+# In the playoffs the header shows the bar ("42+ ATT").
+#
+# DESIGN. The top row opens on the league badge - AFC red or NFC blue solid
+# when a conference is picked, a red/blue split pill for plain "NFL" - then
+# the stat in white and the season in gray (PLAYOFFS in gold). Under it,
+# three rows: the rank in gray, a team badge, the player's name in white
+# (initial and last name if the full name won't fit), and the number in
+# white against the right edge. The badge is how a fan spots their team
+# across a room: the team's code in its own two colors, like a helmet decal.
+# Everything stays 6px inside both edges so the app reads as its own unit in
+# the stream.
 
 # id: [code, fill, ink]. Fill is the color the team wears most, ink its
 # accent. A few inks are brightened from the team's literal secondary shade
@@ -44,11 +49,11 @@ TEAMS = {
     7: ["DEN", "#0A2343", "#FC4C02"],   # Broncos: navy, orange
     8: ["DET", "#0076B6", "#BBBBBB"],   # Lions: blue, silver
     9: ["GB", "#204E32", "#FFB612"],    # Packers: green, gold
-    34: ["HOU", "#021018", "#FF3B47"],  # Texans: navy/black, red
+    34: ["HOU", "#C8102E", "#FFFFFF"],  # Texans: battle red, white (their navy is near-black on the panel)
     11: ["IND", "#003B75", "#FFFFFF"],  # Colts: navy, white
     30: ["JAX", "#007487", "#D7A22A"],  # Jaguars: teal, gold
     12: ["KC", "#E31837", "#FFB612"],   # Chiefs: red, gold
-    13: ["LV", "#000000", "#A5ACAF"],   # Raiders: black, silver
+    13: ["LV", "#A5ACAF", "#000000"],   # Raiders: silver, black (flipped - a black badge vanishes on the panel)
     24: ["LAC", "#0080C6", "#FFC20E"],  # Chargers: powder blue, gold
     14: ["LAR", "#003594", "#FFD100"],  # Rams: royal blue, gold
     15: ["MIA", "#008E97", "#FC4C02"],  # Dolphins: aqua, orange
@@ -58,7 +63,7 @@ TEAMS = {
     19: ["NYG", "#003C7F", "#C9243F"],  # Giants: navy, red
     20: ["NYJ", "#115740", "#FFFFFF"],  # Jets: green, white
     21: ["PHI", "#06424D", "#A5ACAF"],  # Eagles: midnight green, silver
-    23: ["PIT", "#000000", "#FFB612"],  # Steelers: black, gold
+    23: ["PIT", "#FFB612", "#000000"],  # Steelers: gold, black (flipped, same reason)
     25: ["SF", "#AA0000", "#B3995D"],   # 49ers: red, gold
     26: ["SEA", "#002A5C", "#69BE28"],  # Seahawks: navy, action green
     27: ["TB", "#BD1C36", "#FFFFFF"],   # Buccaneers: red, white
@@ -80,6 +85,7 @@ TEAM_CONFERENCE = {
 INK = "#F4F7FF"      # names, live numbers, the stat title
 DIM = "#6E7A94"       # ranks, season, sub-lines
 AMBER = "#E8B04A"     # the one attention state (feed offline)
+GOLD = "#F2C14E"      # PLAYOFFS in the header
 AFC_RED = "#D22D3A"
 NFC_BLUE = "#2A66D9"
 
@@ -146,24 +152,31 @@ def blend(a, b, pct):
 # but the sort param needs camelCase for multi-word categories - a quirk of
 # their API, confirmed by hand, not a typo.
 
-def fetch_leaders(sort_key, qualified = False, limit = 32):
+def fetch_leaders(ctx, sort_key, limit = 32):
+    # One request per page, sorted server-side. Each athlete is ~15 KB of
+    # JSON, so 40 is about as many as fits under the 1 MB body cap.
+    params = {
+        "region": "us",
+        "lang": "en",
+        "contentorigin": "espn",
+        "isqualified": "false",
+        "seasontype": "2",
+        "sort": sort_key + ":desc",
+        "limit": str(limit),
+    }
+    if mode_choice(ctx) == "Playoffs":
+        params["seasontype"] = "3"
+        params["season"] = str(playoff_season(ctx))
     return http.get(
         "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/statistics/byathlete",
-        params = {
-            "region": "us",
-            "lang": "en",
-            "contentorigin": "espn",
-            "isqualified": "true" if qualified else "false",
-            "seasontype": "2",
-            "sort": sort_key + ":desc",
-            "limit": str(limit),
-        },
+        params = params,
         # matches manifest.yaml's refresh - keep in sync
-        ttl_seconds = 14400,
+        ttl_seconds = 10800,
     )
 
 def season_of(resp):
-    return str((resp.get("json") or {}).get("currentSeason", {}).get("displayName") or "")
+    j = resp.get("json") or {}
+    return str((j.get("requestedSeason") or j.get("currentSeason") or {}).get("displayName") or "")
 
 def league_choice(ctx):
     v = ctx.inputs.get("league", "NFL")
@@ -171,6 +184,57 @@ def league_choice(ctx):
 
 def conference_for(lg):
     return lg if lg in ("AFC", "NFC") else None
+
+# ---------- stats setting & minimums ----------
+# Regular season (the default) or Playoffs. NFL playoff stats come from a
+# handful of games, so nothing switches on its own: a fan who wants them
+# picks Playoffs (or adds the app twice). Playoffs shows the latest
+# postseason - the January after a season - so in October it's last
+# January's.
+
+MODES = ["Regular season", "Playoffs"]
+
+def mode_choice(ctx):
+    v = ctx.inputs.get("stats", "Regular season")
+    return v if v in MODES else "Regular season"
+
+def playoff_season(ctx):
+    # The 2026 season's playoffs are played in January 2027, so the latest
+    # finished-or-running postseason always belongs to last calendar year's
+    # season.
+    return ctx.now.year - 1
+
+def total_of(a, category_name, idx):
+    # One of an athlete's ESPN totals as a number (commas dropped); 0 when
+    # missing or "-".
+    for cat in a.get("categories", []):
+        if cat.get("name") == category_name:
+            totals = cat.get("totals", [])
+            if idx < len(totals):
+                s = str(totals[idx]).replace(",", "")
+                ok = s != "" and s != "-"
+                for i in range(len(s)):
+                    if s[i] not in "0123456789.-":
+                        ok = False
+                if ok:
+                    return float(s)
+    return 0.0
+
+def most_games(athletes):
+    # Games behind the minimum: the most any player in this list has played
+    # - in practice the clubs that haven't had their bye yet (or, in the
+    # playoffs, have gone deepest). A club that just had its bye is counted
+    # one game high, which a regular clears easily (starting quarterbacks
+    # average twice the 14 attempts a game the bar asks for).
+    g = 0
+    for a in athletes:
+        g = max(g, int(total_of(a, "general", 0)))
+    return g
+
+def bar_label(need, unit):
+    # The minimum, rounded up, for the header: "42+ ATT".
+    n = int(need) + (1 if need > int(need) else 0)
+    return str(n) + "+ " + unit
 
 # ---------- text helpers ----------
 
@@ -223,16 +287,23 @@ def league_chip(c, lg, x):
     c.text(lg, x + 2, HEAD_Y, font = "4x5", color = "white")
     return x + w
 
-def header(c, lg, titles, season):
+def header(c, lg, titles, season, post = False):
     # titles runs longest first; the header takes the first that fits beside
-    # the badge and season.
+    # the badge and season. A playoff board adds PLAYOFFS in gold after it.
     right = c.width - PAD - 1
     x = league_chip(c, lg, PAD) + 3
     sw = 0
-    if season != "":
+    if post:
+        pw = c.text_width("PLAYOFFS", "4x5")
+        c.text("PLAYOFFS", right, HEAD_Y, font = "4x5", color = GOLD, align = "right")
+        sw = pw
+        if season != "":
+            sw += 4 + c.text_width(season, "4x5")
+            c.text(season, right - pw - 4, HEAD_Y, font = "4x5", color = DIM, align = "right")
+    elif season != "":
         sw = c.text_width(season, "4x5")
         c.text(season, right, HEAD_Y, font = "4x5", color = DIM, align = "right")
-    room = right - sw - 2 - x
+    room = right - sw - 3 - x
     title = clip(c, titles[-1], "4x5", room)
     for t in titles:
         if c.text_width(t, "4x5") <= room:
@@ -276,10 +347,23 @@ def badge(c, x, y, w, style):
 
 # ---------- the leaderboard ----------
 
-def render_leaders(c, lg, titles, season, leaders):
-    header(c, lg, titles, season)
+def display_name(c, full, last, room):
+    # The longest form that fits in the main font: "KENNETH WALKER III",
+    # then "K. WALKER III", then the last name alone.
+    full = strip_accents(full).upper()
+    last = strip_accents(last).upper()
+    forms = [full, full[:1] + ". " + last] if full != "" else []
+    for f in forms:
+        if c.text_width(f, NAME_FONTS[0]) <= room:
+            return f
+    return short_name(c, last, room)
+
+def render_leaders(c, lg, titles, season, leaders, post = False):
+    header(c, lg, titles, season, post)
     if len(leaders) == 0:
-        return message(c, "NO STATS YET", "CHECK BACK IN SEASON", INK)
+        # The stat just hasn't happened yet (no return TD in these playoffs,
+        # nobody past a rate page's bar in Week 1) - not a missing feed.
+        return message(c, "NONE SO FAR", "THESE PLAYOFFS" if post else "THIS SEASON", INK)
 
     rows = []
     for i in range(len(leaders)):
@@ -287,6 +371,7 @@ def render_leaders(c, lg, titles, season, leaders):
         rows.append({
             "rank": str(e["rank"]),
             "style": team_style(e["team_id"], e["team_abbr"]),
+            "full": e.get("full", ""),
             "name": strip_accents(e["name"]).upper(),
             "value": str(e["value"]).upper(),
         })
@@ -301,7 +386,7 @@ def render_leaders(c, lg, titles, season, leaders):
         valw = max(valw, c.text_width(r["value"], VALUE_FONT))
     room = right - valw - GAP - name_x + 1
     for r in rows:
-        r["name"] = short_name(c, r["name"], room)
+        r["name"] = display_name(c, r["full"], r["name"], room)
     font = page_font(c, [r["name"] for r in rows], room)
 
     for i in range(len(rows)):
@@ -349,14 +434,15 @@ def rank_candidates(candidates):
             break
     return leaders
 
-def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles, qualified = False, positions = None):
+def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles, positions = None):
     c.clear()
     lg = league_choice(ctx)
     conf = conference_for(lg)
+    post = mode_choice(ctx) == "Playoffs"
 
-    resp = fetch_leaders(sort_key, qualified = qualified)
+    resp = fetch_leaders(ctx, sort_key)
     if resp["status_code"] != 200 or resp["json"] == None:
-        header(c, lg, titles, "")
+        header(c, lg, titles, "", post)
         return message(c, "STATS OFFLINE", "TRYING AGAIN SOON", AMBER)
 
     athletes = resp["json"].get("athletes", [])
@@ -380,6 +466,7 @@ def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles, qualified = F
                 if idx < len(totals):
                     value = totals[idx]
         candidates.append({
+            "full": athlete.get("displayName", ""),
             "name": strip_accents(athlete.get("lastName", "?")),
             "team_id": team_id,
             "team_abbr": athlete.get("teamShortName", ""),
@@ -388,7 +475,49 @@ def draw_leaderboard(c, ctx, sort_key, category_name, idx, titles, qualified = F
         if len(candidates) >= len(ROW_Y):
             break
 
-    render_leaders(c, lg, titles, season_of(resp), rank_candidates(candidates))
+    render_leaders(c, lg, titles, season_of(resp), rank_candidates(candidates), post)
+
+def draw_rate_page(c, ctx, count_sort, category_name, value_idx, count_idx, per_game, unit, titles):
+    # A rate stat with the NFL's minimum: fetch the top players by attempts
+    # (everyone who could qualify is among them), keep those with at least
+    # per_game x games, and rank them by the rate. Higher is better.
+    c.clear()
+    lg = league_choice(ctx)
+    conf = conference_for(lg)
+    post = mode_choice(ctx) == "Playoffs"
+    resp = fetch_leaders(ctx, count_sort, limit = 40)
+    if resp["status_code"] != 200 or resp["json"] == None:
+        header(c, lg, titles, "", post)
+        return message(c, "STATS OFFLINE", "TRYING AGAIN SOON", AMBER)
+    athletes = resp["json"].get("athletes", [])
+    need = per_game * most_games(athletes)
+    pool = []
+    for a in athletes:
+        athlete = a.get("athlete", {})
+        team_id = athlete.get("teamId", -1)
+        team_id = int(team_id) if team_id != None else -1
+        if conf != None and TEAM_CONFERENCE.get(team_id) != conf:
+            continue
+        if need <= 0 or total_of(a, category_name, count_idx) < need:
+            continue
+        value = ""
+        for cat in a.get("categories", []):
+            if cat.get("name") == category_name:
+                totals = cat.get("totals", [])
+                if value_idx < len(totals):
+                    value = totals[value_idx]
+        pool.append([total_of(a, category_name, value_idx), total_of(a, category_name, count_idx), {
+            "full": athlete.get("displayName", ""),
+            "name": strip_accents(athlete.get("lastName", "?")),
+            "team_id": team_id,
+            "team_abbr": athlete.get("teamShortName", ""),
+            "value": value,
+        }])
+    # Best rate first; ties list the bigger sample first.
+    pool = sorted(pool, key = lambda r: (-r[0], -r[1]))
+    # In the playoffs the bar takes the year's place in the header.
+    label = bar_label(need, unit) if post and need > 0 else season_of(resp)
+    render_leaders(c, lg, titles, label, rank_candidates([r[2] for r in pool]), post)
 
 # ---------- pages ----------
 
@@ -399,7 +528,8 @@ def passtd(c, ctx):
     draw_leaderboard(c, ctx, "passing.passingTouchdowns", "passing", 7, ["PASSING TDS", "PASS TD"])
 
 def passrtg(c, ctx):
-    draw_leaderboard(c, ctx, "passing.QBRating", "passing", 12, ["PASSER RATING", "PASS RTG"], qualified = True)
+    # 14 attempts per team game, the NFL's own passer-rating minimum.
+    draw_rate_page(c, ctx, "passing.passingAttempts", "passing", 12, 1, 14.0, "ATT", ["PASSER RATING", "PASS RTG"])
 
 def rushyds(c, ctx):
     draw_leaderboard(c, ctx, "rushing.rushingYards", "rushing", 1, ["RUSHING YARDS", "RUSH YDS"])

@@ -88,11 +88,15 @@ def safe_input(ctx, key, fallback):
 def favorite_numbers(ctx):
     # Up to three car numbers, matched exactly as the feed prints them
     # ("02" and "2" are different cars). A leading "#" is forgiven.
+    # Unused slots default to "NONE" rather than blank because the Glance
+    # mobile form won't save a blank free-text field, so a viewer with one
+    # favorite was forced to fill all three (same fix as steam-players).
     favs = []
     for key in ["fav1", "fav2", "fav3"]:
-        num = str(ctx.inputs.get(key, "")).strip().replace("#", "")
-        if num != "":
-            favs.append(num)
+        num = str(ctx.inputs.get(key, "NONE")).strip().replace("#", "")
+        if num == "" or num.upper() in ["NONE", "N/A", "NA", "-"]:
+            continue
+        favs.append(num)
     return favs
 
 
