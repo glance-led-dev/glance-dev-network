@@ -32,3 +32,4 @@ inputs:
     app_input_type: free-text
     label: City label
     default: OMAHA AR
+category: Weather
