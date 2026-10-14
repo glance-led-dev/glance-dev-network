@@ -1,0 +1,16 @@
+gdn: 1
+id: study-flashcards-scroll
+name: Study Flashcards (Scroll)
+description: Cycles through term/definition flashcards from any JSON deck you host — build your own study set for any subject.
+author: jkapera
+width: 128
+height: 32
+refresh: 60
+pages: [subject, term, definition]
+inputs:
+  - key: deckurl
+    type: string
+    app_input_type: free-text
+    label: Deck URL (no https://)
+    default: ""
+    help: "Host a JSON array of {term, definition} objects anywhere public (GitHub raw works great) and paste the URL here, without https://"
