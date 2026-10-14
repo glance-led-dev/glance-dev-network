@@ -109,6 +109,23 @@ def fit(c, text, font, maxw):
             return candidate
     return ""
 
+def draw_text(c, text, x, y, font, color):
+    # The 8x12 font draws the letter I as a solid block, so any I is drawn
+    # from 9x12 (same height, a proper I) at the exact spot 8x12 puts it.
+    if font != "8x12" or "I" not in text:
+        c.text(text, x, y, font = font, color = color)
+        return
+    start = 0
+    for i in range(len(text) + 1):
+        if i == len(text) or text[i] == "I":
+            if i > start:
+                c.text(text[start:i], x + c.text_width(text[:start], font), y,
+                       font = font, color = color)
+            if i < len(text):
+                c.text("I", x + c.text_width(text[:i], font), y, font = "9x12",
+                       color = color)
+            start = i + 1
+
 def pick_font(c, text, choices, maxw):
     for choice in choices:
         if c.text_width(text, choice[0]) <= maxw:
@@ -393,8 +410,7 @@ def next_split(c, ctx):
 
     room = flow_x - 8 - tx
     tchoice = pick_font(c, tick, [["8x12", 12], ["6x8", 8]], room)
-    c.text(fit(c, tick, tchoice[0], room), tx, 2, font = tchoice[0],
-           color = WHITE)
+    draw_text(c, fit(c, tick, tchoice[0], room), tx, 2, tchoice[0], WHITE)
     c.text(fit(c, top["n"].upper(), "4x5", room), tx, 17, font = "4x5",
            color = DIM)
     c.text(when, tx, 25, font = "4x5", color = AMBER)
