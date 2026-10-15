@@ -5,7 +5,7 @@ id: date-time
 version: 0.3.0
 name: Date & Weather
 author: jdhine02
-description: Today's date for a US zip code, big, beside the weather at a glance (place, condition icon, temperature, high and low, humidity), then a second page with the next six hours (icon, temperature, chance of rain) beside sunrise stacked over sunset. The temperature takes weather-map colors. Pick F or C, a date style, and colors for the date and weather.
+description: Today's date for a US zip code, big, beside the weather at a glance (place, condition icon, temperature, high and low, humidity), then a second page with the next six hours (icon, temperature, chance of rain) beside sunrise stacked over sunset. The temperature takes weather-map colors. Pick F or C, a date style, and a date color.
 category: Time
 entry: app.star
 
@@ -53,12 +53,5 @@ inputs:
     type: choice
     app_input_type: dropdown
     label: Date color
-    default: "White"
-    choices: ["White", "Amber", "Green", "Cyan", "Red"]
-
-  - key: weathercolor
-    type: choice
-    app_input_type: dropdown
-    label: Weather color
     default: "White"
     choices: ["White", "Amber", "Green", "Cyan", "Red"]

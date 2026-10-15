@@ -12,9 +12,9 @@
 # drawn at that rate would sit up to 15 minutes stale. Sunrise and sunset are
 # fixed times for the day, so the slow refresh never makes them wrong.
 #
-# Temperatures show in F or C (a dropdown). Colors come from two dropdowns
-# (date, weather); the current temperature always takes weather-map colors by
-# value, white at its coldest. The place name and labels are gray, the
+# Temperatures show in F or C (a dropdown). The date's color comes from a
+# dropdown; the condition is white, and the current temperature always takes
+# weather-map colors by value, white at its coldest. The place name and labels are gray, the
 # dividers dim gray.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
@@ -619,7 +619,6 @@ def today(c, ctx):
 
     # Right zone rows: place y 1-5 · icon y 7-24 beside the 10x16 temperature
     # (y 8-23) and high/low/humidity · condition y 26-30.
-    weather_color = _color(ctx, "weathercolor")
     c.text(place_text(c, geo, rw), rx, 1, font = "4x5", color = LABEL)
 
     code = int(cur.get("weather_code", 3))
@@ -657,7 +656,7 @@ def today(c, ctx):
     cw = (col - 4 - rx) if hum != None else rw
 
     c.text(clip(c, condition_label(code, is_day, cover), "4x5", cw), rx, 26,
-           font = "4x5", color = weather_color)
+           font = "4x5", color = "white")
 
 
 # A 3x3 degree ring for the small hourly temperatures.
