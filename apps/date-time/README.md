@@ -8,12 +8,12 @@ current humidity in a column, and the condition by name.
 condition, the temperature, and the chance of rain that hour; sunrise (yellow)
 stacked over sunset (orange) on the right.
 
-Settings: a zip code, a date style (SEP 14 / 14 SEP / 09/14 / 14/09), and one
-of five colors (white, amber, green, cyan, red) each for the date and the
-weather. The current temperature defaults to weather-map colors (purple
-when frigid through blue, green, yellow, and orange to red when hot), or takes
-one of the five fixed colors. Today's high and low, the humidity, and the hourly
-temperatures are always white; the hours are gray, like the sun labels.
+Settings: a zip code, temperature units (F or C), a date style (SEP 14 /
+14 SEP / 09/14 / 14/09), and one of five colors (white, amber, green, cyan,
+red) each for the date and the weather. The current temperature always takes weather-map colors (white
+when bitter cold, then purple through blue, green, yellow, and orange to red
+when hot). Today's high and low, the humidity, and the hourly temperatures are
+always white; the hours are gray, like the sun labels.
 
 At night the icon is the moon in its current phase, pale cream with its dark
 seas filling in as it waxes. Partly cloudy puts a low cloud under it; mostly

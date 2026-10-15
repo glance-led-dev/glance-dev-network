@@ -12,9 +12,10 @@
 # drawn at that rate would sit up to 15 minutes stale. Sunrise and sunset are
 # fixed times for the day, so the slow refresh never makes them wrong.
 #
-# Colors come from three dropdowns (date, weather, temperature); temperatures
-# default to weather-map colors by value. The place name and labels are gray,
-# the dividers dim gray.
+# Temperatures show in F or C (a dropdown). Colors come from two dropdowns
+# (date, weather); the current temperature always takes weather-map colors by
+# value, white at its coldest. The place name and labels are gray, the
+# dividers dim gray.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -129,10 +130,11 @@ def _color(ctx, key):
     return TEXT_COLORS.get(_s(ctx, key, "White"), "#FFFFFF")
 
 # Meteorological temperature colors: the 10-degree bands of a TV/NWS
-# temperature map, Fahrenheit, purple when frigid through blue, green, yellow
-# and orange to red when hot.
+# temperature map, Fahrenheit, white when bitter cold, then purple through
+# blue, green, yellow and orange to red when hot.
 TEMP_BANDS = [
-    [0, "#CC66FF"],     # below 0
+    [-10, "#FFFFFF"],   # below -10
+    [0, "#CC66FF"],     # -10 to -1
     [10, "#9966FF"],    # 0s
     [20, "#3366FF"],    # 10s
     [32, "#3399FF"],    # 20s to freezing
@@ -151,13 +153,6 @@ def temp_scale_color(f):
         if f < band[0]:
             return band[1]
     return TEMP_HOT
-
-def temp_color(ctx, f):
-    # "Weather map" colors the reading by its value; a named color is fixed.
-    mode = _s(ctx, "tempcolormode", "Weather map")
-    if mode == "Weather map":
-        return temp_scale_color(f)
-    return TEXT_COLORS.get(mode, "#FFFFFF")
 
 # ---------- calendar ----------
 
@@ -376,6 +371,13 @@ def _first(d, key):
 def whole(v):
     return int(v + 0.5) if v >= 0 else int(v - 0.5)
 
+def deg(ctx, f):
+    # Weather arrives in Fahrenheit; show it whole in the chosen unit. The
+    # color scale always reads the Fahrenheit value, so 20C is 68F's color.
+    if _s(ctx, "units", "F") == "C":
+        return whole((f - 32) * 5 / 9)
+    return whole(f)
+
 def sun_time(s):
     # Local ISO time under timezone=auto: "2026-09-14T06:32" -> "6:32".
     if s == None or len(s) < 16:
@@ -421,7 +423,7 @@ def next_hours(wxj, n):
         if t == None or code == None:
             continue
         cover = hourly.get("cloud_cover", [])
-        out.append([hour_label(str(times[i])), whole(t), int(code),
+        out.append([hour_label(str(times[i])), t, int(code),
                     rain, int(hourly["is_day"][i] or 0) == 1,
                     cover[i] if i < len(cover) else None])
     return out
@@ -625,8 +627,8 @@ def today(c, ctx):
     cover = cur.get("cloud_cover", None)
     draw_condition(c, code, is_day, _moon_phase(ctx), cover, rx, 7, 2)
 
-    tcolor = temp_color(ctx, whole(temp))
-    ts = str(whole(temp))
+    tcolor = temp_scale_color(whole(temp))
+    ts = str(deg(ctx, temp))
     tx = rx + 18 + 4
     c.text(ts, tx, 8, font = "10x16", color = tcolor)
     ring_x = tx + c.text_width(ts, "10x16") + 1
@@ -642,8 +644,8 @@ def today(c, ctx):
     lo = _first(daily, "temperature_2m_min")
     rows = []
     if hi != None and lo != None:
-        rows.append(["H", str(whole(hi)), 10])
-        rows.append(["L", str(whole(lo)), 18])
+        rows.append(["H", str(deg(ctx, hi)), 10])
+        rows.append(["L", str(deg(ctx, lo)), 18])
     hum = cur.get("relative_humidity_2m", None)
     if hum != None:
         rows.append(["HUM", str(whole(hum)) + "%", 26])
@@ -671,7 +673,7 @@ def hour_cell(c, ctx, h, phase, x, y):
     c.text(h[0], x, y, font = "4x5", color = LABEL)
     draw_condition(c, h[2], h[4], phase, h[5], x, y + 6, 1)
     tx = x + c.text_width("12A", "4x5") + 2
-    ts = str(h[1])
+    ts = str(deg(ctx, h[1]))
     c.text(ts, tx, y + 1, font = "5x7", color = "white")
     _bmp(c, RING_SMALL, tx + c.text_width(ts, "5x7") + 1, y + 1, "white", 1)
     rain = "--" if h[3] == None else str(whole(h[3])) + "%"
