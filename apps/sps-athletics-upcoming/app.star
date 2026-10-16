@@ -68,6 +68,12 @@ OPP_ICON = 22  # opponent logo — its name sits beside it, not underneath
 
 CALENDAR_URL = "https://athletics.sps.edu/services/responsive-calendar.ashx"
 
+# Only 7 game slots exist (8-page cap), so when a week has more than 7 games
+# the slots take turns: every ROTATE_MINUTES they all advance to the next
+# block of 7 games, so every game gets shown eventually.
+ROTATE_MINUTES = 3
+SLOTS = 7
+
 FEED_HEADERS = {
     # athletics.sps.edu's WAF soft-blocks the default "python-requests" UA
     # with a 404 — confirmed by comparing curl (200) against a bare
@@ -597,11 +603,27 @@ def week_matches(ctx, want_played):
     monday = week_monday_days(ctx)
     events, any_ok = fetch_calendar(ctx)
     matches = []
-    for i in range(7):
+    # Start at TODAY and run forward through Sunday, then wrap to the earlier
+    # days of the week (already-played results), so today's and upcoming
+    # games always come first and are never crowded out by Monday/Tuesday.
+    today_i = ctx.now.weekday
+    order = list(range(today_i, 7)) + list(range(0, today_i))
+    for i in order:
         y, m, d = date_from_days(monday + i)
         for e in events_for_day(events, y, m, d, want_played):
             matches.append((i, e))
     return matches, any_ok
+
+def rotation_block(ctx):
+    mins = days_since_epoch(ctx.now.year, ctx.now.month, ctx.now.day) * 1440 + ctx.now.hour * 60 + ctx.now.minute
+    return mins // ROTATE_MINUTES
+
+def pick_index(ctx, slot_index, n):
+    """7 or fewer games: each slot just takes its own game (no shuffling).
+    More than 7: all slots advance together, 7 games at a time."""
+    if n <= SLOTS:
+        return slot_index % n
+    return (rotation_block(ctx) * SLOTS + slot_index) % n
 
 def render_upcoming_slot(c, ctx, slot_index):
     # want_played=None: this week's games either way — not-yet-played AND
@@ -617,7 +639,7 @@ def render_upcoming_slot(c, ctx, slot_index):
     if len(matches) == 0:
         empty_card(c, "THIS WEEK", ["NO GAMES", "SCHEDULED"])
         return
-    weekday_index, e = matches[slot_index % len(matches)]
+    weekday_index, e = matches[pick_index(ctx, slot_index, len(matches))]
     m = int(e["date"][5:7])
     d = int(e["date"][8:10])
     when = "%s %s %d" % (DOW_ABBR[weekday_index], MON_ABBR[m], d)
