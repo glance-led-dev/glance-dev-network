@@ -1,0 +1,38 @@
+gdn: 1
+id: pt-heat-category
+version: 0.1.0
+name: PT Heat Category
+author: Shayan
+description: Estimated heat category flag (WBGT) at your Army post right now and at tomorrow's PT formation, with air and feels-like temps.
+category: Weather
+entry: app.star
+
+width: 128
+height: 32
+refresh: 1800
+
+pages: [now, pt]
+
+inputs:
+  - key: post
+    type: choice
+    app_input_type: dropdown
+    label: Installation
+    default: "FORT CAMPBELL"
+    choices: ["FORT BRAGG", "FORT HOOD", "FORT CAMPBELL", "FORT STEWART", "FORT BENNING", "FORT BLISS", "FORT CARSON", "JBLM", "FORT DRUM", "FORT RILEY", "FORT SILL", "FORT POLK", "FORT LEONARD WOOD", "FORT JACKSON", "FORT GORDON", "FORT KNOX", "FORT LEE", "FORT RUCKER", "FORT SAM HOUSTON", "FORT HUACHUCA", "FORT IRWIN", "FORT LEAVENWORTH", "FORT WAINWRIGHT", "SCHOFIELD BARRACKS", "CAMP HUMPHREYS", "GRAFENWOEHR", "VICENZA", "CUSTOM ZIP"]
+    options: ["FORT BRAGG", "FORT HOOD", "FORT CAMPBELL", "FORT STEWART", "FORT BENNING", "FORT BLISS", "FORT CARSON", "JBLM", "FORT DRUM", "FORT RILEY", "FORT SILL", "FORT POLK", "FORT LEONARD WOOD", "FORT JACKSON", "FORT GORDON", "FORT KNOX", "FORT LEE", "FORT RUCKER", "FORT SAM HOUSTON", "FORT HUACHUCA", "FORT IRWIN", "FORT LEAVENWORTH", "FORT WAINWRIGHT", "SCHOFIELD BARRACKS", "CAMP HUMPHREYS", "GRAFENWOEHR", "VICENZA", "CUSTOM ZIP"]
+    help: Your post. Pick CUSTOM ZIP and fill in the ZIP below for anywhere else in the US.
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: ZIP code (CUSTOM ZIP only)
+    default: ""
+    help: A US ZIP code, used only when Installation is CUSTOM ZIP.
+  - key: pttime
+    type: choice
+    app_input_type: dropdown
+    label: PT formation time
+    default: "0630"
+    choices: ["0530", "0600", "0630", "0700"]
+    options: ["0530", "0600", "0630", "0700"]
+    help: The second page forecasts conditions for your next PT formation at this time.
