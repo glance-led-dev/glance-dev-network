@@ -966,3 +966,88 @@ def player_stats_4(c, ctx):
         player_stats_block(c, data, 12)
     else:
         player_leaders_summary(c, data)
+
+# ------------------------------------------------------------
+# ASHL TITLE PAGE
+# ------------------------------------------------------------
+
+ASHL_TITLE_MARK = [
+    "............................",
+    "...........RRRRRR...........",
+    "........RRRRRRRRRRRR........",
+    ".......RRRR......RRRR.......",
+    ".....RRR............RRR.....",
+    "....RRR..............RRR....",
+    "....RR................RR....",
+    "...RR......WWWWWWWWWWWWRR...",
+    "..RR.......WWWWWWWWWWWW.RR..",
+    "..RR......WWWWWWWWWWWW..RR..",
+    "..RR......WWWWWWWWWWWW..RR..",
+    ".RR.......WWW.......WW...RR.",
+    ".RR......WWWW......WW....RR.",
+    ".RR......WWW.......WW....RR.",
+    ".RR......WWWWWWWWWWW.....RR.",
+    ".RR.....WWWWWWWWWWWW.....RR.",
+    ".RR.....WWWW...WWWWW.....RR.",
+    "..RR...WWWW...WWWWW.....RR..",
+    "..RR...WWWW...WWWWW.....RR..",
+    "..RR...WWWW...WWWWW.....RR..",
+    "...RR.WWWW...WWWWW.....RR...",
+    "....RRWWWW...WWWWW....RR....",
+    "....RRR..............RRR....",
+    ".....RRR............RRR.....",
+    ".......RRRR......RRRR.......",
+    "........RRRRRRRRRRRR........",
+    "...........RRRRRR...........",
+    "............................",
+]
+
+
+def draw_ashl_title_mark(c, x, y):
+    for iy in range(len(ASHL_TITLE_MARK)):
+        row = ASHL_TITLE_MARK[iy]
+        for ix in range(len(row)):
+            if row[ix] == "R":
+                c.pixel(x + ix, y + iy, "#EC0641")
+            elif row[ix] == "W":
+                c.pixel(x + ix, y + iy, "#FFFFFF")
+
+
+def selected_ashl_team_name(data):
+    if not data:
+        return "ASHL HOCKEY"
+
+    # The Worker reports the requested team ID as data.team.
+    team_id = str(data.get("team", "") or "")
+    standings = (data.get("standings", {}) or {}).get("data", []) or []
+    for row in standings:
+        team = row.get("team", {}) or {}
+        if str(team.get("id", "") or "") == team_id:
+            name = team.get("name_full", "") or team.get("name", "")
+            if name:
+                return str(name)
+
+    # If this team is absent from standings, check its scheduled games.
+    games = (data.get("games", {}) or {}).get("data", []) or []
+    for game in games:
+        home = game.get("homeTeam", {}) or {}
+        away = game.get("visitingTeam", {}) or {}
+        for team in [home, away]:
+            if str(team.get("id", "") or "") == team_id:
+                name = team.get("name_full", "") or team.get("name", "")
+                if name:
+                    return str(name)
+
+    return "ASHL HOCKEY"
+
+
+def title_page(c, ctx):
+    c.fill(BLACK)
+    draw_ashl_title_mark(c, 2, 2)
+    data = fetch_data(ctx)
+    team_name = selected_ashl_team_name(data)
+    team_text, team_font = fit_text(
+        c, team_name, ["6x8", "5x7", "4x5"], 154,
+    )
+    c.text(team_text, 35, 5, font = team_font, color = WHITE)
+    c.text("SCHEDULE & STATS", 35, 19, font = "6x8", color = YELLOW)

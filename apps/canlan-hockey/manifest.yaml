@@ -13,6 +13,7 @@ height: 32
 refresh: 28800
 
 pages:
+  - title_page
   - schedule
   - standings_1
   - standings_2
