@@ -1,0 +1,26 @@
+id: forecast-discussion
+name: Forecast Discussion
+author: cfdmb
+category: Weather
+description: Your local National Weather Service forecasters' Area Forecast Discussion in plain English - the key messages and what changed since the last forecast, with the weather jargon translated, plus picture tiles for the biggest weather topics checked against your own zip code's forecast.
+width: 192
+height: 32
+# Note for the GDN crew: NWS offices issue a new discussion every few
+# hours (about 6 a day, typically 4-5 hours apart); 900 shows each new
+# one within about 25 minutes, and each issued discussion is cached for a
+# day since it never changes.
+refresh: 900
+pages:
+- intro
+- point1
+- point2
+- point3
+- point4
+- point5
+inputs:
+- key: zip
+  type: string
+  app_input_type: free-text
+  label: Your zip code
+  default: ""
+  help: A 5-digit US zip code, e.g. 27960. Picks the National Weather Service office that forecasts for you.

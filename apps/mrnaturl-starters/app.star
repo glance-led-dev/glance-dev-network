@@ -88,18 +88,8 @@ def screens(c, ctx, data, part = "games"):
 
 def pick(c, ctx, data, page):
     scr = screens(c, ctx, data)
-    n = len(scr)
-    if n >= PAGES:
-        # Split the games into as few sets of at most PAGES as needed (sized
-        # evenly, one set per 10 minutes), then spread the current set across
-        # all the pages in order.
-        blocks = (n + PAGES - 1) // PAGES
-        block = (ctx.now.unix // ROTATE_SECONDS) % blocks
-        lo = block * n // blocks
-        hi = (block + 1) * n // blocks
-        return scr[lo + page * (hi - lo) // PAGES]
-    # A light night: today's games once each, then last night's results.
     results = screens(c, ctx, data, "results")
+    n = len(scr)
     both = scr + results
     if len(both) == 0:
         return None
@@ -107,14 +97,30 @@ def pick(c, ctx, data, page):
         # Pages can't be skipped, so a short list runs through again in
         # order: a card never shows twice in a row unless it's the only one.
         return both[page % len(both)]
-    # More results than the pages left: a new set of them every 10 minutes.
-    if page < n:
-        return scr[page]
-    slots = PAGES - n
-    nr = len(results)
-    sets = (nr + slots - 1) // slots
-    cur = (ctx.now.unix // ROTATE_SECONDS) % sets
-    return results[(cur * slots + page - n) % nr]
+    tick = ctx.now.unix // ROTATE_SECONDS
+    if n <= PAGES:
+        # A light night: today's games once each, then last night's
+        # results, a new set of them every 10 minutes.
+        if page < n:
+            return scr[page]
+        slots = PAGES - n
+        nr = len(results)
+        sets = (nr + slots - 1) // slots
+        return results[((tick % sets) * slots + page - n) % nr]
+    # More games than pages: eight different games at a time, a new set
+    # every 10 minutes. The last set's spare pages show last night's
+    # results (or, without any, the first games again), so no game ever
+    # shows twice in the same pass.
+    sets = (n + PAGES - 1) // PAGES
+    i = (tick % sets) * PAGES + page
+    if i < n:
+        return scr[i]
+    extra = i - n
+    slots = sets * PAGES - n
+    if len(results) >= slots:
+        return results[((tick // sets) * slots + extra) % len(results)]
+    filler = results + scr
+    return filler[extra % len(filler)]
 
 # --- logos ------------------------------------------------------------------
 
