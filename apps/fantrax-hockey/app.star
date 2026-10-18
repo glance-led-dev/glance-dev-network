@@ -377,6 +377,79 @@ def draw_matchup(c, ctx, index):
 # PAGES
 # ------------------------------------------------------------
 
+# ------------------------------------------------------------
+# FANTRAX TITLE PAGE
+# ------------------------------------------------------------
+
+FANTRAX_MARK = [
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "BBBBBWWWWBBBBBBBBBBBBBWWWWBB",
+    "BBBBBWWWWBBBBBBBBBBBBBWWWWBB",
+    "BBBBBWWWWBBBBGGGGBBBBWWWWBBB",
+    "BBBBBWWWWBBBGGGGGGBBBWWWWBBB",
+    "BBBBBWWWWBBBGGGGGGBBBWWWWBBB",
+    "BBBBBWWWWWBBGGGGGBBBWWWWBBBB",
+    "BBBBBBWWWWBBBGGGGBBWWWWWBBBB",
+    "BBBBBBWWWWWBBBBBBBWWWWWBBBBB",
+    "BBBBBBWWWWWWBBBBBBWWWWBBBBBB",
+    "BBBBBBBWWWWWWBBBBBBBWBBBBBBB",
+    "BBBBBBBBWWWWWWWBBBBBBBBBBBBB",
+    "BBBBBBBBBWWWWWWWWBBBBBBBBBBB",
+    "BBBBBBBBBBWWWWWWWWWBBBBBBBBB",
+    "BBBBBBBBBBBBWWWWWWWWBBBBBBBB",
+    "BBBBBBBWBBBBBBWWWWWWWBBBBBBB",
+    "BBBBBBWWWBBBBBBBWWWWWBBBBBBB",
+    "BBBBBWWWWWBBBBBBBWWWWWBBBBBB",
+    "BBBBWWWWWBBBBBBBBWWWWWBBBBBB",
+    "BBBBWWWWBBBBBBBBBBWWWWBBBBBB",
+    "BBBWWWWBBBBBBBBBBBWWWWWBBBBB",
+    "BBBWWWWBBBBBBBBBBBBWWWWBBBBB",
+    "BBWWWWBBBBBBBBBBBBBWWWWBBBBB",
+    "BBWWWWBBBBBBBBBBBBBWWWWBBBBB",
+    "BBWWWWBBBBBBBBBBBBBWWWWBBBBB",
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+]
+
+def draw_fantrax_mark(c, x, y):
+    for iy in range(28):
+        row = FANTRAX_MARK[iy]
+        for ix in range(28):
+            color = "#0A5598"
+            if row[ix] == "W":
+                color = "#F6F6F8"
+            elif row[ix] == "G":
+                color = "#45E82D"
+            c.pixel(x + ix, y + iy, color)
+
+
+def title_page(c, ctx):
+    c.fill("black")
+    draw_fantrax_mark(c, 1, 2)
+
+    # The Worker already provides the league name and scoring period.
+    # Blank credentials use the existing fictional/demo response.
+    data = fetch_data(ctx)
+    league = {}
+    schedule = {}
+    if data:
+        league = data.get("league", {}) or {}
+        schedule = data.get("schedule", {}) or {}
+
+    league_name = str(league.get("name", "") or "FANTASY HOCKEY").strip()
+    active_period = schedule.get("active_period")
+    subtitle = "WEEKLY MATCHUPS"
+    if active_period:
+        subtitle = "WEEK " + str(active_period) + " MATCHUPS"
+
+    league_name = fit_team_name(c, league_name, 154)
+    subtitle = fit_team_name(c, subtitle, 154)
+
+    c.text(league_name, 35, 5, font = "6x8", color = "white")
+    c.text(subtitle, 35, 19, font = "6x8", color = "amber")
+
+
 def matchup1(c, ctx):
     draw_matchup(c, ctx, 0)
 

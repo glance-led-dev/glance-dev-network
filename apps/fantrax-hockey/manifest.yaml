@@ -22,6 +22,7 @@ inputs:
   help: Connect Fantrax at fantrax-public.mdarpino.workers.dev/connect and paste the
     token shown after login.
 pages:
+- title_page
 - matchup1
 - matchup2
 - matchup3
