@@ -374,6 +374,79 @@ def draw_standings(c, ctx, start_index):
 # PAGES
 # ------------------------------------------------------------
 
+
+# ------------------------------------------------------------
+# FANTRAX STANDINGS TITLE PAGE
+# ------------------------------------------------------------
+
+FANTRAX_MARK = [
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "BBBBBWWWWBBBBBBBBBBBBBWWWWBB",
+    "BBBBBWWWWBBBBBBBBBBBBBWWWWBB",
+    "BBBBBWWWWBBBBGGGGBBBBWWWWBBB",
+    "BBBBBWWWWBBBGGGGGGBBBWWWWBBB",
+    "BBBBBWWWWBBBGGGGGGBBBWWWWBBB",
+    "BBBBBWWWWWBBGGGGGBBBWWWWBBBB",
+    "BBBBBBWWWWBBBGGGGBBWWWWWBBBB",
+    "BBBBBBWWWWWBBBBBBBWWWWWBBBBB",
+    "BBBBBBWWWWWWBBBBBBWWWWBBBBBB",
+    "BBBBBBBWWWWWWBBBBBBBWBBBBBBB",
+    "BBBBBBBBWWWWWWWBBBBBBBBBBBBB",
+    "BBBBBBBBBWWWWWWWWBBBBBBBBBBB",
+    "BBBBBBBBBBWWWWWWWWWBBBBBBBBB",
+    "BBBBBBBBBBBBWWWWWWWWBBBBBBBB",
+    "BBBBBBBWBBBBBBWWWWWWWBBBBBBB",
+    "BBBBBBWWWBBBBBBBWWWWWBBBBBBB",
+    "BBBBBWWWWWBBBBBBBWWWWWBBBBBB",
+    "BBBBWWWWWBBBBBBBBWWWWWBBBBBB",
+    "BBBBWWWWBBBBBBBBBBWWWWBBBBBB",
+    "BBBWWWWBBBBBBBBBBBWWWWWBBBBB",
+    "BBBWWWWBBBBBBBBBBBBWWWWBBBBB",
+    "BBWWWWBBBBBBBBBBBBBWWWWBBBBB",
+    "BBWWWWBBBBBBBBBBBBBWWWWBBBBB",
+    "BBWWWWBBBBBBBBBBBBBWWWWBBBBB",
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+]
+
+def draw_fantrax_mark(c, x, y):
+    for iy in range(28):
+        row = FANTRAX_MARK[iy]
+        for ix in range(28):
+            color = "#0A5598"
+            if row[ix] == "W":
+                color = "#F6F6F8"
+            elif row[ix] == "G":
+                color = "#45E82D"
+            c.pixel(x + ix, y + iy, color)
+
+
+def fit_standings_title(c, value, max_width):
+    value = str(value).upper()
+    for maximum in range(len(value), 0, -1):
+        candidate = value[:maximum]
+        if c.text_width(candidate, font = "6x8") <= max_width:
+            return candidate
+    return ""
+
+
+def title_page(c, ctx):
+    c.fill("black")
+    draw_fantrax_mark(c, 1, 2)
+
+    # Use the existing Worker response. No extra GDN inputs needed.
+    data = fetch_data(ctx)
+    league_name = "FANTASY HOCKEY"
+    if data:
+        league = data.get("league", {}) or {}
+        if league.get("name"):
+            league_name = str(league.get("name")).strip()
+
+    league_name = fit_standings_title(c, league_name, 154)
+    c.text(league_name, 35, 5, font = "6x8", color = "white")
+    c.text("SEASON STANDINGS", 35, 19, font = "6x8", color = "amber")
+
 def standings1(c, ctx):
     draw_standings(c, ctx, 0)
 

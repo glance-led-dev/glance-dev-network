@@ -25,6 +25,7 @@ inputs:
     help: Connect Fantrax at https://fantrax-public.mdarpino.workers.dev/connect and paste the token shown after login.
 
 pages:
+  - title_page
   - standings1
   - standings2
   - standings3
