@@ -1,0 +1,28 @@
+gdn: 1
+id: sleep-panel
+version: 0.1.0
+name: Sleep Panel
+author: joelfullyseeking
+description: "Last night's sleep, as a picture: the app fetches a 64x32 feed image (drawn fresh each morning by a helper) and puts it on the wall. No feed configured, it shows a quiet placeholder instead."
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 1800
+
+pages: [panel]
+
+inputs:
+  - key: feedurl
+    type: string
+    app_input_type: free-text
+    label: Feed image URL
+    default: ""
+    help: URL of a PNG drawn at (or near) 64x32 — e.g. a hosted sleep card updated each morning. Leave empty to show the placeholder panel.
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Label
+    default: "SLEEP"
+    help: Shown on the placeholder panel when no feed image is available.
