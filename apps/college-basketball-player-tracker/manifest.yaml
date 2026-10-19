@@ -1,7 +1,7 @@
 gdn: 1
 id: college-basketball-player-tracker
 version: 0.4.0
-name: Team Tracker (NCAAB)
+name: Team Boxscore Tracker (NCAA)
 author: JSW41
 description: Men's college basketball tracker with seven player pages that switch automatically between season averages and live/final stats.
 category: Sports

@@ -1,4 +1,4 @@
-# Team Tracker (NCAAB)
+# Team Boxscore Tracker (NCAA)
 
 Seven 128×32 player cards for a selected men's Division I basketball team. During games, the rotation includes the five starters and two highest-scoring bench players, sorted by points. Between games it shows season averages.
 

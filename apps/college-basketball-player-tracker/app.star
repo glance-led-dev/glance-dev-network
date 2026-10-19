@@ -1344,7 +1344,11 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
         draw_compact_bio(c, value, detail_x, 3, "#A4B0BF")
         detail_x += compact_bio_width(c, value)
     draw_team_logo(c, team, 116, 0, border)
-    large_tracker_jersey(c, primary, border, athlete["jersey"])
+    # Michigan wears maize; keep the school's navy panel and other accents unchanged.
+    jersey_color = "#FFCB05" if str(team.get("id")) == "130" else primary
+    if str(team.get("id")) == "2097":
+        jersey_color = "#EA7125"  # Official Campbell Orange: brand.campbell.edu/visual-identity/color-palette/
+    large_tracker_jersey(c, jersey_color, border, athlete["jersey"])
     if game.get("mode") != "AVERAGES":
         state = game.get("state")
     labels = ["PTS", "REB", "AST", "STL", "BLK"]
