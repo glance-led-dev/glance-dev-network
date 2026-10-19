@@ -1,0 +1,33 @@
+gdn: 1
+id: day-500-countdown
+version: 0.1.0
+name: Day 500 Countdown
+author: joelfullyseeking
+description: "The road to day 500 — days remaining to the milestone, counted down in gold. After it passes, the panel reads 500+ and names the day you are on."
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [countdown]
+
+inputs:
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Label
+    default: "DAYS TO 500"
+    help: Shown above the number. The panel fonts are uppercase only.
+  - key: target
+    type: string
+    app_input_type: free-text
+    label: Milestone date
+    default: "2027-01-11"
+    help: The day the milestone lands, YYYY-MM-DD. Day 500 of a streak that began Aug 29, 2025.
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#E8B33A"
