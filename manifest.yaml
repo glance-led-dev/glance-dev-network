@@ -1,0 +1,46 @@
+gdn: 1
+id: my-teams-board
+version: 0.1.0
+name: My Teams Board
+author: joelfullyseeking
+description: "Only your teams — Steelers, Cardinals, Suns, Dodgers and Arizona State. The live score, today's game, or what's next. Nobody else's teams, no league noise."
+category: Sports
+entry: app.star
+
+width: 64
+height: 32
+refresh: 900
+
+pages: [steelers, cardinals, suns, dodgers, asu]
+
+inputs:
+  - key: steelersid
+    type: string
+    app_input_type: free-text
+    label: Steelers ESPN team ID
+    default: "23"
+    help: Pittsburgh Steelers. Change only if you swap the page to another NFL team.
+  - key: cardinalsid
+    type: string
+    app_input_type: free-text
+    label: Cardinals ESPN team ID
+    default: "22"
+    help: Arizona Cardinals. Change only if you swap the page to another NFL team.
+  - key: sunsid
+    type: string
+    app_input_type: free-text
+    label: Suns ESPN team ID
+    default: "21"
+    help: Phoenix Suns. Change only if you swap the page to another NBA team.
+  - key: dodgersid
+    type: string
+    app_input_type: free-text
+    label: Dodgers ESPN team ID
+    default: "19"
+    help: Los Angeles Dodgers. Change only if you swap the page to another MLB team.
+  - key: asuid
+    type: string
+    app_input_type: free-text
+    label: Arizona State ESPN team ID
+    default: "9"
+    help: Arizona State Sun Devils. Change only if you swap the page to another college team.
