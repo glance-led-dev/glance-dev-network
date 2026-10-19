@@ -1,0 +1,22 @@
+gdn: 1
+id: morning-forecast
+version: 0.1.0
+name: Morning Forecast
+author: joelfullyseeking
+description: "The wake-up forecast for one place: the temperature now, today's high and low and sky, and tomorrow on page two. National Weather Service, in plain words."
+category: Weather
+entry: app.star
+
+width: 64
+height: 32
+refresh: 1800
+
+pages: [today, tomorrow]
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Zip code
+    default: "15010"
+    help: US zip code. NWS covers the US only.
