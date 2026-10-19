@@ -1,0 +1,27 @@
+gdn: 1
+id: simlandi-flag
+version: 0.1.0
+name: Simlandi Flag
+author: joelfullyseeking
+description: "Shot day, on the wall. Every other Tuesday is a Simlandi day: the panel says SHOT DAY in gold, and on every other day it quietly counts down to the next one and names the date."
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [shot]
+
+inputs:
+  - key: anchor
+    type: string
+    app_input_type: free-text
+    label: A known shot date
+    default: "2026-10-20"
+    help: Any one date in the every-other-week series, YYYY-MM-DD. The 14-day cycle is counted from here in both directions.
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#E8B33A"
