@@ -1,0 +1,33 @@
+gdn: 1
+id: columbia-countdown
+version: 0.1.0
+name: Columbia Countdown
+author: joelfullyseeking
+description: "Days to Columbia — the November trip to South Carolina, counted down on the wall. During the trip the panel just says COLUMBIA!; after the bags are unpacked, it goes quiet."
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [countdown]
+
+inputs:
+  - key: start
+    type: string
+    app_input_type: free-text
+    label: Trip start date
+    default: "2026-11-05"
+    help: First day of the trip, YYYY-MM-DD.
+  - key: end
+    type: string
+    app_input_type: free-text
+    label: Trip end date
+    default: "2026-11-08"
+    help: Last day of the trip, YYYY-MM-DD. After this date the panel shows a quiet dash.
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#7CC4E8"
