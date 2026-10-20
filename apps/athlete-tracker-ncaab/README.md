@@ -1,5 +1,7 @@
 # Athlete Tracker (NCAAB)
 
+Live/final cards show `OPP #N` when the opponent appears in ESPN's explicitly named AP Top 25 poll for the game's season (30-minute cache, no paid key). Missing/unranked AP results and other polls produce no badge. The badge uses measured header space without moving score/clock/overtime anchors; optional biography details yield before the player's name. This is the latest available poll, not a reconstructed historical game-day ranking.
+
 Track one men's Division I college basketball player on two consecutive pages. Page 1 always shows the selected player's season averages. Page 2 shows live statistics during a game, then the most recent ESPN final after it ends.
 
 Both pages use the same approved layout as Team Tracker (NCAAB), including the player's name, jersey number, position, height, class, team logo, and PTS/REB/AST/STL/BLK.

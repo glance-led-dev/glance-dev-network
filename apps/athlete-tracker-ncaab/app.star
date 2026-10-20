@@ -874,6 +874,7 @@ def game_data(ctx):
         "players": players,
         "team": team.get("team") or {},
         "opponent": (opponent or {}).get("team") or {},
+        "opponent_ap_rank": current_opponent_ap(league, opponent, (data.get("header") or {}).get("season", {}).get("year")),
         "team_home_away": team.get("homeAway", "away"),
         "team_score": clean(team.get("score"), "0"),
         "opponent_score": clean((opponent or {}).get("score"), "0"),
@@ -883,6 +884,23 @@ def game_data(ctx):
         "clock": clean(status.get("displayClock")),
         "mode": "GAME",
     }
+
+def current_opponent_ap(league, competitor, season):
+    # Use the named AP poll only, never an unspecified curated/Coaches rank.
+    if competitor == None or season == None:
+        return ""
+    payload = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/rankings?season=%s" % (league, season), 1800)
+    if payload == None:
+        return ""
+    wanted = str((competitor.get("team") or {}).get("id", ""))
+    for poll in payload.get("rankings", []):
+        if poll.get("name") != "AP Top 25" or str((poll.get("season") or {}).get("year")) != str(season):
+            continue
+        for row in poll.get("ranks", []):
+            rank = str(row.get("current", ""))
+            if str((row.get("team") or {}).get("id")) == wanted and rank.isdigit() and int(rank) >= 1 and int(rank) <= 25:
+                return rank
+    return ""
 
 def points_value(item):
     text = clean(item.get("pts"), "0")
@@ -6633,12 +6651,17 @@ def render_athlete(c, ctx, game, athlete):
     detail_width = 0
     for value in details:
         detail_width += compact_bio_width(c, value)
-    name_budget = 89 - detail_width - 2 * len(details)
+    opponent_rank = clean(game.get("opponent_ap_rank"), "") if game.get("mode") != "AVERAGES" else ""
+    rank_badge = "OPP #" + opponent_rank if opponent_rank.isdigit() and int(opponent_rank) >= 1 and int(opponent_rank) <= 25 else ""
+    # Keep all score/clock/OT anchors unchanged; the AP opponent badge owns a
+    # measured header zone. Optional biography yields before player identity.
+    header_width = 89 - (c.text_width(rank_badge, "picopixel") + 3 if rank_badge != "" else 0)
+    name_budget = header_width - detail_width - 2 * len(details)
     # Identity takes priority over optional biography on unusually long names.
     if c.text_width(player_name, "picopixel") > name_budget:
         details = []
         detail_width = 0
-        name_budget = 89
+        name_budget = header_width
     if c.text_width(player_name, "picopixel") > name_budget:
         shortened = ""
         for letter in player_name:
@@ -6651,13 +6674,16 @@ def render_athlete(c, ctx, game, athlete):
             name_font = candidate
             break
     name_width = c.text_width(player_name, name_font)
-    gap = min(4, max(2, (89 - name_width - detail_width) // max(1, len(details))))
+    gap = min(4, max(2, (header_width - name_width - detail_width) // max(1, len(details))))
     c.text_stroke(player_name, 25, 1 if name_font == "5x7" else 2, font = name_font, color = INK, stroke = border, thickness = 1)
     detail_x = 25 + name_width
     for value in details:
         detail_x += gap
         draw_compact_bio(c, value, detail_x, 3, "#A4B0BF")
         detail_x += compact_bio_width(c, value)
+    if rank_badge != "":
+        tight_rank_color = readable_team_accent(game.get("opponent", {}), background)
+        c.text(rank_badge, 114, 2, font = "picopixel", color = tight_rank_color, align = "right")
     draw_team_logo(c, team, 116, 0, border)
     # Michigan wears maize; keep the school's navy panel and other accents unchanged.
     jersey_color = "#FFCB05" if str(team.get("id")) == "130" else primary
