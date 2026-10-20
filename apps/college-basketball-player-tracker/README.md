@@ -1,5 +1,7 @@
 # Team Boxscore Tracker (NCAA)
 
+Ranked opponents: live/final cards show a measured `OPP #N` header badge from ESPN's explicitly named AP Top 25 poll for the game's season. The poll response is cached for 30 minutes and uses no paid key. Generic curated ranks and Coaches Poll ranks are not used. Unranked/missing AP results show no badge. Optional biography space yields to the badge and player name; score, clock and overtime anchors are unchanged. The latest available poll is used, not a reconstructed historical game-day poll.
+
 Seven 128×32 player cards for a selected men's Division I basketball team. During games, the rotation includes the five starters and two highest-scoring bench players, sorted by points. Between games it shows season averages.
 
 ## Display
