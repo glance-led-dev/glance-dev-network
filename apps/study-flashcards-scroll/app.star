@@ -1,14 +1,32 @@
 def fetch_data(ctx):
-    domain = ctx.inputs.get("deckurl", "")
+    domain = ctx.inputs.get("deckurl", "").strip()
     if not domain:
         return None
-    resp = http.get("https://" + domain)
+    if domain.startswith("https://"):
+        domain = domain[len("https://"):]
+    resp = http.get("https://" + domain, ttl_seconds=3600)
     if resp["status_code"] != 200:
         return None
-    return resp["json"]
+    data = resp["json"]
+
+    # Accept either a bare array of cards or {"title": ..., "terms": [...]}
+    if type(data) == "list":
+        return {"title": "STUDY DECK", "terms": clean_terms(data)}
+    if type(data) == "dict":
+        return {"title": str(data.get("title", "STUDY DECK")), "terms": clean_terms(data.get("terms", []))}
+    return None
+
+def clean_terms(items):
+    if type(items) != "list":
+        return []
+    out = []
+    for item in items:
+        if type(item) == "dict" and item.get("term") and item.get("definition"):
+            out.append(item)
+    return out
 
 def current_index(ctx, count):
-    return (ctx.now.unix // 60) % count
+    return (ctx.now.unix // 300) % count
 
 def wrap_text(text, max_chars):
     words = text.split(" ")
@@ -25,15 +43,20 @@ def wrap_text(text, max_chars):
         lines.append(current)
     return lines
 
+def setup_needed(c):
+    c.text_center("SETUP NEEDED", 12, font="6x8", color="red")
+
+def no_terms(c):
+    c.text_center("NO TERMS", 12, font="6x8", color="red")
+
 def subject(c, ctx):
     c.clear()
     deck = fetch_data(ctx)
     if deck == None:
-        c.text_center("SETUP NEEDED", 12, font="6x8", color="red")
+        setup_needed(c)
         return
 
-    title = deck.get("title", "STUDY DECK")
-    lines = wrap_text(title, 16)
+    lines = wrap_text(deck["title"].upper(), 16)
     total = len(lines[:3])
     y = (32 - total * 10) // 2
     for line in lines[:3]:
@@ -44,22 +67,23 @@ def term(c, ctx):
     c.clear()
     deck = fetch_data(ctx)
     if deck == None:
-        c.text_center("SETUP NEEDED", 12, font="6x8", color="red")
+        setup_needed(c)
         return
 
-    terms = deck.get("terms", [])
+    terms = deck["terms"]
     if len(terms) == 0:
-        c.text_center("NO TERMS", 12, font="6x8", color="red")
+        no_terms(c)
         return
 
     idx = current_index(ctx, len(terms))
     entry = terms[idx]
-    full = entry.get("fullname", "")
+    name = str(entry["term"]).upper()
+    full = str(entry.get("fullname", "")).upper()
 
     if full == "":
-        c.text_center(entry["term"], 12, font="8x12", color="cyan")
+        c.text_center(name, 10, font="7x12", color="cyan")
     else:
-        c.text_center(entry["term"], 4, font="8x12", color="cyan")
+        c.text_center(name, 4, font="7x12", color="cyan")
         lines = wrap_text(full, 22)
         y = 20
         for line in lines[:2]:
@@ -70,16 +94,17 @@ def definition(c, ctx):
     c.clear()
     deck = fetch_data(ctx)
     if deck == None:
-        c.text_center("SETUP NEEDED", 12, font="6x8", color="red")
+        setup_needed(c)
         return
 
-    terms = deck.get("terms", [])
+    terms = deck["terms"]
     if len(terms) == 0:
+        no_terms(c)
         return
 
     idx = current_index(ctx, len(terms))
     entry = terms[idx]
-    lines = wrap_text(entry["definition"], 22)
+    lines = wrap_text(str(entry["definition"]).upper(), 22)
 
     shown = lines[:5]
     if len(lines) > 5:

@@ -5,7 +5,8 @@ description: Cycles through term/definition flashcards from any JSON deck you ho
 author: jkapera
 width: 128
 height: 32
-refresh: 60
+refresh: 300
+category: Education
 pages: [subject, term, definition]
 inputs:
   - key: deckurl
@@ -13,4 +14,4 @@ inputs:
     app_input_type: free-text
     label: Deck URL (no https://)
     default: ""
-    help: "Host a JSON array of {term, definition} objects anywhere public (GitHub raw works great) and paste the URL here, without https://"
+    help: "Host a JSON file anywhere public (GitHub raw works great) and paste the URL here, without https://. Use {\"title\": \"...\", \"terms\": [{\"term\": \"...\", \"definition\": \"...\"}]} or just the array of terms. Each term may also have a \"fullname\". A new card shows every 5 minutes."
