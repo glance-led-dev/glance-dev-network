@@ -4,7 +4,7 @@ author: GDN Community
 description: Pixel art of the Centennial lion mascot for a 64×32 Glance panel.
 width: 64
 height: 32
-refresh: 3600
+refresh: 86400
 pages:
   - live
 inputs: []
