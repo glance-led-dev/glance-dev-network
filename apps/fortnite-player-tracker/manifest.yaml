@@ -20,7 +20,7 @@ height: 32
 # list swaps its visible half once per render (see FRAME_SECONDS in
 # app.star). The underlying fortnite-api.com call per player is cached for
 # 5 min via ttl_seconds so this refresh cadence does not multiply API traffic.
-refresh: 60
+refresh: 900
 
 # One page per stat — a leaderboard of up to 8 players, ranked highest to
 # lowest. Capped at 8 on purpose: ranking needs one fortnite-api.com lookup
