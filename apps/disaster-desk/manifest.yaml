@@ -1,6 +1,6 @@
 gdn: 1
 id: disaster-desk
-version: 0.1.0
+version: 0.1.1
 name: Disaster Desk
 author: John McRae
 description: Latest official FEMA disaster declaration from OpenFEMA, nationally or by state. No API key required.

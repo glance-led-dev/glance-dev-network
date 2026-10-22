@@ -248,7 +248,8 @@ MISSION_TIMES = {
     "SPACEX CREW-9": (17, 17, 21, 21, 57, 7),
     "SPACEX CREW-10": (23, 3, 48, 15, 33, 44),
     "SPACEX CREW-11": (15, 43, 42, 8, 41, 36),
-    "SPACEX CREW-12": (10, 15, 55, 10, 15, 55),
+    "SPACEX CREW-12": (10, 15, 55, 15, 34, 26),
+    "SPACEX CREW-13": (15, 10, 6, 15, 10, 6),
     "SOYUZ TMA-1": (0, 49, 47, 2, 4, 25),
     "SOYUZ TMA-18M": (19, 42, 57, 4, 25, 50),
     "SOYUZ MS-19": (7, 42, 40, 11, 28, 1),
@@ -322,13 +323,13 @@ ABORTED_NAMES = ["SOYUZ MS-10"]
 # Real launch but no LAND event of its own -- the crew came home on a
 # different, separately tracked mission. The stored landing is the
 # astronaut's real return, so the duration is their true time in space.
-LAUNCH_ONLY_NAMES = ["SOYUZ TM-21", "SOYUZ TM-31", "SOYUZ TMA-16M", "SOYUZ MS-03", "SOYUZ MS-18", "SOYUZ MS-22", "SOYUZ MS-29", "STARLINER CFT", "SPACEX CREW-12"]
+LAUNCH_ONLY_NAMES = ["SOYUZ TM-21", "SOYUZ TM-31", "SOYUZ TMA-16M", "SOYUZ MS-03", "SOYUZ MS-18", "SOYUZ MS-22", "SOYUZ MS-29", "STARLINER CFT", "SPACEX CREW-13"]
 
 
 # Launched but not yet landed. Also in LAUNCH_ONLY_NAMES; the stored land
 # fields repeat the launch, and duration() shows elapsed time. On landing:
 # store the real land date/time and remove it from both lists.
-IN_FLIGHT_NAMES = ["SOYUZ MS-29", "SPACEX CREW-12"]
+IN_FLIGHT_NAMES = ["SOYUZ MS-29", "SPACEX CREW-13"]
 
 
 # (launch card, landing card) ISS Expedition numbers for the flight's NASA
@@ -409,7 +410,8 @@ ISS_EXPEDITION = {
     "SPACEX CREW-9": ("72", "72"),
     "SPACEX CREW-10": ("72/73", "72/73"),
     "SPACEX CREW-11": ("73/74", "73/74"),
-    "SPACEX CREW-12": ("74/75", ""),
+    "SPACEX CREW-12": ("74/75", "74/75"),
+    "SPACEX CREW-13": ("75", ""),
     "SOYUZ TMA-1": ("", "6"),
     "SOYUZ TMA-18M": ("", "43-46"),
     "SOYUZ MS-19": ("", "64-66"),
@@ -493,7 +495,8 @@ ISS_DOCK = {
     "SPACEX CREW-9": ("28:12:39", "16:52:07"),
     "SPACEX CREW-10": ("29:00:44", "17:18:44"),
     "SPACEX CREW-11": ("14:43:14", "10:21:36"),
-    "SPACEX CREW-12": ("33:59:05", ""),
+    "SPACEX CREW-12": ("33:59:05", "27:29:26"),
+    "SPACEX CREW-13": ("7:54:54", ""),
     "SOYUZ TMA-1": ("", "3:21:25"),
     "SOYUZ TMA-18M": ("", "3:22:02"),
     "SOYUZ MS-19": ("", "4:06:58"),
@@ -784,7 +787,8 @@ COMMERCIAL_DATA = [
     ("SPACEX CREW-9", 2024, 9, 28, 2025, 3, 18, "Nick Hague, Aleksandr Gorbunov, Barry Wilmore, Sunita Williams"),
     ("SPACEX CREW-10", 2025, 3, 14, 2025, 8, 9, "Anne McClain, Nichole Ayers, Takuya Onishi, Kirill Peskov"),
     ("SPACEX CREW-11", 2025, 8, 1, 2026, 1, 15, "Zena Cardman, Michael Fincke, Kimiya Yui, Oleg Platonov"),
-    ("SPACEX CREW-12", 2026, 2, 13, 2026, 2, 13, "Jessica Meir, Jack Hathaway, Sophie Adenot, Andrey Fedyaev"),
+    ("SPACEX CREW-12", 2026, 2, 13, 2026, 10, 8, "Jessica Meir, Jack Hathaway, Sophie Adenot, Andrey Fedyaev"),
+    ("SPACEX CREW-13", 2026, 10, 1, 2026, 10, 1, "Jessica Watkins, Luke Delaney, Joshua Kutryk, Sergey Teteryatnikov"),
 ]
 
 # Private orbital flights on Crew Dragon. Suborbital flights are not included.
@@ -827,8 +831,8 @@ def pad_int(n, width):
     return sign + s
 
 
-# Integer hash of the current minute, so every page agrees on the pick
-# within a minute but the picks don't cycle visibly.
+# Integer hash, for a shuffle that looks random but every page of a
+# render agrees on.
 def scramble(x):
     x = x & 0xFFFFFFFF
     x = ((x ^ 61) ^ (x >> 16)) & 0xFFFFFFFF
@@ -840,10 +844,15 @@ def scramble(x):
 
 
 def rotation_index(ctx, n):
-    bucket = ctx.now.unix // 60
-
-    # Multiply-high range reduction: uses the hash's well-mixed high bits.
-    return (scramble(bucket) * n) // 4294967296
+    # The day's choices in a fresh shuffled order each day, stepping to the
+    # next one every hour: it looks random, but on a busy day every event
+    # gets its turn before any repeats and none comes up twice in a row.
+    # Hourly so it holds whatever refresh the panel uses, up to an hour.
+    # The day is counted on Eastern Standard Time, close enough for when
+    # the shuffle changes.
+    day = (ctx.now.unix - 5 * 3600) // 86400
+    order = sorted(range(n), key = lambda k: scramble(day * 4096 + k))
+    return order[(ctx.now.unix // 3600) % n]
 
 
 def days_from_civil(y, m, d):
@@ -1808,6 +1817,7 @@ SPLASHDOWN_OCEAN = {
     "SPACEX CREW-9": "GULF",
     "SPACEX CREW-10": "PACIFIC",
     "SPACEX CREW-11": "PACIFIC",
+    "SPACEX CREW-12": "PACIFIC",
     "INSPIRATION4": "ATLANTIC",
     "AXIOM-1": "ATLANTIC",
     "AXIOM-2": "GULF",
@@ -2894,6 +2904,7 @@ LAUNCH_PAD = {
     "SPACEX CREW-10": "39A",
     "SPACEX CREW-11": "39A",
     "SPACEX CREW-12": "SLC-40",
+    "SPACEX CREW-13": "SLC-40",
     "SOYUZ TMA-1": "1",
     "SOYUZ TMA-18M": "1",
     "SOYUZ MS-19": "31",
@@ -3753,6 +3764,7 @@ RECOVERY_SHIP = {
     "SPACEX CREW-9": "MV Megan",
     "SPACEX CREW-10": "MV Shannon",
     "SPACEX CREW-11": "MV Shannon",
+    "SPACEX CREW-12": "MV Shannon",
     "INSPIRATION4": "MV GO Searcher",
     "AXIOM-1": "MV Megan",
     "AXIOM-2": "MV Megan",
@@ -4013,6 +4025,7 @@ LAUNCH_VEHICLE = {
     "SPACEX CREW-10": "FALCON 9",
     "SPACEX CREW-11": "FALCON 9",
     "SPACEX CREW-12": "FALCON 9",
+    "SPACEX CREW-13": "FALCON 9",
     "SOYUZ TMA-1": "SOYUZ-FG",
     "SOYUZ TMA-18M": "SOYUZ-FG",
     "SOYUZ MS-19": "SOYUZ-2.1A",
@@ -4683,6 +4696,7 @@ NOTABLE_FIRST = {
     "SPACEX CREW-8": "LONGEST DRAGON FLIGHT YET",
     "SPACEX CREW-10": "FREED STARLINER CREW",
     "SPACEX CREW-12": "1ST FRENCH WOMAN SPACEWALK",
+    "SPACEX CREW-13": "1ST CANADIAN ON COMMERCIAL CREW",
 
     # No "first" for these: a notable event or the astronaut's flight number.
     "SOYUZ TMA-18": "3-EVA AMMONIA PUMP REPAIR",
@@ -6997,7 +7011,9 @@ def flight_lines(mission, kind):
         pad = LAUNCH_PAD.get(name)
         where = ""
         if pad != None:
-            where = ("SPACE LAUNCH COMPLEX " + pad[4:]) if pad.startswith("SLC-") else ("PAD " + pad)
+            # "SPACE LAUNCH COMPLEX 40" plus a time never fits the line, so
+            # Space Launch Complex pads use their short name ("SLC-40").
+            where = pad if pad.startswith("SLC-") else ("PAD " + pad)
         lead = "LAUNCHED FROM THE" if site == "KENNEDY SPACE CENTER" else "LAUNCHED FROM"
         return lead, site, (where + " AT " + clock) if where != "" else "AT " + clock
     if kind == "MOONLAND":

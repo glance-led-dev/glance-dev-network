@@ -7,6 +7,8 @@
 # of a Stafford Act declaration. Many rows share one disasterNumber.
 # The panel shows the newest unique disasterNumber after server-side
 # sort ($orderby=declarationDate desc,disasterNumber desc), not each row.
+# Only declarations from the past year are requested, so an old storm
+# never reads like a live alert.
 #
 # Not an official FEMA application. A declaration in this dataset is
 # historical; it does not mean the hazard is occurring right now.
@@ -264,6 +266,21 @@ def fmt_date_short(n):
 
 def now_ymd(ctx):
     return ctx.now.year * 10000 + ctx.now.month * 100 + ctx.now.day
+
+def cutoff_iso(ctx):
+    # Same calendar day one year back (Feb 29 falls back to Feb 28).
+    y = ctx.now.year - 1
+    m = ctx.now.month
+    d = ctx.now.day
+    if m == 2 and d == 29:
+        d = 28
+    return str(y) + "-" + ("0" + str(m))[-2:] + "-" + ("0" + str(d))[-2:]
+
+def year_tag(rec, ctx):
+    y = rec["decl_n"] // 10000
+    if y <= 0 or y == ctx.now.year:
+        return ""
+    return str(y)
 
 def ends_with(s, suf):
     n = len(suf)
@@ -571,28 +588,22 @@ def pick_unique(rows, usa, ctx):
         "new": isnew,
     }
 
-def build_filter(state, itype):
-    parts = []
+def build_filter(state, itype, since):
+    parts = ["declarationDate ge '" + since + "'"]
     if state != "":
         parts.append("state eq '" + state + "'")
     if itype != "":
         parts.append("incidentType eq '" + itype + "'")
-    if len(parts) == 0:
-        return ""
-    if len(parts) == 1:
-        return parts[0]
-    return parts[0] + " and " + parts[1]
+    return " and ".join(parts)
 
-def fetch_rows(state, itype):
+def fetch_rows(state, itype, since):
     params = {
         "$select": SELECT,
         "$orderby": "declarationDate desc,disasterNumber desc",
         "$top": str(POOL),
         "$metadata": "false",
     }
-    filt = build_filter(state, itype)
-    if filt != "":
-        params["$filter"] = filt
+    params["$filter"] = build_filter(state, itype, since)
     r = http.get(FEMA_URL, headers = HEADERS, params = params, ttl_seconds = TTL)
     code = r["status_code"]
     if code == 0:
@@ -617,7 +628,7 @@ def fetch_rows(state, itype):
 def load_desk(ctx):
     state = area_code(ctx)
     itype = incident_type(ctx)
-    rows = fetch_rows(state, itype)
+    rows = fetch_rows(state, itype, cutoff_iso(ctx))
     if rows == None:
         return fail_rec("DOWN")
     if len(rows) == 0:
@@ -816,6 +827,16 @@ def draw_fail(c, heading, detail):
     c.text(heading.upper(), 6, 14, font = "6x8", color = "amber")
     c.text_fit(detail.upper(), 6, 24, ["5x7", "4x5"], color = "gray", maxw = 182)
 
+def draw_rec_fail(c, ctx, rec):
+    if rec["reason"] == "EMPTY":
+        what = safe_upper(incident_type(ctx))
+        if what == "":
+            draw_fail(c, "NO RECENT", "DECLARATIONS IN PAST YEAR")
+        else:
+            draw_fail(c, "NO RECENT " + what, "DECLARATIONS IN PAST YEAR")
+    else:
+        draw_fail(c, "FEMA DATA", "UNAVAILABLE")
+
 def draw_shell(c, rec, thick):
     col = decl_color(rec["kind"])
     c.fill("#08090C")
@@ -855,10 +876,7 @@ def alert(c, ctx):
     rec = load_desk(ctx)
     c.fill("#08090C")
     if not rec["ok"]:
-        if rec["reason"] == "EMPTY":
-            draw_fail(c, "NO MATCHING", "DECLARATIONS")
-        else:
-            draw_fail(c, "FEMA DATA", "UNAVAILABLE")
+        draw_rec_fail(c, ctx, rec)
         return
 
     kind = rec["kind"]
@@ -884,17 +902,19 @@ def alert(c, ctx):
     sub = decl_label(kind)
     if rec["today"]:
         sub = "NEW DECLARATION"
-    sfont, sub_t = fit_one(c, sub, ["6x8", "5x7", "4x5"], 182)
+    yr = year_tag(rec, ctx)
+    sub_w = 182
+    if yr != "":
+        c.text(yr, c.width - 8, 25, font = "5x7", color = "gray", align = "right")
+        sub_w = sub_w - c.text_width(yr, "5x7") - 6
+    sfont, sub_t = fit_one(c, sub, ["6x8", "5x7", "4x5"], sub_w)
     c.text(sub_t, 6, 24, font = sfont, color = col)
 
 def incident(c, ctx):
     rec = load_desk(ctx)
     c.fill("#08090C")
     if not rec["ok"]:
-        if rec["reason"] == "EMPTY":
-            draw_fail(c, "NO MATCHING", "DECLARATIONS")
-        else:
-            draw_fail(c, "FEMA DATA", "UNAVAILABLE")
+        draw_rec_fail(c, ctx, rec)
         return
 
     kind = rec["kind"]
@@ -906,6 +926,9 @@ def incident(c, ctx):
     head = safe_upper(rec["itype"])
     if head == "":
         head = "INCIDENT"
+    yr = year_tag(rec, ctx)
+    if yr != "":
+        head = head + " " + yr
     code = decl_code(rec)
     right_w = 0
     if code != "":
@@ -922,10 +945,7 @@ def declared(c, ctx):
     rec = load_desk(ctx)
     c.fill("#08090C")
     if not rec["ok"]:
-        if rec["reason"] == "EMPTY":
-            draw_fail(c, "NO MATCHING", "DECLARATIONS")
-        else:
-            draw_fail(c, "FEMA DATA", "UNAVAILABLE")
+        draw_rec_fail(c, ctx, rec)
         return
 
     kind = rec["kind"]
@@ -963,10 +983,7 @@ def aid(c, ctx):
     rec = load_desk(ctx)
     c.fill("#08090C")
     if not rec["ok"]:
-        if rec["reason"] == "EMPTY":
-            draw_fail(c, "NO MATCHING", "DECLARATIONS")
-        else:
-            draw_fail(c, "FEMA DATA", "UNAVAILABLE")
+        draw_rec_fail(c, ctx, rec)
         return
 
     kind = rec["kind"]

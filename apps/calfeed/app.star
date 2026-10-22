@@ -60,11 +60,18 @@ CHEVRON_ART = """
 """
 CHEVRON_W = 5  # 2 px gap + 3 px glyph
 
-# Demo data, shown (labelled) until a feed URL is configured: the three
+# The input takes the feed's id, not its URL: Glance separates an app's
+# settings with colons, so a pasted "https://calfeed.io/v1/feed/<id>"
+# reaches the app truncated to "https". The app builds the URL instead.
+FEED_BASE = "https://calfeed.io/v1/feed/"
+FEED_PATH = "/v1/feed/"
+HEX_DIGITS = "0123456789abcdefABCDEF"
+
+# Demo data, shown (labelled) until a feed id is configured: the three
 # steps to set the app up, as events. Two pages cannot show three, so
 # the demo alternates per refresh period (refresh is 300): steps 1+2, then
 # 2+3, the first of the pair always running.
-DEMO_STEPS = ["CALFEED.IO", "CREATE VIEW", "PASTE URL"]
+DEMO_STEPS = ["CALFEED.IO", "CREATE VIEW", "PASTE ID"]
 
 def demo_feed(now):
     h = 3600
@@ -99,13 +106,38 @@ def pad2(n):
 
 # [feed, state]: state is "live", "demo" or "offline".
 def fetch_feed(ctx):
-    url = str(ctx.inputs.get("feedurl", "")).strip()
-    if url == "":
+    feed_id = read_feed_id(ctx)
+    if feed_id == "":
         return [demo_feed(ctx.now.unix), "demo"]
-    resp = http.get(url, headers = feed_headers(ctx), ttl_seconds = 60)
+    if feed_id == None:
+        return [None, "offline"]
+    resp = http.get(FEED_BASE + feed_id, headers = feed_headers(ctx), ttl_seconds = 60)
     if resp["status_code"] != 200 or not resp["json"]:
         return [None, "offline"]
     return [resp["json"], "live"]
+
+# The configured id: "" when there is none (demo data), None when the
+# value cannot be one (the CHECK FEED screen). Only the id is asked for,
+# but a whole feed URL is taken apart rather than refused, and stray
+# whitespace, a trailing slash or a trailing ".txt" are dropped.
+def read_feed_id(ctx):
+    raw = str(ctx.inputs.get("feedid", "")).strip()
+    at = raw.find(FEED_PATH)
+    if at >= 0:
+        raw = raw[at + len(FEED_PATH):]
+    if raw.endswith("/"):
+        raw = raw[:-1]
+    if raw.endswith(".txt"):
+        raw = raw[:-4]
+    raw = raw.strip()
+    if raw == "":
+        return ""
+    if len(raw) > 64:
+        return None
+    for ch in raw.elems():
+        if HEX_DIGITS.find(ch) < 0:
+            return None
+    return raw
 
 # The optional feed header, configured as "Name=value" ("Name: value"
 # works too). Whatever the calfeed feed's restriction requires.

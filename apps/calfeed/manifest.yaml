@@ -1,6 +1,6 @@
 gdn: 1
 id: calfeed
-version: 0.1.0
+version: 0.1.1
 name: Calfeed Agenda
 author: cfsmp3
 description: Your next calendar event from a calfeed feed - merged calendars, one private URL, no sign-in on the panel.
@@ -32,15 +32,15 @@ inputs:
     choices: [gray, white, red, orange, amber, green, skyblue, purple, pink]
     options: [gray, white, red, orange, amber, green, skyblue, purple, pink]
     help: Colors the label, so two instances read apart at a glance.
-  - key: feedurl
+  - key: feedid
     type: string
     app_input_type: api-key
-    label: Feed URL
+    label: Feed ID
     default: ""
-    help: A calfeed view's feed URL (https://calfeed.io/v1/feed/...). It is a secret; leave blank for demo data.
+    help: The hex id at the end of your calfeed feed URL (https://calfeed.io/v1/feed/<this part>). Leave blank for demo data.
   - key: feedkey
     type: string
     app_input_type: api-key
     label: Feed header (optional)
     default: ""
-    help: Only if the feed requires a header, as Name=value (e.g. X-Feed-Key=secret123).
+    help: Only if the feed requires a header, as Name=value (e.g. X-Feed-Key=secret123). It must contain no colon.

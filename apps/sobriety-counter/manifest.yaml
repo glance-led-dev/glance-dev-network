@@ -1,0 +1,33 @@
+gdn: 1
+id: sobriety-counter
+version: 0.1.0
+name: Sobriety Counter
+author: joelfullyseeking
+description: "Days sober, counted from the day it started — with weeks and the next milestone on page two."
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [count, detail]
+
+inputs:
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Label
+    default: "DAYS SOBER"
+    help: Shown above the number. The panel fonts are uppercase only.
+  - key: since
+    type: string
+    app_input_type: date-past
+    label: Sobriety date
+    default: "2025-08-29"
+    help: The day the streak began. Counting starts the day after.
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#E8B33A"

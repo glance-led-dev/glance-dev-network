@@ -1,0 +1,26 @@
+id: nhl-playoff-picture
+name: NHL Playoff Picture
+author: cfdmb
+description: One conference's NHL playoff picture all year (pick East or West - add the app twice for both). In the regular season, each division's first-round series if the season ended today, the division top 3 and wild card races with playoff magic and tragic numbers, the wild card chasers, and the division and No. 1 seed races. In the spring, the live bracket - every series score, next game, TV network and who advanced, through the Stanley Cup Final.
+category: Sports
+width: 192
+height: 32
+# Note for the GDN crew: refresh is 300 (5 min) so playoff pages can show a
+# live period and score and flip to the next game soon after a final.
+refresh: 3600
+pages:
+  - intro
+  - div1
+  - div2
+  - leaders
+  - race1
+  - race2
+  - wildcard
+  - chasers
+inputs:
+  - key: conference
+    type: string
+    app_input_type: dropdown
+    label: Conference
+    choices: [East, West]
+    default: East

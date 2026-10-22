@@ -1,0 +1,28 @@
+gdn: 1
+id: substack-latest
+version: 0.1.0
+name: Substack Latest
+author: joelfullyseeking
+description: "The newest Pages from the Pit essay title, straight from the Substack feed — so the wall always names the latest piece of writing in the house."
+category: News
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [latest]
+
+inputs:
+  - key: url
+    type: string
+    app_input_type: free-text
+    label: Feed URL
+    default: "https://joelfullyseeking.substack.com/feed"
+    help: Any Substack (or RSS/Atom) feed. The first item's title is shown.
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Source name
+    default: "SUBSTACK"
+    help: Shown above the title.

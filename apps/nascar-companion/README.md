@@ -1,6 +1,6 @@
 # NASCAR Companion
 
-NASCAR Companion is a GLANCE sports app by reyos86. It follows Cup, O’Reilly Auto Parts, or Trucks with a live race board, last-race results, lap/stage/flag (or practice/qual) progress, and rotating race updates from NASCAR’s public Content Feed.
+NASCAR Companion is a GLANCE sports app by reyos86. It follows Cup, O’Reilly Auto Parts, or Trucks with a live race board, last-race results, lap/stage/flag (or practice/qual) progress, and rotating race updates from NASCAR’s public Content Feed. After a race, the updates page settles on the winning update or a winner + top-5 card.
 
 ![NASCAR Companion preview](preview/preview.png)
 
@@ -32,11 +32,11 @@ Manifest order: `upcoming`, `race`, `updates`, `results`.
 | Page | Contents |
 |------|----------|
 | **upcoming** | Next unfinished race. Before green: race name, track, scheduled laps, date, and a waiting note. Once live: top-6 leaderboard (position, small car badge, last name). |
-| **race** | Lap progress bar (flag-colored; stage ticks during race sessions), session or stage/flag label, laps to go / finish / track, plus caution and lead-change counts. Practice and qualifying prefer `PRACTICE` / `QUAL` labels so they do not read as a green flag. |
-| **updates** | One race ticker note at a time, rotating among recent notes (about once per minute). |
+| **race** | Lap progress bar (flag-colored; stage ticks during race sessions), session or stage/flag label, laps to go / finish / track, plus caution and lead-change counts. Practice and qualifying show `PRACTICE` / `QUAL` and the track name only: no lap counter, progress bar, or caution / lead-change row, since those sessions have none. |
+| **updates** | During a race (and in practice / qualifying): one race ticker note at a time, rotating among the six most recent notes. After the race: the header reads `FINAL` and the page stops rotating. If the latest note contains the word `WIN`, `WINS`, or `WINNER`, that note stays on screen; otherwise a winner card shows `#N NAME WINS`, the margin of victory, and P2–P5 in two columns. |
 | **results** | Most recent finished race only (`PREVIOUS RACE`). Top six finishers with large car badges and short names. Never shows an in-progress race. |
 
-Panel size is **192×32**. Refresh is **60 seconds**. Series chrome labels: `CUP`, `ORL`, `TRK`.
+Panel size is **192×32**. Refresh is **300 seconds** (5 minutes). Series chrome labels: `CUP`, `ORL`, `TRK`.
 
 ## Data source
 
@@ -50,13 +50,15 @@ No API key is required. Availability depends on NASCAR’s public CDN.
 
 ## Display behavior
 
-- **Live board** — top six by running position; last names only; P1 name highlighted.
+- **Live board** — top six by running position; last names only, all in white (the leader is not highlighted; P1 is already the first slot). Chase drivers' position numbers are green.
+- **Chase colors** — wherever a position or car number appears (live board, results, updates, winner card), Chase drivers are green and everyone else is white or grey. No gold is used for drivers or positions.
 - **Driver names** — last token after stripping leading `*`, `#` markers, and `(…)` suffixes (rookies / part-timers) so the board shows a clean last name.
 - **Flags** — bundled icons for green, yellow, red, white, blue (warmup), and checkered; chrome accent follows flag color when live.
 - **Sessions** — on the race page, practice/qualifying show `PRACTICE` or `QUAL` and the track name; race sessions show stage or flag plus laps to go when available.
 - **Car badges** — bundled art for the car numbers listed in `manifest.yaml` (including `00`, `8`, `18`, and `39`), full size on results and small on the live board. Missing numbers fall back to a manufacturer-colored number plate.
 - **Race progress** — fill by lap fraction during race sessions; stage ticks from stage lengths in the feed; finished when laps to go are done or the flag is checkered/finish.
-- **Updates** — wrapped note text; color hints for yellow/red/checkered-related notes.
+- **Updates** — wrapped note text in white; caution (yellow-flag) notes in yellow and red-flag notes in red; Chase drivers' `#N` in green.
+- **Winner card** — margin of victory comes from the runner-up's gap in the results feed and is left off when the runner-up finished a lap or more down. Long names are clipped to their column.
 
 ## Assets
 
@@ -91,7 +93,8 @@ gdn validate apps/nascar-companion
 - Boards show the **top six**, not the full field; gap formatting exists in code but is not drawn on the live upcoming board.
 - Car art covers the manifest number list; other cars use number plates.
 - Driver names are last-name only and truncated for space.
-- Updates rotate on a one-minute cadence; the panel does not scroll or animate between refreshes.
+- During a race, the update shown is picked by the minute of the refresh; the panel does not scroll or animate between refreshes.
+- The "winning update" check is a whole-word match on `WIN`, `WINS`, or `WINNER` in NASCAR's final note.
 - Relies on public CF JSON and race IDs from the basic schedule.
 
 Built for the [GLANCE Developer Network](https://github.com/glance-led-dev/glance-dev-network).

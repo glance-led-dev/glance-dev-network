@@ -304,6 +304,7 @@ PLAYERS = {
     "Brandon Aubrey": 3953687,
     "Brandon McManus": 16339,
     "Brandon Powell": 3115255,
+    "Brandon Smith": 4240577,
     "Brashard Smith": 4596602,
     "Braxton Berrios": 3123075,
     "Brayden Narveson": 4361765,
@@ -402,6 +403,7 @@ PLAYERS = {
     "Cyrus Allen": 4912218,
     "D'Andre Swift": 4259545,
     "D'Ernest Johnson": 3139602,
+    "D'Onta Foreman": 3125116,
     "D.J. Montgomery": 4249030,
     "Dak Prescott": 2577417,
     "Dallas Goedert": 3121023,
@@ -447,6 +449,7 @@ PLAYERS = {
     "Desmond Ridder": 4239086,
     "Deuce Vaughn": 4431453,
     "Devaughn Vele": 4569559,
+    "Deven Thompkins": 4374187,
     "Devin Duvernay": 4039050,
     "Devin Leary": 4361653,
     "Devin Neal": 4682652,
@@ -569,6 +572,7 @@ PLAYERS = {
     "Jahmyr Gibbs": 4429795,
     "Jake Bates": 4689936,
     "Jake Bobo": 4360405,
+    "Jake Briningstool": 4431196,
     "Jake Browning": 3886812,
     "Jake Elliott": 3050478,
     "Jake Ferguson": 4242355,
@@ -588,6 +592,7 @@ PLAYERS = {
     "Jalen Tolbert": 4249417,
     "Jalon Daniels": 4596472,
     "Jam Miller": 4685477,
+    "Jamaal Pritchett": 4892576,
     "Jamaal Williams": 2980453,
     "Jamal Agnew": 3061612,
     "Jameis Winston": 2969939,
@@ -630,6 +635,7 @@ PLAYERS = {
     "Joe Burrow": 3915511,
     "Joe Fagnano": 4429582,
     "Joe Flacco": 11252,
+    "Joe Milton": 4360698,
     "Joe Milton III": 4360698,
     "Joe Mixon": 3116385,
     "Joe Royer": 4565859,
@@ -759,6 +765,7 @@ PLAYERS = {
     "Mason Taylor": 4808766,
     "Mason Tipton": 4573697,
     "Matt Gay": 4249087,
+    "Matt Hibner": 4432260,
     "Matt Prater": 11122,
     "Matthew Golden": 4701936,
     "Matthew Hibner": 4432260,
@@ -787,6 +794,7 @@ PLAYERS = {
     "Mitchell Evans": 4683243,
     "Mitchell Tinsley": 4690070,
     "Mitchell Trubisky": 3039707,
+    "Mitchell Wilcox": 3923392,
     "Mo Alie-Cox": 2998565,
     "Montorie Foster Jr.": 4600597,
     "Myles Gaskin": 3886818,
@@ -820,6 +828,7 @@ PLAYERS = {
     "Parris Campbell": 3121410,
     "Pat Bryant": 4600981,
     "Pat Freiermuth": 4361411,
+    "Patrick Herbert": 4429811,
     "Patrick Mahomes": 3139477,
     "Patrick Ricard": 2975417,
     "Payne Durham": 4372505,
@@ -852,6 +861,7 @@ PLAYERS = {
     "Riley Patterson": 4243371,
     "RJ Harvey": 4568490,
     "Robbie Ouzts": 4691688,
+    "Robert Henry Jr.": 5151317,
     "Robert Tonyan": 2975674,
     "Roman Wilson": 4431492,
     "Rome Odunze": 4431299,
@@ -880,6 +890,7 @@ PLAYERS = {
     "Seth McGowan": 4686468,
     "Seydou Traore": 4714379,
     "Shedeur Sanders": 4432762,
+    "Simi Fehoko": 4360739,
     "Sione Vaki": 4912274,
     "Skylar Thompson": 4036419,
     "Skyler Bell": 4683153,
@@ -896,6 +907,7 @@ PLAYERS = {
     "Tank Dell": 4366031,
     "Tanner Arkin": 4683308,
     "Tanner Brown": 4696736,
+    "Tanner Hudson": 3050481,
     "Tanner Koziol": 4917427,
     "Tanner McKee": 4685201,
     "Tay Martin": 4245144,
@@ -948,6 +960,7 @@ PLAYERS = {
     "Tyler Allgeier": 4373626,
     "Tyler Badie": 4362748,
     "Tyler Bass": 3917232,
+    "Tyler Boyd": 3045144,
     "Tyler Conklin": 3915486,
     "Tyler Goodson": 4429676,
     "Tyler Higbee": 2573401,
@@ -1538,8 +1551,8 @@ def et_day(unix):
     return (unix + et_offset(unix) * 3600) // 86400
 
 def game_to_show(p, ov, now_unix):
-    """The game page's game: the live one; else the last result, until the next game is today or
-    tomorrow (or for 18h after a final, so last night's line survives into game day)."""
+    """The game page's game: the live one; else the last result for 2 days after the final (18h if
+    the next game is today or tomorrow), then the next game with its projection."""
     ev = None
     evs = (((ov or {}).get("nextGame") or {}).get("league") or {}).get("events") or []
     if evs:
@@ -1560,9 +1573,13 @@ def game_to_show(p, ov, now_unix):
         return last
     if nxt and nt != None and et_day(nt) - et_day(now_unix) <= 1:
         return nxt
-    if last and (nxt or now_unix - lt < 3 * 86400):
-        return last                             # between games: the most recent result
-    return nxt
+    if last and now_unix - lt < 2 * 86400:
+        return last                             # just played: the most recent result
+    if nxt:
+        return nxt                              # then on to the next game and its projection
+    if last and now_unix - lt < 3 * 86400:
+        return last
+    return None
 
 def live_stats(p, ev):
     """This player's line in the current game (ESPN core API, ~20 KB)."""

@@ -1,6 +1,6 @@
 gdn: 1
 id: election-tracker
-version: 0.1.0
+version: 0.1.1
 name: Elections
 author: jeff
 description: "President, U.S. Senate, U.S. House and governor races for a major US city - Kalshi win odds before election day, live results after"

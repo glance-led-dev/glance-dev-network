@@ -5,9 +5,9 @@ name: Today in US Manned Space Flight
 category: Science
 width: 192
 height: 32
-# Note for the GDN crew: refresh is 300 (5 min) on purpose. Each render
-# picks which event (busy days) or astronaut profile (empty days) to show,
-# so each refresh brings a new pick. Please keep it at or below 300.
+# Note for the GDN crew: the app steps to the next event (busy days) or
+# astronaut profile (empty days) in a daily shuffle every hour, so any
+# refresh up to 3600 (1 hour) shows every event in turn.
 refresh: 3600
 pages:
   - title

@@ -349,7 +349,7 @@ def short_track(name):
         text = text[:20]
     return text
 
-def short_race(name):
+def short_race(name, track = ""):
     text = str(name).upper()
     text = text.replace(" PRESENTED BY PPG", "")
     text = text.replace(" PRESENTED BY ", " ")
@@ -357,6 +357,13 @@ def short_race(name):
     text = text.replace(" POWERED BY ", " ")
     text = text.replace(" AVAILABLE AT WALMART", "")
     text = text.replace(" AVAILABLE AT ", " ")
+    # Races not named yet ("NASCAR CRAFTSMAN TRUCK SERIES RACE AT PHOENIX")
+    # show just the track until NASCAR publishes a real name.
+    for prefix in ("NASCAR CRAFTSMAN TRUCK SERIES ", "NASCAR O'REILLY AUTO PARTS SERIES ", "NASCAR CUP SERIES "):
+        if text.startswith(prefix):
+            text = text[len(prefix):]
+    if (text == "RACE" or text.startswith("RACE AT ")) and track != "":
+        return short_track(track)
     at_idx = text.find(" AT ")
     if at_idx > 0:
         text = text[:at_idx]
@@ -798,7 +805,7 @@ def fetch_state(ctx):
         "series": series,
         "schedule": schedule,
         "has_next": race != None,
-        "race_name": short_race(race.get("race_name", "SEASON DONE")) if race else "SEASON COMPLETE",
+        "race_name": short_race(race.get("race_name", "SEASON DONE"), race.get("track_name", "")) if race else "SEASON COMPLETE",
         "track_name": short_track(race.get("track_name", "")) if race else "",
         "track_key": str(race.get("track_name", "")) if race else "",
         "race_date": (race.get("race_date", race.get("date_scheduled", "")) if race else ""),
@@ -837,7 +844,7 @@ def fetch_state(ctx):
         "series": series,
         "session": session,
         "is_race": is_race,
-        "race_name": short_race(base_name),
+        "race_name": short_race(base_name, feed.get("track_name", race.get("track_name", ""))),
         "track_name": short_track(feed.get("track_name", race.get("track_name", ""))),
         "track_key": str(feed.get("track_name", race.get("track_name", ""))),
         "flag": flag,
@@ -879,7 +886,7 @@ def fetch_last_result(ctx):
             who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
             top.append((str(r["pos"]), who, gap, r["name_color"]))
     return {
-        "race_name": short_race(race.get("race_name", "RACE")),
+        "race_name": short_race(race.get("race_name", "RACE"), race.get("track_name", "")),
         "track_name": short_track(race.get("track_name", "")),
         "comment": str(race.get("race_comments", "")),
         "top": top,
@@ -1229,7 +1236,8 @@ def _draw_next_card(c, ctx, st, big):
     if not big:
         draw_page_tab(c, "NEXT RACE", COLORS["accent"])
     c.text(fit_text(c, st["race_name"], "6x8", text_w), cx, 2, font = "6x8", color = COLORS["text"], align = "center")
-    c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
+    if st["race_name"] != st["track_name"]:
+        c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
     c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = date_color(st["series"]), align = "center")
 
 def _draw_schedule(c, ctx, st, skip):
@@ -1246,8 +1254,19 @@ def _draw_schedule(c, ctx, st, skip):
     for r in races:
         dt = local_race_daydate(ctx, r.get("race_date", r.get("date_scheduled", "")))
         c.text(dt, 4, y, font = "5x7", color = date_color(st["series"]))
-        nm = short_race(r.get("race_name", "RACE")) + "  -  " + short_track(r.get("track_name", ""))
-        c.text(fit_text(c, nm, "5x7", c.width - dx - 4), dx, y, font = "5x7", color = COLORS["text"])
+        # "RACE NAME @ TRACK", stepping down a font size before cutting it off.
+        # An unnamed race is already its track, so it isn't repeated.
+        trk = short_track(r.get("track_name", ""))
+        race_nm = short_race(r.get("race_name", "RACE"), r.get("track_name", ""))
+        nm = race_nm if race_nm == trk or trk == "" else race_nm + " @ " + trk
+        avail = c.width - dx - 4
+        nf = "5x7"
+        if c.text_width(nm, nf) > avail:
+            nf = "4x5"
+        if c.text_width(nm, nf) > avail:
+            nf = "picopixel"
+        ny = y if nf == "5x7" else y + 1
+        c.text(fit_text(c, nm, nf, avail), dx, ny, font = nf, color = COLORS["text"])
         y += 8
 
 
@@ -1261,7 +1280,7 @@ def _draw_last_page(c, ctx, page):
         c.text("NO RESULT AVAILABLE", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
     tabw = c.text_width("LAST RACE", "4x5") + 10
-    label = res["race_name"] + "  -  " + res["track_name"]
+    label = res["race_name"] if res["race_name"] == res["track_name"] else res["race_name"] + "  -  " + res["track_name"]
     c.text(fit_text(c, label, "picopixel", c.width - tabw - 4), tabw, 1, font = "picopixel", color = COLORS["muted"])
 
     ncols = 3 if c.width >= 320 else 2

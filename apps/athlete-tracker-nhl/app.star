@@ -240,6 +240,7 @@ PLAYERS = {
     "A.J. Greer": 3648015,
     "Aaron Ekblad": 3114717,
     "Aatu Raty": 4874912,
+    "Adam Edstrom": 4894222,
     "Adam Fantilli": 5136617,
     "Adam Fox": 4197146,
     "Adam Henrique": 5074,
@@ -248,6 +249,7 @@ PLAYERS = {
     "Adam Larsson": 2562610,
     "Adam Lowry": 2563066,
     "Adam Pelech": 3069621,
+    "Adam Wilsby": 4697765,
     "Adin Hill": 3939714,
     "Adrian Kempe": 3114802,
     "Akira Schmid": 4587845,
@@ -269,6 +271,7 @@ PLAYERS = {
     "Alex Tuch": 3114766,
     "Alex Turcotte": 4565226,
     "Alex Vlasic": 4565266,
+    "Alexander Kerfoot": 3069394,
     "Alexander Nikishin": 5188393,
     "Alexander Nylander": 4024861,
     "Alexander Romanov": 4587854,
@@ -302,6 +305,7 @@ PLAYERS = {
     "Arshdeep Bains": 5103536,
     "Artem Zub": 4712021,
     "Artemi Panarin": 3891952,
+    "Arttu Hyry": 5209793,
     "Artturi Lehkonen": 3042050,
     "Artur Akhtyamov": 4697577,
     "Arturs Silovs": 4576894,
@@ -309,6 +313,7 @@ PLAYERS = {
     "Arvid Soderblom": 4894729,
     "Auston Matthews": 4024123,
     "Axel Sandin-Pellikka": 5149192,
+    "Aydar Suniev": 5188613,
     "Barclay Goodrow": 3069411,
     "Barrett Hayton": 4352699,
     "Beck Malenstyn": 4063240,
@@ -316,6 +321,7 @@ PLAYERS = {
     "Ben Chiarot": 5246,
     "Ben Kindel": 5291947,
     "Ben Lovejoy": 3993,
+    "Ben Meyers": 4755729,
     "Berkly Catton": 5216877,
     "Bill Zonnon": 5291958,
     "Blake Coleman": 2563026,
@@ -504,6 +510,7 @@ PLAYERS = {
     "Frank Nazar": 5080157,
     "Frank Vatrano": 3527554,
     "Fraser Minten": 5080207,
+    "Frederic Brunet": 5103647,
     "Frederick Gaudreau": 3149649,
     "Frederik Andersen": 2517899,
     "Gabe Perreault": 5149204,
@@ -588,8 +595,10 @@ PLAYERS = {
     "Jeffrey Viel": 4588188,
     "Jeremy Lauzon": 3904185,
     "Jeremy Swayman": 4712036,
+    "Jesper Boqvist": 4233872,
     "Jesper Bratt": 4268771,
     "Jesper Wallstedt": 4874737,
+    "Jesperi Kotkaniemi": 4352692,
     "Jet Greaves": 4894366,
     "Jimmy Snuggerud": 5080171,
     "Jiri Kulich": 5080176,
@@ -608,6 +617,7 @@ PLAYERS = {
     "John Tavares": 5160,
     "Jonas Brodin": 2562600,
     "Jonas Siegenthaler": 3904190,
+    "Jonatan Berggren": 4378660,
     "Jonathan Aspirot": 4392308,
     "Jonathan Drouin": 3041971,
     "Jonathan Huberdeau": 2562606,
@@ -631,9 +641,11 @@ PLAYERS = {
     "Josh Morrissey": 3042016,
     "Josh Norris": 4233627,
     "Joshua Mahura": 4063504,
+    "Judd Caulfield": 4755684,
     "Juraj Slafkovsky": 4915349,
     "Justin Brazeau": 4063605,
     "Justin Faulk": 5746,
+    "Justin Holl": 5763,
     "Justin Hryckowian": 5229176,
     "Justin Sourdif": 4697783,
     "Justus Annunen": 4393408,
@@ -728,6 +740,7 @@ PLAYERS = {
     "Matt Roy": 3942924,
     "Matt Savoie": 5080153,
     "Matthew Knies": 4874919,
+    "Matthew Poitras": 5080221,
     "Matthew Robertson": 4565272,
     "Matthew Schaefer": 5291933,
     "Matthew Tkachuk": 4024854,
@@ -743,6 +756,7 @@ PLAYERS = {
     "Max Sasson": 4996099,
     "Maxim Shabanov": 5302535,
     "Maxim Tsyplakov": 5212753,
+    "Maxwell Crozier": 5104716,
     "Michael Amadio": 3149829,
     "Michael Blunden": 3345,
     "Michael Brandsegg-Nygard": 5216883,
@@ -757,6 +771,7 @@ PLAYERS = {
     "Mikael Backlund": 3797,
     "Mikael Granlund": 5831,
     "Mike Matheson": 2976851,
+    "Mike Reilly": 2563077,
     "Mikey Anderson": 4588178,
     "Mikhail Sergachev": 4024868,
     "Mikko Rantanen": 3899938,
@@ -786,10 +801,13 @@ PLAYERS = {
     "Nico Daws": 4697683,
     "Nico Hischier": 4233555,
     "Nicolas Deslauriers": 5193,
+    "Nicolas Hague": 4233870,
     "Nicolas Roy": 3943996,
     "Nikita Klepov": 5361658,
     "Nikita Kucherov": 2563060,
+    "Nikita Nesterenko": 4755696,
     "Nikita Zadorov": 3042021,
+    "Nikita Zaitsev": 4010739,
     "Niko Mikkola": 3942354,
     "Nikolaj Ehlers": 3114741,
     "Nils Hoglander": 4565263,
@@ -800,6 +818,7 @@ PLAYERS = {
     "Noah Hanifin": 3652964,
     "Noah Laba": 5188370,
     "Noah Ostlund": 5080160,
+    "Noah Warren": 5080210,
     "Noel Acciari": 3096237,
     "Nolan Allan": 4874749,
     "Olen Zellweger": 4874863,
@@ -832,6 +851,7 @@ PLAYERS = {
     "Pierre-Cedric Labrie": 3809,
     "Pierre-Luc Dubois": 4024833,
     "Pius Suter": 4271732,
+    "Pontus Holmberg": 4588205,
     "Porter Martone": 5291941,
     "Pyotr Kochetkov": 4565259,
     "Quinn Hughes": 4320548,
@@ -872,6 +892,7 @@ PLAYERS = {
     "Ryan Suter": 3047,
     "Ryan Suzuki": 4565249,
     "Ryan Ufko": 5188493,
+    "Ryan Winterton": 4894928,
     "Ryker Evans": 4874864,
     "Sam Bennett": 3114732,
     "Sam Carrick": 5474,
@@ -926,6 +947,7 @@ PLAYERS = {
     "Thomas Harley": 4565239,
     "Tij Iginla": 5229186,
     "Tim Stutzle": 4697384,
+    "Tim Washe": 4996085,
     "Timo Meier": 3899978,
     "Timothy Liljegren": 4233618,
     "Tom Willander": 5149180,
@@ -952,6 +974,7 @@ PLAYERS = {
     "Tyler Myers": 5052,
     "Tyler Seguin": 5430,
     "Tyler Toffoli": 5550,
+    "Tyrel Bauer": 4697648,
     "Tyson Foerster": 4697406,
     "Ukko-Pekka Luukkonen": 4233889,
     "Uvis Balinskis": 5142461,
@@ -980,6 +1003,7 @@ PLAYERS = {
     "William Eklund": 4874721,
     "William Karlsson": 2563057,
     "William Nylander": 3114736,
+    "William Wallinder": 4697436,
     "Wyatt Aamodt": 4419668,
     "Wyatt Cullen": 5361662,
     "Wyatt Johnston": 4874740,
@@ -994,6 +1018,7 @@ PLAYERS = {
     "Zach Metsa": 4419696,
     "Zach Werenski": 3899972,
     "Zach Whitecloud": 4312877,
+    "Zachary L'Heureux": 4874744,
     "Zack Bolduc": 4874734,
     "Zack Ostapchuk": 4874881,
     "Zayne Parekh": 5216878,
@@ -1545,8 +1570,8 @@ def et_day(unix):
     return (unix + et_offset(unix) * 3600) // 86400
 
 def game_to_show(p, ov, now_unix):
-    """The game page's game: the live one; else the last result, until the next game is today or
-    tomorrow (or for 18h after a final, so last night's line survives into game day)."""
+    """The game page's game: the live one; else the last result for 2 days after the final (18h if
+    the next game is today or tomorrow), then the next game with its projection."""
     ev = None
     evs = (((ov or {}).get("nextGame") or {}).get("league") or {}).get("events") or []
     if evs:
@@ -1567,9 +1592,13 @@ def game_to_show(p, ov, now_unix):
         return last
     if nxt and nt != None and et_day(nt) - et_day(now_unix) <= 1:
         return nxt
-    if last and (nxt or now_unix - lt < 3 * 86400):
-        return last                             # between games: the most recent result
-    return nxt
+    if last and now_unix - lt < 2 * 86400:
+        return last                             # just played: the most recent result
+    if nxt:
+        return nxt                              # then on to the next game and its projection
+    if last and now_unix - lt < 3 * 86400:
+        return last
+    return None
 
 def live_stats(p, ev):
     """This player's line in the current game (ESPN core API, ~20 KB)."""

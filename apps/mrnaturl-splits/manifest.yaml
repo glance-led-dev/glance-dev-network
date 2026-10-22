@@ -1,6 +1,6 @@
 gdn: 1
 id: mrnaturl-splits
-version: 0.1.0
+version: 0.2.0
 name: Stock Splits Calendar
 author: bbusch
 description: Every upcoming US stock split, forward and reverse, with ratio and effective date
