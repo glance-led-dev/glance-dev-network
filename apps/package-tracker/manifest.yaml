@@ -8,7 +8,7 @@ category: Productivity
 entry: app.star
 width: 192
 height: 32
-refresh: 300
+refresh: 86400
 pages: [delivery, latest, scan, journey]
 assets: [ups.png, fedex.png, usps.png]
 inputs:

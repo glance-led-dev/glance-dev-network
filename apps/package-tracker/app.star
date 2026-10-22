@@ -79,6 +79,9 @@ def feed(ctx):
     mode = ctx.inputs.get("demo", "Live")
     endpoint = ctx.inputs.get("endpoint", "")
     key = ctx.inputs.get("readkey", "")
+    # Unconfigured (catalog preview, fresh install): show the fictional shipments.
+    if mode == "Live" and not endpoint and not key:
+        mode = "All carriers"
     if mode != "Live":
         items = demo_shipments()
         if mode in ["UPS", "FedEx", "USPS"]:
