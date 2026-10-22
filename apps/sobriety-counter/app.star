@@ -80,12 +80,12 @@ def count(c, ctx):
                color = "#E8B33A", align = "center")
         return
 
-    # 0-4 label | 5-24 figure | 26-30 the creed
+    # 0-4 label | 6-25 figure | 27-31 the creed
     c.text_fit(label, c.width // 2, 0, ["4x5", "3x4"], color = accent,
                align = "center", maxw = c.width - 2)
-    c.text_fit(fmt.commas(n), c.width // 2, 5, ["16x20", "10x16", "7x12"],
+    c.text_fit(fmt.commas(n), c.width // 2, 6, ["16x20", "10x16", "7x12"],
                color = "#FFFFFF", align = "center", maxw = c.width - 4)
-    c.text_fit("DAY BY DAY", c.width // 2, 26, ["4x5", "3x4"],
+    c.text_fit("DAY BY DAY", c.width // 2, 27, ["4x5", "3x4"],
                color = "#8A8AA8", align = "center", maxw = c.width - 2)
 
 
