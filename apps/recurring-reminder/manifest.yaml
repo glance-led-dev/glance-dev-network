@@ -1,0 +1,39 @@
+gdn: 1
+id: recurring-reminder
+version: 0.1.0
+name: Recurring Reminder
+author: joelfullyseeking
+description: "A reminder that repeats every N days, with a label you set. On the day itself the panel says TODAY in gold; every other day it quietly counts down and names the date that is coming. Good for injections, filters, watering, backups — anything on a fixed cycle."
+category: Lifestyle
+entry: app.star
+
+width: 64
+height: 32
+refresh: 3600
+
+pages: [reminder]
+
+inputs:
+  - key: label
+    type: string
+    app_input_type: free-text
+    label: Label
+    default: "REMINDER"
+    help: What the reminder is for, shown on the panel. The panel fonts are uppercase only; keep it short.
+  - key: anchor
+    type: string
+    app_input_type: free-text
+    label: A known occurrence date
+    default: "2026-10-20"
+    help: Any one date in the repeating series, YYYY-MM-DD. The cycle is counted from here in both directions.
+  - key: intervaldays
+    type: string
+    app_input_type: free-text
+    label: Repeat every how many days?
+    default: "14"
+    help: Days between occurrences, 1 to 365. Use 7 for weekly, 14 for every other week, 30 for roughly monthly.
+  - key: accent
+    type: string
+    app_input_type: color
+    label: Accent color
+    default: "#E8B33A"
