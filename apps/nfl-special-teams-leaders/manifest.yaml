@@ -1,9 +1,9 @@
 id: nfl-special-teams-leaders
 name: NFL Special Teams Leaders
 author: cfdmb
-description: Top 3 special teams leaders by category, for NFL, AFC, or NFC.
+description: Top 3 special teams leaders by category, for NFL, AFC, or NFC - regular season or playoffs.
 category: Sports
-width: 128
+width: 192
 height: 32
 refresh: 10800
 pages:
@@ -22,3 +22,10 @@ inputs:
     label: League
     choices: [NFL, AFC, NFC]
     default: NFL
+  - key: stats
+    type: string
+    app_input_type: dropdown
+    label: Stats
+    choices: [Regular season, Playoffs]
+    default: Regular season
+    help: "Playoffs shows the latest postseason. Per team game: FG % 1 attempt, net punt avg 2.5 punts, return avgs 1.25 returns."

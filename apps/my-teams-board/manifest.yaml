@@ -1,0 +1,546 @@
+gdn: 1
+id: my-teams-board
+version: 0.2.0
+name: My Teams Board
+author: joelfullyseeking
+description: "Your teams, logo against logo: pick two NFL, two NBA, two NHL and two college football teams. Each page shows the live score, the latest final, or the next game."
+category: Sports
+entry: app.star
+
+width: 64
+height: 32
+refresh: 900
+
+pages: [nfl1, nfl2, nba1, nba2, nhl1, nhl2, cfb1, cfb2]
+
+inputs:
+  - key: nfl1
+    type: choice
+    app_input_type: dropdown
+    label: "NFL team"
+    default: "Pittsburgh Steelers"
+    help: "One page for this team."
+    choices: ["Arizona Cardinals", "Atlanta Falcons", "Baltimore Ravens", "Buffalo Bills", "Carolina Panthers", "Chicago Bears", "Cincinnati Bengals", "Cleveland Browns", "Dallas Cowboys", "Denver Broncos", "Detroit Lions", "Green Bay Packers", "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers", "Los Angeles Rams", "Miami Dolphins", "Minnesota Vikings", "New England Patriots", "New Orleans Saints", "New York Giants", "New York Jets", "Philadelphia Eagles", "Pittsburgh Steelers", "San Francisco 49ers", "Seattle Seahawks", "Tampa Bay Buccaneers", "Tennessee Titans", "Washington Commanders"]
+    options: ["Arizona Cardinals", "Atlanta Falcons", "Baltimore Ravens", "Buffalo Bills", "Carolina Panthers", "Chicago Bears", "Cincinnati Bengals", "Cleveland Browns", "Dallas Cowboys", "Denver Broncos", "Detroit Lions", "Green Bay Packers", "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers", "Los Angeles Rams", "Miami Dolphins", "Minnesota Vikings", "New England Patriots", "New Orleans Saints", "New York Giants", "New York Jets", "Philadelphia Eagles", "Pittsburgh Steelers", "San Francisco 49ers", "Seattle Seahawks", "Tampa Bay Buccaneers", "Tennessee Titans", "Washington Commanders"]
+  - key: nfl2
+    type: choice
+    app_input_type: dropdown
+    label: "2nd NFL team"
+    default: "Arizona Cardinals"
+    help: "Optional. None turns this page into your first team's schedule."
+    choices: ["None", "Arizona Cardinals", "Atlanta Falcons", "Baltimore Ravens", "Buffalo Bills", "Carolina Panthers", "Chicago Bears", "Cincinnati Bengals", "Cleveland Browns", "Dallas Cowboys", "Denver Broncos", "Detroit Lions", "Green Bay Packers", "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers", "Los Angeles Rams", "Miami Dolphins", "Minnesota Vikings", "New England Patriots", "New Orleans Saints", "New York Giants", "New York Jets", "Philadelphia Eagles", "Pittsburgh Steelers", "San Francisco 49ers", "Seattle Seahawks", "Tampa Bay Buccaneers", "Tennessee Titans", "Washington Commanders"]
+    options: ["None", "Arizona Cardinals", "Atlanta Falcons", "Baltimore Ravens", "Buffalo Bills", "Carolina Panthers", "Chicago Bears", "Cincinnati Bengals", "Cleveland Browns", "Dallas Cowboys", "Denver Broncos", "Detroit Lions", "Green Bay Packers", "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers", "Los Angeles Rams", "Miami Dolphins", "Minnesota Vikings", "New England Patriots", "New Orleans Saints", "New York Giants", "New York Jets", "Philadelphia Eagles", "Pittsburgh Steelers", "San Francisco 49ers", "Seattle Seahawks", "Tampa Bay Buccaneers", "Tennessee Titans", "Washington Commanders"]
+  - key: nba1
+    type: choice
+    app_input_type: dropdown
+    label: "NBA team"
+    default: "Phoenix Suns"
+    help: "One page for this team."
+    choices: ["Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets", "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets", "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers", "LA Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat", "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks", "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns", "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors", "Utah Jazz", "Washington Wizards"]
+    options: ["Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets", "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets", "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers", "LA Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat", "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks", "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns", "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors", "Utah Jazz", "Washington Wizards"]
+  - key: nba2
+    type: choice
+    app_input_type: dropdown
+    label: "2nd NBA team"
+    default: "None"
+    help: "Optional. None turns this page into your first team's schedule."
+    choices: ["None", "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets", "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets", "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers", "LA Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat", "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks", "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns", "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors", "Utah Jazz", "Washington Wizards"]
+    options: ["None", "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets", "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets", "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers", "LA Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat", "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks", "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns", "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors", "Utah Jazz", "Washington Wizards"]
+  - key: nhl1
+    type: choice
+    app_input_type: dropdown
+    label: "NHL team"
+    default: "Pittsburgh Penguins"
+    help: "One page for this team."
+    choices: ["Anaheim Ducks", "Boston Bruins", "Buffalo Sabres", "Calgary Flames", "Carolina Hurricanes", "Chicago Blackhawks", "Colorado Avalanche", "Columbus Blue Jackets", "Dallas Stars", "Detroit Red Wings", "Edmonton Oilers", "Florida Panthers", "Los Angeles Kings", "Minnesota Wild", "Montreal Canadiens", "Nashville Predators", "New Jersey Devils", "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers", "Pittsburgh Penguins", "San Jose Sharks", "Seattle Kraken", "St. Louis Blues", "Tampa Bay Lightning", "Toronto Maple Leafs", "Utah Mammoth", "Vancouver Canucks", "Vegas Golden Knights", "Washington Capitals", "Winnipeg Jets"]
+    options: ["Anaheim Ducks", "Boston Bruins", "Buffalo Sabres", "Calgary Flames", "Carolina Hurricanes", "Chicago Blackhawks", "Colorado Avalanche", "Columbus Blue Jackets", "Dallas Stars", "Detroit Red Wings", "Edmonton Oilers", "Florida Panthers", "Los Angeles Kings", "Minnesota Wild", "Montreal Canadiens", "Nashville Predators", "New Jersey Devils", "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers", "Pittsburgh Penguins", "San Jose Sharks", "Seattle Kraken", "St. Louis Blues", "Tampa Bay Lightning", "Toronto Maple Leafs", "Utah Mammoth", "Vancouver Canucks", "Vegas Golden Knights", "Washington Capitals", "Winnipeg Jets"]
+  - key: nhl2
+    type: choice
+    app_input_type: dropdown
+    label: "2nd NHL team"
+    default: "None"
+    help: "Optional. None turns this page into your first team's schedule."
+    choices: ["None", "Anaheim Ducks", "Boston Bruins", "Buffalo Sabres", "Calgary Flames", "Carolina Hurricanes", "Chicago Blackhawks", "Colorado Avalanche", "Columbus Blue Jackets", "Dallas Stars", "Detroit Red Wings", "Edmonton Oilers", "Florida Panthers", "Los Angeles Kings", "Minnesota Wild", "Montreal Canadiens", "Nashville Predators", "New Jersey Devils", "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers", "Pittsburgh Penguins", "San Jose Sharks", "Seattle Kraken", "St. Louis Blues", "Tampa Bay Lightning", "Toronto Maple Leafs", "Utah Mammoth", "Vancouver Canucks", "Vegas Golden Knights", "Washington Capitals", "Winnipeg Jets"]
+    options: ["None", "Anaheim Ducks", "Boston Bruins", "Buffalo Sabres", "Calgary Flames", "Carolina Hurricanes", "Chicago Blackhawks", "Colorado Avalanche", "Columbus Blue Jackets", "Dallas Stars", "Detroit Red Wings", "Edmonton Oilers", "Florida Panthers", "Los Angeles Kings", "Minnesota Wild", "Montreal Canadiens", "Nashville Predators", "New Jersey Devils", "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers", "Pittsburgh Penguins", "San Jose Sharks", "Seattle Kraken", "St. Louis Blues", "Tampa Bay Lightning", "Toronto Maple Leafs", "Utah Mammoth", "Vancouver Canucks", "Vegas Golden Knights", "Washington Capitals", "Winnipeg Jets"]
+  - key: cfb1
+    type: choice
+    app_input_type: dropdown
+    label: "College football team"
+    default: "Arizona State Sun Devils"
+    help: "One page for this team."
+    choices: ["Air Force Falcons", "Akron Zips", "Alabama Crimson Tide", "App State Mountaineers", "Arizona State Sun Devils", "Arizona Wildcats", "Arkansas Razorbacks", "Arkansas State Red Wolves", "Army Black Knights", "Auburn Tigers", "BYU Cougars", "Ball State Cardinals", "Baylor Bears", "Boise State Broncos", "Boston College Eagles", "Bowling Green Falcons", "Buffalo Bulls", "California Golden Bears", "Central Michigan Chippewas", "Charlotte 49ers", "Cincinnati Bearcats", "Clemson Tigers", "Coastal Carolina Chanticleers", "Colorado Buffaloes", "Colorado State Rams", "Delaware Blue Hens", "Duke Blue Devils", "East Carolina Pirates", "Eastern Michigan Eagles", "Florida Atlantic Owls", "Florida Gators", "Florida International Panthers", "Florida State Seminoles", "Fresno State Bulldogs", "Georgia Bulldogs", "Georgia Southern Eagles", "Georgia State Panthers", "Georgia Tech Yellow Jackets", "Hawai'i Rainbow Warriors", "Houston Cougars", "Illinois Fighting Illini", "Indiana Hoosiers", "Iowa Hawkeyes", "Iowa State Cyclones", "Jacksonville State Gamecocks", "James Madison Dukes", "Kansas Jayhawks", "Kansas State Wildcats", "Kennesaw State Owls", "Kent State Golden Flashes", "Kentucky Wildcats", "LSU Tigers", "Liberty Flames", "Louisiana Ragin' Cajuns", "Louisiana Tech Bulldogs", "Louisville Cardinals", "Marshall Thundering Herd", "Maryland Terrapins", "Massachusetts Minutemen", "Memphis Tigers", "Miami (OH) RedHawks", "Miami Hurricanes", "Michigan State Spartans", "Michigan Wolverines", "Middle Tennessee Blue Raiders", "Minnesota Golden Gophers", "Mississippi State Bulldogs", "Missouri State Bears", "Missouri Tigers", "NC State Wolfpack", "Navy Midshipmen", "Nebraska Cornhuskers", "Nevada Wolf Pack", "New Mexico Lobos", "New Mexico State Aggies", "North Carolina Tar Heels", "North Dakota State Bison", "North Texas Mean Green", "Northern Illinois Huskies", "Northwestern Wildcats", "Notre Dame Fighting Irish", "Ohio Bobcats", "Ohio State Buckeyes", "Oklahoma Sooners", "Oklahoma State Cowboys", "Old Dominion Monarchs", "Ole Miss Rebels", "Oregon Ducks", "Oregon State Beavers", "Penn State Nittany Lions", "Pittsburgh Panthers", "Purdue Boilermakers", "Rice Owls", "Rutgers Scarlet Knights", "SMU Mustangs", "Sacramento State Hornets", "Sam Houston Bearkats", "San Diego State Aztecs", "San José State Spartans", "South Alabama Jaguars", "South Carolina Gamecocks", "South Florida Bulls", "Southern Miss Golden Eagles", "Stanford Cardinal", "Syracuse Orange", "TCU Horned Frogs", "Temple Owls", "Tennessee Volunteers", "Texas A&M Aggies", "Texas Longhorns", "Texas State Bobcats", "Texas Tech Red Raiders", "Toledo Rockets", "Troy Trojans", "Tulane Green Wave", "Tulsa Golden Hurricane", "UAB Blazers", "UCF Knights", "UCLA Bruins", "UConn Huskies", "UL Monroe Warhawks", "UNLV Rebels", "USC Trojans", "UTEP Miners", "UTSA Roadrunners", "Utah State Aggies", "Utah Utes", "Vanderbilt Commodores", "Virginia Cavaliers", "Virginia Tech Hokies", "Wake Forest Demon Deacons", "Washington Huskies", "Washington State Cougars", "West Virginia Mountaineers", "Western Kentucky Hilltoppers", "Western Michigan Broncos", "Wisconsin Badgers", "Wyoming Cowboys"]
+    options: ["Air Force Falcons", "Akron Zips", "Alabama Crimson Tide", "App State Mountaineers", "Arizona State Sun Devils", "Arizona Wildcats", "Arkansas Razorbacks", "Arkansas State Red Wolves", "Army Black Knights", "Auburn Tigers", "BYU Cougars", "Ball State Cardinals", "Baylor Bears", "Boise State Broncos", "Boston College Eagles", "Bowling Green Falcons", "Buffalo Bulls", "California Golden Bears", "Central Michigan Chippewas", "Charlotte 49ers", "Cincinnati Bearcats", "Clemson Tigers", "Coastal Carolina Chanticleers", "Colorado Buffaloes", "Colorado State Rams", "Delaware Blue Hens", "Duke Blue Devils", "East Carolina Pirates", "Eastern Michigan Eagles", "Florida Atlantic Owls", "Florida Gators", "Florida International Panthers", "Florida State Seminoles", "Fresno State Bulldogs", "Georgia Bulldogs", "Georgia Southern Eagles", "Georgia State Panthers", "Georgia Tech Yellow Jackets", "Hawai'i Rainbow Warriors", "Houston Cougars", "Illinois Fighting Illini", "Indiana Hoosiers", "Iowa Hawkeyes", "Iowa State Cyclones", "Jacksonville State Gamecocks", "James Madison Dukes", "Kansas Jayhawks", "Kansas State Wildcats", "Kennesaw State Owls", "Kent State Golden Flashes", "Kentucky Wildcats", "LSU Tigers", "Liberty Flames", "Louisiana Ragin' Cajuns", "Louisiana Tech Bulldogs", "Louisville Cardinals", "Marshall Thundering Herd", "Maryland Terrapins", "Massachusetts Minutemen", "Memphis Tigers", "Miami (OH) RedHawks", "Miami Hurricanes", "Michigan State Spartans", "Michigan Wolverines", "Middle Tennessee Blue Raiders", "Minnesota Golden Gophers", "Mississippi State Bulldogs", "Missouri State Bears", "Missouri Tigers", "NC State Wolfpack", "Navy Midshipmen", "Nebraska Cornhuskers", "Nevada Wolf Pack", "New Mexico Lobos", "New Mexico State Aggies", "North Carolina Tar Heels", "North Dakota State Bison", "North Texas Mean Green", "Northern Illinois Huskies", "Northwestern Wildcats", "Notre Dame Fighting Irish", "Ohio Bobcats", "Ohio State Buckeyes", "Oklahoma Sooners", "Oklahoma State Cowboys", "Old Dominion Monarchs", "Ole Miss Rebels", "Oregon Ducks", "Oregon State Beavers", "Penn State Nittany Lions", "Pittsburgh Panthers", "Purdue Boilermakers", "Rice Owls", "Rutgers Scarlet Knights", "SMU Mustangs", "Sacramento State Hornets", "Sam Houston Bearkats", "San Diego State Aztecs", "San José State Spartans", "South Alabama Jaguars", "South Carolina Gamecocks", "South Florida Bulls", "Southern Miss Golden Eagles", "Stanford Cardinal", "Syracuse Orange", "TCU Horned Frogs", "Temple Owls", "Tennessee Volunteers", "Texas A&M Aggies", "Texas Longhorns", "Texas State Bobcats", "Texas Tech Red Raiders", "Toledo Rockets", "Troy Trojans", "Tulane Green Wave", "Tulsa Golden Hurricane", "UAB Blazers", "UCF Knights", "UCLA Bruins", "UConn Huskies", "UL Monroe Warhawks", "UNLV Rebels", "USC Trojans", "UTEP Miners", "UTSA Roadrunners", "Utah State Aggies", "Utah Utes", "Vanderbilt Commodores", "Virginia Cavaliers", "Virginia Tech Hokies", "Wake Forest Demon Deacons", "Washington Huskies", "Washington State Cougars", "West Virginia Mountaineers", "Western Kentucky Hilltoppers", "Western Michigan Broncos", "Wisconsin Badgers", "Wyoming Cowboys"]
+  - key: cfb2
+    type: choice
+    app_input_type: dropdown
+    label: "2nd college football team"
+    default: "None"
+    help: "Optional. None turns this page into your first team's schedule."
+    choices: ["None", "Air Force Falcons", "Akron Zips", "Alabama Crimson Tide", "App State Mountaineers", "Arizona State Sun Devils", "Arizona Wildcats", "Arkansas Razorbacks", "Arkansas State Red Wolves", "Army Black Knights", "Auburn Tigers", "BYU Cougars", "Ball State Cardinals", "Baylor Bears", "Boise State Broncos", "Boston College Eagles", "Bowling Green Falcons", "Buffalo Bulls", "California Golden Bears", "Central Michigan Chippewas", "Charlotte 49ers", "Cincinnati Bearcats", "Clemson Tigers", "Coastal Carolina Chanticleers", "Colorado Buffaloes", "Colorado State Rams", "Delaware Blue Hens", "Duke Blue Devils", "East Carolina Pirates", "Eastern Michigan Eagles", "Florida Atlantic Owls", "Florida Gators", "Florida International Panthers", "Florida State Seminoles", "Fresno State Bulldogs", "Georgia Bulldogs", "Georgia Southern Eagles", "Georgia State Panthers", "Georgia Tech Yellow Jackets", "Hawai'i Rainbow Warriors", "Houston Cougars", "Illinois Fighting Illini", "Indiana Hoosiers", "Iowa Hawkeyes", "Iowa State Cyclones", "Jacksonville State Gamecocks", "James Madison Dukes", "Kansas Jayhawks", "Kansas State Wildcats", "Kennesaw State Owls", "Kent State Golden Flashes", "Kentucky Wildcats", "LSU Tigers", "Liberty Flames", "Louisiana Ragin' Cajuns", "Louisiana Tech Bulldogs", "Louisville Cardinals", "Marshall Thundering Herd", "Maryland Terrapins", "Massachusetts Minutemen", "Memphis Tigers", "Miami (OH) RedHawks", "Miami Hurricanes", "Michigan State Spartans", "Michigan Wolverines", "Middle Tennessee Blue Raiders", "Minnesota Golden Gophers", "Mississippi State Bulldogs", "Missouri State Bears", "Missouri Tigers", "NC State Wolfpack", "Navy Midshipmen", "Nebraska Cornhuskers", "Nevada Wolf Pack", "New Mexico Lobos", "New Mexico State Aggies", "North Carolina Tar Heels", "North Dakota State Bison", "North Texas Mean Green", "Northern Illinois Huskies", "Northwestern Wildcats", "Notre Dame Fighting Irish", "Ohio Bobcats", "Ohio State Buckeyes", "Oklahoma Sooners", "Oklahoma State Cowboys", "Old Dominion Monarchs", "Ole Miss Rebels", "Oregon Ducks", "Oregon State Beavers", "Penn State Nittany Lions", "Pittsburgh Panthers", "Purdue Boilermakers", "Rice Owls", "Rutgers Scarlet Knights", "SMU Mustangs", "Sacramento State Hornets", "Sam Houston Bearkats", "San Diego State Aztecs", "San José State Spartans", "South Alabama Jaguars", "South Carolina Gamecocks", "South Florida Bulls", "Southern Miss Golden Eagles", "Stanford Cardinal", "Syracuse Orange", "TCU Horned Frogs", "Temple Owls", "Tennessee Volunteers", "Texas A&M Aggies", "Texas Longhorns", "Texas State Bobcats", "Texas Tech Red Raiders", "Toledo Rockets", "Troy Trojans", "Tulane Green Wave", "Tulsa Golden Hurricane", "UAB Blazers", "UCF Knights", "UCLA Bruins", "UConn Huskies", "UL Monroe Warhawks", "UNLV Rebels", "USC Trojans", "UTEP Miners", "UTSA Roadrunners", "Utah State Aggies", "Utah Utes", "Vanderbilt Commodores", "Virginia Cavaliers", "Virginia Tech Hokies", "Wake Forest Demon Deacons", "Washington Huskies", "Washington State Cougars", "West Virginia Mountaineers", "Western Kentucky Hilltoppers", "Western Michigan Broncos", "Wisconsin Badgers", "Wyoming Cowboys"]
+    options: ["None", "Air Force Falcons", "Akron Zips", "Alabama Crimson Tide", "App State Mountaineers", "Arizona State Sun Devils", "Arizona Wildcats", "Arkansas Razorbacks", "Arkansas State Red Wolves", "Army Black Knights", "Auburn Tigers", "BYU Cougars", "Ball State Cardinals", "Baylor Bears", "Boise State Broncos", "Boston College Eagles", "Bowling Green Falcons", "Buffalo Bulls", "California Golden Bears", "Central Michigan Chippewas", "Charlotte 49ers", "Cincinnati Bearcats", "Clemson Tigers", "Coastal Carolina Chanticleers", "Colorado Buffaloes", "Colorado State Rams", "Delaware Blue Hens", "Duke Blue Devils", "East Carolina Pirates", "Eastern Michigan Eagles", "Florida Atlantic Owls", "Florida Gators", "Florida International Panthers", "Florida State Seminoles", "Fresno State Bulldogs", "Georgia Bulldogs", "Georgia Southern Eagles", "Georgia State Panthers", "Georgia Tech Yellow Jackets", "Hawai'i Rainbow Warriors", "Houston Cougars", "Illinois Fighting Illini", "Indiana Hoosiers", "Iowa Hawkeyes", "Iowa State Cyclones", "Jacksonville State Gamecocks", "James Madison Dukes", "Kansas Jayhawks", "Kansas State Wildcats", "Kennesaw State Owls", "Kent State Golden Flashes", "Kentucky Wildcats", "LSU Tigers", "Liberty Flames", "Louisiana Ragin' Cajuns", "Louisiana Tech Bulldogs", "Louisville Cardinals", "Marshall Thundering Herd", "Maryland Terrapins", "Massachusetts Minutemen", "Memphis Tigers", "Miami (OH) RedHawks", "Miami Hurricanes", "Michigan State Spartans", "Michigan Wolverines", "Middle Tennessee Blue Raiders", "Minnesota Golden Gophers", "Mississippi State Bulldogs", "Missouri State Bears", "Missouri Tigers", "NC State Wolfpack", "Navy Midshipmen", "Nebraska Cornhuskers", "Nevada Wolf Pack", "New Mexico Lobos", "New Mexico State Aggies", "North Carolina Tar Heels", "North Dakota State Bison", "North Texas Mean Green", "Northern Illinois Huskies", "Northwestern Wildcats", "Notre Dame Fighting Irish", "Ohio Bobcats", "Ohio State Buckeyes", "Oklahoma Sooners", "Oklahoma State Cowboys", "Old Dominion Monarchs", "Ole Miss Rebels", "Oregon Ducks", "Oregon State Beavers", "Penn State Nittany Lions", "Pittsburgh Panthers", "Purdue Boilermakers", "Rice Owls", "Rutgers Scarlet Knights", "SMU Mustangs", "Sacramento State Hornets", "Sam Houston Bearkats", "San Diego State Aztecs", "San José State Spartans", "South Alabama Jaguars", "South Carolina Gamecocks", "South Florida Bulls", "Southern Miss Golden Eagles", "Stanford Cardinal", "Syracuse Orange", "TCU Horned Frogs", "Temple Owls", "Tennessee Volunteers", "Texas A&M Aggies", "Texas Longhorns", "Texas State Bobcats", "Texas Tech Red Raiders", "Toledo Rockets", "Troy Trojans", "Tulane Green Wave", "Tulsa Golden Hurricane", "UAB Blazers", "UCF Knights", "UCLA Bruins", "UConn Huskies", "UL Monroe Warhawks", "UNLV Rebels", "USC Trojans", "UTEP Miners", "UTSA Roadrunners", "Utah State Aggies", "Utah Utes", "Vanderbilt Commodores", "Virginia Cavaliers", "Virginia Tech Hokies", "Wake Forest Demon Deacons", "Washington Huskies", "Washington State Cougars", "West Virginia Mountaineers", "Western Kentucky Hilltoppers", "Western Michigan Broncos", "Wisconsin Badgers", "Wyoming Cowboys"]
+
+assets:
+  - assets/cfb/103.png
+  - assets/cfb/113.png
+  - assets/cfb/12.png
+  - assets/cfb/120.png
+  - assets/cfb/127.png
+  - assets/cfb/130.png
+  - assets/cfb/135.png
+  - assets/cfb/142.png
+  - assets/cfb/145.png
+  - assets/cfb/150.png
+  - assets/cfb/151.png
+  - assets/cfb/152.png
+  - assets/cfb/153.png
+  - assets/cfb/154.png
+  - assets/cfb/158.png
+  - assets/cfb/16.png
+  - assets/cfb/164.png
+  - assets/cfb/166.png
+  - assets/cfb/167.png
+  - assets/cfb/183.png
+  - assets/cfb/189.png
+  - assets/cfb/193.png
+  - assets/cfb/194.png
+  - assets/cfb/195.png
+  - assets/cfb/197.png
+  - assets/cfb/2.png
+  - assets/cfb/2005.png
+  - assets/cfb/2006.png
+  - assets/cfb/201.png
+  - assets/cfb/202.png
+  - assets/cfb/2026.png
+  - assets/cfb/2032.png
+  - assets/cfb/204.png
+  - assets/cfb/2050.png
+  - assets/cfb/2084.png
+  - assets/cfb/21.png
+  - assets/cfb/2116.png
+  - assets/cfb/2117.png
+  - assets/cfb/213.png
+  - assets/cfb/2132.png
+  - assets/cfb/218.png
+  - assets/cfb/2199.png
+  - assets/cfb/221.png
+  - assets/cfb/2226.png
+  - assets/cfb/2229.png
+  - assets/cfb/2247.png
+  - assets/cfb/228.png
+  - assets/cfb/2294.png
+  - assets/cfb/23.png
+  - assets/cfb/2305.png
+  - assets/cfb/2306.png
+  - assets/cfb/2309.png
+  - assets/cfb/2335.png
+  - assets/cfb/2348.png
+  - assets/cfb/235.png
+  - assets/cfb/238.png
+  - assets/cfb/239.png
+  - assets/cfb/2390.png
+  - assets/cfb/2393.png
+  - assets/cfb/24.png
+  - assets/cfb/242.png
+  - assets/cfb/2426.png
+  - assets/cfb/2429.png
+  - assets/cfb/2433.png
+  - assets/cfb/2439.png
+  - assets/cfb/2440.png
+  - assets/cfb/2449.png
+  - assets/cfb/245.png
+  - assets/cfb/2459.png
+  - assets/cfb/248.png
+  - assets/cfb/2483.png
+  - assets/cfb/249.png
+  - assets/cfb/25.png
+  - assets/cfb/2509.png
+  - assets/cfb/251.png
+  - assets/cfb/252.png
+  - assets/cfb/2534.png
+  - assets/cfb/254.png
+  - assets/cfb/256.png
+  - assets/cfb/2567.png
+  - assets/cfb/2572.png
+  - assets/cfb/2579.png
+  - assets/cfb/258.png
+  - assets/cfb/259.png
+  - assets/cfb/26.png
+  - assets/cfb/2623.png
+  - assets/cfb/2628.png
+  - assets/cfb/2633.png
+  - assets/cfb/2636.png
+  - assets/cfb/2638.png
+  - assets/cfb/264.png
+  - assets/cfb/2641.png
+  - assets/cfb/2649.png
+  - assets/cfb/265.png
+  - assets/cfb/2653.png
+  - assets/cfb/2655.png
+  - assets/cfb/2711.png
+  - assets/cfb/275.png
+  - assets/cfb/2751.png
+  - assets/cfb/276.png
+  - assets/cfb/277.png
+  - assets/cfb/278.png
+  - assets/cfb/290.png
+  - assets/cfb/295.png
+  - assets/cfb/30.png
+  - assets/cfb/309.png
+  - assets/cfb/324.png
+  - assets/cfb/326.png
+  - assets/cfb/328.png
+  - assets/cfb/333.png
+  - assets/cfb/338.png
+  - assets/cfb/344.png
+  - assets/cfb/349.png
+  - assets/cfb/356.png
+  - assets/cfb/36.png
+  - assets/cfb/38.png
+  - assets/cfb/41.png
+  - assets/cfb/48.png
+  - assets/cfb/5.png
+  - assets/cfb/52.png
+  - assets/cfb/55.png
+  - assets/cfb/57.png
+  - assets/cfb/58.png
+  - assets/cfb/59.png
+  - assets/cfb/6.png
+  - assets/cfb/61.png
+  - assets/cfb/62.png
+  - assets/cfb/66.png
+  - assets/cfb/68.png
+  - assets/cfb/77.png
+  - assets/cfb/8.png
+  - assets/cfb/84.png
+  - assets/cfb/87.png
+  - assets/cfb/9.png
+  - assets/cfb/96.png
+  - assets/cfb/97.png
+  - assets/cfb/98.png
+  - assets/cfb/99.png
+  - assets/cfb/s103.png
+  - assets/cfb/s113.png
+  - assets/cfb/s12.png
+  - assets/cfb/s120.png
+  - assets/cfb/s127.png
+  - assets/cfb/s130.png
+  - assets/cfb/s135.png
+  - assets/cfb/s142.png
+  - assets/cfb/s145.png
+  - assets/cfb/s150.png
+  - assets/cfb/s151.png
+  - assets/cfb/s152.png
+  - assets/cfb/s153.png
+  - assets/cfb/s154.png
+  - assets/cfb/s158.png
+  - assets/cfb/s16.png
+  - assets/cfb/s164.png
+  - assets/cfb/s166.png
+  - assets/cfb/s167.png
+  - assets/cfb/s183.png
+  - assets/cfb/s189.png
+  - assets/cfb/s193.png
+  - assets/cfb/s194.png
+  - assets/cfb/s195.png
+  - assets/cfb/s197.png
+  - assets/cfb/s2.png
+  - assets/cfb/s2005.png
+  - assets/cfb/s2006.png
+  - assets/cfb/s201.png
+  - assets/cfb/s202.png
+  - assets/cfb/s2026.png
+  - assets/cfb/s2032.png
+  - assets/cfb/s204.png
+  - assets/cfb/s2050.png
+  - assets/cfb/s2084.png
+  - assets/cfb/s21.png
+  - assets/cfb/s2116.png
+  - assets/cfb/s2117.png
+  - assets/cfb/s213.png
+  - assets/cfb/s2132.png
+  - assets/cfb/s218.png
+  - assets/cfb/s2199.png
+  - assets/cfb/s221.png
+  - assets/cfb/s2226.png
+  - assets/cfb/s2229.png
+  - assets/cfb/s2247.png
+  - assets/cfb/s228.png
+  - assets/cfb/s2294.png
+  - assets/cfb/s23.png
+  - assets/cfb/s2305.png
+  - assets/cfb/s2306.png
+  - assets/cfb/s2309.png
+  - assets/cfb/s2335.png
+  - assets/cfb/s2348.png
+  - assets/cfb/s235.png
+  - assets/cfb/s238.png
+  - assets/cfb/s239.png
+  - assets/cfb/s2390.png
+  - assets/cfb/s2393.png
+  - assets/cfb/s24.png
+  - assets/cfb/s242.png
+  - assets/cfb/s2426.png
+  - assets/cfb/s2429.png
+  - assets/cfb/s2433.png
+  - assets/cfb/s2439.png
+  - assets/cfb/s2440.png
+  - assets/cfb/s2449.png
+  - assets/cfb/s245.png
+  - assets/cfb/s2459.png
+  - assets/cfb/s248.png
+  - assets/cfb/s2483.png
+  - assets/cfb/s249.png
+  - assets/cfb/s25.png
+  - assets/cfb/s2509.png
+  - assets/cfb/s251.png
+  - assets/cfb/s252.png
+  - assets/cfb/s2534.png
+  - assets/cfb/s254.png
+  - assets/cfb/s256.png
+  - assets/cfb/s2567.png
+  - assets/cfb/s2572.png
+  - assets/cfb/s2579.png
+  - assets/cfb/s258.png
+  - assets/cfb/s259.png
+  - assets/cfb/s26.png
+  - assets/cfb/s2623.png
+  - assets/cfb/s2628.png
+  - assets/cfb/s2633.png
+  - assets/cfb/s2636.png
+  - assets/cfb/s2638.png
+  - assets/cfb/s264.png
+  - assets/cfb/s2641.png
+  - assets/cfb/s2649.png
+  - assets/cfb/s265.png
+  - assets/cfb/s2653.png
+  - assets/cfb/s2655.png
+  - assets/cfb/s2711.png
+  - assets/cfb/s275.png
+  - assets/cfb/s2751.png
+  - assets/cfb/s276.png
+  - assets/cfb/s277.png
+  - assets/cfb/s278.png
+  - assets/cfb/s290.png
+  - assets/cfb/s295.png
+  - assets/cfb/s30.png
+  - assets/cfb/s309.png
+  - assets/cfb/s324.png
+  - assets/cfb/s326.png
+  - assets/cfb/s328.png
+  - assets/cfb/s333.png
+  - assets/cfb/s338.png
+  - assets/cfb/s344.png
+  - assets/cfb/s349.png
+  - assets/cfb/s356.png
+  - assets/cfb/s36.png
+  - assets/cfb/s38.png
+  - assets/cfb/s41.png
+  - assets/cfb/s48.png
+  - assets/cfb/s5.png
+  - assets/cfb/s52.png
+  - assets/cfb/s55.png
+  - assets/cfb/s57.png
+  - assets/cfb/s58.png
+  - assets/cfb/s59.png
+  - assets/cfb/s6.png
+  - assets/cfb/s61.png
+  - assets/cfb/s62.png
+  - assets/cfb/s66.png
+  - assets/cfb/s68.png
+  - assets/cfb/s77.png
+  - assets/cfb/s8.png
+  - assets/cfb/s84.png
+  - assets/cfb/s87.png
+  - assets/cfb/s9.png
+  - assets/cfb/s96.png
+  - assets/cfb/s97.png
+  - assets/cfb/s98.png
+  - assets/cfb/s99.png
+  - assets/nba/1.png
+  - assets/nba/10.png
+  - assets/nba/11.png
+  - assets/nba/12.png
+  - assets/nba/13.png
+  - assets/nba/14.png
+  - assets/nba/15.png
+  - assets/nba/16.png
+  - assets/nba/17.png
+  - assets/nba/18.png
+  - assets/nba/19.png
+  - assets/nba/2.png
+  - assets/nba/20.png
+  - assets/nba/21.png
+  - assets/nba/22.png
+  - assets/nba/23.png
+  - assets/nba/24.png
+  - assets/nba/25.png
+  - assets/nba/26.png
+  - assets/nba/27.png
+  - assets/nba/28.png
+  - assets/nba/29.png
+  - assets/nba/3.png
+  - assets/nba/30.png
+  - assets/nba/4.png
+  - assets/nba/5.png
+  - assets/nba/6.png
+  - assets/nba/7.png
+  - assets/nba/8.png
+  - assets/nba/9.png
+  - assets/nba/s1.png
+  - assets/nba/s10.png
+  - assets/nba/s11.png
+  - assets/nba/s12.png
+  - assets/nba/s13.png
+  - assets/nba/s14.png
+  - assets/nba/s15.png
+  - assets/nba/s16.png
+  - assets/nba/s17.png
+  - assets/nba/s18.png
+  - assets/nba/s19.png
+  - assets/nba/s2.png
+  - assets/nba/s20.png
+  - assets/nba/s21.png
+  - assets/nba/s22.png
+  - assets/nba/s23.png
+  - assets/nba/s24.png
+  - assets/nba/s25.png
+  - assets/nba/s26.png
+  - assets/nba/s27.png
+  - assets/nba/s28.png
+  - assets/nba/s29.png
+  - assets/nba/s3.png
+  - assets/nba/s30.png
+  - assets/nba/s4.png
+  - assets/nba/s5.png
+  - assets/nba/s6.png
+  - assets/nba/s7.png
+  - assets/nba/s8.png
+  - assets/nba/s9.png
+  - assets/nfl/1.png
+  - assets/nfl/10.png
+  - assets/nfl/11.png
+  - assets/nfl/12.png
+  - assets/nfl/13.png
+  - assets/nfl/14.png
+  - assets/nfl/15.png
+  - assets/nfl/16.png
+  - assets/nfl/17.png
+  - assets/nfl/18.png
+  - assets/nfl/19.png
+  - assets/nfl/2.png
+  - assets/nfl/20.png
+  - assets/nfl/21.png
+  - assets/nfl/22.png
+  - assets/nfl/23.png
+  - assets/nfl/24.png
+  - assets/nfl/25.png
+  - assets/nfl/26.png
+  - assets/nfl/27.png
+  - assets/nfl/28.png
+  - assets/nfl/29.png
+  - assets/nfl/3.png
+  - assets/nfl/30.png
+  - assets/nfl/33.png
+  - assets/nfl/34.png
+  - assets/nfl/4.png
+  - assets/nfl/5.png
+  - assets/nfl/6.png
+  - assets/nfl/7.png
+  - assets/nfl/8.png
+  - assets/nfl/9.png
+  - assets/nfl/s1.png
+  - assets/nfl/s10.png
+  - assets/nfl/s11.png
+  - assets/nfl/s12.png
+  - assets/nfl/s13.png
+  - assets/nfl/s14.png
+  - assets/nfl/s15.png
+  - assets/nfl/s16.png
+  - assets/nfl/s17.png
+  - assets/nfl/s18.png
+  - assets/nfl/s19.png
+  - assets/nfl/s2.png
+  - assets/nfl/s20.png
+  - assets/nfl/s21.png
+  - assets/nfl/s22.png
+  - assets/nfl/s23.png
+  - assets/nfl/s24.png
+  - assets/nfl/s25.png
+  - assets/nfl/s26.png
+  - assets/nfl/s27.png
+  - assets/nfl/s28.png
+  - assets/nfl/s29.png
+  - assets/nfl/s3.png
+  - assets/nfl/s30.png
+  - assets/nfl/s33.png
+  - assets/nfl/s34.png
+  - assets/nfl/s4.png
+  - assets/nfl/s5.png
+  - assets/nfl/s6.png
+  - assets/nfl/s7.png
+  - assets/nfl/s8.png
+  - assets/nfl/s9.png
+  - assets/nhl/1.png
+  - assets/nhl/10.png
+  - assets/nhl/11.png
+  - assets/nhl/12.png
+  - assets/nhl/124292.png
+  - assets/nhl/129764.png
+  - assets/nhl/13.png
+  - assets/nhl/14.png
+  - assets/nhl/15.png
+  - assets/nhl/16.png
+  - assets/nhl/17.png
+  - assets/nhl/18.png
+  - assets/nhl/19.png
+  - assets/nhl/2.png
+  - assets/nhl/20.png
+  - assets/nhl/21.png
+  - assets/nhl/22.png
+  - assets/nhl/23.png
+  - assets/nhl/25.png
+  - assets/nhl/26.png
+  - assets/nhl/27.png
+  - assets/nhl/28.png
+  - assets/nhl/29.png
+  - assets/nhl/3.png
+  - assets/nhl/30.png
+  - assets/nhl/37.png
+  - assets/nhl/4.png
+  - assets/nhl/5.png
+  - assets/nhl/6.png
+  - assets/nhl/7.png
+  - assets/nhl/8.png
+  - assets/nhl/9.png
+  - assets/nhl/s1.png
+  - assets/nhl/s10.png
+  - assets/nhl/s11.png
+  - assets/nhl/s12.png
+  - assets/nhl/s124292.png
+  - assets/nhl/s129764.png
+  - assets/nhl/s13.png
+  - assets/nhl/s14.png
+  - assets/nhl/s15.png
+  - assets/nhl/s16.png
+  - assets/nhl/s17.png
+  - assets/nhl/s18.png
+  - assets/nhl/s19.png
+  - assets/nhl/s2.png
+  - assets/nhl/s20.png
+  - assets/nhl/s21.png
+  - assets/nhl/s22.png
+  - assets/nhl/s23.png
+  - assets/nhl/s25.png
+  - assets/nhl/s26.png
+  - assets/nhl/s27.png
+  - assets/nhl/s28.png
+  - assets/nhl/s29.png
+  - assets/nhl/s3.png
+  - assets/nhl/s30.png
+  - assets/nhl/s37.png
+  - assets/nhl/s4.png
+  - assets/nhl/s5.png
+  - assets/nhl/s6.png
+  - assets/nhl/s7.png
+  - assets/nhl/s8.png
+  - assets/nhl/s9.png
