@@ -9,7 +9,7 @@ category: Weather
 entry: app.star
 width: 192
 height: 32
-refresh: 900
+refresh: 3600
 pages:
   - main
   - page2
@@ -20,3 +20,34 @@ pages:
   - page7
   - page8
 inputs: []
+assets:
+  - ALA.png
+  - ARK.png
+  - AUB.png
+  - FLA.png
+  - LSU.png
+  - MISS.png
+  - MIZ.png
+  - MSST.png
+  - OU.png
+  - SC.png
+  - TAMU.png
+  - TENN.png
+  - TEX.png
+  - UGA.png
+  - UK.png
+  - VAN.png
+  - clear-day.png
+  - clear-night.png
+  - drizzle.png
+  - extreme-rain.png
+  - fog-day.png
+  - fog-night.png
+  - overcast.png
+  - partly-cloudy-night.png
+  - partly-sun-day.png
+  - rain.png
+  - sleet.png
+  - snow.png
+  - thunderstorms-extreme-rain.png
+  - thunderstorms-rain.png
