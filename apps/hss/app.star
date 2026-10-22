@@ -16534,6 +16534,8 @@ def identity_text_color(team):
             return accent
     return badge_text_color(background)
 
+EMPTY_STATES = ["key_error", "no_credits", "url_error", "school_error", "feed_error", "error", "no_game", "no_upcoming", "no_final"]
+
 def scoreboard_school(c, ctx):
     schools = school_settings(ctx)
     if not sport_is_active(ctx, schools["timezone"]):
@@ -16572,6 +16574,8 @@ def scoreboard_school(c, ctx):
         draw_final(c, g)
     else:
         draw_next(c, g)
+    if state in EMPTY_STATES:
+        return
     away = team_info(g.get("away", "TBD"), g, "away")
     home = team_info(g.get("home", "TBD"), g, "home")
     away_logo = team_logo(g.get("away", "TBD"), g, "away")
