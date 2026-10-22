@@ -815,8 +815,7 @@ def draw_scores(c, lg, my_id, ev, kind):
     if os != None:
         mid(c, os, 23, ["6x8", "5x7"], oc, x = 53, maxw = 21)
     if kind == "LIVE":
-        c.fill_circle(26, 4, 1, RED)
-        mid(c, "LIVE", 2, ["4x5", "3x4"], RED, x = 34, maxw = 16)
+        mid(c, "LIVE", 2, ["4x5", "3x4"], RED)
         lab = live_clock(lg, ev)
         mid(c, lab[0], 10, ["5x7", "4x5"], WHITE)
         if lab[1] != "":
@@ -828,7 +827,7 @@ def draw_scores(c, lg, my_id, ev, kind):
         col = GREEN if res == "W" else (RED if res == "L" else WHITE)
         mid(c, res, 9, ["7x12", "6x8"], col)
     foot = short_date(ev["unix"]) if kind == "FINAL" else "DONE"
-    mid(c, foot, 25, ["4x5", "3x4"], DIM)
+    mid(c, foot, 25, ["3x4"], DIM, maxw = 20)
 
 
 def notice(c, lg, tid, big, small):
@@ -865,8 +864,6 @@ def draw_schedule(c, lg, tid, data, now):
         ev = rows[i][1]
         y = 1 + i * 11
         logo(c, lg, ev["opp"]["id"], ev["opp"]["abbr"], 26, y, small = True)
-        c.text("@" if not ev["mine"]["home"] else "V", 38, y + 3, font = "3x4",
-               color = DIM)
         if kind == "LIVE":
             lab = "LIVE"
             col = RED
@@ -882,8 +879,8 @@ def draw_schedule(c, lg, tid, data, now):
             w = int(ms) > int(os)
             lab = ("W " if w else "L ") + ms + "-" + os
             col = GREEN if w else RED
-        c.text_fit(lab, 63, y + 3, ["4x5", "3x4"], color = col, align = "right",
-                   maxw = 21)
+        c.text_fit(lab, 50, y + 3, ["4x5", "3x4"], color = col,
+                   align = "center", maxw = 26)
 
 
 def chosen(ctx, slot):
