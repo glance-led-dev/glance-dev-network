@@ -11,16 +11,16 @@ height: 32
 # day since it never changes.
 refresh: 900
 pages:
-- intro
-- point1
-- point2
-- point3
-- point4
-- point5
+  - intro
+  - point1
+  - point2
+  - point3
+  - point4
+  - point5
 inputs:
-- key: zip
-  type: string
-  app_input_type: free-text
-  label: Your zip code
-  default: ""
-  help: A 5-digit US zip code, e.g. 27960. Picks the National Weather Service office that forecasts for you.
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Your zip code
+    default: ""
+    help: A 5-digit US zip code, e.g. 27960. Picks the National Weather Service office that forecasts for you.
