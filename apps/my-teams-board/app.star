@@ -1,9 +1,13 @@
 # My Teams Board — your teams, one page each, logo against logo.
 #
 # Eight pages: two NFL, two NBA, two NHL and two college football slots,
-# each picked from a dropdown. Slot 1 of every league is always a team; slot
-# 2 can be NONE, and then that page turns into slot 1's upcoming schedule
-# (next three games) so no page ever repeats.
+# each picked from a dropdown. Slot 2 can be NONE, and then that page turns
+# into slot 1's upcoming schedule (next three games) so no page ever repeats.
+# Slot 1 can be NONE too: that switches the whole league off (slot 2's pick
+# is then ignored), and the league's two pages become index pages for the
+# teams still on — one of what is next for each of them, one of the latest
+# finals — alternating if more than one league is off, since a page cannot
+# be skipped outright.
 #
 # Each matchup page answers one question: are they playing right now, did
 # they just play, or when is the next one? Live score beats a fresh final
@@ -897,9 +901,106 @@ def chosen(ctx, slot):
     return table[v]
 
 
+def on_teams(ctx):
+    """[league, team id] for every slot holding a real team, in page order.
+
+    A slot set to NONE contributes nothing: slot 2 NONE is just slot 1's
+    schedule page, and slot 1 NONE takes the whole league off."""
+    out = []
+    for slot in ["nfl1", "nfl2", "nba1", "nba2", "nhl1", "nhl2", "cfb1", "cfb2"]:
+        lg = SLOTS[slot][0]
+        if chosen(ctx, lg + "1") == None:
+            continue  # the league is off; slot 2's pick is ignored too
+        tid = chosen(ctx, slot)
+        if tid != None and [lg, tid] not in out:
+            out.append([lg, tid])
+    return out
+
+
+def result_text(ev):
+    """['W 24-17', colour] for a finished game."""
+    ms = ev["mine"]["score"] or "0"
+    os = ev["opp"]["score"] or "0"
+    res = "W" if int(ms) > int(os) else ("L" if int(ms) < int(os) else "T")
+    col = GREEN if res == "W" else (RED if res == "L" else WHITE)
+    return ["%s %s-%s" % (res, ms, os), col]
+
+
+def index_rows(ctx, mode):
+    """One row per team still on: [abbr, text, colour].
+
+    Mode NEXT takes each team's headline game (live beats a fresh final
+    beats the next game, the same order pick() uses); mode LAST takes its
+    most recent final."""
+    rows = []
+    for lg, tid in on_teams(ctx):
+        data = fetch(lg, tid)
+        if data == None:
+            continue
+        team = data.get("team") or {}
+        abbr = str(team.get("abbreviation") or "?").upper()
+        sc = scan(data.get("events") or [], tid)
+        if mode == "LAST":
+            if sc[1]:
+                t = result_text(sc[1][0])
+                rows.append([abbr, t[0], t[1]])
+            elif sc[0] != None:
+                ev = sc[0]
+                rows.append([abbr, "LIVE %s-%s" % (ev["mine"]["score"] or "0",
+                                                   ev["opp"]["score"] or "0"), RED])
+            else:
+                rows.append([abbr, "NO GAMES", DIM])
+            continue
+        got = pick(sc, ctx.now.unix)
+        kind = got[0]
+        ev = got[1]
+        if ev == None:
+            rows.append([abbr, "NO GAMES", DIM])
+        elif kind == "LIVE":
+            rows.append([abbr, "LIVE %s-%s" % (ev["mine"]["score"] or "0",
+                                               ev["opp"]["score"] or "0"), RED])
+        elif kind == "NEXT":
+            rows.append([abbr, when_label(ev, ctx.now.unix).upper(), WHITE])
+        else:
+            t = result_text(ev)
+            rows.append([abbr, t[0], t[1]])
+    return rows
+
+
+def draw_index(c, ctx, mode):
+    """An off league's page: the teams still on, one line each.
+
+    The first off page shows what is next (UP NEXT), the second the latest
+    finals (LATEST); with more pages off they alternate."""
+    mid(c, "UP NEXT" if mode == "NEXT" else "LATEST", 2, ["4x5"], GOLD,
+        maxw = 40)
+    rows = index_rows(ctx, mode)
+    if not rows:
+        mid(c, "NO TEAMS ON", 13, ["4x5", "3x4"], GRAY, maxw = 50)
+        mid(c, "ALL LEAGUES OFF", 21, ["3x4"], DIM, maxw = 50)
+        return
+    for i in range(min(4, len(rows))):
+        y = 8 + i * 6
+        c.text(rows[i][0], 1, y, "4x5", color = WHITE)
+        c.text_fit(rows[i][1], 17, y, ["4x5", "3x4"], color = rows[i][2],
+                   align = "left", maxw = 46)
+
+
 def board(c, ctx, slot):
     c.fill(BG)
     lg = SLOTS[slot][0]
+    if chosen(ctx, lg + "1") == None:
+        # the league is off: this page becomes a board index page. Pages
+        # before this one whose league is also off decide which index it
+        # shows, so the two pages of an off league are NEXT then LATEST.
+        n = 0
+        for s in ["nfl1", "nfl2", "nba1", "nba2", "nhl1", "nhl2", "cfb1", "cfb2"]:
+            if s == slot:
+                break
+            if chosen(ctx, SLOTS[s][0] + "1") == None:
+                n += 1
+        draw_index(c, ctx, "NEXT" if n % 2 == 0 else "LAST")
+        return
     tid = chosen(ctx, slot)
     sched = False
     if tid == None:
