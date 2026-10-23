@@ -1,5 +1,5 @@
 # College Basketball Player Tracker
-# Seven compact live-stat pages: the five starters, then the top two bench scorers.
+# Eight compact live-stat pages: five starters plus the top three bench scorers.
 
 INK = "#F4F7FF"
 DIM = "#738096"
@@ -756,9 +756,9 @@ def game_data(ctx):
     if selected_team == None:
         return {"error": "SCHOOL NOT FOUND"}
     team_id = str(selected_team.get("id"))
-    event_id = upper(ctx.inputs.get("event"), "AUTO")
-    if event_id == "AUTO":
-        event_id = find_event(league, team_id)
+    # Public installations always find the selected team's game automatically.
+    # Ignore saved Studio overrides from earlier versions.
+    event_id = find_event(league, team_id)
     if event_id == None:
         return season_data(league, selected_team)
     data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/summary?event=%s" % (league, event_id), 30)
@@ -818,7 +818,6 @@ def game_data(ctx):
         "players": players,
         "team": team.get("team") or {},
         "opponent": (opponent or {}).get("team") or {},
-        "opponent_ap_rank": current_opponent_ap(league, opponent, (data.get("header") or {}).get("season", {}).get("year")),
         "team_score": clean(team.get("score"), "0"),
         "opponent_score": clean((opponent or {}).get("score"), "0"),
         "team_home_away": clean(team.get("homeAway"), "away"),
@@ -829,23 +828,6 @@ def game_data(ctx):
         "clock": clean(status.get("displayClock")),
         "mode": "GAME",
     }
-
-def current_opponent_ap(league, competitor, season):
-    # Use the named AP poll only, never an unspecified curated/Coaches rank.
-    if competitor == None or season == None:
-        return ""
-    payload = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/rankings?season=%s" % (league, season), 1800)
-    if payload == None:
-        return ""
-    wanted = str((competitor.get("team") or {}).get("id", ""))
-    for poll in payload.get("rankings", []):
-        if poll.get("name") != "AP Top 25" or str((poll.get("season") or {}).get("year")) != str(season):
-            continue
-        for row in poll.get("ranks", []):
-            rank = str(row.get("current", ""))
-            if str((row.get("team") or {}).get("id")) == wanted and rank.isdigit() and int(rank) >= 1 and int(rank) <= 25:
-                return rank
-    return ""
 
 def points_value(item):
     text = clean(item.get("pts"), "0")
@@ -864,7 +846,7 @@ def lineup(game):
         if len(starters) >= 5:
             ordered = starters[:5]
             selected = []
-            for slot in range(2):
+            for slot in range(3):
                 best = None
                 for item in bench:
                     if item["id"] in selected:
@@ -874,8 +856,8 @@ def lineup(game):
                 if best != None:
                     ordered.append(best)
                     selected.append(best["id"])
-            # The seven selected players are displayed in scoring order, while
-            # selection itself remains the five starters plus two bench leaders.
+            # The eight selected players are displayed in scoring order, while
+            # selection itself remains the five starters plus three bench leaders.
             ranked = []
             ranked_ids = []
             for slot in range(len(ordered)):
@@ -891,7 +873,7 @@ def lineup(game):
             return ranked
     ordered = []
     selected = []
-    for slot in range(7):
+    for slot in range(8):
         best = None
         for item in players:
             if item["id"] in selected:
@@ -979,21 +961,21 @@ def fit(c, text, x, y, width, font, color_value):
     c.text(fitted, x, y, font = font, color = color_value)
     return c.text_width(fitted, font)
 
-def compact_bio_width(c, bio):
+def compact_bio_width(c, bio, font = "picopixel"):
     if "'" not in bio:
-        return c.text_width(bio, "picopixel")
+        return c.text_width(bio, font)
     parts = bio.split("'", 1)
-    return c.text_width(parts[0], "picopixel") + 3 + c.text_width(parts[1], "picopixel")
+    return c.text_width(parts[0], font) + 3 + c.text_width(parts[1], font)
 
-def draw_compact_bio(c, bio, x, y, color_value):
+def draw_compact_bio(c, bio, x, y, color_value, font = "picopixel"):
     if "'" not in bio:
-        c.text_stroke(bio, x, y, font = "picopixel", color = color_value, stroke = LINE, thickness = 1, align = "left")
+        c.text_stroke(bio, x, y, font = font, color = color_value, stroke = LINE, thickness = 1, align = "left")
         return
-    # picopixel has no visible apostrophe glyph, so reserve two pixels and
-    # draw the height mark directly between the feet and inches digits.
+    # Stack the height mark into one column, with one blank pixel on each side.
+    # At 4x5 this also closes the two outer gaps by 1px without shrinking digits.
     parts = bio.split("'", 1)
-    left_width = c.text_width(parts[0], "picopixel")
-    c.text_stroke(parts[0], x, y, font = "picopixel", color = color_value, stroke = LINE, thickness = 1, align = "left")
+    left_width = c.text_width(parts[0], font)
+    c.text_stroke(parts[0], x, y, font = font, color = color_value, stroke = LINE, thickness = 1, align = "left")
     mark_x = x + left_width + 1
     c.pixel(mark_x, y, color_value)
     c.pixel(mark_x, y + 1, color_value)
@@ -1001,7 +983,7 @@ def draw_compact_bio(c, bio, x, y, color_value):
     c.pixel(mark_x + 1, y, LINE)
     c.pixel(mark_x - 1, y + 1, LINE)
     c.pixel(mark_x + 1, y + 1, LINE)
-    c.text_stroke(parts[1], mark_x + 2, y, font = "picopixel", color = color_value, stroke = LINE, thickness = 1, align = "left")
+    c.text_stroke(parts[1], mark_x + 2, y, font = font, color = color_value, stroke = LINE, thickness = 1, align = "left")
 
 def error_page(c, message):
     c.fill("#152338")
@@ -1277,16 +1259,11 @@ def final_overtime_label(game):
 
 def draw_decimal_stat(c, value, center, y, color_value):
     text = clean(value, "--")
+    # Supporting columns are 19px apart: allow 17px of ink plus the outline.
     font = "4x5" if c.text_width(text, "4x5") <= 17 else "picopixel"
-    dot_bearing = 2 if font == "4x5" else 1
-    if "." not in text:
-        c.text_stroke(text, center - c.text_width(text, font) - dot_bearing, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1)
-        return
-    whole = text.split(".", 1)[0]
-    whole_x = center - c.text_width(whole, font) - 1 - dot_bearing + 1
-    dot_x = center - dot_bearing
-    c.text_stroke(whole, whole_x, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1)
-    c.text_stroke("." + text.split(".", 1)[1], dot_x, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1)
+    # One draw keeps the font's 1px gaps around '.' and centers the full value.
+    # Splitting '4' and '.5' let the second outline erase two pixels of the 4.
+    c.text_stroke(text, center, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1, align = "center")
 
 def player_page(c, ctx, page_index, force_average = False, preview_game = False, mark_style = "native"):
     # STUDIO DESIGN: identity above context above stats. Keep the same geometry
@@ -1306,15 +1283,6 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
     background = rgb_hex(12 + channel(team_primary, 0) // 6, 12 + channel(team_primary, 2) // 6, 12 + channel(team_primary, 4) // 6)
     if str(team.get("id")) == "356":
         background = "#152338"
-    preview_mode = ctx.inputs.get("preview", "AUTO")
-    demo = preview_mode in ["LIVE DEMO", "NORMAL FINAL DEMO", "OT FINAL DEMO"]
-    if demo:
-        game = dict(game)
-        live_demo = preview_mode == "LIVE DEMO"
-        ot_final_demo = preview_mode == "OT FINAL DEMO"
-        game.update({"mode": "GAME", "state": "IN" if live_demo else "POST", "opponent": {"abbreviation": "MSU", "color": "18453B", "alternateColor": "FFFFFF"}, "team_score": "78", "opponent_score": "74", "team_home_away": "away", "opponent_home_away": "home", "period": 2 if live_demo or not ot_final_demo else 4, "clock": "12:34", "detail": "LIVE" if live_demo else "FINAL/2OT" if ot_final_demo else "FINAL"})
-        athlete = dict(athlete)
-        athlete.update({"pts": "24", "reb": "11", "ast": "6", "stl": "2", "blk": "1"})
     border = "#0B1424"
     primary = hex_color(team.get("color"), "#1F5AA6")
     if str(team.get("id")) == "183":
@@ -1333,42 +1301,41 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
     height = bio_parts[1] if len(bio_parts) > 1 else bio if "'" in bio else ""
     # Measure the whole header before positioning details; preserve the name.
     details = [value for value in [position, height, year] if value != ""]
+    bio_font = "4x5"
     detail_width = 0
     for value in details:
-        detail_width += compact_bio_width(c, value)
-    opponent_rank = clean(game.get("opponent_ap_rank"), "") if game.get("mode") != "AVERAGES" else ""
-    rank_badge = "OPP #" + opponent_rank if opponent_rank.isdigit() and int(opponent_rank) >= 1 and int(opponent_rank) <= 25 else ""
-    # Keep all score/clock/OT anchors unchanged; the AP opponent badge owns a
-    # measured header zone. Optional biography yields before player identity.
-    header_width = 89 - (c.text_width(rank_badge, "picopixel") + 3 if rank_badge != "" else 0)
-    name_budget = header_width - detail_width - 2 * len(details)
+        detail_width += compact_bio_width(c, value, bio_font)
+    # The full header belongs to player identity and optional biography.
+    header_width = 89
+    # Allow a 1px minimum gap so the larger biography does not unnecessarily
+    # shrink a name that still fits alongside the larger compact biography.
+    name_budget = header_width - detail_width - len(details)
     # Identity takes priority over optional biography on unusually long names.
     if c.text_width(player_name, "picopixel") > name_budget:
         details = []
         detail_width = 0
         name_budget = header_width
     if c.text_width(player_name, "picopixel") > name_budget:
-        shortened = ""
-        for letter in player_name:
-            if c.text_width(shortened + letter + ".", "picopixel") <= name_budget:
-                shortened += letter
-        player_name = shortened + "."
+        # Starlark strings cannot be iterated directly. Fit a true prefix,
+        # preserving letter order and keeping the truncation marker in budget.
+        for count in range(len(player_name), 0, -1):
+            shortened = player_name[:count] + "."
+            if c.text_width(shortened, "picopixel") <= name_budget:
+                player_name = shortened
+                break
     name_font = "picopixel"
     for candidate in ["5x7", "4x5", "picopixel"]:
         if c.text_width(player_name, candidate) <= name_budget:
             name_font = candidate
             break
     name_width = c.text_width(player_name, name_font)
-    gap = min(4, max(2, (header_width - name_width - detail_width) // max(1, len(details))))
+    gap = min(4, max(1, (header_width - name_width - detail_width) // max(1, len(details))))
     c.text_stroke(player_name, 25, 1 if name_font == "5x7" else 2, font = name_font, color = INK, stroke = border, thickness = 1)
     detail_x = 25 + name_width
     for value in details:
         detail_x += gap
-        draw_compact_bio(c, value, detail_x, 3, "#A4B0BF")
-        detail_x += compact_bio_width(c, value)
-    if rank_badge != "":
-        tight_rank_color = readable_team_accent(game.get("opponent", {}), background)
-        c.text(rank_badge, 114, 2, font = "picopixel", color = tight_rank_color, align = "right")
+        draw_compact_bio(c, value, detail_x, 3, "#A4B0BF", bio_font)
+        detail_x += compact_bio_width(c, value, bio_font)
     draw_team_logo(c, team, 116, 0, border)
     # Michigan wears maize; keep the school's navy panel and other accents unchanged.
     jersey_color = "#FFCB05" if str(team.get("id")) == "130" else primary
@@ -1385,11 +1352,11 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
         value = clean(athlete.get(keys[index]), "--")
         if index == 0:
             # Dedicated points column stays full-height in every mode.
-            tracker_text(c, labels[index], center, 11, 24, ["picopixel"], accent, "center")
+            tracker_text(c, labels[index], center, 11, 24, ["4x5"], accent, "center")
             points_width = tracker_text(c, value, center, 18, 28, ["scoretext", "6x8", "5x7"], INK, "center")
         else:
             live_layout = game.get("mode") != "AVERAGES"
-            tracker_text(c, labels[index], center, 11 if live_layout else 13, 24, ["picopixel"], "#A4B0BF", "center")
+            tracker_text(c, labels[index], center, 11 if live_layout else 13, 17, ["4x5"], "#A4B0BF", "center")
             if live_layout:
                 stat_font = "4x5" if c.text_width(value, "4x5") <= 17 else "picopixel"
                 tracker_text(c, value, center, 18, 18, [stat_font], INK, "center")
@@ -1409,7 +1376,7 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
             period = int(game.get("period") or 0)
             detail = upper(game.get("detail"))
             is_halftime = "HALFTIME" in detail or "HALF TIME" in detail
-            footer_period = "HALFTIME" if is_halftime else "1H" if period == 1 else "2H" if period == 2 else overtime_label(period) if period > 2 else "LIVE"
+            footer_period = "HT" if is_halftime else "1H" if period == 1 else "2H" if period == 2 else overtime_label(period) if period > 2 else "LIVE"
             footer_clock = "" if is_halftime else clean(game.get("clock"))
             footer_status = footer_period if is_halftime else footer_period + " " + footer_clock
             footer_color = LIVE
@@ -1431,28 +1398,38 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
                 period_x = clock_x - c.text_width(footer_period, "picopixel") - 3
             else:
                 # At halftime the clock is stopped, so use its full footprint
-                # for the explicit HALFTIME label.
+                # for the HT label.
                 period_x = 127 - c.text_width(footer_period, "picopixel") - 2
             status_x = period_x
         away_color = readable_team_accent(team if team_first else game.get("opponent", {}), background)
         home_color = readable_team_accent(game.get("opponent", {}) if team_first else team, background)
         away_x = (55 if footer_status == "FINAL" else 47) if state == "POST" else 49
         row_width = c.text_width(away_abbr, "picopixel") + c.text_width(score_numbers, "picopixel") + c.text_width(home_abbr, "picopixel") + 4
-        status_left = status_x + 3 if state == "POST" and footer_status != "FINAL" else status_x
+        status_left = status_x + 2 if state == "POST" and footer_status != "FINAL" else status_x
+        if state == "IN" and footer_period == "HT":
+            # HT is short; bring the complete score line within 4px of it
+            # instead of leaving the space formerly reserved for HALFTIME.
+            away_x = status_left - row_width - 4
         if away_x + row_width + 2 > status_left:
             # Keep a single score line. Shift it only as far left as needed.
             # For the longest codes/scores, raise PTS above the footer rather
             # than stacking score/status rows or clipping school codes.
             away_x = status_left - row_width - 2
-        # Leave the approved PTS position and size alone whenever it fits.
-        # First try a 3px shift; raise/shrink only if that is insufficient.
+        # Leave PTS alone whenever it fits. Otherwise measure the exact left
+        # shift: PENN 78-74 MSU FINAL OT2 needs 4px, not the old fixed 3px.
+        # Preserve full-size digits until the jersey boundary prevents it.
         if away_x < 37 + (points_width + 1) // 2 + 2:
             c.rect(24, 10, 51, 31, fill = background)
-            tracker_text(c, "PTS", 34, 11, 20, ["picopixel"], accent, "center")
-            if away_x >= 34 + (points_width + 1) // 2 + 2:
-                tracker_text(c, clean(athlete.get("pts"), "--"), 34, 18, 22, ["scoretext", "6x8", "5x7"], INK, "center")
+            points_center = min(37, away_x - (points_width + 1) // 2 - 2)
+            if points_center - points_width // 2 >= 25:
+                tracker_text(c, "PTS", points_center, 11, 20, ["4x5"], accent, "center")
+                tracker_text(c, clean(athlete.get("pts"), "--"), points_center, 18, 28, ["scoretext", "6x8", "5x7"], INK, "center")
             else:
-                tracker_text(c, clean(athlete.get("pts"), "--"), 34, 16, 20, ["6x8", "5x7", "4x5"], INK, "center")
+                tracker_text(c, "PTS", 34, 11, 20, ["4x5"], accent, "center")
+                # PTS fills y=11–15. Start the compact value at 17 so its
+                # outline cannot erase that label; its 8px face ends at 24,
+                # still leaving a blank row before the footer at 26.
+                tracker_text(c, clean(athlete.get("pts"), "--"), 34, 17, 20, ["6x8", "5x7", "4x5"], INK, "center")
         c.text(away_abbr, away_x, 26, font = "picopixel", color = away_color)
         score_x = away_x + 1 + c.text_width(away_abbr, "picopixel") + 1
         c.text(score_numbers, score_x, 26, font = "picopixel", color = INK)
@@ -1463,10 +1440,9 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
             if footer_clock != "":
                 c.text(footer_clock, clock_x, 26, font = "picopixel", color = footer_color)
         elif state == "POST" and footer_status != "FINAL":
-            # Use the approved OT2 alignment rule for every overtime label.
-            # The complete status remains right-aligned; the suffix gets the
-            # same one-pixel gap after FINAL for OT, OT2, OT3, and beyond.
-            final_x = status_x + 3
+            # Keep the OT suffix anchored. FINAL moves 1px left to leave one
+            # visible blank column between its ink and OT, OT2, OT3, etc.
+            final_x = status_x + 2
             overtime_x = status_x + c.text_width("FINAL ", "picopixel") + 1
             c.text("FINAL", final_x, 26, font = "picopixel", color = footer_color)
             c.text(overtime, overtime_x, 26, font = "picopixel", color = footer_color)
@@ -1497,3 +1473,6 @@ def player_6(c, ctx):
 
 def player_7(c, ctx):
     player_page(c, ctx, 6, False, False, "native")
+
+def player_8(c, ctx):
+    player_page(c, ctx, 7, False, False, "native")
