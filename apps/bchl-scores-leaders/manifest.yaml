@@ -1,0 +1,32 @@
+gdn: 1
+id: bchl-scores-leaders
+version: 0.2.0
+name: BCHL Scores and Leaders
+author: Michael Crawford
+description: BCHL scores, Blackfalds games, and top-five scoring leaders with team logos. Times are Mountain Time.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 120
+pages: [scores, blackfalds, leaders]
+inputs:
+  - key: stat
+    type: choice
+    app_input_type: dropdown
+    label: Leader statistic
+    default: points
+    choices: [points, goals, assists]
+  - key: scope
+    type: choice
+    app_input_type: dropdown
+    label: Leader team scope
+    default: league
+    choices: [league, blackfalds]
+  - key: mode
+    type: choice
+    app_input_type: dropdown
+    label: Data mode
+    default: live
+    choices: [live, demo]
+    help: Live fetches BCHL data. Demo shows fictional data labelled DEMO without network requests.
