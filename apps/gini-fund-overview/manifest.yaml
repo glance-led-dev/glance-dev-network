@@ -1,0 +1,41 @@
+gdn: 1
+id: gini-fund-overview
+version: 0.5.0
+name: Gini Capital Fund Overview
+author: Gini Capital
+description: Internal display of Gini Capital fund data for authorized users on the full width panel.
+category: Finance
+entry: app.star
+
+# Pro 5 ft is 384x32. Glance tekent op de breedte uit dit manifest,
+# dus een volle balk is een eigen app naast gini-fund-ticker (192).
+width: 384
+height: 32
+
+# 5 minuten, gelijk aan de ttl van http.get.
+refresh: 300
+
+# 8 pagina's. Elk fonds en elke melding blijft heel op een pagina.
+# Het aantal hoort gelijk te zijn aan PAGES in app.star.
+pages: [p0, p1, p2, p3, p4, p5, p6, p7]
+
+inputs:
+  - key: funds
+    type: choice
+    app_input_type: selection
+    label: Fondsen
+    default: "GCF"
+    help: "Geldt als het ticker-eindpunt geen antwoord 200 geeft. GCF Core Fund, DFF Digital Future Fund, SCF Super Commodities Fund, IVF Income Value Fund, GSF Global South Fund."
+    choices: ["GCF", "DFF", "SCF", "IVF", "GSF"]
+  - key: token
+    type: string
+    app_input_type: api-key
+    label: Toegangstoken
+    required: true
+    help: "Alleen-lezen token voor de Gini fondsdata. Glance bewaart het versleuteld. Zonder token zie je een DEMO scherm."
+  - key: screen
+    type: string
+    app_input_type: free-text
+    label: Schermcode
+    default: ""
+    help: "Leeg laten voor de standaard band. Hoofdlettergevoelig, hooguit 40 tekens: letters, cijfers, koppelteken, underscore. Voorbeeld Kantoor-1. Een underscore knipt Glance tussen twee instellingen, een koppelteken blijft heel."
