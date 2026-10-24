@@ -1,0 +1,48 @@
+gdn: 1
+id: nfl-dk-live
+version: 0.3.1
+name: NFL DK Live
+author: "jnwallen"
+description: Live DraftKings fantasy points for NFL players during games - the top scorers right now, by position or for your own player list. Needs an API key for the NFL DK Live backend; plays a labelled demo until one is entered.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+
+# The backend recomputes DK points every 60s during games; 300s is the floor
+# for apps with an API key. Every page makes the same request, so pages 2-5
+# are cache hits from page 1's fetch.
+refresh: 300
+
+pages: [splash, p1, p2, p3, p4, p5]
+
+inputs:
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: NFL DK Live API key
+    default: ""
+    required: true
+    help: The key for your NFL DK Live server. Until a key is entered, the app plays a labelled DEMO with sample players.
+  - key: position
+    type: choice
+    app_input_type: dropdown
+    label: Position
+    default: "ALL"
+    help: Show the top live DK scorers at one position, or across all positions.
+    choices: ["ALL", "QB", "RB", "WR", "TE", "DST"]
+    options: ["ALL", "QB", "RB", "WR", "TE", "DST"]
+  - key: players
+    type: string
+    app_input_type: free-text
+    label: My players (optional)
+    default: ""
+    help: Comma-separated names as F.LAST (for example J.ALLEN, B.ROBINSON, BUF DST). When filled in, the app shows these players instead of the top scorers, up to ten, two per page, highest first.
+  - key: screen
+    type: choice
+    app_input_type: dropdown
+    label: Screen
+    default: "LIVE"
+    help: LIVE shows real data. The other choices show labelled sample screens (demo, error, no games) without making any network request.
+    choices: ["LIVE", "DEMO", "ERROR", "NO GAMES"]
+    options: ["LIVE", "DEMO", "ERROR", "NO GAMES"]
