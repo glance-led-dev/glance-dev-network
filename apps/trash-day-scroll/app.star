@@ -145,22 +145,20 @@ def bins(c, ctx):
         when = "IN " + str(ahead) + " DAYS"
 
     target_week = week + (1 if ahead > 0 else 0)
-    show = [["BINTRASH",
-             wanted(str(ctx.inputs.get("garbage", "EVERY WEEK")).upper(), target_week)]]
-    show.append(["BINRECYCLE",
-                 wanted(str(ctx.inputs.get("recycling", "NEVER")).upper(), target_week)])
-    show.append(["BINYARD",
-                 wanted(str(ctx.inputs.get("yard", "NEVER")).upper(), target_week)])
-
+    # [input key, default, wide label, narrow label, colour]
+    items = [
+        ["garbage", "EVERY WEEK", "GARBAGE", "TRASH", "#B8C0CC"],
+        ["recycling", "NEVER", "RECYCLING", "RECY", "#4A9BFF"],
+        ["yard", "NEVER", "YARD WASTE", "YARD", "#5CC85C"],
+    ]
     live = []
-    for s in show:
-        if s[1]:
-            live.append(s[0])
+    for it in items:
+        if wanted(str(ctx.inputs.get(it[0], it[1])).upper(), target_week):
+            live.append(it)
 
     urgent = tonight or ahead == 0
     c.fill("#161006" if urgent else "#080A10")
 
-    sz = 22 if c.width >= 128 else 15
     x = 2
     if c.width >= 128:
         # Content lives in a 180x30 box centred on the panel, framed in a
@@ -169,20 +167,34 @@ def bins(c, ctx):
         c.badge("TRASH DAY", 6, 1, color = "black", bg = "#F5D64E",
                 font = "4x5")
         x = 10
-    for nm in live:
-        y = c.height - sz - 2 if c.width >= 128 else c.height - sz - 1
-        if nm == "BINTRASH":
-            c.image("BINTRASH.png", x, y, w = sz, h = sz)
-        elif nm == "BINRECYCLE":
-            c.image("BINRECYCLE.png", x, y, w = sz, h = sz)
-        else:
-            c.image("BINYARD.png", x, y, w = sz, h = sz)
-        x += sz + 4 if c.width >= 128 else sz + 2
+        # Words, not bin icons: the three bins only differed by colour,
+        # which doesn't read from across a room. The labels stack in the
+        # y 8-29 band under the badge. 6x8 is the cap: anything bigger and
+        # YARD WASTE leaves no room for IN 6 DAYS at 10x16.
+        n = len(live)
+        if n > 0:
+            font = "6x8" if n < 3 else "6x6"
+            fh = 8 if n < 3 else 6
+            gap = (22 - n * fh) // (n + 1)
+            y = 8 + gap
+            w = 0
+            for it in live:
+                c.text(it[2], x, y, font = font, color = it[4])
+                w = max(w, c.text_width(it[2], font))
+                y += fh + gap
+            x += w + 6
+    else:
+        # Narrow panels: short labels in a single row under the WHEN line.
+        for it in live:
+            if x + c.text_width(it[3], "4x5") > c.width - 1:
+                break
+            c.text(it[3], x, c.height - 7, font = "4x5", color = it[4])
+            x += c.text_width(it[3], "4x5") + 3
 
     col = "#FFB03A" if urgent else "#8FA8D0"
     if c.width >= 128:
         c.text_fit(when, c.width - 12, 3, ["16x20", "10x16"], color = col,
-                   align = "right", maxw = c.width - x - 16)
+                   align = "right", maxw = c.width - 12 - x)
         c.text(target, c.width - 12, 22, font = "6x8", color = "#7C88A8",
                align = "right")
     else:
