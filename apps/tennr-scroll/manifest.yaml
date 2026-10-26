@@ -1,0 +1,26 @@
+# GDN app manifest (v2).
+gdn: 1
+id: tennr-scroll
+version: 0.1.0
+name: Tennr Scroll
+author: will-morris
+description: The Tennr mark and name on a black ground, in Tennr coral and off-white. No setup required.
+category: Branding
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed).
+width: 192
+height: 32
+
+# Static logo: nothing changes, so refresh slowly.
+refresh: 3600
+
+pages: [logo]
+
+# MARK.png: official Tennr mark downsampled to 14x16 for 64px panels.
+# MARK_L.png: same mark at 20x22 for wide (scroll) panels.
+assets:
+  - MARK.png
+  - MARK_L.png
+
+inputs: []
