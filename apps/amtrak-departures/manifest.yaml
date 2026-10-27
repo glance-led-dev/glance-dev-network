@@ -1,0 +1,94 @@
+id: amtrak-departures
+name: Amtrak Departures
+description: Next trains leaving any US Amtrak station, with live delays.
+author: 'uel'
+width: 64
+height: 32
+refresh: 300
+pages:
+  - title
+  - next_train
+  - board1
+  - board2
+inputs:
+  - key: station
+    name: Station
+    app_input_type: dropdown
+    default: NYP
+    options:
+      - {value: NYP, label: "NYP - New York Penn"}
+      - {value: WAS, label: "WAS - Washington Union"}
+      - {value: BOS, label: "BOS - Boston South"}
+      - {value: BBY, label: "BBY - Boston Back Bay"}
+      - {value: PHL, label: "PHL - Philadelphia 30th St"}
+      - {value: BAL, label: "BAL - Baltimore Penn"}
+      - {value: BWI, label: "BWI - BWI Airport"}
+      - {value: WIL, label: "WIL - Wilmington DE"}
+      - {value: NWK, label: "NWK - Newark Penn"}
+      - {value: TRE, label: "TRE - Trenton"}
+      - {value: HAR, label: "HAR - Harrisburg"}
+      - {value: PVD, label: "PVD - Providence"}
+      - {value: NHV, label: "NHV - New Haven"}
+      - {value: ALB, label: "ALB - Albany Rensselaer"}
+      - {value: SYR, label: "SYR - Syracuse"}
+      - {value: ROC, label: "ROC - Rochester NY"}
+      - {value: BUF, label: "BUF - Buffalo DEpew"}
+      - {value: NFS, label: "NFS - Niagara Falls"}
+      - {value: RVR, label: "RVR - Richmond Staples Mill"}
+      - {value: NFK, label: "NFK - Norfolk"}
+      - {value: NPN, label: "NPN - Newport News"}
+      - {value: CLT, label: "CLT - Charlotte"}
+      - {value: RGH, label: "RGH - Raleigh"}
+      - {value: SAV, label: "SAV - Savannah"}
+      - {value: JAX, label: "JAX - Jacksonville"}
+      - {value: ORL, label: "ORL - Orlando"}
+      - {value: TPA, label: "TPA - Tampa"}
+      - {value: MIA, label: "MIA - Miami"}
+      - {value: NOL, label: "NOL - New ORleans"}
+      - {value: ATL, label: "ATL - Atlanta Peachtree"}
+      - {value: CHS, label: "CHS - Charleston SC"}
+      - {value: CHI, label: "CHI - Chicago Union"}
+      - {value: MKE, label: "MKE - Milwaukee"}
+      - {value: STL, label: "STL - St Louis"}
+      - {value: KCY, label: "KCY - Kansas City"}
+      - {value: DET, label: "DET - Detroit"}
+      - {value: PIT, label: "PIT - Pittsburgh"}
+      - {value: CLE, label: "CLE - Cleveland"}
+      - {value: CIN, label: "CIN - Cincinnati"}
+      - {value: IND, label: "IND - Indianapolis"}
+      - {value: MSP, label: "MSP - St Paul Minneapolis"}
+      - {value: DEN, label: "DEN - Denver"}
+      - {value: SLC, label: "SLC - Salt Lake City"}
+      - {value: SEA, label: "SEA - Seattle"}
+      - {value: PDX, label: "PDX - Portland OR"}
+      - {value: SAC, label: "SAC - Sacramento"}
+      - {value: EMY, label: "EMY - Emeryville"}
+      - {value: LAX, label: "LAX - Los Angeles"}
+      - {value: SAN, label: "SAN - San Diego"}
+      - {value: SBA, label: "SBA - Santa Barbara"}
+      - {value: SJC, label: "SJC - San Jose"}
+      - {value: ABQ, label: "ABQ - Albuquerque"}
+      - {value: FLG, label: "FLG - Flagstaff"}
+      - {value: TUS, label: "TUS - Tucson"}
+      - {value: SAS, label: "SAS - San Antonio"}
+      - {value: DAL, label: "DAL - Dallas"}
+      - {value: FTW, label: "FTW - Fort Worth"}
+      - {value: HOU, label: "HOU - Houston"}
+      - {value: AUS, label: "AUS - Austin"}
+      - {value: OKC, label: "OKC - Oklahoma City"}
+      - {value: MEM, label: "MEM - Memphis"}
+  - key: customcode
+    name: Other station code (optional, overrides list)
+    app_input_type: free-text
+    default: ""
+  - key: rows
+    name: Trains shown
+    app_input_type: dropdown
+    default: "4"
+    options:
+      - {value: "2", label: "2 trains"}
+      - {value: "4", label: "4 trains"}
+  - key: demo
+    name: Demo mode (sample trains)
+    app_input_type: checkbox
+    default: false
