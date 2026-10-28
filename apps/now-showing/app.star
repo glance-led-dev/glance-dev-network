@@ -80,7 +80,10 @@ def _mock_info(kind):
 def fetch_info(ctx):
     dbg = _s(ctx, "_debug", "")
     if dbg == "movie" or dbg == "show":
-        return _mock_info(dbg)
+        info = _mock_info(dbg)
+        if _s(ctx, "title", ""):
+            info["name"] = _s(ctx, "title", "").upper()
+        return info
 
     title = _s(ctx, "title", "")
     omdbkey = _s(ctx, "omdbkey", "")
@@ -269,6 +272,42 @@ def _pick_font(c, chain, text, maxw):
             return f
     return chain[len(chain) - 1]
 
+# Best two-line split of a title: the word break that keeps the wider line
+# narrowest, so the two halves come out balanced. Returns None if no single
+# break fits both lines in max_w.
+def _split2(c, text, font, max_w):
+    words = text.split(" ")
+    best = None
+    best_w = 0
+    for i in range(1, len(words)):
+        a = " ".join(words[:i])
+        b = " ".join(words[i:])
+        w = max(c.text_width(a, font), c.text_width(b, font))
+        if w <= max_w and (best == None or w < best_w):
+            best = [a, b]
+            best_w = w
+    return best
+
+# Hero title layout: one line in the biggest face that fits; a long title
+# (STAR WARS: THE MANDALORIAN AND GROGU) wraps to two balanced lines and
+# steps down through 6x8 / 5x7 / 4x5 until both halves fit. Last resort is
+# two clipped 4x5 lines.
+def _layout_name(c, name, maxw):
+    for f in ["7x12", "6x8"]:
+        if f == "7x12" and not _hero_ok(name):
+            continue
+        if c.text_width(name, f) <= maxw:
+            return f, [name]
+    for f in ["6x8", "5x7", "4x5"]:
+        two = _split2(c, name, f, maxw)
+        if two:
+            return f, two
+    if c.text_width(name, "4x5") <= maxw:
+        return "4x5", [name]
+    words = name.split(" ")
+    half = max(1, len(words) // 2)
+    return "4x5", [_fit(c, " ".join(words[:half]), "4x5", maxw), _fit(c, " ".join(words[half:]), "4x5", maxw)]
+
 # "169 MIN" -> "2H 49M", "45 MIN" -> "45M". Anything unexpected passes through.
 def _runtime(s):
     if s == "N/A":
@@ -317,19 +356,21 @@ def title(c, ctx):
     cx = HERO_X0 + maxw // 2
 
     name = _glyphs(info["name"])
-    nf = _pick_font(c, HERO_FONTS, name, maxw)
-    name = _fit(c, name, nf, maxw)
+    nf, lines = _layout_name(c, name, maxw)
 
     # Sub-line: the episode for a show, otherwise year (accent) + genre (gray).
     sub_font = "5x7"
-    gap = 4
     nh = FONT_H[nf]
-    y1 = (32 - (nh + gap + FONT_H[sub_font])) // 2
-    if info.get("demo"):
+    lgap = 2
+    block_h = len(lines) * nh + (len(lines) - 1) * lgap
+    gap = 4 if len(lines) == 1 else 3
+    y1 = (32 - (block_h + gap + FONT_H[sub_font])) // 2
+    if info.get("demo") and len(lines) == 1:
         y1 = max(y1, 7)  # clear the DEMO tag
-    y2 = y1 + nh + gap
+    y2 = y1 + block_h + gap
 
-    c.text(name, cx, y1, font = nf, color = "white", align = "center")
+    for i in range(len(lines)):
+        c.text(lines[i], cx, y1 + i * (nh + lgap), font = nf, color = "white", align = "center")
 
     if info["headline"]:
         ep = _glyphs(info["headline"])
