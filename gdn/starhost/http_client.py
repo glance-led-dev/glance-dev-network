@@ -37,6 +37,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import requests
+from . import paid_hss_cache
 
 try:
     import fcntl  # POSIX only; used to serialise proxy-list refreshes across renders
@@ -232,7 +233,7 @@ def _direct_host(url) -> bool:
     return host.lower().rstrip(".").endswith(DIRECT_SUFFIXES)
 
 
-def _fetch(url, headers, params):
+def _fetch(url, headers, params, paid=False):
     """One logical GET, routed through the proxy pool with rotation + retry.
     Redirects are disabled so a public URL can't bounce the request to an internal
     address; a 3xx is handed back to the app as-is. Raises requests.RequestException
@@ -249,12 +250,13 @@ def _fetch(url, headers, params):
     pool = _load_proxies()
     if PROXY_SRC and not pool:
         raise requests.RequestException("proxy pool unavailable (GDN_P list empty or throttled)")
-    chosen = random.sample(pool, min(PROXY_ATTEMPTS, len(pool))) if pool else [None]
+    attempts = 1 if paid else PROXY_ATTEMPTS
+    chosen = random.sample(pool, min(attempts, len(pool))) if pool else [None]
     last = None
     for proxy in chosen:
         try:
             return requests.get(url, headers=headers, params=params,
-                                timeout=REQUEST_TIMEOUT, allow_redirects=False,
+                                timeout=12.0 if paid else REQUEST_TIMEOUT, allow_redirects=False,
                                 proxies={"http": proxy, "https": proxy} if proxy else None)
         except requests.RequestException as e:
             last = e
@@ -340,7 +342,8 @@ class HttpHost:
 
         key = _cache_key(url, params, headers)
         cached = _cache_read(key, ttl)
-        if cached is not None:
+        paid_rule = paid_hss_cache.policy(url, headers)
+        if cached is not None and not (paid_rule and paid_rule['scoretracker']):
             return _response(*cached)
 
         hit = self._mem.get(key)
@@ -351,6 +354,13 @@ class HttpHost:
         if self._count > MAX_REQUESTS_PER_RUN:
             raise HttpLimit(f"http limit: at most {MAX_REQUESTS_PER_RUN} "
                             "uncached requests per render")
+        if paid_rule:
+            out = paid_hss_cache.get(
+                CACHE_DIR / 'paid-hss-v1.sqlite3', url, headers, params, ttl,
+                lambda: _fetch(url, headers, params, paid=True), seed=cached,
+            )
+            self._mem[key] = out
+            return out
         try:
             r = _fetch(url, headers, params)
         except requests.RequestException as e:
