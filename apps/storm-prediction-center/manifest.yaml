@@ -2,10 +2,10 @@ id: storm-prediction-center
 name: SPC Convective Outlook
 category: weather
 author: "uel"
-description: NWS Storm Prediction Center convective outlook for your location. Days 1-3 categories, Day 1 and Day 2 tornado, wind and hail probabilities with CIG levels, and an MD badge when a Mesoscale Discussion covers you.
+description: NWS Storm Prediction Center convective outlook for your ZIP code. Days 1-3 risk categories, Day 1 and Day 2 tornado, wind and hail probabilities with CIG levels, and an MD badge when a Mesoscale Discussion covers you.
 width: 64
 height: 32
-refresh: 900
+refresh: 1800
 pages:
   - title
   - outlook
@@ -13,13 +13,10 @@ pages:
   - hazard1
   - hazard2
 inputs:
-  - key: location
-    name: location
-    label: Location as latitude,longitude (use a negative longitude, for example 39.45,-75.72)
+  - key: zip
+    name: zip
+    type: string
+    label: ZIP code
+    help: US ZIP code in the lower 48. Sets the location; the city name is looked up from it.
     app_input_type: free-text
-    default: ""
-  - key: placename
-    name: placename
-    label: Name shown on the title page (optional, blank shows the coordinates)
-    app_input_type: free-text
-    default: ""
+    default: "73069"
