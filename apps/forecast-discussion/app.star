@@ -30,6 +30,11 @@ BODY = "#E8E8E8"
 
 SLOTS = 5   # point1..point5
 
+# Text pages: a picture rail on the left, the words to its right.
+RAIL = 26
+TX = RAIL + 3
+TW = 190 - TX
+
 # ---------- text and fonts ----------
 
 FONT_PUNCT = {
@@ -102,6 +107,12 @@ PHRASES = [
     ("upper level ridge", "high pressure aloft"),
     ("upper ridge", "high pressure aloft"),
     ("mid-level ridge", "high pressure aloft"),
+    ("an upper-level trough", "a dip in the jet stream"),
+    ("an upper level trough", "a dip in the jet stream"),
+    ("an upper trough", "a dip in the jet stream"),
+    ("an upper-level ridge", "high pressure aloft"),
+    ("an upper level ridge", "high pressure aloft"),
+    ("an upper ridge", "high pressure aloft"),
     ("upper-level trough", "dip in the jet stream"),
     ("upper level trough", "dip in the jet stream"),
     ("upper trough", "dip in the jet stream"),
@@ -134,6 +145,16 @@ PHRASES = [
     ("in regards to", "about"),
     ("at this time", "now"),
     ("at this point", "now"),
+    ("max temps", "highs"),
+    ("min temps", "lows"),
+    ("high temps", "highs"),
+    ("low temps", "lows"),
+    ("high temperatures", "highs"),
+    ("low temperatures", "lows"),
+    ("through the period", "through the forecast"),
+    ("through the extended", "through the forecast"),
+    ("long term period", "next week"),
+    ("short term period", "next couple of days"),
 ]
 
 # Forecaster shorthand, one word at a time.
@@ -150,7 +171,7 @@ WORDS = {
     "tonite": "tonight", "tmrw": "tomorrow", "wknd": "weekend", "pres": "pressure", "sfc": "surface",
     "upr": "upper", "lvl": "level", "avg": "average", "approx": "about", "mtn": "mountain",
     "mtns": "mountains", "elev": "elevation", "elevs": "elevations", "slgt": "slight", "chc": "chance",
-    "mins": "low temps", "maxes": "high temps", "maxt": "high temps", "mint": "low temps",
+    "mins": "lows", "maxes": "highs", "maxt": "highs", "mint": "lows", "temps": "temperatures",
     "hwo": "outlook", "rh": "humidity", "rhs": "humidity",
     "locales": "places", "nwd": "north", "swd": "south", "ewd": "east", "wwd": "west",
     "nely": "northeasterly", "nwly": "northwesterly", "sely": "southeasterly", "swly": "southwesterly",
@@ -300,11 +321,12 @@ def condense(t, limit):
     return " ".join(out)
 
 def issued(text):
-    # "215 PM EDT Thu Oct 15 2026" -> "THU 2:15 PM".
+    # "215 PM EDT Thu Oct 15 2026" -> "THU 2:15PM"; "300 AM ..." -> "THU 3AM".
     for line in text.split("\n")[:20]:
         tk = line.strip().split(" ")
         if len(tk) == 7 and (tk[1] == "AM" or tk[1] == "PM") and tk[0].isdigit() and len(tk[0]) >= 3:
-            return tk[3].upper() + " " + tk[0][:-2] + ":" + tk[0][-2:] + " " + tk[1]
+            mins = tk[0][-2:]
+            return tk[3].upper() + " " + tk[0][:-2] + ("" if mins == "00" else ":" + mins) + tk[1]
     return ""
 
 def office_name(text):
@@ -483,9 +505,11 @@ def filler(text):
 
 # ---------- topics, most important first ----------
 
-# (name, words, color, tier): tier 1 = hazards, 2 = notable weather,
-# 3 = trends. Within a tier the topic the forecasters raise first wins.
+# (name, words, color, tier): tier 1 = hazards first; after them the
+# weather in the order the forecasters raise it in their key points (what
+# changed only counts after those: "took out rain" isn't a rain story).
 TOPICS = [
+    ("HIGH WATER", ["coastal flood", "king tide", "high tide", "tidal", "water level", "storm surge"], "#22D3EE", 1),
     ("TROPICAL", ["tropical storm", "hurricane", "tropical depression"], "#FF4FA3", 1),
     ("RECORD HEAT", ["record heat", "record high", "record warm"], "#FF5A4E", 1),
     ("HEAT", ["heat index", "heat advisory", "excessive heat", "extreme heat", "heat risk", "heat illness", "hot "], "#FF8C1A", 1),
@@ -501,30 +525,39 @@ TOPICS = [
     ("FOG", ["fog"], "#B0B7C3", 2),
     ("SMOKE", ["smoke", "air quality"], "#A8A29E", 2),
     ("ROUGH SURF", ["rip current", "high surf", "surf", "waves", "beach erosion", "overwash"], "#38BDF8", 2),
-    ("COOLER", ["cooler", "colder", "chilly", "cool down", "cooldown", "crisp", "chillier"], "#7DD3FC", 3),
-    ("WARMER", ["warmer", "warm up", "warming", "above normal"], "#FBBF24", 3),
-    ("DRY", ["dry", "drier"], "#D6B37A", 3),
+    ("COOLER", ["cooler", "colder", "chilly", "cool down", "cooldown", "crisp", "chillier"], "#7DD3FC", 2),
+    ("WARMER", ["warmer", "warm up", "warming", "above normal"], "#FBBF24", 2),
+    ("DRY", ["dry", "drier"], "#D6B37A", 2),
 ]
 
+# Wording that belongs to another topic: coastal flooding is high water,
+# not a rain flood.
+NOT_TOPIC = {"FLOOD": ["coastal flood", "tidal flood"]}
+
 def topics(cs):
+    order = [c for c in cs if c["kind"] != "new"] + [c for c in cs if c["kind"] == "new"]
     found = []
     for n in range(len(TOPICS)):
         name, keys, col, tier = TOPICS[n]
         first = -1
-        for c in cs:
-            t = " " + c["text"].lower() + " "
+        pos = -1
+        for r in range(len(order)):
+            t = " " + order[r]["text"].lower() + " "
+            for x in NOT_TOPIC.get(name, []):
+                t = t.replace(x, " " * len(x))
             for k in keys:
-                if t.find(k) >= 0:
-                    first = c["i"]
-                    break
-            if first >= 0:
+                at = t.find(k)
+                if at >= 0 and (pos < 0 or at < pos):
+                    pos = at
+            if pos >= 0:
+                first = r
                 break
         if first >= 0:
-            found.append((tier, first, n, name, col))
-    names = [f[3] for f in found]
+            found.append((tier, first, pos, n, name, col))
+    names = [f[4] for f in found]
     # The stronger word covers the weaker: record heat over heat, freeze over frost.
-    found = [f for f in found if not ((f[3] == "HEAT" and "RECORD HEAT" in names) or (f[3] == "FROST" and "FREEZE" in names))]
-    return [(f[3], f[4]) for f in sorted(found)]
+    found = [f for f in found if not ((f[4] == "HEAT" and "RECORD HEAT" in names) or (f[4] == "FROST" and "FREEZE" in names))]
+    return [(f[4], f[5]) for f in sorted(found)]
 
 # ---------- data ----------
 
@@ -547,6 +580,8 @@ def geocode(text):
     territory = t.startswith("00") or (t >= "96910" and t <= "96939") or t == "96799"
     if not territory:
         r = get("https://api.zippopotam.us/us/" + t, 2592000)
+        if r["status_code"] != 200 and r["status_code"] != 404:
+            return "offline"
         if r["status_code"] != 200 or r["json"] == None or len(r["json"].get("places", [])) == 0:
             return None
         p = r["json"]["places"][0]
@@ -554,7 +589,9 @@ def geocode(text):
         return {"lat": float(p["latitude"]), "lon": float(p["longitude"]), "label": label, "zip": t}
     r = get("https://nominatim.openstreetmap.org/search", 2592000,
             params = {"postalcode": t, "countrycodes": "us,pr,vi,gu,as,mp", "format": "json", "limit": "1", "addressdetails": "1"})
-    if r["status_code"] != 200 or r["json"] == None or len(r["json"]) == 0:
+    if r["status_code"] != 200:
+        return "offline"
+    if r["json"] == None or len(r["json"]) == 0:
         return None
     p = r["json"][0]
     a = p.get("address", {})
@@ -609,8 +646,12 @@ def point_forecast(url):
     gust = 0
     pop = 0
     text = ""
+    periods = []
     for p in r["json"].get("properties", {}).get("periods", []):
         t = p.get("temperature")
+        if len(periods) < SLOTS and t != None:
+            periods.append({"name": ascii_name(str(p.get("name", ""))), "temp": int(t), "day": p.get("isDaytime") == True,
+                            "short": ascii_name(str(p.get("shortForecast", "")))})
         if t != None and not p.get("isDaytime"):
             lo = min(lo, int(t))
         for n in numbers_in(str(p.get("windSpeed", ""))):
@@ -625,7 +666,7 @@ def point_forecast(url):
         if v != None:
             pop = max(pop, int(v))
         text += " " + str(p.get("shortForecast", "")).lower() + " " + d.lower()
-    return {"lo": lo, "gust": gust, "pop": pop, "text": text}
+    return {"lo": lo, "gust": gust, "pop": pop, "text": text, "periods": periods}
 
 def local_check(name, pf):
     # Does this spot's own forecast back the tile up? Hazards the forecast
@@ -686,6 +727,8 @@ def world(ctx):
     if z == "":
         return {"error": "ENTER YOUR ZIP CODE"}
     loc = geocode(z)
+    if loc == "offline":
+        return {"error": "NO CONNECTION"}
     if loc == None:
         return {"error": "ZIP CODE NOT FOUND"}
     office, fc_url = office_for(loc)
@@ -696,8 +739,9 @@ def world(ctx):
         return {"error": "DISCUSSION UNAVAILABLE", "loc": loc}
     cs = cards(text)
     tp = topics(cs)
+    pf = point_forecast(fc_url)
     return {"loc": loc, "office": office_name(text) or office, "issued": issued(text), "cards": cs,
-            "local": local_topics(tp, point_forecast(fc_url)), "filler": filler(text),
+            "local": local_topics(tp, pf), "pf": pf, "filler": filler(text),
             "points": len([c for c in cs if c["kind"] == "point"])}
 
 # ---------- laying the text out on the pages ----------
@@ -759,8 +803,8 @@ def card_lines(c, card, font, by_sentence, hang = True):
     lines = []
     softs = []
     for sent in (sentence_list(card["text"]) if by_sentence else [card["text"]]):
-        first = 188 - indent if len(lines) == 0 or hang else 188
-        ls = wrap_hang(c, sent, font, first, 188 - indent if hang else 188)
+        first = TW - indent if len(lines) == 0 or hang else TW
+        ls = wrap_hang(c, sent, font, first, TW - indent if hang else TW)
         for k in range(len(ls)):
             lines.append(ls[k])
             softs.append(k == 0)
@@ -796,19 +840,37 @@ def cut_cost(lines, cut):
 # chosen so as many pages as possible get the big letters.
 PAGE_FACE_COST = {"5x7": 0, "5x5": 12, "4x5": 18}
 
+# A page left over for the local forecast. Dearer than a break between
+# sentences, cheaper than one inside a sentence: a short discussion takes
+# fewer pages instead of being chopped into fragments.
+EMPTY_PAGE = 45
+
 def split_pages(c, lines, cap, font):
-    # SLOTS non-empty pages of at most cap lines with the cheapest breaks,
+    # Up to SLOTS pages, whichever count reads best. Returns (pages, score).
+    best = None
+    best_score = 0
+    for k in range(1, SLOTS + 1):
+        pages, score = split_k(c, lines, cap, font, k)
+        if pages != None:
+            score += (SLOTS - k) * EMPTY_PAGE
+            if best == None or score < best_score:
+                best = pages
+                best_score = score
+    return best, best_score
+
+def split_k(c, lines, cap, font, slots):
+    # slots non-empty pages of at most cap lines with the cheapest breaks,
     # the biggest letters and even pages (best split by dynamic
     # programming). Returns (pages, score).
     n = len(lines)
-    if n < SLOTS or n > cap * SLOTS:
+    if n < slots or n > cap * slots:
         return None, 0
     big = 1 << 30
-    dp = [[big for i in range(n + 1)] for k in range(SLOTS + 1)]
-    back = [[0 for i in range(n + 1)] for k in range(SLOTS + 1)]
+    dp = [[big for i in range(n + 1)] for k in range(slots + 1)]
+    back = [[0 for i in range(n + 1)] for k in range(slots + 1)]
     dp[0][0] = 0
     face_cost = {}
-    for k in range(1, SLOTS + 1):
+    for k in range(1, slots + 1):
         for e in range(k, n + 1):
             for st in range(max(k - 1, e - cap), e):
                 if dp[k - 1][st] >= big:
@@ -817,21 +879,21 @@ def split_pages(c, lines, cap, font):
                 if key not in face_cost:
                     eg = enlarge(c, lines[st:e], font)
                     face_cost[key] = PAGE_FACE_COST[eg[1] if eg != None else font]
-                cost = dp[k - 1][st] + abs((e - st) * SLOTS - n) * 2 // SLOTS + face_cost[key]
+                cost = dp[k - 1][st] + abs((e - st) * slots - n) * 2 // slots + face_cost[key]
                 if st > 0:
                     cost += cut_cost(lines, st)
                 if cost < dp[k][e]:
                     dp[k][e] = cost
                     back[k][e] = st
-    if dp[SLOTS][n] >= big:
+    if dp[slots][n] >= big:
         return None, 0
     pages = []
     e = n
-    for k in range(SLOTS, 0, -1):
+    for k in range(slots, 0, -1):
         st = back[k][e]
         pages.insert(0, lines[st:e])
         e = st
-    return pages, dp[SLOTS][n]
+    return pages, dp[slots][n]
 
 # A smaller face costs a little, so it wins only when it breaks the text
 # more cleanly.
@@ -847,8 +909,6 @@ def try_layout(c, cs):
             lines = []
             for cd in cs:
                 lines += card_lines(c, cd, font, by_sentence, hang)
-            if len(lines) < SLOTS and not by_sentence and hang:
-                return {"short": lines, "font": font, "step": step, "y0": y0}
             pages, score = split_pages(c, lines, cap, font)
             score += FACE_COST[font] + (5 if by_sentence else 0) + (0 if hang else 25)
             if pages != None and (best == None or score < best_score):
@@ -861,9 +921,12 @@ def layout(c, w):
     if len(cs) == 0:
         return None
     lay = try_layout(c, cs)
-    if lay != None and "short" in lay and w["filler"] != "":
-        # Too little to fill the pages: add the synopsis as the big picture.
-        lay = try_layout(c, cs + [{"kind": "big", "num": 0, "i": len(cs), "text": w["filler"]}])
+    if (lay != None and len(lay["pages"]) < SLOTS and w["filler"] != "" and
+        len([cd for cd in cs if cd["kind"] == "big"]) == 0):
+        # Room to spare: add the synopsis as the big picture.
+        more = try_layout(c, cs + [{"kind": "big", "num": 0, "i": len(cs), "text": w["filler"]}])
+        if more != None:
+            lay = more
     if lay == None:
         # Too long even in the smallest face: trim the
         # explanations off the longest points.
@@ -884,9 +947,6 @@ def layout(c, w):
             lines = lines[:4 * SLOTS]
             lines[-1]["text"] = lines[-1]["text"] + "..."
             lay = {"pages": [lines[k:k + 4] for k in range(0, len(lines), 4)], "font": "4x5", "step": 6, "y0": 7}
-    if "short" in lay:
-        # Fewer lines than pages: one line a page, then the source.
-        lay = {"pages": [[ln] for ln in lay["short"]], "font": lay["font"], "step": lay["step"], "y0": lay["y0"]}
     return lay
 
 def page_label(w, page):
@@ -899,12 +959,14 @@ def page_label(w, page):
     for i in ids:
         cd = w["cards"][i] if i < len(w["cards"]) else {"kind": "big", "num": 0}
         if cd["kind"] == "new":
-            parts.append("WHAT'S NEW")
+            parts.append("WHAT CHANGED")
         elif cd["kind"] == "big":
             parts.append("THE BIG PICTURE")
         else:
             nums.append(cd["num"])
-    if len(nums) > 0:
+    if len(nums) > 0 and w["points"] == 1:
+        parts.append("KEY MESSAGE")
+    elif len(nums) > 0:
         word = "POINT" if len(parts) > 0 else "KEY POINT"
         if len(nums) == 1:
             t = word + " " + str(nums[0])
@@ -1016,6 +1078,30 @@ def icon(c, name, x, y):
         c.fill_circle(x - 1, y, 7, "#38BDF8")
         c.fill_circle(x + 2, y - 1, 4, "#000000")
         c.rect(x - 10, y + 6, x + 9, y + 8, fill = "#1E6FD9")
+    elif name == "HIGH WATER":
+        # Water over a dock post, an arrow showing it rising.
+        c.rect(x - 7, y - 6, x - 6, y + 9, fill = "#8A6A3A")
+        c.rect(x - 10, y + 3, x + 9, y + 9, fill = "#0E7490")
+        for k in range(0, 20, 4):
+            c.line(x - 10 + k, y + 3, x - 8 + k, y + 1, "#22D3EE")
+            c.line(x - 8 + k, y + 1, x - 6 + k, y + 3, "#22D3EE")
+        c.fill_triangle(x + 1, y - 4, x + 7, y - 4, x + 4, y - 9, "#FFFFFF")
+        c.rect(x + 3, y - 4, x + 5, y - 1, fill = "#FFFFFF")
+    elif name == "SUNNY":
+        sun(c, x, y, 5, "#FFD23F", "#FFB703")
+    elif name == "NIGHT":
+        # A crescent cut by a circle of the tile's own color, and two stars.
+        c.fill_circle(x, y, 7, "#F4F1C9")
+        c.fill_circle(x + 4, y - 3, 6, tile_colors("NIGHT")[0])
+        c.pixel(x + 7, y + 5, "#FFFFFF")
+        c.pixel(x + 4, y - 8, "#FFFFFF")
+        c.pixel(x - 8, y - 7, "#C7D2FE")
+    elif name == "CHANGED":
+        # Revision arrows: one up, one down.
+        c.fill_triangle(x - 8, y - 2, x - 2, y - 2, x - 5, y - 8, "#FFD23F")
+        c.rect(x - 6, y - 2, x - 4, y + 7, fill = "#FFD23F")
+        c.fill_triangle(x + 2, y + 2, x + 8, y + 2, x + 5, y + 8, "#FFFFFF")
+        c.rect(x + 4, y - 7, x + 6, y + 2, fill = "#FFFFFF")
     elif name == "TROPICAL":
         c.fill_circle(x, y, 7, "#FF4FA3")
         c.fill_circle(x, y, 3, "#000000")
@@ -1032,7 +1118,9 @@ TILE = {
     "ICE": ("#0F2438", "#3B6E8F"), "RAIN": ("#0B1A33", "#28456B"), "FLOOD": ("#06261A", "#1C5A44"),
     "STORMS": ("#1A0533", "#4C1D95"), "WIND": ("#03282A", "#0F766E"), "FIRE DANGER": ("#330A00", "#9A3412"),
     "FOG": ("#1F2329", "#4B5563"), "SMOKE": ("#22201E", "#57534E"), "ROUGH SURF": ("#04203A", "#0369A1"),
-    "TROPICAL": ("#33001A", "#9D174D"), "DRY": ("#2E1F0A", "#8A6A3A"),
+    "TROPICAL": ("#33001A", "#9D174D"), "DRY": ("#2E1F0A", "#8A6A3A"), "HIGH WATER": ("#022A33", "#0E7490"),
+    "CHANGED": ("#2A2000", "#6B5300"), "NIGHT": ("#0B1238", "#0B1238"),
+    "SUNNY": ("#0B2E5C", "#2B6CB0"),
 }
 
 def tile_colors(name):
@@ -1040,22 +1128,52 @@ def tile_colors(name):
 
 # ---------- pages ----------
 
+# What to do about each error, under it.
+ERROR_HINT = {
+    "ENTER YOUR ZIP CODE": "IN THIS APP'S SETTINGS",
+    "ZIP CODE NOT FOUND": "CHECK THIS APP'S SETTINGS",
+    "NO NWS OFFICE FOR THIS ZIP": "US ZIP CODES ONLY",
+    "NO CONNECTION": "TRYING AGAIN SOON",
+    "DISCUSSION UNAVAILABLE": "TRYING AGAIN SOON",
+}
+
 def error_page(c, w):
     c.fill("#000000")
-    c.text("FORECAST DISCUSSION", 2, 0, font = "4x5", color = GOLD)
-    c.text(w["error"], 96, 13, font = "5x7", color = TITLE, align = "center")
-    if w["error"] == "ENTER YOUR ZIP CODE":
-        c.text("IN THIS APP'S SETTINGS", 96, 24, font = "4x5", color = DIM, align = "center")
+    rail(c, "OUTLOOK")
+    c.text("FORECAST DISCUSSION", TX, 0, font = "4x5", color = GOLD)
+    mid = TX + TW // 2
+    t, f = fit_line(c, w["error"], ["5x7", "4x5"], TW)
+    c.text(t, mid, 11, font = f, color = TITLE, align = "center")
+    c.text(ERROR_HINT.get(w["error"], ""), mid, 22, font = "4x5", color = DIM, align = "center")
 
 def place(w):
     return w["loc"]["label"] + " " + w["loc"]["zip"]
 
-def header(c, w, label):
-    right, _ = fit_line(c, place(w), ["4x5"], 92)
+def header(c, w, label, col = GOLD):
+    right, _ = fit_line(c, place(w), ["4x5"], 80)
     rw = c.text_width(right, font = "4x5")
-    lab, f = fit_line(c, label, ["4x5"], 188 - rw - 6)
-    c.text(lab, 2, 0, font = f, color = GOLD)
+    lab, f = fit_line(c, label, ["4x5"], 190 - TX - rw - 6)
+    c.text(lab, TX, 0, font = f, color = col)
     c.text(right, 190, 0, font = "4x5", color = DIM, align = "right")
+
+def page_card(w, page):
+    i = page[0]["card"]
+    if i < len(w["cards"]):
+        return w["cards"][i]
+    return {"kind": "big", "num": 0, "i": i, "text": w["filler"]}
+
+def card_topic(w, card):
+    # The picture for a page: what changed gets the revision arrows;
+    # otherwise the card's first topic that holds for this spot.
+    if card["kind"] == "new":
+        return "CHANGED", GOLD
+    tp = local_topics(topics([card]), w["pf"])
+    return tp[0] if len(tp) > 0 else ("OUTLOOK", "#7FB3FF")
+
+def rail(c, name):
+    a, b = tile_colors(name)
+    c.gradient_rect(0, 0, RAIL - 1, 31, a, b, horizontal = False)
+    icon(c, name, RAIL // 2, 16)
 
 def short_office(w):
     # "MOREHEAD CITY NC" -> "MOREHEAD CITY" when the state matches the zip's.
@@ -1101,7 +1219,9 @@ def intro(c, ctx):
     c.text(state + " " + w["loc"]["zip"], 2, 10, font = "4x5", color = TITLE)
     t, f = fit_line(c, "NWS " + short_office(w), ["4x5", "picopixel"], left - 3)
     c.text(t, 2, 18, font = f, color = DIM)
-    c.text(w["issued"], 2, 25, font = "4x5", color = DIM)
+    if w["issued"] != "":
+        t, f = fit_line(c, "UPDATED " + w["issued"], ["4x5", "picopixel"], left - 3)
+        c.text(t, 2, 25, font = f, color = DIM)
     if n == 0:
         c.text("NO MAJOR", (left + 191) // 2, 9, font = "5x7", color = "#3DDC84", align = "center")
         c.text("WEATHER", (left + 191) // 2, 19, font = "5x7", color = "#3DDC84", align = "center")
@@ -1118,22 +1238,64 @@ def point(c, ctx, n):
         return error_page(c, w)
     c.fill("#000000")
     lay = layout(c, w)
-    if lay == None or n > len(lay["pages"]):
-        header(c, w, "FORECAST DISCUSSION")
-        c.text("THAT'S THE LATEST FROM", 96, 11, font = "4x5", color = DIM, align = "center")
-        c.text("NWS " + w["office"], 96, 19, font = "4x5", color = TITLE, align = "center")
-        return
+    used = len(lay["pages"]) if lay != None else 0
+    if n > used:
+        return forecast_page(c, w, n - used - 1)
     page = lay["pages"][n - 1]
-    header(c, w, page_label(w, page))
+    cd = page_card(w, page)
+    name, col = card_topic(w, cd)
+    rail(c, name)
+    header(c, w, page_label(w, page), col)
     font, step, y = lay["font"], lay["step"], lay["y0"]
     big = enlarge(c, page, lay["font"])
     if big != None:
         page, font, step, y = big
     for ln in page:
         if ln["mark"] != "":
-            draw_mark(c, ln["mark"], 2, y, font)
-        c.text(ln["text"], 2 + ln["indent"], y, font = font, color = BODY)
+            draw_mark(c, ln["mark"], TX, y, font)
+        c.text(ln["text"], TX + ln["indent"], y, font = font, color = BODY)
         y += step
+
+def forecast_page(c, w, k):
+    # The pages the discussion doesn't need: this zip's own NWS forecast,
+    # one period a page, so the discussion's big picture meets the
+    # backyard.
+    periods = w["pf"]["periods"] if w["pf"] != None else []
+    if k >= len(periods):
+        rail(c, "OUTLOOK")
+        header(c, w, "FORECAST DISCUSSION")
+        mid = TX + TW // 2
+        c.text("THAT'S THE LATEST FROM", mid, 11, font = "4x5", color = DIM, align = "center")
+        t, f = fit_line(c, "NWS " + w["office"], ["4x5", "picopixel"], TW)
+        c.text(t, mid, 19, font = f, color = TITLE, align = "center")
+        return
+    p = periods[k]
+    tp = topics([{"kind": "point", "i": 0, "text": p["short"]}])
+    sky = p["short"]
+    if len(tp) > 0:
+        name, col = tp[0]
+    elif not p["day"]:
+        name, col = "NIGHT", "#A5B4FC"
+    elif sky.find("CLOUD") < 0 and sky.find("PARTLY") < 0 and (sky.find("SUNNY") >= 0 or sky.find("CLEAR") >= 0):
+        name, col = "SUNNY", "#FFD23F"
+    else:
+        name, col = "OUTLOOK", "#7FB3FF"
+    rail(c, name)
+    header(c, w, "YOUR FORECAST", col)
+    temp = ("HIGH " if p["day"] else "LOW ") + str(p["temp"])
+    tcol = "#FF9F43" if p["day"] else "#6FC3E0"
+    c.text(temp, 186, 8, font = "5x7", color = tcol, align = "right")
+    c.rect(187, 8, 189, 10, outline = tcol)
+    tw_ = c.text_width(temp, font = "5x7")
+    t, f = fit_line(c, p["name"], ["5x7", "4x5"], TW - tw_ - 10)
+    c.text(t, TX, 8, font = f, color = TITLE)
+    for f in ["5x5", "4x5", "picopixel"]:
+        if font_ok(p["short"], f):
+            ls = wrap(c, p["short"], f, TW)
+            if len(ls) <= 2 or f == "picopixel":
+                for r in range(min(2, len(ls))):
+                    c.text(ls[r], TX, 19 + r * 7, font = f, color = BODY)
+                break
 
 def enlarge(c, page, font):
     # The page's own text rewrapped in the biggest face it fits, so a page
@@ -1154,7 +1316,7 @@ def enlarge(c, page, font):
                 out = None
                 break
             indent = mark_width(c, pc["mark"], f) + 4 if pc["mark"] != "" else (page[0]["indent"] if pc == pieces[0] else 0)
-            ls = wrap(c, t, f, 188 - indent)
+            ls = wrap(c, t, f, TW - indent)
             for k in range(len(ls)):
                 out.append({"mark": pc["mark"] if k == 0 else "", "indent": indent, "text": ls[k]})
         if out != None and len(out) <= cap:
