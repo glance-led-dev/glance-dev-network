@@ -1,0 +1,31 @@
+id: nba-leaders
+name: NBA Leaders
+author: cfdmb
+description: Top 3 NBA leaders by category - Points, Rebounds, Assists, Steals, Blocks, and shooting splits - for the NBA, East, or West, switching to the playoffs on its own in the spring.
+category: Sports
+width: 192
+height: 32
+refresh: 10800
+pages:
+  - points
+  - rebounds
+  - assists
+  - steals
+  - blocks
+  - fgpct
+  - tppct
+  - ftpct
+inputs:
+  - key: conference
+    type: string
+    app_input_type: dropdown
+    label: Conference
+    choices: [NBA, East, West]
+    default: NBA
+  - key: stats
+    type: string
+    app_input_type: dropdown
+    label: Stats
+    choices: [Auto, Regular season, Playoffs]
+    default: Auto
+    help: "Auto: playoffs from the first playoff game through the Finals, regular season otherwise. Playoff leaders need as many games as the fewest played by a team still alive (shown as 8+ GP)."
