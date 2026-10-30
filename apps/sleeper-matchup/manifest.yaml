@@ -1,0 +1,33 @@
+# GDN app manifest (v2).
+gdn: 1
+id: sleeper-matchup
+version: 0.1.0
+name: Sleeper Matchup
+author: coopernewman
+description: Your live Sleeper fantasy football matchup - your score against your opponent's this week, side by side under both usernames. Your score glows green when you lead and red when you trail, with the margin underneath. No key needed.
+category: Sports
+entry: app.star
+
+# Glance LED V2: one 64x32 panel.
+width: 64
+height: 32
+
+# Five minutes - the fastest a free-text input allows. The matchup feed is
+# cached just under that, so every refresh shows fresh points on game day.
+refresh: 300
+
+pages: [matchup]
+
+inputs:
+  - key: username
+    type: string
+    app_input_type: free-text
+    label: Sleeper username
+    default: ""
+    help: Your Sleeper username, as it appears on your profile (no @). Leave it blank to see a demo.
+  - key: league
+    type: string
+    app_input_type: free-text
+    label: League name or ID
+    default: ""
+    help: Part of your league's name (for example DYNASTY) or its league ID from the Sleeper web address. Leave it blank to use your first league this season.
