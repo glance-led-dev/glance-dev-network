@@ -1,0 +1,24 @@
+id: us-launches
+name: US Launches
+author: cfdmb
+description: The next three rocket launches from any US pad - status, countdown and launch time in your time zone, whether you can see it from your zip, which way and when to look, your cloud forecast, booster and sonic-boom alerts, plus the week ahead. No API key.
+category: Science
+width: 192
+height: 32
+refresh: 3600
+pages:
+  - intro
+  - launch1
+  - see1
+  - launch2
+  - see2
+  - launch3
+  - see3
+  - week
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: Your zip code
+    default: "32920"
+    help: "Times show in this zip's time zone, and visibility is judged from here."
