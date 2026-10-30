@@ -1,0 +1,32 @@
+id: nc-election-results
+name: NC Election Results
+author: cfdmb
+description: Live North Carolina election results from the State Board of Elections. Pick All NC for the statewide races, or any of the 100 counties for its own ballot down to commissioners, school board and local referendums. Unofficial counts, precincts reporting, ballots cast and turnout.
+category: News
+width: 192
+height: 32
+refresh: 300
+pages:
+  - card
+  - race1
+  - race2
+  - race3
+  - race4
+  - race5
+  - race6
+  - race7
+inputs:
+  - key: county
+    type: string
+    app_input_type: dropdown
+    label: County
+    choices: ["All NC", "Alamance", "Alexander", "Alleghany", "Anson", "Ashe", "Avery", "Beaufort", "Bertie", "Bladen", "Brunswick", "Buncombe", "Burke", "Cabarrus", "Caldwell", "Camden", "Carteret", "Caswell", "Catawba", "Chatham", "Cherokee", "Chowan", "Clay", "Cleveland", "Columbus", "Craven", "Cumberland", "Currituck", "Dare", "Davidson", "Davie", "Duplin", "Durham", "Edgecombe", "Forsyth", "Franklin", "Gaston", "Gates", "Graham", "Granville", "Greene", "Guilford", "Halifax", "Harnett", "Haywood", "Henderson", "Hertford", "Hoke", "Hyde", "Iredell", "Jackson", "Johnston", "Jones", "Lee", "Lenoir", "Lincoln", "Macon", "Madison", "Martin", "McDowell", "Mecklenburg", "Mitchell", "Montgomery", "Moore", "Nash", "New Hanover", "Northampton", "Onslow", "Orange", "Pamlico", "Pasquotank", "Pender", "Perquimans", "Person", "Pitt", "Polk", "Randolph", "Richmond", "Robeson", "Rockingham", "Rowan", "Rutherford", "Sampson", "Scotland", "Stanly", "Stokes", "Surry", "Swain", "Transylvania", "Tyrrell", "Union", "Vance", "Wake", "Warren", "Washington", "Watauga", "Wayne", "Wilkes", "Wilson", "Yadkin", "Yancey"]
+    default: All NC
+    help: All NC shows the statewide races and every US House district. A county shows its own ballot.
+  - key: show
+    type: string
+    app_input_type: dropdown
+    label: Show
+    choices: [All races, County races, Ballot questions, Judges]
+    default: All races
+    help: County races only applies when a county is picked.
