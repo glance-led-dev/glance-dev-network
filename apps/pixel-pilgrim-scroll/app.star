@@ -182,10 +182,10 @@ def where(c, ctx):
         c.text_fit(label(s["current"], 25), 126, 17, ["10x16", "7x12", "6x8", "5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 102)
         top(c, "PIXEL PILGRIM", str(s["hours_left"]) + "H")
     else:
-        pilgrim(c, 31, 18)
-        c.rect(0, 22, 63, 31, fill = INK)
-        c.text(str(s["hours_left"]) + "H LEFT", 32, 22, font = "4x5", color = GREEN, align = "center")
-        c.text_fit(label(s["current"], 15), 32, 27, ["4x5", "3x4"], color = MINT, align = "center", maxw = 60)
+        pilgrim(c, 31, 19)
+        c.rect(0, 23, 63, 31, fill = INK)
+        c.text_fit("IN " + label(s["current"], 12), 32, 23, ["3x4"], color = MINT, align = "center", maxw = 63)
+        c.text(str(s["hours_left"]) + "H LEFT", 32, 28, font = "3x4", color = GREEN, align = "center")
 
 
 def arrival(c, ctx):
