@@ -41,4 +41,4 @@ All five pages share their source reads. The release's full-app cold-cache audit
 
 Package: `ncaa-bracketology`, version 0.3.1. The bundled approved projection is October 27, 2026, revision 2: 76 unique selected schools, 64 regional slots, twelve opening games, and 32 automatic qualifiers.
 
-Catalog previews show the approved projection; supplemental metrics depend on provider availability at preview generation time. Team marks identify their respective schools.
+The catalog thumbnail (`preview/preview.png`) shows the opening My Team screen using Texas, enlarged 5x with exact pixels. The individual page previews remain available. Catalog previews show the approved projection; supplemental metrics depend on provider availability at preview generation time. Team marks identify their respective schools.
