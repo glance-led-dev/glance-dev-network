@@ -19,6 +19,7 @@ inputs:
     app_input_type: dropdown
     label: Collection day
     default: "MONDAY"
+    help: Choose the day your bins are collected, not the night you put them out. The display counts down beforehand and changes to "TONIGHT" after 4 PM the evening before. For a Friday pickup, choose Friday; it will remind you on Thursday evening.
     choices: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
   - key: garbage
     type: choice
