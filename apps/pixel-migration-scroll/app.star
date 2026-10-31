@@ -218,9 +218,9 @@ def visitor(c, ctx):
     p = CREATURES[s["creature"]]
     if c.width >= 128:
         creature(c, s["creature"], 46, 27)
-        c.rect(72, 8, 178, 30, fill = "#030708", outline = HABITATS[s["habitat"]]["accent"])
-        c.text_fit(p["name"], 125, 10, ["10x16", "7x12", "6x8"], color = p["main"], align = "center", maxw = 100)
-        c.text("VISITING / " + p["effect"], 125, 26, font = "4x5", color = "#91A5A4", align = "center")
+        c.rect(72, 7, 178, 31, fill = "#030708", outline = HABITATS[s["habitat"]]["accent"])
+        c.text_fit(p["name"], 125, 8, ["10x16", "7x12", "6x8"], color = p["main"], align = "center", maxw = 100)
+        c.text_fit("VISITING / " + p["effect"], 125, 26, ["4x5", "3x4"], color = "#91A5A4", align = "center", maxw = 100)
     else:
         creature(c, s["creature"], 32, 24)
         c.rect(0, 25, 63, 31, fill = "#030708")
