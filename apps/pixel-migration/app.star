@@ -234,26 +234,32 @@ def journey(c, ctx):
     p = CREATURES[s["creature"]]
     c.fill("#020506")
     if c.width >= 128:
-        xs = [17, 74, 131]
+        xs = [10, 71, 132]
         ids = [s["from"], s["habitat"], s["next"]]
-        labels = ["FROM", "NOW", "NEXT"]
+        labels = ["CAME FROM", "NOW AT", "GOING TO"]
         for i in range(3):
             hh = HABITATS[ids[i]]
-            c.rect(xs[i], 9, xs[i] + 43, 29, fill = hh["sky"], outline = hh["accent"])
-            c.text(labels[i], xs[i] + 21, 11, font = "4x5", color = "#A2B2B1", align = "center")
-            c.text_fit(hh["short"], xs[i] + 21, 20, ["6x8", "5x7", "4x5"], color = hh["accent"], align = "center", maxw = 39)
-        c.text(">", 67, 16, font = "6x8", color = CREATURES[s["creature"]]["main"], align = "center")
-        c.text(">", 124, 16, font = "6x8", color = CREATURES[s["creature"]]["main"], align = "center")
+            c.rect(xs[i], 9, xs[i] + 49, 29, fill = hh["sky"], outline = hh["accent"])
+            c.text(labels[i], xs[i] + 24, 11, font = "4x5", color = "#A2B2B1", align = "center")
+            c.text_fit(hh["short"], xs[i] + 24, 20, ["6x8", "5x7", "4x5"], color = hh["accent"], align = "center", maxw = 45)
+        c.text(">", 65, 16, font = "6x8", color = p["main"], align = "center")
+        c.text(">", 126, 16, font = "6x8", color = p["main"], align = "center")
     else:
-        rows = [["FROM", HABITATS[s["from"]]["short"]], ["NOW", h["short"]], ["NEXT", HABITATS[s["next"]]["short"]]]
+        rows = ["FROM: " + HABITATS[s["from"]]["short"], "NOW: " + h["short"], "NEXT: " + HABITATS[s["next"]]["short"]]
         for i in range(3):
             y = 8 + i * 8
             col = h["accent"] if i == 1 else "#829493"
-            c.text(rows[i][0], 3, y, font = "4x5", color = "#829493")
-            c.text(rows[i][1], 61, y, font = "4x5", color = col, align = "right")
+            c.text_fit(rows[i], 32, y, ["4x5", "3x4"], color = col, align = "center", maxw = 60)
             if i < 2:
                 c.hline(3, 61, y + 6, "#18302E")
-    header(c, s, p["short"] + " ROUTE" if c.width >= 128 else "JOURNEY")
+    b = scene_bounds(c)
+    c.rect(b[0], 0, b[1], 6, fill = "#020506")
+    if c.width >= 128:
+        c.text(p["name"] + " JOURNEY", 12, 1, font = "4x5", color = p["main"])
+        c.text(str(s["hours"]) + "H", 180, 1, font = "4x5", color = "#829496", align = "right")
+    else:
+        c.text_fit(p["name"], 2, 1, ["4x5", "3x4"], color = p["main"], maxw = 47)
+        c.text(str(s["hours"]) + "H", 62, 1, font = "4x5", color = "#829496", align = "right")
 
 
 def changed(c, ctx):
