@@ -3,7 +3,7 @@ id: ncaa-bracketology
 version: 0.3.1
 name: NCAA Bracketology
 author: Jacob Wilmot
-description: Kyle Somelofske's approved 76-team bracketology projection, team matchups, bubble watch and multi-bid conferences.
+description: Somelofske Sports' approved 76-team bracketology projection, team matchups, bubble watch and multi-bid conferences.
 category: Sports
 entry: app.star
 width: 192

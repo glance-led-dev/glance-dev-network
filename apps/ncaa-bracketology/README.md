@@ -1,6 +1,6 @@
 # NCAA Bracketology
 
-Kyle Somelofske's approved men's college basketball bracketology projection for a 192×32 Glance display. This is a projection, not a live NCAA tournament bracket or a prediction of individual game winners.
+Somelofske Sports' approved men's college basketball bracketology projection for a 192×32 Glance display. This is a projection, not a live NCAA tournament bracket or a prediction of individual game winners.
 
 ## Settings
 
@@ -14,7 +14,7 @@ Every view has the shared introduction followed by four content screens. No acco
 - **Field of 64:** four projected regions, preserving alternative teams in opening-round slots rather than choosing a winner.
 - **Top 4 Seeds:** the top four seeds in each region with overall rankings.
 - **My Team:** selected-school projection and available resume metrics, Round of 64 opponent, and potential Round of 32 and Sweet 16 matchups. Schools outside the projected field are not assigned an invented slot.
-- **Bubble:** Last Four Byes, Last Four In, First Four Out, and Multi-bid Conferences. First Four Out uses Kyle's confirmed overall-rank convention of 77–80. Next Four Out is not displayed.
+- **Bubble:** Last Four Byes, Last Four In, First Four Out, and Multi-bid Conferences. First Four Out uses Somelofske Sports' confirmed overall-rank convention of 77–80. Next Four Out is not displayed.
 - **Opening Round:** the projection's twelve opening games, split between automatic-qualifier and at-large groups.
 
 ## Updates and safeguards
