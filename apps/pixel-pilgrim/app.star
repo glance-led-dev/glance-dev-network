@@ -180,11 +180,12 @@ def where(c, ctx):
         c.rect(72, 8, 180, 30, fill = INK, outline = GREEN)
         c.text("NOW VISITING", 126, 10, font = "4x5", color = DIM, align = "center")
         c.text_fit(label(s["current"], 25), 126, 17, ["10x16", "7x12", "6x8", "5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 102)
+        top(c, "PIXEL PILGRIM", str(s["hours_left"]) + "H")
     else:
-        pilgrim(c, 31, 20)
-        c.rect(0, 24, 63, 31, fill = INK)
-        c.text_fit(label(s["current"], 15), 32, 25, ["5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 60)
-    top(c, "PIXEL PILGRIM" if c.width >= 128 else "VISITING", str(s["hours_left"]) + "H")
+        pilgrim(c, 31, 18)
+        c.rect(0, 22, 63, 31, fill = INK)
+        c.text(str(s["hours_left"]) + "H LEFT", 32, 22, font = "4x5", color = GREEN, align = "center")
+        c.text_fit(label(s["current"], 15), 32, 27, ["4x5", "3x4"], color = MINT, align = "center", maxw = 60)
 
 
 def arrival(c, ctx):
