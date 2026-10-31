@@ -1,0 +1,21 @@
+gdn: 1
+id: pixel-pilgrim
+version: 0.1.0
+name: Pixel Pilgrim
+author: primetime43
+description: One tiny traveler moves between anonymous Glance cities. See where it is, when it reaches your city, and what it found at its last stop.
+category: Fun
+entry: app.star
+
+width: 64
+height: 32
+refresh: 300
+
+pages: [where, arrival, journal]
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: ZIP code
+    default: "10001"
+    help: Your US ZIP code becomes an anonymous city stop. The ZIP itself is never shown.
