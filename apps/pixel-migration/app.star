@@ -241,15 +241,17 @@ def journey(c, ctx):
             hh = HABITATS[ids[i]]
             c.rect(xs[i], 9, xs[i] + 49, 29, fill = hh["sky"], outline = hh["accent"])
             c.text(labels[i], xs[i] + 24, 11, font = "4x5", color = "#A2B2B1", align = "center")
-            c.text_fit(hh["short"], xs[i] + 24, 20, ["6x8", "5x7", "4x5"], color = hh["accent"], align = "center", maxw = 45)
+            words = hh["name"].split(" ")
+            c.text(words[0], xs[i] + 24, 18, font = "4x5", color = hh["accent"], align = "center")
+            c.text(words[1], xs[i] + 24, 24, font = "4x5", color = hh["accent"], align = "center")
         c.text(">", 65, 16, font = "6x8", color = p["main"], align = "center")
         c.text(">", 126, 16, font = "6x8", color = p["main"], align = "center")
     else:
-        rows = ["FROM: " + HABITATS[s["from"]]["short"], "NOW: " + h["short"], "NEXT: " + HABITATS[s["next"]]["short"]]
+        rows = ["WAS: " + HABITATS[s["from"]]["name"], "NOW: " + h["name"], "NEXT: " + HABITATS[s["next"]]["name"]]
         for i in range(3):
             y = 8 + i * 8
             col = h["accent"] if i == 1 else "#829493"
-            c.text_fit(rows[i], 32, y, ["4x5", "3x4"], color = col, align = "center", maxw = 60)
+            c.text_fit(rows[i], 32, y, ["3x4"], color = col, align = "center", maxw = 63)
             if i < 2:
                 c.hline(3, 61, y + 6, "#18302E")
     b = scene_bounds(c)
