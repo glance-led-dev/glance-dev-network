@@ -1,0 +1,48 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: thanksgiving-countdown
+version: 0.1.0
+name: Thanksgiving Countdown
+author: jdhine02
+description: Days until US Thanksgiving, in your choice of five designs from a set table to a harvest moon. Says Happy Thanksgiving on the day.
+category: Lifestyle
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+width: 192
+height: 32
+
+# The count changes once a day; checking every 15 minutes catches local midnight closely.
+refresh: 900
+
+# Pages the panel rotates through, in order. app.star must define a function per name.
+pages: [countdown]
+
+assets:
+  - scenecornucopia.png
+  - scenefall.png
+  - sceneharvest.png
+  - scenetable.png
+  - sceneturkey.png
+
+# What the client fills in at install time.
+#   type            — the data type: string | number | choice
+#   app_input_type  — the UI widget the client sees. One of:
+#                     free-text | dropdown | selection | checkbox | date | date-past | color
+#                     (optional; if omitted the form infers it from `type`)
+inputs:
+  - key: design
+    type: choice
+    app_input_type: dropdown
+    label: Design
+    default: "Thanksgiving table"
+    choices: ["Thanksgiving table", "Turkey and fall tree", "Fall scene", "Cornucopia", "Harvest moon"]
+
+  - key: zone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "Eastern"
+    choices: ["Eastern", "Central", "Mountain", "Arizona", "Pacific", "Alaska", "Hawaii"]
+    help: Sets when the count changes, so Thanksgiving starts and ends at your own midnight.
