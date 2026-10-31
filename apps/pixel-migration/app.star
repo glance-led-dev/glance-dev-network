@@ -224,7 +224,7 @@ def visitor(c, ctx):
     else:
         creature(c, s["creature"], 32, 24)
         c.rect(0, 25, 63, 31, fill = "#030708")
-        c.text_fit(p["name"], 32, 26, ["5x7", "4x5"], color = p["main"], align = "center", maxw = 60)
+        c.text_fit(p["name"], 32, 25, ["5x7", "4x5"], color = p["main"], align = "center", maxw = 60)
     header(c, s, "VISITOR")
 
 
@@ -265,9 +265,9 @@ def legacy(c, ctx):
     if c.width >= 128:
         c.rect(58, 8, 177, 30, fill = "#030708", outline = p["main"])
         c.text("LEFT BY " + p["short"], 117, 10, font = "4x5", color = "#91A5A4", align = "center")
-        c.text_fit(p["effect"], 117, 17, ["10x16", "7x12", "6x8"], color = p["accent"], align = "center", maxw = 112)
+        c.text_fit(p["effect"], 117, 15, ["10x16", "7x12", "6x8"], color = p["accent"], align = "center", maxw = 112)
     else:
-        c.rect(0, 7, 63, 13, fill = "#030708")
+        c.rect(0, 7, 63, 14, fill = "#030708")
         c.text_fit(p["short"], 32, 8, ["5x7", "4x5"], color = p["main"], align = "center", maxw = 60)
         c.rect(0, 24, 63, 31, fill = "#030708")
         c.text_fit(p["effect"], 32, 25, ["5x7", "4x5"], color = p["accent"], align = "center", maxw = 60)
