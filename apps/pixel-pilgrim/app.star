@@ -181,7 +181,7 @@ def where(c, ctx):
         c.text("NOW VISITING", 126, 10, font = "4x5", color = DIM, align = "center")
         c.text_fit(label(s["current"], 25), 126, 17, ["10x16", "7x12", "6x8", "5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 102)
     else:
-        pilgrim(c, 31, 25)
+        pilgrim(c, 31, 20)
         c.rect(0, 24, 63, 31, fill = INK)
         c.text_fit(label(s["current"], 15), 32, 25, ["5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 60)
     top(c, "PIXEL PILGRIM" if c.width >= 128 else "VISITING", str(s["hours_left"]) + "H")
@@ -201,9 +201,9 @@ def arrival(c, ctx):
         c.text_fit(arrival_value, 148, 18, ["7x12", "6x8", "5x7"], color = AMBER, align = "center", maxw = 58)
     else:
         c.text("YOUR CITY", 32, 8, font = "4x5", color = DIM, align = "center")
-        c.text_fit(label(s["local"], 15), 32, 14, ["6x8", "5x7", "4x5", "3x4"], color = GREEN, align = "center", maxw = 60)
-        c.text(arrival_head, 32, 23, font = "4x5", color = DIM, align = "center")
-        c.text_fit(arrival_value, 32, 27, ["4x5", "3x4"], color = AMBER, align = "center", maxw = 60)
+        c.text_fit(label(s["local"], 15), 32, 14, ["5x7", "4x5", "3x4"], color = GREEN, align = "center", maxw = 60)
+        c.text(arrival_head, 32, 21, font = "4x5", color = DIM, align = "center")
+        c.text_fit(arrival_value, 32, 26, ["4x5", "3x4"], color = AMBER, align = "center", maxw = 60)
     top(c, "VISITING YOU" if s["is_here"] else "ON THE WAY", "")
 
 
