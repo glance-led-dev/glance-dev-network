@@ -1,0 +1,22 @@
+gdn: 1
+id: pixel-migration-scroll
+version: 0.1.0
+name: Pixel Migration
+author: primetime43
+description: Creatures roam between Glance owners' panels. Visitors alter each habitat before moving on, leaving a visible trail of where they have been.
+category: Fun
+entry: app.star
+
+width: 192
+height: 32
+refresh: 300
+
+pages: [visitor, trail, legacy]
+inputs:
+  - key: habitat
+    type: string
+    app_input_type: dropdown
+    label: Habitat
+    choices: [MOSS GARDEN, TIDE POOL, DUNE CAMP, CLOUD FARM, EMBER FIELD, MOON GROVE, GLASS CAVE, REED MARSH]
+    default: MOSS GARDEN
+    help: Pick this panel's place in the shared migration route.
