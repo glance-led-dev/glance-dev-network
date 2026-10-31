@@ -247,7 +247,7 @@ def journey(c, ctx):
         c.text(">", 65, 16, font = "6x8", color = p["main"], align = "center")
         c.text(">", 126, 16, font = "6x8", color = p["main"], align = "center")
     else:
-        rows = ["WAS: " + HABITATS[s["from"]]["name"], "NOW: " + h["name"], "NEXT: " + HABITATS[s["next"]]["name"]]
+        rows = ["FROM: " + HABITATS[s["from"]]["name"], "NOW: " + h["name"], "NEXT: " + HABITATS[s["next"]]["name"]]
         for i in range(3):
             y = 8 + i * 8
             col = h["accent"] if i == 1 else "#829493"
