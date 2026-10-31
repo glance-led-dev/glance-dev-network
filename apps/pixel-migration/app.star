@@ -228,14 +228,15 @@ def visitor(c, ctx):
     header(c, s, "VISITOR")
 
 
-def trail(c, ctx):
+def journey(c, ctx):
     s = migration(ctx)
     h = HABITATS[s["habitat"]]
+    p = CREATURES[s["creature"]]
     c.fill("#020506")
     if c.width >= 128:
         xs = [17, 74, 131]
         ids = [s["from"], s["habitat"], s["next"]]
-        labels = ["FROM", "HERE", "NEXT"]
+        labels = ["FROM", "NOW", "NEXT"]
         for i in range(3):
             hh = HABITATS[ids[i]]
             c.rect(xs[i], 9, xs[i] + 43, 29, fill = hh["sky"], outline = hh["accent"])
@@ -244,7 +245,7 @@ def trail(c, ctx):
         c.text(">", 67, 16, font = "6x8", color = CREATURES[s["creature"]]["main"], align = "center")
         c.text(">", 124, 16, font = "6x8", color = CREATURES[s["creature"]]["main"], align = "center")
     else:
-        rows = [["FROM", HABITATS[s["from"]]["short"]], ["HERE", h["short"]], ["NEXT", HABITATS[s["next"]]["short"]]]
+        rows = [["FROM", HABITATS[s["from"]]["short"]], ["NOW", h["short"]], ["NEXT", HABITATS[s["next"]]["short"]]]
         for i in range(3):
             y = 8 + i * 8
             col = h["accent"] if i == 1 else "#829493"
@@ -252,23 +253,22 @@ def trail(c, ctx):
             c.text(rows[i][1], 61, y, font = "4x5", color = col, align = "right")
             if i < 2:
                 c.hline(3, 61, y + 6, "#18302E")
-    header(c, s, "MIGRATE")
+    header(c, s, p["short"] + " ROUTE" if c.width >= 128 else "JOURNEY")
 
 
-def legacy(c, ctx):
+def changed(c, ctx):
     s = migration(ctx)
     habitat_scene(c, s["habitat"])
     previous = s["previous"]
     p = CREATURES[previous]
+    left_name = "MOSS" if previous == 1 else p["short"]
     b = scene_bounds(c)
     effect(c, previous, b[0], b[1], 29)
     if c.width >= 128:
         c.rect(58, 8, 177, 30, fill = "#030708", outline = p["main"])
-        c.text("LEFT BY " + p["short"], 117, 10, font = "4x5", color = "#91A5A4", align = "center")
+        c.text("IT LEFT BEHIND", 117, 10, font = "4x5", color = "#91A5A4", align = "center")
         c.text_fit(p["effect"], 117, 15, ["10x16", "7x12", "6x8"], color = p["accent"], align = "center", maxw = 112)
     else:
-        c.rect(0, 7, 63, 14, fill = "#030708")
-        c.text_fit(p["short"], 32, 8, ["5x7", "4x5"], color = p["main"], align = "center", maxw = 60)
         c.rect(0, 24, 63, 31, fill = "#030708")
         c.text_fit(p["effect"], 32, 25, ["5x7", "4x5"], color = p["accent"], align = "center", maxw = 60)
-    header(c, s, "LEFT BY" if c.width < 128 else "HABITAT CHANGE")
+    header(c, s, left_name + " LEFT")

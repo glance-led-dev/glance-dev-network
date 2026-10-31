@@ -11,7 +11,7 @@ width: 192
 height: 32
 refresh: 300
 
-pages: [visitor, trail, legacy]
+pages: [visitor, journey, changed]
 inputs:
   - key: habitat
     type: string
