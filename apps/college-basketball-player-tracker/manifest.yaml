@@ -1,15 +1,15 @@
 gdn: 1
 id: college-basketball-player-tracker
-version: 0.4.0
+version: 0.4.1
 name: Team Boxscore Tracker (NCAA)
 author: JSW41
-description: Men's college basketball tracker with seven player pages that switch automatically between season averages and live/final stats.
+description: Men's college basketball tracker with eight player pages that switch automatically between season averages and live/final stats.
 category: Sports
 entry: app.star
 width: 128
 height: 32
 refresh: 300
-pages: [player_1, player_2, player_3, player_4, player_5, player_6, player_7]
+pages: [player_1, player_2, player_3, player_4, player_5, player_6, player_7, player_8]
 assets:
   - 2.png
   - 5.png
@@ -377,13 +377,6 @@ assets:
   - 3101.png
   - 112358.png
 inputs:
-  - key: preview
-    app_input_type: dropdown
-    type: string
-    label: Studio layout preview
-    default: "AUTO"
-    choices: ["AUTO", "LIVE DEMO", "NORMAL FINAL DEMO", "OT FINAL DEMO"]
-    help: AUTO uses the real feed. Demo modes show illustrative game stats to review the layout only.
   - key: team
     app_input_type: dropdown
     type: choice
@@ -756,9 +749,3 @@ inputs:
       - "Xavier Musketeers"
       - "Yale Bulldogs"
       - "Youngstown State Penguins"
-  - key: event
-    app_input_type: text
-    type: string
-    label: Game ID Override
-    default: "AUTO"
-    help: Leave AUTO to find the team's current game. Enter an ESPN event ID to test or display a specific game.

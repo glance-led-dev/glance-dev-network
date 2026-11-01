@@ -2,7 +2,7 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: now-showing
-version: 0.2.0
+version: 0.3.0
 name: Now Showing
 author: jdhine02
 description: One title, always on the panel. Set a movie or a show (with an optional season/episode); one page shows the title and genre, the next shows episode/runtime and IMDb + Rotten Tomatoes ratings.
@@ -33,6 +33,7 @@ inputs:
     choices: ["Movie", "Show"]
 
   - key: title
+    required: true
     type: string
     app_input_type: free-text
     label: Title
@@ -40,6 +41,7 @@ inputs:
     help: Exact title of the movie or show.
 
   - key: year
+    required: false
     type: string
     app_input_type: free-text
     label: Release year (optional)
@@ -47,12 +49,14 @@ inputs:
     help: Narrows down remakes/reboots that share the same title.
 
   - key: season
+    required: false
     type: string
     app_input_type: free-text
     label: Season # (shows only, optional)
     default: ""
 
   - key: episode
+    required: false
     type: string
     app_input_type: free-text
     label: Episode # (shows only, optional)
@@ -68,6 +72,7 @@ inputs:
     help: Powers the title lookup, runtime, genre, and both ratings. To get an API key, go to omdbapi.com/apikey.aspx — it's free.
 
   - key: labelcolor
+    required: false
     type: string
     app_input_type: color
     label: "\"Now Showing\" label color"

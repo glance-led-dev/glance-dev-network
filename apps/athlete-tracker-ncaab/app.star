@@ -184,13 +184,28 @@ def official_team_accent(team, background):
     alternate_contrast = abs(color_brightness(alternate) - background_brightness)
     return alternate if alternate_contrast > primary_contrast else primary
 
-def get_json(url, ttl):
+def get_json(url, ttl, source_host = None):
+    # A chosen host gets one attempt per endpoint. Do not independently retry
+    # every feed: that can exceed Glance's 8-request two-page render budget.
+    if source_host != None:
+        response = http.get(url.replace("site.api.espn.com", source_host), ttl_seconds = ttl)
+        return response.get("json") if response.get("status_code", 0) == 200 else None
     response = http.get(url, ttl_seconds = ttl)
     if (response.get("status_code", 0) != 200 or response.get("json") == None) and "site.api.espn.com" in url:
         response = http.get(url.replace("site.api.espn.com", "site.web.api.espn.com"), ttl_seconds = ttl)
     if response.get("status_code", 0) != 200:
         return None
     return response.get("json")
+
+def roster_source(league, team_id):
+    # The shared roster URL chooses the JSON host for both pages. Glance
+    # memoizes its successful and failed responses within the render.
+    path = "/apis/site/v2/sports/basketball/%s/teams/%s/roster" % (league, team_id)
+    for host in ["site.api.espn.com", "site.web.api.espn.com"]:
+        response = http.get("https://" + host + path, ttl_seconds = 21600)
+        if response.get("status_code", 0) == 200 and response.get("json") != None:
+            return {"roster": response["json"], "host": host}
+    return {"roster": None, "host": "site.web.api.espn.com"}
 
 # Verified ESPN IDs and school metadata, audited 2026-10-13. This directory
 # keeps selection available when ESPN omits a school or its directory is down.
@@ -566,6 +581,11 @@ def resolve_team(league, query):
     wanted = upper(query, "ILLINOIS")
     if wanted in TEAM_DIRECTORY:
         return TEAM_DIRECTORY[wanted]
+    # Resolve legacy school names/codes locally too, so valid old selections
+    # do not spend two extra HTTP calls on the national directory.
+    for known in TEAM_DIRECTORY.values():
+        if wanted in [str(known.get("id")), upper(known.get("location")), upper(known.get("shortDisplayName")), upper(known.get("abbreviation")), upper(known.get("slug"))]:
+            return known
     # ESPN's team directory can lag the dropdown manifest for newly added
     # schools. Keep stable ESPN IDs for those labels and use the direct team
     # endpoint as a fallback if the directory response omits them.
@@ -597,8 +617,8 @@ def resolve_team(league, query):
             return detail.get("team") or detail
     return None
 
-def find_event(league, team_id):
-    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/scoreboard?groups=50&limit=1000" % league, 45)
+def find_event(league, team_id, source_host = None):
+    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/scoreboard?groups=50&limit=1000" % league, 45, source_host)
     if data != None:
         for event in data.get("events", []):
             competition = (event.get("competitions") or [{}])[0]
@@ -608,7 +628,7 @@ def find_event(league, team_id):
 
     # Between game days, keep page 2 on the latest completed game rather than
     # duplicating the season-average page. A live/today event above always wins.
-    schedule = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams/%s/schedule" % (league, team_id), 3600)
+    schedule = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams/%s/schedule" % (league, team_id), 3600, source_host)
     latest_id = None
     latest_date = ""
     for event in (schedule or {}).get("events", []):
@@ -619,6 +639,148 @@ def find_event(league, team_id):
             latest_id = str(event.get("id"))
             latest_date = event_date
     return latest_id
+
+def schedule_month_days(year, month):
+    days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+    return 29 if month == 2 and leap else days[month - 1]
+
+def schedule_day_index(year, month, day):
+    previous = year - 1
+    result = 365 * previous + previous // 4 - previous // 100 + previous // 400 + day - 1
+    for value in range(1, month):
+        result += schedule_month_days(year, value)
+    return result
+
+def schedule_utc_minute(value):
+    text = clean(value)
+    if len(text) < 16 or not (text.endswith("Z") or text.endswith("+00:00")):
+        return None
+    fields = [text[0:4], text[5:7], text[8:10], text[11:13], text[14:16]]
+    for field in fields:
+        if not field.isdigit():
+            return None
+    year, month, day, hour, minute = [int(field) for field in fields]
+    if year < 2007 or month < 1 or month > 12 or day < 1 or hour > 23 or minute > 59:
+        return None
+    if day > schedule_month_days(year, month):
+        return None
+    return schedule_day_index(year, month, day) * 1440 + hour * 60 + minute
+
+def schedule_eastern_labels(value):
+    # ESPN schedules use UTC. Convert the displayed date as well as the clock,
+    # so a 00:30Z tip does not show the following day's date in Eastern time.
+    utc = schedule_utc_minute(value)
+    if utc == None:
+        return {"day": "", "date": "TBD", "time": ""}
+    text = clean(value)
+    year, month, day = int(text[0:4]), int(text[5:7]), int(text[8:10])
+    march_sunday = 8 + (6 - schedule_day_index(year, 3, 1) % 7) % 7
+    november_sunday = 1 + (6 - schedule_day_index(year, 11, 1) % 7) % 7
+    summer_start = schedule_day_index(year, 3, march_sunday) * 1440 + 7 * 60
+    summer_end = schedule_day_index(year, 11, november_sunday) * 1440 + 6 * 60
+    offset = 240 if utc >= summer_start and utc < summer_end else 300
+    local_minutes = int(text[11:13]) * 60 + int(text[14:16]) - offset
+    if local_minutes < 0:
+        local_minutes += 1440
+        day -= 1
+        if day < 1:
+            month -= 1
+            if month < 1:
+                month = 12
+                year -= 1
+            day = schedule_month_days(year, month)
+    hour, minute = local_minutes // 60, local_minutes % 60
+    twelve = hour % 12
+    twelve = 12 if twelve == 0 else twelve
+    clock = str(twelve) + (":" + ("0" if minute < 10 else "") + str(minute) if minute else "") + ("P" if hour >= 12 else "A")
+    weekday = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][schedule_day_index(year, month, day) % 7]
+    return {"day": weekday, "date": str(month) + "/" + str(day), "time": clock}
+
+def next_scheduled_game(ctx, team, source_host = None):
+    # ESPN's default preseason schedule can be empty while the regular-season
+    # schedule is already populated. Try that real feed before showing TBD.
+    team_id = str(team.get("id"))
+    schedule_url = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/%s/schedule" % team_id
+    schedule = get_json(schedule_url, 3600, source_host)
+    if schedule == None or len(schedule.get("events") or []) == 0:
+        regular = get_json(schedule_url + "?seasontype=2", 3600, source_host)
+        if regular != None:
+            schedule = regular
+        elif schedule != None:
+            return {"state": "offline"}
+    if schedule == None:
+        return {"state": "offline"}
+    now = ctx.now
+    current = schedule_day_index(now.year, now.month, now.day) * 1440 + now.hour * 60 + now.minute
+    selected = None
+    first = None
+    for event in schedule.get("events", []):
+        competition = (event.get("competitions") or [{}])[0]
+        status = ((competition.get("status") or event.get("status") or {}).get("type") or {})
+        if status.get("completed", False) or status.get("state") in ["post", "in"] or status.get("name") in ["STATUS_CANCELED", "STATUS_POSTPONED", "STATUS_SUSPENDED"]:
+            continue
+        date = clean(event.get("date") or competition.get("date"))
+        start = schedule_utc_minute(date)
+        if start == None or start < current or (first != None and start >= first):
+            continue
+        opponents = []
+        own = None
+        for competitor in competition.get("competitors", []):
+            if str((competitor.get("team") or {}).get("id")) == team_id:
+                own = competitor
+            else:
+                opponents.append(competitor)
+        if own == None or len(opponents) != 1:
+            continue
+        labels = schedule_eastern_labels(date)
+        confirmed_time = competition.get("timeValid", event.get("timeValid", True))
+        selected = {"state": "scheduled", "opponent": opponents[0].get("team") or {},
+                    "day": labels["day"], "date": labels["date"], "time": labels["time"] if confirmed_time else "TBD",
+                    "site": "VS" if competition.get("neutralSite", False) or own.get("homeAway") != "away" else "AT"}
+        first = start
+    return selected if selected != None else {"state": "none"}
+
+def next_box_layout(c, following):
+    opponent = following.get("opponent") or {}
+    school = upper(opponent.get("abbreviation") or opponent.get("shortDisplayName"), "TBD")
+    fields = ["NXT", school, upper(following.get("day")), clean(following.get("date"), "TBD"), upper(following.get("time"), "TBD")]
+    fields = [field for field in fields if field != ""]
+    # NXT BAY FRI 10/23 8P is 72px with roomier 3px gaps. Use that
+    # spacing whenever it fits the original 75px footer, before borrowing
+    # space from PTS. Longer rows retain every field with tighter gaps.
+    width = 0
+    for field in fields:
+        width += c.text_width(field, "picopixel")
+    gap = 3 if width + (len(fields) - 1) * 3 <= 75 else 2 if width + (len(fields) - 1) * 2 <= 100 else 1
+    # Bound an unexpectedly long provider abbreviation without dropping time.
+    budget = 100 - (width - c.text_width(school, "picopixel")) - (len(fields) - 1) * gap
+    for count in range(len(school), 0, -1):
+        if c.text_width(school[:count], "picopixel") <= budget:
+            fields[1] = school[:count]
+            break
+    width = (len(fields) - 1) * gap
+    for field in fields:
+        width += c.text_width(field, "picopixel")
+    return {"fields": fields, "gap": gap, "start": min(52, 127 - width)}
+
+def draw_next_box(c, game, background, accent):
+    following = game.get("next_game") or {}
+    start = 52
+    cursor = start + c.text_width("NXT", "picopixel") + 3
+    if following.get("state") != "scheduled":
+        c.text("NXT", start, 26, font = "picopixel", color = accent)
+        message = "OFFLINE" if following.get("state") == "offline" else "TBD"
+        c.text(message, cursor, 26, font = "picopixel", color = "#A4B0BF")
+        return
+    layout = next_box_layout(c, following)
+    cursor = layout["start"]
+    opponent_color = readable_team_accent(following.get("opponent") or {}, background)
+    for index in range(len(layout["fields"])):
+        field = layout["fields"][index]
+        color = accent if index == 0 else opponent_color if index == 1 else INK
+        c.text(field, cursor, 26, font = "picopixel", color = color)
+        cursor += c.text_width(field, "picopixel") + layout["gap"]
 
 def stat_map(table):
     result = {}
@@ -684,83 +846,91 @@ def athlete_year(athlete):
 def athlete_extra_bio(athlete):
     return athlete_year(athlete)
 
-def season_data(league, team):
+def season_data(league, team, athlete_id = None, query = None):
     team_id = str(team.get("id"))
-    roster = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams/%s/roster" % (league, team_id), 21600)
+    source = roster_source(league, team_id)
+    roster = source["roster"]
     if roster == None:
         return {"error": "ROSTER OFFLINE"}
     roster_info = {}
     for athlete in (roster.get("athletes") or []):
-        athlete_id = str(athlete.get("id"))
-        roster_info[athlete_id] = {
+        roster_id = str(athlete.get("id"))
+        roster_info[roster_id] = {
             "name": upper(athlete.get("shortName") or athlete.get("displayName") or athlete.get("fullName"), "PLAYER"),
             "jersey": clean(athlete.get("jersey"), "0"),
             "bio": athlete_bio(athlete),
             "extra_bio": athlete_extra_bio(athlete),
         }
-    slug = clean(team.get("slug"), team_id)
-    page_url = "https://www.espn.com/%s/team/stats/_/id/%s/%s" % (league, team_id, slug)
-    response = http.get(page_url, headers = {"User-Agent": "Mozilla/5.0 (compatible; Glance College Basketball Tracker)"}, ttl_seconds = 21600)
-    if response.get("status_code", 0) != 200:
+    if athlete_id == None:
+        matches = []
+        for roster_id, info in roster_info.items():
+            if clean(query) == roster_id or player_matches(upper(query), info["name"]):
+                matches.append(roster_id)
+        if len(matches) != 1:
+            return {"error": "PLAYER NOT FOUND"}
+        athlete_id = matches[0]
+    if athlete_id not in roster_info:
+        return {"error": "PLAYER NOT FOUND"}
+    # Structured ESPN data is decoded safely by the HTTP host. Never decode
+    # embedded HTML JSON in Starlark: malformed JSON raises an uncatchable error.
+    url = "https://%s/apis/common/v3/sports/basketball/%s/athletes/%s/stats" % (source["host"], league, athlete_id)
+    response = http.get(url, ttl_seconds = 21600)
+    status = response.get("status_code", 0)
+    if status not in [200, 404]:
         return {"error": "AVERAGES OFFLINE"}
-    body = clean(response.get("body"))
-    marker = "window['__espnfitt__']="
-    if marker not in body:
+    # Current roster identity was verified above. ESPN returns 404 for some
+    # freshmen with no statistical history: unknown stats, not a fake zero.
+    document = {"categories": []} if status == 404 else response.get("json")
+    if type(document) != "dict" or type(document.get("categories")) != "list":
         return {"error": "AVERAGES NOT POSTED"}
-    payload = body.split(marker, 1)[1].split(";</script>", 1)[0]
-    document = json.decode(payload)
-    rows = (((((document.get("page") or {}).get("content") or {}).get("stats") or {}).get("playerStats") or [[]])[0])
-    players = []
-    players_with_stats = []
-    for row in rows:
-        athlete = row.get("athlete") or {}
-        athlete_id = clean(athlete.get("uid")).split("~a:")[-1]
-        # The ESPN averages page can retain last season's departed players while
-        # the roster endpoint has already rolled forward. Only join rows whose
-        # athlete ID is still on the selected team's current roster.
-        if athlete_id not in roster_info:
+    values = {}
+    latest_year = 0
+    newest_player_year = 0
+    latest = None
+    names = []
+    for category in document["categories"]:
+        if type(category) != "dict":
+            return {"error": "AVERAGES NOT POSTED"}
+        if category.get("name") != "averages":
             continue
-        players_with_stats.append(athlete_id)
-        values = {}
-        for item in ((row.get("statGroups") or {}).get("stats") or []):
-            values[item.get("name")] = clean(item.get("displayValue"), "0.0")
-        players.append({
-            "id": athlete_id,
-            "name": upper(athlete.get("shortName") or athlete.get("name"), "PLAYER"),
-            "jersey": roster_info.get(athlete_id, {}).get("jersey", ""),
-            "bio": roster_info.get(athlete_id, {}).get("bio", ""),
-            "extra_bio": roster_info.get(athlete_id, {}).get("extra_bio", ""),
-            "starter": False,
-            "min": values.get("avgMinutes", "0.0"),
-            "pts": values.get("avgPoints", "0.0"),
-            "reb": values.get("avgRebounds", "0.0"),
-            "ast": values.get("avgAssists", "0.0"),
-            "stl": values.get("avgSteals", "0.0"),
-            "blk": values.get("avgBlocks", "0.0"),
-            "fg": values.get("fieldGoalPct", "-")
-        })
-    # Missing statistics are unknown, not zero. Retain current roster identity
-    # without inventing averages for players whose stat rows are not posted.
-    for athlete_id in roster_info:
-        if athlete_id in players_with_stats:
-            continue
-        info = roster_info[athlete_id]
-        players.append({
-            "id": athlete_id,
-            "name": info.get("name", "PLAYER"),
-            "jersey": info.get("jersey", ""),
-            "bio": info.get("bio", ""),
-            "extra_bio": info.get("extra_bio", ""),
-            "starter": False,
-            "min": "--",
-            "pts": "--",
-            "reb": "--",
-            "ast": "--",
-            "stl": "--",
-            "blk": "--",
-            "fg": "-",
-        })
-    return {"players": players, "team": team, "opponent": {}, "team_score": "", "opponent_score": "", "state": "AVG", "detail": "SEASON AVERAGES", "mode": "AVERAGES"}
+        if type(category.get("names")) != "list" or type(category.get("statistics")) != "list":
+            return {"error": "AVERAGES NOT POSTED"}
+        names = category["names"]
+        for row in category["statistics"]:
+            if type(row) != "dict":
+                return {"error": "AVERAGES NOT POSTED"}
+            season = row.get("season")
+            if type(season) != "dict" or type(row.get("stats")) != "list":
+                return {"error": "AVERAGES NOT POSTED"}
+            year = clean(season.get("year"))
+            if not year.isdigit():
+                return {"error": "AVERAGES NOT POSTED"}
+            newest_player_year = max(newest_player_year, int(year))
+            # Do not use career totals or a former school's row. A player
+            # returning to a former school must not revive an older season.
+            if str(row.get("teamId")) != team_id:
+                continue
+            if int(year) > latest_year:
+                latest_year = int(year)
+                latest = row
+        break
+    if latest_year < newest_player_year:
+        latest = None
+    if latest != None:
+        for index in range(min(len(names), len(latest["stats"]))):
+            key = names[index]
+            value = latest["stats"][index]
+            if type(key) != "string" or type(value) not in ["string", "int", "float", "NoneType"]:
+                return {"error": "AVERAGES NOT POSTED"}
+            values[key] = clean(value, "--")
+    info = roster_info[athlete_id]
+    player = {"id": athlete_id, "name": info["name"], "jersey": info["jersey"], "bio": info["bio"],
+              "extra_bio": info["extra_bio"], "starter": False,
+              "min": values.get("avgMinutes", "--"), "pts": values.get("avgPoints", "--"),
+              "reb": values.get("avgRebounds", "--"), "ast": values.get("avgAssists", "--"),
+              "stl": values.get("avgSteals", "--"), "blk": values.get("avgBlocks", "--"),
+              "fg": values.get("fieldGoalPct", "-")}
+    return {"players": [player], "team": team, "opponent": {}, "team_score": "", "opponent_score": "", "state": "AVG", "detail": "SEASON AVERAGES", "mode": "AVERAGES", "source_host": source["host"], "average_season": latest_year}
 
 def game_data(ctx):
     league = LEAGUES.get(upper(ctx.inputs.get("league"), "MEN"), LEAGUES["MEN"])
@@ -770,12 +940,14 @@ def game_data(ctx):
     if selected_team == None:
         return {"error": "SCHOOL NOT FOUND"}
     team_id = str(selected_team.get("id"))
-    event_id = upper(ctx.inputs.get("event"), "AUTO")
-    if event_id == "AUTO":
-        event_id = find_event(league, team_id)
+    # Public installations always find the selected team's game automatically.
+    # Ignore saved Studio overrides from earlier versions.
+    source = roster_source(league, team_id)
+    event_id = find_event(league, team_id, source["host"])
     if event_id == None:
-        return season_data(league, selected_team)
-    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/summary?event=%s" % (league, event_id), 30)
+        # Page 2 never duplicates averages; avoid an unnecessary stats read.
+        return {"mode": "AVERAGES"}
+    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/summary?event=%s" % (league, event_id), 30, source["host"])
     if data == None:
         return {"error": "GAME DATA OFFLINE"}
 
@@ -794,7 +966,7 @@ def game_data(ctx):
     # jersey number. Join the current roster so live/final pages retain the
     # same complete player header shown on season-average pages.
     roster_info = {}
-    roster = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams/%s/roster" % (league, team_id), 21600)
+    roster = source["roster"]
     if roster != None:
         for roster_athlete in (roster.get("athletes") or []):
             roster_id = str(roster_athlete.get("id"))
@@ -874,7 +1046,6 @@ def game_data(ctx):
         "players": players,
         "team": team.get("team") or {},
         "opponent": (opponent or {}).get("team") or {},
-        "opponent_ap_rank": current_opponent_ap(league, opponent, (data.get("header") or {}).get("season", {}).get("year")),
         "team_home_away": team.get("homeAway", "away"),
         "team_score": clean(team.get("score"), "0"),
         "opponent_score": clean((opponent or {}).get("score"), "0"),
@@ -884,23 +1055,6 @@ def game_data(ctx):
         "clock": clean(status.get("displayClock")),
         "mode": "GAME",
     }
-
-def current_opponent_ap(league, competitor, season):
-    # Use the named AP poll only, never an unspecified curated/Coaches rank.
-    if competitor == None or season == None:
-        return ""
-    payload = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/rankings?season=%s" % (league, season), 1800)
-    if payload == None:
-        return ""
-    wanted = str((competitor.get("team") or {}).get("id", ""))
-    for poll in payload.get("rankings", []):
-        if poll.get("name") != "AP Top 25" or str((poll.get("season") or {}).get("year")) != str(season):
-            continue
-        for row in poll.get("ranks", []):
-            rank = str(row.get("current", ""))
-            if str((row.get("team") or {}).get("id")) == wanted and rank.isdigit() and int(rank) >= 1 and int(rank) <= 25:
-                return rank
-    return ""
 
 def points_value(item):
     text = clean(item.get("pts"), "0")
@@ -1048,21 +1202,21 @@ def player_matches(wanted, candidate):
             return True
     return False
 
-def compact_bio_width(c, bio):
+def compact_bio_width(c, bio, font = "picopixel"):
     if "'" not in bio:
-        return c.text_width(bio, "picopixel")
+        return c.text_width(bio, font)
     parts = bio.split("'", 1)
-    return c.text_width(parts[0], "picopixel") + 3 + c.text_width(parts[1], "picopixel")
+    return c.text_width(parts[0], font) + 3 + c.text_width(parts[1], font)
 
-def draw_compact_bio(c, bio, x, y, color_value):
+def draw_compact_bio(c, bio, x, y, color_value, font = "picopixel"):
     if "'" not in bio:
-        c.text_stroke(bio, x, y, font = "picopixel", color = color_value, stroke = LINE, thickness = 1, align = "left")
+        c.text_stroke(bio, x, y, font = font, color = color_value, stroke = LINE, thickness = 1, align = "left")
         return
-    # picopixel has no visible apostrophe glyph, so reserve two pixels and
-    # draw the height mark directly between the feet and inches digits.
+    # Stack the height mark into one column, with one blank pixel on each side.
+    # At 4x5 this also closes the two outer gaps by 1px without shrinking digits.
     parts = bio.split("'", 1)
-    left_width = c.text_width(parts[0], "picopixel")
-    c.text_stroke(parts[0], x, y, font = "picopixel", color = color_value, stroke = LINE, thickness = 1, align = "left")
+    left_width = c.text_width(parts[0], font)
+    c.text_stroke(parts[0], x, y, font = font, color = color_value, stroke = LINE, thickness = 1, align = "left")
     mark_x = x + left_width + 1
     c.pixel(mark_x, y, color_value)
     c.pixel(mark_x, y + 1, color_value)
@@ -1070,7 +1224,7 @@ def draw_compact_bio(c, bio, x, y, color_value):
     c.pixel(mark_x + 1, y, LINE)
     c.pixel(mark_x - 1, y + 1, LINE)
     c.pixel(mark_x + 1, y + 1, LINE)
-    c.text_stroke(parts[1], mark_x + 2, y, font = "picopixel", color = color_value, stroke = LINE, thickness = 1, align = "left")
+    c.text_stroke(parts[1], mark_x + 2, y, font = font, color = color_value, stroke = LINE, thickness = 1, align = "left")
 
 def error_page(c, message):
     c.fill("black")
@@ -6602,15 +6756,9 @@ def final_overtime_label(game):
 def draw_decimal_stat(c, value, center, y, color_value):
     text = clean(value, "--")
     font = "4x5" if c.text_width(text, "4x5") <= 17 else "picopixel"
-    dot_bearing = 2 if font == "4x5" else 1
-    if "." not in text:
-        c.text_stroke(text, center - c.text_width(text, font) - dot_bearing, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1)
-        return
-    whole = text.split(".", 1)[0]
-    whole_x = center - c.text_width(whole, font) - 1 - dot_bearing + 1
-    dot_x = center - dot_bearing
-    c.text_stroke(whole, whole_x, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1)
-    c.text_stroke("." + text.split(".", 1)[1], dot_x, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1)
+    # One draw keeps the font's 1px gaps around '.' and centers the full value.
+    # Splitting '4' and '.5' let the second outline erase two pixels of the 4.
+    c.text_stroke(text, center, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1, align = "center")
 
 def render_athlete(c, ctx, game, athlete):
     # STUDIO DESIGN: identity above context above stats. Keep the same geometry
@@ -6621,15 +6769,6 @@ def render_athlete(c, ctx, game, athlete):
     background = rgb_hex(12 + channel(team_primary, 0) // 6, 12 + channel(team_primary, 2) // 6, 12 + channel(team_primary, 4) // 6)
     if str(team.get("id")) == "356":
         background = "#152338"
-    preview_mode = ctx.inputs.get("preview", "AUTO")
-    demo = preview_mode in ["LIVE DEMO", "NORMAL FINAL DEMO", "OT FINAL DEMO"]
-    if demo:
-        game = dict(game)
-        live_demo = preview_mode == "LIVE DEMO"
-        ot_final_demo = preview_mode == "OT FINAL DEMO"
-        game.update({"mode": "GAME", "state": "IN" if live_demo else "POST", "opponent": {"abbreviation": "MSU", "color": "18453B", "alternateColor": "FFFFFF"}, "team_score": "78", "opponent_score": "74", "team_home_away": "away", "opponent_home_away": "home", "period": 2 if live_demo or not ot_final_demo else 4, "clock": "12:34", "detail": "LIVE" if live_demo else "FINAL/2OT" if ot_final_demo else "FINAL"})
-        athlete = dict(athlete)
-        athlete.update({"pts": "24", "reb": "11", "ast": "6", "stl": "2", "blk": "1"})
     border = "#0B1424"
     primary = hex_color(team.get("color"), "#1F5AA6")
     if str(team.get("id")) == "183":
@@ -6648,42 +6787,41 @@ def render_athlete(c, ctx, game, athlete):
     height = bio_parts[1] if len(bio_parts) > 1 else bio if "'" in bio else ""
     # Measure the whole header before positioning details; preserve the name.
     details = [value for value in [position, height, year] if value != ""]
+    bio_font = "4x5"
     detail_width = 0
     for value in details:
-        detail_width += compact_bio_width(c, value)
-    opponent_rank = clean(game.get("opponent_ap_rank"), "") if game.get("mode") != "AVERAGES" else ""
-    rank_badge = "OPP #" + opponent_rank if opponent_rank.isdigit() and int(opponent_rank) >= 1 and int(opponent_rank) <= 25 else ""
-    # Keep all score/clock/OT anchors unchanged; the AP opponent badge owns a
-    # measured header zone. Optional biography yields before player identity.
-    header_width = 89 - (c.text_width(rank_badge, "picopixel") + 3 if rank_badge != "" else 0)
-    name_budget = header_width - detail_width - 2 * len(details)
+        detail_width += compact_bio_width(c, value, bio_font)
+    # The full header belongs to player identity and optional biography.
+    header_width = 89
+    # Allow a 1px minimum gap so the larger biography does not unnecessarily
+    # shrink a name that still fits alongside the larger compact biography.
+    name_budget = header_width - detail_width - len(details)
     # Identity takes priority over optional biography on unusually long names.
     if c.text_width(player_name, "picopixel") > name_budget:
         details = []
         detail_width = 0
         name_budget = header_width
     if c.text_width(player_name, "picopixel") > name_budget:
-        shortened = ""
-        for letter in player_name:
-            if c.text_width(shortened + letter + ".", "picopixel") <= name_budget:
-                shortened += letter
-        player_name = shortened + "."
+        # Starlark strings cannot be iterated. Fit an ordered prefix via
+        # indexed slices, including the final truncation mark in the budget.
+        for count in range(min(len(player_name), name_budget), 0, -1):
+            shortened = player_name[:count] + "."
+            if c.text_width(shortened, "picopixel") <= name_budget:
+                player_name = shortened
+                break
     name_font = "picopixel"
     for candidate in ["5x7", "4x5", "picopixel"]:
         if c.text_width(player_name, candidate) <= name_budget:
             name_font = candidate
             break
     name_width = c.text_width(player_name, name_font)
-    gap = min(4, max(2, (header_width - name_width - detail_width) // max(1, len(details))))
+    gap = min(4, max(1, (header_width - name_width - detail_width) // max(1, len(details))))
     c.text_stroke(player_name, 25, 1 if name_font == "5x7" else 2, font = name_font, color = INK, stroke = border, thickness = 1)
     detail_x = 25 + name_width
     for value in details:
         detail_x += gap
-        draw_compact_bio(c, value, detail_x, 3, "#A4B0BF")
-        detail_x += compact_bio_width(c, value)
-    if rank_badge != "":
-        tight_rank_color = readable_team_accent(game.get("opponent", {}), background)
-        c.text(rank_badge, 114, 2, font = "picopixel", color = tight_rank_color, align = "right")
+        draw_compact_bio(c, value, detail_x, 3, "#A4B0BF", bio_font)
+        detail_x += compact_bio_width(c, value, bio_font)
     draw_team_logo(c, team, 116, 0, border)
     # Michigan wears maize; keep the school's navy panel and other accents unchanged.
     jersey_color = "#FFCB05" if str(team.get("id")) == "130" else primary
@@ -6700,16 +6838,31 @@ def render_athlete(c, ctx, game, athlete):
         value = clean(athlete.get(keys[index]), "--")
         if index == 0:
             # Dedicated points column stays full-height in every mode.
-            tracker_text(c, labels[index], center, 11, 24, ["picopixel"], accent, "center")
+            tracker_text(c, labels[index], center, 11, 24, ["4x5"], accent, "center")
             points_width = tracker_text(c, value, center, 18, 28, ["scoretext", "6x8", "5x7"], INK, "center")
         else:
             live_layout = game.get("mode") != "AVERAGES"
-            tracker_text(c, labels[index], center, 11 if live_layout else 13, 24, ["picopixel"], "#A4B0BF", "center")
+            tracker_text(c, labels[index], center, 11, 17, ["4x5"], "#A4B0BF", "center")
             if live_layout:
                 stat_font = "4x5" if c.text_width(value, "4x5") <= 17 else "picopixel"
                 tracker_text(c, value, center, 18, 18, [stat_font], INK, "center")
             else:
-                draw_decimal_stat(c, value, center, 21, INK)
+                draw_decimal_stat(c, value, center, 18, INK)
+    if game.get("mode") == "AVERAGES":
+        following = game.get("next_game") or {}
+        if following.get("state") == "scheduled":
+            next_start = next_box_layout(c, following)["start"]
+            if next_start < 37 + (points_width + 1) // 2 + 2:
+                c.rect(24, 10, 51, 31, fill = background)
+                points_center = min(37, next_start - (points_width + 1) // 2 - 2)
+                if points_center - points_width // 2 >= 25:
+                    tracker_text(c, "PTS", points_center, 11, 20, ["4x5"], accent, "center")
+                    tracker_text(c, clean(athlete.get("pts"), "--"), points_center, 18, 28, ["scoretext", "6x8", "5x7"], INK, "center")
+                else:
+                    # Above the footer with a blank row on either side.
+                    tracker_text(c, "PTS", 34, 11, 20, ["4x5"], accent, "center")
+                    tracker_text(c, clean(athlete.get("pts"), "--"), 34, 17, 20, ["6x8", "5x7", "4x5"], INK, "center")
+        draw_next_box(c, game, background, accent)
     if game.get("mode") != "AVERAGES":
         own = upper(team.get("abbreviation"), "TEAM")
         opp = upper(game.get("opponent", {}).get("abbreviation"), "OPP")
@@ -6724,7 +6877,7 @@ def render_athlete(c, ctx, game, athlete):
             period = int(game.get("period") or 0)
             detail = upper(game.get("detail"))
             is_halftime = "HALFTIME" in detail or "HALF TIME" in detail
-            footer_period = "HALFTIME" if is_halftime else "1H" if period == 1 else "2H" if period == 2 else overtime_label(period) if period > 2 else "LIVE"
+            footer_period = "HT" if is_halftime else "1H" if period == 1 else "2H" if period == 2 else overtime_label(period) if period > 2 else "LIVE"
             footer_clock = "" if is_halftime else clean(game.get("clock"))
             footer_status = footer_period if is_halftime else footer_period + " " + footer_clock
             footer_color = LIVE
@@ -6746,28 +6899,39 @@ def render_athlete(c, ctx, game, athlete):
                 period_x = clock_x - c.text_width(footer_period, "picopixel") - 3
             else:
                 # At halftime the clock is stopped, so use its full footprint
-                # for the explicit HALFTIME label.
+                # for the HT label.
                 period_x = 127 - c.text_width(footer_period, "picopixel") - 2
             status_x = period_x
         away_color = readable_team_accent(team if team_first else game.get("opponent", {}), background)
         home_color = readable_team_accent(game.get("opponent", {}) if team_first else team, background)
         away_x = (55 if footer_status == "FINAL" else 47) if state == "POST" else 49
         row_width = c.text_width(away_abbr, "picopixel") + c.text_width(score_numbers, "picopixel") + c.text_width(home_abbr, "picopixel") + 4
+        # Keep the score row's approved anchor. Its 2px status buffer leaves
+        # at least 1px when overtime FINAL is nudged left below.
         status_left = status_x + 3 if state == "POST" and footer_status != "FINAL" else status_x
+        if state == "IN" and footer_period == "HT":
+            # HT is short; bring the complete score line within 4px of it
+            # instead of leaving the space formerly reserved for HALFTIME.
+            away_x = status_left - row_width - 4
         if away_x + row_width + 2 > status_left:
             # Keep a single score line. Shift it only as far left as needed.
             # For the longest codes/scores, raise PTS above the footer rather
             # than stacking score/status rows or clipping school codes.
             away_x = status_left - row_width - 2
-        # Leave the approved PTS position and size alone whenever it fits.
-        # First try a 3px shift; raise/shrink only if that is insufficient.
+        # Leave PTS alone whenever it fits. Otherwise measure the exact left
+        # shift: PENN 78-74 MSU FINAL OT2 needs 4px, not the old fixed 3px.
+        # Preserve full-size digits until the jersey boundary prevents it.
         if away_x < 37 + (points_width + 1) // 2 + 2:
             c.rect(24, 10, 51, 31, fill = background)
-            tracker_text(c, "PTS", 34, 11, 20, ["picopixel"], accent, "center")
-            if away_x >= 34 + (points_width + 1) // 2 + 2:
-                tracker_text(c, clean(athlete.get("pts"), "--"), 34, 18, 22, ["scoretext", "6x8", "5x7"], INK, "center")
+            points_center = min(37, away_x - (points_width + 1) // 2 - 2)
+            if points_center - points_width // 2 >= 25:
+                tracker_text(c, "PTS", points_center, 11, 20, ["4x5"], accent, "center")
+                tracker_text(c, clean(athlete.get("pts"), "--"), points_center, 18, 28, ["scoretext", "6x8", "5x7"], INK, "center")
             else:
-                tracker_text(c, clean(athlete.get("pts"), "--"), 34, 16, 20, ["6x8", "5x7", "4x5"], INK, "center")
+                tracker_text(c, "PTS", 34, 11, 20, ["4x5"], accent, "center")
+                # Label ends at y15, compact value occupies y17–24, and
+                # footer begins at y26: a blank row separates each element.
+                tracker_text(c, clean(athlete.get("pts"), "--"), 34, 17, 20, ["6x8", "5x7", "4x5"], INK, "center")
         c.text(away_abbr, away_x, 26, font = "picopixel", color = away_color)
         score_x = away_x + 1 + c.text_width(away_abbr, "picopixel") + 1
         c.text(score_numbers, score_x, 26, font = "picopixel", color = INK)
@@ -6781,7 +6945,7 @@ def render_athlete(c, ctx, game, athlete):
             # Use the approved OT2 alignment rule for every overtime label.
             # The complete status remains right-aligned; the suffix gets the
             # same one-pixel gap after FINAL for OT, OT2, OT3, and beyond.
-            final_x = status_x + 3
+            final_x = status_x + 2
             overtime_x = status_x + c.text_width("FINAL ", "picopixel") + 1
             c.text("FINAL", final_x, 26, font = "picopixel", color = footer_color)
             c.text(overtime, overtime_x, 26, font = "picopixel", color = footer_color)
@@ -6810,37 +6974,25 @@ def athlete_page(c, ctx, force_average):
     selection = clean(ctx.inputs.get("selection"))
     school = selection.split(" — ", 1)[0] if " — " in selection else ctx.inputs.get("team")
     query = selection.split(" — ", 1)[1].split(" (#", 1)[0] if " — " in selection else ctx.inputs.get("player")
-    preview = ctx.inputs.get("preview", "AUTO")
     team = resolve_team(LEAGUES["MEN"], school)
     if team == None:
         error_page(c, "SCHOOL NOT FOUND")
         return
-    if preview != "AUTO":
-        # Explicit Studio demos work before a school has published season stats.
-        jersey = selection.split(" (#", 1)[1].rstrip(")") if " (#" in selection else "2"
-        athlete = {"id": PLAYER_IDS.get(selection, "demo"), "name": upper(query, "DEMO PLAYER"), "jersey": jersey, "bio": "", "extra_bio": "", "pts": "18.5", "reb": "4.5", "ast": "2.1", "stl": "1.0", "blk": "0.5"}
-        roster = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/%s/roster" % team["id"], 21600)
-        for person in (roster or {}).get("athletes", []):
-            if str(person.get("id")) == athlete["id"]:
-                athlete["bio"] = athlete_bio(person)
-                athlete["extra_bio"] = athlete_extra_bio(person)
-                break
-        game = {"team": team, "players": [athlete], "mode": "AVERAGES", "state": "AVG"}
-    else:
-        game = season_data(LEAGUES["MEN"], team) if force_average else game_data(ctx)
-        if game.get("error") != None:
-            error_page(c, game["error"])
-            return
-        if not force_average and game.get("mode") == "AVERAGES":
-            error_page(c, "NO GAME YET")
-            return
-        athlete = selected_athlete(game, selection, query)
-        if athlete == None:
-            error_page(c, "PLAYER NOT FOUND")
-            return
-    # Page 1 stays averages even when page 2 previews a game state.
-    render_ctx = struct(inputs = {"preview": "AUTO" if force_average else preview})
-    render_athlete(c, render_ctx, game, athlete)
+    game = season_data(LEAGUES["MEN"], team, PLAYER_IDS.get(selection), query) if force_average else game_data(ctx)
+    if game.get("error") != None:
+        error_page(c, game["error"])
+        return
+    if not force_average and game.get("mode") == "AVERAGES":
+        error_page(c, "NO GAME YET")
+        return
+    athlete = selected_athlete(game, selection, query)
+    if athlete == None:
+        error_page(c, "PLAYER NOT FOUND")
+        return
+    if force_average:
+        game = dict(game)
+        game["next_game"] = next_scheduled_game(ctx, team, game.get("source_host"))
+    render_athlete(c, ctx, game, athlete)
 
 def season_average(c, ctx):
     athlete_page(c, ctx, True)

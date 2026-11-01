@@ -1,22 +1,27 @@
 id: where-in-the-sky
 name: Where in the Sky is...
 author: cfdmb
-description: Which direction and how high to look for a planet or the Moon from your zip code right now, or when it's next visible if it isn't.
+description: Where to look for the planets and the Moon from your zip code - right now or when next visible, rise and set, the next four nights, tonight's whole sky, the Moon's phase and close passes coming up.
 category: Science
-width: 128
+width: 192
 height: 32
 refresh: 3600
 pages:
   - look
-  - info
   - aim
+  - rise_set
+  - timeline
+  - sky_tonight
+  - up_tonight
+  - moon_phase
+  - sky_events
 inputs:
   - key: body
     type: string
     app_input_type: dropdown
     label: Body
-    choices: [Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune]
-    default: Moon
+    choices: [Best Tonight, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune]
+    default: Best Tonight
   - key: zip
     type: string
     app_input_type: free-text

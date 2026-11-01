@@ -1,6 +1,6 @@
 gdn: 1
 id: hss
-version: 0.17.0
+version: 0.17.2
 name: High School Sports
 description: Recent scores and upcoming games for one high school and sport per app instance.
 author: JSW41
@@ -116,7 +116,7 @@ assets:
   - ilfull-salem-3fba7f04-maxpreps-led.png
   - springfield-maxpreps-led.png
   - lanphier-maxpreps-led.png
-  - ilfull-sacred-heart-griffin-19b7b05d-maxpreps-led.png
+  - shg-maxpreps-led-v5.png
   - springfield-southeast-maxpreps-led.png
   - ilfull-sterling-fa5b36ae-maxpreps-led.png
   - ilfull-streator-c27d77eb-maxpreps-led.png

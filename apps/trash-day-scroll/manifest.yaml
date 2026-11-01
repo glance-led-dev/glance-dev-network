@@ -13,11 +13,6 @@ refresh: 21600
 
 pages: [bins]
 
-assets:
-  - BINTRASH.png
-  - BINRECYCLE.png
-  - BINYARD.png
-
 inputs:
   - key: day
     type: choice

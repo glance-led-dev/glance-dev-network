@@ -1910,7 +1910,7 @@ IL_COMPLETE_LOGOS_BY_ID_1 = {
     "1838c1bd-a2f9-4f1a-9c79-79fb5b26950d": "ilfull-southland-college-prep-1838c1bd-maxpreps-led.png",
     "183a53f1-fc4f-459e-849c-66b94136b08c": "ilfull-st-bede-183a53f1-maxpreps-led.png",
     "189516ff-107b-4881-9637-37edf32b0cbf": "ilfull-longwood-189516ff-maxpreps-led.png",
-    "19b7b05d-5646-4d16-8646-16988bf7b7ef": "ilfull-sacred-heart-griffin-19b7b05d-maxpreps-led.png",
+    "19b7b05d-5646-4d16-8646-16988bf7b7ef": "shg-maxpreps-led-v5.png",
     "19d9ccd1-8ea3-40cc-bbde-58544c2f6370": "ilfull-leyden-19d9ccd1-maxpreps-led.png",
     "1a9398cc-c6ae-464d-a4f2-fb4ea17b1485": "ilfull-alden-hebron-1a9398cc-maxpreps-led.png",
     "1a9d8a4e-60d1-471e-8ce3-835a173e4e0d": "ilfull-marissa-coulterville-1a9d8a4e-maxpreps-led.png",
@@ -11809,7 +11809,7 @@ STATE_75_LOGOS_BY_ID_2 = {
     "1962919d-a9d6-42be-a33a-0bf86b10e216": "allrank26-id-football-highland-maxpreps-led.png",
     "196c5970-5412-4c8b-9ed2-850f46af0f42": "state75-sc-marlboro-county-196c5970.png",
     "19a47fff-304e-438b-ad34-fc3d34c52a99": "state75-az-desert-vista-19a47fff.png",
-    "19b7b05d-5646-4d16-8646-16988bf7b7ef": "ilfull-sacred-heart-griffin-19b7b05d-maxpreps-led.png",
+    "19b7b05d-5646-4d16-8646-16988bf7b7ef": "shg-maxpreps-led-v5.png",
     "19c39756-1f4c-4eca-b58a-6698681a325e": "state75-al-andalusia-19c39756.png",
     "19d0bc7c-c0fd-4510-b33c-a58e969ee122": "state75-ma-minnechaug-regional-19d0bc7c.png",
     "19e7fc56-83f8-4204-8d54-6ee17f8eadfc": "state75-ga-john-milledge-academy-19e7fc56.png",
@@ -15563,7 +15563,7 @@ BUNDLED_LOGOS = {
     "ilfull-salem-3fba7f04-maxpreps-led.png": True,
     "springfield-maxpreps-led.png": True,
     "lanphier-maxpreps-led.png": True,
-    "ilfull-sacred-heart-griffin-19b7b05d-maxpreps-led.png": True,
+    "shg-maxpreps-led-v5.png": True,
     "springfield-southeast-maxpreps-led.png": True,
     "ilfull-sterling-fa5b36ae-maxpreps-led.png": True,
     "ilfull-streator-c27d77eb-maxpreps-led.png": True,
@@ -16009,7 +16009,7 @@ BUNDLED_LOGOS_BY_ID = {
     "16c148b2-6e16-43fc-9d8e-fca6cd8ec0b9": "shgsp-mahomet-seymour-maxpreps-led.png",
     "172f1c96-8b5e-4079-ac1c-e03ecaa6f3ad": "ilfull-lakes-172f1c96-maxpreps-led.png",
     "19196fd3-b432-4f7f-a07a-b3d86b582771": "infbrank26-center-grove-maxpreps-led.png",
-    "19b7b05d-5646-4d16-8646-16988bf7b7ef": "ilfull-sacred-heart-griffin-19b7b05d-maxpreps-led.png",
+    "19b7b05d-5646-4d16-8646-16988bf7b7ef": "shg-maxpreps-led-v5.png",
     "1a1e5832-35d4-4aec-a467-38069e7336f1": "ncfull-parkland-1a1e5832-maxpreps-led.png",
     "1a3ba4f2-3892-4a2a-99b4-3c798001ffb3": "njrank26-bergen-catholic-maxpreps-led.png",
     "1a6caeca-efbf-491d-8f50-b5f7bdc30870": "txfull-lancaster-maxpreps-led.png",
@@ -16856,7 +16856,13 @@ def restored_abbreviation(c, team, code, record, box):
 
 def restored_value(c, value, box, color = "white", font = "7x12"):
     draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
-    restored_center_text(c, value, box["x"], box["y"] + 4, box["w"], font, color)
+    if font == "7x12" and c.text_width(str(value), font = font) > box["w"] - 2:
+        font = "5x7"  # Three-digit totals must also stay inside narrow final boxes.
+    # 7x12 scores were using the old 5x7 +4 padding, putting ink on the
+    # bottom border. A 16-pixel row centers 12-pixel digits at +2 (2..13).
+    height = {"7x12": 12, "5x7": 7}.get(font, 12)
+    top = box["y"] + (box["h"] + 1 - height) // 2
+    restored_center_text(c, value, box["x"], top, box["w"], font, color)
 
 def restored_period(period):
     if period == None:
@@ -17094,9 +17100,8 @@ def restored_volleyball_final(c, g):
             draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             restored_center_text(c, sets[index] if index < len(sets) else "-", box["x"], box["y"] + 5, box["w"], "3x7", "white")
         total_box = {"x": 169, "y": y, "w": 22, "h": 15}
-        draw_box(c, total_box["x"], total_box["y"], total_box["w"], total_box["h"], STAT_DIVIDER_COLOR)
         total = g.get(side + "SetsWon", g.get(side + "Score", "-"))
-        restored_center_text(c, total, total_box["x"], total_box["y"] + 4, total_box["w"], "7x12", "green" if g.get("winner") == side else "white")
+        restored_value(c, total, total_box, "green" if g.get("winner") == side else "white")
 
 def restored_soccer_final(c, g):
     for row in range(2):
@@ -17106,9 +17111,12 @@ def restored_soccer_final(c, g):
         values = [halves[0] if len(halves) > 0 else "-", halves[1] if len(halves) > 1 else "-", g.get(side + "Score", "-")]
         for index in range(3):
             box = {"x": 117 if index == 0 else 143 + (index - 1) * 24, "y": y, "w": 26 if index == 0 else 24, "h": 15}
-            draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
             color = "green" if index == 2 and g.get("winner") == side else "white"
-            restored_center_text(c, str(values[index]), box["x"], box["y"] + 4, box["w"], "5x7" if index < 2 else "7x12", color)
+            if index == 2:
+                restored_value(c, str(values[index]), box, color)
+            else:
+                draw_box(c, box["x"], box["y"], box["w"], box["h"], STAT_DIVIDER_COLOR)
+                restored_center_text(c, str(values[index]), box["x"], box["y"] + 4, box["w"], "5x7", color)
 
 def restored_quarter_row(c, scores, y):
     for index in range(4):

@@ -205,9 +205,23 @@ def draw_number_one(c, chart_key, label):
     c.text(label_text, 2, 1, font = header_font, color = "black")
 
     label_w = c.text_width(label_text, header_font)
+    week_w = 0
     if week != "" and width - 4 - label_w - c.text_width(week, header_font) >= 6:
         c.text(week, width - 2, 1, font = header_font, color = "black",
                align = "right")
+        week_w = c.text_width(week, header_font)
+
+    # Weeks on chart, centered in the gold bar when it fits between the label
+    # and the chart week with room to spare on both sides.
+    weeks_on = top.get("wks", 0)
+    if weeks_on > 0:
+        on_chart = str(weeks_on) + (" WKS" if weeks_on > 1 else " WK") + " ON CHART"
+        on_w = c.text_width(on_chart, header_font)
+        left = 2 + label_w + 8
+        right = width - 2 - week_w - 8
+        if right - left >= on_w:
+            x = (left + right - on_w) // 2
+            c.text(on_chart, x, 1, font = header_font, color = "black")
 
     # The title band runs from y 10 to y 22. Long album titles get a smaller
     # font rather than being cut in half, and the chosen font is centered in

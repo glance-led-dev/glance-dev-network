@@ -1,0 +1,24 @@
+id: nfl-playoff-race
+name: NFL Playoff Race
+author: cfdmb
+description: The NFL playoff picture for one conference - seeds if the season ended today, Wild Card Round matchups, the hunt for the last spot, the No. 1 seed race and division standings, then live playoff results through the Super Bowl.
+category: Sports
+width: 192
+height: 32
+refresh: 3600
+pages:
+  - intro
+  - leaders
+  - wildcards
+  - first_round
+  - hunt
+  - top_seed
+  - div1
+  - div2
+inputs:
+  - key: conference
+    type: string
+    app_input_type: dropdown
+    label: Conference
+    choices: [AFC, NFC]
+    default: AFC
