@@ -8,10 +8,15 @@ one for between sessions:
 
 | # | between sessions | live session |
 |---|------------------|--------------|
-| 1 | F1 mark · **NEXT RACE** — grand prix · circuit · local date/time · circuit outline | F1 mark · **LIVE** — grand prix · session · flag / lap / air temp · circuit outline |
+| 1 | F1 mark · **NEXT RACE** — grand prix · circuit · local date/time · last winner there · circuit outline | F1 mark · **LIVE** (or **FINAL** once it ends) — grand prix · session · flag / lap / air temp · circuit outline |
 | 2 | **LAST RACE** — finishing order P1–8 | **ORDER P1–8** (car #, driver, tyre, gap to leader) |
 | 3 | **LAST RACE** — P9–16 | **ORDER P9–16** |
 | 4 | **CALENDAR** — the four grands prix after the next | **ORDER P17–22** |
+
+Once a race weekend starts, the latest session stays on the panel until the
+next one begins, so qualifying's order shows until the race starts. A finished
+race stays up until 11:59 PM in the chosen time zone, then the panel moves on
+to the next grand prix. The panel refreshes every 60 seconds.
 
 Air temperature on the live `event` page follows the **Temperature unit**
 dropdown (°C / °F).
@@ -20,15 +25,16 @@ dropdown (°C / °F).
 
 - **OpenF1** (`api.openf1.org`) — live position, intervals, stints, weather.
   Free, no key. There is no "current session" endpoint, so the app pulls the
-  latest session and checks it is actually inside its live window (plus an
-  end-of-day grace) before trusting it.
-- **Jolpica-Ergast** (`api.jolpi.ca`) — the calendar and the last result.
+  latest session and holds it until the next one starts (a finished race
+  only until local midnight) before falling back to the between-sessions cards.
+- **Jolpica-Ergast** (`api.jolpi.ca`) — the calendar, the last result, and
+  the last winner at the next circuit.
 
 ## Configuration
 
 - **Temperature unit** — °C or °F for the live air-temperature reading.
 - **Time zone** — grand prix dates/times are shown in this zone (F1's calendar
-  spans every region).
+  spans every region), and a finished race holds until midnight here.
 - **Date color** — accent, red, green, blue, white, yellow, magenta or cyan for
   the date/time on the next-race page and the calendar.
 
