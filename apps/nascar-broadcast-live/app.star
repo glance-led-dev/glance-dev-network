@@ -854,27 +854,38 @@ def lighten(hex_color, f):
         out += "0123456789ABCDEF"[v // 16] + "0123456789ABCDEF"[v % 16]
     return out
 
+def _visits(races, track_id, rtype):
+    # The races of one type at one track, in schedule order.
+    return [r for r in races if r.get("track_id", None) == track_id and r.get("race_type_id", None) == rtype]
+
 def prev_winner(ctx, schedule, series, race):
-    # The last winner at the next race's track, as (season, last name, team
-    # colour): this season's earlier visit if there was one, else last
-    # season's.
+    # Last season's winner of this same event, as (season, last name, team
+    # colour). If this is the Nth race of its type at this track this season,
+    # it's the Nth one there last season, so Daytona in August shows last
+    # August's winner rather than the 500's, and the Duels map one to one.
+    # (Sponsor names change year to year and master_race_id gets reused
+    # across tracks, so neither identifies the event.) None for an event
+    # with no counterpart last season.
     if race == None:
         return None
     track_id = race.get("track_id", None)
     if track_id == None:
         return None
-    found = None
-    for r in schedule.get(series_key(series), []):
-        if r.get("track_id", None) == track_id and _has_winner(r):
-            found = r
-    if found == None:
-        resp = http_json("https://cf.nascar.com/cacher/" + str(ctx.now.year - 1) + "/race_list_basic.json", 86400)
-        if resp["ok"]:
-            for r in resp["data"].get(series_key(series), []):
-                if r.get("track_id", None) == track_id and _has_winner(r):
-                    found = r
-    if found == None:
+    rtype = race.get("race_type_id", None)
+    n = -1
+    for i, r in enumerate(_visits(schedule.get(series_key(series), []), track_id, rtype)):
+        if r.get("race_id", None) == race.get("race_id", None):
+            n = i
+    if n < 0:
         return None
+    season = int(race.get("race_season", 0) or ctx.now.year)
+    resp = http_json("https://cf.nascar.com/cacher/" + str(season - 1) + "/race_list_basic.json", 86400)
+    if not resp["ok"]:
+        return None
+    last = _visits(resp["data"].get(series_key(series), []), track_id, rtype)
+    if n >= len(last) or not _has_winner(last[n]):
+        return None
+    found = last[n]
     win = race_winner(found)
     if win == None or win[0] == "":
         return None
