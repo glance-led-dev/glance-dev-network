@@ -4,9 +4,11 @@
 # on the left, so the panel reads as a date app first rather than as another
 # weather app, and gives the right zone to the weather at a glance: the place,
 # the drawn condition, a 10x16 temperature, today's high, low, and humidity
-# in a column, and the condition by name. SKY shows the next six hours, three
-# over three, each an hour, drawn condition, temperature, and chance of rain,
-# with sunrise stacked over sunset on the right.
+# in a column, and the condition by name. SKY stacks sunrise over sunset beside
+# a forecast picked from a dropdown: the next six hours, three over three, each
+# an hour, drawn condition, temperature, and chance of rain, with the sun times
+# on the right; or the next three days, each a weekday, drawn condition, high
+# over low, and type and chance of precipitation, with the sun times on the left.
 #
 # No clock: the app re-renders every 15 minutes (refresh 900), and a time
 # drawn at that rate would sit up to 15 minutes stale. Sunrise and sunset are
@@ -336,8 +338,8 @@ def fetch_weather(lat, lon):
             "longitude": str(lon),
             "current": "temperature_2m,relative_humidity_2m,weather_code,is_day,cloud_cover",
             "hourly": "temperature_2m,weather_code,precipitation_probability,is_day,cloud_cover",
-            "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset",
-            "forecast_days": "2",   # so late-evening hours reach past midnight
+            "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,sunrise,sunset",
+            "forecast_days": "4",   # today plus the next three days; late hours reach past midnight
             "temperature_unit": "fahrenheit",
             "timezone": "auto",
         },
@@ -428,6 +430,26 @@ def next_hours(wxj, n):
                     cover[i] if i < len(cover) else None])
     return out
 
+def next_days(wxj, n):
+    # The n days after today, from Open-Meteo's daily arrays. Each is
+    # [weekday, high, low, code, chance of precipitation].
+    daily = wxj.get("daily", None)
+    if daily == None:
+        return []
+    times = daily.get("time", [])
+    out = []
+    for i in range(1, min(n + 1, len(times))):
+        s = str(times[i])
+        hi = daily["temperature_2m_max"][i]
+        lo = daily["temperature_2m_min"][i]
+        code = daily["weather_code"][i]
+        if len(s) < 10 or hi == None or lo == None or code == None:
+            continue
+        days = _dfc(int(s[0:4]), int(s[5:7]), int(s[8:10]))
+        out.append([WEEKDAYS_FULL[(days + 3) % 7][:3], hi, lo, int(code),
+                    daily["precipitation_probability_max"][i]])
+    return out
+
 # ---------- weather icon + condition text ----------
 
 # Open-Meteo has no "mostly cloudy" code: 3 covers everything from mostly
@@ -440,6 +462,18 @@ def mostly_cloudy(code, cover):
 
 RAIN_CODES = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]
 SNOW_CODES = [71, 73, 75, 77, 85, 86]
+ICE_CODES = [56, 57, 66, 67]
+
+def precip_type(code):
+    # The kind of precipitation a day's code calls for. A dry day still shows
+    # its chance, as rain.
+    if code >= 95:
+        return "STORM"
+    if code in ICE_CODES:
+        return "ICE"
+    if code in SNOW_CODES:
+        return "SNOW"
+    return "RAIN"
 
 def _bmp(c, bitmap, x, y, color, scale):
     for ry in range(len(bitmap)):
@@ -666,17 +700,44 @@ RING_SMALL = [
     [1, 1, 1],
 ]
 
+def forecast_mode(ctx):
+    return "days" if _s(ctx, "forecast", "Next 6 hours") == "Next 3 days" else "hours"
+
+def small_temp(c, ctx, f, x, y, color):
+    # A 5x7 temperature with its small ring; returns the width drawn.
+    ts = str(deg(ctx, f))
+    c.text(ts, x, y, font = "5x7", color = color)
+    w = c.text_width(ts, "5x7")
+    _bmp(c, RING_SMALL, x + w + 1, y, color, 1)
+    return w + 1 + len(RING_SMALL[0])
+
 def hour_cell(c, ctx, h, phase, x, y):
     # One hour, 15px tall from y: the hour over its drawn condition (1x, 9x9)
     # on the left; the 5x7 temperature over the 4x5 chance of rain beside it.
     c.text(h[0], x, y, font = "4x5", color = LABEL)
     draw_condition(c, h[2], h[4], phase, h[5], x, y + 6, 1)
     tx = x + c.text_width("12A", "4x5") + 2
-    ts = str(deg(ctx, h[1]))
-    c.text(ts, tx, y + 1, font = "5x7", color = "white")
-    _bmp(c, RING_SMALL, tx + c.text_width(ts, "5x7") + 1, y + 1, "white", 1)
+    small_temp(c, ctx, h[1], tx, y + 1, "white")
     rain = "--" if h[3] == None else str(whole(h[3])) + "%"
     c.text(rain, tx, y + 10, font = "4x5", color = "cyan")
+
+def day_cell(c, ctx, d, x, cellw):
+    # One day, top to bottom: the weekday, the drawn condition beside the high
+    # (white) over the low (gray), then the kind and chance of precipitation.
+    c.text(d[0], x, 1, font = "4x5", color = LABEL)
+    draw_condition(c, d[3], True, 0.0, None, x, 10, 1)
+    small_temp(c, ctx, d[1], x + 12, 7, "white")
+    small_temp(c, ctx, d[2], x + 12, 17, LABEL)
+    chance = "--" if d[4] == None else str(whole(d[4])) + "%"
+    p = precip_type(d[3]) + " " + chance
+    if c.text_width(p, "4x5") > cellw:
+        p = chance
+    c.text(p, x, 26, font = "4x5", color = "cyan")
+
+# A cell's widest case: "12A" beside "100" and its ring; a day's "RAIN 100%".
+HOUR_CELL_W = 36
+DAY_CELL_W = 40
+DAYS = 3
 
 def sun_row(c, label, value, x, y, sun_color):
     # One stacked sun row, 14px tall from y: the horizon icon, then the gray
@@ -699,26 +760,37 @@ def sky(c, ctx):
         nodata(c, "NO WEATHER", "CHECK BACK SOON")
         return
 
-    # Right zone, sized to its widest text: sunrise stacked over sunset.
+    # The sun zone, sized to its widest text: sunrise stacked over sunset. It
+    # sits on the right beside the hours, and moves to the left for the days.
     sw = len(SUN_RAYS[0]) + 3 + max(c.text_width("SUNRISE", "4x5"), c.text_width("10:15", "6x8"))
-    rx = RIGHT - sw + 1
-    dx = rx - GAP - 1
+    days_mode = forecast_mode(ctx) == "days"
+    sx = LEFT if days_mode else RIGHT - sw + 1
+    dx = sx + sw + GAP if days_mode else sx - GAP - 1
     c.line(dx, 3, dx, 28, DIVIDER)
-    sun_row(c, "SUNRISE", sun_time(_first(daily, "sunrise")), rx, 1, "yellow")
-    sun_row(c, "SUNSET", sun_time(_first(daily, "sunset")), rx, 17, "orange")
+    sun_row(c, "SUNRISE", sun_time(_first(daily, "sunrise")), sx, 1, "yellow")
+    sun_row(c, "SUNSET", sun_time(_first(daily, "sunset")), sx, 17, "orange")
 
-    # Left zone: the next six hours, three over three. Each row is 15px
-    # tall; the second starts at 17, leaving 2px between them and ending on
-    # the panel's last row.
-    hours = next_hours(wxj, 6)
-    lw = dx - GAP - LEFT
-    if not hours:
-        c.text("NO FORECAST", LEFT + lw // 2, 13, font = "4x5", color = LABEL, align = "center")
+    # The forecast zone, its columns spread so the last ends at the zone's
+    # edge, the spare width going between them.
+    fx = dx + 1 + GAP if days_mode else LEFT
+    fw = (RIGHT + 1 - fx) if days_mode else (dx - GAP - LEFT)
+    if days_mode:
+        items = next_days(wxj, DAYS)
+    else:
+        items = next_hours(wxj, 6)
+    if not items:
+        c.text("NO FORECAST", fx + fw // 2, 13, font = "4x5", color = LABEL, align = "center")
         return
-    # Columns spread so the third ends one gap before the divider, the
-    # spare width going between them rather than all to the right.
+
+    if days_mode:
+        cw = (fw - DAY_CELL_W) // (DAYS - 1)
+        for i in range(len(items)):
+            day_cell(c, ctx, items[i], fx + i * cw, DAY_CELL_W)
+        return
+
+    # The next six hours, three over three. Each row is 15px tall; the second
+    # starts at 17, leaving 2px between them and ending on the panel's last row.
     phase = _moon_phase(ctx)
-    cellw = c.text_width("12A", "4x5") + 2 + c.text_width("100", "5x7") + 1 + len(RING_SMALL[0])
-    cw = (lw - cellw) // 2
-    for i in range(len(hours)):
-        hour_cell(c, ctx, hours[i], phase, LEFT + (i % 3) * cw, 0 if i < 3 else 17)
+    cw = (fw - HOUR_CELL_W) // 2
+    for i in range(len(items)):
+        hour_cell(c, ctx, items[i], phase, fx + (i % 3) * cw, 0 if i < 3 else 17)

@@ -4,11 +4,15 @@
 a drawn condition icon, the temperature, today's high, low, and
 current humidity in a column, and the condition by name.
 
-**SKY:** the next six hours, three over three, each with its hour, a drawn
-condition, the temperature, and the chance of rain that hour; sunrise (yellow)
-stacked over sunset (orange) on the right.
+**SKY:** sunrise (yellow) stacked over sunset (orange) beside the forecast you
+pick. **Next 6 hours** puts the hours three over three, each with its hour, a
+drawn condition, the temperature, and the chance of rain, with the sun times on
+the right. **Next 3 days** puts the sun times on the left and the three days
+after today on the right, each with its weekday, a drawn condition, the high
+(white) over the low (gray), and the type and chance of precipitation (RAIN,
+SNOW, ICE, or STORM).
 
-Settings: a zip code, temperature units (F or C), a date style (SEP 14 /
+Settings: a zip code, the forecast (next 6 hours or next 3 days), temperature units (F or C), a date style (SEP 14 /
 14 SEP / 09/14 / 14/09), and one of five colors (white, amber, green, cyan,
 red) for the date. The condition name is white. The current temperature always
 takes weather-map colors (white when bitter cold, then purple through blue,
