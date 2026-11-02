@@ -1,9 +1,8 @@
 # Thanksgiving Countdown — a GDN Starlark app (192x32, 1 page).
 #
-# DESIGN. Five complete designs, picked from one dropdown. Each is a full scene
-# with the words placed to suit it, so they read as different signs rather than
-# one layout with different art. On the day, the count gives way to HAPPY
-# THANKSGIVING in the same spot.
+# DESIGN. Five complete designs, picked from one dropdown, each a full scene with
+# its own palette. Every design reads "24 DAYS TO / THANKSGIVING", with the title
+# along the bottom. On the day, the count gives way to HAPPY above THANKSGIVING.
 #
 # ctx.now is UTC and apps aren't told the viewer's time zone, so a dropdown sets
 # it. The greeting then runs midnight to midnight on the viewer's own clock,
@@ -63,7 +62,7 @@ def days_left(ctx):
     return target - today
 
 def label(days):
-    return "DAY" if days == 1 else "DAYS"
+    return "DAY TO" if days == 1 else "DAYS TO"
 
 def put_center(c, text, y, font, color):
     c.text_stroke(text, (c.width - c.text_width(text, font = font)) // 2, y, font = font, color = color)
@@ -98,16 +97,10 @@ def countdown(c, ctx):
     c.image(scene, 0, 0)
     days = days_left(ctx)
 
-    if name == "Thanksgiving table":
-        # The title lies on the tablecloth, which starts at y 24.
-        put_center(c, "THANKSGIVING", 25, "5x7", title)
-        if days == 0:
-            put_center(c, "HAPPY", 4, "10x16", number)
-        else:
-            count(c, days, 2, number, small)
-    elif days == 0:
-        put_center(c, "HAPPY", 3, "10x16", number)
-        put_center(c, "THANKSGIVING", 21, "5x7", title)
+    # THANKSGIVING always sits along the bottom, so the count reads as
+    # "24 DAYS TO / THANKSGIVING" and the greeting as "HAPPY / THANKSGIVING".
+    put_center(c, "THANKSGIVING", 25, "5x7", title)
+    if days == 0:
+        put_center(c, "HAPPY", 4, "10x16", number)
     else:
-        put_center(c, "THANKSGIVING", 0, "5x7", title)
-        count(c, days, 8, number, small)
+        count(c, days, 2, number, small)
