@@ -184,14 +184,18 @@ def official_team_accent(team, background):
     alternate_contrast = abs(color_brightness(alternate) - background_brightness)
     return alternate if alternate_contrast > primary_contrast else primary
 
-def get_json(url, ttl):
+def get_json(url, ttl, source_host = None):
+    # A chosen host gets one attempt per endpoint. Do not independently retry
+    # every feed: that can exceed Glance's 8-request two-page render budget.
+    if source_host != None:
+        response = http.get(url.replace("site.api.espn.com", source_host), ttl_seconds = ttl)
+        return response.get("json") if response.get("status_code", 0) == 200 else None
     response = http.get(url, ttl_seconds = ttl)
     if (response.get("status_code", 0) != 200 or response.get("json") == None) and "site.api.espn.com" in url:
         response = http.get(url.replace("site.api.espn.com", "site.web.api.espn.com"), ttl_seconds = ttl)
     if response.get("status_code", 0) != 200:
         return None
     return response.get("json")
-
 # Verified ESPN IDs and school metadata, audited 2026-10-13. This directory
 # keeps selection available when ESPN omits a school or its directory is down.
 TEAM_DIRECTORY = {
@@ -597,17 +601,251 @@ def resolve_team(league, query):
             return detail.get("team") or detail
     return None
 
-def find_event(league, team_id):
-    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/scoreboard?groups=50&limit=1000" % league, 45)
-    if data == None:
-        return None
-    for event in data.get("events", []):
-        competition = (event.get("competitions") or [{}])[0]
-        for competitor in competition.get("competitors", []):
-            if str((competitor.get("team") or {}).get("id")) == team_id:
-                return str(event.get("id"))
+# Shared source injected into both local packages by prepare.py (not a load()).
+# One team schedule replaces the oversized all-NCAA scoreboard. Keep every
+# failure distinct from an actual off-day, and share identical URLs across pages.
+
+def tracker_hosts(preferred = None):
+    first = preferred if preferred in ["site.api.espn.com", "site.web.api.espn.com"] else "site.api.espn.com"
+    return [first, "site.web.api.espn.com" if first == "site.api.espn.com" else "site.api.espn.com"]
+
+def tracker_schedule_valid(document, team_id):
+    if type(document) != "dict" or type(document.get("events")) != "list":
+        return False
+    for event in document["events"]:
+        if type(event) != "dict" or type(event.get("competitions")) != "list" or len(event["competitions"]) != 1:
+            return False
+        comp = event["competitions"][0]
+        if type(comp) != "dict" or type(comp.get("competitors")) != "list" or len(comp["competitors"]) != 2:
+            return False
+        ids = []
+        for side in comp["competitors"]:
+            if type(side) != "dict" or type(side.get("team")) != "dict" or clean(side["team"].get("id")) == "":
+                return False
+            ids.append(str(side["team"]["id"]))
+        if ids[0] == ids[1] or str(team_id) not in ids:
+            return False
+        status = comp.get("status") or event.get("status") or {}
+        if type(status) != "dict" or type(status.get("type")) != "dict":
+            return False
+        if status["type"].get("name") in ["STATUS_CANCELED", "STATUS_CANCELLED", "STATUS_POSTPONED"]:
+            continue
+        if status["type"].get("state") not in ["in", "pre", "post"]:
+            return False
+        if not clean(event.get("id")).isdigit() or schedule_utc_minute(event.get("date") or comp.get("date")) == None:
+            return False
+    return True
+
+def tracker_schedule_feed(path, team_id, preferred = None):
+    for host in tracker_hosts(preferred):
+        response = http.get("https://" + host + path, ttl_seconds = 300)
+        document = response.get("json")
+        if response.get("status_code", 0) == 200 and tracker_schedule_valid(document, team_id):
+            return {"document": document, "host": host}
     return None
 
+def tracker_schedule_source(league, team_id, preferred = None):
+    path = "/apis/site/v2/sports/basketball/%s/teams/%s/schedule" % (league, team_id)
+    source = tracker_schedule_feed(path, team_id, preferred)
+    # Before regular-season rollout ESPN's default can be empty. Only that
+    # case (or a failed default) uses the regular-season endpoint; never probe
+    # every NCAA game or silently truncate a national scoreboard to fewer teams.
+    if source == None or len(source["document"]["events"]) == 0:
+        regular = tracker_schedule_feed(path + "?seasontype=2", team_id, source["host"] if source != None else preferred)
+        if regular != None and len(regular["document"]["events"]) > 0:
+            return regular
+        if source == None and regular == None:
+            return {"error": "SCHEDULE OFFLINE"}
+        # Empty on both endpoints is not proof that a known live game ended.
+        return {"error": "SCHEDULE NOT POSTED"}
+    return source
+
+def tracker_now_minute(ctx):
+    now = ctx.now
+    return schedule_day_index(now.year, now.month, now.day) * 1440 + now.hour * 60 + now.minute
+
+def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = False):
+    source = tracker_schedule_source(league, team_id, preferred)
+    if source.get("error") != None:
+        return source
+    current = tracker_now_minute(ctx)
+    today = (current - schedule_eastern_offset(current, ctx.now.year)) // 1440
+    live = None
+    today_pre = None
+    latest = None
+    for event in source["document"]["events"]:
+        if type(event) != "dict" or type(event.get("competitions")) != "list" or len(event["competitions"]) != 1:
+            return {"error": "SCHEDULE NOT POSTED"}
+        comp = event["competitions"][0]
+        if type(comp) != "dict" or type(comp.get("competitors")) != "list":
+            return {"error": "SCHEDULE NOT POSTED"}
+        own = 0
+        opponents = 0
+        for side in comp["competitors"]:
+            if type(side) != "dict" or type(side.get("team")) != "dict":
+                return {"error": "SCHEDULE NOT POSTED"}
+            if str(side["team"].get("id")) == str(team_id):
+                own += 1
+            else:
+                opponents += 1
+        if own != 1 or opponents != 1:
+            return {"error": "SCHEDULE NOT POSTED"}
+        status = comp.get("status") or event.get("status") or {}
+        if type(status) != "dict" or type(status.get("type")) != "dict":
+            return {"error": "SCHEDULE NOT POSTED"}
+        kind = status["type"]
+        if kind.get("name") in ["STATUS_CANCELED", "STATUS_CANCELLED", "STATUS_POSTPONED"]:
+            continue
+        state = kind.get("state")
+        date = clean(event.get("date") or comp.get("date"))
+        start = schedule_utc_minute(date)
+        event_id = clean(event.get("id"))
+        if state not in ["in", "pre", "post"] or start == None or not event_id.isdigit():
+            return {"error": "SCHEDULE NOT POSTED"}
+        day = (start - schedule_eastern_offset(start, int(date[:4]))) // 1440
+        item = {"id": event_id, "state": state, "start": start, "year": int(date[:4]), "host": source["host"]}
+        if state == "in":
+            # A multi-day stale IN flag must not masquerade as a fresh live game.
+            if start > current + 60 or current - start > 36 * 60:
+                return {"error": "GAME STATUS DELAYED"}
+            if live != None and live["id"] != event_id:
+                return {"error": "GAME STATUS DELAYED"}
+            live = item
+        elif state == "pre":
+            # Probe today's game summary even if the 5-minute schedule cache
+            # still says PRE after tipoff. Include previous-night tips so UTC
+            # or Eastern midnight cannot make a live game vanish.
+            if day == today or (start <= current and current - start <= 12 * 60):
+                if today_pre == None or abs(start - current) < abs(today_pre["start"] - current):
+                    today_pre = item
+        else:
+            if kind.get("completed") != True or start > current:
+                return {"error": "GAME STATUS DELAYED"}
+            if latest == None or start > latest["start"]:
+                latest = item
+    if live != None:
+        return live
+    if today_pre != None:
+        # Probe today's summary first in case PRE is stale after tipoff. A
+        # confirmed PRE must not erase yesterday's still-retained team final.
+        if not keep_final and latest != None and current - latest["start"] < 24 * 60:
+            today_pre["retained_final"] = latest
+        return today_pre
+    if latest != None:
+        # Athlete page 2 keeps its existing last-final behavior. Team pages
+        # retain a final until 24 elapsed hours after tipoff, then averages.
+        # UTC elapsed time avoids adding/subtracting an hour at DST changes.
+        if keep_final or current - latest["start"] < 24 * 60:
+            return latest
+    return {"id": None, "host": source["host"]}
+
+def tracker_summary_context(league, event, team_id):
+    url = "https://site.api.espn.com/apis/site/v2/sports/basketball/%s/summary?event=%s" % (league, event["id"])
+    # The schedule-selected host gets one summary attempt. This bounds the
+    # two-page athlete render to eight cold requests even during host failures.
+    data = get_json(url, 300, event["host"])
+    if type(data) != "dict":
+        return {"error": "GAME DATA OFFLINE"}
+    header = data.get("header")
+    comps = header.get("competitions") if type(header) == "dict" else None
+    if type(comps) != "list" or len(comps) != 1 or type(comps[0]) != "dict":
+        return {"error": "GAME DATA NOT POSTED"}
+    comp = comps[0]
+    # ESPN occasionally supplies the ID on the header instead of competition.
+    actual_id = clean(comp.get("id") or header.get("id"))
+    if actual_id != event["id"]:
+        return {"error": "GAME DATA NOT POSTED"}
+    sides = comp.get("competitors")
+    if type(sides) != "list" or len(sides) != 2:
+        return {"error": "GAME DATA NOT POSTED"}
+    own = None
+    opponent = None
+    for side in sides:
+        if type(side) != "dict" or type(side.get("team")) != "dict":
+            return {"error": "GAME DATA NOT POSTED"}
+        if str(side["team"].get("id")) == str(team_id):
+            if own != None:
+                return {"error": "GAME DATA NOT POSTED"}
+            own = side
+        else:
+            opponent = side
+    if own == None or opponent == None:
+        return {"error": "TEAM NOT IN GAME"}
+    status = comp.get("status")
+    kind = status.get("type") if type(status) == "dict" else None
+    if type(kind) != "dict" or kind.get("state") not in ["in", "pre", "post"]:
+        return {"error": "GAME STATUS DELAYED"}
+    period = status.get("period")
+    if period != None and (type(period) != "int" or period < 0 or period > 30):
+        return {"error": "GAME STATUS DELAYED"}
+    if status.get("displayClock") != None and type(status["displayClock"]) != "string":
+        return {"error": "GAME STATUS DELAYED"}
+    for side in sides:
+        if side.get("score") != None and type(side["score"]) not in ["string", "int", "float"]:
+            return {"error": "GAME DATA NOT POSTED"}
+    if kind["state"] == "pre" and event["state"] in ["in", "post"]:
+        return {"error": "GAME STATUS DELAYED"}
+    return {"data": data, "competition": comp, "team": own, "opponent": opponent}
+
+def roster_source(league, team_id, preferred = None):
+    path = "/apis/site/v2/sports/basketball/%s/teams/%s/roster" % (league, team_id)
+    for host in tracker_hosts(preferred):
+        response = http.get("https://" + host + path, ttl_seconds = 21600)
+        roster = response.get("json")
+        if response.get("status_code", 0) == 200 and type(roster) == "dict" and type(roster.get("athletes")) == "list":
+            valid = True
+            seen = []
+            for item in roster["athletes"]:
+                if type(item) != "dict" or not clean(item.get("id")).isdigit():
+                    valid = False
+                elif str(item["id"]) in seen:
+                    valid = False
+                else:
+                    seen.append(str(item["id"]))
+            if valid:
+                return {"roster": roster, "host": host}
+    return {"roster": None, "host": tracker_hosts(preferred)[-1]}
+
+def tracker_player_bio(athlete, roster_athlete):
+    # Join each missing field, not an entire partially populated bio string.
+    position = athlete_position(athlete) or athlete_position(roster_athlete)
+    height = athlete_height(athlete) or athlete_height(roster_athlete)
+    return (position + " " + height).strip()
+
+def tracker_game_table(data, team_id):
+    box = data.get("boxscore")
+    groups = box.get("players") if type(box) == "dict" else None
+    if type(groups) != "list":
+        return None
+    for group in groups:
+        if type(group) != "dict" or type(group.get("team")) != "dict":
+            continue
+        if str(group["team"].get("id")) != str(team_id):
+            continue
+        tables = group.get("statistics")
+        if type(tables) != "list" or len(tables) == 0 or type(tables[0]) != "dict":
+            return None
+        table = tables[0]
+        if type(table.get("labels")) != "list" or type(table.get("athletes")) != "list" or len(table["athletes"]) == 0:
+            return None
+        if "MIN" not in table["labels"] or "PTS" not in table["labels"]:
+            return None
+        seen = []
+        for label in table["labels"]:
+            if type(label) != "string":
+                return None
+        for row in table["athletes"]:
+            if type(row) != "dict" or type(row.get("athlete")) != "dict" or type(row.get("stats")) != "list":
+                return None
+            athlete_id = clean(row["athlete"].get("id"))
+            if not athlete_id.isdigit() or athlete_id in seen:
+                return None
+            seen.append(athlete_id)
+            for value in row["stats"]:
+                if type(value) not in ["string", "int", "float", "NoneType"]:
+                    return None
+        return table
+    return None
 def stat_map(table):
     result = {}
     labels = table.get("labels", [])
@@ -615,7 +853,7 @@ def stat_map(table):
         result[str(labels[index]).upper()] = index
     return result
 
-def stat_value(row, indexes, key, fallback = "0"):
+def stat_value(row, indexes, key, fallback = "--"):
     index = indexes.get(key)
     values = row.get("stats", [])
     if index == None or index >= len(values):
@@ -636,7 +874,7 @@ def tenths(value):
     return whole * 10 + decimal
 
 def athlete_position(athlete):
-    position = athlete.get("position") or {}
+    position = athlete.get("position") if type(athlete.get("position")) == "dict" else {}
     return upper(position.get("abbreviation") or position.get("name"))
 
 def athlete_height(athlete):
@@ -657,7 +895,7 @@ def athlete_weight(athlete):
     return weight.replace("POUNDS", "").replace("LBS", "").replace("LB", "").strip()
 
 def athlete_year(athlete):
-    experience = athlete.get("experience") or {}
+    experience = athlete.get("experience") if type(athlete.get("experience")) == "dict" else {}
     value = upper(experience.get("abbreviation") or experience.get("displayValue") or athlete.get("class"))
     classes = {
         "FRESHMAN": "FR",
@@ -674,7 +912,7 @@ def athlete_extra_bio(athlete):
 
 def season_data(league, team):
     team_id = str(team.get("id"))
-    roster = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams/%s/roster" % (league, team_id), 21600)
+    roster = roster_source(league, team_id)["roster"]
     if roster == None:
         return {"error": "ROSTER OFFLINE"}
     roster_info = {}
@@ -692,26 +930,29 @@ def season_data(league, team):
     if response.get("status_code", 0) != 200:
         return {"error": "AVERAGES OFFLINE"}
     body = clean(response.get("body"))
-    marker = "window['__espnfitt__']="
-    if marker not in body:
+    rows = tracker_average_rows(body)
+    if rows == None:
         return {"error": "AVERAGES NOT POSTED"}
-    payload = body.split(marker, 1)[1].split(";</script>", 1)[0]
-    document = json.decode(payload)
-    rows = (((((document.get("page") or {}).get("content") or {}).get("stats") or {}).get("playerStats") or [[]])[0])
     players = []
     players_with_stats = []
     for row in rows:
-        athlete = row.get("athlete") or {}
+        if type(row) != "dict" or type(row.get("athlete")) != "dict" or type(row.get("statGroups")) != "dict" or type(row["statGroups"].get("stats")) != "list":
+            return {"error": "AVERAGES NOT POSTED"}
+        athlete = row["athlete"]
         athlete_id = clean(athlete.get("uid")).split("~a:")[-1]
         # The ESPN averages page can retain last season's departed players while
         # the roster endpoint has already rolled forward. Only join rows whose
         # athlete ID is still on the selected team's current roster.
         if athlete_id not in roster_info:
             continue
+        if athlete_id in players_with_stats:
+            return {"error": "AVERAGES NOT POSTED"}
         players_with_stats.append(athlete_id)
         values = {}
         for item in ((row.get("statGroups") or {}).get("stats") or []):
-            values[item.get("name")] = clean(item.get("displayValue"), "0.0")
+            if type(item) != "dict" or type(item.get("name")) != "string" or type(item.get("displayValue")) not in ["string", "int", "float", "NoneType"]:
+                return {"error": "AVERAGES NOT POSTED"}
+            values[item["name"]] = clean(item.get("displayValue"), "--")
         players.append({
             "id": athlete_id,
             "name": upper(athlete.get("shortName") or athlete.get("name"), "PLAYER"),
@@ -719,12 +960,12 @@ def season_data(league, team):
             "bio": roster_info.get(athlete_id, {}).get("bio", ""),
             "extra_bio": roster_info.get(athlete_id, {}).get("extra_bio", ""),
             "starter": False,
-            "min": values.get("avgMinutes", "0.0"),
-            "pts": values.get("avgPoints", "0.0"),
-            "reb": values.get("avgRebounds", "0.0"),
-            "ast": values.get("avgAssists", "0.0"),
-            "stl": values.get("avgSteals", "0.0"),
-            "blk": values.get("avgBlocks", "0.0"),
+            "min": values.get("avgMinutes", "--"),
+            "pts": values.get("avgPoints", "--"),
+            "reb": values.get("avgRebounds", "--"),
+            "ast": values.get("avgAssists", "--"),
+            "stl": values.get("avgSteals", "--"),
+            "blk": values.get("avgBlocks", "--"),
             "fg": values.get("fieldGoalPct", "-")
         })
     # Missing statistics are unknown, not zero. Retain current roster identity
@@ -749,57 +990,60 @@ def season_data(league, team):
             "fg": "-",
         })
     return {"players": players, "team": team, "opponent": {}, "team_score": "", "opponent_score": "", "state": "AVG", "detail": "SEASON AVERAGES", "mode": "AVERAGES"}
-
 def game_data(ctx):
     league = LEAGUES.get(upper(ctx.inputs.get("league"), "MEN"), LEAGUES["MEN"])
     selected_team = resolve_team(league, ctx.inputs.get("team"))
     if selected_team == None:
         return {"error": "SCHOOL NOT FOUND"}
     team_id = str(selected_team.get("id"))
-    # Public installations always find the selected team's game automatically.
-    # Ignore saved Studio overrides from earlier versions.
-    event_id = find_event(league, team_id)
-    if event_id == None:
+    event = tracker_event_context(ctx, league, team_id)
+    if event.get("error") != None:
+        return event
+    if event.get("id") == None:
         return season_data(league, selected_team)
-    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/summary?event=%s" % (league, event_id), 30)
-    if data == None:
-        return {"error": "GAME DATA OFFLINE"}
-
-    competition = ((data.get("header") or {}).get("competitions") or [{}])[0]
-    team = None
-    opponent = None
-    for competitor in competition.get("competitors", []):
-        if str((competitor.get("team") or {}).get("id")) == team_id:
-            team = competitor
-        else:
-            opponent = competitor
-    if team == None:
-        return {"error": "TEAM NOT IN GAME"}
-
-    table = None
-    for group in (data.get("boxscore") or {}).get("players", []):
-        if str((group.get("team") or {}).get("id")) == team_id:
-            tables = group.get("statistics") or []
-            if len(tables) > 0:
-                table = tables[0]
+    source = tracker_summary_context(league, event, team_id)
+    if source.get("error") != None:
+        return source
+    if source["competition"]["status"]["type"]["state"] == "pre" and event.get("retained_final") != None:
+        source = tracker_summary_context(league, event["retained_final"], team_id)
+        if source.get("error") != None:
+            return source
+    data = source["data"]
+    competition = source["competition"]
+    team = source["team"]
+    opponent = source["opponent"]
+    status = competition["status"]
+    status_type = status["type"]
+    state = upper(status_type["state"])
+    # Only a successfully decoded, matching PRE summary may show averages.
+    # A failed summary or a PRE/IN conflict never silently changes mode.
+    if state == "PRE":
+        return season_data(league, selected_team)
+    table = tracker_game_table(data, team_id)
     if table == None:
-        if upper(((competition.get("status") or {}).get("type") or {}).get("state")) == "PRE":
-            return season_data(league, selected_team)
         return {"error": "STATS NOT POSTED"}
-
+    roster = roster_source(league, team_id, event["host"])["roster"]
+    roster_info = {}
+    if roster != None:
+        for item in roster["athletes"]:
+            roster_info[str(item["id"])] = item
     indexes = stat_map(table)
     players = []
-    for row in table.get("athletes", []):
-        athlete = row.get("athlete") or {}
-        minutes = stat_value(row, indexes, "MIN", "0")
-        if row.get("didNotPlay", False) or minutes == "0" or minutes == "0:00" or minutes == "--":
+    for row in table["athletes"]:
+        athlete = row["athlete"]
+        athlete_id = clean(athlete.get("id"))
+        if athlete_id == "":
             continue
+        minutes = stat_value(row, indexes, "MIN", "--")
+        if row.get("didNotPlay", False) or minutes in ["0", "0:00", "--"]:
+            continue
+        bio = roster_info.get(athlete_id, {})
         players.append({
-            "id": str(athlete.get("id")),
+            "id": athlete_id,
             "name": upper(athlete.get("shortName") or athlete.get("displayName"), "PLAYER"),
-            "jersey": clean(athlete.get("jersey"), ""),
-            "bio": athlete_bio(athlete),
-            "extra_bio": athlete_extra_bio(athlete),
+            "jersey": clean(athlete.get("jersey"), clean(bio.get("jersey"))),
+            "bio": tracker_player_bio(athlete, bio),
+            "extra_bio": athlete_extra_bio(athlete) or athlete_extra_bio(bio),
             "starter": row.get("starter", False) == True,
             "min": minutes,
             "pts": stat_value(row, indexes, "PTS"),
@@ -809,26 +1053,20 @@ def game_data(ctx):
             "blk": stat_value(row, indexes, "BLK"),
             "fg": stat_value(row, indexes, "FG", "-")
         })
-
-    status = competition.get("status") or {}
-    status_type = status.get("type") or {}
-    state = upper(status_type.get("state"), "PRE")
-    detail = upper(status_type.get("shortDetail") or status_type.get("detail"), "SCHEDULED")
     return {
         "players": players,
-        "team": team.get("team") or {},
-        "opponent": (opponent or {}).get("team") or {},
+        "team": team["team"],
+        "opponent": opponent["team"],
         "team_score": clean(team.get("score"), "0"),
-        "opponent_score": clean((opponent or {}).get("score"), "0"),
+        "opponent_score": clean(opponent.get("score"), "0"),
         "team_home_away": clean(team.get("homeAway"), "away"),
-        "opponent_home_away": clean((opponent or {}).get("homeAway"), "home"),
+        "opponent_home_away": clean(opponent.get("homeAway"), "home"),
         "state": state,
-        "detail": detail,
+        "detail": upper(status_type.get("shortDetail") or status_type.get("detail"), state),
         "period": int(status.get("period") or 0),
         "clock": clean(status.get("displayClock")),
         "mode": "GAME",
     }
-
 def points_value(item):
     text = clean(item.get("pts"), "0")
     return tenths(text)
@@ -1476,3 +1714,201 @@ def player_7(c, ctx):
 
 def player_8(c, ctx):
     player_page(c, ctx, 7, False, False, "native")
+
+
+def schedule_month_days(year, month):
+    days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+    return 29 if month == 2 and leap else days[month - 1]
+
+
+def schedule_day_index(year, month, day):
+    previous = year - 1
+    result = 365 * previous + previous // 4 - previous // 100 + previous // 400 + day - 1
+    for value in range(1, month):
+        result += schedule_month_days(year, value)
+    return result
+
+
+def schedule_utc_minute(value):
+    text = clean(value)
+    if len(text) < 16 or not (text.endswith("Z") or text.endswith("+00:00")):
+        return None
+    fields = [text[0:4], text[5:7], text[8:10], text[11:13], text[14:16]]
+    for field in fields:
+        if not field.isdigit():
+            return None
+    year, month, day, hour, minute = [int(field) for field in fields]
+    if year < 2007 or month < 1 or month > 12 or day < 1 or hour > 23 or minute > 59:
+        return None
+    if day > schedule_month_days(year, month):
+        return None
+    return schedule_day_index(year, month, day) * 1440 + hour * 60 + minute
+
+
+def schedule_eastern_offset(utc, year):
+    # US Eastern daylight saving starts at 07:00Z and ends at 06:00Z.
+    march_sunday = 8 + (6 - schedule_day_index(year, 3, 1) % 7) % 7
+    november_sunday = 1 + (6 - schedule_day_index(year, 11, 1) % 7) % 7
+    summer_start = schedule_day_index(year, 3, march_sunday) * 1440 + 7 * 60
+    summer_end = schedule_day_index(year, 11, november_sunday) * 1440 + 6 * 60
+    return 240 if utc >= summer_start and utc < summer_end else 300
+
+
+
+# The team table is one small JSON array inside ESPN's much larger HTML state.
+# Validate that array before json.decode: Starlark has no catchable decode error.
+
+def tracker_json_atom(token):
+    if token in ["true", "false", "null"]:
+        return True
+    if len(token) == 0 or len(token) > 64:
+        return False
+    for index in range(len(token)):
+        if token[index] not in "0123456789.eE+-":
+            return False
+    parts = token.lower().split("e")
+    if len(parts) > 2:
+        return False
+    if len(parts) == 2:
+        exponent = parts[1]
+        if exponent.startswith("+") or exponent.startswith("-"):
+            exponent = exponent[1:]
+        if not exponent.isdigit() or len(exponent) > 3 or int(exponent) > 100:
+            return False
+    decimal = parts[0]
+    if decimal.startswith("-"):
+        decimal = decimal[1:]
+    digits = decimal.split(".")
+    if len(digits) > 2 or not digits[0].isdigit():
+        return False
+    if len(digits[0]) > 1 and digits[0].startswith("0"):
+        return False
+    return len(digits) == 1 or digits[1].isdigit()
+
+def tracker_json_finish(stack):
+    state = stack[-1]
+    if state not in ["value", "array_first", "array_value", "object_value"]:
+        return False
+    stack[-1] = "done" if state == "value" else "array_comma" if state in ["array_first", "array_value"] else "object_comma"
+    return True
+
+def tracker_json_valid(text):
+    stack = ["value"]
+    quoted = False
+    escaped = False
+    unicode_left = 0
+    unicode_digits = ""
+    key = False
+    token = ""
+    for index in range(len(text)):
+        ch = text[index]
+        if quoted:
+            if unicode_left > 0:
+                if ch not in "0123456789abcdefABCDEF":
+                    return False
+                unicode_digits += ch
+                unicode_left -= 1
+                # Conservatively reject surrogate escapes (even paired ones):
+                # no decoder-dependent invalid-Unicode failure can reach pages.
+                if unicode_left == 0 and int(unicode_digits, 16) >= 55296 and int(unicode_digits, 16) <= 57343:
+                    return False
+            elif escaped:
+                escaped = False
+                if ch == "u":
+                    unicode_left = 4
+                    unicode_digits = ""
+                elif ch not in '\\"/bfnrt':
+                    return False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                quoted = False
+                if key:
+                    stack[-1] = "colon"
+                elif not tracker_json_finish(stack):
+                    return False
+            elif ch < " ":
+                return False
+            continue
+        if token != "":
+            if ch not in " \t\r\n,]}":
+                token += ch
+                if len(token) > 64:
+                    return False
+                continue
+            if not tracker_json_atom(token) or not tracker_json_finish(stack):
+                return False
+            token = ""
+        if ch in " \t\r\n":
+            continue
+        state = stack[-1]
+        if ch == '"':
+            key = state in ["object_first", "object_key"]
+            if not key and state not in ["value", "array_first", "array_value", "object_value"]:
+                return False
+            quoted = True
+        elif ch in "[{":
+            if len(stack) >= 64 or not tracker_json_finish(stack):
+                return False
+            stack.append("array_first" if ch == "[" else "object_first")
+        elif ch == "]":
+            if state not in ["array_first", "array_comma"] or len(stack) == 1:
+                return False
+            stack.pop()
+        elif ch == "}":
+            if state not in ["object_first", "object_comma"] or len(stack) == 1:
+                return False
+            stack.pop()
+        elif ch == ":":
+            if state != "colon":
+                return False
+            stack[-1] = "object_value"
+        elif ch == ",":
+            if state not in ["array_comma", "object_comma"]:
+                return False
+            stack[-1] = "array_value" if state == "array_comma" else "object_key"
+        elif state in ["value", "array_first", "array_value", "object_value"]:
+            token = ch
+        else:
+            return False
+    if token != "" and (not tracker_json_atom(token) or not tracker_json_finish(stack)):
+        return False
+    return not quoted and len(stack) == 1 and stack[0] == "done"
+
+def tracker_average_rows(body):
+    marker = "window['__espnfitt__']="
+    if marker not in body:
+        return None
+    payload = body.split(marker, 1)[1]
+    marker = '"playerStats":'
+    if payload.count(marker) != 1:
+        return None
+    text = payload.split(marker, 1)[1].lstrip()
+    if not text.startswith("["):
+        return None
+    depth = 0
+    quoted = False
+    escaped = False
+    for index in range(len(text)):
+        ch = text[index]
+        if quoted:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                quoted = False
+        elif ch == '"':
+            quoted = True
+        elif ch == "[":
+            depth += 1
+        elif ch == "]":
+            depth -= 1
+            if depth == 0:
+                table = text[:index + 1]
+                if not tracker_json_valid(table):
+                    return None
+                groups = json.decode(table)
+                return groups[0] if len(groups) > 0 and type(groups[0]) == "list" else None
+    return None
