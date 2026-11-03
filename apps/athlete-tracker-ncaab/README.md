@@ -4,9 +4,9 @@ Opponent rankings are not displayed. No AP badge, reserved badge space, or addit
 
 Track one men's Division I college basketball player on two consecutive pages. Page 1 always shows the selected player's season averages. Page 2 shows live statistics during a game, then the most recent ESPN final after it ends.
 
-Page 1 also has a Next row: NXT, opponent abbreviation, weekday, date, then tip time in Eastern time, with daylight saving and date rollover handled together. Games today or tomorrow replace weekday/date with TODAY or TMRW, based on the Eastern calendar date (including midnight, year rollover and daylight-saving changes). Later games retain weekday/date. The team schedule is cached for one hour. Longer rows use measured spacing and adjust PTS only when needed. Unconfirmed tip times show TBD, no listed upcoming game shows NXT TBD, and an unavailable schedule source shows NXT OFFLINE. Missing schedules never replace season averages with invented game statistics.
+Page 1 also has a Next row: NXT, opponent abbreviation, weekday, date, then tip time in Eastern time, with daylight saving and date rollover handled together. Games today or tomorrow replace weekday/date with TODAY or TMRW, based on the Eastern calendar date (including midnight, year rollover and daylight-saving changes). Later games retain weekday/date. The team schedule is cached for five minutes. Longer rows use measured spacing and adjust PTS only when needed. Unconfirmed tip times show TBD, no listed upcoming game shows NXT TBD, and an unavailable schedule source shows NXT OFFLINE. Missing schedules never replace season averages with invented game statistics.
 
-When ESPN's default preseason schedule is empty or unavailable, the Next row also checks its regular-season schedule before showing TBD. Both reads are cached for one hour. Season averages remain ESPN's latest available posted averages; a scheduled upcoming season does not imply new-season player statistics already exist.
+When ESPN's default preseason schedule is empty or unavailable, the Next row also checks its regular-season schedule before showing TBD. Both reads are cached for five minutes. Season averages remain ESPN's latest available posted averages; a scheduled upcoming season does not imply new-season player statistics already exist.
 
 Both pages use the same approved layout as Team Tracker (NCAAB), including the player's name, jersey number, position, height, class, team logo, and PTS/REB/AST/STL/BLK.
 
@@ -40,14 +40,48 @@ The app uses ESPN's public basketball data and refreshes every 300 seconds. The 
 
 Version 0.2.2 also indents the manifest's pages/assets/inputs lists consistently, matching the phone-settings formatting workaround reported in issue #992 and PRs #975/#976. The app ID, selection key/default, two pages, author JSW41, refresh interval and all artwork are unchanged. Glance must publish this updated input schema and verify the Team + Player dropdown on the phone; passing local YAML/Studio checks does not prove that deployment or phone compatibility.
 
-Version 0.2.2 verification: all 5,417 previous selection mappings preserved; 26,298 Eastern calendar checks; 3,285 full-page Next footer cases; 1,076 new-name page renders; zero layout findings. Three actual Starlark renders cover TODAY, TMRW and a later weekday/date. Production-response, partial-average and malformed-data regressions pass. Eighty cold-cache cases remain within seven uncached requests. Both pages and offline fallback pass Glance validation. These are local checks, not proof of a deployed phone dropdown.
+Prior 0.2.2 verification (before the local reliability fix): all 5,417 previous selection mappings preserved; 26,298 Eastern calendar checks; 3,285 full-page Next footer cases; 1,076 new-name page renders; zero layout findings. Three actual Starlark renders cover TODAY, TMRW and a later weekday/date. Production-response, partial-average and malformed-data regressions pass. Eighty cold-cache cases remain within seven uncached requests. Both pages and offline fallback pass Glance validation. These are local checks, not proof of a deployed phone dropdown.
 
 Season averages use ESPN's structured player statistics endpoint, not JSON embedded in an HTML page. The selected athlete must be on the current team roster; only that team's row from the player's most recent posted season is used. Career totals and older former-team rows are not substituted. No posted history (including ESPN's 404 for a verified roster player) displays `--`; a bad response shape displays AVERAGES NOT POSTED, and transport errors display AVERAGES OFFLINE. Roster and averages retain their six-hour caches. Eight sampled real players matched the previous team-page values (two populated-stat samples and six without matching posted stats).
 
 Michigan jerseys use official maize (#FFCB05); Campbell jerseys use official Campbell Orange (#EA7125). Other jersey, abbreviation-readability and layout rules are unchanged.
 
-The refreshed design includes larger editable jerseys with white collars and centered numbers, school-colored backgrounds, 64 custom team marks, compact decimals, measured header spacing, and separate regulation/overtime final layouts. Long score rows retain full team abbreviations; PTS moves only when required for space. Missing statistics display `--` instead of invented zeroes. The shared roster request chooses the primary or alternate ESPN JSON host, then both pages reuse that host rather than retrying every endpoint separately. The cold-cache plan uses at most seven uncached requests for supported picker selections, below Glance's limit of eight. A failed individual endpoint still uses its unavailable-data state instead of unbounded retries. The alternate host is the same ESPN source, not an independent backup provider.
+The refreshed design includes larger editable jerseys with white collars and centered numbers, school-colored backgrounds, 64 custom team marks, compact decimals, measured header spacing, and separate regulation/overtime final layouts. Long score rows retain full team abbreviations; PTS moves only when required for space. Missing statistics display `--` instead of invented zeroes. The shared roster request chooses the primary or alternate ESPN JSON host. Both pages share team-schedule reads; the summary uses the schedule-selected host. The national NCAA scoreboard is no longer requested. The cold-cache plan uses at most eight uncached requests for supported picker selections, including mixed-host failures and regular-season schedule fallback. A failed individual endpoint still uses its unavailable-data state instead of unbounded retries. The alternate host is the same ESPN source, not an independent backup provider.
 
 Version 0.2.1's final local audit passed 27,081 layout renders, 135,405 category/value alignment checks, and 10,834 biography/header renders across all 5,417 choices. Both pages passed Glance validation. Cold-cache tests remained within seven requests, and malformed-data/season-selection checks passed except for the separate platform limitation below. These tests do not guarantee future ESPN payloads or complete rosters. The missing picker on the live phone app still requires Glance to refresh and verify its published catalog settings; local Studio alone cannot certify that repair.
 
 Platform limitation recorded during edge testing: a nonstandard bare NaN literal can fail inside Glance's HTTP-to-Starlark bridge before the app receives the response. The app cannot catch that host-level failure. The tested ESPN responses use ordinary JSON; this limitation is not reported as a passing app test.
+
+
+## Reliability update
+
+Game discovery uses the selected school's ESPN schedule instead of the oversized
+national NCAA scoreboard. Today's summary is checked even when a cached schedule
+still says pregame. Live games, halftime, overtime, finals, overnight transitions,
+and conflicting or unavailable feeds have explicit handling. A failed feed does
+not silently become season averages. Malformed or duplicate box-score rows are
+rejected; missing individual statistics remain unknown (`--`), not invented zeroes.
+
+Missing position and height are filled independently from the exact roster athlete
+ID. Class and jersey use roster fallback when absent from the game. Valid game
+biography remains authoritative; details absent from both sources are not guessed.
+
+Both selected-player pages are generated together on each render: season
+averages first, live/latest-final stats second. They do not alternate by minute.
+The existing last-final behavior is retained; the team app's 24-hour cutoff does
+not apply to this athlete app. Existing settings formatting, all 5,955 choices,
+previous saved athlete-ID mappings, and Eastern TODAY/TMRW Next labels are retained.
+
+Glance must publish the updated catalog/settings and verify the selected player
+and both pages on the phone and device. Local rendering cannot certify deployed
+catalog ingestion or guarantee fresh ESPN data during an upstream outage.
+
+Refresh remains 300 seconds. App identity, approved artwork/layouts and public
+author JSW41 are unchanged. No shooting-stat categories or faster-refresh request
+are included in this update. All pages share requests; the tested worst case uses
+eight uncached requests, including mixed-host failures and regular-season fallback.
+
+Verification: 174 regression scenarios / 966 actual Starlark page renders, 26
+calendar checks, both full-app/offline validations, saved-selection/page-wiring
+checks, and Illinois/Florida ESPN replays. The team JSON preflight also passed
+2,250 mutated-input checks. These are test results, not production certification.
