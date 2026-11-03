@@ -9,6 +9,10 @@
 
 FPI_URL = "https://site.web.api.espn.com/apis/fitt/v3/sports/football/college-football/powerindex"
 SCORES_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard"
+# Compact scoreboard: a full regular-season week of the main scoreboard can
+# pass GDN's 1 MB response cap (week 10: 1.18 MB), so the current week comes
+# from this feed in two pieces (Tue-Fri, Sat-Mon), each well under it.
+HEADER_URL = "https://site.web.api.espn.com/apis/v2/scoreboard/header"
 RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
 CFP_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/%d/types/2/weeks/%d/rankings/21"
 SAGARIN_URL = "http://sagarin.com/sports/cfsend.htm"
@@ -1532,6 +1536,84 @@ def load_scoreboard(params, ttl):
         }
     return out
 
+def dim(yy, mm):
+    return [31, 29 if yy % 4 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mm - 1]
+
+def shift_day(y, mo, d, k):
+    """The date k days (|k| <= 28) from y-mo-d, as (y, mo, d)."""
+    d += k
+    for _ in range(2):
+        if d < 1:
+            mo -= 1
+            if mo < 1:
+                mo, y = 12, y - 1
+            d += dim(y, mo)
+        elif d > dim(y, mo):
+            d -= dim(y, mo)
+            mo += 1
+            if mo > 12:
+                mo, y = 1, y + 1
+    return (y, mo, d)
+
+def ymd(t):
+    return str(t[0]) + ("0" if t[1] < 10 else "") + str(t[1]) + ("0" if t[2] < 10 else "") + str(t[2])
+
+def load_week(ctx, ttl):
+    """This week's games (ESPN weeks run Tuesday-Monday), keyed like
+    load_scoreboard, from the compact header feed in two requests."""
+    y, mo, d = ctx.now.year, ctx.now.month, ctx.now.day
+    back = (day_number(y, mo, d) + 3) % 7          # days since Tuesday (2000-01-01 was a Saturday)
+    tue = shift_day(y, mo, d, -back)
+    out = {"week": None}
+    for lo, hi in ((0, 3), (4, 6)):
+        span = ymd(shift_day(tue[0], tue[1], tue[2], lo)) + "-" + ymd(shift_day(tue[0], tue[1], tue[2], hi))
+        resp = http.get(HEADER_URL, params = {"sport": "football", "league": "college-football", "groups": "80",
+                                              "limit": "300", "dates": span}, ttl_seconds = ttl)
+        if resp["status_code"] != 200 or resp["json"] == None:
+            continue
+        for sp in resp["json"].get("sports") or []:
+            for lg in sp.get("leagues") or []:
+                for e in lg.get("events") or []:
+                    side = {}
+                    for k in e.get("competitors") or []:
+                        side[k.get("homeAway")] = k
+                    if "home" not in side or "away" not in side:
+                        continue
+                    if e.get("week") and out["week"] == None:
+                        out["week"] = e.get("week")
+                    st = (e.get("fullStatus") or {}).get("type") or {}
+                    hs = int(num(float(side["home"].get("score") or 0), 0.0))
+                    aws = int(num(float(side["away"].get("score") or 0), 0.0))
+                    h, a = str(side["home"].get("id", "")), str(side["away"].get("id", ""))
+                    info = {}
+                    for k in (side["home"], side["away"]):
+                        rk = k.get("rank")
+                        info[str(k.get("id", ""))] = {
+                            "abbr": str(k.get("abbreviation", "?")).upper()[:4],
+                            "team": str(k.get("shortDisplayName") or k.get("location") or k.get("name") or "").upper(),
+                            "color": "#" + str(k.get("color") or "555555"),
+                            "alt": "#" + str(k.get("alternateColor") or "FFFFFF"),
+                            "rank": rk if type(rk) == "int" and rk >= 1 and rk <= 25 else None,
+                        }
+                    out[h + "@" + a] = {
+                        "home": h,
+                        "away": a,
+                        "hs": hs,
+                        "as": aws,
+                        "margin": hs - aws,
+                        "done": st.get("completed") == True,
+                        "live": st.get("state") == "in",
+                        "period": e.get("period", 0),
+                        "clock": str((e.get("fullStatus") or {}).get("displayClock", e.get("clock", ""))),
+                        "spread": num((e.get("odds") or {}).get("spread"), None),
+                        "neutral": e.get("neutralSite") == True,
+                        "note": "",
+                        "date": str(e.get("date", "")),
+                        "city": "",
+                        "info": info,
+                    }
+    return out
+
 def games_in(board):
     return [board[k] for k in board if k != "week"]
 
@@ -1543,7 +1625,10 @@ def load_cfp(weeks):
         for r in resp["json"].get("rankings", []):
             if r.get("type") == "cfp" or "Playoff" in str(r.get("name", "")):
                 return [str((x.get("team") or {}).get("id", "")) for x in r.get("ranks", [])], str(r.get("date", ""))
-    for w in weeks:
+        return [], ""                                  # feed fine, no committee ranking out yet
+    # Only when the rankings feed itself fails: the core API (a 404 there is
+    # never cached, so don't ask for weeks that can't exist).
+    for w in [w for w in weeks if w and w >= 2]:
         resp = http.get(CFP_CORE_URL % (SEASON, w), headers = {"User-Agent": "curl/8.21.0"}, ttl_seconds = 3600)
         if resp["status_code"] != 200 or resp["json"] == None or not resp["json"].get("ranks"):
             continue
@@ -2084,7 +2169,7 @@ def model(ctx):
     sag, sag_home = load_sagarin()
     # At most 8 uncached requests: the regular week is over by Selection
     # Day, and the playoff games only exist after it.
-    week = load_scoreboard({}, 600) if not selected else {}
+    week = load_week(ctx, 600) if not selected else {}
     title_week = load_scoreboard({"dates": str(SEASON), "seasontype": "2", "week": str(TITLE_WEEK)}, 600) if december else {}
     playoff = load_scoreboard({"dates": str(SEASON), "seasontype": "3", "week": "999"}, 300) if selected else {}
     games = build_games(week)
@@ -2098,7 +2183,7 @@ def model(ctx):
     official, released = [], ""
     if today >= CFP_FIRST:
         wk = week.get("week") or 0
-        official, released = load_cfp((TITLE_WEEK + 1, TITLE_WEEK) if december else (wk + 1, wk))
+        official, released = load_cfp((TITLE_WEEK + 1,) if december and not selected else ((TITLE_WEEK + 1, TITLE_WEEK) if december else (wk + 1, wk)))
     final = len(official) > 0 and released[:10] >= SELECTION_DAY
     by_id = {t: team_info(fpi, t) for t in CONF}
     # Playoff games ESPN has scheduled, keyed both ways round.
