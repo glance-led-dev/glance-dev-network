@@ -1,0 +1,16 @@
+id: garmin
+description: Provide last Garmin activity details
+author: Matt Ham
+name: Garmin Cycling Stats
+width: 64
+height: 32
+refresh: 300
+pages:
+  - garmin_cycling
+  - garmin_strength
+inputs:
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: apikey
+    default: 
