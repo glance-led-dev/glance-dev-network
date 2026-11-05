@@ -4,10 +4,17 @@
 # right now: the one in progress that started last, else the next one
 # to start; all-day events only when nothing timed is left today. Page
 # NEXT shows what follows it. The event's phase colour (white far off,
-# amber within 15 minutes, green running, sky blue all-day) dresses the
-# left rail, the countdown word, the start time and the calendar glyph
-# beside it; the title sits under it in white. A running event paints
-# its elapsed share along the bottom row.
+# amber within 15 minutes, green running, sky blue all-day -- each one a
+# dropdown, those four are only the defaults) dresses the left rail, the
+# countdown word, the start time and the calendar glyph beside it; the
+# title sits under it in white. A running event paints its elapsed share
+# along the bottom row.
+#
+# The eyebrow row carries a third thing when the feed offers it: the
+# event's source badge (calfeed's `source_short_name`, up to 3
+# characters) between the label and the state word, in the source's own
+# colour when the view serves one. It is the first thing dropped when
+# the row is full -- see chrome().
 #
 # The feed does the date maths: every event carries start_unix/end_unix
 # and `local` {date, weekday, time} in the view's own zone, so this file
@@ -20,12 +27,18 @@
 
 SOON_SECONDS = 15 * 60
 
+# The default of each colour dropdown; the OFFLINE and CLEAR screens
+# keep them literally, since those are the app's own states rather than
+# an event's phase.
 COLOR_FAR = "white"
 COLOR_SOON = "amber"
 COLOR_RUNNING = "green"
 COLOR_ALLDAY = "skyblue"
 COLOR_LABEL_DEFAULT = "gray"
 COLOR_TRACK = "#20262E"
+
+BADGE_CHARS = 3  # the feed promises <= 3, but nothing drawn is unbounded
+BADGE_GAP = 4    # px between the badge and each of its neighbours
 
 # 64x32 grid: rail x 0-1, content x 4..61. Eyebrow y 1-5, hairline y 7,
 # hero y 9-20, title y 23-29, progress bar y 31.
@@ -85,12 +98,16 @@ def demo_feed(now):
         ],
     }
 
+# The demo events name a source but no colour, so the demo shows the
+# badge in the label colour -- the shape a feed without source colours
+# has.
 def ev(title, start, end):
     return {
         "title": title,
         "start_unix": start,
         "end_unix": end,
         "all_day": False,
+        "source_short_name": "CAL",
         "local": {"date": "", "weekday": "", "time": hhmm(start), "end_time": hhmm(end)},
     }
 
@@ -186,19 +203,21 @@ def pick_next(events, chosen, now):
     return None
 
 # [words, color] for the event's phase, words long form first; the words
-# and the colour can never disagree.
-def phase(e, now):
+# and the colour can never disagree. The four colours are the viewer's,
+# the constants only their defaults.
+def phase(e, now, ctx):
     if e.get("all_day"):
-        return [["ALL DAY"], COLOR_ALLDAY]
+        return [["ALL DAY"], color_input(ctx, "alldaycolor", COLOR_ALLDAY)]
     if is_running(e, now):
+        running = color_input(ctx, "runningcolor", COLOR_RUNNING)
         left = (e["end_unix"] - now) // 60
         if left <= 0:
-            return [["ENDING"], COLOR_RUNNING]
-        return [[left_label(left) + " LEFT", left_label(left)], COLOR_RUNNING]
+            return [["ENDING"], running]
+        return [[left_label(left) + " LEFT", left_label(left)], running]
     until = e["start_unix"] - now
     if until <= SOON_SECONDS:
-        return [["IN %dM" % max(until // 60, 1)], COLOR_SOON]
-    return [[when_label(e, until)], COLOR_FAR]
+        return [["IN %dM" % max(until // 60, 1)], color_input(ctx, "sooncolor", COLOR_SOON)]
+    return [[when_label(e, until)], color_input(ctx, "farcolor", COLOR_FAR)]
 
 def left_label(mins):
     return "%dM" % mins if mins < 60 else "%dH" % (mins // 60)
@@ -214,6 +233,30 @@ def when_label(e, until):
 def title_of(e):
     t = str(e.get("title", "") or "BUSY").upper()
     return t if t != "" else "BUSY"
+
+# The event's source badge: calfeed sends `source_short_name` only when
+# the view's calendars have short names, so absent, blank or not-a-string
+# all mean "no badge".
+def badge_of(e):
+    name = e.get("source_short_name")
+    if type(name) != "string":
+        return ""
+    return name.strip().upper()[:BADGE_CHARS]
+
+# The source's own colour, sent as #rrggbb only when the view has source
+# colours on. Validated here rather than trusted: an unparseable colour
+# raises inside c.text() and a raised host error kills the whole render.
+def badge_color(e, fallback):
+    col = e.get("color")
+    if type(col) != "string":
+        return fallback
+    col = col.strip()
+    if len(col) != 7 or not col.startswith("#"):
+        return fallback
+    for ch in col[1:].elems():
+        if HEX_DIGITS.find(ch) < 0:
+            return fallback
+    return col
 
 # ---- drawing helpers ----------------------------------------------------
 
@@ -236,15 +279,19 @@ def fit_clip(c, text, fonts, maxw):
 
 # The shared frame of every screen: a 2 px rail on the left edge in the
 # screen's state colour, and the eyebrow row (y 1..5): label left in the
-# label colour, a state word right-aligned, measured first.
+# label colour, a state word right-aligned, measured first, and the
+# source badge between them, right-aligned against the state word.
 # `words` is the state word, long form first: the long one is used only
 # when the label still fits whole beside it. On NEXT pages a chevron
-# after the label marks the page.
-def chrome(c, ctx, label, words, col, page):
+# after the label marks the page. `badge` is "" on the screens that have
+# no event (OFFLINE, CLEAR).
+def chrome(c, ctx, label, words, col, page, badge, badge_col):
     c.fill("black")
     c.rect(0, 0, RAIL_W, c.height, fill = col)
+    lcol = color_input(ctx, "labelcolor", COLOR_LABEL_DEFAULT)
     right = c.width - PAD
-    lw = c.text_width(label, "4x5") + (CHEVRON_W if page == "NEXT" else 0)
+    chev = CHEVRON_W if page == "NEXT" else 0
+    lw = c.text_width(label, "4x5") + chev
     word = words[len(words) - 1]
     for w in words:
         if TEXT_X + lw + 4 + c.text_width(w, "4x5") <= right:
@@ -252,11 +299,24 @@ def chrome(c, ctx, label, words, col, page):
             break
     sx = right - c.text_width(word, "4x5")
     c.text(word, sx, 1, font = "4x5", color = col)
-    room = sx - TEXT_X - 4 - (CHEVRON_W if page == "NEXT" else 0)
+
+    # The badge is measured against the UNCLIPPED label, so it can never
+    # cost the label characters it would otherwise have kept: "CANDELA"
+    # is 34 px in 4x5 and "12M LEFT" 36 px, which already overruns the
+    # row's 58 px (x 4..61) between them -- there the badge is dropped
+    # rather than clipping the name to "CAND..". When it is dropped,
+    # `room` below is the width the label had before the badge existed.
+    bw = c.text_width(badge, "4x5") if badge != "" else 0
+    if bw > 0 and TEXT_X + lw + BADGE_GAP + bw + BADGE_GAP > sx:
+        bw = 0
+    if bw > 0:
+        c.text(badge, sx - BADGE_GAP - bw, 1, font = "4x5", color = badge_col)
+
+    room = sx - TEXT_X - 4 - chev - (bw + BADGE_GAP if bw > 0 else 0)
     lf, lt = fit_clip(c, label, ["4x5"], room)
-    c.text(lt, TEXT_X, 1, font = lf, color = label_color(ctx))
+    c.text(lt, TEXT_X, 1, font = lf, color = lcol)
     if page == "NEXT":
-        c.sprite(CHEVRON_ART, TEXT_X + c.text_width(lt, lf) + 2, 1, color = label_color(ctx))
+        c.sprite(CHEVRON_ART, TEXT_X + c.text_width(lt, lf) + 2, 1, color = lcol)
     c.hline(TEXT_X, right - 1, 7, color = COLOR_TRACK)
 
 # The hero row (y 9..20) with the calendar glyph as the app's identity
@@ -271,20 +331,22 @@ def hero_and_sub(c, hero, col, sub, sub_col, sub_fonts):
 
 # Two short lines: what, and what to do.
 def offline(c, ctx):
-    chrome(c, ctx, eyebrow_text(ctx, ""), ["OFFLINE"], COLOR_SOON, "NOW")
+    chrome(c, ctx, eyebrow_text(ctx, ""), ["OFFLINE"], COLOR_SOON, "NOW", "", "")
     hero_and_sub(c, "--:--", COLOR_SOON, "CHECK FEED", COLOR_LABEL_DEFAULT, SUB_FONTS)
 
 def all_clear(c, ctx, view_name, page, sub):
-    chrome(c, ctx, eyebrow_text(ctx, view_name), ["CLEAR"], COLOR_RUNNING, page)
+    chrome(c, ctx, eyebrow_text(ctx, view_name), ["CLEAR"], COLOR_RUNNING, page, "", "")
     hero_and_sub(c, "FREE", COLOR_RUNNING, sub, COLOR_LABEL_DEFAULT, SUB_FONTS)
+
+# One colour dropdown's value: the chosen palette name, or the default
+# when the input is blank. All five colour inputs read through this.
+def color_input(ctx, key, default):
+    col = str(ctx.inputs.get(key, "")).strip()
+    return col if col != "" else default
 
 # The label is the eyebrow's left side: the configured one, else the
 # view's name, else DEMO, so two instances (yours, your wife's) still
 # say whose event is on screen.
-def label_color(ctx):
-    col = str(ctx.inputs.get("labelcolor", "")).strip()
-    return col if col != "" else COLOR_LABEL_DEFAULT
-
 def eyebrow_text(ctx, view_name):
     label = str(ctx.inputs.get("label", "")).strip().upper()
     if label == "":
@@ -300,8 +362,10 @@ def allday_hero(e, now):
 
 # One event card. `page` is the page name (NOW / NEXT).
 def card(c, e, now, page, view_name, ctx):
-    words, col = phase(e, now)
-    chrome(c, ctx, eyebrow_text(ctx, view_name), words, col, page)
+    words, col = phase(e, now, ctx)
+    lcol = color_input(ctx, "labelcolor", COLOR_LABEL_DEFAULT)
+    chrome(c, ctx, eyebrow_text(ctx, view_name), words, col, page,
+           badge_of(e), badge_color(e, lcol))
 
     # Hero: the start time (or TODAY / weekday for all-day), phase-
     # coloured; the title under it in white, the largest that fits.
