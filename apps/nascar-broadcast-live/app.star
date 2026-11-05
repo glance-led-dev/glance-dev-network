@@ -5,13 +5,16 @@
 # fixed job; each reads in both live and off-season. The position badge on
 # every row already says what a page is, so there's no "ORDER" tab text.
 #
-#   logo     - series wordmark (LIVE / NEXT UP)
+#   logo     - series wordmark (LIVE / FINAL / NEXT UP), with each stage
+#              winner beside it during a race
 #   event    - race / session + flag / lap / stage / cautions / lead changes
-#              and the track shape;   off: NEXT RACE card
+#              and the track shape;   off: NEXT RACE card (date, TV, the
+#              last winner at that track)
 #   order1   - running order P1-8;    off: LAST RACE, the full finishing order
 #   order2-5 - running order P9-40;   off: SCHEDULE (the upcoming slate)
 #   movers   - the six biggest gainers and six biggest losers vs. their start
-#              spot;                  off: SCHEDULE, continued
+#              spot;                  off: SCHEDULE, the next race and
+#              the three after it
 #
 # The order board is 2 columns x 4 rows on a 192 panel (8 cars/page, so 5
 # pages cover NASCAR Cup's full 40-car field) and 3 x 4 on 384/640.
@@ -370,6 +373,69 @@ def short_race(name, track = ""):
     text = text.replace("  ", " ").strip()
     return text
 
+# The network, as short as the schedule row allows: "PRIME VIDEO" -> "PRIME".
+TV_SHORT = {"PRIME VIDEO": "PRIME"}
+
+def tv_name(race):
+    tv = str(race.get("television_broadcaster", "") or "").strip().upper()
+    return TV_SHORT.get(tv, tv)
+
+# "Kyle Larson" -> "LARSON", "Ricky Stenhouse Jr." -> "STENHOUSE",
+# "Shane van Gisbergen" -> "VAN GISBERGEN".
+NAME_SUFFIXES = ("JR.", "JR", "SR.", "SR", "II", "III", "IV")
+NAME_PARTICLES = ("VAN", "VON", "DE", "DEL", "DA", "LA", "LE")
+
+def last_name(full):
+    parts = [x for x in str(full).strip().upper().split(" ") if x != ""]
+    for _ in range(3):
+        if len(parts) > 1 and parts[len(parts) - 1] in NAME_SUFFIXES:
+            parts = parts[:len(parts) - 1]
+    if len(parts) == 0:
+        return ""
+    i = len(parts) - 1
+    for _ in range(3):
+        if i > 1 and parts[i - 1] in NAME_PARTICLES:
+            i -= 1
+    return " ".join(parts[i:])
+
+# Cut a name letter by letter (fit_text cuts by word, which would drop a
+# one-word surname entirely).
+def fit_chars(c, text, font, max_w):
+    t = text
+    for _ in range(len(text)):
+        if len(t) <= 1 or c.text_width(t, font) <= max_w:
+            return t
+        t = t[:len(t) - 1]
+    return t
+
+# The green-and-white checkered flag NASCAR waves at the end of a stage: a
+# 6x5 checker on a 1px pole that runs 2px below it.
+STAGE_FLAG_GREEN = "#22C55E"
+
+def draw_stage_flag(c, x, y):
+    c.rect(x, y, x, y + 6, fill = COLORS["muted"])
+    for r in range(5):
+        for k in range(6):
+            col = STAGE_FLAG_GREEN if (r + k) % 2 == 0 else "#FFFFFF"
+            c.pixel(x + 1 + k, y + r, col)
+
+# The board-row version of the stage flag, 5px tall to fit a 4x5 row: a 4x3
+# green-and-white checker on a 1px pole. One per stage the driver won.
+def draw_mini_stage_flag(c, x, y):
+    c.rect(x, y, x, y + 4, fill = COLORS["muted"])
+    for r in range(3):
+        for k in range(4):
+            c.pixel(x + 1 + k, y + r, STAGE_FLAG_GREEN if (r + k) % 2 == 0 else "#FFFFFF")
+
+MINI_FLAG_STEP = 6   # 5px flag + 1px space
+
+def flags_width(n):
+    return n * MINI_FLAG_STEP - 1 if n > 0 else 0
+
+def draw_mini_flags(c, n, x, y):
+    for i in range(n):
+        draw_mini_stage_flag(c, x + i * MINI_FLAG_STEP, y)
+
 def session_and_name(run_name):
     upper = str(run_name).upper()
     for kw in ("QUALIFYING", "PRACTICE"):
@@ -720,6 +786,145 @@ def upcoming_races(schedule, series):
     return [r for r in races if not _has_winner(r)]
 
 
+def _utc_unix(s):
+    # A UTC ISO time ("2026-11-08T20:00:00") as unix seconds.
+    y, mo, d, h, mi = parse_iso(s)
+    return _days_from_civil(y, mo, d) * 86400 + h * 3600 + mi * 60
+
+def weekend_runs(race):
+    # (run type, start unix UTC) for the weekend's on-track sessions:
+    # practice (1), qualifying (2) and the race (3).
+    out = []
+    for e in race.get("schedule", []) or []:
+        rt = int(e.get("run_type", 0) or 0)
+        st = str(e.get("start_time_utc", "") or "")
+        if rt in (1, 2, 3) and len(st) >= 16:
+            out.append((rt, _utc_unix(st)))
+    return out
+
+def weekend_start(race):
+    runs = weekend_runs(race)
+    if len(runs) == 0:
+        return None
+    return min([r[1] for r in runs])
+
+def race_start(race):
+    for r in weekend_runs(race):
+        if r[0] == 3:
+            return r[1]
+    return None
+
+def weekend_feed(race, ttl):
+    url = ("https://cf.nascar.com/cacher/" + str(race.get("race_season", 0)) + "/" +
+           str(race.get("series_id", 1)) + "/" + str(race.get("race_id", 0)) + "/weekend-feed.json")
+    resp = http_json(url, ttl)
+    if not resp["ok"]:
+        return None
+    wr = resp["data"].get("weekend_race", [])
+    return wr[0] if len(wr) > 0 else None
+
+def race_winner(race):
+    # (last name, car number) of the race's winner from its weekend feed, or
+    # None.
+    wr = weekend_feed(race, 86400)
+    if wr == None:
+        return None
+    for r in wr.get("results", []):
+        if int(r.get("finishing_position", 0) or 0) == 1:
+            return (last_name(r.get("driver_fullname", "")), str(r.get("car_number", "")))
+    return None
+
+def team_name_color(num, series):
+    # A car's livery colour for its driver's name on black. A livery too dark
+    # to read there (navy, black) falls back to its number colour.
+    bg, txt = driver_colors(num, series)
+    if bg == "#000000" and txt == "#FFFFFF":
+        return COLORS["text"]           # car not in the livery table
+    col = bg if yiq_of(bg) >= 50 else txt
+    return lighten(col, 0.45) if yiq_of(col) < 110 else col
+
+def lighten(hex_color, f):
+    # Mix a colour toward white by f (0..1), so a dark livery reads on black
+    # and keeps its hue.
+    h = hex_color.lstrip("#")
+    out = "#"
+    for k in range(3):
+        v = int(h[k * 2:k * 2 + 2], 16)
+        v = v + int((255 - v) * f)
+        out += "0123456789ABCDEF"[v // 16] + "0123456789ABCDEF"[v % 16]
+    return out
+
+def _visits(races, track_id, rtype):
+    # The races of one type at one track, in schedule order.
+    return [r for r in races if r.get("track_id", None) == track_id and r.get("race_type_id", None) == rtype]
+
+def prev_winner(ctx, schedule, series, race):
+    # Last season's winner of this same event, as (season, last name, team
+    # colour). If this is the Nth race of its type at this track this season,
+    # it's the Nth one there last season, so Daytona in August shows last
+    # August's winner rather than the 500's, and the Duels map one to one.
+    # (Sponsor names change year to year and master_race_id gets reused
+    # across tracks, so neither identifies the event.) None for an event
+    # with no counterpart last season.
+    if race == None:
+        return None
+    track_id = race.get("track_id", None)
+    if track_id == None:
+        return None
+    rtype = race.get("race_type_id", None)
+    n = -1
+    for i, r in enumerate(_visits(schedule.get(series_key(series), []), track_id, rtype)):
+        if r.get("race_id", None) == race.get("race_id", None):
+            n = i
+    if n < 0:
+        return None
+    season = int(race.get("race_season", 0) or ctx.now.year)
+    resp = http_json("https://cf.nascar.com/cacher/" + str(season - 1) + "/race_list_basic.json", 86400)
+    if not resp["ok"]:
+        return None
+    last = _visits(resp["data"].get(series_key(series), []), track_id, rtype)
+    if n >= len(last) or not _has_winner(last[n]):
+        return None
+    found = last[n]
+    win = race_winner(found)
+    if win == None or win[0] == "":
+        return None
+    return (str(found.get("race_season", "")), win[0], team_name_color(win[1], series))
+
+def stage_results(race, ttl):
+    # The race's stage results from NASCAR's live stage-points feed, which
+    # fills in as each stage ends: [(stage number, winner's car number,
+    # winner's last name)], at most 3.
+    if race == None:
+        return []
+    url = ("https://cf.nascar.com/cacher/" + str(race.get("race_season", 0)) + "/" +
+           str(race.get("series_id", 1)) + "/" + str(race.get("race_id", 0)) + "/live-stage-points.json")
+    resp = http_json(url, ttl)
+    if not resp["ok"] or type(resp["data"]) != "list":
+        return []
+    out = []
+    for st in resp["data"]:
+        for r in st.get("results", []) or []:
+            if int(r.get("position", 0) or 0) == 1:
+                # "William Byron (C)" -> "BYRON": drop the playoff tag first.
+                full = str(r.get("full_name", ""))
+                k = full.find("(")
+                if k > 0:
+                    full = full[:k]
+                out.append((int(st.get("stage_number", 0) or 0), str(r.get("vehicle_number", "")), last_name(full)))
+    return sorted(out, key = lambda e: e[0])[:3]
+
+def stage_wins_by_car(race, ttl):
+    # {car number: stages won}.
+    out = {}
+    for _, num, _ in stage_results(race, ttl):
+        out[num] = out.get(num, 0) + 1
+    return out
+
+def stage_winners(race):
+    # [(stage number, winner's last name)] for the logo page.
+    return [(e[0], e[2]) for e in stage_results(race, 60)]
+
 # Temporary preview harness: `_debug` = "race" or "quali" returns a mock live
 # state so the live boards can be rendered without a session in progress. Not a
 # real manifest input, so it's inert once shipped. Remove once the live pages
@@ -767,6 +972,7 @@ def _mock_live(ctx, mode):
         })
     mark_duplicate_names(rows)
     is_race = mode == "race"
+    with_stage_wins(rows, {"24": 1, "5": 1} if is_race else {})
     for r in rows:
         g, _ = gap_text(r, 120, is_race)
         r["gap"] = g
@@ -786,6 +992,8 @@ def _mock_live(ctx, mode):
         "stage_num": 2 if is_race else 0,
         "cautions": 4 if is_race else 0, "lead_changes": 11 if is_race else 0,
         "leaders": 6 if is_race else 0, "rows": rows,
+        "stage_winners": [(1, "BYRON"), (2, "LARSON")] if is_race else [],
+        "race": None,
     }
 
 def fetch_state(ctx):
@@ -809,33 +1017,45 @@ def fetch_state(ctx):
         "track_name": short_track(race.get("track_name", "")) if race else "",
         "track_key": str(race.get("track_name", "")) if race else "",
         "race_date": (race.get("race_date", race.get("date_scheduled", "")) if race else ""),
+        "tv": tv_name(race) if race else "",
+        "race": race,
     }
+
+    # A finished race stays up until 11:59 PM local on the day it ran (its
+    # start plus three hours, so a night race that runs past midnight still
+    # gets the rest of that night).
+    if last != None:
+        rs = race_start(last)
+        if rs != None and ctx.now.unix >= rs and ctx.now.unix <= keep_until_end_of_day(ctx, rs + 3 * 3600):
+            held = live_state(ctx, series, last, 300)
+            if held != None:
+                return held
+
+    # Once a race weekend's first session starts, the live feed carries the
+    # latest session -- running, or finished and held until the next begins.
     if race == None:
         return off_state
+    ws = weekend_start(race)
+    if ws == None or ctx.now.unix < ws:
+        return off_state
+    live = live_state(ctx, series, race, 45)
+    return live if live != None else off_state
 
+def live_state(ctx, series, race, ttl):
     series_id = int(race.get("series_id", SERIES_IDS.get(series, 1)))
     race_id = int(race.get("race_id", 0))
     live_url = ("https://cf.nascar.com/cacher/live/series_" + str(series_id) +
                 "/" + str(race_id) + "/live-feed.json")
-    live = http_json(live_url, 45)
+    live = http_json(live_url, ttl)
     if not live["ok"]:
-        return off_state
-
+        return None
     feed = live["data"]
+    if len(feed.get("vehicles", [])) == 0:
+        return None
     lap = int(feed.get("lap_number", 0))
     flag = int(feed.get("flag_state", 0))
     session, base_name = session_and_name(feed.get("run_name", race.get("race_name", "RACE")))
     racing = lap > 0 or flag in (1, 2, 3, 4, 5, 9)
-
-    has_results = len(feed.get("vehicles", [])) > 0
-    race_date_str = race.get("race_date", race.get("date_scheduled", ""))
-    within_grace = False
-    if has_results and race_date_str != "":
-        ry, rmo, rd, _, _ = parse_iso(race_date_str)
-        scheduled_day_unix = _days_from_civil(ry, rmo, rd) * 86400
-        within_grace = ctx.now.unix <= keep_until_end_of_day(ctx, scheduled_day_unix)
-    if not racing and not within_grace:
-        return off_state
 
     stage = feed.get("stage", {})
     is_race = session == "RACE" and racing
@@ -844,6 +1064,7 @@ def fetch_state(ctx):
         "series": series,
         "session": session,
         "is_race": is_race,
+        "over": flag == 9,
         "race_name": short_race(base_name, feed.get("track_name", race.get("track_name", ""))),
         "track_name": short_track(feed.get("track_name", race.get("track_name", ""))),
         "track_key": str(feed.get("track_name", race.get("track_name", ""))),
@@ -855,8 +1076,14 @@ def fetch_state(ctx):
         "cautions": int(feed.get("number_of_caution_segments", 0)),
         "lead_changes": int(feed.get("number_of_lead_changes", 0)),
         "leaders": int(feed.get("number_of_leaders", 0)),
-        "rows": vehicle_rows(feed, series, is_race),
+        "rows": with_stage_wins(vehicle_rows(feed, series, is_race), stage_wins_by_car(race, 60) if session == "RACE" else {}),
+        "race": race,
     }
+
+def with_stage_wins(rows, wins):
+    for r in rows:
+        r["stage_wins"] = wins.get(str(r["num"]), 0)
+    return rows
 
 def fetch_last_result(ctx):
     schedule, series, err = fetch_schedule(ctx)
@@ -870,6 +1097,7 @@ def fetch_last_result(ctx):
     live = http_json("https://cf.nascar.com/cacher/live/series_" + str(series_id) +
                      "/" + str(race_id) + "/live-feed.json", 3600)
     top = []
+    wins = stage_wins_by_car(race, 3600)
     if live["ok"]:
         rows = vehicle_rows(live["data"], series, False)
         leader_laps = rows[0]["laps"] if len(rows) > 0 else 0
@@ -884,7 +1112,7 @@ def fetch_last_result(ctx):
             else:
                 gap = r["gap"]
             who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
-            top.append((str(r["pos"]), who, gap, r["name_color"]))
+            top.append((str(r["pos"]), who, gap, r["name_color"], wins.get(str(r["num"]), 0)))
     return {
         "race_name": short_race(race.get("race_name", "RACE"), race.get("track_name", "")),
         "track_name": short_track(race.get("track_name", "")),
@@ -936,11 +1164,20 @@ def draw_driver_row_block(c, x0, x1, y0, y1, row):
     gap = row.get("gap", "")
     gap_w = c.text_width(gap, gap_font) if gap != "" else 0
     reserve = (gap_w + 4) if gap_w > 0 else 0
-    avail = (x1 - row_x0) - 6 - reserve
+    # Stage winners get a small flag per stage won after the name, on a black
+    # chip so the green and white read against any livery.
+    nwins = row.get("stage_wins", 0)
+    fw = flags_width(nwins)
+    chip = (fw + 2) if fw > 0 else 0
+    avail = (x1 - row_x0) - 6 - reserve - (chip + 2 if chip > 0 else 0)
     who_max_w = avail - c.text_width(prefix, font)
     who = fit_text(c, who, font, who_max_w) if who_max_w > 0 else ""
     main = prefix + who
     c.text(main, row_x0 + 3, cy, font = font, color = txt_color)
+    if chip > 0:
+        fx = row_x0 + 3 + c.text_width(main, font) + 2
+        c.rect(fx, y0, fx + chip - 1, y1, fill = "#000000")
+        draw_mini_flags(c, nwins, fx + 1, y0 + (box_h - 5) // 2)
 
     if gap != "":
         c.text(gap, x1 - 3, gap_cy, font = gap_font, color = txt_color, align = "right")
@@ -989,13 +1226,45 @@ def logo(c, ctx):
         draw_error(c, st["title"], st["sub"])
         return
     series = st["series"]
-    tag = "LIVE" if st["mode"] == "live" else "NEXT UP"
-    tcol = COLORS["error"] if st["mode"] == "live" else COLORS["muted"]
+    live = st["mode"] == "live"
+    tag = ("FINAL" if st.get("over", False) else "LIVE") if live else "NEXT UP"
+    tcol = COLORS["error"] if tag == "LIVE" else COLORS["muted"]
+    winners = []
+    if live and st.get("session", "") == "RACE":
+        winners = st["stage_winners"] if "stage_winners" in st else stage_winners(st.get("race", None))
+    if len(winners) > 0:
+        _draw_logo_with_stages(c, series, winners, tag, tcol)
+        return
     _, logo_w, logo_h = series_logo_dims(series, c.width - 40, 19)
     logo_x = (c.width - logo_w) // 2
     logo_y = (28 - logo_h) // 2
     draw_series_logo(c, series, logo_x, logo_y, logo_w, logo_h)
     c.text(tag, c.width // 2, 27, font = "picopixel", color = tcol, align = "center")
+
+# During a race, the logo moves left once a stage has finished, and each
+# stage winner stacks on the right behind a green-and-white checkered flag:
+# up to three rows, 10px apart, the last name cut short if it won't fit.
+STAGE_COL_W = 76
+
+def _draw_logo_with_stages(c, series, winners, tag, tcol):
+    col_x = c.width - 4 - STAGE_COL_W
+    zone_w = col_x - 10 - 4
+    _, logo_w, logo_h = series_logo_dims(series, zone_w, 19)
+    logo_x = 4 + (zone_w - logo_w) // 2
+    logo_y = (28 - logo_h) // 2
+    draw_series_logo(c, series, logo_x, logo_y, logo_w, logo_h)
+    c.text(tag, logo_x + logo_w // 2, 27, font = "picopixel", color = tcol, align = "center")
+    c.line(col_x - 5, 3, col_x - 5, 28, COLORS["line"])
+    n = len(winners)
+    y0 = (32 - (n * 10 - 3)) // 2
+    lx = col_x + 10
+    nx = lx + c.text_width("S0", "4x5") + 4
+    for i in range(n):
+        num, name = winners[i]
+        y = y0 + i * 10
+        draw_stage_flag(c, col_x, y)
+        c.text("S" + str(num), lx, y, font = "4x5", color = COLORS["accent2"])
+        c.text(fit_chars(c, name, "4x5", c.width - 4 - nx), nx, y, font = "4x5", color = COLORS["text"])
 
 def event(c, ctx):
     st = fetch_state(ctx)
@@ -1195,18 +1464,24 @@ def _draw_gains_losses(c, st):
     if len(gainers) == 0 and len(losers) == 0:
         c.text("NO POSITIONS CHANGED YET", c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
-    col_w = (c.width - 6) // 4
-    mid = 2 * (col_w + 2) - 1
+    # 4px in from each edge and 4px either side of the centre divider.
+    col_w = (c.width - 2 * MV_EDGE - 2 * MV_GAP - 1 - 2 * 4) // 4
+    mid = MV_EDGE + 2 * col_w + 4 + MV_GAP
     c.line(mid, 7, mid, 31, COLORS["line"])
-    c.text("GAINED", mid - 2, 1, font = "picopixel", color = GREEN, align = "right")
-    c.text("LOST", c.width - 1, 1, font = "picopixel", color = COLORS["error"], align = "right")
+    c.text("GAINED", mid - MV_GAP, 1, font = "picopixel", color = GREEN, align = "right")
+    c.text("LOST", c.width - MV_EDGE, 1, font = "picopixel", color = COLORS["error"], align = "right")
     _mv_half(c, gainers, 0, col_w, GREEN)
     _mv_half(c, losers, 2, col_w, COLORS["error"])
 
+MV_EDGE = 4
+MV_GAP = 4
+
 def _mv_half(c, entries, col_off, col_w, vcol):
+    # The left half starts MV_EDGE in; the right half MV_GAP past the divider.
+    base = MV_EDGE if col_off == 0 else MV_EDGE + 2 * col_w + 4 + 2 * MV_GAP + 1
     for i in range(len(entries)):
         r, delta = entries[i]
-        cx0 = (col_off + i // 2) * (col_w + 2)
+        cx0 = base + (i // 2) * (col_w + 4)
         cx1 = cx0 + col_w - 1
         ry = 10 + (i % 2) * 12
         who = (r["initial"] + "." + r["name"]) if r["initial"] else r["name"]
@@ -1235,39 +1510,67 @@ def _draw_next_card(c, ctx, st, big):
     draw_nascar_track(c, st["track_key"], asset, trx, (32 - th) // 2, tw, th)
     if not big:
         draw_page_tab(c, "NEXT RACE", COLORS["accent"])
-    c.text(fit_text(c, st["race_name"], "6x8", text_w), cx, 2, font = "6x8", color = COLORS["text"], align = "center")
+    prev = prev_winner(ctx, st["schedule"], st["series"], st.get("race", None))
+    # With a last winner, four rows 2px apart: race (0-7), track (10-14),
+    # date and TV (17-23), winner (26-30). Without one, the original three.
+    nf = "6x8" if c.text_width(st["race_name"], "6x8") <= text_w else "5x7"
+    if prev != None:
+        name_top = 0 if nf == "6x8" else 1
+    else:
+        name_top = 2 if nf == "6x8" else 3
+    c.text(fit_text(c, st["race_name"], nf, text_w), cx, name_top, font = nf, color = COLORS["text"], align = "center")
     if st["race_name"] != st["track_name"]:
-        c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 13, font = "4x5", color = COLORS["muted"], align = "center")
-    c.text(fit_text(c, local_race_date(ctx, st["race_date"]), "5x7", text_w), cx, 21, font = "5x7", color = date_color(st["series"]), align = "center")
+        c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 10 if prev != None else 13, font = "4x5", color = COLORS["muted"], align = "center")
 
+    # The date in the series colour, then the TV network in white.
+    date_y = 17 if prev != None else 21
+    when = local_race_date(ctx, st["race_date"])
+    tv = st.get("tv", "")
+    ww = c.text_width(when, "5x7")
+    tvw = c.text_width(tv, "4x5") if tv != "" else 0
+    if tvw > 0 and ww + 6 + tvw > text_w:
+        tv, tvw = "", 0
+    gw = ww + (6 + tvw if tvw > 0 else 0)
+    gx = cx - gw // 2
+    c.text(fit_text(c, when, "5x7", text_w), gx, date_y, font = "5x7", color = date_color(st["series"]))
+    if tvw > 0:
+        c.text(tv, gx + ww + 6, date_y + 2, font = "4x5", color = COLORS["text"])
+
+    if prev != None:
+        season, name, name_col = prev
+        label = season + " WINNER"
+        lw = c.text_width(label, "picopixel")
+        name = fit_chars(c, name, "picopixel", text_w - lw - 4)
+        x = cx - (lw + 4 + c.text_width(name, "picopixel")) // 2
+        c.text(label, x, 26, font = "picopixel", color = COLORS["muted"])
+        c.text(name, x + lw + 4, 26, font = "picopixel", color = name_col)
+
+# The next race and the three after it, one 4x5 row each: the date in the
+# series colour, the track, and the TV network in a column 8px past the
+# longest track shown.
 def _draw_schedule(c, ctx, st, skip):
     draw_page_tab(c, "SCHEDULE", date_color(st["series"]))
     up = upcoming_races(st["schedule"], st["series"])
-    # up[0] is the immediate next race -- that's the `event` page.
-    races = up[1 + skip:1 + skip + 3]
+    races = up[skip:skip + 4]
     if len(races) == 0:
         msg = "SEASON COMPLETE" if skip == 0 else "END OF SCHEDULE"
         c.text(msg, c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
-    dx = 4 + c.text_width("SEP 00", "5x7") + 8
+    dx = 4 + c.text_width("SEP 00", "4x5") + 6
+    tv_w = max([c.text_width(tv_name(r), "4x5") for r in races])
+    trk_max = c.width - 4 - tv_w - 8 - dx
+    tracks = [fit_text(c, short_track(r.get("track_name", "")), "4x5", trk_max) for r in races]
+    tv_x = dx + max([c.text_width(t, "4x5") for t in tracks]) + 8
     y = 8
-    for r in races:
+    for i in range(len(races)):
+        r = races[i]
         dt = local_race_daydate(ctx, r.get("race_date", r.get("date_scheduled", "")))
-        c.text(dt, 4, y, font = "5x7", color = date_color(st["series"]))
-        # "RACE NAME @ TRACK", stepping down a font size before cutting it off.
-        # An unnamed race is already its track, so it isn't repeated.
-        trk = short_track(r.get("track_name", ""))
-        race_nm = short_race(r.get("race_name", "RACE"), r.get("track_name", ""))
-        nm = race_nm if race_nm == trk or trk == "" else race_nm + " @ " + trk
-        avail = c.width - dx - 4
-        nf = "5x7"
-        if c.text_width(nm, nf) > avail:
-            nf = "4x5"
-        if c.text_width(nm, nf) > avail:
-            nf = "picopixel"
-        ny = y if nf == "5x7" else y + 1
-        c.text(fit_text(c, nm, nf, avail), dx, ny, font = nf, color = COLORS["text"])
-        y += 8
+        c.text(dt, 4, y, font = "4x5", color = date_color(st["series"]))
+        c.text(tracks[i], dx, y, font = "4x5", color = COLORS["text"])
+        tv = tv_name(r)
+        if tv != "":
+            c.text(tv, tv_x, y, font = "4x5", color = COLORS["muted"])
+        y += 6
 
 
 # The full finishing order across order1-5, the same 2x4 (192) / 3x4 (384+)
@@ -1300,7 +1603,7 @@ def _draw_last_page(c, ctx, page):
     pw = c.text_width("00", "4x5") + 3
     hi = min(lo + per_page, len(top))
     for i in range(lo, hi):
-        pos, who, gap, name_color = top[i]
+        pos, who, gap, name_color, nwins = top[i]
         j = i - lo
         cx0 = (j // 4) * (col_w + 2)
         cx1 = cx0 + col_w - 1
@@ -1312,5 +1615,10 @@ def _draw_last_page(c, ctx, page):
             c.text(gap, cx1, ry + 1, font = "picopixel", color = COLORS["muted"], align = "right")
         # Between sessions the chase flag rides on the name (the position
         # number here already carries the finish-order colour).
-        c.text(fit_text(c, who, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry,
-               font = "4x5", color = name_color or COLORS["text"])
+        # Stage winners get a small green-and-white flag per stage won after
+        # the name, which is cut short to make room.
+        fw = flags_width(nwins)
+        who = fit_text(c, who, "4x5", cx1 - cx0 - pw - gw - 3 - (fw + 2 if fw > 0 else 0))
+        c.text(who, cx0 + pw, ry, font = "4x5", color = name_color or COLORS["text"])
+        if fw > 0:
+            draw_mini_flags(c, nwins, cx0 + pw + c.text_width(who, "4x5") + 2, ry)
