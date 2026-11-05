@@ -10,22 +10,22 @@ height: 32
 # lookups + 4 covers); covers are cached for a week.
 refresh: 300
 pages:
-- intro
-- channel_1
-- channel_2
-- channel_3
-- channel_4
+  - intro
+  - channel_1
+  - channel_2
+  - channel_3
+  - channel_4
 inputs:
-- key: genre
-  type: string
-  app_input_type: dropdown
-  label: Stations
-  default: My Channels
-  choices: [My Channels, Rock, Pop, Hip-Hop & R&B, Country, Jazz & Standards, Dance & Electronic, Latin & World, Canadian, Comedy, Christian, Kids]
-  help: My Channels uses the channel numbers below; a genre shows four of its stations, a new four each hour.
-- key: channels
-  type: string
-  app_input_type: free-text
-  label: My Channels
-  default: 30, 23, 33, 18
-  help: Up to 4 SiriusXM channel numbers, separated by commas.
+  - key: genre
+    type: string
+    app_input_type: dropdown
+    label: Stations
+    default: My Channels
+    choices: [My Channels, Rock, Pop, Hip-Hop & R&B, Country, Jazz & Standards, Dance & Electronic, Latin & World, Canadian, Comedy, Christian, Kids]
+    help: My Channels uses the channel numbers below; a genre shows four of its stations, a new four each hour.
+  - key: channels
+    type: string
+    app_input_type: free-text
+    label: My Channels
+    default: 30, 23, 33, 18
+    help: Up to 4 SiriusXM channel numbers, separated by commas.
