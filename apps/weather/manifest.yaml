@@ -1,20 +1,20 @@
 id: weather
 name: Weather Report
 author: cfdmb
-description: another weather app
+description: Estimated conditions and forecast for any US ZIP, no weather station or key needed. Bold color pages for the temperature and what's coming next, air quality, wind, rain, the day's temperature curve, the next 8 hours, 5 days ahead and the sun and moon, with NWS alerts.
 category: Weather
-width: 128
+width: 192
 height: 32
-refresh: 3600
+refresh: 600
 pages:
-  - current
-  - conditions
+  - now
+  - air
   - wind
-  - rainfall
-  - uv_aqi
+  - rain
+  - today
+  - hourly
   - forecast
-  - warnings
-  - astro
+  - sky
 inputs:
   - key: zip
     type: number
