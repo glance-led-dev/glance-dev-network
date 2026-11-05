@@ -1,0 +1,63 @@
+gdn: 1
+id: bchl-scores-leaders
+version: 0.2.0
+name: BCHL Scores and Leaders
+author: Michael Crawford
+description: BCHL scores, your team's games, and top-five scoring leaders with team logos, live from the league's official stats feed. Pick any BCHL team; times show in that team's time zone.
+category: Sports
+entry: app.star
+assets:
+  - assets/logos/8.png
+  - assets/logos/9.png
+  - assets/logos/10.png
+  - assets/logos/11.png
+  - assets/logos/13.png
+  - assets/logos/14.png
+  - assets/logos/16.png
+  - assets/logos/17.png
+  - assets/logos/18.png
+  - assets/logos/19.png
+  - assets/logos/20.png
+  - assets/logos/21.png
+  - assets/logos/22.png
+  - assets/logos/23.png
+  - assets/logos/39.png
+  - assets/logos/81.png
+  - assets/logos/82.png
+  - assets/logos/87.png
+  - assets/logos/88.png
+  - assets/logos/89.png
+width: 192
+height: 32
+refresh: 300
+pages: [scores, team, leaders]
+inputs:
+  - key: team
+    type: choice
+    app_input_type: dropdown
+    label: Your team
+    default: Alberni Valley Bulldogs
+    choices: [Alberni Valley Bulldogs, Blackfalds Bulldogs, Brooks Bandits, Chilliwack Chiefs, Coquitlam Express, Cowichan Valley Capitals, Cranbrook Bucks, Langley Rivermen, Nanaimo Clippers, Okotoks Oilers, Powell River Kings, Prince George Spruce Kings, Salmon Arm Silverbacks, Sherwood Park Crusaders, Spruce Grove Saints, Surrey Eagles, Trail Smoke Eaters, Vernon Vipers, Victoria Grizzlies, West Kelowna Warriors]
+    options: [Alberni Valley Bulldogs, Blackfalds Bulldogs, Brooks Bandits, Chilliwack Chiefs, Coquitlam Express, Cowichan Valley Capitals, Cranbrook Bucks, Langley Rivermen, Nanaimo Clippers, Okotoks Oilers, Powell River Kings, Prince George Spruce Kings, Salmon Arm Silverbacks, Sherwood Park Crusaders, Spruce Grove Saints, Surrey Eagles, Trail Smoke Eaters, Vernon Vipers, Victoria Grizzlies, West Kelowna Warriors]
+  - key: stat
+    type: choice
+    app_input_type: dropdown
+    label: Leader statistic
+    default: points
+    choices: [points, goals, assists]
+    options: [points, goals, assists]
+  - key: scope
+    type: choice
+    app_input_type: dropdown
+    label: Leaders from
+    default: league
+    choices: [league, team]
+    options: [league, team]
+  - key: mode
+    type: choice
+    app_input_type: dropdown
+    label: Data mode
+    default: live
+    choices: [live, demo]
+    options: [live, demo]
+    help: Live fetches BCHL data. Demo shows fictional data labelled DEMO without network requests.
