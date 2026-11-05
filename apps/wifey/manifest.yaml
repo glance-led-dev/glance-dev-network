@@ -1,0 +1,18 @@
+gdn: 1
+id: wifey
+version: 0.1.0
+name: "Wifey"
+author: "Francis Lang"
+description: First One.
+category: Other
+entry: app.star
+width: 64
+height: 32
+refresh: 300
+pages: [main]
+inputs:
+  - key: setting1
+    type: string
+    app_input_type: free-text
+    label: "Hi Wifey"
+    default: ""
