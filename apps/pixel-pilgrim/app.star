@@ -51,24 +51,38 @@ def clean_place(city, state):
     return {"city": city, "state": state, "scene": (len(city) * 3 + len(state)) % 12}
 
 
+def zip_input(ctx):
+    return str(ctx.inputs.get("zip", "10001")).strip()
+
+
+def is_zip(value):
+    if len(value) != 5:
+        return False
+    for i in range(5):
+        if value[i] not in DIGITS:
+            return False
+    return True
+
+
 def local_place(ctx):
     debug = str(ctx.inputs.get("_debugcity", "")).strip()
     if debug != "":
         parts = debug.split("|")
         return clean_place(parts[0], parts[1] if len(parts) > 1 else "")
-    zip_code = str(ctx.inputs.get("zip", "10001")).strip()
-    if len(zip_code) == 5:
+    zip_code = zip_input(ctx)
+    if is_zip(zip_code):
         r = http.get(GEO_URL + zip_code, ttl_seconds = 86400)
         if r["status_code"] == 200 and r["json"]:
             places = r["json"].get("places", [])
             if places:
                 p = places[0]
                 return clean_place(p.get("place name", ""), p.get("state abbreviation", ""))
-    return clean_place("YOUR CITY", "")
+    # No city to name, so show the ZIP itself (no state marks this case).
+    return clean_place(zip_code if zip_code != "" else "NOT SET", "")
 
 
 def demo_state(ctx, local):
-    zip_code = str(ctx.inputs.get("zip", "10001")).strip()
+    zip_code = zip_input(ctx)
     slot = ctx.now.unix // 21600
     debug = str(ctx.inputs.get("_debugslot", "")).strip()
     if debug != "":
@@ -91,18 +105,33 @@ def demo_state(ctx, local):
             "keepsake": KEEPSAKES[(current_i - 1) % len(KEEPSAKES)]}
 
 
+def service_place(d, key):
+    place = d.get(key) or {}
+    return clean_place(place.get("city", ""), place.get("state", ""))
+
+
 def network_state(ctx):
-    zip_code = str(ctx.inputs.get("zip", "10001")).strip()
-    if PILGRIM_API != "" and len(zip_code) == 5:
-        r = http.get(PILGRIM_API + "/v1/journey?zip=" + zip_code, ttl_seconds = 300)
-        if r["status_code"] == 200 and r["json"] and r["json"].get("ok", False):
-            d = r["json"]
-            d["local"] = clean_place(d["local"].get("city", ""), d["local"].get("state", ""))
-            d["current"] = clean_place(d["current"].get("city", ""), d["current"].get("state", ""))
-            d["previous"] = clean_place(d["previous"].get("city", ""), d["previous"].get("state", ""))
-            d["next"] = clean_place(d["next"].get("city", ""), d["next"].get("state", ""))
-            return d
-    return demo_state(ctx, local_place(ctx))
+    if PILGRIM_API == "":
+        return demo_state(ctx, local_place(ctx))
+    zip_code = zip_input(ctx)
+    if not is_zip(zip_code):
+        return {"lost": "CHECK ZIP"}
+    # Keep ttl_seconds in sync with refresh in manifest.yaml.
+    r = http.get(PILGRIM_API + "/v1/journey?zip=" + zip_code, ttl_seconds = 1800)
+    if r["status_code"] == 400 or r["status_code"] == 422:
+        return {"lost": "CHECK ZIP"}
+    if r["status_code"] == 200 and r["json"] and r["json"].get("ok", False):
+        d = r["json"]
+        return {"local": service_place(d, "local"),
+                "current": service_place(d, "current"),
+                "previous": service_place(d, "previous"),
+                "next": service_place(d, "next"),
+                "is_here": d.get("is_here", False),
+                "eta_hours": d.get("eta_hours", 0),
+                "hours_left": d.get("hours_left", 1),
+                "keepsake": str(d.get("keepsake", "")).upper()}
+    # Never fall back to the demo route here: it would show a made-up location.
+    return {"lost": "NO SIGNAL"}
 
 
 def label(place, limit = 0):
@@ -111,9 +140,13 @@ def label(place, limit = 0):
     full = city + (", " + state if state != "" else "")
     if limit <= 0 or len(full) <= limit:
         return full
-    suffix = ", " + state if state != "" else ""
-    room = max(1, limit - len(suffix))
-    return city[:room] + suffix
+    # Drop the state before cutting the name: 'LOS ANGE, CA' reads as a typo.
+    return city[:limit]
+
+
+def found_text(keepsake, limit = 0):
+    full = "FOUND " + keepsake
+    return full if limit <= 0 or len(full) <= limit else keepsake
 
 
 def eta_text(hours):
@@ -145,7 +178,7 @@ def city_scene(c, place):
         c.rect(x, 22 - height, min(x + 8, x1), 27, fill = col)
         c.pixel(x + 2, 24 - height, AMBER)
         c.pixel(min(x + 6, x1), 26 - height, "#8FE3D1")
-    c.hline(x0, x1, 28, "#3A6855")
+    c.hline(x0, 28, x1 - x0 + 1, "#3A6855")
 
 
 def pilgrim(c, cx, ground):
@@ -172,53 +205,83 @@ def top(c, title, right, color = GREEN):
         c.text(right, 62, 1, font = "4x5", color = DIM, align = "right")
 
 
+def lost(c, message):
+    city_scene(c, {"scene": 0})
+    if c.width >= 128:
+        pilgrim(c, 45, 25)
+        c.rect(72, 8, 180, 30, fill = INK, outline = GREEN)
+        c.text("PILGRIM STATUS", 126, 10, font = "4x5", color = DIM, align = "center")
+        c.text(message, 126, 17, font = "7x12", color = AMBER, align = "center")
+        top(c, "PIXEL PILGRIM", "")
+    else:
+        pilgrim(c, 31, 19)
+        c.rect(0, 23, 63, 31, fill = INK)
+        c.text(message, 32, 25, font = "4x5", color = AMBER, align = "center")
+
+
 def where(c, ctx):
     s = network_state(ctx)
+    if "lost" in s:
+        return lost(c, s["lost"])
     city_scene(c, s["current"])
     if c.width >= 128:
         pilgrim(c, 45, 25)
         c.rect(72, 8, 180, 30, fill = INK, outline = GREEN)
         c.text("NOW VISITING", 126, 10, font = "4x5", color = DIM, align = "center")
-        c.text_fit(label(s["current"], 25), 126, 17, ["10x16", "7x12", "6x8", "5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 102)
-        top(c, "PIXEL PILGRIM", str(s["hours_left"]) + "H")
+        # Starts at 7x12: 10x16 at y=17 ends at y=33, through the box and off the panel.
+        c.text_fit(label(s["current"], 25), 126, 17, ["7x12", "6x8", "5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 102)
+        top(c, "PIXEL PILGRIM", str(s["hours_left"]) + "H LEFT")
     else:
         pilgrim(c, 31, 19)
         c.rect(0, 23, 63, 31, fill = INK)
-        c.text_fit("IN " + label(s["current"], 12), 32, 23, ["3x4"], color = MINT, align = "center", maxw = 63)
+        # 15 chars of 3x4 is the panel width, so the 'IN ' goes before the city is cut.
+        place = s["current"]
+        line = "IN " + label(place, 12) if len(place["city"]) <= 12 else label(place, 15)
+        c.text_fit(line, 32, 23, ["3x4"], color = MINT, align = "center", maxw = 63)
         c.text(str(s["hours_left"]) + "H LEFT", 32, 28, font = "3x4", color = GREEN, align = "center")
 
 
 def arrival(c, ctx):
     s = network_state(ctx)
+    if "lost" in s:
+        return lost(c, s["lost"])
+    local_head = "YOUR CITY" if s["local"]["state"] != "" else "YOUR ZIP"
     arrival_head = "PILGRIM IS" if s["is_here"] else "ARRIVES IN"
     arrival_value = "HERE NOW" if s["is_here"] else eta_text(s["eta_hours"])
     c.fill(INK)
     if c.width >= 128:
         c.rect(10, 8, 181, 30, fill = "#0C1A18", outline = GREEN)
-        c.text("YOUR CITY", 24, 11, font = "4x5", color = DIM)
-        c.text_fit(label(s["local"], 21), 24, 18, ["7x12", "6x8", "5x7", "4x5", "3x4"], color = GREEN, maxw = 88)
-        c.vline(116, 10, 28, "#23443C")
+        c.text(local_head, 24, 11, font = "4x5", color = DIM)
+        # y=17: 7x12 at y=18 ended on the box outline at y=30.
+        c.text_fit(label(s["local"], 21), 24, 17, ["7x12", "6x8", "5x7", "4x5", "3x4"], color = GREEN, maxw = 88)
+        c.vline(116, 10, 19, "#23443C")
         c.text(arrival_head, 148, 11, font = "4x5", color = DIM, align = "center")
-        c.text_fit(arrival_value, 148, 18, ["7x12", "6x8", "5x7"], color = AMBER, align = "center", maxw = 58)
+        c.text_fit(arrival_value, 148, 17, ["7x12", "6x8", "5x7"], color = AMBER, align = "center", maxw = 58)
     else:
-        c.text("YOUR CITY", 32, 8, font = "4x5", color = DIM, align = "center")
-        c.text_fit(label(s["local"], 15), 32, 14, ["5x7", "4x5", "3x4"], color = GREEN, align = "center", maxw = 60)
-        c.text(arrival_head, 32, 21, font = "4x5", color = DIM, align = "center")
-        c.text_fit(arrival_value, 32, 26, ["4x5", "3x4"], color = AMBER, align = "center", maxw = 60)
+        # Rows at 1/7/13/19/25 keep the 1px gap; 5x7 ran into the row below it.
+        c.text(local_head, 32, 7, font = "4x5", color = DIM, align = "center")
+        c.text_fit(label(s["local"], 15), 32, 13, ["4x5", "3x4"], color = GREEN, align = "center", maxw = 60)
+        c.text(arrival_head, 32, 19, font = "4x5", color = DIM, align = "center")
+        c.text_fit(arrival_value, 32, 25, ["4x5", "3x4"], color = AMBER, align = "center", maxw = 60)
     top(c, "VISITING YOU" if s["is_here"] else "ON THE WAY", "")
 
 
 def journal(c, ctx):
     s = network_state(ctx)
+    if "lost" in s:
+        return lost(c, s["lost"])
     city_scene(c, s["previous"])
     if c.width >= 128:
         c.rect(60, 8, 180, 30, fill = INK, outline = AMBER)
+        # Rows at 10/16/24 clear the box outline at y=8 and y=30. 5x7 is the largest
+        # city face that keeps the 1px gaps; 6x8 touched the rows around it.
         c.text("LAST CITY", 120, 10, font = "4x5", color = DIM, align = "center")
-        c.text_fit(label(s["previous"], 27), 120, 16, ["6x8", "5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 112)
-        c.text("FOUND " + s["keepsake"], 120, 25, font = "4x5", color = AMBER, align = "center")
+        c.text_fit(label(s["previous"], 27), 120, 16, ["5x7", "4x5", "3x4"], color = MINT, align = "center", maxw = 112)
+        c.text(found_text(s["keepsake"]), 120, 24, font = "4x5", color = AMBER, align = "center")
     else:
         c.rect(0, 7, 63, 13, fill = INK)
         c.text_fit(label(s["previous"], 15), 32, 8, ["4x5", "3x4"], color = MINT, align = "center", maxw = 60)
         c.rect(0, 24, 63, 31, fill = INK)
-        c.text_fit("FOUND " + s["keepsake"], 32, 25, ["4x5", "3x4"], color = AMBER, align = "center", maxw = 60)
+        # 'FOUND RED FEATHER' is 67px even at 3x4, so long keepsakes lose the verb.
+        c.text_fit(found_text(s["keepsake"], 15), 32, 25, ["4x5", "3x4"], color = AMBER, align = "center", maxw = 60)
     top(c, "TRAVEL JOURNAL" if c.width >= 128 else "LAST STOP", "")
