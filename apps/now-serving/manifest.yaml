@@ -1,0 +1,70 @@
+# GDN app manifest (v2). This file is the source of truth for how your app is
+# configured and reviewed. Edit it in VS Code or the Studio.
+gdn: 1
+id: now-serving
+version: 0.1.0
+name: Now Serving
+author: jdhine02
+description: Show what's being poured. Pick up to three bottles from the dropdowns and their logos space themselves evenly under a Now Serving header.
+category: Lifestyle
+entry: app.star
+
+# Panel geometry. Height is 32 (fixed); width up to 384.
+width: 192
+height: 32
+
+# The picks only change when the owner edits them, so there's nothing to poll.
+refresh: 86400
+
+# Pages the panel rotates through, in order. app.star must define a function per name.
+pages: [serving]
+
+assets:
+  - blantons54.png
+  - blantons84.png
+  - budlight46.png
+  - bulleit54.png
+  - bulleit74.png
+  - elijahcraig34.png
+  - fourroses54.png
+  - fourroses82.png
+  - makersmark54.png
+  - makersmark61.png
+  - oldforester54.png
+  - oldforester81.png
+  - rhinegeist26.png
+  - staggjr55.png
+  - staggjr64.png
+  - weller54.png
+  - weller66.png
+  - whiteclaw57.png
+  - wines61.png
+
+# What the client fills in at install time.
+#   type            — the data type: string | number | choice
+#   app_input_type  — the UI widget the client sees. One of:
+#                     free-text | dropdown | selection | checkbox | date | date-past | color
+#                     (optional; if omitted the form infers it from `type`)
+inputs:
+  - key: logo1
+    type: choice
+    app_input_type: dropdown
+    label: Logo 1
+    default: "Bulleit"
+    choices: ["None", "Blanton's", "Bud Light", "Bulleit", "Elijah Craig", "Four Roses", "Maker's Mark", "Old Forester", "Rhinegeist", "Stagg Jr", "Various Wines", "Weller", "White Claw"]
+
+  - key: logo2
+    required: false
+    type: choice
+    app_input_type: dropdown
+    label: Logo 2 (optional)
+    default: "None"
+    choices: ["None", "Blanton's", "Bud Light", "Bulleit", "Elijah Craig", "Four Roses", "Maker's Mark", "Old Forester", "Rhinegeist", "Stagg Jr", "Various Wines", "Weller", "White Claw"]
+
+  - key: logo3
+    required: false
+    type: choice
+    app_input_type: dropdown
+    label: Logo 3 (optional)
+    default: "None"
+    choices: ["None", "Blanton's", "Bud Light", "Bulleit", "Elijah Craig", "Four Roses", "Maker's Mark", "Old Forester", "Rhinegeist", "Stagg Jr", "Various Wines", "Weller", "White Claw"]
