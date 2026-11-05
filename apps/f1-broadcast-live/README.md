@@ -16,7 +16,7 @@ one for between sessions:
 Once a race weekend starts, the latest session stays on the panel until the
 next one begins, so qualifying's order shows until the race starts. A finished
 race stays up until 11:59 PM in the chosen time zone, then the panel moves on
-to the next grand prix. The panel refreshes every 60 seconds.
+to the next grand prix. The panel refreshes every 2 minutes.
 
 Air temperature on the live `event` page follows the **Temperature unit**
 dropdown (°C / °F).

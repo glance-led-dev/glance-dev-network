@@ -14,10 +14,10 @@ entry: app.star
 width: 192
 height: 32
 
-# One fixed interval for the whole app: 60 seconds, in line with the Glance
-# zone. Each feed keeps its own cache (15 s to a day), so a refresh only
+# One fixed interval for the whole app: 2 minutes. Each feed keeps its own
+# cache (15 s to a day), so a refresh only
 # re-fetches what has gone stale.
-refresh: 60
+refresh: 300
 
 # The panel rotates through these pages in order, one render request per page.
 # board*/feed* are "flex" slots -- each figures out what to show from the
