@@ -2,7 +2,7 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: now-serving
-version: 0.1.0
+version: 0.2.0
 name: Now Serving
 author: jdhine02
 description: Show what's being poured. Pick up to three bottles from the dropdowns and their logos space themselves evenly under a Now Serving header.
@@ -20,23 +20,22 @@ refresh: 86400
 pages: [serving]
 
 assets:
-  - blantons54.png
+  - blantons56.png
   - blantons84.png
   - budlight46.png
-  - bulleit54.png
-  - bulleit74.png
-  - elijahcraig34.png
-  - fourroses54.png
-  - fourroses82.png
+  - bulleit57.png
+  - bulleit88.png
+  - elijahcraig36.png
+  - fourroses57.png
   - makersmark54.png
-  - makersmark61.png
+  - makersmark62.png
   - oldforester54.png
-  - oldforester81.png
+  - oldforester83.png
   - rhinegeist26.png
   - staggjr55.png
   - staggjr64.png
   - weller54.png
-  - weller66.png
+  - weller67.png
   - whiteclaw57.png
   - wines61.png
 
