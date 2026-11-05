@@ -3,9 +3,30 @@ id: bchl-scores-leaders
 version: 0.2.0
 name: BCHL Scores and Leaders
 author: Michael Crawford
-description: BCHL scores, Blackfalds games, and top-five scoring leaders with team logos. Times are Mountain Time.
+description: BCHL scores, Blackfalds games, and top-five scoring leaders with team logos, live from the league's official stats feed. Times are Mountain Time.
 category: Sports
 entry: app.star
+assets:
+  - assets/logos/8.png
+  - assets/logos/9.png
+  - assets/logos/10.png
+  - assets/logos/11.png
+  - assets/logos/13.png
+  - assets/logos/14.png
+  - assets/logos/16.png
+  - assets/logos/17.png
+  - assets/logos/18.png
+  - assets/logos/19.png
+  - assets/logos/20.png
+  - assets/logos/21.png
+  - assets/logos/22.png
+  - assets/logos/23.png
+  - assets/logos/39.png
+  - assets/logos/81.png
+  - assets/logos/82.png
+  - assets/logos/87.png
+  - assets/logos/88.png
+  - assets/logos/89.png
 width: 192
 height: 32
 refresh: 120

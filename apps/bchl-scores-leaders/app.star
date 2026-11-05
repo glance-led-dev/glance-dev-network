@@ -1,73 +1,182 @@
 # BCHL Scores and Leaders — native GDN app. No user credentials required.
-# Live data comes from the project's public Cloudflare adapter. Demo is opt-in.
-# Official team marks are embedded below to keep the app to exactly two files.
+# Live data comes straight from HockeyTech, the BCHL's official stats feed
+# (the same public key bchl.ca uses). Demo is opt-in.
 
-API = "https://bchl-glance.pages.dev/api/gdn/"
+FEED = "https://lscluster.hockeytech.com/feed/index.php"
+FEED_KEY = {"key": "ca4e9e599d4dae55", "client_code": "bchl", "lang": "en", "fmt": "json"}
+BLACKFALDS = "82"
+
 LEFT = 10
 RIGHT = 181
 WHITE = "#FFFFFF"
-GRAY = "#969696"
+GRAY = "#8C8C8C"
+DIM = "#5A5A5A"
 RED = "#FF3B30"
 AMBER = "#FFBF00"
+GREEN = "#3DDC84"
 
-def _fit(c, value, width, font = "5x7"):
-    text = str(value).upper()
-    if c.text_width(text, font = font) <= width:
-        return text
-    for length in range(len(text), -1, -1):
-        short = text[:length] + "."
-        if c.text_width(short, font = font) <= width:
-            return short
-    return ""
+DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
-def _text(c, value, x, y, width, color = GRAY, font = "5x7"):
-    c.text(_fit(c, value, width, font), x, y, font = font, color = color)
+# Official team marks, 28x28. Paths stay literal so the asset lint can see them.
+LOGOS = {
+    "8": "assets/logos/8.png",
+    "9": "assets/logos/9.png",
+    "10": "assets/logos/10.png",
+    "11": "assets/logos/11.png",
+    "13": "assets/logos/13.png",
+    "14": "assets/logos/14.png",
+    "16": "assets/logos/16.png",
+    "17": "assets/logos/17.png",
+    "18": "assets/logos/18.png",
+    "19": "assets/logos/19.png",
+    "20": "assets/logos/20.png",
+    "21": "assets/logos/21.png",
+    "22": "assets/logos/22.png",
+    "23": "assets/logos/23.png",
+    "39": "assets/logos/39.png",
+    "81": "assets/logos/81.png",
+    "82": "assets/logos/82.png",
+    "87": "assets/logos/87.png",
+    "88": "assets/logos/88.png",
+    "89": "assets/logos/89.png",
+}
 
-def _center(c, value, center, y, width, color = WHITE, font = "5x7"):
-    text = _fit(c, value, width, font)
-    x = center - c.text_width(text, font = font) // 2
-    c.text(text, x, y, font = font, color = color)
+# ---------- time (feed times are ISO with an offset; we show Mountain Time)
 
-def _header(c, title, tag = ""):
-    c.fill("black")
-    tag = _fit(c, tag, 36)
-    tag_width = c.text_width(tag, font = "5x7")
-    title_width = 172 - tag_width - 4 if tag else 172
-    _text(c, title, LEFT, 0, title_width, RED)
-    if tag:
-        tint = AMBER if tag in ["DEMO", "STALE", "ERROR"] else GRAY
-        c.text(tag.upper(), RIGHT + 1 - tag_width, 0, font = "5x7", color = tint)
+def _days_from_civil(y, m, d):
+    yy = y - 1 if m <= 2 else y
+    era = (yy if yy >= 0 else yy - 399) // 400
+    yoe = yy - era * 400
+    mm = m + (-3 if m > 2 else 9)
+    doy = (153 * mm + 2) // 5 + d - 1
+    doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
+    return era * 146097 + doe - 719468
 
-def _notice(c, title, first, second, error = False):
-    _header(c, title, "ERROR" if error else "")
-    _text(c, first, LEFT, 12, 172, AMBER if error else "green")
-    _text(c, second, LEFT, 24, 172)
+def _civil(days):
+    z = days + 719468
+    era = (z if z >= 0 else z - 146096) // 146097
+    doe = z - era * 146097
+    yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp = (5 * doy + 2) // 153
+    d = doy - (153 * mp + 2) // 5 + 1
+    m = mp + (3 if mp < 10 else -9)
+    return (yoe + era * 400 + (1 if m <= 2 else 0), m, d)
 
-def _logo(c, team, x, y):
-    art = LOGOS.get(team, None)
-    if art == None:
-        # Unknown/new team: no unrelated club's logo is substituted.
-        _text(c, "?", x + 8, y + 7, 5)
+def _sunday(y, m, nth):
+    first = _days_from_civil(y, m, 1)
+    return first + (7 - (first + 4) % 7) % 7 + 7 * (nth - 1)
+
+def _mountain(unix):
+    # Local Mountain Time seconds: DST from 2nd Sunday of March to 1st Sunday of November.
+    y = _civil(unix // 86400)[0]
+    start = _sunday(y, 3, 2) * 86400 + 9 * 3600
+    end = _sunday(y, 11, 1) * 86400 + 8 * 3600
+    return unix + (-6 if start <= unix and unix < end else -7) * 3600
+
+def _parse_iso(s):
+    # "2026-10-30T19:00:00-06:00" -> unix seconds, or None.
+    if type(s) != "string" or len(s) < 25:
+        return None
+    d = s[0:10].split("-")
+    t = s[11:19].split(":")
+    if len(d) != 3 or len(t) != 3:
+        return None
+    for part in d + t + [s[20:22], s[23:25]]:
+        if not part.isdigit():
+            return None
+    offset = (int(s[20:22]) * 3600 + int(s[23:25]) * 60) * (-1 if s[19] == "-" else 1)
+    local = _days_from_civil(int(d[0]), int(d[1]), int(d[2])) * 86400 + int(t[0]) * 3600 + int(t[1]) * 60
+    return local - offset
+
+def _day(unix):
+    return _mountain(unix) // 86400
+
+def _date_label(day):
+    ymd = _civil(day)
+    return DAYS[(day + 4) % 7] + " " + MONTHS[ymd[1] - 1] + " " + str(ymd[2])
+
+def _clock(unix):
+    secs = _mountain(unix) % 86400
+    h = secs // 3600
+    m = (secs % 3600) // 60
+    return (str(h % 12 if h % 12 else 12) + ":" + ("0" if m < 10 else "") + str(m), "PM" if h >= 12 else "AM")
+
+# ---------- feed
+
+def _feed(params, ttl):
+    query = dict(FEED_KEY)
+    query.update(params)
+    resp = http.get(FEED, headers = {}, params = query, ttl_seconds = ttl)
+    if resp["status_code"] != 200:
+        return None
+    body = resp["json"]
+    if type(body) != "dict" or type(body.get("SiteKit")) != "dict":
+        return None
+    return body["SiteKit"]
+
+def _str(value):
+    return str(value) if value != None else ""
+
+def _num(value):
+    s = _str(value)
+    return int(s) if s.isdigit() else 0
+
+def _game(raw):
+    if type(raw) != "dict":
+        return None
+    unix = _parse_iso(raw.get("GameDateISO8601"))
+    away = _str(raw.get("VisitorID"))
+    home = _str(raw.get("HomeID"))
+    if unix == None or away == "" or home == "":
+        return None
+    text = _str(raw.get("GameStatusString")).upper()
+    status = _str(raw.get("GameStatus"))
+    if "FINAL" in text:
+        state = "final"
+        label = text
+    elif status == "1" or status == "":
+        state = "pre"
+        label = ""
     else:
-        for row in range(len(art["rows"])):
-            for col in range(len(art["rows"][row])):
-                key = art["rows"][row][col]
-                if key != "0":
-                    c.pixel(x + col, y + row, art["palette"][key])
+        state = "live"
+        period = _str(raw.get("PeriodNameShort")).upper()
+        period = "P" + period if period.isdigit() else period
+        if _str(raw.get("Intermission")) == "1":
+            label = "INT " + period
+        else:
+            label = period + " " + _str(raw.get("GameClock"))
+    return {
+        "unix": unix,
+        "state": state,
+        "label": label,
+        "away": {
+            "id": away,
+            "code": _str(raw.get("VisitorCode")),
+            "goals": _str(raw.get("VisitorGoals")),
+            "record": "%d-%d-%d" % (_num(raw.get("VisitorWins")), _num(raw.get("VisitorRegulationLosses")), _num(raw.get("VisitorOTLosses")) + _num(raw.get("VisitorShootoutLosses"))),
+        },
+        "home": {
+            "id": home,
+            "code": _str(raw.get("HomeCode")),
+            "goals": _str(raw.get("HomeGoals")),
+            "record": "%d-%d-%d" % (_num(raw.get("HomeWins")), _num(raw.get("HomeRegulationLosses")), _num(raw.get("HomeOTLosses")) + _num(raw.get("HomeShootoutLosses"))),
+        },
+    }
 
-def _match(c, game):
-    _logo(c, game["away"]["id"], LEFT, 10)
-    _logo(c, game["home"]["id"], RIGHT - 20, 10)
-    _center(c, game["away"]["code"], 44, 12, 25)
-    _center(c, game["home"]["code"], 148, 12, 25)
-    _center(c, "AWY", 44, 24, 25, GRAY)
-    _center(c, "HME", 148, 24, 25, GRAY)
-    result = game["result"]
-    font = "10x16"
-    if c.text_width(result.upper(), font = font) > 72:
-        font = "7x12"
-    _center(c, result, 96, 8, 72, WHITE, font)
-    _center(c, game["status"], 96, 25, 72, GRAY)
+def _games(params, ttl):
+    query = {"feed": "modulekit", "view": "scorebar"}
+    query.update(params)
+    kit = _feed(query, ttl)
+    if kit == None or type(kit.get("Scorebar")) != "list":
+        return None
+    games = []
+    for raw in kit["Scorebar"]:
+        game = _game(raw)
+        if game != None:
+            games.append(game)
+    return sorted(games, key = lambda g: g["unix"])
 
 def _stat(ctx):
     value = ctx.inputs.get("stat", "points")
@@ -76,894 +185,226 @@ def _stat(ctx):
 def _scope(ctx):
     return "blackfalds" if ctx.inputs.get("scope", "league") == "blackfalds" else "league"
 
-def _error():
-    return {"state": "error", "items": [], "date": ""}
+def _demo(ctx):
+    return ctx.inputs.get("mode", "live") == "demo"
 
-def _valid_team(value):
-    return type(value) == "dict" and type(value.get("id")) == "string" and type(value.get("code")) == "string" and value["code"] != ""
+# ---------- drawing
 
-def _valid_item(item, section):
-    if type(item) != "dict":
-        return False
-    if section == "leaders":
-        return _valid_team(item.get("team")) and type(item.get("name")) == "string" and type(item.get("value")) == "string" and type(item.get("rank")) == "string"
-    return _valid_team(item.get("away")) and _valid_team(item.get("home")) and type(item.get("result")) == "string" and type(item.get("status")) == "string" and type(item.get("date")) == "string"
+def _fit(c, value, width, font):
+    text = str(value).upper()
+    if c.text_width(text, font = font) <= width:
+        return text
+    for length in range(len(text) - 1, -1, -1):
+        short = text[:length].rstrip(" .") + "."
+        if c.text_width(short, font = font) <= width:
+            return short
+    return ""
 
-def _data(ctx, section):
-    if ctx.inputs.get("mode", "live") == "demo":
-        return _demo(ctx, section)
-    endpoint = "leaders" if section == "leaders" else "scores"
-    params = {"stat": _stat(ctx), "scope": _scope(ctx)} if section == "leaders" else {}
-    resp = http.get(API + endpoint, headers = {}, params = params, ttl_seconds = 120)
-    if resp["status_code"] != 200:
-        return _error()
-    body = resp["json"]
-    if type(body) != "dict" or body.get("schema") != 1 or type(body.get("date")) != "string":
-        return _error()
-    data = body.get(section)
-    if type(data) != "dict" or type(data.get("items")) != "list":
-        return _error()
-    state = data.get("state")
-    if state not in ["ok", "empty", "stale"]:
-        return _error()
-    if section == "leaders" and (body.get("stat") != _stat(ctx) or body.get("scope") != _scope(ctx)):
-        return _error()
-    retrieved = data.get("retrievedAt")
-    if type(retrieved) != "int":
-        return _error()
-    age = ctx.now.unix - retrieved
-    # Bound offline cache age even if a host serves an old successful response.
-    maximum = 3600 if section == "leaders" else 900
-    fresh = 420 if section == "leaders" else 180
-    if age < -120 or age > maximum:
-        return _error()
-    if age > fresh:
-        state = "stale"
-    for item in data["items"]:
-        if not _valid_item(item, section):
-            return _error()
-    return {"state": state, "items": data["items"], "date": body["date"]}
+def _text(c, value, x, y, width, color, font = "5x7"):
+    c.text(_fit(c, value, width, font), x, y, font = font, color = color)
 
-def _show_notice(c, title, data, empty):
-    if data["state"] == "error":
-        _notice(c, title, "FEED UNAVAILABLE", "RETRY IN 2 MIN", True)
-        return True
-    if not data["items"]:
-        if data["state"] == "stale":
-            _notice(c, title, "FEED OUT OF DATE", "RETRY IN 2 MIN", True)
+def _center(c, value, center, y, width, color, font = "5x7"):
+    text = _fit(c, value, width, font)
+    c.text(text, center - c.text_width(text, font = font) // 2, y, font = font, color = color)
+
+def _right(c, value, right, y, width, color, font = "5x7"):
+    text = _fit(c, value, width, font)
+    c.text(text, right + 1 - c.text_width(text, font = font), y, font = font, color = color)
+
+def _logo(c, team, x, y):
+    path = LOGOS.get(team["id"])
+    if path != None:
+        c.image(path, x, y, w = 28, h = 28)
+    else:
+        # New or renamed club: a framed code rather than some other team's mark.
+        c.rect(x + 1, y + 1, x + 26, y + 26, outline = DIM)
+        _center(c, team["code"], x + 14, y + 10, 24, GRAY)
+
+def _notice(c, first, second, color):
+    c.fill("black")
+    c.text("BCHL", LEFT, 3, font = "10x16_bold", color = RED)
+    _text(c, first, 58, 6, 124, color)
+    _text(c, second, 58, 18, 124, GRAY)
+
+def _match(c, game, tag, tag_color, pager, now):
+    c.fill("black")
+    away = game["away"]
+    home = game["home"]
+    _logo(c, away, LEFT, 2)
+    _logo(c, home, RIGHT - 27, 2)
+
+    # Team codes and records flank the score.
+    c.text(_fit(c, away["code"], 26, "7x12"), 41, 3, font = "7x12", color = WHITE)
+    _right(c, home["code"], 150, 3, 26, WHITE, "7x12")
+    c.text(away["record"], 41, 18, font = "4x5", color = GRAY)
+    _right(c, home["record"], 150, 18, 30, GRAY, "4x5")
+
+    state = game["state"]
+    if state == "pre":
+        clock = _clock(game["unix"])
+        width = c.text_width(clock[0], font = "10x16_bold") + 2 + c.text_width(clock[1], font = "4x5")
+        x = 96 - width // 2
+        c.text(clock[0], x, 3, font = "10x16_bold", color = WHITE)
+        c.text(clock[1], x + width - c.text_width(clock[1], font = "4x5"), 13, font = "4x5", color = GRAY)
+        day = _day(game["unix"])
+        status = "TODAY MT" if day == _day(now) else _date_label(day)
+        status_color = AMBER
+    else:
+        ag = _num(away["goals"])
+        hg = _num(home["goals"])
+        live = state == "live"
+        a_color = WHITE if live or ag >= hg else DIM
+        h_color = WHITE if live or hg >= ag else DIM
+        _right(c, away["goals"], 89, 1, 40, a_color, "16x20_bold")
+        c.rect(93, 10, 98, 11, fill = GRAY)
+        c.text(_fit(c, home["goals"], 40, "16x20_bold"), 103, 1, font = "16x20_bold", color = h_color)
+        if live:
+            status = game["label"]
+            status_color = RED
         else:
-            _notice(c, title, "ALL CLEAR", empty)
-        return True
-    return False
+            ymd = _civil(_day(game["unix"]))
+            status = game["label"] + " " + str(ymd[1]) + "/" + str(ymd[2])
+            status_color = GRAY
 
-def _tag(data, fallback = ""):
-    return data["state"].upper() if data["state"] in ["demo", "stale"] else fallback
+    status = _fit(c, status, 68, "5x7")
+    start = 96 - c.text_width(status, font = "5x7") // 2
+    c.text(status, start, 24, font = "5x7", color = status_color)
+    if state == "live":
+        c.rect(start - 5, 26, start - 3, 28, fill = RED)
+
+    # Footer corners: page identity on the left, pager on the right.
+    c.text(tag, 41, 26, font = "4x5", color = tag_color)
+    if pager:
+        _right(c, pager, 150, 26, 20, DIM, "4x5")
+
+def _pick_day(games, now):
+    # Live games win; then today's slate; then yesterday's finals; then the next slate.
+    live = [g for g in games if g["state"] == "live"]
+    if live:
+        return live
+    today = _day(now)
+    for wanted in [today, today - 1]:
+        slate = [g for g in games if _day(g["unix"]) == wanted]
+        if slate and (wanted == today or [g for g in slate if g["state"] == "final"]):
+            return slate
+    upcoming = [g for g in games if _day(g["unix"]) > today]
+    if upcoming:
+        first = _day(upcoming[0]["unix"])
+        return [g for g in upcoming if _day(g["unix"]) == first]
+    if games:
+        last = _day(games[-1]["unix"])
+        return [g for g in games if _day(g["unix"]) == last]
+    return []
 
 def scores(c, ctx):
-    data = _data(ctx, "scores")
-    if not _show_notice(c, "BCHL SCORES", data, "NO GAMES TODAY"):
-        count = len(data["items"])
-        index = (ctx.now.unix // 120) % count
-        _header(c, "BCHL " + data["date"], _tag(data, str(index + 1) + "/" + str(count)))
-        _match(c, data["items"][index])
+    now = ctx.now.unix
+    if _demo(ctx):
+        games = DEMO_GAMES
+    else:
+        games = _games({"numberofdaysback": "3", "numberofdaysahead": "3"}, 90)
+    if games == None:
+        _notice(c, "FEED UNAVAILABLE", "RETRY IN 2 MIN", AMBER)
+        return
+    slate = _pick_day(games, now)
+    if not slate:
+        _notice(c, "ALL CLEAR", "NO GAMES THIS WEEK", GREEN)
+        return
+    index = (now // 120) % len(slate)
+    tag = "DEMO" if _demo(ctx) else "BCHL"
+    _match(c, slate[index], tag, AMBER if _demo(ctx) else RED, str(index + 1) + "/" + str(len(slate)), now)
 
 def blackfalds(c, ctx):
-    data = _data(ctx, "blackfalds")
-    if not _show_notice(c, "BLACKFALDS", data, "NO GAME IN FEED"):
-        game = data["items"][0]
-        _header(c, "BLACKFALDS " + game["date"], _tag(data))
-        _match(c, game)
+    now = ctx.now.unix
+    if _demo(ctx):
+        games = DEMO_GAMES
+    else:
+        games = _games({"team_id": BLACKFALDS, "numberofdaysback": "14", "numberofdaysahead": "14"}, 300)
+    if games == None:
+        _notice(c, "FEED UNAVAILABLE", "RETRY IN 2 MIN", AMBER)
+        return
+    games = [g for g in games if BLACKFALDS in [g["away"]["id"], g["home"]["id"]]]
+    today = _day(now)
+    live = [g for g in games if g["state"] == "live"]
+    done = [g for g in games if g["state"] == "final"]
+    ahead = [g for g in games if g["state"] == "pre"]
+    if live:
+        game, tag = live[0], "LIVE"
+    elif done and _day(done[-1]["unix"]) == today:
+        game, tag = done[-1], "FINAL"
+    elif ahead:
+        game, tag = ahead[0], "NEXT"
+    elif done:
+        game, tag = done[-1], "LAST"
+    else:
+        _notice(c, "ALL CLEAR", "NO BULLDOGS GAMES", GREEN)
+        return
+    if _demo(ctx):
+        tag = "DEMO"
+    _match(c, game, tag, AMBER if tag in ["NEXT", "DEMO"] else RED, "BFB", now)
 
 def leaders(c, ctx):
     stat = _stat(ctx)
     scope = _scope(ctx)
-    title = "BCHL " + stat.upper()
-    data = _data(ctx, "leaders")
-    if not _show_notice(c, title, data, "SEASON STATS SOON"):
-        count = min(5, len(data["items"]))
-        player = data["items"][(ctx.now.unix // 120) % count]
-        _header(c, title, _tag(data))
-        _logo(c, player["team"]["id"], LEFT, 10)
-        _text(c, player["name"], 37, 12, 98, WHITE)
-        scope_label = "BFB" if scope == "blackfalds" else "LEAGUE"
-        _text(c, "#" + player["rank"] + " " + scope_label + " " + player["team"]["code"], 37, 24, 98)
-        font = "10x16" if c.text_width(player["value"], font = "10x16") <= 38 else "5x7"
-        _center(c, player["value"], 162, 8, 38, WHITE, font)
-        unit = {"points": "PTS", "goals": "G", "assists": "A"}[stat]
-        _center(c, unit, 162, 25, 38)
-
-def _demo(ctx, section):
-    # Explicit demo mode only. Never used as a fallback for unavailable live data.
-    if section == "leaders":
-        club = {"id": "82", "code": "BFB"} if _scope(ctx) == "blackfalds" else {"id": "87", "code": "OKO"}
-        items = [{"name": "ALEX SAMPLE", "team": club, "rank": "1", "value": {"points": "23", "goals": "9", "assists": "14"}[_stat(ctx)]}]
-    elif section == "blackfalds":
-        items = [{"away": {"id": "21", "code": "VER"}, "home": {"id": "82", "code": "BFB"}, "result": "VS", "status": "6PM MT", "date": "10/24"}]
+    if _demo(ctx):
+        players = DEMO_LEADERS
     else:
-        items = [{"away": {"id": "14", "code": "PG"}, "home": {"id": "10", "code": "CV"}, "result": "3-2", "status": "P2 08:42", "date": "10/22"}]
-    return {"state": "demo", "items": items, "date": "10/22"}
+        params = {"feed": "modulekit", "view": "statviewtype", "type": "topscorers", "first": "0", "limit": "5", "sort": stat}
+        if scope == "blackfalds":
+            params["team_id"] = BLACKFALDS
+        kit = _feed(params, 600)
+        if kit == None or type(kit.get("Statviewtype")) != "list":
+            _notice(c, "FEED UNAVAILABLE", "RETRY IN 2 MIN", AMBER)
+            return
+        players = [p for p in kit["Statviewtype"] if type(p) == "dict" and _str(p.get("team_id")) != ""]
+    if not players:
+        _notice(c, "ALL CLEAR", "SEASON STATS SOON", GREEN)
+        return
 
-# LOGOS follows: original BCHL team marks converted to a hard pixel palette.
+    count = min(5, len(players))
+    index = (ctx.now.unix // 120) % count
+    p = players[index]
+    unit = {"points": "PTS", "goals": "GOALS", "assists": "ASSISTS"}[stat]
 
-LOGOS = {
-  "8": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000111100000000",
-      "000001087799A77010000",
-      "0001079999999999A0100",
-      "000799999999999999710",
-      "179999997877478999970",
-      "2A9999700077077099991",
-      "079999707787070009990",
-      "010999904777777089990",
-      "000999970477770799990",
-      "005999999908079999970",
-      "001999999999999999710",
-      "017999999999999997500",
-      "019999900077777701000",
-      "017777770000110000000",
-      "011111110000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000"
-    ]
-  },
-  "9": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000001100101100000",
-      "000001112020111010100",
-      "000102102100000011100",
-      "000022100222220101100",
-      "000020211112211102100",
-      "000122022111000250100",
-      "000122010A02222222100",
-      "000121100222100222000",
-      "000111022010000000200",
-      "000010502012222222000",
-      "000022200000000001000",
-      "001200877777000022000",
-      "000007800007000000000",
-      "000022000000000000000",
-      "000000222000000000800",
-      "000000522022002020000",
-      "000000110222002222100",
-      "000000010102250222100",
-      "000000000011A02202000",
-      "000000000010211110000",
-      "000000000000010001000"
-    ]
-  },
-  "10": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000500000000000100000",
-      "000555552252555001000",
-      "025555033000000025210",
-      "005552330110003112521",
-      "155550331111021111058",
-      "155550330110001111150",
-      "055552333430555501151",
-      "102555552550002255020",
-      "013311121133300010510",
-      "001331111333000000500",
-      "000333113330000001000",
-      "000033333310000000000",
-      "000013333100000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000"
-    ]
-  },
-  "11": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000111110000000",
-      "000151116211115000000",
-      "000177511111211510000",
-      "000185551111111550000",
-      "000115551151155775000",
-      "000515555551755777500",
-      "005175511111571577500",
-      "05AA77111111115556000",
-      "1AA1A875511111A510000",
-      "211555575155151A15100",
-      "2A11A1555555111115551",
-      "1A1A15255552115555515",
-      "01AA55555555551555521",
-      "001555555551155555511",
-      "000055515121155551151",
-      "000001112110015125500",
-      "000000000000000010000",
-      "000000000000000000000",
-      "000000000000000000000"
-    ]
-  },
-  "13": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000100000000000",
-      "000000000410000000000",
-      "000001100444000000000",
-      "000004444444410000000",
-      "000001444411141000000",
-      "000000444414441122200",
-      "001111444441444222210",
-      "004444411111441222210",
-      "001444441444412222200",
-      "000144441444422222100",
-      "000181114444122211000",
-      "044441144441222244000",
-      "044444114442222144100",
-      "004444114412221444410",
-      "000111444122224444440",
-      "014441144422221444100",
-      "144444414412221444100",
-      "001444144441222111100",
-      "000041144444222222200",
-      "000444441111122222220",
-      "001444444444422222221"
-    ]
-  },
-  "14": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000001100000000",
-      "000000000001100000000",
-      "000000000013300000000",
-      "000000011381133100000",
-      "000000131318113131000",
-      "000001313113115713100",
-      "000003111115111115300",
-      "00000111B515515615100",
-      "000000611155151115000",
-      "000000152B51151651000",
-      "000000083331133310000",
-      "000000021111111111000",
-      "013113355155155113310",
-      "013131311111331133310",
-      "013313331113111337110",
-      "013313313113113111310",
-      "013131311311373113110",
-      "013113333333333333310",
-      "000015551115113000000",
-      "000000000000003000000",
-      "000000000000001000000"
-    ]
-  },
-  "16": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000220000",
-      "000000000000002000000",
-      "000000000200002200000",
-      "000000200211000000000",
-      "000400033202210000000",
-      "000100011102022200000",
-      "000002000010002210000",
-      "000000001103000200000",
-      "000000200202222222000",
-      "00000001002000A220000",
-      "000050010000022220100",
-      "000000010000022520100",
-      "000000100002020200010",
-      "000000103000330000010",
-      "000000003133100000012",
-      "002011000000500000000",
-      "110000000000000000000",
-      "010000000000000000000",
-      "000000000000000000000"
-    ]
-  },
-  "17": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000055555550000000",
-      "000005155555551500000",
-      "000005511555555520000",
-      "000155511515155151000",
-      "000555255011151155100",
-      "055551515525555550550",
-      "015155525555555510510",
-      "555555555555555555555",
-      "555555555551155155555",
-      "555555155515555155555",
-      "555551515511215555551",
-      "555555010511155555555",
-      "551105155555555555155",
-      "551155555555115551155",
-      "015515555515552155510",
-      "055155555505515511550",
-      "005551150555551555100",
-      "000151551511515551000",
-      "000055551511555510000",
-      "000005155555551500000",
-      "000000055515550000000"
-    ]
-  },
-  "18": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000008700804707800000",
-      "000277700070007771000",
-      "001000000000000000150",
-      "000000100070001000000",
-      "000777870777078777000",
-      "007777008000700777700",
-      "070770701000707077070",
-      "070770077707770177070",
-      "070777007707720777070",
-      "070077001101100770A70",
-      "010007701101107700100",
-      "017000101000110001710",
-      "000700071444570007000",
-      "001170070404070170100",
-      "000107010104001701000",
-      "00001A071144170210000",
-      "000000117101711000000",
-      "000000000757000000000",
-      "000000001000100000000",
-      "000000000000000000000"
-    ]
-  },
-  "19": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000777000000000",
-      "777770151118111007777",
-      "001571A77202770178100",
-      "007010070771270010700",
-      "070077707701107170070",
-      "007747700787447127700",
-      "00787700A000744770700",
-      "000077770A00007710100",
-      "000077000027084110000",
-      "000777770070477777000",
-      "000007707770747000000",
-      "007007727742771770700",
-      "000070700747411070000",
-      "000707777248778707000",
-      "770707077747170702070",
-      "717070007701700070717",
-      "772700700777007007777",
-      "777000000707000000877",
-      "000000000070000000000",
-      "000000000000000000000"
-    ]
-  },
-  "20": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000010011000000",
-      "000000000110001000000",
-      "0000000020A0510200000",
-      "000001000001000100000",
-      "000011001051000110000",
-      "00001A011000050000000",
-      "000110010000000001000",
-      "001100050100020000000",
-      "000100000000220000200",
-      "020110200000222000A20",
-      "120000200000222000021",
-      "010000000000000500010",
-      "011500156155011155500",
-      "011500150115511055100",
-      "015105150000005151110",
-      "015501215111115101110",
-      "015100152222221000000",
-      "000000001222100000000",
-      "000000000120000000000",
-      "000000000000000000000"
-    ]
-  },
-  "21": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "0000020000000002A0000",
-      "0014A8522222222854200",
-      "00A840000000000008400",
-      "000A18800000008420400",
-      "0080A44000000044A0400",
-      "0040A0000000000040A50",
-      "008A00A4080A0AA000400",
-      "00AA00000A4A00000A400",
-      "000008482000584800400",
-      "001000001000200000200",
-      "000800002000200004200",
-      "0140AA088088888408820",
-      "0A1011808A22010112250",
-      "0021011AA1114A5A12200",
-      "002222000000000222200",
-      "000000240080081000000",
-      "000000040080040000000",
-      "000000028080450000000",
-      "00000000440A400000000",
-      "000000000525000000000"
-    ]
-  },
-  "22": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000010000010000000",
-      "000001010011000100000",
-      "000000A00011010100000",
-      "000010101000011000000",
-      "000001007777701000000",
-      "01000A177711771000010",
-      "008001777700777100800",
-      "100007710700777700001",
-      "00007770070077771000A",
-      "011077700700177770010",
-      "000071700100007010000",
-      "000001000100010100000",
-      "00102010010100001101A",
-      "110100011110000001101",
-      "000101001111000110000",
-      "011000100011001010110",
-      "000111002000101100000",
-      "000011011000010000000",
-      "000005011000011000000",
-      "000001011000110100000",
-      "00000001A000A10000000"
-    ]
-  },
-  "23": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "033333333303333333330",
-      "030000000033000000030",
-      "030111111003011111030",
-      "030111111103011111030",
-      "003011111110011110300",
-      "003011111111011110300",
-      "003011111111111110300",
-      "003011111111111110300",
-      "003011112111111110300",
-      "003011111211111110300",
-      "003011100002111110300",
-      "003011101000111110300",
-      "003011101000111110300",
-      "003011101000001110300",
-      "030011102000001110300",
-      "030111100000000110330",
-      "030111111111110111030",
-      "030111111000011111030",
-      "030000000000111111030",
-      "033333333000000000030",
-      "000000000003333333330"
-    ]
-  },
-  "39": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000001A10000000000",
-      "000000000011000000000",
-      "0000000010A1000000000",
-      "000000001111000000000",
-      "000000001220000000000",
-      "0000000A0220000000000",
-      "00000001A21A100000000",
-      "00000000222A000000000",
-      "000000012A2A000000000",
-      "0001000AAAAAAA0000000",
-      "0000A212AAAAAAA100000",
-      "0000000AAAAAAAA200000",
-      "00000021A2A22AAA00000",
-      "000001A12021AAAA00000",
-      "00000001022A2AAA2A000",
-      "000000001A52AA5AA1000",
-      "0000001AAA2A2AA222000",
-      "000002AA22AAAAAAA1000",
-      "000001A2A2AAA2A100000",
-      "000001AA22A1000000000",
-      "000001A10000000000000"
-    ]
-  },
-  "81": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000010000000002000000",
-      "000000000050555000000",
-      "010000000005055000000",
-      "001000000000503000000",
-      "000002000020000000000",
-      "000120000011000550000",
-      "000000001011010000001",
-      "000010001111001000000",
-      "000000000011881000000",
-      "000000000030000000000",
-      "000000005033333000000",
-      "000000001033333100000",
-      "000000001033301000000",
-      "000000000300000000000",
-      "000000000010000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000"
-    ]
-  },
-  "82": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000002100100000000",
-      "0001110A0A0A101811110",
-      "0881010A0A0A000500110",
-      "0012010A1A2A201801020",
-      "011220000200000000220",
-      "011002110202221222020",
-      "00880200201021A001000",
-      "008888000A12022251000",
-      "000001008888202221000",
-      "0000022A2020182225A00",
-      "00000802001021AA02020",
-      "00000021A022222020000",
-      "0000008AAA021AA200000",
-      "0000000202A00A5800000",
-      "00000000552AA18000000",
-      "000000000A20100000000",
-      "000000000008000000000",
-      "000000000000000000000",
-      "000000000000000000000"
-    ]
-  },
-  "87": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000001100000000",
-      "0000000000A2210080000",
-      "000000000001120040000",
-      "0000000A08111000410A1",
-      "0000000111A11110A400A",
-      "088000118088818888401",
-      "0000001288800A8288082",
-      "80000011878A4A8080000",
-      "20A00112170288888A000",
-      "208000108108888AA0000",
-      "80004005A80811AA00000",
-      "00008A005A01120000000",
-      "014000000002500000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000",
-      "000000000000000000000"
-    ]
-  },
-  "88": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000000000",
-      "000000000009999000000",
-      "000000000099999999900",
-      "000009000909099999000",
-      "000090099009000090000",
-      "000900999009000000000",
-      "009900999009000000000",
-      "009900999009000000000",
-      "099000999009000000000",
-      "099000999009000000000",
-      "099A00999009000000000",
-      "099900999009000000000",
-      "099900999009000000000",
-      "099900990009000000000",
-      "099990900009000000000",
-      "009999000009000000000",
-      "009999900009000000000",
-      "000999999009000009900",
-      "00009999999999999A000",
-      "000000999999999900000",
-      "000000000999900000000"
-    ]
-  },
-  "89": {
-    "palette": {
-      "0": "#000000",
-      "1": "#FFFFFF",
-      "2": "#969696",
-      "3": "#E52B35",
-      "4": "#721E28",
-      "5": "#183960",
-      "6": "#2871BA",
-      "7": "#FFC34D",
-      "8": "#A97C43",
-      "9": "#138B52",
-      "A": "#0E5040",
-      "B": "#57B9DD"
-    },
-    "rows": [
-      "000000000000000070000",
-      "000000000000000080000",
-      "000000000000000007000",
-      "000000000070000017000",
-      "00000001077B000001000",
-      "000007000B00008117000",
-      "000007057050771010000",
-      "0000000A8777802117000",
-      "000000787777705070000",
-      "057700087777755A55700",
-      "00000118777775560BB70",
-      "00000101875775550BB70",
-      "000007708777557500770",
-      "000000007B00570015770",
-      "000000005000006000700",
-      "000700000070600877000",
-      "000170007565700000000",
-      "000017760710000010000",
-      "0000767000070770001B0",
-      "000000001107000211000",
-      "000000000000000000000"
-    ]
-  }
-}
+    c.fill("black")
+    _logo(c, {"id": _str(p.get("team_id")), "code": _str(p.get("team_code"))}, LEFT, 2)
+
+    value = _str(p.get(stat))
+    _right(c, value, RIGHT, 1, 48, WHITE, "16x20_bold")
+    _right(c, unit, RIGHT, 24, 48, GRAY, "4x5")
+    value_left = RIGHT - c.text_width(value, font = "16x20_bold") - 4
+    name_width = min(value_left, 140) - 41
+
+    name = _str(p.get("shortname")) or _str(p.get("name"))
+    font = "7x12" if c.text_width(name.upper(), font = "7x12") <= name_width else "5x7"
+    _text(c, name, 41, 3 if font == "7x12" else 6, name_width, WHITE, font)
+
+    rank = _str(p.get("rank")) or str(index + 1)
+    where = "BULLDOGS" if scope == "blackfalds" else "BCHL"
+    _text(c, "#" + rank + " " + where, 41, 17, name_width, AMBER)
+
+    line = "%sG %sA %sGP" % (_str(p.get("goals")), _str(p.get("assists")), _str(p.get("games_played")))
+    if stat == "points":
+        line = line + " " + _str(p.get("team_code"))
+    _text(c, line, 41, 26, name_width, GRAY, "4x5")
+
+    # Rank pips: where this player sits in the top five.
+    for i in range(count):
+        x = RIGHT - 1 - (count - 1 - i) * 4
+        c.rect(x - 1, 30, x, 31, fill = AMBER if i == index else DIM)
+    if _demo(ctx):
+        c.text("DEMO", 41 + name_width - c.text_width("DEMO", font = "4x5"), 26, font = "4x5", color = AMBER)
+
+# Explicit demo mode only. Never used as a fallback for unavailable live data.
+DEMO_GAMES = [
+    {"unix": 1793300000, "state": "live", "label": "P2 08:42",
+     "away": {"id": "14", "code": "PG", "goals": "3", "record": "9-3-1"},
+     "home": {"id": "10", "code": "CV", "goals": "2", "record": "7-5-0"}},
+    {"unix": 1793300000, "state": "pre", "label": "",
+     "away": {"id": "21", "code": "VER", "goals": "0", "record": "8-4-1"},
+     "home": {"id": "82", "code": "BFB", "goals": "0", "record": "6-7-0"}},
+]
+
+DEMO_LEADERS = [
+    {"shortname": "A. Sample", "team_id": "87", "team_code": "OKO", "rank": "1",
+     "points": "23", "goals": "9", "assists": "14", "games_played": "13"},
+]
