@@ -14,7 +14,7 @@ width: 192
 height: 32
 
 # The count changes once a day; checking every 15 minutes catches local midnight closely.
-refresh: 900
+refresh: 14400
 
 # Pages the panel rotates through, in order. app.star must define a function per name.
 pages: [countdown]
