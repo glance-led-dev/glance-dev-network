@@ -3,8 +3,8 @@
 # it reports, then its next report date, before the open (AM) or after the
 # close (PM), and the EPS estimate.
 #
-# The pick list holds every US company that reported earnings in the past
-# year; type a ticker or name in the Glance app to search it.
+# Pick stocks from the list (the 750 largest US companies that report
+# earnings) and type any others in the second box.
 #
 # Data comes from MrNaturl's own static feed at /api/holdings/<letter>.json,
 # rebuilt several times a day from Nasdaq's public earnings calendar and
@@ -33,19 +33,26 @@ ROTATE_SECONDS = 600
 # --- the picked stocks -------------------------------------------------------
 
 def picked(ctx):
-    # A selection arrives as a list or as a comma separated string. Each
-    # choice reads "TICKER NAME"; the ticker is the first word.
+    # Stocks picked from the list (each choice reads "TICKER NAME"; the first
+    # word is the ticker) plus any tickers typed in the second box, separated
+    # by commas or spaces. A selection can arrive as a list or a comma
+    # separated string.
+    out = []
     raw = ctx.inputs.get("stocks", "")
     items = raw if type(raw) == "list" else str(raw).split(",")
-    out = []
     for item in items:
-        words = str(item).strip().split(" ")
-        if len(words) == 0 or words[0] == "":
-            continue
-        sym = words[0].upper()
-        if sym not in [p[0] for p in out]:
-            out.append((sym, " ".join(words[1:])))
+        words = str(item).split()
+        if len(words) > 0:
+            add(out, words[0])
+    typed = str(ctx.inputs.get("more", ""))
+    for w in typed.replace(",", " ").replace(";", " ").split():
+        add(out, w)
     return out
+
+def add(out, word):
+    sym = word.replace("$", "").strip().upper()
+    if sym != "" and sym not in [p[0] for p in out]:
+        out.append((sym, ""))
 
 def letter(sym):
     ch = sym[0]
@@ -180,8 +187,13 @@ def row_small(c, r, y):
         col = result_color(r)
         word = "BEAT" if r.get("b", True) else "MISS"
         c.text(word, 63, y, font = "4x5", color = col, align = "right")
-        c.text(r.get("d", ""), 63 - c.text_width(word, "4x5") - 5, y,
-               font = "4x5", color = DIM, align = "right")
+        # The date goes between the ticker and BEAT/MISS when it fits; a long
+        # ticker would run into it, so then it's left off.
+        left = 1 + c.text_width(r.get("s", ""), "4x5") + 2
+        right = 63 - c.text_width(word, "4x5") - 2
+        d = r.get("d", "")
+        if right - left + 1 >= c.text_width(d, "4x5"):
+            c.text(d, right, y, font = "4x5", color = DIM, align = "right")
         c.text(r["a"], 1, y + 6, font = "4x5", color = col)
         c.text(r.get("p", ""), 63, y + 6, font = "4x5", color = col,
                align = "right")
