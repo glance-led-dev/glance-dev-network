@@ -13,22 +13,26 @@ SAFE_WIDTH = 180    # x 6-185, so the app never merges with its scroll neighbors
 LOGO_TOP = 6        # header is picopixel at y 0-4, leaving 1 px clear above the logos
 LOGO_HEIGHT = 26    # y 6-31
 
-# name -> {size: (file, w, h)}. 84 is used with 1-2 logos, 54 with 3.
-# Widest three at 54 are 61+57+55 = 173 of 180, which still leaves 1 px gaps.
+# name -> {size: (file, w, h)}. "84" is the 1-2 logo slot, "54" the 3-logo slot.
+# Widest three in the 3-logo slot are 61+57+57 = 175 of 180, which still leaves 1 px gaps.
+# Old Forester is hand-drawn pixel lettering. The rest are blended from the
+# artwork with firmed edges; Bulleit keeps its arch. BOURBON lines are dropped:
+# unreadable at this size. Bulleit runs 88 wide; with an 84 partner that leaves 2 px gaps.
+# Maker's Mark redraws its seal ring as a crisp 1 px circle.
 # Various Wines is 20 px of bottles with its name drawn below them, because the
 # artwork's lettering turned to mush and picopixel read as "PARIOUS HINES".
 LOGOS = {
-    "Blanton's": {84: ("blantons84.png", 84, 24), 54: ("blantons54.png", 54, 15)},
+    "Blanton's": {84: ("blantons84.png", 84, 23), 54: ("blantons56.png", 56, 15)},
     "Bud Light": {84: ("budlight46.png", 46, 26), 54: ("budlight46.png", 46, 26)},
-    "Bulleit": {84: ("bulleit74.png", 74, 26), 54: ("bulleit54.png", 54, 19)},
-    "Elijah Craig": {84: ("elijahcraig34.png", 34, 26), 54: ("elijahcraig34.png", 34, 26)},
-    "Four Roses": {84: ("fourroses82.png", 82, 26), 54: ("fourroses54.png", 54, 26)},
-    "Maker's Mark": {84: ("makersmark61.png", 61, 26), 54: ("makersmark54.png", 54, 23)},
-    "Old Forester": {84: ("oldforester81.png", 81, 26), 54: ("oldforester54.png", 54, 17)},
+    "Bulleit": {84: ("bulleit88.png", 88, 19), 54: ("bulleit57.png", 57, 12)},
+    "Elijah Craig": {84: ("elijahcraig36.png", 36, 26), 54: ("elijahcraig36.png", 36, 26)},
+    "Four Roses": {84: ("fourroses57.png", 57, 26), 54: ("fourroses57.png", 57, 26)},
+    "Maker's Mark": {84: ("makersmark62.png", 62, 26), 54: ("makersmark54.png", 54, 23)},
+    "Old Forester": {84: ("oldforester83.png", 83, 26), 54: ("oldforester54.png", 54, 20)},
     "Rhinegeist": {84: ("rhinegeist26.png", 26, 26), 54: ("rhinegeist26.png", 26, 26)},
     "Stagg Jr": {84: ("staggjr64.png", 64, 26), 54: ("staggjr55.png", 55, 21)},
     "Various Wines": {84: ("wines61.png", 61, 26), 54: ("wines61.png", 61, 26)},
-    "Weller": {84: ("weller66.png", 66, 26), 54: ("weller54.png", 54, 21)},
+    "Weller": {84: ("weller67.png", 67, 26), 54: ("weller54.png", 54, 21)},
     "White Claw": {84: ("whiteclaw57.png", 57, 26), 54: ("whiteclaw57.png", 57, 26)},
 }
 
