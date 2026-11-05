@@ -27,7 +27,7 @@ The generated eight-page catalog poster is [preview/preview.png](preview/preview
 
 - **Team:** Select from the app's 365-school directory. No API key is needed.
 
-The five-minute refresh interval is unchanged. ESPN supplies rosters, season averages and game data. Live scoreboard and boxscore reads use short caches; roster and season-average reads are cached for six hours. An alternate ESPN API host is tried when the primary API request fails; this is not an independent data provider. HTML season-average reads do not have that API-host fallback.
+The five-minute refresh interval is unchanged. Game discovery uses the selected team's ESPN schedule, not the oversized national NCAA scoreboard. Schedule and game-summary reads are cached for five minutes; roster and season-average reads remain cached for six hours. Schedule and roster reads can try the alternate ESPN hostname. The summary uses the schedule-selected host once to keep the cold-cache request budget bounded. These are the same ESPN source, not independent providers. HTML season-average reads do not have API-host fallback.
 
 Roster members without posted season-average rows show `--`. A roster with fewer than eight eligible players shows LINEUP NOT POSTED on unfilled cards. Source failures and unposted boxscores have explicit fallback screens. Automatic live coverage depends on ESPN listing the game and its boxscore; this app does not add a separate exhibition-stat feed.
 
@@ -38,3 +38,41 @@ Game selection is automatic. Saved testing/demo overrides from earlier versions 
 Local validation checks all 365 selections and logo assets, all eight page entrypoints, player selection, centered stat values, decimal preservation, long score lines, larger biography text, exceptional surnames, source failures and the absence of public test controls. Layout fixtures and mocked ESPN responses are test evidence, not claims about actual games. These checks cannot guarantee every future provider payload or upstream roster completeness.
 
 After Glance publishes an approved update, verify the actual phone setup form contains only Team, preserves the selected school, and rotates eight pages. No credentials or local review harness files belong in this public app folder.
+
+
+## Reliability update
+
+Game discovery uses the selected school's ESPN schedule instead of the oversized
+national NCAA scoreboard. Today's summary is checked even when a cached schedule
+still says pregame. Live games, halftime, overtime, finals, overnight transitions,
+and conflicting or unavailable feeds have explicit handling. A failed feed does
+not silently become season averages. Malformed or duplicate box-score rows are
+rejected; missing individual statistics remain unknown (`--`), not invented zeroes.
+
+Missing position and height are filled independently from the exact roster athlete
+ID. Class and jersey use roster fallback when absent from the game. Valid game
+biography remains authoritative; details absent from both sources are not guessed.
+
+The eight team pages retain final statistics until 24 elapsed hours after
+tipoff, then return to season averages. A newer live game takes priority. A
+confirmed pregame does not erase a still-retained final. This is elapsed UTC time,
+so daylight-saving changes cannot shorten or lengthen the window. Game selection
+remains five starters plus three bench scoring leaders, displayed in scoring
+order; averages use the top eight season scorers. With fewer than eight eligible
+game participants, an unfilled page says LINEUP NOT POSTED rather than substituting
+a preview or averages.
+
+Only the season player-stat array is extracted from ESPN's web page. JSON syntax
+is validated before decoding so a damaged embedded table cannot crash the app.
+Missing individual averages display `--`, not zero. Schedule and summary caches
+are five minutes; roster and average caches remain six hours.
+
+Refresh remains 300 seconds. App identity, approved artwork/layouts and public
+author JSW41 are unchanged. No shooting-stat categories or faster-refresh request
+are included in this update. All pages share requests; the tested worst case uses
+eight uncached requests, including mixed-host failures and regular-season fallback.
+
+Verification: 174 regression scenarios / 966 actual Starlark page renders, 26
+calendar checks, both full-app/offline validations, saved-selection/page-wiring
+checks, and Illinois/Florida ESPN replays. The team JSON preflight also passed
+2,250 mutated-input checks. These are test results, not production certification.
