@@ -1,0 +1,25 @@
+id: ncaaw-leaders
+name: NCAA Women's Basketball Leaders
+author: cfdmb
+description: Top 3 NCAA Division I women's basketball leaders by category - Points, Rebounds, Assists, Steals, Blocks, and shooting splits - for all of D-I or one conference.
+category: Sports
+width: 192
+height: 32
+refresh: 10800
+pages:
+  - points
+  - rebounds
+  - assists
+  - steals
+  - blocks
+  - fgpct
+  - tppct
+  - ftpct
+inputs:
+  - key: conference
+    type: string
+    app_input_type: dropdown
+    label: Conference
+    choices: [All D-I, ACC, America East, American, Atlantic 10, ASUN, Big 12, Big East, Big Sky, Big South, Big Ten, Big West, CAA, Conference USA, Horizon, Ivy League, MAAC, MAC, MEAC, Missouri Valley, Mountain West, NEC, Ohio Valley, Pac-12, Patriot, SEC, SoCon, Southland, SWAC, Summit, Sun Belt, UAC, WCC]
+    default: All D-I
+    help: "All D-I shows the NCAA's official national leaders; a conference shows its own leaders."
