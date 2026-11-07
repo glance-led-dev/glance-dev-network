@@ -1,0 +1,38 @@
+# GDN app manifest (v2).
+gdn: 1
+id: sleeper-matchup-tracker
+version: 0.1.0
+name: Sleeper Matchup Tracker
+author: Kevin
+description: Your Sleeper fantasy matchups across two leagues — live scores vs your opponent, top scorers and busts (4+ point scorers highlighted), and league standings — plus live Patriots and Vikings scores with top stat leaders and their AFC East / NFC North division races. Sleeper + ESPN, no keys needed.
+category: Sports
+entry: app.star
+
+# Glance Classic 64x32: maximize the space, every pixel earns its place.
+width: 64
+height: 32
+
+# Live scores need fresh paint; feeds are cached per-TTL below so this is cheap.
+refresh: 120
+
+pages: [tpl_matchup, tpl_stars, lhl_matchup, lhl_stars, boards, patriots, vikings, divisions]
+
+inputs:
+  - key: sleeperuser
+    type: string
+    app_input_type: free-text
+    label: Sleeper username
+    default: "Probrum"
+    help: Your Sleeper username — used to find your roster in each league.
+  - key: tplleague
+    type: string
+    app_input_type: free-text
+    label: League 1 ID (The Perfectly League)
+    default: "1361212735974547456"
+    help: Sleeper league ID for the first league shown.
+  - key: lhlleague
+    type: string
+    app_input_type: free-text
+    label: League 2 ID (Love Hate League)
+    default: "1389327521807347712"
+    help: Sleeper league ID for the second league shown.
