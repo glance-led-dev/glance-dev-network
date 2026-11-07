@@ -2,7 +2,7 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: now-serving
-version: 0.2.0
+version: 0.3.0
 name: Now Serving
 author: jdhine02
 description: Show what's being poured. Pick up to three bottles from the dropdowns and their logos space themselves evenly under a Now Serving header.
@@ -20,20 +20,36 @@ refresh: 86400
 pages: [serving]
 
 assets:
+  - bakers57.png
+  - bakers81.png
+  - bardstown57.png
+  - bardstown72.png
   - blantons56.png
   - blantons84.png
   - budlight46.png
   - bulleit57.png
   - bulleit88.png
+  - ehtaylor57.png
+  - ehtaylor84.png
   - elijahcraig36.png
   - fourroses57.png
+  - heavenhill44.png
+  - josecuervo57.png
+  - josecuervo84.png
+  - knobcreek46.png
   - makersmark54.png
   - makersmark62.png
+  - michters29.png
   - oldforester54.png
   - oldforester83.png
+  - redbull52.png
   - rhinegeist26.png
+  - smirnoff57.png
+  - smirnoff84.png
   - staggjr55.png
   - staggjr64.png
+  - truly57.png
+  - truly84.png
   - weller54.png
   - weller67.png
   - whiteclaw57.png
@@ -50,7 +66,7 @@ inputs:
     app_input_type: dropdown
     label: Logo 1
     default: "Bulleit"
-    choices: ["None", "Blanton's", "Bud Light", "Bulleit", "Elijah Craig", "Four Roses", "Maker's Mark", "Old Forester", "Rhinegeist", "Stagg Jr", "Various Wines", "Weller", "White Claw"]
+    choices: ["None", "Baker's", "Bardstown", "Blanton's", "Bud Light", "Bulleit", "E.H. Taylor", "Elijah Craig", "Four Roses", "Heaven Hill", "Jose Cuervo", "Knob Creek", "Maker's Mark", "Michter's", "Old Forester", "Red Bull", "Rhinegeist", "Smirnoff", "Stagg Jr", "Truly", "Various Wines", "Weller", "White Claw"]
 
   - key: logo2
     required: false
@@ -58,7 +74,7 @@ inputs:
     app_input_type: dropdown
     label: Logo 2 (optional)
     default: "None"
-    choices: ["None", "Blanton's", "Bud Light", "Bulleit", "Elijah Craig", "Four Roses", "Maker's Mark", "Old Forester", "Rhinegeist", "Stagg Jr", "Various Wines", "Weller", "White Claw"]
+    choices: ["None", "Baker's", "Bardstown", "Blanton's", "Bud Light", "Bulleit", "E.H. Taylor", "Elijah Craig", "Four Roses", "Heaven Hill", "Jose Cuervo", "Knob Creek", "Maker's Mark", "Michter's", "Old Forester", "Red Bull", "Rhinegeist", "Smirnoff", "Stagg Jr", "Truly", "Various Wines", "Weller", "White Claw"]
 
   - key: logo3
     required: false
@@ -66,4 +82,4 @@ inputs:
     app_input_type: dropdown
     label: Logo 3 (optional)
     default: "None"
-    choices: ["None", "Blanton's", "Bud Light", "Bulleit", "Elijah Craig", "Four Roses", "Maker's Mark", "Old Forester", "Rhinegeist", "Stagg Jr", "Various Wines", "Weller", "White Claw"]
+    choices: ["None", "Baker's", "Bardstown", "Blanton's", "Bud Light", "Bulleit", "E.H. Taylor", "Elijah Craig", "Four Roses", "Heaven Hill", "Jose Cuervo", "Knob Creek", "Maker's Mark", "Michter's", "Old Forester", "Red Bull", "Rhinegeist", "Smirnoff", "Stagg Jr", "Truly", "Various Wines", "Weller", "White Claw"]
