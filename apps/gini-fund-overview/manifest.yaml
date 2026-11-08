@@ -1,6 +1,6 @@
 gdn: 1
 id: gini-fund-overview
-version: 0.5.0
+version: 0.5.1
 name: Gini Capital Fund Overview
 author: Gini Capital
 description: Internal display of Gini Capital fund data for authorized users on the full width panel.
@@ -13,6 +13,10 @@ width: 384
 height: 32
 
 # 5 minuten, gelijk aan de ttl van http.get.
+# 300 s is de Glance-band 300-899: free-text en api-key zijn toegestaan,
+# het aantal pagina's is niet begrensd, en een kleurkiezer is er niet.
+# Schermcode blijft free-text: het is een vrije id voor ?screen=,
+# geen vaste lijst.
 refresh: 300
 
 # 8 pagina's. Elk fonds en elke melding blijft heel op een pagina.

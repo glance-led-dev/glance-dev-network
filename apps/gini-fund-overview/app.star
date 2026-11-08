@@ -28,6 +28,10 @@
 # hoofdletters, dus een melding verschijnt in kapitalen.
 #
 # Data: een verzoek per verversing, ttl 300 s, refresh 300 s.
+# 300 s zit in de Glance-band 300-899: free-text en api-key mogen,
+# en het aantal pagina's is niet begrensd. Schermcode blijft free-text
+# omdat het een vrije id is die als ?screen= meegaat, zoals een
+# station-id, niet een vaste keuzelijst.
 # GET getGlanceTicker met header X-Glance-Token. Een gevulde schermcode
 # gaat mee als ?screen= . Een leeg veld laat de parameter weg, want een
 # lege screen= geeft 400. De code is hoofdlettergevoelig: letters,
@@ -35,7 +39,16 @@
 # Antwoord 200 bepaalt de fondsen en de meldingen. Bij 401, 403, 429 of
 # een dode verbinding komt het foutscherm. Bij een ander antwoord bouwt
 # de app dezelfde strook uit getGlanceFundValue, een fonds per gekozen
-# code, zonder meldingen. Zonder token: DEMO, geen verzoek.
+# code, zonder meldingen.
+#
+# Vier schermen. Live: antwoord 200 met fondsen of meldingen.
+# Het eerste blok is GINI / FONDS, zodat de band zichzelf noemt.
+# Fout: 401, 403, 429 of geen verbinding, amber, twee regels.
+# Leeg: antwoord 200 zonder fondsen en zonder meldingen. Dat is geen
+# fout: groen ALL CLEAR, niet de amber kaart.
+# Demo: geen token, geen verzoek. Het eerste blok is DEMO / GINI SAMPLE
+# en de meldingen zeggen in het Engels dat de ronde cijfers een sample
+# zijn. De publieke catalogus toont die demo, nooit een live antwoord.
 #
 # Meldingen komen binnen als schone ASCII, soms met kleine letters.
 # De lettertypen tekenen alleen hoofdletters, dus de balk zet ze om.
@@ -71,8 +84,8 @@ DEMO_FUNDS = [
     {"fund_code": "GSF", "name": "GLOBAL SOUTH", "nav": "140.00", "nav_date": "2026-01-01", "daily_return": "+0.50%", "mtd_return": "-0.50%", "peildatum": "2026-01-15"},
 ]
 DEMO_MESSAGES = [
-    {"text": "VOORBEELD MELDING", "kleur": "oranje"},
-    {"text": "CIJFERS ZIJN EEN VOORBEELD", "kleur": "wit"},
+    {"text": "SAMPLE NOTICE", "kleur": "oranje"},
+    {"text": "FIGURES ARE A SAMPLE", "kleur": "wit"},
 ]
 
 def _s(d, key, limit):
@@ -226,10 +239,12 @@ def _metrics(width, spec):
     if width >= 320:
         return {"pad": 10, "sep": 16}
     if width >= 128:
-        # 4x5 is de kleine trap voor een lange ronde. Die heeft 4 px marge
-        # nodig zodat een stuk melding en het volgende fonds nog samen passen.
+        # 4x5 is de kleine trap voor een lange ronde. Zelfde 6 px rand als
+        # de gewone Studio-band, zodat de safe zone ook dan blijft. Past een
+        # melding niet meer naast het volgende fonds, dan gaat dat fonds heel
+        # naar de volgende pagina.
         if spec["top"] == "4x5":
-            return {"pad": 4, "sep": 8}
+            return {"pad": 6, "sep": 8}
         return {"pad": 6, "sep": 10}
     return {"pad": 2, "sep": 4}
 
@@ -495,9 +510,15 @@ def _build_pieces(c, spec, maxw, demo, funds, messages):
     y1 = ys[1]
     pieces = []
     if demo:
-        demo_item = _text_item(c, spec, y0, y1, "DEMO", "VOORBEELD", ORANGE, ORANGE, maxw)
+        demo_item = _text_item(c, spec, y0, y1, "DEMO", "GINI SAMPLE", ORANGE, ORANGE, maxw)
         if demo_item != None:
             pieces.append({"kind": "fixed", "item": demo_item})
+    else:
+        # Live heeft geen DEMO-blok. Een kort merkblok zodat de band in de
+        # scroll-reeks herkenbaar is tussen de apps ervoor en erna.
+        brand = _text_item(c, spec, y0, y1, "GINI", "FONDS", ORANGE, ORANGE, maxw)
+        if brand != None:
+            pieces.append({"kind": "fixed", "item": brand})
     mixed = _mix(funds, messages)
     for piece in mixed:
         if piece["kind"] == "fund":
@@ -685,21 +706,21 @@ def _pick_line(c, text, fonts):
     return [font, ""]
 
 
-def nodata(c, title, sub, short, title_color):
-    c.fill("#0B0C12")
-    shown = title
-    if c.width < 128 and short != "":
-        shown = short
+def _empty(c):
+    """200 zonder fondsen en zonder meldingen. Positief, niet de amber kaart."""
+    c.fill("#000000")
+    title = "ALL CLEAR"
+    sub = "NIETS TE MELDEN"
     if c.width >= 320:
-        tfonts = ["16x20", "10x16", "6x8", "4x5"]
+        tfonts = ["10x16", "6x8", "5x7", "4x5"]
         sfonts = ["6x8", "5x7", "4x5"]
     elif c.width >= 128:
-        tfonts = ["10x16", "6x8", "5x7", "4x5"]
+        tfonts = ["6x8", "5x7", "4x5"]
         sfonts = ["5x7", "4x5"]
     else:
         tfonts = ["5x7", "4x5"]
         sfonts = ["4x5"]
-    picked = _pick_line(c, shown, tfonts)
+    picked = _pick_line(c, title, tfonts)
     spicked = _pick_line(c, sub, sfonts)
     tfont = picked[0]
     ttext = picked[1]
@@ -708,15 +729,88 @@ def nodata(c, title, sub, short, title_color):
     th = HEIGHTS[tfont]
     sh = HEIGHTS[sfont]
     gap = 3
-    if th + gap + sh > c.height:
+    if th + gap + sh > c.height - 2:
         gap = 1
     block = th + gap + sh
     y0 = (c.height - block) // 2
-    if y0 < 0:
-        y0 = 0
+    if y0 < 1:
+        y0 = 1
     y1 = y0 + th + gap
-    if y1 + sh > c.height:
-        y1 = c.height - sh
+    if y1 + sh > c.height - 1:
+        y1 = c.height - 1 - sh
+    if y1 < y0 + th:
+        y1 = y0 + th
+    if ttext != "":
+        c.text(ttext, c.width // 2, y0, font = tfont, color = "green", align = "center")
+    if stext != "":
+        c.text(stext, c.width // 2, y1, font = sfont, color = WHITE, align = "center")
+
+
+def _edge_pad(width):
+    """Zelfde rand als de ticker: 10 op Pro, 6 op Studio, 1 op 64."""
+    if width >= 320:
+        return 10
+    if width >= 128:
+        return 6
+    return 1
+
+
+def _pick_inset(c, text, fonts, pad):
+    """Grootste font dat binnen de rand past, daarna hard afkappen."""
+    maxw = c.width - 2 * pad
+    if maxw < 1:
+        maxw = 1
+    n = len(fonts)
+    for i in range(n):
+        font = fonts[i]
+        if c.text_width(text, font) <= maxw:
+            return [font, text]
+    font = fonts[n - 1]
+    shown = text
+    for k in range(len(text), 0, -1):
+        shown = text[:k]
+        if c.text_width(shown, font) <= maxw:
+            return [font, shown]
+    return [font, ""]
+
+
+def nodata(c, title, sub, short, title_color):
+    c.fill("#0B0C12")
+    shown = title
+    if c.width < 128 and short != "":
+        shown = short
+    # 16x20 plus een onderregel raakt y 0 op een band van 32. 10x16 blijft
+    # de held en houdt 1 px boven en onder vrij.
+    if c.width >= 320:
+        tfonts = ["10x16", "6x8", "5x7", "4x5"]
+        sfonts = ["6x8", "5x7", "4x5"]
+    elif c.width >= 128:
+        tfonts = ["10x16", "6x8", "5x7", "4x5"]
+        sfonts = ["5x7", "4x5"]
+    else:
+        tfonts = ["5x7", "4x5"]
+        sfonts = ["4x5"]
+    pad = _edge_pad(c.width)
+    picked = _pick_inset(c, shown, tfonts, pad)
+    spicked = _pick_inset(c, sub, sfonts, pad)
+    tfont = picked[0]
+    ttext = picked[1]
+    sfont = spicked[0]
+    stext = spicked[1]
+    th = HEIGHTS[tfont]
+    sh = HEIGHTS[sfont]
+    gap = 3
+    if th + gap + sh > c.height - 2:
+        gap = 1
+    block = th + gap + sh
+    y0 = (c.height - block) // 2
+    if y0 < 1:
+        y0 = 1
+    y1 = y0 + th + gap
+    if y1 + sh > c.height - 1:
+        y1 = c.height - 1 - sh
+    if y1 < y0 + th:
+        y1 = y0 + th
     if ttext != "":
         c.text(ttext, c.width // 2, y0, font = tfont, color = title_color, align = "center")
     if stext != "":
@@ -831,17 +925,20 @@ def _load(c, ctx):
                 return _err(failed[0], failed[1], failed[2], failed[3])
             funds = loaded[0]
     if len(funds) == 0 and len(messages) == 0:
-        return _err("NOG GEEN KOERS", "WACHT OP DATA", "GEEN KOERS", WHITE)
+        return {"mode": "empty"}
     if _blank_numbers(funds) and len(messages) == 0:
-        return _err("NOG GEEN KOERS", "WACHT OP DATA", "GEEN KOERS", WHITE)
+        return _err("NOG GEEN KOERS", "WACHT OP DATA", "GEEN KOERS", WARN)
     placed = _compose(c, demo, funds, messages)
     if placed == None:
-        return _err("NOG GEEN KOERS", "WACHT OP DATA", "GEEN KOERS", WHITE)
+        return _err("TEKST TE LANG", "KORTER HOUDEN", "TE LANG", WARN)
     return {"mode": "ok", "pages": placed["pages"], "marks": placed["marks"], "bar_y": placed["bar_y"]}
 
 
 def _page(c, ctx, index):
     state = _load(c, ctx)
+    if state["mode"] == "empty":
+        _empty(c)
+        return
     if state["mode"] != "ok":
         nodata(c, state["title"], state["sub"], state["short"], state["color"])
         return
