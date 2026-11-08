@@ -1,6 +1,6 @@
 gdn: 1
 id: gini-fund-ticker
-version: 0.5.0
+version: 0.5.1
 name: Gini Capital Fund Ticker
 author: Gini Capital
 description: Internal display of Gini Capital fund data for authorized users.
@@ -14,6 +14,10 @@ height: 32
 
 # 5 minuten. Een api-key veld blijft op 300 seconden of langzamer,
 # en de http.get ttl staat op dezelfde 300 seconden.
+# 300 s is de Glance-band 300-899: free-text en api-key zijn toegestaan,
+# het aantal pagina's is niet begrensd, en een kleurkiezer is er niet.
+# Schermcode blijft free-text: het is een vrije id voor ?screen=,
+# geen vaste lijst.
 refresh: 300
 
 # 8 pagina's. Elk fonds en elke melding blijft heel op een pagina.

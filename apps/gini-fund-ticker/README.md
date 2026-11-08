@@ -10,7 +10,7 @@ Ask a Gini Capital administrator for the read-only token.
 
 Paste it into **Toegangstoken**. That field is an api-key. Glance stores it encrypted and sends it only from Glance servers, in the header `X-Glance-Token`.
 
-Use a token made of letters and digits. With no token the panel shows a demo and does not call the server. The demo uses round sample figures, not live fund data.
+Use a token made of letters and digits. With no token the panel shows a demo and does not call the server. The first block reads DEMO / GINI SAMPLE. The notices read SAMPLE NOTICE and FIGURES ARE A SAMPLE. The figures are round samples, not live fund data.
 
 ## Funds
 
@@ -33,3 +33,11 @@ On the device, an underscore splits two settings before the app runs. A hyphen s
 Eight still pages. The Scroll panel moves those pages to the left. Each fund and each message stays inside one page.
 
 The fund code is orange. The day figure and the month to date figure are green for a plus, red for a minus, and white for zero. A message follows every two funds.
+
+## Screens
+
+- Demo. No token. Labelled DEMO. Sample figures only. No request.
+- Live. A token and a 200 response. The round opens with GINI / FONDS, then the funds and notices from that response.
+- Error. No access, too many requests, or no connection. Two lines: what happened, and what to do. Amber title.
+- Empty. A 200 response with no funds and no notices. Green ALL CLEAR, then NIETS TE MELDEN. That is not the error card.
+- No price yet. Funds came back with no figures and there is no notice. Amber NOG GEEN KOERS / WACHT OP DATA.
