@@ -4,17 +4,17 @@ Eight 128×32 player cards for a selected men's Division I basketball team. Duri
 
 ## Display
 
-School-colored backgrounds, editable jerseys with centered numbers and white collars, team logos, and a prominent points column. Position, height and class use the larger 4x5 font; the height mark is stacked vertically with one-pixel gaps to the digits. Player surnames take priority over optional biography details. Initials distinguish duplicate surnames, and exceptionally long names shorten with a final period rather than overflowing.
+School-colored backgrounds, editable jerseys with centered numbers and white collars, team logos, and a prominent points column. Position, height and class use the larger 4x5 font. A first initial is added only if it fits in the existing font without reducing the gaps or removing bio details. Initials still distinguish duplicate surnames.
 
-Live scores sit beneath REB/AST/STL/BLK. Status labels include 1H, 2H, HT, OT, OT2 and subsequent overtime numbers. Regulation finals show FINAL; overtime finals show FINAL OT, FINAL OT2, etc., with a visible separator. The halftime scoreboard sits four pixels before HT. Opponent rankings are not displayed or fetched.
+Game scores sit below the supporting stats. Status labels include 1H, 2H, HT, OT, OT2 and subsequent overtime numbers. Regulation finals show FINAL; overtime finals show FINAL OT, FINAL OT2, etc., with a visible separator. The halftime scoreboard sits four pixels before HT. Opponent rankings are not displayed or fetched.
 
-PTS, REB, AST, STL and BLK use 4x5 labels in every display state. Each number is centered beneath its label. Supporting season averages are drawn once as complete outlined values, preserving the decimal gaps; wider values use the smaller fallback font. Points retain their original font ladder and full-size decimal.
+Each stat is centered beneath its label. LIVE and FINAL add FGS on the right, with made/attempted field goals (for example, `9/17`) from the existing box score. Zero attempts show `0/0`; unavailable values show `--`. Season-average cards retain their five stat columns and decimal formatting.
 
-Long scoreboards stay on one line without shortening team codes. The PTS label and number move left only when the measured score row needs room. If the jersey boundary prevents a full-height horizontal fit, a compact number sits above the footer with a blank row separating it from both its label and the scoreboard. Ordinary score rows keep their approved positions.
+Long scoreboards stay on one line without shortening team codes. The points column stays in place; when a long footer needs the space below it, the points value uses a compact font above the footer.
 
 ## Illustrative previews
 
-These are layout examples with demonstration statistics, not current game results.
+These are layout replays using archived or simulated game states, not current game results.
 
 ![Season averages](preview/stojakovic-average.png)
 ![Live](preview/stojakovic-live.png)
@@ -27,7 +27,7 @@ The generated eight-page catalog poster is [preview/preview.png](preview/preview
 
 - **Team:** Select from the app's 365-school directory. No API key is needed.
 
-The five-minute refresh interval is unchanged. Game discovery uses the selected team's ESPN schedule, not the oversized national NCAA scoreboard. Schedule and game-summary reads are cached for five minutes; roster and season-average reads remain cached for six hours. Schedule and roster reads can try the alternate ESPN hostname. The summary uses the schedule-selected host once to keep the cold-cache request budget bounded. These are the same ESPN source, not independent providers. HTML season-average reads do not have API-host fallback.
+The five-minute refresh interval is unchanged. Game discovery uses the selected team's ESPN schedule, not the national scoreboard. Schedule and summary reads are cached for five minutes; roster and season-average reads are cached for six hours. Season averages use ESPN's structured full-season team feed first, with the ESPN team stats webpage as a fallback. Both are ESPN sources; this does not add hosting or protect against a complete ESPN outage.
 
 Roster members without posted season-average rows show `--`. A roster with fewer than eight eligible players shows LINEUP NOT POSTED on unfilled cards. Source failures and unposted boxscores have explicit fallback screens. Automatic live coverage depends on ESPN listing the game and its boxscore; this app does not add a separate exhibition-stat feed.
 
@@ -62,17 +62,13 @@ order; averages use the top eight season scorers. With fewer than eight eligible
 game participants, an unfilled page says LINEUP NOT POSTED rather than substituting
 a preview or averages.
 
-Only the season player-stat array is extracted from ESPN's web page. JSON syntax
-is validated before decoding so a damaged embedded table cannot crash the app.
-Missing individual averages display `--`, not zero. Schedule and summary caches
-are five minutes; roster and average caches remain six hours.
+The structured averages feed is validated for the selected team, season and
+complete stat columns. The HTML fallback validates its embedded stat array
+before decoding. A verified recent team box score can recover the identity
+and jersey of a player missing from the roster, without per-player requests.
+Missing individual averages display `--`, not zero.
 
-Refresh remains 300 seconds. App identity, approved artwork/layouts and public
-author JSW41 are unchanged. No shooting-stat categories or faster-refresh request
-are included in this update. All pages share requests; the tested worst case uses
-eight uncached requests, including mixed-host failures and regular-season fallback.
-
-Verification: 174 regression scenarios / 966 actual Starlark page renders, 26
-calendar checks, both full-app/offline validations, saved-selection/page-wiring
-checks, and Illinois/Florida ESPN replays. The team JSON preflight also passed
-2,250 mutated-input checks. These are test results, not production certification.
+Refresh remains 300 seconds. App identity, artwork and public author JSW41
+are unchanged. The release replay covers all eight cards, source failures,
+roster omissions, live shooting, regulation and overtime finals, and the
+eight-uncached-request ceiling. These are local checks, not production certification.
