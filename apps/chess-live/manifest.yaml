@@ -1,0 +1,28 @@
+gdn: 1
+id: chess-live
+version: 1.0.0
+name: Chess Live
+author: reyos86
+description: Live elite chess, your Chess.com rating and the daily puzzle, drawn as a real chess board on your wall.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 300
+pages: [live, you, puzzle]
+
+inputs:
+  - key: username
+    type: string
+    app_input_type: free-text
+    label: Chess.com username (or NONE)
+    default: "NONE"
+    help: Your Chess.com username to show your rating and record. Leave as NONE to show the Chess.com top 3 instead. If your username has an underscore, type a space in its place.
+  - key: timecontrol
+    type: choice
+    app_input_type: dropdown
+    label: Time control
+    default: BLITZ
+    choices: [BLITZ, RAPID, BULLET]
+    options: [BLITZ, RAPID, BULLET]
+    help: Which Chess.com rating (or leaderboard) the second page shows.
