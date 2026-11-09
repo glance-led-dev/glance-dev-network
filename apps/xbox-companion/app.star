@@ -222,10 +222,13 @@ def main(c, ctx):
         if not endpoint:
             message(c,"CHECK STATUS HOST","ENTER HOST/PATH ONLY")
             return
-        response = http.get(endpoint, headers={"Authorization":"Bearer "+key}, ttl_seconds=60)
+        response = http.get(endpoint, headers={"Authorization":"Bearer "+key,"User-Agent":"GlanceXboxCompanion/1.0"}, ttl_seconds=60)
         status = response.get("status_code",0)
-        if status in [401,403]:
-            message(c,"RECONNECT ACCOUNT","CHECK YOUR DEVICE KEY")
+        if status == 401:
+            message(c,"DEVICE KEY REJECTED","CHECK COMPANION KEY")
+            return
+        if status == 403:
+            message(c,"REQUEST BLOCKED","CHECK WORKER ACCESS")
             return
         if status != 200:
             message(c,"SERVICE UNAVAILABLE","TRY AGAIN LATER")
