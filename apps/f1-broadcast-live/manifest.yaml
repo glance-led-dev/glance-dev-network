@@ -2,10 +2,10 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: f1-broadcast-live
-version: 0.2.3
+version: 0.3.0
 name: F1 - Broadcast Live
 author: jdhine02
-description: Broadcast-style live timing for Formula 1. A real page rotation - the F1 mark with the grand prix, circuit and flag/lap/air temp, then the full order a screen at a time with tyre compound and gap to the leader. Between sessions it shows the next grand prix in your local time, the rest of the calendar, and the last race's podium. Built for a 192-wide panel; the boards widen to 3 columns on 384/640.
+description: Broadcast-style live timing for Formula 1. A real page rotation - the F1 mark with the grand prix, circuit and flag/lap/air temp, then the full order a screen at a time with tyre compound and gap to the leader. Once a race weekend starts, the latest session stays up until the next one begins, and a finished race stays up until midnight in your time zone. Between weekends it shows the next grand prix in your local time with the last winner there, the rest of the calendar, and the last race's order. Built for a 192-wide panel; the boards widen to 3 columns on 384/640.
 category: Sports
 entry: app.star
 
@@ -14,8 +14,9 @@ entry: app.star
 width: 192
 height: 32
 
-# One fixed interval for the whole app. 2 minutes keeps the OpenF1 calls light
-# while a session is live; the off-season cards re-fetch on the same timer.
+# One fixed interval for the whole app: 2 minutes. Each feed keeps its own
+# cache (15 s to a day), so a refresh only
+# re-fetches what has gone stale.
 refresh: 300
 
 # The panel rotates through these pages in order, one render request per page.
