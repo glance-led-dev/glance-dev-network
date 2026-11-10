@@ -587,8 +587,10 @@ def get_liverpool_matches(ctx):
     # instead: the current one always, plus the previous month early in the
     # month and the next month late in it. That keeps at least two weeks in
     # view either side of today (Liverpool never go longer than that without
-    # a match) within the sandbox cap of 8 requests per render: four
-    # competitions x two months.
+    # a match). The sandbox allows 8 uncached requests per render across ALL
+    # pages, and the two standings pages need 2 of them, so only the league
+    # competitions get the extra month; the cups (few, widely spaced games)
+    # fetch the current month only: 2x2 + 2x1 + 2 standings = 8.
     now = ctx.now
 
     year = now.year
@@ -613,17 +615,19 @@ def get_liverpool_matches(ctx):
         [other_year, other_month, 300],
     ]
 
+    # [url, name, fetch the other month too]
     competitions = [
-        [EPL_URL, "PREMIER LEAGUE"],
-        [UCL_URL, "CHAMPIONS LEAGUE"],
-        [FA_CUP_URL, "FA CUP"],
-        [EFL_CUP_URL, "EFL CUP"],
+        [EPL_URL, "PREMIER LEAGUE", True],
+        [UCL_URL, "CHAMPIONS LEAGUE", True],
+        [FA_CUP_URL, "FA CUP", False],
+        [EFL_CUP_URL, "EFL CUP", False],
     ]
 
     matches = []
 
     for comp in competitions:
-        for m in months:
+        comp_months = months if comp[2] else months[:1]
+        for m in comp_months:
             resp = http.get(
                 comp[0] + month_query(m[0], m[1]),
                 ttl_seconds=m[2],
