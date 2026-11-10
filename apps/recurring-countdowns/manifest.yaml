@@ -1,214 +1,50 @@
 id: recurring-countdowns
 name: Recurring Countdowns
-description: Count down the number of days until a special date (up to 6).
+description: Days until a birthday, anniversary, trip or milestone that comes around every year. Add the app once for each date you want to count down to.
 author: Matt H.
+category: Lifestyle
 width: 64
 height: 32
-refresh: 21600
+# The count only changes at local midnight; hourly catches it within the hour.
+refresh: 3600
 pages:
-  - event1
-  - event2
-  - event3
-  - event4
-  - event5
-  - event6
+  - countdown
 assets:
   - anniv.png
   - bday.png
   - trophy.png
   - trip.png
 inputs:
-
-# ---------------
-# --- EVENT 1 ---
-# ---------------
-  - key: event1
-    name: Event 1 Type
+  - key: event
+    type: choice
     app_input_type: dropdown
-    default: "ANNIV"
-    options:
-      - label: "Birthday"
-        value: "BDAY"
-      - label: "Anniversary"
-        value: "ANNIV"
-      - label: "Milestone"
-        value: "EVENT"
-      - label: "Trip"
-        value: "TRIP"
-      - label: "None / Off"
-        value: "NONE"
-  - key: name1
-    name: Event 1 Name
+    label: Event type
+    default: "Birthday"
+    choices: ["Birthday", "Anniversary", "Trip", "Milestone"]
+    help: Picks the picture and the wording.
+  - key: name
+    type: string
     app_input_type: free-text
-    default: "Our"
-  - key: month1
-    name: Event 1 Month
+    label: Name
+    default: "MOM"
+    help: Shown in the title, like MOM BDAY or OUR ANNIV. For a Milestone this is the whole title, like RACE DAY.
+  - key: month
+    type: choice
     app_input_type: dropdown
-    default: "2"
-    options: [{"label": "Jan", "value": "1"}, {"label": "Feb", "value": "2"}, {"label": "Mar", "value": "3"}, {"label": "Apr", "value": "4"}, {"label": "May", "value": "5"}, {"label": "Jun", "value": "6"}, {"label": "Jul", "value": "7"}, {"label": "Aug", "value": "8"}, {"label": "Sep", "value": "9"}, {"label": "Oct", "value": "10"}, {"label": "Nov", "value": "11"}, {"label": "Dec", "value": "12"}]
-  - key: day1
-    name: Event 1 Day
+    label: Month
+    default: "June"
+    choices: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+  - key: day
+    type: choice
     app_input_type: dropdown
-    default: "4"
-    options: [{"label": "4", "value": "4"}, {"label": "14", "value": "14"}, {"label": "28", "value": "28"}, {"label": "30", "value": "30"}]
-
-# ---------------
-# --- EVENT 2 ---
-# ---------------
-  - key: event2
-    name: Event 2 Type
+    label: Day
+    default: "15"
+    choices: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
+    help: February 29 counts down to February 28 in years without a leap day.
+  - key: timezone
+    type: choice
     app_input_type: dropdown
-    default: "BDAY"
-    options:
-      - label: "Birthday"
-        value: "BDAY"
-      - label: "Anniversary"
-        value: "ANNIV"
-      - label: "Milestone"
-        value: "EVENT"
-      - label: "Trip"
-        value: "TRIP"
-      - label: "None / Off"
-        value: "NONE"
-  - key: name2
-    name: Event 2 Name
-    app_input_type: free-text
-    default: "MY"
-  - key: month2
-    name: Event 2 Month
-    app_input_type: dropdown
-    default: "11"
-    options: [{"label": "Jan", "value": "1"}, {"label": "Feb", "value": "2"}, {"label": "Mar", "value": "3"}, {"label": "Apr", "value": "4"}, {"label": "May", "value": "5"}, {"label": "Jun", "value": "6"}, {"label": "Jul", "value": "7"}, {"label": "Aug", "value": "8"}, {"label": "Sep", "value": "9"}, {"label": "Oct", "value": "10"}, {"label": "Nov", "value": "11"}, {"label": "Dec", "value": "12"}]
-  - key: day2
-    name: Event 2 Day
-    app_input_type: dropdown
-    default: "18"
-    options: [{"label": "15", "value": "15"}, {"label": "27", "value": "27"}, {"label": "30", "value": "30"}]
-# ---------------
-# --- EVENT 3 ---
-# ---------------
-  - key: event3
-    name: Event 3 Type
-    app_input_type: dropdown
-    default: "EVENT"
-    options:
-      - label: "Birthday"
-        value: "BDAY"
-      - label: "Anniversary"
-        value: "ANNIV"
-      - label: "Milestone"
-        value: "EVENT"
-      - label: "Trip"
-        value: "TRIP"
-      - label: "None / Off"
-        value: "NONE"
-  - key: name3
-    name: Event 3 Name
-    app_input_type: free-text
-    default: "RACE DAY"
-  - key: month3
-    name: Event 3 Month
-    app_input_type: dropdown
-    default: "4"
-    options: [{"label": "Jan", "value": "1"}, {"label": "Feb", "value": "2"}, {"label": "Mar", "value": "3"}, {"label": "Apr", "value": "4"}, {"label": "May", "value": "5"}, {"label": "Jun", "value": "6"}, {"label": "Jul", "value": "7"}, {"label": "Aug", "value": "8"}, {"label": "Sep", "value": "9"}, {"label": "Oct", "value": "10"}, {"label": "Nov", "value": "11"}, {"label": "Dec", "value": "12"}]
-  - key: day3
-    name: Event 3 Day
-    app_input_type: dropdown
-    default: "30"
-    options: [{"label": "15", "value": "15"}, {"label": "30", "value": "30"}]
-# ---------------
-# --- EVENT 4 ---
-# ---------------
-  - key: event4
-    name: Event 4 Type
-    app_input_type: dropdown
-    default: "TRIP"
-    options:
-      - label: "Birthday"
-        value: "BDAY"
-      - label: "Anniversary"
-        value: "ANNIV"
-      - label: "Milestone"
-        value: "EVENT"
-      - label: "Trip"
-        value: "TRIP"
-      - label: "None / Off"
-        value: "NONE"
-  - key: name4
-    name: Event 4 Name
-    app_input_type: free-text
-    default: "JAMACIA"
-  - key: month4
-    name: Event 4 Month
-    app_input_type: dropdown
-    default: "9"
-    options: [{"label": "Jan", "value": "1"}, {"label": "Feb", "value": "2"}, {"label": "Mar", "value": "3"}, {"label": "Apr", "value": "4"}, {"label": "May", "value": "5"}, {"label": "Jun", "value": "6"}, {"label": "Jul", "value": "7"}, {"label": "Aug", "value": "8"}, {"label": "Sep", "value": "9"}, {"label": "Oct", "value": "10"}, {"label": "Nov", "value": "11"}, {"label": "Dec", "value": "12"}]
-  - key: day4
-    name: Event 4 Day
-    app_input_type: dropdown
-    default: "27"
-    options: [{"label": "1", "value": "1"}, {"label": "15", "value": "15"}]
-# ---------------
-# --- EVENT 5 ---
-# ---------------
-  - key: event5
-    name: Event 5 Type
-    app_input_type: dropdown
-    default: "NONE"
-    options:
-      - label: "Birthday"
-        value: "BDAY"
-      - label: "Anniversary"
-        value: "ANNIV"
-      - label: "Milestone"
-        value: "EVENT"
-      - label: "Trip"
-        value: "TRIP"
-      - label: "None / Off"
-        value: "NONE"
-  - key: name5
-    name: Event 5 Name
-    app_input_type: free-text
-    default: "Kid 3"
-  - key: month5
-    name: Event 5 Month
-    app_input_type: dropdown
-    default: "1"
-    options: [{"label": "Jan", "value": "1"}, {"label": "Feb", "value": "2"}, {"label": "Mar", "value": "3"}, {"label": "Apr", "value": "4"}, {"label": "May", "value": "5"}, {"label": "Jun", "value": "6"}, {"label": "Jul", "value": "7"}, {"label": "Aug", "value": "8"}, {"label": "Sep", "value": "9"}, {"label": "Oct", "value": "10"}, {"label": "Nov", "value": "11"}, {"label": "Dec", "value": "12"}]
-  - key: day5
-    name: Event 5 Day
-    app_input_type: dropdown
-    default: "1"
-    options: [{"label": "1", "value": "1"}, {"label": "15", "value": "15"}]
-# ---------------
-# --- EVENT 6 ---
-# ---------------
-  - key: event6
-    name: Event 6 Type
-    app_input_type: dropdown
-    default: "NONE"
-    options:
-      - label: "Birthday"
-        value: "BDAY"
-      - label: "Anniversary"
-        value: "ANNIV"
-      - label: "Milestone"
-        value: "EVENT"
-      - label: "Trip"
-        value: "TRIP"
-      - label: "None / Off"
-        value: "NONE"
-  - key: name6
-    name: Event 6 Name
-    app_input_type: free-text
-    default: "Event"
-  - key: month6
-    name: Event 6 Month
-    app_input_type: dropdown
-    default: "1"
-    options: [{"label": "Jan", "value": "1"}, {"label": "Feb", "value": "2"}, {"label": "Mar", "value": "3"}, {"label": "Apr", "value": "4"}, {"label": "May", "value": "5"}, {"label": "Jun", "value": "6"}, {"label": "Jul", "value": "7"}, {"label": "Aug", "value": "8"}, {"label": "Sep", "value": "9"}, {"label": "Oct", "value": "10"}, {"label": "Nov", "value": "11"}, {"label": "Dec", "value": "12"}]
-  - key: day6
-    name: Event 6 Day
-    app_input_type: dropdown
-    default: "1"
-    options: [{"label": "1", "value": "1"}, {"label": "15", "value": "15"}]
+    label: Time zone
+    default: "EASTERN"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "PACIFIC", "ALASKA", "HAWAII", "UTC"]
+    help: So the count changes at your midnight. US daylight saving is applied automatically.
