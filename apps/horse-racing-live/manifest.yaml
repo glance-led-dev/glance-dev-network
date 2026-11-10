@@ -1,0 +1,30 @@
+gdn: 1
+id: horse-racing-live
+version: 1.0.0
+name: Horse Racing Live
+author: reyos86
+description: The next race off counted down to the gate, the latest official result and the day's big race, with saddle-cloth colours, odds, jockeys and the favourite.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 120
+pages: [next, result, feature]
+
+inputs:
+  - key: region
+    type: choice
+    app_input_type: dropdown
+    label: Region
+    default: USA
+    choices: [USA, UK AND IRELAND, WORLDWIDE]
+    options: [USA, UK AND IRELAND, WORLDWIDE]
+    help: Which tracks to follow. Worldwide adds France, Hong Kong, Dubai and every other track Sporting Life covers.
+  - key: odds
+    type: choice
+    app_input_type: dropdown
+    label: Odds format
+    default: TRACK STYLE
+    choices: [TRACK STYLE, US STYLE, UK STYLE, DECIMAL]
+    options: [TRACK STYLE, US STYLE, UK STYLE, DECIMAL]
+    help: Track style shows US races as 5-2 and UK and Irish races as 5/2. Or pick one style for every race, or decimal (3.50).
