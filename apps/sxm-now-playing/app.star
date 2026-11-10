@@ -232,6 +232,22 @@ def _s(ctx, key, fallback):
     v = str(v).strip()
     return v if v != "" else fallback
 
+def channels_text(ctx):
+    # The My Channels box as text. On the device an untouched default
+    # ("30, 23, 33, 18") can arrive as just its first number, 30, which
+    # would show channel 30 four times; that means "the default list".
+    v = ctx.inputs.get("channels")
+    if v == None:
+        return DEFAULT_CHANNELS
+    if type(v) == "list":
+        v = ", ".join([str(x) for x in v])
+    elif type(v) == "float" and v == int(v):
+        v = int(v)
+    v = str(v).strip()
+    if v == "" or v == DEFAULT_CHANNELS.split(",")[0].strip():
+        return DEFAULT_CHANNELS
+    return v
+
 def parse_numbers(text):
     # "30, 23,33 / ch 18" -> ["30", "23", "33", "18"]: any run of digits is
     # a channel, everything else is a separator.
@@ -260,7 +276,7 @@ def slot_numbers(ctx):
             # A different run each hour, walking the whole genre.
             start = (ctx.now.unix // 3600 * NSLOTS) % len(nums)
         return [nums[(start + i) % len(nums)] for i in range(NSLOTS)]
-    nums = parse_numbers(_s(ctx, "channels", DEFAULT_CHANNELS))[:NSLOTS]
+    nums = parse_numbers(channels_text(ctx))[:NSLOTS]
     if len(nums) == 0:
         nums = parse_numbers(DEFAULT_CHANNELS)
     # The page count is fixed, so a shorter list repeats to fill it.
