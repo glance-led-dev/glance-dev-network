@@ -1,0 +1,50 @@
+id: recurring-countdowns
+name: Recurring Countdowns
+description: Days until a birthday, anniversary, trip or milestone that comes around every year. Add the app once for each date you want to count down to.
+author: Matt H.
+category: Lifestyle
+width: 64
+height: 32
+# The count only changes at local midnight; hourly catches it within the hour.
+refresh: 3600
+pages:
+  - countdown
+assets:
+  - anniv.png
+  - bday.png
+  - trophy.png
+  - trip.png
+inputs:
+  - key: event
+    type: choice
+    app_input_type: dropdown
+    label: Event type
+    default: "Birthday"
+    choices: ["Birthday", "Anniversary", "Trip", "Milestone"]
+    help: Picks the picture and the wording.
+  - key: name
+    type: string
+    app_input_type: free-text
+    label: Name
+    default: "MOM"
+    help: Shown in the title, like MOM BDAY or OUR ANNIV. For a Milestone this is the whole title, like RACE DAY.
+  - key: month
+    type: choice
+    app_input_type: dropdown
+    label: Month
+    default: "June"
+    choices: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+  - key: day
+    type: choice
+    app_input_type: dropdown
+    label: Day
+    default: "15"
+    choices: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
+    help: February 29 counts down to February 28 in years without a leap day.
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "EASTERN"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "PACIFIC", "ALASKA", "HAWAII", "UTC"]
+    help: So the count changes at your midnight. US daylight saving is applied automatically.
