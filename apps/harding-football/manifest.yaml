@@ -1,0 +1,10 @@
+gdn: 1
+id: harding-football
+name: Harding Football
+author: Stephen Ramsey
+description: Harding University Bisons football (NCAA Division II) — live score, final, or next kickoff.
+category: Sports
+width: 64
+height: 32
+refresh: 300            # re-check every 5 minutes; plenty for a football score
+pages: [main]
