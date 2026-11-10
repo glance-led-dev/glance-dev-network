@@ -1,0 +1,47 @@
+gdn: 1
+id: is-it-christmas
+version: 1.0.0
+name: Is It Christmas?
+author: Whit McGhee
+description: Answers one question every day of the year. On December 25 the answer changes and the trees light up.
+category: Fun
+entry: app.star
+
+width: 64
+height: 32
+refresh: 60
+
+pages: [main]
+
+inputs:
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "US Central (Chicago)"
+    choices:
+      - "US Eastern (New York)"
+      - "US Central (Chicago)"
+      - "US Mountain (Denver)"
+      - "US Arizona (Phoenix)"
+      - "US Pacific (Los Angeles)"
+      - "US Alaska (Anchorage)"
+      - "US Hawaii (Honolulu)"
+      - "Atlantic (Halifax, Puerto Rico)"
+      - "Newfoundland (St. John's)"
+      - "Mexico City"
+      - "Brazil (Sao Paulo)"
+      - "UTC"
+      - "UK / Ireland / Portugal"
+      - "Central Europe (Paris, Berlin)"
+      - "Eastern Europe (Athens, Kyiv)"
+      - "Moscow / Istanbul"
+      - "Gulf (Dubai)"
+      - "India (Kolkata)"
+      - "China / Singapore / Perth"
+      - "Japan / Korea"
+      - "Australia (Brisbane)"
+      - "Australia (Adelaide)"
+      - "Australia (Sydney, Melbourne)"
+      - "New Zealand (Auckland)"
+    help: Where the panel hangs. Decides when December 25 starts and ends.
