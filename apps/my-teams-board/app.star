@@ -1,9 +1,14 @@
 # My Teams Board — your teams, one page each, logo against logo.
 #
 # Eight pages: two NFL, two NBA, two NHL and two college football slots,
-# each picked from a dropdown. Slot 1 of every league is always a team; slot
-# 2 can be NONE, and then that page turns into slot 1's upcoming schedule
-# (next three games) so no page ever repeats.
+# each picked from a dropdown of ESPN team abbreviations. Slot 2 can be
+# NONE, and then that page turns into slot 1's upcoming schedule (next three
+# games) so no page ever repeats.
+# Slot 1 can be NONE too: that switches the whole league off (slot 2's pick
+# is then ignored), and the league's two pages become index pages for the
+# teams still on — one of what is next for each of them, one of the latest
+# finals — alternating if more than one league is off, since a page cannot
+# be skipped outright.
 #
 # Each matchup page answers one question: are they playing right now, did
 # they just play, or when is the next one? Live score beats a fresh final
@@ -518,24 +523,273 @@ LOGOS = {
 }
 # ---- end generated -------------------------------------------------------
 
+# Dropdown values are ESPN abbreviations (short, so the device descriptor
+# stays under 256 bytes); M-OH and TA&M become MOH and TAMU because - and &
+# do not survive it. The full-name tables above still resolve values saved
+# by 0.2.x.
+
+NFL_CODES = {
+    "ARI": "22",
+    "ATL": "1",
+    "BAL": "33",
+    "BUF": "2",
+    "CAR": "29",
+    "CHI": "3",
+    "CIN": "4",
+    "CLE": "5",
+    "DAL": "6",
+    "DEN": "7",
+    "DET": "8",
+    "GB": "9",
+    "HOU": "34",
+    "IND": "11",
+    "JAX": "30",
+    "KC": "12",
+    "LAC": "24",
+    "LAR": "14",
+    "LV": "13",
+    "MIA": "15",
+    "MIN": "16",
+    "NE": "17",
+    "NO": "18",
+    "NYG": "19",
+    "NYJ": "20",
+    "PHI": "21",
+    "PIT": "23",
+    "SEA": "26",
+    "SF": "25",
+    "TB": "27",
+    "TEN": "10",
+    "WSH": "28",
+}
+
+NBA_CODES = {
+    "ATL": "1",
+    "BKN": "17",
+    "BOS": "2",
+    "CHA": "30",
+    "CHI": "4",
+    "CLE": "5",
+    "DAL": "6",
+    "DEN": "7",
+    "DET": "8",
+    "GS": "9",
+    "HOU": "10",
+    "IND": "11",
+    "LAC": "12",
+    "LAL": "13",
+    "MEM": "29",
+    "MIA": "14",
+    "MIL": "15",
+    "MIN": "16",
+    "NO": "3",
+    "NY": "18",
+    "OKC": "25",
+    "ORL": "19",
+    "PHI": "20",
+    "PHX": "21",
+    "POR": "22",
+    "SA": "24",
+    "SAC": "23",
+    "TOR": "28",
+    "UTAH": "26",
+    "WSH": "27",
+}
+
+NHL_CODES = {
+    "ANA": "25",
+    "BOS": "1",
+    "BUF": "2",
+    "CAR": "7",
+    "CBJ": "29",
+    "CGY": "3",
+    "CHI": "4",
+    "COL": "17",
+    "DAL": "9",
+    "DET": "5",
+    "EDM": "6",
+    "FLA": "26",
+    "LA": "8",
+    "MIN": "30",
+    "MTL": "10",
+    "NJ": "11",
+    "NSH": "27",
+    "NYI": "12",
+    "NYR": "13",
+    "OTT": "14",
+    "PHI": "15",
+    "PIT": "16",
+    "SEA": "124292",
+    "SJ": "18",
+    "STL": "19",
+    "TB": "20",
+    "TOR": "21",
+    "UTAH": "129764",
+    "VAN": "22",
+    "VGK": "37",
+    "WPG": "28",
+    "WSH": "23",
+}
+
+CFB_CODES = {
+    "AF": "2005",
+    "AKR": "2006",
+    "ALA": "333",
+    "APP": "2026",
+    "ARIZ": "12",
+    "ARK": "8",
+    "ARMY": "349",
+    "ARST": "2032",
+    "ASU": "9",
+    "AUB": "2",
+    "BALL": "2050",
+    "BAY": "239",
+    "BC": "103",
+    "BGSU": "189",
+    "BOIS": "68",
+    "BUF": "2084",
+    "BYU": "252",
+    "CAL": "25",
+    "CCU": "324",
+    "CIN": "2132",
+    "CLEM": "228",
+    "CLT": "2429",
+    "CMU": "2117",
+    "COLO": "38",
+    "CONN": "41",
+    "CSU": "36",
+    "DEL": "48",
+    "DUKE": "150",
+    "ECU": "151",
+    "EMU": "2199",
+    "FAU": "2226",
+    "FIU": "2229",
+    "FLA": "57",
+    "FRES": "278",
+    "FSU": "52",
+    "GASO": "290",
+    "GAST": "2247",
+    "GT": "59",
+    "HAW": "62",
+    "HOU": "248",
+    "ILL": "356",
+    "IOWA": "2294",
+    "ISU": "66",
+    "IU": "84",
+    "JMU": "256",
+    "JXST": "55",
+    "KENN": "338",
+    "KENT": "2309",
+    "KSU": "2306",
+    "KU": "2305",
+    "LIB": "2335",
+    "LOU": "97",
+    "LSU": "99",
+    "LT": "2348",
+    "MASS": "113",
+    "MD": "120",
+    "MEM": "235",
+    "MIA": "2390",
+    "MICH": "130",
+    "MINN": "135",
+    "MISS": "145",
+    "MIZ": "142",
+    "MOH": "193",
+    "MOST": "2623",
+    "MRSH": "276",
+    "MSST": "344",
+    "MSU": "127",
+    "MTSU": "2393",
+    "NAVY": "2426",
+    "NCSU": "152",
+    "ND": "87",
+    "NDSU": "2449",
+    "NEB": "158",
+    "NEV": "2440",
+    "NIU": "2459",
+    "NMSU": "166",
+    "NU": "77",
+    "ODU": "295",
+    "OHIO": "195",
+    "OKST": "197",
+    "ORE": "2483",
+    "ORST": "204",
+    "OSU": "194",
+    "OU": "201",
+    "PITT": "221",
+    "PSU": "213",
+    "PUR": "2509",
+    "RICE": "242",
+    "RUTG": "164",
+    "SAC": "16",
+    "SC": "2579",
+    "SDSU": "21",
+    "SHSU": "2534",
+    "SJSU": "23",
+    "SMU": "2567",
+    "STAN": "24",
+    "SYR": "183",
+    "TAMU": "245",
+    "TCU": "2628",
+    "TEM": "218",
+    "TENN": "2633",
+    "TEX": "251",
+    "TLSA": "202",
+    "TOL": "2649",
+    "TROY": "2653",
+    "TTU": "2641",
+    "TULN": "2655",
+    "TXST": "326",
+    "UAB": "5",
+    "UCF": "2116",
+    "UCLA": "26",
+    "UGA": "61",
+    "UK": "96",
+    "UL": "309",
+    "ULM": "2433",
+    "UNC": "153",
+    "UNLV": "2439",
+    "UNM": "167",
+    "UNT": "249",
+    "USA": "6",
+    "USC": "30",
+    "USF": "58",
+    "USM": "2572",
+    "USU": "328",
+    "UTAH": "254",
+    "UTEP": "2638",
+    "UTSA": "2636",
+    "UVA": "258",
+    "VAN": "238",
+    "VT": "259",
+    "WAKE": "154",
+    "WASH": "264",
+    "WIS": "275",
+    "WKU": "98",
+    "WMU": "2711",
+    "WSU": "265",
+    "WVU": "277",
+    "WYO": "2751",
+}
+
 # league -> feed path, team table, period letter and regulation periods
 LEAGUES = {
-    "nfl": {"path": "football/nfl", "teams": NFL_TEAMS, "per": "Q", "reg": 4},
-    "nba": {"path": "basketball/nba", "teams": NBA_TEAMS, "per": "Q", "reg": 4},
-    "nhl": {"path": "hockey/nhl", "teams": NHL_TEAMS, "per": "P", "reg": 3},
-    "cfb": {"path": "football/college-football", "teams": CFB_TEAMS,
+    "nfl": {"path": "football/nfl", "teams": NFL_TEAMS, "codes": NFL_CODES, "per": "Q", "reg": 4},
+    "nba": {"path": "basketball/nba", "teams": NBA_TEAMS, "codes": NBA_CODES, "per": "Q", "reg": 4},
+    "nhl": {"path": "hockey/nhl", "teams": NHL_TEAMS, "codes": NHL_CODES, "per": "P", "reg": 3},
+    "cfb": {"path": "football/college-football", "teams": CFB_TEAMS, "codes": CFB_CODES,
             "per": "Q", "reg": 4},
 }
 
 # slot -> [league, input key, default team]; mirrors manifest.yaml
 SLOTS = {
-    "nfl1": ["nfl", "nfl1", "Pittsburgh Steelers"],
-    "nfl2": ["nfl", "nfl2", "Arizona Cardinals"],
-    "nba1": ["nba", "nba1", "Phoenix Suns"],
+    "nfl1": ["nfl", "nfl1", "PIT"],
+    "nfl2": ["nfl", "nfl2", "ARI"],
+    "nba1": ["nba", "nba1", "PHX"],
     "nba2": ["nba", "nba2", NONE],
-    "nhl1": ["nhl", "nhl1", "Pittsburgh Penguins"],
+    "nhl1": ["nhl", "nhl1", "PIT"],
     "nhl2": ["nhl", "nhl2", NONE],
-    "cfb1": ["cfb", "cfb1", "Arizona State Sun Devils"],
+    "cfb1": ["cfb", "cfb1", "ASU"],
     "cfb2": ["cfb", "cfb2", NONE],
 }
 
@@ -884,22 +1138,124 @@ def draw_schedule(c, lg, tid, data, now):
 
 
 def chosen(ctx, slot):
-    """The ESPN id for a slot's dropdown value, or None for NONE."""
+    """The ESPN id for a slot's dropdown value, or None for NONE.
+
+    The value is an ESPN abbreviation; a full team name saved by 0.2.x
+    still resolves, and anything unknown falls back to the slot default."""
     s = SLOTS[slot]
-    table = LEAGUES[s[0]]["teams"]
+    lg = LEAGUES[s[0]]
     v = str(ctx.inputs.get(s[1], s[2])).strip()
-    if v == NONE:
+    if v.upper() == NONE.upper():
         return None
-    if v not in table:
-        v = s[2]
-        if v == NONE:
-            return None
-    return table[v]
+    if v.upper() in lg["codes"]:
+        return lg["codes"][v.upper()]
+    if v in lg["teams"]:
+        return lg["teams"][v]
+    if s[2] == NONE:
+        return None
+    return lg["codes"][s[2]]
+
+
+def on_teams(ctx):
+    """[league, team id] for every slot holding a real team, in page order.
+
+    A slot set to NONE contributes nothing: slot 2 NONE is just slot 1's
+    schedule page, and slot 1 NONE takes the whole league off."""
+    out = []
+    for slot in ["nfl1", "nfl2", "nba1", "nba2", "nhl1", "nhl2", "cfb1", "cfb2"]:
+        lg = SLOTS[slot][0]
+        if chosen(ctx, lg + "1") == None:
+            continue  # the league is off; slot 2's pick is ignored too
+        tid = chosen(ctx, slot)
+        if tid != None and [lg, tid] not in out:
+            out.append([lg, tid])
+    return out
+
+
+def result_text(ev):
+    """['W 24-17', colour] for a finished game."""
+    ms = ev["mine"]["score"] or "0"
+    os = ev["opp"]["score"] or "0"
+    res = "W" if int(ms) > int(os) else ("L" if int(ms) < int(os) else "T")
+    col = GREEN if res == "W" else (RED if res == "L" else WHITE)
+    return ["%s %s-%s" % (res, ms, os), col]
+
+
+def index_rows(ctx, mode):
+    """One row per team still on: [abbr, text, colour].
+
+    Mode NEXT takes each team's headline game (live beats a fresh final
+    beats the next game, the same order pick() uses); mode LAST takes its
+    most recent final."""
+    rows = []
+    for lg, tid in on_teams(ctx):
+        data = fetch(lg, tid)
+        if data == None:
+            continue
+        team = data.get("team") or {}
+        abbr = str(team.get("abbreviation") or "?").upper()
+        sc = scan(data.get("events") or [], tid)
+        if mode == "LAST":
+            if sc[1]:
+                t = result_text(sc[1][0])
+                rows.append([abbr, t[0], t[1]])
+            elif sc[0] != None:
+                ev = sc[0]
+                rows.append([abbr, "LIVE %s-%s" % (ev["mine"]["score"] or "0",
+                                                   ev["opp"]["score"] or "0"), RED])
+            else:
+                rows.append([abbr, "NO GAMES", DIM])
+            continue
+        got = pick(sc, ctx.now.unix)
+        kind = got[0]
+        ev = got[1]
+        if ev == None:
+            rows.append([abbr, "NO GAMES", DIM])
+        elif kind == "LIVE":
+            rows.append([abbr, "LIVE %s-%s" % (ev["mine"]["score"] or "0",
+                                               ev["opp"]["score"] or "0"), RED])
+        elif kind == "NEXT":
+            rows.append([abbr, when_label(ev, ctx.now.unix).upper(), WHITE])
+        else:
+            t = result_text(ev)
+            rows.append([abbr, t[0], t[1]])
+    return rows
+
+
+def draw_index(c, ctx, mode):
+    """An off league's page: the teams still on, one line each.
+
+    The first off page shows what is next (UP NEXT), the second the latest
+    finals (LATEST); with more pages off they alternate."""
+    mid(c, "UP NEXT" if mode == "NEXT" else "LATEST", 2, ["4x5"], GOLD,
+        maxw = 40)
+    rows = index_rows(ctx, mode)
+    if not rows:
+        mid(c, "NO TEAMS ON", 13, ["4x5", "3x4"], GRAY, maxw = 50)
+        mid(c, "ALL LEAGUES OFF", 21, ["3x4"], DIM, maxw = 50)
+        return
+    for i in range(min(4, len(rows))):
+        y = 8 + i * 6
+        c.text(rows[i][0], 1, y, "4x5", color = WHITE)
+        c.text_fit(rows[i][1], 17, y, ["4x5", "3x4"], color = rows[i][2],
+                   align = "left", maxw = 46)
 
 
 def board(c, ctx, slot):
     c.fill(BG)
     lg = SLOTS[slot][0]
+    if chosen(ctx, lg + "1") == None:
+        # the league is off: this page becomes a board index page. Pages
+        # before this one whose league is also off decide which index it
+        # shows, so the two pages of an off league are NEXT then LATEST.
+        n = 0
+        for s in ["nfl1", "nfl2", "nba1", "nba2", "nhl1", "nhl2", "cfb1", "cfb2"]:
+            if s == slot:
+                break
+            if chosen(ctx, SLOTS[s][0] + "1") == None:
+                n += 1
+        draw_index(c, ctx, "NEXT" if n % 2 == 0 else "LAST")
+        return
     tid = chosen(ctx, slot)
     sched = False
     if tid == None:
