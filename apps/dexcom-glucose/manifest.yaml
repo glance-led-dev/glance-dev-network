@@ -1,0 +1,20 @@
+gdn: 1
+id: dexcom-glucose
+name: Dexcom Glucose
+author: Stephen Ramsey
+description: Dexcom G7 glucose as a big number with a trend arrow.
+width: 64
+height: 32
+refresh: 300            # re-check every 5 minutes, matching the sensor cadence
+pages: [main]
+inputs:
+  - key: bridgeurl       # free-text key names are fine; only api-key keys forbid _ and -
+    app_input_type: free-text
+    type: string
+    label: Bridge URL
+    help: Public URL of your Dexcom bridge, e.g. https://dexcom-glucose-bridge.onrender.com (no trailing slash).
+  - key: token           # api-key key names can't contain _ or -
+    app_input_type: api-key
+    type: string
+    label: Bridge token
+    help: Optional. Only needed if your bridge has BRIDGE_TOKEN set.
