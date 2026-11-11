@@ -1,0 +1,27 @@
+
+gdn: 1
+id: fantasy-football-tracker
+version: 0.1.0
+name: Fantasy Football Tracker
+description: Live Sleeper fantasy football scoreboard
+category: Sports
+entry: app.star
+width: 128
+height: 32
+refresh: 300
+pages: [main, starters1, starters2, starters3, scoreboard]
+
+inputs:
+  - key: leagueid
+    type: string
+    app_input_type: free-text
+    label: Sleeper League ID
+    default: "1390459122712875008"
+    help: Your Sleeper league ID.
+
+  - key: userid
+    type: string
+    app_input_type: free-text
+    label: Sleeper User ID
+    default: "1394055510503735296"
+    help: Your Sleeper user ID.
