@@ -197,15 +197,6 @@ def get_json(url, ttl, source_host = None):
         return None
     return response.get("json")
 
-def roster_source(league, team_id):
-    # The shared roster URL chooses the JSON host for both pages. Glance
-    # memoizes its successful and failed responses within the render.
-    path = "/apis/site/v2/sports/basketball/%s/teams/%s/roster" % (league, team_id)
-    for host in ["site.api.espn.com", "site.web.api.espn.com"]:
-        response = http.get("https://" + host + path, ttl_seconds = 21600)
-        if response.get("status_code", 0) == 200 and response.get("json") != None:
-            return {"roster": response["json"], "host": host}
-    return {"roster": None, "host": "site.web.api.espn.com"}
 
 # Verified ESPN IDs and school metadata, audited 2026-10-13. This directory
 # keeps selection available when ESPN omits a school or its directory is down.
@@ -617,29 +608,251 @@ def resolve_team(league, query):
             return detail.get("team") or detail
     return None
 
-def find_event(league, team_id, source_host = None):
-    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/scoreboard?groups=50&limit=1000" % league, 45, source_host)
-    if data != None:
-        for event in data.get("events", []):
-            competition = (event.get("competitions") or [{}])[0]
-            for competitor in competition.get("competitors", []):
-                if str((competitor.get("team") or {}).get("id")) == team_id:
-                    return str(event.get("id"))
+# Shared source injected into both local packages by prepare.py (not a load()).
+# One team schedule replaces the oversized all-NCAA scoreboard. Keep every
+# failure distinct from an actual off-day, and share identical URLs across pages.
 
-    # Between game days, keep page 2 on the latest completed game rather than
-    # duplicating the season-average page. A live/today event above always wins.
-    schedule = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams/%s/schedule" % (league, team_id), 3600, source_host)
-    latest_id = None
-    latest_date = ""
-    for event in (schedule or {}).get("events", []):
-        competition = (event.get("competitions") or [{}])[0]
-        status = (competition.get("status") or {}).get("type") or {}
-        event_date = clean(event.get("date"))
-        if status.get("state") == "post" and status.get("completed", False) and event_date > latest_date:
-            latest_id = str(event.get("id"))
-            latest_date = event_date
-    return latest_id
+def tracker_hosts(preferred = None):
+    first = preferred if preferred in ["site.api.espn.com", "site.web.api.espn.com"] else "site.api.espn.com"
+    return [first, "site.web.api.espn.com" if first == "site.api.espn.com" else "site.api.espn.com"]
 
+def tracker_schedule_valid(document, team_id):
+    if type(document) != "dict" or type(document.get("events")) != "list":
+        return False
+    for event in document["events"]:
+        if type(event) != "dict" or type(event.get("competitions")) != "list" or len(event["competitions"]) != 1:
+            return False
+        comp = event["competitions"][0]
+        if type(comp) != "dict" or type(comp.get("competitors")) != "list" or len(comp["competitors"]) != 2:
+            return False
+        ids = []
+        for side in comp["competitors"]:
+            if type(side) != "dict" or type(side.get("team")) != "dict" or clean(side["team"].get("id")) == "":
+                return False
+            ids.append(str(side["team"]["id"]))
+        if ids[0] == ids[1] or str(team_id) not in ids:
+            return False
+        status = comp.get("status") or event.get("status") or {}
+        if type(status) != "dict" or type(status.get("type")) != "dict":
+            return False
+        if status["type"].get("name") in ["STATUS_CANCELED", "STATUS_CANCELLED", "STATUS_POSTPONED"]:
+            continue
+        if status["type"].get("state") not in ["in", "pre", "post"]:
+            return False
+        if not clean(event.get("id")).isdigit() or schedule_utc_minute(event.get("date") or comp.get("date")) == None:
+            return False
+    return True
+
+def tracker_schedule_feed(path, team_id, preferred = None):
+    for host in tracker_hosts(preferred):
+        response = http.get("https://" + host + path, ttl_seconds = 300)
+        document = response.get("json")
+        if response.get("status_code", 0) == 200 and tracker_schedule_valid(document, team_id):
+            return {"document": document, "host": host}
+    return None
+
+def tracker_schedule_source(league, team_id, preferred = None):
+    path = "/apis/site/v2/sports/basketball/%s/teams/%s/schedule" % (league, team_id)
+    source = tracker_schedule_feed(path, team_id, preferred)
+    # Before regular-season rollout ESPN's default can be empty. Only that
+    # case (or a failed default) uses the regular-season endpoint; never probe
+    # every NCAA game or silently truncate a national scoreboard to fewer teams.
+    if source == None or len(source["document"]["events"]) == 0:
+        regular = tracker_schedule_feed(path + "?seasontype=2", team_id, source["host"] if source != None else preferred)
+        if regular != None and len(regular["document"]["events"]) > 0:
+            return regular
+        if source == None and regular == None:
+            return {"error": "SCHEDULE OFFLINE"}
+        # Empty on both endpoints is not proof that a known live game ended.
+        return {"error": "SCHEDULE NOT POSTED"}
+    return source
+
+def tracker_now_minute(ctx):
+    now = ctx.now
+    return schedule_day_index(now.year, now.month, now.day) * 1440 + now.hour * 60 + now.minute
+
+def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = False):
+    source = tracker_schedule_source(league, team_id, preferred)
+    if source.get("error") != None:
+        return source
+    current = tracker_now_minute(ctx)
+    today = (current - schedule_eastern_offset(current, ctx.now.year)) // 1440
+    live = None
+    today_pre = None
+    latest = None
+    for event in source["document"]["events"]:
+        if type(event) != "dict" or type(event.get("competitions")) != "list" or len(event["competitions"]) != 1:
+            return {"error": "SCHEDULE NOT POSTED"}
+        comp = event["competitions"][0]
+        if type(comp) != "dict" or type(comp.get("competitors")) != "list":
+            return {"error": "SCHEDULE NOT POSTED"}
+        own = 0
+        opponents = 0
+        for side in comp["competitors"]:
+            if type(side) != "dict" or type(side.get("team")) != "dict":
+                return {"error": "SCHEDULE NOT POSTED"}
+            if str(side["team"].get("id")) == str(team_id):
+                own += 1
+            else:
+                opponents += 1
+        if own != 1 or opponents != 1:
+            return {"error": "SCHEDULE NOT POSTED"}
+        status = comp.get("status") or event.get("status") or {}
+        if type(status) != "dict" or type(status.get("type")) != "dict":
+            return {"error": "SCHEDULE NOT POSTED"}
+        kind = status["type"]
+        if kind.get("name") in ["STATUS_CANCELED", "STATUS_CANCELLED", "STATUS_POSTPONED"]:
+            continue
+        state = kind.get("state")
+        date = clean(event.get("date") or comp.get("date"))
+        start = schedule_utc_minute(date)
+        event_id = clean(event.get("id"))
+        if state not in ["in", "pre", "post"] or start == None or not event_id.isdigit():
+            return {"error": "SCHEDULE NOT POSTED"}
+        day = (start - schedule_eastern_offset(start, int(date[:4]))) // 1440
+        item = {"id": event_id, "state": state, "start": start, "year": int(date[:4]), "host": source["host"]}
+        if state == "in":
+            # A multi-day stale IN flag must not masquerade as a fresh live game.
+            if start > current + 60 or current - start > 36 * 60:
+                return {"error": "GAME STATUS DELAYED"}
+            if live != None and live["id"] != event_id:
+                return {"error": "GAME STATUS DELAYED"}
+            live = item
+        elif state == "pre":
+            # Probe today's game summary even if the 5-minute schedule cache
+            # still says PRE after tipoff. Include previous-night tips so UTC
+            # or Eastern midnight cannot make a live game vanish.
+            if day == today or (start <= current and current - start <= 12 * 60):
+                if today_pre == None or abs(start - current) < abs(today_pre["start"] - current):
+                    today_pre = item
+        else:
+            if kind.get("completed") != True or start > current:
+                return {"error": "GAME STATUS DELAYED"}
+            if latest == None or start > latest["start"]:
+                latest = item
+    if live != None:
+        return live
+    if today_pre != None:
+        # Probe today's summary first in case PRE is stale after tipoff. A
+        # confirmed PRE must not erase yesterday's still-retained team final.
+        if not keep_final and latest != None and current - latest["start"] < 24 * 60:
+            today_pre["retained_final"] = latest
+        return today_pre
+    if latest != None:
+        # Athlete page 2 keeps its existing last-final behavior. Team pages
+        # retain a final until 24 elapsed hours after tipoff, then averages.
+        # UTC elapsed time avoids adding/subtracting an hour at DST changes.
+        if keep_final or current - latest["start"] < 24 * 60:
+            return latest
+    return {"id": None, "host": source["host"]}
+
+def tracker_summary_context(league, event, team_id):
+    url = "https://site.api.espn.com/apis/site/v2/sports/basketball/%s/summary?event=%s" % (league, event["id"])
+    # The schedule-selected host gets one summary attempt. This bounds the
+    # two-page athlete render to eight cold requests even during host failures.
+    data = get_json(url, 300, event["host"])
+    if type(data) != "dict":
+        return {"error": "GAME DATA OFFLINE"}
+    header = data.get("header")
+    comps = header.get("competitions") if type(header) == "dict" else None
+    if type(comps) != "list" or len(comps) != 1 or type(comps[0]) != "dict":
+        return {"error": "GAME DATA NOT POSTED"}
+    comp = comps[0]
+    # ESPN occasionally supplies the ID on the header instead of competition.
+    actual_id = clean(comp.get("id") or header.get("id"))
+    if actual_id != event["id"]:
+        return {"error": "GAME DATA NOT POSTED"}
+    sides = comp.get("competitors")
+    if type(sides) != "list" or len(sides) != 2:
+        return {"error": "GAME DATA NOT POSTED"}
+    own = None
+    opponent = None
+    for side in sides:
+        if type(side) != "dict" or type(side.get("team")) != "dict":
+            return {"error": "GAME DATA NOT POSTED"}
+        if str(side["team"].get("id")) == str(team_id):
+            if own != None:
+                return {"error": "GAME DATA NOT POSTED"}
+            own = side
+        else:
+            opponent = side
+    if own == None or opponent == None:
+        return {"error": "TEAM NOT IN GAME"}
+    status = comp.get("status")
+    kind = status.get("type") if type(status) == "dict" else None
+    if type(kind) != "dict" or kind.get("state") not in ["in", "pre", "post"]:
+        return {"error": "GAME STATUS DELAYED"}
+    period = status.get("period")
+    if period != None and (type(period) != "int" or period < 0 or period > 30):
+        return {"error": "GAME STATUS DELAYED"}
+    if status.get("displayClock") != None and type(status["displayClock"]) != "string":
+        return {"error": "GAME STATUS DELAYED"}
+    for side in sides:
+        if side.get("score") != None and type(side["score"]) not in ["string", "int", "float"]:
+            return {"error": "GAME DATA NOT POSTED"}
+    if kind["state"] == "pre" and event["state"] in ["in", "post"]:
+        return {"error": "GAME STATUS DELAYED"}
+    return {"data": data, "competition": comp, "team": own, "opponent": opponent}
+
+def roster_source(league, team_id, preferred = None):
+    path = "/apis/site/v2/sports/basketball/%s/teams/%s/roster" % (league, team_id)
+    for host in tracker_hosts(preferred):
+        response = http.get("https://" + host + path, ttl_seconds = 21600)
+        roster = response.get("json")
+        if response.get("status_code", 0) == 200 and type(roster) == "dict" and type(roster.get("athletes")) == "list":
+            valid = True
+            seen = []
+            for item in roster["athletes"]:
+                if type(item) != "dict" or not clean(item.get("id")).isdigit():
+                    valid = False
+                elif str(item["id"]) in seen:
+                    valid = False
+                else:
+                    seen.append(str(item["id"]))
+            if valid:
+                return {"roster": roster, "host": host}
+    return {"roster": None, "host": tracker_hosts(preferred)[-1]}
+
+def tracker_player_bio(athlete, roster_athlete):
+    # Join each missing field, not an entire partially populated bio string.
+    position = athlete_position(athlete) or athlete_position(roster_athlete)
+    height = athlete_height(athlete) or athlete_height(roster_athlete)
+    return (position + " " + height).strip()
+
+def tracker_game_table(data, team_id):
+    box = data.get("boxscore")
+    groups = box.get("players") if type(box) == "dict" else None
+    if type(groups) != "list":
+        return None
+    for group in groups:
+        if type(group) != "dict" or type(group.get("team")) != "dict":
+            continue
+        if str(group["team"].get("id")) != str(team_id):
+            continue
+        tables = group.get("statistics")
+        if type(tables) != "list" or len(tables) == 0 or type(tables[0]) != "dict":
+            return None
+        table = tables[0]
+        if type(table.get("labels")) != "list" or type(table.get("athletes")) != "list" or len(table["athletes"]) == 0:
+            return None
+        if "MIN" not in table["labels"] or "PTS" not in table["labels"]:
+            return None
+        seen = []
+        for label in table["labels"]:
+            if type(label) != "string":
+                return None
+        for row in table["athletes"]:
+            if type(row) != "dict" or type(row.get("athlete")) != "dict" or type(row.get("stats")) != "list":
+                return None
+            athlete_id = clean(row["athlete"].get("id"))
+            if not athlete_id.isdigit() or athlete_id in seen:
+                return None
+            seen.append(athlete_id)
+            for value in row["stats"]:
+                if type(value) not in ["string", "int", "float", "NoneType"]:
+                    return None
+        return table
+    return None
 def schedule_month_days(year, month):
     days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
@@ -667,7 +880,15 @@ def schedule_utc_minute(value):
         return None
     return schedule_day_index(year, month, day) * 1440 + hour * 60 + minute
 
-def schedule_eastern_labels(value):
+def schedule_eastern_offset(utc, year):
+    # US Eastern daylight saving starts at 07:00Z and ends at 06:00Z.
+    march_sunday = 8 + (6 - schedule_day_index(year, 3, 1) % 7) % 7
+    november_sunday = 1 + (6 - schedule_day_index(year, 11, 1) % 7) % 7
+    summer_start = schedule_day_index(year, 3, march_sunday) * 1440 + 7 * 60
+    summer_end = schedule_day_index(year, 11, november_sunday) * 1440 + 6 * 60
+    return 240 if utc >= summer_start and utc < summer_end else 300
+
+def schedule_eastern_labels(value, today = None):
     # ESPN schedules use UTC. Convert the displayed date as well as the clock,
     # so a 00:30Z tip does not show the following day's date in Eastern time.
     utc = schedule_utc_minute(value)
@@ -675,11 +896,7 @@ def schedule_eastern_labels(value):
         return {"day": "", "date": "TBD", "time": ""}
     text = clean(value)
     year, month, day = int(text[0:4]), int(text[5:7]), int(text[8:10])
-    march_sunday = 8 + (6 - schedule_day_index(year, 3, 1) % 7) % 7
-    november_sunday = 1 + (6 - schedule_day_index(year, 11, 1) % 7) % 7
-    summer_start = schedule_day_index(year, 3, march_sunday) * 1440 + 7 * 60
-    summer_end = schedule_day_index(year, 11, november_sunday) * 1440 + 6 * 60
-    offset = 240 if utc >= summer_start and utc < summer_end else 300
+    offset = schedule_eastern_offset(utc, year)
     local_minutes = int(text[11:13]) * 60 + int(text[14:16]) - offset
     if local_minutes < 0:
         local_minutes += 1440
@@ -695,24 +912,22 @@ def schedule_eastern_labels(value):
     twelve = 12 if twelve == 0 else twelve
     clock = str(twelve) + (":" + ("0" if minute < 10 else "") + str(minute) if minute else "") + ("P" if hour >= 12 else "A")
     weekday = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][schedule_day_index(year, month, day) % 7]
+    game_day = schedule_day_index(year, month, day)
+    if today != None and game_day in [today, today + 1]:
+        return {"day": "TODAY" if game_day == today else "TMRW", "date": "", "time": clock}
     return {"day": weekday, "date": str(month) + "/" + str(day), "time": clock}
 
 def next_scheduled_game(ctx, team, source_host = None):
     # ESPN's default preseason schedule can be empty while the regular-season
     # schedule is already populated. Try that real feed before showing TBD.
     team_id = str(team.get("id"))
-    schedule_url = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/%s/schedule" % team_id
-    schedule = get_json(schedule_url, 3600, source_host)
-    if schedule == None or len(schedule.get("events") or []) == 0:
-        regular = get_json(schedule_url + "?seasontype=2", 3600, source_host)
-        if regular != None:
-            schedule = regular
-        elif schedule != None:
-            return {"state": "offline"}
-    if schedule == None:
+    source = tracker_schedule_source(LEAGUES["MEN"], team_id, source_host)
+    if source.get("error") != None:
         return {"state": "offline"}
+    schedule = source["document"]
     now = ctx.now
     current = schedule_day_index(now.year, now.month, now.day) * 1440 + now.hour * 60 + now.minute
+    today = (current - schedule_eastern_offset(current, now.year)) // 1440
     selected = None
     first = None
     for event in schedule.get("events", []):
@@ -733,22 +948,24 @@ def next_scheduled_game(ctx, team, source_host = None):
                 opponents.append(competitor)
         if own == None or len(opponents) != 1:
             continue
-        labels = schedule_eastern_labels(date)
+        labels = schedule_eastern_labels(date, today)
         confirmed_time = competition.get("timeValid", event.get("timeValid", True))
         selected = {"state": "scheduled", "opponent": opponents[0].get("team") or {},
                     "day": labels["day"], "date": labels["date"], "time": labels["time"] if confirmed_time else "TBD",
                     "site": "VS" if competition.get("neutralSite", False) or own.get("homeAway") != "away" else "AT"}
         first = start
     return selected if selected != None else {"state": "none"}
-
 def next_box_layout(c, following):
     opponent = following.get("opponent") or {}
     school = upper(opponent.get("abbreviation") or opponent.get("shortDisplayName"), "TBD")
-    fields = ["NXT", school, upper(following.get("day")), clean(following.get("date"), "TBD"), upper(following.get("time"), "TBD")]
+    day = upper(following.get("day"))
+    date = "" if day in ["TODAY", "TMRW"] else clean(following.get("date"), "TBD")
+    fields = ["NXT", school, day, date, upper(following.get("time"), "TBD")]
     fields = [field for field in fields if field != ""]
     # NXT BAY FRI 10/23 8P is 72px with roomier 3px gaps. Use that
     # spacing whenever it fits the original 75px footer, before borrowing
-    # space from PTS. Longer rows retain every field with tighter gaps.
+    # space from PTS. TODAY/TMRW replace weekday/date; longer rows retain
+    # every applicable field with tighter gaps.
     width = 0
     for field in fields:
         width += c.text_width(field, "picopixel")
@@ -810,7 +1027,7 @@ def tenths(value):
     return whole * 10 + decimal
 
 def athlete_position(athlete):
-    position = athlete.get("position") or {}
+    position = athlete.get("position") if type(athlete.get("position")) == "dict" else {}
     return upper(position.get("abbreviation") or position.get("name"))
 
 def athlete_height(athlete):
@@ -831,7 +1048,7 @@ def athlete_weight(athlete):
     return weight.replace("POUNDS", "").replace("LBS", "").replace("LB", "").strip()
 
 def athlete_year(athlete):
-    experience = athlete.get("experience") or {}
+    experience = athlete.get("experience") if type(athlete.get("experience")) == "dict" else {}
     value = upper(experience.get("abbreviation") or experience.get("displayValue") or athlete.get("class"))
     classes = {
         "FRESHMAN": "FR",
@@ -943,24 +1160,20 @@ def game_data(ctx):
     # Public installations always find the selected team's game automatically.
     # Ignore saved Studio overrides from earlier versions.
     source = roster_source(league, team_id)
-    event_id = find_event(league, team_id, source["host"])
-    if event_id == None:
-        # Page 2 never duplicates averages; avoid an unnecessary stats read.
+    event = tracker_event_context(ctx, league, team_id, source["host"], True)
+    if event.get("error") != None:
+        return event
+    if event.get("id") == None:
         return {"mode": "AVERAGES"}
-    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/summary?event=%s" % (league, event_id), 30, source["host"])
-    if data == None:
-        return {"error": "GAME DATA OFFLINE"}
-
-    competition = ((data.get("header") or {}).get("competitions") or [{}])[0]
-    team = None
-    opponent = None
-    for competitor in competition.get("competitors", []):
-        if str((competitor.get("team") or {}).get("id")) == team_id:
-            team = competitor
-        else:
-            opponent = competitor
-    if team == None:
-        return {"error": "TEAM NOT IN GAME"}
+    context = tracker_summary_context(league, event, team_id)
+    if context.get("error") != None:
+        return context
+    data = context["data"]
+    competition = context["competition"]
+    team = context["team"]
+    opponent = context["opponent"]
+    if competition["status"]["type"]["state"] == "pre":
+        return {"error": "GAME NOT STARTED"}
 
     # ESPN's box-score athletes often omit position, height, class, and even
     # jersey number. Join the current roster so live/final pages retain the
@@ -975,17 +1188,11 @@ def game_data(ctx):
                 "jersey": clean(roster_athlete.get("jersey"), ""),
                 "bio": athlete_bio(roster_athlete),
                 "extra_bio": athlete_extra_bio(roster_athlete),
+                "raw": roster_athlete,
             }
 
-    table = None
-    for group in (data.get("boxscore") or {}).get("players", []):
-        if str((group.get("team") or {}).get("id")) == team_id:
-            tables = group.get("statistics") or []
-            if len(tables) > 0:
-                table = tables[0]
+    table = tracker_game_table(data, team_id)
     if table == None:
-        if upper(((competition.get("status") or {}).get("type") or {}).get("state")) == "PRE":
-            return {"error": "GAME NOT STARTED"}
         return {"error": "STATS NOT POSTED"}
 
     indexes = stat_map(table)
@@ -1001,7 +1208,7 @@ def game_data(ctx):
             "id": athlete_id,
             "name": upper(athlete.get("shortName") or athlete.get("displayName"), "PLAYER"),
             "jersey": clean(athlete.get("jersey"), roster_athlete.get("jersey", "")),
-            "bio": athlete_bio(athlete) or roster_athlete.get("bio", ""),
+            "bio": tracker_player_bio(athlete, roster_athlete.get("raw", {})),
             "extra_bio": athlete_extra_bio(athlete) or roster_athlete.get("extra_bio", ""),
             "starter": row.get("starter", False) == True,
             "min": minutes,
@@ -1055,7 +1262,6 @@ def game_data(ctx):
         "clock": clean(status.get("displayClock")),
         "mode": "GAME",
     }
-
 def points_value(item):
     text = clean(item.get("pts"), "0")
     return tenths(text)
@@ -6668,6 +6874,544 @@ PLAYER_IDS = {
     "Youngstown State Penguins — K. Destin (#5)": "5459417",
     "Youngstown State Penguins — L. Holmstrom (#4)": "5243263",
     "Youngstown State Penguins — L. Lokhmanchuk (#11)": "5459418",
+    "Alabama State Hornets — A. Brown (#15)": "5314342",
+    "Alabama State Hornets — H. Stewart (#0)": "5461679",
+    "Alabama State Hornets — I. Barganier (#23)": "5105485",
+    "Alabama State Hornets — J. Rogers (#22)": "5242609",
+    "Alabama State Hornets — J. Scott (#11)": "5314818",
+    "Alabama State Hornets — M. Dixon (#2)": "5461681",
+    "Alabama State Hornets — M. James (#10)": "5314773",
+    "Alabama State Hornets — N. Benny (#3)": "5314532",
+    "Alabama State Hornets — P. McMillan IV (#34)": "5106659",
+    "Alabama State Hornets — P. Mensah (#1)": "5461680",
+    "Alabama State Hornets — T. Hampton (#33)": "5461684",
+    "Alabama State Hornets — T. Miller (#5)": "5108892",
+    "Alabama State Hornets — T. Powell (#4)": "5461682",
+    "Alcorn State Braves — A. Tokpah (#35)": "5312325",
+    "Alcorn State Braves — B. Cannon (#2)": "5461692",
+    "Alcorn State Braves — B. Thomas (#7)": "5239884",
+    "Alcorn State Braves — C. Richardson (#15)": "5241909",
+    "Alcorn State Braves — C. Zeigler (#12)": "5461694",
+    "Alcorn State Braves — E. Griffin (#23)": "5461695",
+    "Alcorn State Braves — J. Craine (#8)": "5461693",
+    "Alcorn State Braves — J. Felton (#0)": "4873098",
+    "Alcorn State Braves — J. Powell (#6)": "5144549",
+    "Alcorn State Braves — J. Walker (#5)": "5241385",
+    "Alcorn State Braves — M. Taylor (#13)": "5239814",
+    "Alcorn State Braves — N. Thomas (#10)": "5312346",
+    "Alcorn State Braves — S. Sunderland (#11)": "5106049",
+    "Alcorn State Braves — T. Thomas (#1)": "5106699",
+    "Arkansas-Pine Bluff Golden Lions — B. Johnson (#0)": "5241337",
+    "Arkansas-Pine Bluff Golden Lions — C. Dixon (#11)": "5464775",
+    "Arkansas-Pine Bluff Golden Lions — C. Smith (#5)": "5240267",
+    "Arkansas-Pine Bluff Golden Lions — C. Williamson (#22)": "5177353",
+    "Arkansas-Pine Bluff Golden Lions — D. Capriotti (#6)": "5106783",
+    "Arkansas-Pine Bluff Golden Lions — D. Giddens (#7)": "5313174",
+    "Arkansas-Pine Bluff Golden Lions — E. Hernandez (#2)": "5322027",
+    "Arkansas-Pine Bluff Golden Lions — J. Hayes (#3)": "5313436",
+    "Arkansas-Pine Bluff Golden Lions — J. Nyakundi (#4)": "5464773",
+    "Arkansas-Pine Bluff Golden Lions — J. Tatum (#1)": "5243345",
+    "Arkansas-Pine Bluff Golden Lions — K. Johnson (#9)": "5464774",
+    "Arkansas-Pine Bluff Golden Lions — L. Taylor (#44)": "5177542",
+    "Arkansas-Pine Bluff Golden Lions — M. Williams (#24)": "5464776",
+    "Auburn Tigers — M. Rubštavičius (#17)": "5351499",
+    "Bethune-Cookman Wildcats — C. Teasley (#30)": "5461747",
+    "Bethune-Cookman Wildcats — D. Johnson (#11)": "5239644",
+    "Bethune-Cookman Wildcats — D. Perez-Rouzan (#23)": "5108148",
+    "Bethune-Cookman Wildcats — I. Ezuma (#15)": "4898338",
+    "Bethune-Cookman Wildcats — J. Jones (#4)": "4845388",
+    "Bethune-Cookman Wildcats — J. Morris (#1)": "5177232",
+    "Bethune-Cookman Wildcats — J. Smith (#24)": "5461746",
+    "Bethune-Cookman Wildcats — K. Branch (#2)": "5314674",
+    "Bethune-Cookman Wildcats — K. Murphy (#10)": "5461744",
+    "Bethune-Cookman Wildcats — K. Patton (#12)": "5239634",
+    "Bethune-Cookman Wildcats — K. Patton Jr. (#0)": "5176443",
+    "Bethune-Cookman Wildcats — M. Jordan (#3)": "4894453",
+    "Bethune-Cookman Wildcats — M. Martinez (#21)": "5313672",
+    "Bethune-Cookman Wildcats — V. Boskovic (#34)": "5313159",
+    "Bradley Braves — M. Gaspa (#6)": "5460116",
+    "Cal State Fullerton Titans — A. Ponga (#0)": "5464739",
+    "Cal State Fullerton Titans — D. McConnell (#2)": "4897705",
+    "Cal State Fullerton Titans — G. Howard Jr. (#10)": "5309816",
+    "Cal State Fullerton Titans — H. Beckett (#13)": "5328515",
+    "Cal State Fullerton Titans — M. Bell (#11)": "5464740",
+    "Cal State Fullerton Titans — M. Willenborg (#21)": "5464742",
+    "Cal State Fullerton Titans — M. Zeller (#3)": "5240614",
+    "Cal State Fullerton Titans — R. Reynolds (#23)": "5175393",
+    "Cal State Fullerton Titans — S. Tresvant (#12)": "5464741",
+    "Cal State Fullerton Titans — T. Jenkins (#14)": "5241236",
+    "Cal State Fullerton Titans — T. Stynes (#42)": "5464743",
+    "California Baptist Lancers — O. Blankson (#24) [5314833]": "5314833",
+    "Canisius Golden Griffins — C. Francis (#32)": "5468197",
+    "Chattanooga Mocs — A. Swift (#2)": "4897967",
+    "Chattanooga Mocs — C. Hardaway (#6)": "5462747",
+    "Chattanooga Mocs — C. Matos (#11)": "5462748",
+    "Chattanooga Mocs — J. Fleeman (#34)": "5462751",
+    "Chattanooga Mocs — K. McDowell-White (#5)": "5462746",
+    "Chattanooga Mocs — L. Anigbata (#12)": "5462749",
+    "Chattanooga Mocs — M. Hampton (#1)": "5462744",
+    "Chattanooga Mocs — T. Houser (#44)": "5107353",
+    "Chattanooga Mocs — T. Powell (#3)": "5462745",
+    "Chattanooga Mocs — Y. Levy (#18)": "5262456",
+    "Chattanooga Mocs — Y. Moungalla (#33)": "5462750",
+    "Chicago State Cougars — A. Carraway (#3)": "5313447",
+    "Chicago State Cougars — A. Stanton (#20)": "5463674",
+    "Chicago State Cougars — B. Akanmu (#24)": "5317318",
+    "Chicago State Cougars — B. Kalonji (#10)": "5181536",
+    "Chicago State Cougars — D. Loury (#1)": "5312429",
+    "Chicago State Cougars — F. Sheriff (#2)": "5463670",
+    "Chicago State Cougars — J. Pazon (#7)": "5243265",
+    "Chicago State Cougars — K. Foman (#0)": "5243192",
+    "Chicago State Cougars — K. Popotte (#18)": "5463673",
+    "Chicago State Cougars — L. Hodges Jr. (#25)": "5463675",
+    "Chicago State Cougars — L. Stephane Djiya (#15)": "5318081",
+    "Chicago State Cougars — M. Olafioye (#11)": "5177742",
+    "Chicago State Cougars — M. Price (#8)": "5241842",
+    "Chicago State Cougars — N. Graham (#4)": "5463671",
+    "Chicago State Cougars — W. Lovings-Watts (#23)": "5176223",
+    "Coppin State Eagles — S. Djopmo (#13)": "5239487",
+    "Coppin State Eagles — T. Gapare (#11)": "5106034",
+    "Eastern Washington Eagles — Z. Trezvant (#22)": "5466535",
+    "Florida A&M Rattlers — A. Mbaye (#22)": "5240537",
+    "Florida A&M Rattlers — A. Montes (#16)": "5462544",
+    "Florida A&M Rattlers — A. Williams (#12)": "5321953",
+    "Florida A&M Rattlers — B. Ndour (#45)": "5462545",
+    "Florida A&M Rattlers — C. Davis (#2)": "5462540",
+    "Florida A&M Rattlers — D. Williford (#8)": "5240880",
+    "Florida A&M Rattlers — J. Joseph (#3)": "5280926",
+    "Florida A&M Rattlers — J. Kempson (#11)": "5313144",
+    "Florida A&M Rattlers — J. Lomicka (#6)": "5462541",
+    "Florida A&M Rattlers — J. Mokweza (#21)": "5221329",
+    "Florida A&M Rattlers — J. Sanders (#5)": "5105593",
+    "Florida A&M Rattlers — M. Stijovic (#15)": "5462543",
+    "Florida A&M Rattlers — R. Martino Jr. (#00)": "5243388",
+    "Grambling Tigers — A. Shannon (#0)": "5462534",
+    "Grambling Tigers — A. Shannon (#2)": "5462535",
+    "Grambling Tigers — B. Hardy (#4)": "5176556",
+    "Grambling Tigers — C. Byrd (#5)": "5462537",
+    "Grambling Tigers — D. Pierce (#11)": "5312174",
+    "Grambling Tigers — G. Avramovic (#3)": "5462536",
+    "Grambling Tigers — H. Washington (#7)": "5314204",
+    "Grambling Tigers — I. Erims (#8)": "5462538",
+    "Grambling Tigers — I. Howard (#43)": "5247673",
+    "Grambling Tigers — I. Miranda (#14)": "5121428",
+    "Grambling Tigers — K. Layton (#6)": "5177610",
+    "Grambling Tigers — T. Bey (#1)": "4858607",
+    "Green Bay Phoenix — T. Colnaric (#36)": "5464868",
+    "Harvard Crimson — T. Batties (#15)": "5467070",
+    "Indiana State Sycamores — E. McQuillan (#1)": "5247674",
+    "Jackson State Tigers — A. Manyuon (#3)": "5462531",
+    "Jackson State Tigers — B. Nettles (#0)": "5462529",
+    "Jackson State Tigers — C. Brunt (#10)": "5176415",
+    "Jackson State Tigers — D. Davis (#6)": "5462532",
+    "Jackson State Tigers — E. Wilson (#7)": "5243346",
+    "Jackson State Tigers — J. Williams (#4)": "4869785",
+    "Jackson State Tigers — N. Williams (#22)": "5319553",
+    "Jackson State Tigers — T. Hoover (#5)": "5243343",
+    "Jackson State Tigers — T. Husband (#2)": "5462530",
+    "Jackson State Tigers — T. Lawson (#8)": "5462533",
+    "Jacksonville Dolphins — C. Williams (#1)": "5243035",
+    "Jacksonville Dolphins — E. Roberts (#5)": "5465505",
+    "Jacksonville Dolphins — J. Morrow (#22)": "5179094",
+    "Jacksonville Dolphins — J. Newell (#7)": "5105532",
+    "Jacksonville Dolphins — J. Phillips Jr. (#0)": "5240016",
+    "Jacksonville Dolphins — L. Buckingham Jr. (#2)": "5327891",
+    "Jacksonville Dolphins — L. Katz (#9)": "5465506",
+    "Jacksonville Dolphins — M. Palmer (#44)": "5465507",
+    "Jacksonville Dolphins — N. Turner (#6)": "5239776",
+    "Jacksonville Dolphins — R. Stirling (#25)": "5314618",
+    "Jacksonville Dolphins — S. Mbingazo (#35)": "5144545",
+    "Kansas Jayhawks — T. Kaufman-Renn (#9)": "4897438",
+    "La Salle Explorers — J. Mboudjika (#23)": "5458216",
+    "LSU New Orleans Privateers — A. Manning Jr. (#3)": "5210794",
+    "LSU New Orleans Privateers — A. Shi (#7)": "5462525",
+    "LSU New Orleans Privateers — C. Okey (#24)": "5242971",
+    "LSU New Orleans Privateers — J. Awe (#13)": "5462526",
+    "LSU New Orleans Privateers — J. Pace (#34)": "5243355",
+    "LSU New Orleans Privateers — K. Ratliff (#23)": "5107218",
+    "LSU New Orleans Privateers — K. Singleton (#11)": "5176059",
+    "LSU New Orleans Privateers — M. McDonald (#2)": "5462524",
+    "LSU New Orleans Privateers — N. Jones (#5)": "5317314",
+    "LSU New Orleans Privateers — S. Ominu (#4)": "5240907",
+    "LSU New Orleans Privateers — S. Parson (#20)": "5462528",
+    "LSU New Orleans Privateers — W. Campbell (#14)": "5462527",
+    "LSU New Orleans Privateers — Y. Ortiz (#0)": "5462523",
+    "LSU Tigers — B. Dessert (#13)": "5464194",
+    "LSU Tigers — G. Levy (#18)": "5442783",
+    "LSU Tigers — S. Clark (#55)": "5105794",
+    "LSU Tigers — S. Niang (#7)": "5281137",
+    "Manhattan Jaspers — B. Pearce (#4)": "5465511",
+    "McNeese Cowboys — A. Maluk (#21)": "5238166",
+    "McNeese Cowboys — A. Mazou (#27)": "5313570",
+    "McNeese Cowboys — C. Cherenfant (#5)": "4711271",
+    "McNeese Cowboys — C. Chest (#11)": "4858606",
+    "McNeese Cowboys — C. Nitu (#7)": "5238164",
+    "McNeese Cowboys — D. Warren (#1)": "4873112",
+    "McNeese Cowboys — E. Moore (#81)": "5074087",
+    "McNeese Cowboys — J. Colbert (#23)": "4433273",
+    "McNeese Cowboys — J. Dean-Vines (#12)": "5221327",
+    "McNeese Cowboys — J. DeVall (#10)": "5462483",
+    "McNeese Cowboys — J. Rembert (#2)": "5186554",
+    "McNeese Cowboys — M. Madison (#3)": "5280901",
+    "McNeese Cowboys — N. DeVall (#0)": "5462482",
+    "McNeese Cowboys — T. Hunter (#24)": "5462484",
+    "Mississippi Valley State Delta Devils — A. Abrams (#2)": "5462513",
+    "Mississippi Valley State Delta Devils — C. Cameron (#8)": "5462516",
+    "Mississippi Valley State Delta Devils — E. Pippins (#1)": "5462512",
+    "Mississippi Valley State Delta Devils — G. Martinez (#21)": "5462522",
+    "Mississippi Valley State Delta Devils — H. Wilson Jr. (#11)": "5462518",
+    "Mississippi Valley State Delta Devils — M. Anglo (#5)": "5462514",
+    "Mississippi Valley State Delta Devils — M. McCoy (#12)": "5462519",
+    "Mississippi Valley State Delta Devils — Q. Pang (#13)": "5462520",
+    "Mississippi Valley State Delta Devils — T. Foster (#24)": "5174615",
+    "Mississippi Valley State Delta Devils — T. James Jr. (#20)": "5312305",
+    "Mississippi Valley State Delta Devils — T. Williams (#7)": "5462515",
+    "Mississippi Valley State Delta Devils — T. Wu (#9)": "5462517",
+    "Montana Grizzlies — J. Clark (#3)": "5460690",
+    "Morehead State Eagles — D. Alexander (#25)": "5462434",
+    "Morehead State Eagles — I. Day (#23)": "5252080",
+    "Morehead State Eagles — J. Payne (#1)": "5462431",
+    "Morehead State Eagles — K. Carbon (#2)": "5462432",
+    "Morehead State Eagles — K. Shaw (#7)": "5243389",
+    "Morehead State Eagles — L. Bass Jr. (#0)": "5462430",
+    "Morehead State Eagles — M. Gillespie (#4)": "5462433",
+    "Morehead State Eagles — T. Tangiora (#42)": "5462435",
+    "Nicholls Colonels — A. Arop (#24)": "5175888",
+    "Nicholls Colonels — A. Dent (#1)": "5314856",
+    "Nicholls Colonels — A. McPeters (#13)": "5462681",
+    "Nicholls Colonels — C. Biteye (#15)": "5462682",
+    "Nicholls Colonels — C. Simpson (#6)": "5183926",
+    "Nicholls Colonels — D. Cockrill III (#44)": "5247705",
+    "Nicholls Colonels — H. Carter (#7)": "5254318",
+    "Nicholls Colonels — J. Bruce (#4)": "5462679",
+    "Nicholls Colonels — J. Matthews (#21)": "5313590",
+    "Nicholls Colonels — J. Sileu (#52)": "5243099",
+    "Nicholls Colonels — J. Taylor (#9)": "5462680",
+    "Nicholls Colonels — M. Mboup (#0)": "5462678",
+    "Nicholls Colonels — S. Sharp (#5)": "5176388",
+    "North Dakota Fighting Hawks — A. Radojevic (#15)": "5461670",
+    "North Dakota Fighting Hawks — C. Evanson (#0)": "5461666",
+    "North Dakota Fighting Hawks — D. Dungey (#3)": "5461667",
+    "North Dakota Fighting Hawks — D. Ely (#52)": "5461673",
+    "North Dakota Fighting Hawks — J. Moore (#2)": "5144472",
+    "North Dakota Fighting Hawks — J. Thomas (#8)": "5461668",
+    "North Dakota Fighting Hawks — L. Winkel (#14)": "5461669",
+    "North Dakota Fighting Hawks — S. Hanson (#32)": "5461672",
+    "North Dakota Fighting Hawks — S. Hincapie (#12)": "5313955",
+    "North Dakota Fighting Hawks — T. Wagner (#5)": "5312886",
+    "North Dakota Fighting Hawks — Z. Parks (#23)": "5461671",
+    "North Dakota State Bison — A. Danforth (#13)": "5461688",
+    "North Dakota State Bison — A. Nagy (#44)": "5241910",
+    "North Dakota State Bison — C. Schoenfeld (#12)": "5461687",
+    "North Dakota State Bison — C. Stack (#35)": "5461691",
+    "North Dakota State Bison — J. Harper (#14)": "5311973",
+    "North Dakota State Bison — J. Robison (#11)": "5110430",
+    "North Dakota State Bison — K. Poom (#23)": "5248277",
+    "North Dakota State Bison — K. Tate (#3)": "5461685",
+    "North Dakota State Bison — M. Bell Jr. (#1)": "5101782",
+    "North Dakota State Bison — M. Iversen (#4)": "5461686",
+    "North Dakota State Bison — O. Junker (#22)": "5461689",
+    "North Dakota State Bison — R. Diaz III (#0)": "5312976",
+    "North Dakota State Bison — S. Paz Vazquez (#30)": "5461690",
+    "North Texas Mean Green — F. Kalajzic (#7)": "5466859",
+    "Northern Kentucky Norse — P. Mae (#5)": "5459305",
+    "Northwestern State Demons — A. Almuttar (#22)": "5462716",
+    "Northwestern State Demons — A. Almuttar (#5)": "5462712",
+    "Northwestern State Demons — A. Osojnik (#3)": "5176190",
+    "Northwestern State Demons — B. Remo (#12)": "5462714",
+    "Northwestern State Demons — C. Kelly (#2)": "5462710",
+    "Northwestern State Demons — C. Larry (#10)": "5314536",
+    "Northwestern State Demons — D. Brown (#11)": "5462713",
+    "Northwestern State Demons — D. Thomas (#8)": "5107301",
+    "Northwestern State Demons — I. Vick (#1)": "5462709",
+    "Northwestern State Demons — J. Nesbitt (#15)": "5462715",
+    "Northwestern State Demons — K. Simpson (#4)": "5462711",
+    "Northwestern State Demons — K. Turner (#23)": "5314538",
+    "Northwestern State Demons — N. Ojukwu (#13)": "5176392",
+    "Omaha Mavericks — B. Orgilbold (#13)": "5181402",
+    "Omaha Mavericks — C. Crosby (#2)": "5313375",
+    "Omaha Mavericks — C. Curtis Jr. (#1)": "5241911",
+    "Omaha Mavericks — C. Dockery (#0)": "5108143",
+    "Omaha Mavericks — D. Pleasant (#5)": "5461711",
+    "Omaha Mavericks — D. Thompson (#21)": "5313362",
+    "Omaha Mavericks — E. Sheats (#8)": "5461712",
+    "Omaha Mavericks — G. Baker (#42)": "5461714",
+    "Omaha Mavericks — H. Bukinga (#32)": "5313839",
+    "Omaha Mavericks — J. Bolis (#7)": "5239573",
+    "Omaha Mavericks — J. Jordan Jr. (#11)": "5461713",
+    "Oral Roberts Golden Eagles — A. Blanco (#11)": "5461727",
+    "Oral Roberts Golden Eagles — A. Robinson (#22)": "5176227",
+    "Oral Roberts Golden Eagles — B. Smith (#43)": "5105834",
+    "Oral Roberts Golden Eagles — B. Williams (#0)": "5308430",
+    "Oral Roberts Golden Eagles — C. Haffner (#1)": "5107700",
+    "Oral Roberts Golden Eagles — J. George (#10)": "5461726",
+    "Oral Roberts Golden Eagles — M. Gavazov (#23)": "5461730",
+    "Oral Roberts Golden Eagles — M. Pavlovic (#21)": "5461729",
+    "Oral Roberts Golden Eagles — T. Zorbas (#18)": "5461728",
+    "Prairie View A&M Panthers — A. Gause (#0)": "5240411",
+    "Prairie View A&M Panthers — B. Ajiero (#8)": "5465878",
+    "Prairie View A&M Panthers — D. Bynum (#7)": "5465877",
+    "Prairie View A&M Panthers — D. Ceaser (#24)": "5465881",
+    "Prairie View A&M Panthers — D. Rivers (#1)": "5465876",
+    "Prairie View A&M Panthers — D. Williams (#3)": "5243188",
+    "Prairie View A&M Panthers — E. Page (#21)": "5465880",
+    "Prairie View A&M Panthers — J. Fazande (#25)": "5240408",
+    "Prairie View A&M Panthers — J. Lee (#10)": "5465879",
+    "Prairie View A&M Panthers — J. Wharton (#5)": "5240355",
+    "Prairie View A&M Panthers — M. Bell (#4)": "5108054",
+    "Prairie View A&M Panthers — M. Eley (#9)": "5107807",
+    "Prairie View A&M Panthers — S. Tidor (#2)": "5241303",
+    "Princeton Tigers — N. Cohen (#10)": "5464668",
+    "Saint Peter's Peacocks — J. Mathews (#11)": "5464872",
+    "Samford Bulldogs — B. Fussell (#14)": "5189546",
+    "Samford Bulldogs — B. Kemp (#22)": "5462474",
+    "Samford Bulldogs — B. MacVicar (#13)": "5176792",
+    "Samford Bulldogs — C. Noard (#1)": "5106247",
+    "Samford Bulldogs — I. Campbell-Finch (#3)": "5101768",
+    "Samford Bulldogs — L. Lee (#32)": "5462475",
+    "Samford Bulldogs — N. George (#10)": "5314323",
+    "Samford Bulldogs — T. Davis (#9)": "5149116",
+    "Samford Bulldogs — W. Miller (#0)": "5176308",
+    "San José State Spartans — O. Kullamae (#14)": "5461289",
+    "SE Louisiana Lions — A. Sims II (#2)": "5313075",
+    "SE Louisiana Lions — C. Al-Naziat (#15)": "5314565",
+    "SE Louisiana Lions — D. Akoue (#10)": "5313081",
+    "SE Louisiana Lions — G. Sanford (#9)": "5313080",
+    "SE Louisiana Lions — H. Muhammad II (#11)": "5462726",
+    "SE Louisiana Lions — J. Furman (#1)": "5314456",
+    "SE Louisiana Lions — J. Massaquoi (#5)": "5313154",
+    "SE Louisiana Lions — J. Nyam (#12)": "5313077",
+    "SE Louisiana Lions — L. Suber (#0)": "5176191",
+    "SE Louisiana Lions — P. Jimenez (#7)": "5462725",
+    "SE Louisiana Lions — Q. Allen (#8)": "4433257",
+    "SE Louisiana Lions — T. Bailey (#4)": "5239833",
+    "SE Louisiana Lions — T. Perry (#6)": "5462724",
+    "SE Louisiana Lions — T. Rolison (#3)": "4845370",
+    "SE Louisiana Lions — Y. Ndjonga (#23)": "5175027",
+    "Seton Hall Pirates — R. Brown Jr. (#6)": "5037870",
+    "South Dakota Coyotes — B. Domsch (#22)": "5461751",
+    "South Dakota Coyotes — C. Kelderman (#2)": "5175036",
+    "South Dakota Coyotes — E. Warren (#5)": "5108002",
+    "South Dakota Coyotes — I. Fevry (#19)": "5461750",
+    "South Dakota Coyotes — J. Summers (#44)": "5241384",
+    "South Dakota Coyotes — J. Townley-Thomas (#8)": "5175359",
+    "South Dakota Coyotes — K. Kublickas (#9)": "5174659",
+    "South Dakota Coyotes — M. Nee (#3)": "5461749",
+    "South Dakota Coyotes — M. Richard III (#0)": "5461748",
+    "South Dakota Coyotes — M. Sanchez (#6)": "5116128",
+    "South Dakota Coyotes — S. van Bussel (#15)": "5174643",
+    "South Dakota Coyotes — T. Netolicky (#33)": "5461752",
+    "South Dakota State Jackrabbits — B. Ellwein (#23)": "5461765",
+    "South Dakota State Jackrabbits — C. Swearengen (#11)": "5461764",
+    "South Dakota State Jackrabbits — E. Ryans (#7)": "5243096",
+    "South Dakota State Jackrabbits — J. Mekonnen (#5)": "5241232",
+    "South Dakota State Jackrabbits — J. Van Kalsbeek (#42)": "5461766",
+    "South Dakota State Jackrabbits — M. Thompson (#21)": "5242970",
+    "South Dakota State Jackrabbits — S. Stampley (#1)": "5461762",
+    "South Dakota State Jackrabbits — Y. Yatabare (#4)": "5461763",
+    "Southeast Missouri State Redhawks — A. Clawson-Smith (#1)": "5462442",
+    "Southeast Missouri State Redhawks — A. Perry (#5)": "5462443",
+    "Southeast Missouri State Redhawks — C. Jewell (#33)": "5462446",
+    "Southeast Missouri State Redhawks — C. Simpson (#4)": "5330038",
+    "Southeast Missouri State Redhawks — D. Cooper (#11)": "5462444",
+    "Southeast Missouri State Redhawks — D. Sutton (#10)": "5144381",
+    "Southeast Missouri State Redhawks — F. Williams Jr. (#23)": "5462445",
+    "Southeast Missouri State Redhawks — K. Pruett (#9)": "5176561",
+    "Southeast Missouri State Redhawks — M. Eaves (#0)": "5462441",
+    "Southeast Missouri State Redhawks — P. Farmer (#2)": "5314338",
+    "Southern Illinois Salukis — B. McClure (#88)": "4896925",
+    "Southern Illinois Salukis — C. Hawkins (#21)": "5313874",
+    "Southern Illinois Salukis — D. Hill (#30)": "5107796",
+    "Southern Illinois Salukis — D. Pauliukonis (#4)": "5313876",
+    "Southern Illinois Salukis — J. Fugate (#23)": "5462427",
+    "Southern Illinois Salukis — J. Haynes (#1)": "5313875",
+    "Southern Illinois Salukis — J. Jackson (#0)": "5462425",
+    "Southern Illinois Salukis — L. Susko (#24)": "5462428",
+    "Southern Illinois Salukis — P. Ranieri (#5)": "5462426",
+    "Southern Illinois Salukis — T. Laur (#50)": "5462429",
+    "Southern Indiana Screaming Eagles — A. Fejzic (#33)": "5314341",
+    "Southern Indiana Screaming Eagles — A. Gooch (#2)": "5312078",
+    "Southern Indiana Screaming Eagles — A. Trnka (#4)": "5243002",
+    "Southern Indiana Screaming Eagles — D. Hunter (#5)": "5176207",
+    "Southern Indiana Screaming Eagles — D. Maleng (#15)": "5314642",
+    "Southern Indiana Screaming Eagles — F. Sylla (#21)": "5312391",
+    "Southern Indiana Screaming Eagles — J. Pautsch (#31)": "5462450",
+    "Southern Indiana Screaming Eagles — J. Smith (#1)": "5462447",
+    "Southern Indiana Screaming Eagles — L. Hayes (#7)": "5176206",
+    "Southern Indiana Screaming Eagles — M. Hryshchuk (#6)": "5462448",
+    "Southern Indiana Screaming Eagles — M. Knight (#24)": "5462449",
+    "Southern Indiana Screaming Eagles — Y. Warren (#3)": "5312314",
+    "Southern Indiana Screaming Eagles — Y. Yamanouchi-Williams (#10)": "5108086",
+    "Southern Jaguars — A. Benjamin (#9)": "5461724",
+    "Southern Jaguars — A. Hall (#4)": "5461721",
+    "Southern Jaguars — D. Dormu (#3)": "5314858",
+    "Southern Jaguars — D. Parish (#2)": "5461720",
+    "Southern Jaguars — I. Olajuwon (#35)": "5242119",
+    "Southern Jaguars — J. Greer (#8)": "5461723",
+    "Southern Jaguars — J. Hunter (#13)": "5461725",
+    "Southern Jaguars — J. Page (#5)": "5175174",
+    "Southern Jaguars — K. Demory (#6)": "5461722",
+    "Southern Jaguars — L. Bell (#10)": "5243370",
+    "Southern Jaguars — L. Larvadain (#11)": "5313921",
+    "Southern Jaguars — M. Ferguson (#1)": "5176803",
+    "Southern Jaguars — N. Boyde (#24)": "5238209",
+    "Southern Jaguars — R. King (#23)": "5313402",
+    "Southern Jaguars — S. Van Dorn Jr. (#7)": "5312455",
+    "St. Thomas Tommies — A. Herro (#2)": "4685653",
+    "St. Thomas Tommies — B. Madson (#0)": "5461769",
+    "St. Thomas Tommies — C. Wilkins (#21)": "5241637",
+    "St. Thomas Tommies — J. Lorenz (#33)": "5176418",
+    "St. Thomas Tommies — J. Mitchell III (#3)": "5461770",
+    "St. Thomas Tommies — J. Wade (#11)": "5461771",
+    "St. Thomas Tommies — J. Wilkinson (#22)": "5461772",
+    "St. Thomas Tommies — K. Blue (#4)": "5109018",
+    "Stephen F. Austin Lumberjacks — A. Reed (#33)": "5196935",
+    "Stephen F. Austin Lumberjacks — A. Simmons (#1)": "5179086",
+    "Stephen F. Austin Lumberjacks — B. Melvin (#2)": "5314588",
+    "Stephen F. Austin Lumberjacks — C. Scott (#5)": "5462741",
+    "Stephen F. Austin Lumberjacks — E. Daniel (#32)": "5311865",
+    "Stephen F. Austin Lumberjacks — E. Hupp (#24)": "5313452",
+    "Stephen F. Austin Lumberjacks — E. Makke (#12)": "5462742",
+    "Stephen F. Austin Lumberjacks — K. Candler (#20)": "5462743",
+    "Stephen F. Austin Lumberjacks — K. Pearson (#0)": "5314703",
+    "Stephen F. Austin Lumberjacks — M. Manciel (#99)": "5325988",
+    "Stephen F. Austin Lumberjacks — M. Russell (#21)": "5105539",
+    "Tennessee State Tigers — A. Bradshaw (#2)": "4685683",
+    "Tennessee State Tigers — A. Morris (#1)": "5106279",
+    "Tennessee State Tigers — A. Simmons (#24)": "5462453",
+    "Tennessee State Tigers — C. Alston (#7)": "5241312",
+    "Tennessee State Tigers — D. Howard Jr. (#11)": "5314352",
+    "Tennessee State Tigers — D. Lindsey (#0)": "5311748",
+    "Tennessee State Tigers — D. Vieira-Tuck (#3)": "5462451",
+    "Tennessee State Tigers — G. Shelton (#6)": "5462452",
+    "Tennessee State Tigers — I. Stewart (#16)": "5314206",
+    "Tennessee State Tigers — J. Rivera (#15)": "5105681",
+    "Tennessee State Tigers — P. Patterson (#4)": "5105524",
+    "Tennessee State Tigers — T. Johnson (#10)": "4845369",
+    "Tennessee Tech Golden Eagles — C. Gonzales (#6)": "5462477",
+    "Tennessee Tech Golden Eagles — C. Hollenbeck (#10)": "5313169",
+    "Tennessee Tech Golden Eagles — C. Newton (#5)": "5177575",
+    "Tennessee Tech Golden Eagles — C. Sanders (#11)": "5313561",
+    "Tennessee Tech Golden Eagles — D. Christensen (#22)": "5314733",
+    "Tennessee Tech Golden Eagles — D. Green (#1)": "4684795",
+    "Tennessee Tech Golden Eagles — D. Hackett (#3)": "5315084",
+    "Tennessee Tech Golden Eagles — H. Stewart (#24)": "5462481",
+    "Tennessee Tech Golden Eagles — J. Pampolina (#13)": "5462479",
+    "Tennessee Tech Golden Eagles — K. Fox (#20)": "5462480",
+    "Tennessee Tech Golden Eagles — K. Samuels (#0)": "5462476",
+    "Tennessee Tech Golden Eagles — S. Arnold (#12)": "5462478",
+    "Tennessee Tech Golden Eagles — T. Mosquera (#7)": "5177250",
+    "Tennessee Tech Golden Eagles — T. Owens (#2)": "5314364",
+    "Texas A&M-Corpus Christi Islanders — B. Basil (#22)": "5317320",
+    "Texas A&M-Corpus Christi Islanders — B. Billingsley (#5)": "5462753",
+    "Texas A&M-Corpus Christi Islanders — B. Wheatfall (#4)": "5314704",
+    "Texas A&M-Corpus Christi Islanders — C. Worsham (#42)": "5462758",
+    "Texas A&M-Corpus Christi Islanders — D. Kent Jr. (#12)": "5462756",
+    "Texas A&M-Corpus Christi Islanders — D. Mukuna (#3)": "5107288",
+    "Texas A&M-Corpus Christi Islanders — D. Winston (#2)": "5462752",
+    "Texas A&M-Corpus Christi Islanders — I. Lewis (#9)": "5242546",
+    "Texas A&M-Corpus Christi Islanders — J. Jones (#11)": "5462755",
+    "Texas A&M-Corpus Christi Islanders — J. Mizell (#0)": "5241436",
+    "Texas A&M-Corpus Christi Islanders — K. Wallace (#7)": "5462754",
+    "Texas A&M-Corpus Christi Islanders — L. Foon (#23)": "5462757",
+    "Texas A&M-Corpus Christi Islanders — S. Robinson (#1)": "5175802",
+    "The Citadel Bulldogs — A. Alexander (#13)": "5243247",
+    "The Citadel Bulldogs — A. Ekwere (#8)": "5462486",
+    "The Citadel Bulldogs — C. Cormier (#1)": "4838705",
+    "The Citadel Bulldogs — C. McKenzie (#11)": "5106054",
+    "The Citadel Bulldogs — E. Bronson (#2)": "5176133",
+    "The Citadel Bulldogs — J. Alexander (#5)": "5462485",
+    "The Citadel Bulldogs — J. Heck (#0)": "5314549",
+    "The Citadel Bulldogs — J. Hurlburt (#4)": "5105613",
+    "The Citadel Bulldogs — J. Seiders (#24)": "5462488",
+    "The Citadel Bulldogs — M. Banks (#12)": "5462487",
+    "The Citadel Bulldogs — R. Bethea (#7)": "5313193",
+    "The Citadel Bulldogs — T. Mrus (#10)": "5176299",
+    "The Citadel Bulldogs — Y. Ansong (#35)": "5462489",
+    "UCLA Bruins — J. Houegban (#13)": "5466586",
+    "UNC Greensboro Spartans — A. Beljan (#21)": "5108799",
+    "UNC Greensboro Spartans — B. Mishak (#3)": "5462491",
+    "UNC Greensboro Spartans — B. Stacker (#44)": "5107891",
+    "UNC Greensboro Spartans — C. Barnes (#24)": "5462492",
+    "UNC Greensboro Spartans — C. Grant (#4)": "5175008",
+    "UNC Greensboro Spartans — C. LaFrentz (#32)": "5462493",
+    "UNC Greensboro Spartans — D. Neal (#0)": "5144475",
+    "UNC Greensboro Spartans — J. Mani (#6)": "5241919",
+    "UNC Greensboro Spartans — M. Giant (#2)": "5462490",
+    "UNC Greensboro Spartans — R. Greer (#14)": "5311850",
+    "UNC Greensboro Spartans — V. Collins Jr. (#33)": "5107172",
+    "UNC Greensboro Spartans — Z. Fitch (#11)": "5242414",
+    "USC Trojans — O. Agu (#33)": "5388939",
+    "UT Martin Skyhawks — A. Bancevicius (#4)": "5462455",
+    "UT Martin Skyhawks — A. Vilkas (#27)": "5462462",
+    "UT Martin Skyhawks — D. Remagen (#1)": "5311960",
+    "UT Martin Skyhawks — E. Moya (#8)": "5314370",
+    "UT Martin Skyhawks — F. Petkovski (#22)": "5314376",
+    "UT Martin Skyhawks — G. Bubnys (#14)": "5462460",
+    "UT Martin Skyhawks — G. Sulaberidze (#15)": "5462461",
+    "UT Martin Skyhawks — K. Onat (#29)": "5462463",
+    "UT Martin Skyhawks — M. Hong (#33)": "5462464",
+    "UT Martin Skyhawks — N. Janicic (#11)": "5462459",
+    "UT Martin Skyhawks — N. Stuknys (#9)": "5462457",
+    "UT Martin Skyhawks — O. Sambe (#10)": "5462458",
+    "UT Martin Skyhawks — R. Conley (#0)": "5462454",
+    "UT Martin Skyhawks — S. Savkov (#6)": "5462456",
+    "UT Martin Skyhawks — V. Khryapa (#31)": "5314375",
+    "UT Rio Grande Valley Vaqueros — B. Crawford Jr. (#11)": "5462781",
+    "UT Rio Grande Valley Vaqueros — B. Knight (#7)": "5106641",
+    "UT Rio Grande Valley Vaqueros — C. Bell (#5)": "5462778",
+    "UT Rio Grande Valley Vaqueros — C. Uwayo (#3)": "5462776",
+    "UT Rio Grande Valley Vaqueros — D. Carr (#2)": "4684267",
+    "UT Rio Grande Valley Vaqueros — D. Pryor (#22)": "5152761",
+    "UT Rio Grande Valley Vaqueros — I. Parham Jr. (#8)": "5462779",
+    "UT Rio Grande Valley Vaqueros — J. Blair (#4)": "5462777",
+    "UT Rio Grande Valley Vaqueros — J. Hill (#20)": "5462782",
+    "UT Rio Grande Valley Vaqueros — J. Posey (#23)": "5101654",
+    "UT Rio Grande Valley Vaqueros — K. Corbitt (#35)": "5462783",
+    "UT Rio Grande Valley Vaqueros — L. Ramirez (#6)": "5314735",
+    "UT Rio Grande Valley Vaqueros — T. Brown (#0)": "4845366",
+    "UT Rio Grande Valley Vaqueros — T. Wright (#10)": "5462780",
+    "VMI Keydets — C. Henderson-Bradley (#4)": "5462494",
+    "VMI Keydets — D. Exarchopoulos (#72)": "5462500",
+    "VMI Keydets — J. Panzo (#12)": "5462496",
+    "VMI Keydets — P. Narvilas (#11)": "5462495",
+    "VMI Keydets — R. Jucevicius (#25)": "5462499",
+    "VMI Keydets — R. Zilys (#22)": "5462498",
+    "VMI Keydets — T. Johnson (#23)": "5241292",
+    "VMI Keydets — Z. Vaamonde (#15)": "5462497",
+    "Western Carolina Catamounts — A. McKoy (#6)": "5462502",
+    "Western Carolina Catamounts — C. Arias (#14)": "5462504",
+    "Western Carolina Catamounts — D. Hollifield (#1)": "5225519",
+    "Western Carolina Catamounts — D. Raymond (#8)": "4711303",
+    "Western Carolina Catamounts — F. Sodipo (#23)": "5462505",
+    "Western Carolina Catamounts — I. Manning (#7)": "4895786",
+    "Western Carolina Catamounts — J. Baker (#9)": "5312049",
+    "Western Carolina Catamounts — J. Martins (#3)": "5462501",
+    "Western Carolina Catamounts — J. Prunty (#0)": "5060731",
+    "Western Carolina Catamounts — J. Roberts (#2)": "5312164",
+    "Western Carolina Catamounts — J. Zhu (#11)": "5462503",
+    "Western Carolina Catamounts — M. Brown (#22)": "5164367",
+    "Western Carolina Catamounts — T. Bryson (#4)": "5316220",
+    "Western Illinois Leathernecks — A. Konate (#3)": "5462467",
+    "Western Illinois Leathernecks — D. Flowers (#0)": "5462465",
+    "Western Illinois Leathernecks — D. Traylor (#15)": "5462472",
+    "Western Illinois Leathernecks — H. Vaughn (#2)": "5462466",
+    "Western Illinois Leathernecks — I. Davis (#12)": "5462471",
+    "Western Illinois Leathernecks — J. Cain (#10)": "5462469",
+    "Western Illinois Leathernecks — M. Biembongo (#21)": "5260344",
+    "Western Illinois Leathernecks — S. Higgins (#32)": "5462473",
+    "Western Illinois Leathernecks — S. Stephens (#11)": "5462470",
+    "Western Illinois Leathernecks — T. Moore (#5)": "5462468",
+    "Wofford Terriers — C. Arias (#3)": "5243204",
+    "Wofford Terriers — C. Lowe (#0)": "5176197",
+    "Wofford Terriers — C. Sisk (#34)": "5462511",
+    "Wofford Terriers — D. Miller (#92)": "5314617",
+    "Wofford Terriers — E. Ramsey (#33)": "5261278",
+    "Wofford Terriers — J. Carter (#15)": "5462509",
+    "Wofford Terriers — J. Daniels (#10)": "5462507",
+    "Wofford Terriers — J. Dawkins (#11)": "5462508",
+    "Wofford Terriers — J. Price (#5)": "5462506",
+    "Wofford Terriers — M. Kalinov (#23)": "5462510",
 }
 
 def capture_jersey(art, x, y, color = "white", legend = {}):

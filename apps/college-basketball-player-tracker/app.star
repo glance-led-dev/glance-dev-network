@@ -184,15 +184,24 @@ def official_team_accent(team, background):
     alternate_contrast = abs(color_brightness(alternate) - background_brightness)
     return alternate if alternate_contrast > primary_contrast else primary
 
-def get_json(url, ttl, source_host = None):
+def tracker_get(url, ttl, requests = None, headers = None):
+    # Count unique URLs across the entire page set, including failed requests.
+    # This is conservative: a request already cached by Glance may be free.
+    if requests != None and url not in requests:
+        if len(requests) >= 8:
+            return {"status_code": 0, "json": None, "body": ""}
+        requests.append(url)
+    return http.get(url, ttl_seconds = ttl, headers = headers or {})
+
+def get_json(url, ttl, source_host = None, requests = None):
     # A chosen host gets one attempt per endpoint. Do not independently retry
     # every feed: that can exceed Glance's 8-request two-page render budget.
     if source_host != None:
-        response = http.get(url.replace("site.api.espn.com", source_host), ttl_seconds = ttl)
+        response = tracker_get(url.replace("site.api.espn.com", source_host), ttl, requests)
         return response.get("json") if response.get("status_code", 0) == 200 else None
-    response = http.get(url, ttl_seconds = ttl)
+    response = tracker_get(url, ttl, requests)
     if (response.get("status_code", 0) != 200 or response.get("json") == None) and "site.api.espn.com" in url:
-        response = http.get(url.replace("site.api.espn.com", "site.web.api.espn.com"), ttl_seconds = ttl)
+        response = tracker_get(url.replace("site.api.espn.com", "site.web.api.espn.com"), ttl, requests)
     if response.get("status_code", 0) != 200:
         return None
     return response.get("json")
@@ -566,7 +575,7 @@ TEAM_DIRECTORY = {
     "YOUNGSTOWN STATE PENGUINS": {"id":"2754","displayName":"Youngstown State Penguins","location":"Youngstown State","shortDisplayName":"Youngstown St","abbreviation":"YSU","color":"E51935","alternateColor":"690717","slug":"youngstown-state-penguins"},
 }
 
-def resolve_team(league, query):
+def resolve_team(league, query, requests = None):
     wanted = upper(query, "ILLINOIS")
     if wanted in TEAM_DIRECTORY:
         return TEAM_DIRECTORY[wanted]
@@ -579,7 +588,7 @@ def resolve_team(league, query):
         "SOUTHERN INDIANA SCREAMING EAGLES": "88",
     }
     known_team_id = known_team_ids.get(wanted)
-    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams?limit=500" % league, 86400)
+    data = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams?limit=500" % league, 86400, requests = requests)
     teams = [] if data == None else (((data.get("sports") or [{}])[0].get("leagues") or [{}])[0].get("teams") or [])
     partial = None
     for wrapped in teams:
@@ -596,7 +605,7 @@ def resolve_team(league, query):
     if partial != None:
         return partial
     if known_team_id != None:
-        detail = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams/%s" % (league, known_team_id), 86400)
+        detail = get_json("https://site.api.espn.com/apis/site/v2/sports/basketball/%s/teams/%s" % (league, known_team_id), 86400, requests = requests)
         if detail != None:
             return detail.get("team") or detail
     return None
@@ -636,22 +645,22 @@ def tracker_schedule_valid(document, team_id):
             return False
     return True
 
-def tracker_schedule_feed(path, team_id, preferred = None):
+def tracker_schedule_feed(path, team_id, preferred = None, requests = None):
     for host in tracker_hosts(preferred):
-        response = http.get("https://" + host + path, ttl_seconds = 300)
+        response = tracker_get("https://" + host + path, 300, requests)
         document = response.get("json")
         if response.get("status_code", 0) == 200 and tracker_schedule_valid(document, team_id):
             return {"document": document, "host": host}
     return None
 
-def tracker_schedule_source(league, team_id, preferred = None):
+def tracker_schedule_source(league, team_id, preferred = None, requests = None):
     path = "/apis/site/v2/sports/basketball/%s/teams/%s/schedule" % (league, team_id)
-    source = tracker_schedule_feed(path, team_id, preferred)
+    source = tracker_schedule_feed(path, team_id, preferred, requests)
     # Before regular-season rollout ESPN's default can be empty. Only that
     # case (or a failed default) uses the regular-season endpoint; never probe
     # every NCAA game or silently truncate a national scoreboard to fewer teams.
     if source == None or len(source["document"]["events"]) == 0:
-        regular = tracker_schedule_feed(path + "?seasontype=2", team_id, source["host"] if source != None else preferred)
+        regular = tracker_schedule_feed(path + "?seasontype=2", team_id, source["host"] if source != None else preferred, requests)
         if regular != None and len(regular["document"]["events"]) > 0:
             return regular
         if source == None and regular == None:
@@ -664,8 +673,8 @@ def tracker_now_minute(ctx):
     now = ctx.now
     return schedule_day_index(now.year, now.month, now.day) * 1440 + now.hour * 60 + now.minute
 
-def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = False):
-    source = tracker_schedule_source(league, team_id, preferred)
+def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = False, requests = None):
+    source = tracker_schedule_source(league, team_id, preferred, requests)
     if source.get("error") != None:
         return source
     current = tracker_now_minute(ctx)
@@ -725,11 +734,14 @@ def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = F
                 latest = item
     if live != None:
         return live
+    season = tracker_season_year(source["document"])
     if today_pre != None:
         # Probe today's summary first in case PRE is stale after tipoff. A
         # confirmed PRE must not erase yesterday's still-retained team final.
         if not keep_final and latest != None and current - latest["start"] < 24 * 60:
             today_pre["retained_final"] = latest
+        today_pre["season"] = season
+        today_pre["latest_final"] = latest
         return today_pre
     if latest != None:
         # Athlete page 2 keeps its existing last-final behavior. Team pages
@@ -737,13 +749,13 @@ def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = F
         # UTC elapsed time avoids adding/subtracting an hour at DST changes.
         if keep_final or current - latest["start"] < 24 * 60:
             return latest
-    return {"id": None, "host": source["host"]}
+    return {"id": None, "host": source["host"], "season": season, "latest_final": latest}
 
-def tracker_summary_context(league, event, team_id):
+def tracker_summary_context(league, event, team_id, requests = None):
     url = "https://site.api.espn.com/apis/site/v2/sports/basketball/%s/summary?event=%s" % (league, event["id"])
     # The schedule-selected host gets one summary attempt. This bounds the
     # two-page athlete render to eight cold requests even during host failures.
-    data = get_json(url, 300, event["host"])
+    data = get_json(url, 300, event["host"], requests)
     if type(data) != "dict":
         return {"error": "GAME DATA OFFLINE"}
     header = data.get("header")
@@ -787,10 +799,12 @@ def tracker_summary_context(league, event, team_id):
         return {"error": "GAME STATUS DELAYED"}
     return {"data": data, "competition": comp, "team": own, "opponent": opponent}
 
-def roster_source(league, team_id, preferred = None):
+def roster_source(league, team_id, preferred = None, requests = None, reserve = 0):
     path = "/apis/site/v2/sports/basketball/%s/teams/%s/roster" % (league, team_id)
     for host in tracker_hosts(preferred):
-        response = http.get("https://" + host + path, ttl_seconds = 21600)
+        if requests != None and len(requests) >= 8 - reserve:
+            break
+        response = tracker_get("https://" + host + path, 21600, requests)
         roster = response.get("json")
         if response.get("status_code", 0) == 200 and type(roster) == "dict" and type(roster.get("athletes")) == "list":
             valid = True
@@ -860,6 +874,14 @@ def stat_value(row, indexes, key, fallback = "--"):
         return fallback
     return clean(values[index], fallback)
 
+def live_field_goals(value):
+    parts = value.replace("-", "/").split("/")
+    if len(parts) != 2 or not parts[0].isdigit() or not parts[1].isdigit():
+        return "--"
+    if len(parts[0]) > 2 or len(parts[1]) > 2 or int(parts[0]) > int(parts[1]):
+        return "--"
+    return "%d/%d" % (int(parts[0]), int(parts[1]))
+
 def average_value(categories, key, fallback = "0.0"):
     for category in categories:
         for item in category.get("stats", []):
@@ -910,55 +932,122 @@ def athlete_year(athlete):
 def athlete_extra_bio(athlete):
     return athlete_year(athlete)
 
-def season_data(league, team):
+AVERAGE_FIELDS = {
+    "minutesPerGame": "min",
+    "pointsPerGame": "pts",
+    "reboundsPerGame": "reb",
+    "assistsPerGame": "ast",
+    "stealsPerGame": "stl",
+    "blocksPerGame": "blk",
+    "fieldGoalPercentage": "fg",
+}
+
+def tracker_season_year(document):
+    season = document.get("season") if type(document) == "dict" else None
+    year = clean(season.get("year")) if type(season) == "dict" else ""
+    return year if len(year) == 4 and year.isdigit() else None
+
+def espn_ref_path(item):
+    if type(item) != "dict":
+        return ""
+    ref = clean(item.get("$ref")).split("?", 1)[0]
+    for prefix in ["http://sports.core.api.espn.com", "https://sports.core.api.espn.com"]:
+        if ref.startswith(prefix + "/"):
+            return ref[len(prefix):]
+    return ""
+
+def core_average_rows(league, team_id, season, requests):
+    if season == None:
+        return None
+    root = "/v2/sports/basketball/leagues/%s/seasons/%s" % (league, season)
+    # Type 0 includes postseason games, matching the ESPN season webpage.
+    path = root + "/types/0/teams/" + team_id + "/leaders"
+    response = tracker_get("https://sports.core.api.espn.com" + path, 21600, requests)
+    document = response.get("json")
+    if response.get("status_code") != 200 or espn_ref_path(document) != path:
+        return None
+    categories = document.get("categories")
+    if type(categories) != "list":
+        return None
+    columns = {}
+    for category in categories:
+        if type(category) != "dict" or type(category.get("name")) != "string":
+            return None
+        field = AVERAGE_FIELDS.get(category["name"])
+        if field == None:
+            continue
+        leaders = category.get("leaders")
+        if field in columns or type(leaders) != "list" or len(leaders) == 0 or len(leaders) > 40:
+            return None
+        column = {}
+        athlete_prefix = root + "/athletes/"
+        for entry in leaders:
+            if type(entry) != "dict" or espn_ref_path(entry.get("team")) != root + "/teams/" + team_id:
+                return None
+            ref = espn_ref_path(entry.get("athlete"))
+            athlete_id = ref[len(athlete_prefix):] if ref.startswith(athlete_prefix) else ""
+            value = entry.get("displayValue")
+            if not athlete_id.isdigit() or athlete_id in column or type(value) not in ["string", "int", "float"]:
+                return None
+            value = clean(value)
+            if value.endswith("%"):
+                value = value[:-1]
+            parts = value.split(".")
+            if len(value) > 6 or len(parts) > 2 or not parts[0].isdigit() or (len(parts) == 2 and not parts[1].isdigit()):
+                return None
+            column[athlete_id] = value
+        columns[field] = column
+    points = columns.get("pts", {})
+    if len(columns) != len(AVERAGE_FIELDS) or len(points) == 0:
+        return None
+    rows = {}
+    for athlete_id in points:
+        row = {"id": athlete_id, "starter": False}
+        for field in columns:
+            if len(columns[field]) != len(points) or athlete_id not in columns[field]:
+                return None
+            row[field] = columns[field][athlete_id]
+        rows[athlete_id] = row
+    return rows
+
+def average_bio(athlete):
+    position = athlete_position(athlete)
+    if position in ["NA", "N/A", "NOT AVAILABLE"]:
+        position = ""
+    return {
+        "name": upper(athlete.get("shortName") or athlete.get("displayName") or athlete.get("fullName")),
+        "jersey": clean(athlete.get("jersey")),
+        "bio": (position + " " + athlete_height(athlete)).strip(),
+        "extra_bio": athlete_extra_bio(athlete),
+    }
+
+def website_average_rows(league, team, requests):
     team_id = str(team.get("id"))
-    roster = roster_source(league, team_id)["roster"]
-    if roster == None:
-        return {"error": "ROSTER OFFLINE"}
-    roster_info = {}
-    for athlete in (roster.get("athletes") or []):
-        athlete_id = str(athlete.get("id"))
-        roster_info[athlete_id] = {
-            "name": upper(athlete.get("shortName") or athlete.get("displayName") or athlete.get("fullName"), "PLAYER"),
-            "jersey": clean(athlete.get("jersey"), "0"),
-            "bio": athlete_bio(athlete),
-            "extra_bio": athlete_extra_bio(athlete),
-        }
     slug = clean(team.get("slug"), team_id)
     page_url = "https://www.espn.com/%s/team/stats/_/id/%s/%s" % (league, team_id, slug)
-    response = http.get(page_url, headers = {"User-Agent": "Mozilla/5.0 (compatible; Glance College Basketball Tracker)"}, ttl_seconds = 21600)
+    response = tracker_get(page_url, 21600, requests, {"User-Agent": "Mozilla/5.0 (compatible; Glance College Basketball Tracker)"})
     if response.get("status_code", 0) != 200:
         return {"error": "AVERAGES OFFLINE"}
     body = clean(response.get("body"))
     rows = tracker_average_rows(body)
     if rows == None:
         return {"error": "AVERAGES NOT POSTED"}
-    players = []
-    players_with_stats = []
+    result = {}
     for row in rows:
         if type(row) != "dict" or type(row.get("athlete")) != "dict" or type(row.get("statGroups")) != "dict" or type(row["statGroups"].get("stats")) != "list":
             return {"error": "AVERAGES NOT POSTED"}
         athlete = row["athlete"]
         athlete_id = clean(athlete.get("uid")).split("~a:")[-1]
-        # The ESPN averages page can retain last season's departed players while
-        # the roster endpoint has already rolled forward. Only join rows whose
-        # athlete ID is still on the selected team's current roster.
-        if athlete_id not in roster_info:
-            continue
-        if athlete_id in players_with_stats:
+        if not athlete_id.isdigit() or athlete_id in result:
             return {"error": "AVERAGES NOT POSTED"}
-        players_with_stats.append(athlete_id)
         values = {}
         for item in ((row.get("statGroups") or {}).get("stats") or []):
             if type(item) != "dict" or type(item.get("name")) != "string" or type(item.get("displayValue")) not in ["string", "int", "float", "NoneType"]:
                 return {"error": "AVERAGES NOT POSTED"}
             values[item["name"]] = clean(item.get("displayValue"), "--")
-        players.append({
+        result[athlete_id] = {
             "id": athlete_id,
             "name": upper(athlete.get("shortName") or athlete.get("name"), "PLAYER"),
-            "jersey": roster_info.get(athlete_id, {}).get("jersey", ""),
-            "bio": roster_info.get(athlete_id, {}).get("bio", ""),
-            "extra_bio": roster_info.get(athlete_id, {}).get("extra_bio", ""),
             "starter": False,
             "min": values.get("avgMinutes", "--"),
             "pts": values.get("avgPoints", "--"),
@@ -967,11 +1056,63 @@ def season_data(league, team):
             "stl": values.get("avgSteals", "--"),
             "blk": values.get("avgBlocks", "--"),
             "fg": values.get("fieldGoalPct", "-")
-        })
+        }
+    return {"rows": result}
+
+def last_game_bios(league, team_id, event, requests):
+    if event == None or len(requests) >= 8:
+        return {}
+    source = tracker_summary_context(league, event, team_id, requests)
+    if source.get("error") != None or source["competition"]["status"]["type"]["state"] != "post":
+        return {}
+    table = tracker_game_table(source["data"], team_id)
+    if table == None:
+        return {}
+    return {str(row["athlete"]["id"]): average_bio(row["athlete"]) for row in table["athletes"]}
+
+def season_data(league, team, event = None, requests = None):
+    event = event or {}
+    requests = requests if requests != None else []
+    team_id = str(team.get("id"))
+    roster = roster_source(league, team_id, event.get("host"), requests, reserve = 2)["roster"]
+    roster_year = tracker_season_year(roster)
+    season = event.get("season") or roster_year
+    roster_info = {}
+    if roster != None and (roster_year == None or roster_year == season):
+        for athlete in roster["athletes"]:
+            roster_info[str(athlete["id"])] = average_bio(athlete)
+    rows = core_average_rows(league, team_id, season, requests)
+    use_core = rows != None
+    website = None
+    if not use_core:
+        website = website_average_rows(league, team, requests)
+        if website.get("error") != None:
+            return website
+        rows = website["rows"]
+    top_rows = lineup({"players": rows.values(), "mode": "AVERAGES"})
+    # ESPN's roster can lag its stats. A recent matching final gives the
+    # missing identity and jersey in one team request, not one per player.
+    needs_identity = [row["id"] for row in top_rows if row["id"] not in roster_info or not roster_info[row["id"]]["name"]]
+    final_info = last_game_bios(league, team_id, event.get("latest_final"), requests) if needs_identity else {}
+    if use_core and [athlete_id for athlete_id in needs_identity if athlete_id not in final_info]:
+        website = website_average_rows(league, team, requests)
+    website_rows = website.get("rows", {}) if website != None else {}
+    players = []
+    for athlete_id in rows:
+        row = rows[athlete_id]
+        info = roster_info.get(athlete_id) or final_info.get(athlete_id) or {}
+        if not info and not use_core:
+            # Unlike the structured feed, the HTML can contain departed or
+            # prior-season rows. Require a current roster or matching final.
+            continue
+        name = info.get("name") or row.get("name") or website_rows.get(athlete_id, {}).get("name")
+        if not name:
+            continue
+        players.append(dict(row, name = name, jersey = info.get("jersey", ""), bio = info.get("bio", ""), extra_bio = info.get("extra_bio", "")))
     # Missing statistics are unknown, not zero. Retain current roster identity
     # without inventing averages for players whose stat rows are not posted.
     for athlete_id in roster_info:
-        if athlete_id in players_with_stats:
+        if athlete_id in rows:
             continue
         info = roster_info[athlete_id]
         players.append({
@@ -992,20 +1133,21 @@ def season_data(league, team):
     return {"players": players, "team": team, "opponent": {}, "team_score": "", "opponent_score": "", "state": "AVG", "detail": "SEASON AVERAGES", "mode": "AVERAGES"}
 def game_data(ctx):
     league = LEAGUES.get(upper(ctx.inputs.get("league"), "MEN"), LEAGUES["MEN"])
-    selected_team = resolve_team(league, ctx.inputs.get("team"))
+    requests = []
+    selected_team = resolve_team(league, ctx.inputs.get("team"), requests)
     if selected_team == None:
         return {"error": "SCHOOL NOT FOUND"}
     team_id = str(selected_team.get("id"))
-    event = tracker_event_context(ctx, league, team_id)
+    event = tracker_event_context(ctx, league, team_id, requests = requests)
     if event.get("error") != None:
         return event
     if event.get("id") == None:
-        return season_data(league, selected_team)
-    source = tracker_summary_context(league, event, team_id)
+        return season_data(league, selected_team, event, requests)
+    source = tracker_summary_context(league, event, team_id, requests)
     if source.get("error") != None:
         return source
     if source["competition"]["status"]["type"]["state"] == "pre" and event.get("retained_final") != None:
-        source = tracker_summary_context(league, event["retained_final"], team_id)
+        source = tracker_summary_context(league, event["retained_final"], team_id, requests)
         if source.get("error") != None:
             return source
     data = source["data"]
@@ -1018,11 +1160,11 @@ def game_data(ctx):
     # Only a successfully decoded, matching PRE summary may show averages.
     # A failed summary or a PRE/IN conflict never silently changes mode.
     if state == "PRE":
-        return season_data(league, selected_team)
+        return season_data(league, selected_team, event, requests)
     table = tracker_game_table(data, team_id)
     if table == None:
         return {"error": "STATS NOT POSTED"}
-    roster = roster_source(league, team_id, event["host"])["roster"]
+    roster = roster_source(league, team_id, event["host"], requests)["roster"]
     roster_info = {}
     if roster != None:
         for item in roster["athletes"]:
@@ -1454,6 +1596,24 @@ def tracker_text(c, value, x, y, width, fonts, color, align = "left"):
     c.text_stroke(text, x, y, font = font, color = color, stroke = "#0B1424", thickness = 1, align = align)
     return c.text_width(text, font)
 
+def draw_game_fgs(c, value, center):
+    if c.text_width(value, "4x5") <= 18:
+        tracker_text(c, value, center, 18, 18, ["4x5"], INK, "center")
+    elif c.text_width(value, "picopixel") <= 18:
+        tracker_text(c, value, center, 18, 18, ["picopixel"], INK, "center")
+    else:
+        # At x118 a 19px ratio would lose its outline. Use a two-pixel slash
+        # to keep both complete numbers centered with one pixel of separation.
+        made, attempts = value.split("/")
+        left_width = c.text_width(made, "picopixel")
+        width = left_width + c.text_width(attempts, "picopixel") + 4
+        left = center - width // 2
+        slash_x = left + left_width + 1
+        c.rect(slash_x - 1, 17, slash_x + 2, 23, fill = "#0B1424")
+        tracker_text(c, made, left, 18, left_width, ["picopixel"], INK)
+        tracker_text(c, attempts, slash_x + 3, 18, 7, ["picopixel"], INK)
+        c.bitmap([[0, 1], [0, 1], [1, 1], [1, 0], [1, 0]], slash_x, 18, INK)
+
 def display_player_name(athlete, players):
     name = clean(athlete.get("name"), "PLAYER")
     parts = name.split(" ")
@@ -1534,6 +1694,7 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
     year = clean(athlete.get("extra_bio"))
     player_name = display_player_name(athlete, game.get("players", []))
     player_name = player_name.replace(". ", ".")
+    base_name = player_name
     bio_parts = bio.split(" ", 1)
     position = bio_parts[0] if bio != "" and "'" not in bio_parts[0] else ""
     height = bio_parts[1] if len(bio_parts) > 1 else bio if "'" in bio else ""
@@ -1568,6 +1729,14 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
             break
     name_width = c.text_width(player_name, name_font)
     gap = min(4, max(1, (header_width - name_width - detail_width) // max(1, len(details))))
+    # Fit the optional initial after the normal header is laid out. Never
+    # change the chosen font or gap, truncate the name, or drop bio details.
+    source_name = clean(athlete.get("name")).replace(". ", ".")
+    if player_name == base_name and len(source_name) == len(base_name) + 2 and source_name[1:2] == "." and source_name[2:] == base_name:
+        initial_width = c.text_width(source_name, name_font)
+        if initial_width + detail_width + gap * len(details) <= header_width:
+            player_name = source_name
+            name_width = initial_width
     c.text_stroke(player_name, 25, 1 if name_font == "5x7" else 2, font = name_font, color = INK, stroke = border, thickness = 1)
     detail_x = 25 + name_width
     for value in details:
@@ -1580,18 +1749,33 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
     if str(team.get("id")) == "2097":
         jersey_color = "#EA7125"  # Official Campbell Orange: brand.campbell.edu/visual-identity/color-palette/
     large_tracker_jersey(c, jersey_color, border, athlete["jersey"])
-    if game.get("mode") != "AVERAGES":
-        state = game.get("state")
+    state = game.get("state")
+    show_shooting = game.get("mode") == "GAME" and state in ["IN", "POST"]
     labels = ["PTS", "REB", "AST", "STL", "BLK"]
     keys = ["pts", "reb", "ast", "stl", "blk"]
     centers = [37, 61, 80, 99, 118]
-    for index in range(5):
+    if show_shooting:
+        labels += ["FGS"]
+        keys += ["fg"]
+        centers = [31, 48, 65, 82, 100, 118]
+    for index in range(len(labels)):
         center = centers[index]
         value = clean(athlete.get(keys[index]), "--")
-        if index == 0:
+        if index == 0 and show_shooting:
+            # Draw the points hero after measuring the footer. No clearing
+            # rectangle: it would erase REB now that the stats sit closer.
+            continue
+        elif index == 0:
             # Dedicated points column stays full-height in every mode.
             tracker_text(c, labels[index], center, 11, 24, ["4x5"], accent, "center")
             points_width = tracker_text(c, value, center, 18, 28, ["scoretext", "6x8", "5x7"], INK, "center")
+        elif show_shooting:
+            shooting = keys[index] == "fg"
+            tracker_text(c, labels[index], center, 11, 15, ["4x5"], "#A4B0BF", "center")
+            if shooting:
+                draw_game_fgs(c, live_field_goals(value), center)
+            else:
+                tracker_text(c, value, center, 18, 13, ["4x5", "picopixel"], INK, "center")
         else:
             live_layout = game.get("mode") != "AVERAGES"
             tracker_text(c, labels[index], center, 11 if live_layout else 13, 17, ["4x5"], "#A4B0BF", "center")
@@ -1656,7 +1840,18 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
         # Leave PTS alone whenever it fits. Otherwise measure the exact left
         # shift: PENN 78-74 MSU FINAL OT2 needs 4px, not the old fixed 3px.
         # Preserve full-size digits until the jersey boundary prevents it.
-        if away_x < 37 + (points_width + 1) // 2 + 2:
+        if show_shooting:
+            points_center = centers[0]
+            points = clean(athlete.get("pts"), "--")
+            tracker_text(c, "PTS", points_center, 11, 15, ["4x5"], accent, "center")
+            # The large face reaches into the footer. Keep it unless the
+            # score needs that space; the compact face ends above the footer.
+            # Center x31 leaves a clear column before the jersey (ends at x22),
+            # even with a 15px-wide value and its 1px outline.
+            compact = away_x <= points_center + (min(15, c.text_width(points, "scoretext")) + 1) // 2 + 1
+            points_fonts = ["6x8", "5x7", "4x5", "picopixel"] if compact else ["scoretext", "6x8", "5x7", "4x5", "picopixel"]
+            tracker_text(c, points, points_center, 17, 15, points_fonts, INK, "center")
+        elif away_x < 37 + (points_width + 1) // 2 + 2:
             c.rect(24, 10, 51, 31, fill = background)
             points_center = min(37, away_x - (points_width + 1) // 2 - 2)
             if points_center - points_width // 2 >= 25:

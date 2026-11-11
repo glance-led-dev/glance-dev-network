@@ -1,0 +1,94 @@
+gdn: 1
+id: my-baseball-team
+version: 0.1.0
+name: My Baseball Team
+author: joelfullyseeking
+description: "Your ball club, logo against logo: pick two MLB teams. Each page shows the live score, the latest final, or the next game. Set the first team to None to switch the app off. Companion to My Teams Board — a display holds at most 8 pages per app, so baseball gets its own."
+category: Sports
+entry: app.star
+
+width: 64
+height: 32
+refresh: 900
+
+pages: [mlb1, mlb2]
+
+inputs:
+  - key: mlb1
+    type: choice
+    app_input_type: dropdown
+    label: "MLB team"
+    default: "Los Angeles Dodgers"
+    help: "One page for this team. None switches the app off."
+    choices: ["None", "Arizona Diamondbacks", "Athletics", "Atlanta Braves", "Baltimore Orioles", "Boston Red Sox", "Chicago Cubs", "Chicago White Sox", "Cincinnati Reds", "Cleveland Guardians", "Colorado Rockies", "Detroit Tigers", "Houston Astros", "Kansas City Royals", "Los Angeles Angels", "Los Angeles Dodgers", "Miami Marlins", "Milwaukee Brewers", "Minnesota Twins", "New York Mets", "New York Yankees", "Philadelphia Phillies", "Pittsburgh Pirates", "San Diego Padres", "San Francisco Giants", "Seattle Mariners", "St. Louis Cardinals", "Tampa Bay Rays", "Texas Rangers", "Toronto Blue Jays", "Washington Nationals"]
+    options: ["None", "Arizona Diamondbacks", "Athletics", "Atlanta Braves", "Baltimore Orioles", "Boston Red Sox", "Chicago Cubs", "Chicago White Sox", "Cincinnati Reds", "Cleveland Guardians", "Colorado Rockies", "Detroit Tigers", "Houston Astros", "Kansas City Royals", "Los Angeles Angels", "Los Angeles Dodgers", "Miami Marlins", "Milwaukee Brewers", "Minnesota Twins", "New York Mets", "New York Yankees", "Philadelphia Phillies", "Pittsburgh Pirates", "San Diego Padres", "San Francisco Giants", "Seattle Mariners", "St. Louis Cardinals", "Tampa Bay Rays", "Texas Rangers", "Toronto Blue Jays", "Washington Nationals"]
+  - key: mlb2
+    type: choice
+    app_input_type: dropdown
+    label: "2nd MLB team"
+    default: "None"
+    help: "Optional. None turns this page into your first team's schedule."
+    choices: ["None", "Arizona Diamondbacks", "Athletics", "Atlanta Braves", "Baltimore Orioles", "Boston Red Sox", "Chicago Cubs", "Chicago White Sox", "Cincinnati Reds", "Cleveland Guardians", "Colorado Rockies", "Detroit Tigers", "Houston Astros", "Kansas City Royals", "Los Angeles Angels", "Los Angeles Dodgers", "Miami Marlins", "Milwaukee Brewers", "Minnesota Twins", "New York Mets", "New York Yankees", "Philadelphia Phillies", "Pittsburgh Pirates", "San Diego Padres", "San Francisco Giants", "Seattle Mariners", "St. Louis Cardinals", "Tampa Bay Rays", "Texas Rangers", "Toronto Blue Jays", "Washington Nationals"]
+    options: ["None", "Arizona Diamondbacks", "Athletics", "Atlanta Braves", "Baltimore Orioles", "Boston Red Sox", "Chicago Cubs", "Chicago White Sox", "Cincinnati Reds", "Cleveland Guardians", "Colorado Rockies", "Detroit Tigers", "Houston Astros", "Kansas City Royals", "Los Angeles Angels", "Los Angeles Dodgers", "Miami Marlins", "Milwaukee Brewers", "Minnesota Twins", "New York Mets", "New York Yankees", "Philadelphia Phillies", "Pittsburgh Pirates", "San Diego Padres", "San Francisco Giants", "Seattle Mariners", "St. Louis Cardinals", "Tampa Bay Rays", "Texas Rangers", "Toronto Blue Jays", "Washington Nationals"]
+
+assets:
+  - assets/mlb/1.png
+  - assets/mlb/s1.png
+  - assets/mlb/2.png
+  - assets/mlb/s2.png
+  - assets/mlb/3.png
+  - assets/mlb/s3.png
+  - assets/mlb/4.png
+  - assets/mlb/s4.png
+  - assets/mlb/5.png
+  - assets/mlb/s5.png
+  - assets/mlb/6.png
+  - assets/mlb/s6.png
+  - assets/mlb/7.png
+  - assets/mlb/s7.png
+  - assets/mlb/8.png
+  - assets/mlb/s8.png
+  - assets/mlb/9.png
+  - assets/mlb/s9.png
+  - assets/mlb/10.png
+  - assets/mlb/s10.png
+  - assets/mlb/11.png
+  - assets/mlb/s11.png
+  - assets/mlb/12.png
+  - assets/mlb/s12.png
+  - assets/mlb/13.png
+  - assets/mlb/s13.png
+  - assets/mlb/14.png
+  - assets/mlb/s14.png
+  - assets/mlb/15.png
+  - assets/mlb/s15.png
+  - assets/mlb/16.png
+  - assets/mlb/s16.png
+  - assets/mlb/17.png
+  - assets/mlb/s17.png
+  - assets/mlb/18.png
+  - assets/mlb/s18.png
+  - assets/mlb/19.png
+  - assets/mlb/s19.png
+  - assets/mlb/20.png
+  - assets/mlb/s20.png
+  - assets/mlb/21.png
+  - assets/mlb/s21.png
+  - assets/mlb/22.png
+  - assets/mlb/s22.png
+  - assets/mlb/23.png
+  - assets/mlb/s23.png
+  - assets/mlb/24.png
+  - assets/mlb/s24.png
+  - assets/mlb/25.png
+  - assets/mlb/s25.png
+  - assets/mlb/26.png
+  - assets/mlb/s26.png
+  - assets/mlb/27.png
+  - assets/mlb/s27.png
+  - assets/mlb/28.png
+  - assets/mlb/s28.png
+  - assets/mlb/29.png
+  - assets/mlb/s29.png
+  - assets/mlb/30.png
+  - assets/mlb/s30.png

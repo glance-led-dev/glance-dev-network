@@ -156,9 +156,12 @@ FLAG_SHORT = {
     "DOUBLE YELLOW": "DBL YELLOW",
 }
 
-# How long past a session's scheduled end fetch_f1_live still treats it as
-# "just finished" rather than falling back to the between-sessions cards.
-F1_GRACE_SECONDS = 6 * 3600
+# Once a race weekend starts, the latest session stays up until the next one
+# begins (OpenF1's "latest" moves on by itself when it does). A finished race
+# instead stays up until 11:59 PM in the chosen time zone. This cap only
+# catches a weekend whose race never ran, so a Friday practice can't hold the
+# board for weeks.
+F1_HOLD_SECONDS = 4 * 86400
 
 # circuit_id / circuit_short_name -> (asset, native width, native height).
 # Each asset is pre-sized in Python so it is drawn at its own dimensions, not
@@ -578,15 +581,20 @@ def fetch_f1_live(ctx):
     start_unix = _days_from_civil(sy, smo, sd) * 86400 + sh * 3600 + smi * 60
     end_unix = _days_from_civil(ey, emo, ed) * 86400 + eh * 3600 + emi * 60
     now_unix = ctx.now.unix
-    # A per-viewer local-midnight grace (like NASCAR's) needs a timezone
-    # lookup, and fetch_f1_live already spends its full 8-call http budget on
-    # OpenF1 data alone -- one more call over the limit fails validation. A
-    # flat post-session window approximates "still today" without the call.
-    if now_unix < start_unix or now_unix > end_unix + F1_GRACE_SECONDS:
+    session_type = str(session.get("session_type", "Race")).upper()
+    if now_unix < start_unix or now_unix > end_unix + F1_HOLD_SECONDS:
         return None
+    # A finished race holds until local midnight on the day it ended. The time
+    # zone lookup is only made once the race is over, when the board reads
+    # /session_result instead of /position + /intervals, so the render stays
+    # inside the 8-call http budget (7 OpenF1 calls + this one).
+    if session_type == "RACE" and now_unix > end_unix:
+        off = panel_offset_seconds(ctx)
+        local_midnight = ((end_unix + off) // 86400 + 1) * 86400 - off
+        if now_unix >= local_midnight:
+            return None
 
     session_key = session.get("session_key")
-    session_type = str(session.get("session_type", "Race")).upper()
     circuit_short = str(session.get("circuit_short_name", ""))
 
     race_name = "GRAND PRIX"
@@ -732,6 +740,7 @@ def fetch_f1_live(ctx):
         "rows": rows,
         "session_key": str(session_key),
         "num2name": num2name,
+        "over": session_over,
     }
 
 # ---------- schedule / last result (Jolpica) ----------
@@ -754,6 +763,31 @@ def fetch_f1_next(ctx):
         "race_time": str(race.get("time", "")),
     }
 
+
+def fetch_f1_prev_winner(circuit_id):
+    # The most recent winner at this circuit, as (season, first three letters
+    # of the surname, team color),
+    # or None for a new circuit. Jolpica lists a circuit's wins oldest first,
+    # so the first call only reads the total and the second jumps to the last.
+    if circuit_id == "":
+        return None
+    url = "https://api.jolpi.ca/ergast/f1/circuits/" + circuit_id + "/results/1.json"
+    head = http_json(url, 86400, params = {"limit": "1"})
+    if not head["ok"]:
+        return None
+    total = int(head["data"].get("MRData", {}).get("total", "0") or "0")
+    if total == 0:
+        return None
+    resp = http_json(url, 86400, params = {"limit": "1", "offset": str(total - 1)})
+    if not resp["ok"]:
+        return None
+    races = resp["data"].get("MRData", {}).get("RaceTable", {}).get("Races", [])
+    if len(races) == 0 or len(races[0].get("Results", [])) == 0:
+        return None
+    res = races[0]["Results"][0]
+    return (str(races[0].get("season", "")),
+            up(res.get("Driver", {}).get("familyName", ""))[:3],
+            team_color(res.get("Constructor", {}).get("constructorId", ""), COLORS["text"]))
 
 def fetch_f1_last(ctx):
     resp = http_json("https://api.jolpi.ca/ergast/f1/current/last/results.json", 3600)
@@ -894,6 +928,7 @@ def get_state(ctx):
         "race_date": nxt["race_date"],
         "race_time": nxt["race_time"],
         "has_next": True,
+        "prev_winner": fetch_f1_prev_winner(nxt["circuit_id"]),
     }
 
 # ---------- drawing: chrome + rows ----------
@@ -1033,13 +1068,24 @@ def event(c, ctx):
     text_w = min(c.width - 2 * EDGE - fixed, 150)
     x0 = (c.width - fixed - text_w) // 2
 
-    draw_logo_block(c, x0, live)
+    draw_logo_block(c, x0, "FINAL" if (live and st.get("over", False)) else ("LIVE" if live else "NEXT RACE"))
     tx0 = x0 + LOGO_W + gap
     cx = tx0 + text_w // 2
     trx = tx0 + text_w + gap
     draw_f1_track(c, asset, trx, (32 - th) // 2, tw, th)
 
     name, nf = fit_ladder(c, race_variants(st["race_name"]), ["6x8", "5x7", "4x5", "picopixel"], text_w)
+    prev = st.get("prev_winner", None) if not live else None
+    if prev != None:
+        # Four rows with the last winner here, 2 px apart: race (bottom 7),
+        # circuit (10-14), date (bottom 23), winner in picopixel (26-30).
+        c.text(name, cx, top_for(nf, 7), font = nf, color = COLORS["text"], align = "center")
+        c.text(fit_text(c, st["track_name"], "4x5", text_w), cx, 10, font = "4x5", color = COLORS["muted"], align = "center")
+        when = local_dt(ctx, st["race_date"], st.get("race_time", ""))
+        wf = "5x7" if c.text_width(when, "5x7") <= text_w else "4x5"
+        c.text(fit_text(c, when, wf, text_w), cx, top_for(wf, 23), font = wf, color = DATE_COLOR, align = "center")
+        draw_prev_winner(c, prev, cx, text_w, 26)
+        return
     # Row bottoms on this page: 9 (race / flag), 16 (circuit / lap),
     # 27 (date / flag row / session / temp / the logo tag).
     c.text(name, cx, top_for(nf, 9), font = nf, color = COLORS["text"], align = "center")
@@ -1069,14 +1115,26 @@ def event(c, ctx):
     if st.get("temp", "") != "":
         draw_temp(c, st, stx, top_for("4x5", 27), True)
 
-def draw_logo_block(c, x, live):
+def draw_logo_block(c, x, tag):
+    # The tag is LIVE while a session runs, FINAL once it has ended and is
+    # being held, and NEXT RACE between weekends.
     lw, lh = f1_logo_dims(LOGO_W, LOGO_H)
     # Tag bottom-aligns with the third text row (bottom 27); the mark's 11 lit
     # rows sit at 8-18, 4 px above it.
     c.image("f1-logo.png", x + (LOGO_W - lw) // 2, 8, w = lw, h = lh)
-    tag = "LIVE" if live else "NEXT RACE"
-    tcol = COLORS["error"] if live else COLORS["muted"]
+    tcol = COLORS["error"] if tag == "LIVE" else COLORS["muted"]
     c.text(tag, x + LOGO_W // 2, top_for("4x5", 27), font = "4x5", color = tcol, align = "center")
+
+# "2025 WINNER" (gray) then the first three letters of the surname in its
+# team's colour, centred, in the small picopixel face so it sits under the
+# date rather than competing with it.
+def draw_prev_winner(c, prev, cx, max_w, y):
+    season, name, col = prev
+    label = season + " WINNER"
+    lw = c.text_width(label, "picopixel")
+    x = cx - (lw + 4 + c.text_width(name, "picopixel")) // 2
+    c.text(label, x, y, font = "picopixel", color = COLORS["muted"])
+    c.text(name, x + lw + 4, y, font = "picopixel", color = col)
 
 # Circuit (gray) then session (amber), centred. The session is the one that
 # matters live, so it keeps its width and a long circuit is truncated into

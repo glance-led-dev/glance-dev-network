@@ -13,22 +13,40 @@ SAFE_WIDTH = 180    # x 6-185, so the app never merges with its scroll neighbors
 LOGO_TOP = 6        # header is picopixel at y 0-4, leaving 1 px clear above the logos
 LOGO_HEIGHT = 26    # y 6-31
 
-# name -> {size: (file, w, h)}. 84 is used with 1-2 logos, 54 with 3.
-# Widest three at 54 are 61+57+55 = 173 of 180, which still leaves 1 px gaps.
-# Various Wines is 20 px of bottles with its name drawn below them, because the
-# artwork's lettering turned to mush and picopixel read as "PARIOUS HINES".
+# name -> {size: (file, w, h[, (caption, color, dy)])}. "84" is the 1-2 logo slot,
+# "54" the 3-logo slot. Widest three in the 3-logo slot are 61+57+57 = 175 of 180,
+# which still leaves 1 px gaps.
+# Old Forester is hand-drawn pixel lettering. The rest are blended from the
+# artwork with firmed edges; Bulleit keeps its arch. BOURBON lines, taglines and
+# (R) marks are dropped: unreadable at this size. Bulleit runs 88 wide; with an 84
+# partner that leaves 2 px gaps. Maker's Mark redraws its seal ring as a crisp 1 px
+# circle. Black lettering is turned white on the black panel.
+# A caption is text the app draws in 4x5 at dy below the logo's top, for lines the
+# artwork can't carry: Various Wines' name (its lettering turned to mush and
+# picopixel read as "PARIOUS HINES"), Baker's High Rye, and Taylor's "Colonel E.H.".
+WINES_CAPTION = ("VARIOUS WINES", "white", 21)
 LOGOS = {
-    "Blanton's": {84: ("blantons84.png", 84, 24), 54: ("blantons54.png", 54, 15)},
+    "Baker's": {84: ("bakers81.png", 81, 25, ("HIGH RYE", "#3CC47C", 20)), 54: ("bakers57.png", 57, 20, ("HIGH RYE", "#3CC47C", 15))},
+    "Bardstown": {84: ("bardstown72.png", 72, 26), 54: ("bardstown57.png", 57, 26)},
+    "Blanton's": {84: ("blantons84.png", 84, 23), 54: ("blantons56.png", 56, 15)},
     "Bud Light": {84: ("budlight46.png", 46, 26), 54: ("budlight46.png", 46, 26)},
-    "Bulleit": {84: ("bulleit74.png", 74, 26), 54: ("bulleit54.png", 54, 19)},
-    "Elijah Craig": {84: ("elijahcraig34.png", 34, 26), 54: ("elijahcraig34.png", 34, 26)},
-    "Four Roses": {84: ("fourroses82.png", 82, 26), 54: ("fourroses54.png", 54, 26)},
-    "Maker's Mark": {84: ("makersmark61.png", 61, 26), 54: ("makersmark54.png", 54, 23)},
-    "Old Forester": {84: ("oldforester81.png", 81, 26), 54: ("oldforester54.png", 54, 17)},
+    "Bulleit": {84: ("bulleit88.png", 88, 19), 54: ("bulleit57.png", 57, 13)},
+    "E.H. Taylor": {84: ("ehtaylor84.png", 84, 25, ("COLONEL E.H.", "white", 0)), 54: ("ehtaylor57.png", 57, 19, ("COLONEL E.H.", "white", 0))},
+    "Elijah Craig": {84: ("elijahcraig36.png", 36, 26), 54: ("elijahcraig36.png", 36, 26)},
+    "Four Roses": {84: ("fourroses57.png", 57, 26), 54: ("fourroses57.png", 57, 26)},
+    "Heaven Hill": {84: ("heavenhill44.png", 44, 26), 54: ("heavenhill44.png", 44, 26)},
+    "Jose Cuervo": {84: ("josecuervo84.png", 84, 21), 54: ("josecuervo57.png", 57, 14)},
+    "Knob Creek": {84: ("knobcreek46.png", 46, 26), 54: ("knobcreek46.png", 46, 26)},
+    "Maker's Mark": {84: ("makersmark62.png", 62, 26), 54: ("makersmark54.png", 54, 23)},
+    "Michter's": {84: ("michters29.png", 29, 26), 54: ("michters29.png", 29, 26)},
+    "Old Forester": {84: ("oldforester83.png", 83, 26), 54: ("oldforester54.png", 54, 20)},
+    "Red Bull": {84: ("redbull52.png", 52, 26), 54: ("redbull52.png", 52, 26)},
     "Rhinegeist": {84: ("rhinegeist26.png", 26, 26), 54: ("rhinegeist26.png", 26, 26)},
+    "Smirnoff": {84: ("smirnoff84.png", 84, 25), 54: ("smirnoff57.png", 57, 17)},
     "Stagg Jr": {84: ("staggjr64.png", 64, 26), 54: ("staggjr55.png", 55, 21)},
-    "Various Wines": {84: ("wines61.png", 61, 26), 54: ("wines61.png", 61, 26)},
-    "Weller": {84: ("weller66.png", 66, 26), 54: ("weller54.png", 54, 21)},
+    "Truly": {84: ("truly84.png", 84, 26), 54: ("truly57.png", 57, 17)},
+    "Various Wines": {84: ("wines61.png", 61, 26, WINES_CAPTION), 54: ("wines61.png", 61, 26, WINES_CAPTION)},
+    "Weller": {84: ("weller67.png", 67, 26), 54: ("weller54.png", 54, 21)},
     "White Claw": {84: ("whiteclaw57.png", 57, 26), 54: ("whiteclaw57.png", 57, 26)},
 }
 
@@ -63,6 +81,7 @@ def serving(c, ctx):
     for logo in logos:
         y = LOGO_TOP + (LOGO_HEIGHT - logo[2]) // 2
         c.image(logo[0], x, y)
-        if logo[0] == "wines61.png":
-            c.text("VARIOUS WINES", x + logo[1] // 2, y + 21, font = "4x5", color = "white", align = "center")
+        if len(logo) > 3:
+            cap = logo[3]
+            c.text(cap[0], x + logo[1] // 2, y + cap[2], font = "4x5", color = cap[1], align = "center")
         x += logo[1] + gap

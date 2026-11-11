@@ -1,0 +1,47 @@
+gdn: 1
+id: shopify-daily-orders
+version: 0.1.0
+name: Shopify Orders Today
+author: jakob-rowe
+description: Today's Shopify order count, orders this hour, the 7-day high and the time of the next update. Counts only.
+category: Lifestyle
+entry: app.star
+
+# 192x32 SCROLL. Layout reads c.width.
+width: 192
+height: 32
+
+# Glance's floor for apps with a free-text or api-key input is 300 s (anything
+# faster must use pick-list inputs only). Frames are still images, so the
+# "next update" readout is a clock time, not a ticking countdown.
+refresh: 300
+
+pages: [orders]
+
+inputs:
+  - key: shop
+    type: string
+    app_input_type: free-text
+    label: Store handle
+    default: ""
+    help: The part before .myshopify.com (e.g. my-store). Do not paste https:// - Glance cuts settings at colons. Leave blank for demo.
+  - key: apikey
+    type: string
+    app_input_type: api-key
+    label: Admin API access token
+    default: ""
+    help: A read-only Shopify Admin API token (shpat_...) from a custom app with only the read_orders scope. Stored encrypted by Glance.
+  - key: tz
+    type: choice
+    app_input_type: dropdown
+    label: Store time zone
+    default: America/Chicago
+    choices: [America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, UTC]
+    help: Match your Shopify store's time zone so days and hours split at your local clock.
+  - key: cancelled
+    type: choice
+    app_input_type: dropdown
+    label: Cancelled orders
+    default: skip
+    choices: [skip, count]
+    help: skip = only orders still standing. count = every order placed, which matches the Orders number in Shopify Analytics.
