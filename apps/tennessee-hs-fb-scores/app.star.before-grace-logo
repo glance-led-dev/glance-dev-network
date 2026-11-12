@@ -1,0 +1,696 @@
+LOGOS = {
+    "ADAMSVILLE": "adamsville.png",
+    "ALCOA": "alcoa.png",
+    "ANDERSON CO.": "anderson_co.png",
+    "ANTIOCH": "antioch.png",
+    "BGA": "bga.png",
+    "BARTLETT": "bartlett.png",
+    "BEECH": "beech.png",
+    "BLACKMAN": "blackman.png",
+    "BLEDSOE CO.": "bledsoe_co.png",
+    "BOLIVAR CENTRAL": "bolivar_central.png",
+    "BOLTON": "bolton.png",
+    "BOYD BUCHANAN": "boyd_buchanan.png",
+    "BRENTWOOD": "brentwood.png",
+    "BRIGHTON": "brighton.png",
+    "CAK": "cak.png",
+    "CPA": "cpa.png",
+    "CANE RIDGE": "cane_ridge.png",
+    "CANNON CO.": "cannon_co.png",
+    "CHATTANOOGA PREP": "chattanooga_prep.png",
+    "CHEATHAM CO.": "cheatham_co.png",
+    "CHEROKEE": "cherokee.png",
+    "CHRISTIAN BROTHERS": "christian_brothers.png",
+    "CHUCKEY-DOAK": "chuckey_doak.png",
+    "CLARKSVILLE": "clarksville.png",
+    "CLARKSVILLE NORTHEAST": "clarksville_northeast.png",
+    "CLAY CO.": "clay_co.png",
+    "CLEVELAND": "cleveland.png",
+    "CLOUDLAND": "cloudland.png",
+    "COALFIELD": "coalfield.png",
+    "COLLIERVILLE": "collierville.png",
+    "COLUMBIA": "columbia.png",
+    "CONCORD CHRISTIAN": "concord_christian.png",
+    "COOKEVILLE": "cookeville.png",
+    "COPPER BASIN": "copper_basin.png",
+    "CORDOVA": "cordova.png",
+    "CORNERSVILLE": "cornersville.png",
+    "COSBY": "cosby.png",
+    "COVINGTON": "covington.png",
+    "CREEK WOOD": "creek_wood.png",
+    "CROCKETT CO.": "crockett_co.png",
+    "CUMBERLAND GAP": "cumberland_gap.png",
+    "DAVID CROCKETT": "david_crockett.png",
+    "DAVIDSON ACADEMY": "davidson_academy.png",
+    "DICKSON CO.": "dickson_co.png",
+    "DOBYNS BENNETT": "dobyns_bennett.png",
+    "DRESDEN": "dresden.png",
+    "DYERSBURG": "dyersburg.png",
+    "ECS": "ecs.png",
+    "EAGLETON": "eagleton.png",
+    "EAGLEVILLE": "eagleville.png",
+    "EAST NASHVILLE": "east_nashville.png",
+    "EAST RIDGE": "east_ridge.png",
+    "EAST ROBERTSON": "east_robertson.png",
+    "ELIZABETHTON": "elizabethton.png",
+    "EZELL-HARDING": "ezell_harding.png",
+    "FRA": "fra.png",
+    "FAIRLEY": "fairley.png",
+    "FAIRVIEW": "fairview.png",
+    "FATHER RYAN": "father_ryan.png",
+    "FAYETTE ACADEMY": "fayette_academy.png",
+    "FAYETTEVILLE": "fayetteville.png",
+    "FRANKLIN": "franklin.png",
+    "FRANKLIN CHRISTIAN": "franklin_christian.png",
+    "FRANKLIN GRACE": "franklin_grace.png",
+    "FRIENDSHIP CHRISTIAN": "friendship_christian.png",
+    "GALLATIN": "gallatin.png",
+    "GATLINBURG-PITTMAN": "gatlinburg_pittman.png",
+    "GERMANTOWN": "germantown.png",
+    "GIBBS": "gibbs.png",
+    "GOODPASTURE": "goodpasture.png",
+    "GORDONSVILLE": "gordonsville.png",
+    "GREEN HILL": "green_hill.png",
+    "GREENBACK": "greenback.png",
+    "GREENEVILLE": "greeneville.png",
+    "GREENFIELD": "greenfield.png",
+    "GRUNDY CO.": "grundy_co.png",
+    "HAMPTON": "hampton.png",
+    "HAPPY VALLEY": "happy_valley.png",
+    "HARDIN VALLEY": "hardin_valley.png",
+    "HAYWOOD": "haywood.png",
+    "HENDERSONVILLE": "hendersonville.png",
+    "HENRY CO.": "henry_co.png",
+    "HICKMAN CO.": "hickman_co.png",
+    "HILLSBORO": "hillsboro.png",
+    "HOUSTON": "houston.png",
+    "HOUSTON CO.": "houston_co.png",
+    "HUMBOLDT": "humboldt.png",
+    "HUNTINGDON": "huntingdon.png",
+    "HUNTLAND": "huntland.png",
+    "INDEPENDENCE": "independence.png",
+    "JCM": "jcm.png",
+    "JPII": "jpii.png",
+    "JACKSON CHRISTIAN": "jackson_christian.png",
+    "JACKSON CO.": "jackson_co.png",
+    "JACKSON NORTH SIDE": "jackson_north_side.png",
+    "JAMES LAWSON": "james_lawson.png",
+    "JEFFERSON CO.": "jefferson_co.png",
+    "JELLICO": "jellico.png",
+    "JO BYRNS": "jo_byrns.png",
+    "KIPP MEMPHIS COLLEGIATE": "kipp_memphis_collegiate.png",
+    "KINGSTON": "kingston.png",
+    "KIRBY": "kirby.png",
+    "KIRKWOOD": "kirkwood.png",
+    "KNOXVILLE CENTRAL": "knoxville_central.png",
+    "KNOXVILLE FULTON": "knoxville_fulton.png",
+    "KNOXVILLE GRACE": "knoxville_grace.png",
+    "KNOXVILLE HALLS": "knoxville_halls.png",
+    "KNOXVILLE WEBB": "knoxville_webb.png",
+    "KNOXVILLE WEST": "knoxville_west.png",
+    "LAKELAND PREP": "lakeland_prep.png",
+    "LAKEWAY CHRISTIAN": "lakeway_christian.png",
+    "LAUSANNE": "lausanne.png",
+    "LAWRENCE CO.": "lawrence_co.png",
+    "LEBANON": "lebanon.png",
+    "LEXINGTON": "lexington.png",
+    "LIBERTY CREEK": "liberty_creek.png",
+    "LINCOLN CO.": "lincoln_co.png",
+    "LIVINGSTON ACADEMY": "livingston_academy.png",
+    "LOUDON": "loudon.png",
+    "MASE": "mase.png",
+    "MBA": "mba.png",
+    "MUS": "mus.png",
+    "MACON CO.": "macon_co.png",
+    "MARION CO.": "marion_co.png",
+    "MARSHALL CO.": "marshall_co.png",
+    "MARYVILLE": "maryville.png",
+    "MCCALLIE": "mccallie.png",
+    "MCEWEN": "mcewen.png",
+    "MCKENZIE": "mckenzie.png",
+    "MCMINN CENTRAL": "mcminn_central.png",
+    "MCMINN CO.": "mcminn_co.png",
+    "MEIGS CO.": "meigs_co.png",
+    "MELROSE": "melrose.png",
+    "MEMPHIS BUSINESS": "memphis_business.png",
+    "MEMPHIS CENTRAL": "memphis_central.png",
+    "MEMPHIS MIDDLE COLLEGE": "memphis_middle_college.png",
+    "MEMPHIS OVERTON": "memphis_overton.png",
+    "MEMPHIS WESTWOOD": "memphis_westwood.png",
+    "MIDWAY": "midway.png",
+    "MILAN": "milan.png",
+    "MILLINGTON": "millington.png",
+    "MITCHELL": "mitchell.png",
+    "MONTGOMERY CENTRAL": "montgomery_central.png",
+    "MORRISTOWN WEST": "morristown_west.png",
+    "MT. PLEASANT": "mt_pleasant.png",
+    "MUNFORD": "munford.png",
+    "NOLENSVILLE": "nolensville.png",
+    "NORTHPOINT CHRISTIAN": "northpoint_christian.png",
+    "OAK RIDGE": "oak_ridge.png",
+    "OAKHAVEN": "oakhaven.png",
+    "OAKLAND": "oakland.png",
+    "ONEIDA": "oneida.png",
+    "PAGE": "page.png",
+    "PEARL COHN": "pearl_cohn.png",
+    "PERRY CO.": "perry_co.png",
+    "PIGEON FORGE": "pigeon_forge.png",
+    "POLK CO.": "polk_co.png",
+    "PORTLAND": "portland.png",
+    "POWELL": "powell.png",
+    "PROVIDENCE ACADEMY": "providence_academy.png",
+    "RALEIGH EGYPT": "raleigh_egypt.png",
+    "RAVENWOOD": "ravenwood.png",
+    "RED BANK": "red_bank.png",
+    "RED BOILING SPRINGS": "red_boiling_springs.png",
+    "RHEA CO.": "rhea_co.png",
+    "RIVERDALE": "riverdale.png",
+    "RIVERSIDE": "riverside.png",
+    "ROBERTSON INNOVATION": "robertson_innovation.png",
+    "ROCKWOOD": "rockwood.png",
+    "ROSSVIEW": "rossview.png",
+    "SALE CREEK": "sale_creek.png",
+    "SCIENCE HILL": "science_hill.png",
+    "SEQUATCHIE CO.": "sequatchie_co.png",
+    "SEVIER CO.": "sevier_co.png",
+    "SEYMOUR": "seymour.png",
+    "SIGNAL MOUNTAIN": "signal_mountain.png",
+    "SILVERDALE": "silverdale.png",
+    "SMYRNA": "smyrna.png",
+    "SODDY DAISY": "soddy_daisy.png",
+    "SOUTH FULTON": "south_fulton.png",
+    "SOUTH GIBSON": "south_gibson.png",
+    "SOUTH GREENE": "south_greene.png",
+    "SOUTH PITTSBURG": "south_pittsburg.png",
+    "SOUTHWIND": "southwind.png",
+    "SPRING HILL": "spring_hill.png",
+    "SPRINGFIELD": "springfield.png",
+    "ST. GEORGE'S": "st_george_s.png",
+    "STATION CAMP": "station_camp.png",
+    "STEWART CO.": "stewart_co.png",
+    "STRATFORD": "stratford.png",
+    "SUMMERTOWN": "summertown.png",
+    "SWEETWATER": "sweetwater.png",
+    "TELLICO PLAINS": "tellico_plains.png",
+    "TENNESSEE": "tennessee.png",
+    "TRINITY CHRISTIAN": "trinity_christian.png",
+    "TROUSDALE CO.": "trousdale_co.png",
+    "TULLAHOMA": "tullahoma.png",
+    "TYNER": "tyner.png",
+    "UNICOI CO.": "unicoi_co.png",
+    "UNION CITY": "union_city.png",
+    "UPPERMAN": "upperman.png",
+    "WH HERITAGE": "wh_heritage.png",
+    "WALKER VALLEY": "walker_valley.png",
+    "WATERTOWN": "watertown.png",
+    "WAVERLY": "waverly.png",
+    "WAYNE CO.": "wayne_co.png",
+    "WEST GREENE": "west_greene.png",
+    "WEST RIDGE": "west_ridge.png",
+    "WESTMORELAND": "westmoreland.png",
+    "WESTVIEW": "westview.png",
+    "WHITE CO.": "white_co.png",
+    "WHITE HOUSE": "white_house.png",
+    "WHITE STATION": "white_station.png",
+    "WHITEHAVEN": "whitehaven.png",
+    "WHITES CREEK": "whites_creek.png",
+    "WHITWELL": "whitwell.png",
+    "WOODDALE": "wooddale.png",
+    "YORK INSTITUTE": "york_institute.png",
+    "ARLINGTON": "arlington.png",
+    "AUSTIN-EAST": "austin_east.png",
+    "BATTLE CREEK": "battle_creek.png",
+    "BAYLOR": "baylor.png",
+    "BEARDEN": "bearden.png",
+    "BLUFF CITY": "bluff_city.png",
+    "BOOKER T. WASHINGTON": "booker_t_washington.png",
+    "BRADLEY CENTRAL": "bradley_central.png",
+    "BRAINERD": "brainerd.png",
+    "BRENTWOOD ACADEMY": "brentwood_academy.png",
+    "BRIARCREST CHRISTIAN": "briarcrest_christian.png",
+    "CAMDEN CENTRAL": "camden_central.png",
+    "CAMPBELL CO.": "campbell_co.png",
+    "CARTER": "carter.png",
+    "CASCADE": "cascade.png",
+    "CENTENNIAL": "centennial.png",
+    "CHATTANOOGA CENTRAL": "chattanooga_central.png",
+    "CHATTANOOGA CHRISTIAN": "chattanooga_christian.png",
+    "CHESTER CO.": "chester_co.png",
+    "CLAIBORNE": "claiborne.png",
+    "CLARKSVILLE ACADEMY": "clarksville_academy.png",
+    "CLINTON": "clinton.png",
+    "COCKE CO.": "cocke_co.png",
+    "COFFEE CO. CENTRAL": "coffee_co_central.png",
+    "COLLINWOOD": "collinwood.png",
+    "COLUMBIA CENTRAL": "columbia_central.png",
+    "COMMUNITY": "community.png",
+    "CRAIGMONT": "craigmont.png",
+    "DANIEL BOONE": "daniel_boone.png",
+    "DEKALB CO.": "dekalb_co.png",
+    "DONELSON CHRISTIAN ACADEMY": "donelson_christian_academy.png",
+    "DYER CO.": "dyer_co.png",
+    "EAST HAMILTON": "east_hamilton.png",
+    "EAST HICKMAN": "east_hickman.png",
+    "ENSWORTH": "ensworth.png",
+    "FARRAGUT": "farragut.png",
+    "FAYETTE-WARE": "fayette_ware.png",
+    "FIRST ASSEMBLY CHRISTIAN": "first_assembly_christian.png",
+    "FORREST": "forrest.png",
+    "FRANKLIN CO.": "franklin_co.png",
+    "FREDERICK DOUGLASS": "frederick_douglass.png",
+    "GIBSON CO.": "gibson_co.png",
+    "GILES CO.": "giles_co.png",
+    "GLEASON": "gleason.png",
+    "GRACE BAPTIST ACADEMY": "grace_baptist_academy.png",
+    "GRAINGER": "grainger.png",
+    "GREENBRIER": "greenbrier.png",
+    "HALLS": "halls.png",
+    "HAMILTON": "hamilton.png",
+    "HANCOCK CO.": "hancock_co.png",
+    "HARDIN CO.": "hardin_co.png",
+    "HARDING ACADEMY": "harding_academy.png",
+    "HARPETH": "harpeth.png",
+    "HARRIMAN": "harriman.png",
+    "HERITAGE": "heritage.png",
+    "HILLCREST": "hillcrest.png",
+    "HIXSON": "hixson.png",
+    "HOLLOW ROCK-BRUCETON CENTRAL": "hollow_rock_bruceton_central.png",
+    "HUNTERS LANE": "hunters_lane.png",
+    "JACKSON SOUTH SIDE": "jackson_south_side.png",
+    "JOHN OVERTON": "john_overton.png",
+    "JOHNSON CO.": "johnson_co.png",
+    "KARNS": "karns.png",
+    "KENWOOD": "kenwood.png",
+    "KINGSBURY": "kingsbury.png",
+    "KNOXVILLE CATHOLIC": "knoxville_catholic.png",
+    "LAKE CO.": "lake_co.png",
+    "LAVERGNE": "lavergne.png",
+    "LENOIR CITY": "lenoir_city.png",
+    "LEWIS CO.": "lewis_co.png",
+    "LIPSCOMB ACADEMY": "lipscomb_academy.png",
+    "LOOKOUT VALLEY": "lookout_valley.png",
+    "LORETTO": "loretto.png",
+    "MANASSAS": "manassas.png",
+    "MAPLEWOOD": "maplewood.png",
+    "MCGAVOCK": "mcgavock.png",
+    "MCNAIRY CENTRAL": "mcnairy_central.png",
+    "MEMPHIS EAST": "memphis_east.png",
+    "MIDDLE TENNESSEE CHRISTIAN": "middle_tennessee_christian.png",
+    "MIDDLETON": "middleton.png",
+    "MONTEREY": "monterey.png",
+    "MOORE CO.": "moore_co.png",
+    "MORRISTOWN-HAMBLEN HIGH SCHOOL EAST": "morristown_hamblen_high_school_east.png",
+    "MT. JULIET": "mt_juliet.png",
+    "MT. JULIET CHRISTIAN ACADEMY": "mt_juliet_christian_academy.png",
+    "NASHVILLE CHRISTIAN": "nashville_christian.png",
+    "NORTH GREENE": "north_greene.png",
+    "NORTHVIEW ACADEMY": "northview_academy.png",
+    "NORTHWEST": "northwest.png",
+    "NOTRE DAME": "notre_dame.png",
+    "OAKDALE": "oakdale.png",
+    "OBION CO. CENTRAL": "obion_co_central.png",
+    "OLIVER SPRINGS": "oliver_springs.png",
+    "OOLTEWAH": "ooltewah.png",
+    "PEABODY": "peabody.png",
+    "PROVIDENCE CHRISTIAN ACADEMY": "providence_christian_academy.png",
+    "RICHLAND": "richland.png",
+    "RIDGEWAY": "ridgeway.png",
+    "RIPLEY": "ripley.png",
+    "ROCKVALE": "rockvale.png",
+    "SCOTT": "scott.png",
+    "SCOTTS HILL": "scotts_hill.png",
+    "SEQUOYAH HIGH SCHOOL - MADISONVILLE": "sequoyah_high_school_madisonville.png",
+    "SHEFFIELD": "sheffield.png",
+    "SHELBYVILLE CENTRAL": "shelbyville_central.png",
+    "SIEGEL": "siegel.png",
+    "SMITH CO.": "smith_co.png",
+    "SOUTH-DOYLE": "south_doyle.png",
+    "ST. BENEDICT AT AUBURNDALE": "st_benedict_at_auburndale.png",
+    "STEWARTS CREEK": "stewarts_creek.png",
+    "STONE MEMORIAL": "stone_memorial.png",
+    "SULLIVAN EAST": "sullivan_east.png",
+    "SUMMIT": "summit.png",
+    "SUNBRIGHT": "sunbright.png",
+    "SYCAMORE": "sycamore.png",
+    "TIPTON-ROSEMARK ACADEMY": "tipton_rosemark_academy.png",
+    "TREZEVANT": "trezevant.png",
+    "UNAKA": "unaka.png",
+    "UNION CO.": "union_co.png",
+    "UNIVERSITY SCHOOL OF JACKSON": "university_school_of_jackson.png",
+    "VOLUNTEER": "volunteer.png",
+    "WARTBURG CENTRAL": "wartburg_central.png",
+    "WEST CARROLL": "west_carroll.png",
+    "WEST CREEK": "west_creek.png",
+    "WILLIAM BLOUNT": "william_blount.png",
+    "WILSON CENTRAL": "wilson_central.png",
+}
+
+def _draw_team(c, name, y, color):
+    team = name.strip().upper()
+    aliases = {
+        "SHELBYVILLE": "SHELBYVILLE CENTRAL",
+        "COFFEE CO.": "COFFEE CO. CENTRAL",
+        "COLUMBIA ACADEMY": "COLUMBIA CENTRAL",
+        "MTCS": "MIDDLE TENNESSEE CHRISTIAN",
+        "NASHVILLE OVERTON": "JOHN OVERTON",
+        "PROVIDENCE CHRISTIAN": "PROVIDENCE CHRISTIAN ACADEMY",
+        "B.T. WASHINGTON": "BOOKER T. WASHINGTON",
+        "BRIARCREST": "BRIARCREST CHRISTIAN",
+        "CAMDEN": "CAMDEN CENTRAL",
+        "CLARKSVILLE NORTHWEST": "NORTHWEST",
+        "DCA": "DONELSON CHRISTIAN ACADEMY",
+        "FACS": "FIRST ASSEMBLY CHRISTIAN",
+        "HOLLOW ROCK-BRUCETON": "HOLLOW ROCK-BRUCETON CENTRAL",
+        "KNOXVILLE CARTER": "CARTER",
+        "MORRISTOWN EAST": "MORRISTOWN-HAMBLEN HIGH SCHOOL EAST",
+        "MT. JULIET CHRISTIAN": "MT. JULIET CHRISTIAN ACADEMY",
+        "OBION CO.": "OBION CO. CENTRAL",
+        "SEQUOYAH": "SEQUOYAH HIGH SCHOOL - MADISONVILLE",
+        "ST. BENEDICT": "ST. BENEDICT AT AUBURNDALE",
+        "TIPTON-ROSEMARK": "TIPTON-ROSEMARK ACADEMY",
+        "USJ": "UNIVERSITY SCHOOL OF JACKSON",
+    }
+    logo = LOGOS.get(aliases.get(team, team), "")
+    if logo != "":
+        c.image(logo, 1, y)
+    c.text(name.upper()[:12], 20, y + 4, font="5x7b", color=color)
+
+
+def main(c, ctx):
+    area = ctx.inputs.get("area", "ALL")
+    c.clear()
+
+    url = "https://tssaasports.com/sports/scoreboard/"
+
+    response = http.get(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html",
+        },
+        params={"sport": "football"},
+        ttl_seconds=300
+    )
+
+    if response["status_code"] != 200:
+        c.text("TSSAA UNAVAILABLE", 2, 12)
+        return
+
+    html = str(response["body"])
+    selected_pos = html.find("selected")
+
+    if selected_pos < 0:
+        c.text("WEEK NOT FOUND", 2, 12)
+        return
+
+    value_pos = html.rfind('value="', 0, selected_pos)
+
+    if value_pos < 0:
+        c.text("WEEK NOT FOUND", 2, 12)
+        return
+
+    value_start = value_pos + 7
+    value_end = html.find('"', value_start)
+    selected_week = int(html[value_start:value_end])
+
+    selected_week_input = str(ctx.inputs.get("week", "AUTO")).strip().upper()
+
+    if selected_week_input == "AUTO":
+        display_week = selected_week
+        if not show_upcoming_week(ctx.now.unix) and selected_week > 1:
+            display_week = selected_week - 1
+    else:
+        display_week = int(selected_week_input.replace("WEEK ", "").split("(")[0].strip())
+
+    if display_week != selected_week:
+        response = http.get(
+            url,
+            headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "text/html",
+            },
+            params={
+                "sport": "football",
+                "week": str(display_week),
+            },
+            ttl_seconds=300
+        )
+
+        if response["status_code"] != 200:
+            c.text("TSSAA UNAVAILABLE", 2, 12)
+            return
+
+        html = str(response["body"])
+
+    game_date = "WEEK " + str(display_week)
+    option_marker = '<option value="' + str(display_week) + '"'
+    option_pos = html.find(option_marker)
+    if option_pos >= 0:
+        text_start = html.find(">", option_pos) + 1
+        text_end = html.find("</option>", text_start)
+        if text_start > 0 and text_end > text_start:
+            option_text = html[text_start:text_end]
+            date_start = option_text.find("(")
+            date_end = option_text.find(")", date_start)
+            if date_start >= 0 and date_end > date_start:
+                game_date = option_text[date_start + 1:date_end].replace(".", "").upper()
+
+    games = []
+    selected_area = str(ctx.inputs.get("area", "ALL")).strip().upper()
+    selected_school = str(ctx.inputs.get("school", "ALL SCHOOLS")).strip().upper()
+    school_aliases = {
+        "SHELBYVILLE CENTRAL": "SHELBYVILLE",
+        "COFFEE CO. CENTRAL": "COFFEE CO.",
+        "COLUMBIA CENTRAL": "COLUMBIA ACADEMY",
+        "MIDDLE TENNESSEE CHRISTIAN": "MTCS",
+        "JOHN OVERTON": "NASHVILLE OVERTON",
+    }
+    selected_school_match = school_aliases.get(selected_school, selected_school)
+
+    for region in ("East", "Middle", "West"):
+        if selected_area != "ALL" and region.upper() != selected_area:
+            continue
+
+        region_games = _tssaa_parse_region(html, region)
+        for game in region_games:
+            if selected_school != "ALL SCHOOLS":
+                team1 = str(game["team1"]).strip().upper()
+                team2 = str(game["team2"]).strip().upper()
+                if selected_school_match != team1 and selected_school_match != team2:
+                    continue
+            games.append(game)
+
+    if len(games) == 0:
+        c.text("NO GAMES FOUND", 2, 12)
+        c.text("WEEK " + str(display_week), 2, 23)
+        return
+
+    page = int(ctx.now.unix // 60) % len(games)
+    game = games[page]
+
+    name1 = game["team1"]
+    name2 = game["team2"]
+
+    if game["status"] == "FINAL":
+        color1 = "#39D353" if game["score1"] > game["score2"] else "#FFFFFF"
+        color2 = "#39D353" if game["score2"] > game["score1"] else "#FFFFFF"
+
+        _draw_team(c, name1, 0, color1)
+        _draw_team(c, name2, 16, color2)
+        c.text(str(game["score1"]), 100, 0, font="10x16_bold", color=color1)
+        c.text(str(game["score2"]), 100, 16, font="10x16_bold", color=color2)
+        footer = "F " + game["region"].upper() + " " + game_date
+    else:
+        _draw_team(c, name1, 0, "#FFFFFF")
+        _draw_team(c, name2, 16, "#FFFFFF")
+        footer = "UPCOMING " + game["region"].upper() + " " + game_date
+
+    c.text(footer, 20, 27, font="4x5", color="#888888")
+
+
+def days_from_civil(y, m, d):
+    yy = y - 1 if m <= 2 else y
+    era = (yy if yy >= 0 else yy - 399) // 400
+    yoe = yy - era * 400
+    doy = (153 * (m + (-3 if m > 2 else 9)) + 2) // 5 + d - 1
+    doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
+    return era * 146097 + doe - 719468
+
+
+def civil_from_days(z):
+    zz = z + 719468
+    era = (zz if zz >= 0 else zz - 146096) // 146097
+    doe = zz - era * 146097
+    yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    y = yoe + era * 400
+    doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp = (5 * doy + 2) // 153
+    d = doy - (153 * mp + 2) // 5 + 1
+    m = mp + (3 if mp < 10 else -9)
+    return [y + 1 if m <= 2 else y, m, d]
+
+
+def weekday(z):
+    return (z + 3) % 7
+
+
+def nth_sunday(y, m, n):
+    first = 1 + ((6 - weekday(days_from_civil(y, m, 1))) % 7)
+    return first + 7 * (n - 1)
+
+
+def _utcmin(y, m, d, hh):
+    return days_from_civil(y, m, d) * 1440 + hh * 60
+
+
+def central_offset_minutes(unix_seconds):
+    t = unix_seconds // 60
+    y = civil_from_days(t // 1440)[0]
+    standard = -360
+    start = _utcmin(y, 3, nth_sunday(y, 3, 2), 2) - standard
+    end = _utcmin(y, 11, nth_sunday(y, 11, 1), 2) - standard - 60
+    return standard + 60 if start <= t and t < end else standard
+
+
+def central_datetime(unix_seconds):
+    local_minutes = unix_seconds // 60 + central_offset_minutes(unix_seconds)
+    day = local_minutes // 1440
+    year, month, date = civil_from_days(day)
+    minute_of_day = local_minutes % 1440
+    return [year, month, date, minute_of_day // 60, minute_of_day % 60, weekday(day)]
+
+
+
+def show_upcoming_week(unix_seconds):
+    local = central_datetime(unix_seconds)
+    day = local[5]
+    hour = local[3]
+
+    if day == 2 and hour >= 8:
+        return True
+    if day == 3 or day == 4 or day == 5:
+        return True
+    return False
+
+
+def _tssaa_clean(raw):
+    out = ""
+    parts = raw.split("<")
+
+    for i in range(len(parts)):
+        part = parts[i]
+        if i == 0:
+            out += part
+        else:
+            gt = part.find(">")
+            if gt >= 0:
+                out += part[gt + 1:]
+
+    out = out.replace("&nbsp;", " ")
+    out = out.replace("&#160;", " ")
+    out = out.replace("&amp;", "&")
+    out = out.replace("&#39;", "'")
+    out = out.replace("&#x27;", "'")
+    return " ".join(out.split()).strip()
+
+
+def _tssaa_number(value):
+    if value == "" or not value.isdigit():
+        return None
+    return int(value)
+
+
+def _tssaa_team_score(raw):
+    clean = _tssaa_clean(raw).replace("*", "")
+    for day in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"):
+        clean = clean.replace("(" + day + ")", "")
+    clean = " ".join(clean.split()).strip()
+    parts = clean.split()
+    if len(parts) < 2:
+        return [clean, None]
+
+    score = _tssaa_number(parts[-1])
+    if score == None:
+        return [clean, None]
+
+    return [" ".join(parts[:-1]), score]
+
+
+def _tssaa_parse_row(row, region):
+    if "<strong" in row:
+        start = row.find("<strong")
+        tag_end = row.find(">", start)
+        tag_close = row.find("</strong>", tag_end)
+
+        if start < 0 or tag_end < 0 or tag_close < 0:
+            return None
+
+        first = _tssaa_team_score(row[tag_end + 1:tag_close])
+        second = _tssaa_team_score(row[tag_close + 9:])
+
+        if first[1] == None or second[1] == None:
+            return None
+
+        return {
+            "region": region,
+            "status": "FINAL",
+            "team1": first[0],
+            "score1": first[1],
+            "team2": second[0].lstrip(", "),
+            "score2": second[1],
+        }
+
+    clean = _tssaa_clean(row)
+    lower = clean.lower()
+    at = lower.find(" at ")
+
+    if at < 0:
+        return None
+
+    away = clean[:at].strip()
+    home = clean[at + 4:].strip()
+
+    if away == "" or home == "":
+        return None
+
+    return {
+        "region": region,
+        "status": "UPCOMING",
+        "team1": away,
+        "team2": home,
+        "score1": None,
+        "score2": None,
+    }
+
+
+def _tssaa_parse_region(html, region):
+    lower = html.lower()
+    heading = ">" + region.lower() + "</h4>"
+    heading_pos = lower.find(heading)
+
+    if heading_pos < 0:
+        return []
+
+    table_start = lower.find("<table", heading_pos)
+    if table_start < 0:
+        return []
+
+    table_end = lower.find("</table>", table_start)
+    if table_end < 0:
+        return []
+
+    table = html[table_start:table_end]
+    games = []
+
+    for part in table.split("<tr")[1:]:
+        row_end = part.lower().find("</tr>")
+        if row_end < 0:
+            continue
+
+        row = part[:row_end]
+        game = _tssaa_parse_row(row, region)
+
+        if game != None:
+            games.append(game)
+
+    return games
