@@ -7,11 +7,13 @@
 # SiriusXM account needed. GET /api/station/{deeplink} returns the
 # station's recent plays newest-first, so results[0] is "now playing".
 #
-# Stations come from two light inputs: a short genre dropdown, and a text
-# box of channel numbers ("30, 23, 33, 18"). "My Channels" (the
-# default) uses the text box; any genre instead shows four of that
-# genre's stations, a different four each hour. Both inputs have
-# defaults, so the app shows real stations even with no settings at all.
+# Stations come from a short genre dropdown plus four channel boxes, one
+# number each. "My Channels" (the default) uses the boxes; any genre
+# instead shows four of that genre's stations, a different four each
+# hour. One number per box: the phone app reads a box that starts with
+# a number as that number, so a comma list would keep only its first
+# channel. Every input has a default, so the app shows real stations
+# even with no settings at all.
 # The channel number -> deeplink table lives here rather than in a
 # dropdown, regenerated from GET https://xmplaylist.com/api/station.
 
@@ -19,7 +21,7 @@ USER_AGENT = "GDN-SXM-NowPlaying (glance-led-panel)"
 # Four channels, not five: each costs up to two uncached requests per
 # refresh (now playing + cover), and GDN allows eight.
 NSLOTS = 4
-DEFAULT_CHANNELS = "30, 23, 33, 18"
+DEFAULT_CHANNELS = ["30", "23", "33", "18"]
 DEFAULT_GENRE = "My Channels"
 
 # Dropdown label -> the xmplaylist genre tag behind it.
@@ -232,21 +234,21 @@ def _s(ctx, key, fallback):
     v = str(v).strip()
     return v if v != "" else fallback
 
-def channels_text(ctx):
-    # The My Channels box as text. On the device an untouched default
-    # ("30, 23, 33, 18") can arrive as just its first number, 30, which
-    # would show channel 30 four times; that means "the default list".
-    v = ctx.inputs.get("channels")
+def slot_channel(ctx, i):
+    # Channel box i (0-3) as a channel number string. A box that was never
+    # saved uses its default; "NONE", blank or no digits skips the slot.
+    v = [
+        ctx.inputs.get("mychannel1"),
+        ctx.inputs.get("mychannel2"),
+        ctx.inputs.get("mychannel3"),
+        ctx.inputs.get("mychannel4"),
+    ][i]
     if v == None:
-        return DEFAULT_CHANNELS
-    if type(v) == "list":
-        v = ", ".join([str(x) for x in v])
-    elif type(v) == "float" and v == int(v):
+        return DEFAULT_CHANNELS[i]
+    if type(v) == "float" and v == int(v):
         v = int(v)
-    v = str(v).strip()
-    if v == "" or v == DEFAULT_CHANNELS.split(",")[0].strip():
-        return DEFAULT_CHANNELS
-    return v
+    nums = parse_numbers(str(v))
+    return nums[0] if len(nums) > 0 else None
 
 def parse_numbers(text):
     # "30, 23,33 / ch 18" -> ["30", "23", "33", "18"]: any run of digits is
@@ -276,9 +278,13 @@ def slot_numbers(ctx):
             # A different run each hour, walking the whole genre.
             start = (ctx.now.unix // 3600 * NSLOTS) % len(nums)
         return [nums[(start + i) % len(nums)] for i in range(NSLOTS)]
-    nums = parse_numbers(channels_text(ctx))[:NSLOTS]
+    nums = []
+    for i in range(NSLOTS):
+        n = slot_channel(ctx, i)
+        if n != None:
+            nums.append(n)
     if len(nums) == 0:
-        nums = parse_numbers(DEFAULT_CHANNELS)
+        nums = list(DEFAULT_CHANNELS)
     # The page count is fixed, so a shorter list repeats to fill it.
     return [nums[i % len(nums)] for i in range(NSLOTS)]
 

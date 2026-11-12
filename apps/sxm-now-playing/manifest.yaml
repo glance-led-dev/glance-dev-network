@@ -22,10 +22,28 @@ inputs:
     label: Stations
     default: My Channels
     choices: [My Channels, Rock, Pop, Hip-Hop & R&B, Country, Jazz & Standards, Dance & Electronic, Latin & World, Canadian, Comedy, Christian, Kids]
-    help: My Channels uses the channel numbers below; a genre shows four of its stations, a new four each hour.
-  - key: channels
+    help: My Channels uses the four channel boxes below; a genre shows four of its stations, a new four each hour.
+  - key: mychannel1
     type: string
     app_input_type: free-text
-    label: My Channels
-    default: 30, 23, 33, 18
-    help: Up to 4 SiriusXM channel numbers, separated by commas.
+    label: My Channel 1
+    default: "30"
+    help: A SiriusXM channel number. Type NONE to skip this slot.
+  - key: mychannel2
+    type: string
+    app_input_type: free-text
+    label: My Channel 2
+    default: "23"
+    help: A SiriusXM channel number. Type NONE to skip this slot.
+  - key: mychannel3
+    type: string
+    app_input_type: free-text
+    label: My Channel 3
+    default: "33"
+    help: A SiriusXM channel number. Type NONE to skip this slot.
+  - key: mychannel4
+    type: string
+    app_input_type: free-text
+    label: My Channel 4
+    default: "18"
+    help: A SiriusXM channel number. Type NONE to skip this slot.
