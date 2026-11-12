@@ -1,0 +1,33 @@
+gdn: 1
+id: detailed-metar
+version: 0.1.0
+name: Detailed METAR
+author: Whit McGhee
+description: Decoded airport weather - flight category, wind dial, temp/dew point, ceiling and the full cloud stack. Port of DetailedMETAR by SamuelSagarino.
+category: Weather
+entry: app.star
+width: 64
+height: 32
+refresh: 600
+pages: [metar, sky]
+inputs:
+  - key: airport
+    type: string
+    app_input_type: free-text
+    label: Airport
+    default: "KJFK"
+    help: The four-letter ICAO code, e.g. KJFK, KATL, EGLL. US airports add a K to the three-letter code.
+  - key: units
+    label: Temperature
+    app_input_type: dropdown
+    options:
+      - {value: F, label: "Fahrenheit"}
+      - {value: C, label: "Celsius"}
+    default: F
+  - key: windunits
+    label: Wind speed
+    app_input_type: dropdown
+    options:
+      - {value: KT, label: "Knots"}
+      - {value: MPH, label: "Miles per hour"}
+    default: KT
