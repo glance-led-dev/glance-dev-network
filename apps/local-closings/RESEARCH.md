@@ -255,6 +255,38 @@ Implemented?: no
 
 RSchoolToday, SchoolMessenger, AlertSense, CivicReady, Blackboard/Finalsite, PowerSchool public feeds were **not** confirmed as the engine behind the researched station closings pages.
 
+### Montana, Utah and Wyoming sweep
+
+These three states had no readable source. Every TV station, the Townsquare and iHeart radio sites, public radio and the main newspapers in each were probed. Each site was tried at about 25 closings paths, the Gray, Arc, Nexstar WP and TownNews feeds, and Sinclair `ftptransfer`. FlashAlert region IDs 1–40 were also enumerated.
+
+Found and added:
+- **KPAX Missoula** (Scripps): the closings module lives at `/school-closings-delays`, not under `/weather/`. It's the same module as KIVI and KOAA.
+- **ABC4 Salt Lake City** (Nexstar): `/wp-json/wp/v2/pages?slug=closings` returns the real closings page, created for the Feb 2023 storm.
+- **Wyoming News Now** (Gray, on TownNews): there's no BLOX closings app. Instead it posts one "School Closings and Delays" article per storm in the `weather/closings` section. The TownNews search feed (`/search/?f=json&t=article&c=weather/closings&l=1&s=start_time&sd=desc`) is 6 KB and returns the article body as HTML lines with `starttime`. The Feb 19, 2025 article parses to 30 rows across WY, western NE and northern CO.
+- **FlashAlert region 25:** Medford/Klamath Falls/Grants Pass. Regions 8 and 29 are test regions and 26 is national.
+
+Checked and left out:
+- **The other MTN Scripps stations** (KTVQ, KRTV, KXLH, KBZK, KXLF, KTVH): `/weather/closings` is an empty shell, also empty in archived winter copies. `/school-closings-delays` is a 404.
+- **FOX 13 Salt Lake** (Scripps): `/weather/closings` is a hand-typed RichText note. A Provo "Two Hour Late Start on Tuesday" item has stayed on it from Dec 2025 to Nov 2026.
+- **KUTV, KJZZ, NBC Montana** (Sinclair): `ftptransfer` closings files are 403 (absent).
+- **KSL:** `/closings` returns an empty 200 body. KSL and KSL NewsRadio post closings as articles.
+- **KULR, Montana Right Now** (Cowles, TownNews): no closings app or closings section.
+- **Radio** (Townsquare: K2 Radio, KGAB, KGVO, KMMS…): tag pages and articles only.
+- **Newspapers** (Lee, Adams, APG): no closings section.
+
+### Coverage-gap sweep (biggest uncovered areas)
+
+The gaps were ranked by how many ZIP codes a new source could bring within 35 miles. The worst were Los Angeles, Chicago, the Bay Area, Albany, Miami and San Diego. About 230 candidate links were then run through the app.
+
+- **Chicago:** the Emergency Closing Center widget (`wgnr-closings.emergencyclosingcenter.com`) loads `media.psg.nexstardigital.net/WGNR/closings/closings.json`. The same folder serves `closings.xml` in NewsTicker format (`DATA/RECORD`, `RUN_DATE`), which the app already reads. WGN's own WordPress page only iframes the widget. Of about 120 Nexstar call signs, only WGNR, WCBD, WJW and WJZY have this XML; the rest are 403.
+- **Nexstar page names vary:** `/wp-json/wp/v2/pages?search=closing` finds them (`closings-and-delays` at NEWS10, `chicago-area-school-closings` at WGN). A `closings-and-delays` address also matched the TownNews URL rule, which skipped the Nexstar reader; fixed.
+- **Nexstar pages that aren't lists:** OurQuadCities (an image), MyStateline (a text note), WSAV (an organisation login), WRBL and WDHN (hand-typed lists), FOX59 (a PSG embed that is 403), and KTLA, PIX11, KRON 4, FOX40 and WFLA (no closings page found). OzarksFirst iframes `schoolclosingsnet.com`, which sits behind a Cloudflare challenge.
+- **Gray domains that moved** (301): WIFR → rockfordnewsfirst.com, NBC15 → wmtv15news.com, KMOV → firstalert4.com, WAVE → wdrbwave.com, KBJR → northernnewsnow.com, NBC29 → 29news.com.
+- **NBC owned:** NBC Los Angeles, NBC Bay Area, NBC 7 San Diego and NBC 6 Miami all use the same school-closings page as NBC New York.
+- **Sinclair file names have capitals:** WCYB `Schools.html` and KRCG `WebClose.htm` were missed by a lowercase-only search.
+- **ABC 17 (KMIZ):** iframes `npgdigital.com/kmiz/closings.html`, a two-table HTML page ("No Active School Closings"). No other NPG station has one.
+- **No list:** KOMU (an empty TownNews section), News 12 (`/closings` is 404), WFMZ, and the CBS News pages for LA, SF, Miami, Sacramento and Chicago.
+
 ## HTTP budget
 
 Adapters fetch the pasted page, then **at most one** follow-up (GSync JSON, BLOX XML, PSG/FlashAlert/WorldNow iframe, CBS XML, WP JSON, or Arc `weather-school-closings`). TEGNA, Hearst, Cox, NBC HTML, Scripps HTML, and Arc SchoolClosings empty copy use the page body only when that is the listing.
