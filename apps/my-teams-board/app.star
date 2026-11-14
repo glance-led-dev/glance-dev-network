@@ -22,6 +22,19 @@
 # from ESPN's UTC stamps to US Eastern by hand (fixed DST rules; there is no
 # tz database here).
 #
+# THREAT MARKERS (0.4.0). On the schedule page each upcoming opponent's
+# record prints in a five-step spectrum — deep green for a much weaker
+# side, green for weaker, gold for even, orange for stronger, red for a
+# much stronger one — with a small filled chip in the same colour, and
+# the NEXT page shows the opponent's record in that colour beside ours,
+# with a small arrow between them pointing up at a sterner test and
+# down at a softer one. The spectrum compares win percentages (points
+# percentage in the NHL) and reads records from ESPN's standings feed,
+# one cached fetch per league; an opponent the standings miss (an FCS
+# school) falls back to its own schedule feed. A side with fewer than
+# three games played keeps a plain gray record and no chip: a 1-0
+# start proves nothing.
+#
 # ART. assets/<league>/<espn id>.png is a 20px logo, s<id>.png a 10px one,
 # for every NFL, NBA, NHL and FBS team, so the opponent gets a logo too. An
 # opponent outside that set (an FCS school) gets a framed abbreviation.
@@ -32,6 +45,8 @@ GRAY = "#8A8AA8"
 DIM = "#6A7090"
 RED = "#FF5347"
 GREEN = "#3EE07A"
+DEEP_GREEN = "#1FA855"
+ORANGE = "#FF8A3D"
 BG = "#08090D"
 
 NONE = "None"
@@ -993,6 +1008,168 @@ def fetch(lg, tid):
     return r["json"]
 
 
+def stat_int(m, name):
+    """The first stat called name, as an int, or None."""
+    v = m.get(name)
+    if v == None:
+        return None
+    s = str(v)
+    if s.startswith("-"):
+        s = s[1:]
+    return int(s) if s.isdigit() else None
+
+
+def parse_record(s):
+    """'6-2' / '7-1-1' -> [wins, losses, third], where third is ties (or
+    OT losses in the NHL); None when the string is not a record."""
+    if s == None:
+        return None
+    parts = str(s).strip().split("-")
+    if len(parts) < 2 or len(parts) > 3:
+        return None
+    out = []
+    for p in parts:
+        if not p.isdigit():
+            return None
+        out.append(int(p))
+    if len(out) == 2:
+        out.append(0)
+    return out
+
+
+def record_pct(lg, parts):
+    """[win percentage, games played] for a parsed record, or None for
+    an empty one. The NHL ranks on points percentage: (2W + OT losses)
+    over the two points a game."""
+    w = parts[0]
+    l = parts[1]
+    t = parts[2]
+    gp = w + l + t
+    if gp == 0:
+        return None
+    if lg == "nhl":
+        return [(2 * w + t) / (2.0 * gp), gp]
+    return [(w + 0.5 * t) / gp, gp]
+
+
+def entry_record(lg, e):
+    """One standings entry -> [record, win pct, games played] or None.
+
+    Stat blocks repeat down the list (overall, home, away, versus...),
+    so the first value under each name wins. College football keeps its
+    season record in an 'overall' stat, not in wins/losses; the NHL
+    needs its OT losses spelled out."""
+    m = {}
+    for s in e.get("stats") or []:
+        n = s.get("name")
+        if n != None and n not in m:
+            m[n] = s.get("displayValue")
+    rec = None
+    if lg == "nhl":
+        w = stat_int(m, "wins")
+        l = stat_int(m, "losses")
+        ot = stat_int(m, "otLosses")
+        if w != None and l != None and ot != None:
+            rec = "%d-%d-%d" % (w, l, ot)
+    if rec == None and lg == "cfb" and m.get("overall") != None:
+        rec = str(m["overall"]).split(",")[0].strip().upper()
+    if rec == None:
+        w = stat_int(m, "wins")
+        l = stat_int(m, "losses")
+        if w != None and l != None:
+            t = stat_int(m, "ties")
+            if t == None:
+                t = 0
+            rec = "%d-%d" % (w, l) if t == 0 else "%d-%d-%d" % (w, l, t)
+    if rec == None and m.get("overall") != None:
+        rec = str(m["overall"]).split(",")[0].strip().upper()
+    parts = parse_record(rec)
+    if parts == None:
+        return None
+    pg = record_pct(lg, parts)
+    if pg == None:
+        return None
+    return [rec, pg[0], pg[1]]
+
+
+def standings(lg):
+    """ESPN id -> [record, win pct, games] for a whole league from one
+    standings fetch, or None when the feed is unreachable. Groups nest
+    at most two deep (league, conference, division)."""
+    url = ("https://site.api.espn.com/apis/v2/sports/%s/standings"
+           % LEAGUES[lg]["path"])
+    r = http.get(url, ttl_seconds = 300)
+    if r["status_code"] != 200 or not r["json"]:
+        return None
+    nodes = [r["json"]]
+    for ch in r["json"].get("children") or []:
+        nodes.append(ch)
+        for g in ch.get("children") or []:
+            nodes.append(g)
+    out = {}
+    for node in nodes:
+        st = node.get("standings")
+        if type(st) != "dict":
+            continue
+        for e in st.get("entries") or []:
+            team = e.get("team") or {}
+            if team.get("id") == None:
+                continue
+            rec = entry_record(lg, e)
+            if rec != None:
+                out[str(team["id"])] = rec
+    return out
+
+
+def opp_record(lg, oid, table):
+    """[record, win pct, games] for an opponent: the league standings
+    first, its own schedule feed when the standings miss it (an FCS
+    school), None when neither knows it."""
+    if table != None and str(oid) in table:
+        return table[str(oid)]
+    data = fetch(lg, oid)
+    if data == None:
+        return None
+    rec = record_of(data)
+    parts = parse_record(rec)
+    if parts == None:
+        return None
+    pg = record_pct(lg, parts)
+    if pg == None:
+        return None
+    return [rec, pg[0], pg[1]]
+
+
+def threat_delta(lg, my_rec, opp):
+    """Opponent win pct minus ours, or None when the comparison is not
+    earned yet: an unknown record, or either side under three games."""
+    if opp == None:
+        return None
+    mp = parse_record(my_rec)
+    if mp == None:
+        return None
+    mine = record_pct(lg, mp)
+    if mine == None or mine[1] < 3 or opp[2] < 3:
+        return None
+    return opp[1] - mine[0]
+
+
+def threat(lg, my_rec, opp):
+    """The spectrum colour for that delta, or None to stay gray."""
+    d = threat_delta(lg, my_rec, opp)
+    if d == None:
+        return None
+    if d <= -0.200:
+        return DEEP_GREEN
+    if d <= -0.075:
+        return GREEN
+    if d < 0.075:
+        return GOLD
+    if d < 0.200:
+        return ORANGE
+    return RED
+
+
 # ---- drawing -----------------------------------------------------------------
 
 def mid(c, text, y, fonts, color, x = 32, maxw = 22):
@@ -1043,12 +1220,29 @@ def matchup(c, lg, my_id, ev):
     logo(c, lg, ev["opp"]["id"], ev["opp"]["abbr"], 43, 1)
 
 
-def draw_next(c, lg, my_id, ev, rec, now):
+def draw_next(c, lg, my_id, ev, rec, now, table):
     matchup(c, lg, my_id, ev)
     mid(c, "NEXT", 2, ["4x5"], GOLD)
     mid(c, "VS" if ev["mine"]["home"] else "AT", 9, ["5x7"], WHITE)
-    if rec != "":
-        mid(c, rec, 18, ["4x5", "3x4"], DIM)
+    opp = opp_record(lg, ev["opp"]["id"], table)
+    if opp == None:
+        if rec != "":
+            mid(c, rec, 18, ["4x5", "3x4"], DIM)
+    else:
+        col = threat(lg, rec, opp)
+        if rec != "":
+            c.text_fit(rec, 15, 18, ["4x5", "3x4"], color = DIM,
+                       align = "center", maxw = 26)
+        f = c.text_fit(opp[0], 49, 18, ["4x5", "3x4"],
+                       color = col if col != None else DIM,
+                       align = "center", maxw = 24)
+        if col != None:
+            d = threat_delta(lg, rec, opp)
+            if d != None:
+                c.trend_arrow(30, 17, d, col)
+            cx = 49 + c.text_width(opp[0], f) // 2 + 2
+            if cx + 2 <= 63:
+                c.rect(cx, 18, cx + 2, 22, fill = col)
     c.text_fit(when_label(ev, now).upper(), 32, 24, ["5x7", "4x5"],
                color = GOLD, align = "center", maxw = 62)
 
@@ -1092,8 +1286,12 @@ def notice(c, lg, tid, big, small):
                maxw = 40)
 
 
-def draw_schedule(c, lg, tid, data, now):
-    """Slot 2 is NONE: team 1's next three games (or last three results)."""
+def draw_schedule(c, lg, tid, data, now, table):
+    """Slot 2 is NONE: team 1's next three games (or last three results).
+
+    An upcoming row carries two lines: the day, then the opponent's
+    record in its threat colour with a filled chip beside it (plain
+    gray, no chip, until both sides have played three games)."""
     sc = scan(data.get("events") or [], tid)
     logo(c, lg, tid, "?", 1, 1)
     rec = record_of(data)
@@ -1116,17 +1314,27 @@ def draw_schedule(c, lg, tid, data, now):
     for i in range(min(3, len(rows))):
         kind = rows[i][0]
         ev = rows[i][1]
-        y = 1 + i * 11
-        logo(c, lg, ev["opp"]["id"], ev["opp"]["abbr"], 26, y, small = True)
-        if kind == "LIVE":
-            lab = "LIVE"
-            col = RED
-        elif kind == "NEXT":
+        y = i * 11
+        if kind == "NEXT":
+            logo(c, lg, ev["opp"]["id"], ev["opp"]["abbr"], 25, y, small = True)
             days = et_day(ev["unix"]) - et_day(now)
             lab = weekday(ev["unix"]) if days < 7 else short_date(ev["unix"])
             if days <= 0:
                 lab = "TODAY"
-            col = WHITE
+            c.text(lab, 36, y, "3x4", color = WHITE)
+            opp = opp_record(lg, ev["opp"]["id"], table)
+            if opp != None:
+                col = threat(lg, rec, opp)
+                c.text_fit(opp[0], 36, y + 5, ["4x5", "3x4"],
+                           color = col if col != None else DIM,
+                           align = "left", maxw = 21)
+                if col != None:
+                    c.rect(59, y + 5, 61, y + 9, fill = col)
+            continue
+        logo(c, lg, ev["opp"]["id"], ev["opp"]["abbr"], 26, y, small = True)
+        if kind == "LIVE":
+            lab = "LIVE"
+            col = RED
         else:
             ms = ev["mine"]["score"] or "0"
             os = ev["opp"]["score"] or "0"
@@ -1267,7 +1475,7 @@ def board(c, ctx, slot):
         notice(c, lg, tid, "NO FEED", "WILL RETRY")
         return
     if sched:
-        draw_schedule(c, lg, tid, data, ctx.now.unix)
+        draw_schedule(c, lg, tid, data, ctx.now.unix, standings(lg))
         return
     got = pick(scan(data.get("events") or [], tid), ctx.now.unix)
     kind = got[0]
@@ -1275,7 +1483,8 @@ def board(c, ctx, slot):
     if kind == "NONE" or ev == None:
         notice(c, lg, tid, "NO GAMES", "NONE POSTED")
     elif kind == "NEXT":
-        draw_next(c, lg, tid, ev, record_of(data), ctx.now.unix)
+        draw_next(c, lg, tid, ev, record_of(data), ctx.now.unix,
+                  standings(lg))
     else:
         draw_scores(c, lg, tid, ev, kind)
 

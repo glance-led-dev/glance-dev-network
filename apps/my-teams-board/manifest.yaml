@@ -1,9 +1,9 @@
 gdn: 1
 id: my-teams-board
-version: 0.3.0
+version: 0.4.0
 name: My Teams Board
 author: joelfullyseeking
-description: "Your teams, logo against logo: pick two NFL, two NBA, two NHL and two college football teams — or set a league's first team to None to switch that league off, and its pages become index pages for the teams still on. Each page shows the live score, the latest final, or the next game."
+description: "Your teams, logo against logo: pick two NFL, two NBA, two NHL and two college football teams — or set a league's first team to None to switch that league off, and its pages become index pages for the teams still on. Each page shows the live score, the latest final, or the next game. On the schedule page each upcoming opponent's record is coloured by how strong they are next to yours — green for weaker, gold for even, red for stronger — with a matching chip, and the next-game page shows their record in the same colour."
 category: Sports
 entry: app.star
 
