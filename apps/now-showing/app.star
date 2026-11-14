@@ -20,19 +20,28 @@ def _s(ctx, key, fallback):
         return fallback
     return str(v).strip()
 
+# An optional input that's switched off: blank, or a placeholder choice
+# ("All" season/episode, "Any" year). Older installs may still hold "".
+def _opt(ctx, key):
+    v = _s(ctx, key, "")
+    if v.upper() in ["", "ALL", "ANY", "NONE", "-"]:
+        return ""
+    return v
+
 def _clean(v, fallback):
     if v == None or v == "" or v == "N/A":
         return fallback
     return v
 
-# OMDb's "Year" field for shows is a range like "2008–2013" (or "2016–" if
-# still running) using a Unicode en-dash — a glyph the bitmap fonts don't
-# have, so it silently drops instead of erroring. Swap it for a plain hyphen.
+# OMDb's "Year" field for shows is a range like "2008–2013", or "2016–" if
+# still running (kept as "2016-" so a current show reads as ongoing). It uses a
+# Unicode en-dash — a glyph the bitmap fonts don't have, so it silently drops
+# instead of erroring. Swap it for a plain hyphen.
 def _clean_year(v):
     y = _clean(v, "")
     if not y:
         return ""
-    return y.replace("–", "-").replace("—", "-").rstrip("-")
+    return y.replace("–", "-").replace("—", "-")
 
 # ---------- OMDb ----------
 
@@ -94,10 +103,10 @@ def fetch_info(ctx):
     if not omdbkey:
         return {"ok": False, "title": "NO API KEY", "sub": "ADD OMDB KEY"}
 
-    year = _s(ctx, "year", "")
+    year = _opt(ctx, "year")
     is_show = _s(ctx, "mediatype", "Movie") == "Show"
-    season = _s(ctx, "season", "")
-    episode = _s(ctx, "episode", "")
+    season = _opt(ctx, "season")
+    episode = _opt(ctx, "episode")
 
     if not is_show:
         params = {"apikey": omdbkey, "t": title, "type": "movie"}

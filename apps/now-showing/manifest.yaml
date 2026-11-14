@@ -2,7 +2,7 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: now-showing
-version: 0.3.0
+version: 0.4.0
 name: Now Showing
 author: jdhine02
 description: One title, always on the panel. Set a movie or a show (with an optional season/episode); one page shows the title and genre, the next shows episode/runtime and IMDb + Rotten Tomatoes ratings.
@@ -45,23 +45,28 @@ inputs:
     type: string
     app_input_type: free-text
     label: Release year (optional)
-    default: ""
-    help: Narrows down remakes/reboots that share the same title.
+    default: "Any"
+    help: Leave as Any, or type a year to narrow down remakes/reboots that share the same title.
 
+  # Season and episode are dropdowns with an "All" choice rather than blank
+  # free-text: the settings form wouldn't save a blank field even when it is
+  # marked optional, so a real choice keeps them genuinely optional.
   - key: season
     required: false
-    type: string
-    app_input_type: free-text
-    label: Season # (shows only, optional)
-    default: ""
+    type: choice
+    app_input_type: dropdown
+    label: Season (shows only)
+    default: "All"
+    choices: ["All", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"]
 
   - key: episode
     required: false
-    type: string
-    app_input_type: free-text
-    label: Episode # (shows only, optional)
-    default: ""
-    help: Leave season and episode both blank to show overall series info instead of one episode.
+    type: choice
+    app_input_type: dropdown
+    label: Episode (shows only)
+    default: "All"
+    choices: ["All", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"]
+    help: Leave season and episode on All to show the whole series and the years it ran.
 
   - key: omdbkey
     required: true
