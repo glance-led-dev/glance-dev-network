@@ -1944,7 +1944,9 @@ def resume_record(body, team_id):
     if "]" not in stats: return {}
     values = safe_json_document("[" + stats.split("]", 1)[0] + "]")
     if type(values) != "list" or column >= len(values): return {}
-    record = values[column]
+    return valid_team_record(values[column])
+
+def valid_team_record(record):
     if type(record) != "string": return {}
     parts = record.split("-")
     if len(parts) != 2: return {}
@@ -1954,9 +1956,14 @@ def resume_record(body, team_id):
             if digit not in "0123456789": return {}
     return {"RECORD": record}
 
-def current_team_record(team_id):
+def current_team_record(team_id, saved_records = None):
     if team_id == "":
         return {}
+    # The published snapshot is updated per team and only with valid records.
+    # Once present, use it consistently instead of briefly displaying a
+    # direct response that has not yet been saved anywhere.
+    if saved_records != None:
+        return valid_team_record(saved_records.get(team_id))
     # Both URLs cover the entire league. Use at most one additional shared
     # fetch, not one request per team on multi-team projections.
     for url in [RESUME_RECORDS_URL, RESUME_RECORDS_BACKUP_URL]:
@@ -1967,11 +1974,11 @@ def current_team_record(team_id):
                 return record
     return {}
 
-def your_team_resume(team, include_wab = False):
+def your_team_resume(team, include_wab = False, saved_records = None):
     # Full metrics are requested by the team snapshot and the single R64
     # opponent card, never for each possible future-round opponent.
     # Shared key-free ranking reads are cached for an hour.
-    metrics = current_team_record(RESUME_TEAM_IDS.get(team, ""))
+    metrics = current_team_record(RESUME_TEAM_IDS.get(team, ""), saved_records)
     seasons = []
     # Full-metric cards use one shared whole-table SOR read, not an AP read.
     if include_wab:
@@ -2105,11 +2112,12 @@ def sweet_pair(c, pair, seed, left, top, compact = False, logo_left = None):
     your_team_small_pool_mark(c, pair[1], or_left + 9, top, False, compact)
     tight_text(c, "OR", center, top + 12, font = "picopixel", color = MUTED, align = "center")
 
-def round32_pool_width(c, pair):
-    return tight_width(c, str(your_team_resume(pair[0]).get("RECORD", "--")), "picopixel") + tight_width(c, str(your_team_resume(pair[1]).get("RECORD", "--")), "picopixel") + future_logo_width(pair[0]) + future_logo_width(pair[1]) + 15
+def round32_pool_width(_projection, c, pair):
+    widths = [tight_width(c, current_team_record(RESUME_TEAM_IDS.get(code, ""), _projection.get("TEAM_RECORDS")).get("RECORD", "--"), "picopixel") for code in pair]
+    return widths[0] + widths[1] + future_logo_width(pair[0]) + future_logo_width(pair[1]) + 15
 
-def round32_pool(c, pair, seed, left, top):
-    records = [str(your_team_resume(code).get("RECORD", "--")) for code in pair]
+def round32_pool(_projection, c, pair, seed, left, top):
+    records = [current_team_record(RESUME_TEAM_IDS.get(code, ""), _projection.get("TEAM_RECORDS")).get("RECORD", "--") for code in pair]
     first_logo = left + tight_width(c, records[0], "picopixel") + 3
     or_left = first_logo + future_logo_width(pair[0]) + 1
     second_logo = or_left + 8
@@ -2145,7 +2153,7 @@ def your_team_options(_projection, c, seed, left, top, width, tall = False, regi
         if sweet or width <= 40:
             sweet_pair(c, pair, seed, left, top, width < 53)
         else:
-            round32_pool(c, pair, seed, left, top)
+            round32_pool(_projection, c, pair, seed, left, top)
         return
     if len(options) == 4 and width >= 70 and not tall:
         # A four-pair pool needs the full height. Put its label in the existing
@@ -2244,7 +2252,7 @@ def your_team_notice(c, team, title, line1, line2):
 def your_team_round64_opponent(_projection, c, opponent, seed):
     # Keep the opening-round winner's single-opponent identity treatment.
     # Three larger resume columns keep the opponent card easy to read.
-    metrics = your_team_resume(opponent, include_wab = True)
+    metrics = your_team_resume(opponent, include_wab = True, saved_records = _projection.get("TEAM_RECORDS"))
     your_team_text(c, "ROUND OF 64", 96, 0, font = "4x5", color = BLUE, align = "center")
     c.line(8, 6, 184, 6, color = "#12345c")
     your_team_mark(c, opponent, 8, 8, 38, 24)
@@ -2288,7 +2296,7 @@ def your_team_round32_card(_projection, c, code, seed, left):
     # Half-width Houston card: three airy identity rows, with record and
     # overall sharing the bottom row. Move the logo/identity block left,
     # leaving NET and OVR fixed. Stop wide right-hand art at the divider.
-    metrics = your_team_resume(code)
+    metrics = your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS"))
     frame = USER_LOGO_FRAMES[code]["38x24"] if code in USER_LOGO_FRAMES else SMC_NATIVE_FRAMES["38x24"] if code == "SMC" else MRMK_NATIVE_FRAMES["38x24"] if code == "MRMK" else ROUND32_SOURCE_LOGO_FRAMES[code]
     shift = min(5, (38 - frame[1]) // 2 + 1) if left > 96 else 5
     logo_left = left - shift
@@ -2324,7 +2332,7 @@ def your_team_candidate(_projection, c, code, seed, left, region, width = 80):
     if code == "TBD":
         your_team_options(_projection, c, seed, left, 8, width, region = region)
         return
-    resume = your_team_resume(code)
+    resume = your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS"))
     logo_left = your_team_corner_seed(c, seed, left, 8)
     your_team_mark(c, code, logo_left - SWEET_SINGLE_LEFT_INK[code], 8, 26, 23)
     stats_left = logo_left + future_logo_width(code) + 5
@@ -2338,22 +2346,23 @@ def your_team_candidate(_projection, c, code, seed, left, region, width = 80):
 def round32_candidate_width(_projection, c, code, seed, region):
     if code == "TBD":
         options = your_team_slot_options(_projection, seed, region)
-        return round32_pool_width(c, options[0]) if len(options) == 1 else 80
-    record_width = tight_width(c, str(your_team_resume(code).get("RECORD", "--")), "4x5")
+        return round32_pool_width(_projection, c, options[0]) if len(options) == 1 else 80
+    record = current_team_record(RESUME_TEAM_IDS.get(code, ""), _projection.get("TEAM_RECORDS")).get("RECORD", "--")
+    record_width = tight_width(c, record, "4x5")
     return future_seed_width(c, seed) + 1 + future_logo_width(code) + 5 + max(record_width, 12)
 
-def round32_mixed_pair_width(c, pair, seed, resumes = None):
+def round32_mixed_pair_width(_projection, c, pair, seed, resumes = None):
     # Full native marks plus three compact identity rows per candidate.
     # NET + one-pixel gap + a three-digit value needs a 23-pixel column.
     width = future_seed_width(c, seed) + 2 + 9
     for index, code in enumerate(pair):
-        metrics = resumes[index] if resumes != None else your_team_resume(code)
+        metrics = resumes[index] if resumes != None else your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS"))
         record = str(metrics.get("RECORD", "--"))
         width += future_logo_width(code) + 2 + max(23, tight_width(c, code, "4x5"), tight_width(c, record, "picopixel"))
     return width
 
 def your_team_round32_mixed_single(_projection, c, code, seed, left, width, metrics = None):
-    if metrics == None: metrics = your_team_resume(code)
+    if metrics == None: metrics = your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS"))
     your_team_mark(c, code, left - SWEET_SINGLE_LEFT_INK[code], 8, 26, 23)
     identity = left + future_logo_width(code) + 2
     net_center = left + width - 7
@@ -2381,7 +2390,7 @@ def your_team_round32_mixed_pair(_projection, c, pair, seed, left, resumes = Non
     extra = (future_seed_width(c, seed) + 2) // 2
     logo_left = left
     for index, code in enumerate(pair):
-        metrics = resumes[index] if resumes != None else your_team_resume(code)
+        metrics = resumes[index] if resumes != None else your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS"))
         record = str(metrics.get("RECORD", "--"))
         column_width = max(23, tight_width(c, code, "4x5"), tight_width(c, record, "picopixel")) + extra
         your_team_mark(c, code, logo_left - SWEET_SINGLE_LEFT_INK[code], 8, 26, 23)
@@ -2425,8 +2434,8 @@ def your_team_round32_candidates(_projection, c, game, region):
         pair = options[0]
         # Share these reads between sizing and drawing: adding the labels
         # must not add repeat source pulls for either opening-round school.
-        resumes = [your_team_resume(code) for code in pair]
-        pair_width = round32_mixed_pair_width(c, pair, pair_seed, resumes)
+        resumes = [your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS")) for code in pair]
+        pair_width = round32_mixed_pair_width(_projection, c, pair, pair_seed, resumes)
         single_width = 181 - pair_width
         other_seed = game[2] if pair_index == 0 else game[0]
         minimum_single = future_logo_width(other_code) + max(40, tight_width(c, str(other_seed) + " SEED", "picopixel") + 15)
@@ -2603,7 +2612,7 @@ def your_team_page(_projection, c, ctx, slot):
         your_team_text(c, name, 19, 0, font = name_font, color = LIGHT, align = "center")
         your_team_mark(c, team, 0, 8, 38, 24)
         seed = str(info[1]) if info != None else str(opening[0]) if opening != None else "--"
-        metrics = your_team_resume(team, include_wab = True)
+        metrics = your_team_resume(team, include_wab = True, saved_records = _projection.get("TEAM_RECORDS"))
         # Shared centers keep identity, seed, and metadata independent.
         record = str(metrics.get("RECORD", "--"))
         record_font = "4x5" if tight_width(c, record, "4x5") <= 27 else "picopixel"
@@ -3200,6 +3209,11 @@ def projection_state():
     result["BUBBLE_GROUPS"] = groups + [["SOURCE SNAPSHOT", "KYLE", "76 TEAMS", "", ""]]
     result["PROJECTION_DATE"] = data.get("projection_date", "")
     result["SAVED_PROJECTION"] = False
+    records = data.get("team_records")
+    if type(records) == "dict" and records.get("season") == data["season"]:
+        teams_by_id = records.get("teams")
+        if type(teams_by_id) == "dict" and teams_by_id:
+            result["TEAM_RECORDS"] = teams_by_id
     return result
 
 # Wright State's official standalone wolf, proportional native frames.
