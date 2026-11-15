@@ -1,0 +1,39 @@
+gdn: 1
+id: detailed-metar
+version: 2.1.0
+name: Detailed METAR
+author: Whit McGhee
+description: An airport's latest METAR on four pages - flight category and sky picture, a wind dial, temperature and dew point, and the full cloud stack. Free NWS data, no API key. Based on the Tidbyt app DetailedMETAR by SamuelSagarino.
+category: Weather
+entry: app.star
+
+width: 64
+height: 32
+# METARs are issued hourly, plus specials when conditions change. 900 s is the
+# low end of the guideline weather cadence and catches a special within 15
+# minutes. The fetch's ttl_seconds (TTL in app.star) matches.
+refresh: 900
+
+pages: [metar, wind, temp, sky]
+
+inputs:
+  - key: airport
+    type: string
+    app_input_type: free-text
+    label: Airport
+    default: "KATL"
+    help: The airport's four-character ICAO code - KATL, KJFK, KBHM, EGLL. US airports add a K to the three-letter code.
+  - key: tempunit
+    type: choice
+    app_input_type: dropdown
+    label: Temperature
+    default: "FAHRENHEIT"
+    choices: ["FAHRENHEIT", "CELSIUS"]
+    help: Units for temperature and dew point on the TEMP page.
+  - key: windunit
+    type: choice
+    app_input_type: dropdown
+    label: Wind speed
+    default: "KNOTS"
+    choices: ["KNOTS", "MPH"]
+    help: Units for wind and gust speed on the WIND page.
