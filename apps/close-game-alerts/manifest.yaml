@@ -3,6 +3,7 @@ id: close-game-alerts
 version: 0.9.1
 name: Close Game Alerts
 author: Justin Morrison
+category: Sports
 description: Real-time close-game alerts for NFL, NCAA football, NCAA basketball, NBA, NHL, and MLB.
 entry: app.star
 
@@ -14,7 +15,7 @@ pages:
   - main
 
 inputs:
-  - key: sport_category
+  - key: sportcategory
     type: choice
     app_input_type: dropdown
     label: Sport / Team Category

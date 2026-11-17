@@ -822,7 +822,7 @@ def _draw_unavailable(c):
 
 
 def main(c, ctx):
-    sports, top25_sports = _category_config(ctx.inputs["sport_category"])
+    sports, top25_sports = _category_config(ctx.inputs["sportcategory"])
 
     if len(sports) == 0:
         _draw_empty(c)
