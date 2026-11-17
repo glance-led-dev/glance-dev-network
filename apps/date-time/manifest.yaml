@@ -2,10 +2,10 @@
 # configured and reviewed. Edit it in VS Code or the Studio.
 gdn: 1
 id: date-time
-version: 0.4.0
+version: 0.5.0
 name: Date & Weather
 author: jdhine02
-description: Today's date for a US zip code, big, beside the weather at a glance (place, condition icon, temperature, high and low, humidity), then a second page with sunrise stacked over sunset beside your pick of the next six hours (icon, temperature, chance of rain) or the next three days (icon, high, low, type and chance of precipitation). The temperature takes weather-map colors. Pick the forecast, F or C, a date style, and a date color.
+description: Today's date for a US zip code, big, beside the weather at a glance (place, condition icon, temperature and what it feels like, high and low, humidity), then a second page with sunrise stacked over sunset beside your pick of the next six hours (icon, temperature, chance of rain) or the next three days (icon, high, low, type and chance of precipitation). The temperature takes weather-map colors. Pick the forecast, F or C, a date style, and a date color.
 category: Weather
 entry: app.star
 
