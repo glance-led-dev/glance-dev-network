@@ -1,26 +1,32 @@
 gdn: 1
 id: local-closings
-version: 0.1.0
+version: 1.1.0
 name: Local Closings
-author: John McRae
-description: "Paste a local TV Closings and Delays page to see reported school and business closings. Optional school name pins a listed match to page one. No API key."
+author: reyos86
+description: "School, business, church and government closings and delays from your local TV station. Type your ZIP code and the app finds your station. Optional school name shows your school's status first. No API key."
 category: Weather
 entry: app.star
 width: 192
 height: 32
-# Closings change on a human timescale. Five minutes is enough.
-refresh: 3600
-pages: [board, one, two, three, four, five]
+# Closings pour in early on storm mornings; five minutes keeps up with them.
+refresh: 300
+pages: [board, closings]
 inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: ZIP Code
+    default: "46802"
+    help: "Your 5-digit ZIP code. The app watches the closings page of the nearest TV station it can read."
   - key: school
     type: string
     app_input_type: free-text
-    label: School Name
-    default: ""
-    help: "Optional. Type your school or organization name. If the station listed it, that closing is shown first. The app cannot add a school that is not on the page."
+    label: School Name (or NONE)
+    default: "NONE"
+    help: "Optional. Your school or organization, e.g. WABASH CITY SCHOOLS. If the station lists it, its status shows on the main screen and first in the list. Leave as NONE to skip."
   - key: closingsurl
     type: string
     app_input_type: free-text
-    label: Closings Website URL
-    default: "www.21alivenews.com/weather/closings/"
-    help: "Paste the station Closings and Delays page URL. https is added if omitted. If you see SOURCE NOT SUPPORTED, try another local station that lists closings for your school."
+    label: Station Closings Link (or NONE)
+    default: "NONE"
+    help: "Optional. Paste a TV station's Closings and Delays page to use it instead of the one picked from your ZIP code. https is added if you leave it off."
