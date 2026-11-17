@@ -15,8 +15,8 @@
 # fixed times for the day, so the slow refresh never makes them wrong.
 #
 # Temperatures show in F or C (a dropdown). The date's color comes from a
-# dropdown; the condition is white, and the current temperature always takes
-# weather-map colors by value, white at its coldest. The place name and labels are gray, the
+# dropdown; the place and condition are white, and the current temperature always takes
+# weather-map colors by value, white at its coldest. The labels are gray, the
 # dividers dim gray.
 
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
@@ -336,7 +336,7 @@ def fetch_weather(lat, lon):
         params = {
             "latitude": str(lat),
             "longitude": str(lon),
-            "current": "temperature_2m,relative_humidity_2m,weather_code,is_day,cloud_cover",
+            "current": "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,cloud_cover",
             "hourly": "temperature_2m,weather_code,precipitation_probability,is_day,cloud_cover",
             "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,sunrise,sunset",
             "forecast_days": "4",   # today plus the next three days; late hours reach past midnight
@@ -653,7 +653,7 @@ def today(c, ctx):
 
     # Right zone rows: place y 1-5 · icon y 7-24 beside the 10x16 temperature
     # (y 8-23) and high/low/humidity · condition y 26-30.
-    c.text(place_text(c, geo, rw), rx, 1, font = "4x5", color = LABEL)
+    c.text(place_text(c, geo, rw), rx, 1, font = "4x5", color = "white")
 
     code = int(cur.get("weather_code", 3))
     is_day = int(cur.get("is_day", 1)) == 1
@@ -663,8 +663,11 @@ def today(c, ctx):
     tcolor = temp_scale_color(whole(temp))
     ts = str(deg(ctx, temp))
     tx = rx + 18 + 4
-    c.text(ts, tx, 8, font = "10x16", color = tcolor)
-    ring_x = tx + c.text_width(ts, "10x16") + 1
+    # A 3-digit or below-zero reading drops to the narrower 7x16, same
+    # height, so it leaves room for FEELS beside it.
+    tfont = "10x16" if len(ts) < 3 else "7x16"
+    c.text(ts, tx, 8, font = tfont, color = tcolor)
+    ring_x = tx + c.text_width(ts, tfont) + 1
     _bmp(c, RING, ring_x, 8, tcolor, 1)
 
     # High, low, and humidity share one right-hand column at an even 8px
@@ -687,6 +690,24 @@ def today(c, ctx):
         c.text(row[0], vx - 2 - c.text_width(row[0], "4x5"), row[2],
                font = "4x5", color = LABEL)
         c.text(row[1], vx, row[2], font = "4x5", color = "white")
+
+    # Feels like: FEELS over the value, both in the small 4x5 the H and L use
+    # and on their rows, centered in the gap between the big temperature's
+    # ring and the H and L labels. A 3-digit or below-zero reading widens the
+    # big temperature by a digit; FEELS then shortens to FEEL, and if even
+    # that won't fit the block is left out rather than crowd H and L.
+    feels = cur.get("apparent_temperature", None)
+    if feels != None:
+        gx = ring_x + len(RING[0]) + 3
+        stop = vx - 2 - c.text_width("H", "4x5") - 3
+        fs = str(deg(ctx, feels))
+        for label in ["FEELS", "FEEL"]:
+            bw = max(c.text_width(label, "4x5"), c.text_width(fs, "4x5"))
+            if gx + bw <= stop:
+                mid = (gx + stop) // 2
+                c.text(label, mid, 10, font = "4x5", color = LABEL, align = "center")
+                c.text(fs, mid, 18, font = "4x5", color = "white", align = "center")
+                break
     cw = (col - 4 - rx) if hum != None else rw
 
     c.text(clip(c, condition_label(code, is_day, cover), "4x5", cw), rx, 26,
