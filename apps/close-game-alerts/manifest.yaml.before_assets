@@ -1,0 +1,569 @@
+gdn: 1
+id: close-game-alerts
+version: 0.9.1
+name: Close Game Alerts
+entry: app.star
+
+width: 128
+height: 32
+refresh: 60
+
+pages:
+  - main
+
+inputs:
+  - key: mode
+    type: choice
+    app_input_type: dropdown
+    label: Mode
+    default: LIVE
+    choices:
+      - LIVE
+      - TEST
+
+  - key: sport
+    type: choice
+    app_input_type: dropdown
+    label: Sport
+    default: NFL
+    choices:
+      - ALL SPORTS
+      - NFL
+      - NCAA FOOTBALL
+      - NCAA BASKETBALL
+      - NBA
+      - NHL
+      - MLB
+
+  - key: team_mode
+    type: choice
+    app_input_type: dropdown
+    label: Team Mode
+    default: ALL TEAMS
+    choices:
+      - ALL TEAMS
+      - SELECT SPECIFIC TEAMS
+
+  - key: teams
+    type: choice
+    app_input_type: selection
+    label: Select Teams
+    default: []
+    choices:
+      - MLB - Arizona Diamondbacks
+      - MLB - Athletics
+      - MLB - Atlanta Braves
+      - MLB - Baltimore Orioles
+      - MLB - Boston Red Sox
+      - MLB - Chicago Cubs
+      - MLB - Chicago White Sox
+      - MLB - Cincinnati Reds
+      - MLB - Cleveland Guardians
+      - MLB - Colorado Rockies
+      - MLB - Detroit Tigers
+      - MLB - Houston Astros
+      - MLB - Kansas City Royals
+      - MLB - Los Angeles Angels
+      - MLB - Los Angeles Dodgers
+      - MLB - Miami Marlins
+      - MLB - Milwaukee Brewers
+      - MLB - Minnesota Twins
+      - MLB - New York Mets
+      - MLB - New York Yankees
+      - MLB - Philadelphia Phillies
+      - MLB - Pittsburgh Pirates
+      - MLB - San Diego Padres
+      - MLB - San Francisco Giants
+      - MLB - Seattle Mariners
+      - MLB - St. Louis Cardinals
+      - MLB - Tampa Bay Rays
+      - MLB - Texas Rangers
+      - MLB - Toronto Blue Jays
+      - MLB - Washington Nationals
+      - NBA - Atlanta Hawks
+      - NBA - Boston Celtics
+      - NBA - Brooklyn Nets
+      - NBA - Charlotte Hornets
+      - NBA - Chicago Bulls
+      - NBA - Cleveland Cavaliers
+      - NBA - Dallas Mavericks
+      - NBA - Denver Nuggets
+      - NBA - Detroit Pistons
+      - NBA - Golden State Warriors
+      - NBA - Houston Rockets
+      - NBA - Indiana Pacers
+      - NBA - LA Clippers
+      - NBA - Los Angeles Lakers
+      - NBA - Memphis Grizzlies
+      - NBA - Miami Heat
+      - NBA - Milwaukee Bucks
+      - NBA - Minnesota Timberwolves
+      - NBA - New Orleans Pelicans
+      - NBA - New York Knicks
+      - NBA - Oklahoma City Thunder
+      - NBA - Orlando Magic
+      - NBA - Philadelphia 76ers
+      - NBA - Phoenix Suns
+      - NBA - Portland Trail Blazers
+      - NBA - Sacramento Kings
+      - NBA - San Antonio Spurs
+      - NBA - Toronto Raptors
+      - NBA - Utah Jazz
+      - NBA - Washington Wizards
+      - NCAA BASKETBALL - Akron Zips
+      - NCAA BASKETBALL - Alabama Crimson Tide
+      - NCAA BASKETBALL - Arizona State Sun Devils
+      - NCAA BASKETBALL - Arizona Wildcats
+      - NCAA BASKETBALL - Arkansas Razorbacks
+      - NCAA BASKETBALL - Auburn Tigers
+      - NCAA BASKETBALL - BYU Cougars
+      - NCAA BASKETBALL - Baylor Bears
+      - NCAA BASKETBALL - Boston College Eagles
+      - NCAA BASKETBALL - Bowling Green Falcons
+      - NCAA BASKETBALL - Buffalo Bulls
+      - NCAA BASKETBALL - Butler Bulldogs
+      - NCAA BASKETBALL - California Baptist Lancers
+      - NCAA BASKETBALL - California Golden Bears
+      - NCAA BASKETBALL - Cincinnati Bearcats
+      - NCAA BASKETBALL - Clemson Tigers
+      - NCAA BASKETBALL - Colorado Buffaloes
+      - NCAA BASKETBALL - Creighton Bluejays
+      - NCAA BASKETBALL - Davidson Wildcats
+      - NCAA BASKETBALL - Dayton Flyers
+      - NCAA BASKETBALL - DePaul Blue Demons
+      - NCAA BASKETBALL - Duke Blue Devils
+      - NCAA BASKETBALL - Duquesne Dukes
+      - NCAA BASKETBALL - Eastern Michigan Eagles
+      - NCAA BASKETBALL - Florida Gators
+      - NCAA BASKETBALL - Florida State Seminoles
+      - NCAA BASKETBALL - Furman Paladins
+      - NCAA BASKETBALL - George Mason Patriots
+      - NCAA BASKETBALL - George Washington Revolutionaries
+      - NCAA BASKETBALL - Georgetown Hoyas
+      - NCAA BASKETBALL - Georgia Bulldogs
+      - NCAA BASKETBALL - Georgia Tech Yellow Jackets
+      - NCAA BASKETBALL - Gonzaga Bulldogs
+      - NCAA BASKETBALL - Grand Canyon Lopes
+      - NCAA BASKETBALL - Hawai'i Rainbow Warriors
+      - NCAA BASKETBALL - High Point Panthers
+      - NCAA BASKETBALL - Hofstra Pride
+      - NCAA BASKETBALL - Houston Cougars
+      - NCAA BASKETBALL - Howard Bison
+      - NCAA BASKETBALL - Idaho Vandals
+      - NCAA BASKETBALL - Illinois Fighting Illini
+      - NCAA BASKETBALL - Indiana Hoosiers
+      - NCAA BASKETBALL - Iowa Hawkeyes
+      - NCAA BASKETBALL - Iowa State Cyclones
+      - NCAA BASKETBALL - Kansas Jayhawks
+      - NCAA BASKETBALL - Kansas State Wildcats
+      - NCAA BASKETBALL - Kennesaw State Owls
+      - NCAA BASKETBALL - Kent State Golden Flashes
+      - NCAA BASKETBALL - Kentucky Wildcats
+      - NCAA BASKETBALL - LSU Tigers
+      - NCAA BASKETBALL - La Salle Explorers
+      - NCAA BASKETBALL - Lehigh Mountain Hawks
+      - NCAA BASKETBALL - Long Island University Sharks
+      - NCAA BASKETBALL - Louisville Cardinals
+      - NCAA BASKETBALL - Loyola Chicago Ramblers
+      - NCAA BASKETBALL - Loyola Marymount Lions
+      - NCAA BASKETBALL - Marquette Golden Eagles
+      - NCAA BASKETBALL - Marshall Thundering Herd
+      - NCAA BASKETBALL - Maryland Terrapins
+      - NCAA BASKETBALL - Massachusetts Minutemen
+      - NCAA BASKETBALL - McNeese Cowboys
+      - NCAA BASKETBALL - Miami (OH) RedHawks
+      - NCAA BASKETBALL - Miami Hurricanes
+      - NCAA BASKETBALL - Michigan State Spartans
+      - NCAA BASKETBALL - Michigan Wolverines
+      - NCAA BASKETBALL - Minnesota Golden Gophers
+      - NCAA BASKETBALL - Mississippi State Bulldogs
+      - NCAA BASKETBALL - Missouri Tigers
+      - NCAA BASKETBALL - NC State Wolfpack
+      - NCAA BASKETBALL - Nebraska Cornhuskers
+      - NCAA BASKETBALL - Nevada Wolf Pack
+      - NCAA BASKETBALL - North Carolina Tar Heels
+      - NCAA BASKETBALL - North Dakota State Bison
+      - NCAA BASKETBALL - Northern Illinois Huskies
+      - NCAA BASKETBALL - Northern Iowa Panthers
+      - NCAA BASKETBALL - Northwestern Wildcats
+      - NCAA BASKETBALL - Notre Dame Fighting Irish
+      - NCAA BASKETBALL - Ohio Bobcats
+      - NCAA BASKETBALL - Ohio State Buckeyes
+      - NCAA BASKETBALL - Oklahoma Sooners
+      - NCAA BASKETBALL - Oklahoma State Cowboys
+      - NCAA BASKETBALL - Ole Miss Rebels
+      - NCAA BASKETBALL - Oregon Ducks
+      - NCAA BASKETBALL - Oregon State Beavers
+      - NCAA BASKETBALL - Pacific Tigers
+      - NCAA BASKETBALL - Penn State Nittany Lions
+      - NCAA BASKETBALL - Pennsylvania Quakers
+      - NCAA BASKETBALL - Pepperdine Waves
+      - NCAA BASKETBALL - Pittsburgh Panthers
+      - NCAA BASKETBALL - Portland Pilots
+      - NCAA BASKETBALL - Prairie View A&M Panthers
+      - NCAA BASKETBALL - Providence Friars
+      - NCAA BASKETBALL - Purdue Boilermakers
+      - NCAA BASKETBALL - Queens University Royals
+      - NCAA BASKETBALL - Rhode Island Rams
+      - NCAA BASKETBALL - Rutgers Scarlet Knights
+      - NCAA BASKETBALL - SMU Mustangs
+      - NCAA BASKETBALL - Saint Louis Billikens
+      - NCAA BASKETBALL - Saint Mary's Gaels
+      - NCAA BASKETBALL - San Francisco Dons
+      - NCAA BASKETBALL - Santa Clara Broncos
+      - NCAA BASKETBALL - Seattle U Redhawks
+      - NCAA BASKETBALL - Seton Hall Pirates
+      - NCAA BASKETBALL - Siena Saints
+      - NCAA BASKETBALL - South Carolina Gamecocks
+      - NCAA BASKETBALL - South Florida Bulls
+      - NCAA BASKETBALL - St. Bonaventure Bonnies
+      - NCAA BASKETBALL - St. John's Red Storm
+      - NCAA BASKETBALL - Stanford Cardinal
+      - NCAA BASKETBALL - Syracuse Orange
+      - NCAA BASKETBALL - TCU Horned Frogs
+      - NCAA BASKETBALL - Tennessee State Tigers
+      - NCAA BASKETBALL - Tennessee Volunteers
+      - NCAA BASKETBALL - Texas A&M Aggies
+      - NCAA BASKETBALL - Texas Longhorns
+      - NCAA BASKETBALL - Texas Tech Red Raiders
+      - NCAA BASKETBALL - Toledo Rockets
+      - NCAA BASKETBALL - Troy Trojans
+      - NCAA BASKETBALL - UCF Knights
+      - NCAA BASKETBALL - UCLA Bruins
+      - NCAA BASKETBALL - UConn Huskies
+      - NCAA BASKETBALL - UMBC Retrievers
+      - NCAA BASKETBALL - USC Trojans
+      - NCAA BASKETBALL - Utah State Aggies
+      - NCAA BASKETBALL - Utah Utes
+      - NCAA BASKETBALL - VCU Rams
+      - NCAA BASKETBALL - Vanderbilt Commodores
+      - NCAA BASKETBALL - Villanova Wildcats
+      - NCAA BASKETBALL - Virginia Cavaliers
+      - NCAA BASKETBALL - Virginia Tech Hokies
+      - NCAA BASKETBALL - Wake Forest Demon Deacons
+      - NCAA BASKETBALL - Washington Huskies
+      - NCAA BASKETBALL - Washington State Cougars
+      - NCAA BASKETBALL - West Virginia Mountaineers
+      - NCAA BASKETBALL - Western Michigan Broncos
+      - NCAA BASKETBALL - Wisconsin Badgers
+      - NCAA BASKETBALL - Wright State Raiders
+      - NCAA BASKETBALL - Xavier Musketeers
+      - NCAA FOOTBALL - Abilene Christian Wildcats
+      - NCAA FOOTBALL - Air Force Falcons
+      - NCAA FOOTBALL - Akron Zips
+      - NCAA FOOTBALL - Alabama Crimson Tide
+      - NCAA FOOTBALL - Alabama Crimson Tide
+      - NCAA FOOTBALL - Alabama State Hornets
+      - NCAA FOOTBALL - Alcorn State Braves
+      - NCAA FOOTBALL - App State Mountaineers
+      - NCAA FOOTBALL - Arizona State Sun Devils
+      - NCAA FOOTBALL - Arizona Wildcats
+      - NCAA FOOTBALL - Arkansas Razorbacks
+      - NCAA FOOTBALL - Arkansas State Red Wolves
+      - NCAA FOOTBALL - Arkansas-Pine Bluff Golden Lions
+      - NCAA FOOTBALL - Army Black Knights
+      - NCAA FOOTBALL - Auburn Tigers
+      - NCAA FOOTBALL - Austin Peay Governors
+      - NCAA FOOTBALL - BYU Cougars
+      - NCAA FOOTBALL - Ball State Cardinals
+      - NCAA FOOTBALL - Baylor Bears
+      - NCAA FOOTBALL - Bethune-Cookman Wildcats
+      - NCAA FOOTBALL - Boise State Broncos
+      - NCAA FOOTBALL - Boise State Broncos
+      - NCAA FOOTBALL - Boston College Eagles
+      - NCAA FOOTBALL - Bowling Green Falcons
+      - NCAA FOOTBALL - Bryant Bulldogs
+      - NCAA FOOTBALL - Bucknell Bison
+      - NCAA FOOTBALL - Buffalo Bulls
+      - NCAA FOOTBALL - Cal Poly Mustangs
+      - NCAA FOOTBALL - California Golden Bears
+      - NCAA FOOTBALL - Campbell Fighting Camels
+      - NCAA FOOTBALL - Central Arkansas Bears
+      - NCAA FOOTBALL - Central Connecticut Blue Devils
+      - NCAA FOOTBALL - Central Michigan Chippewas
+      - NCAA FOOTBALL - Charleston Southern Buccaneers
+      - NCAA FOOTBALL - Charlotte 49ers
+      - NCAA FOOTBALL - Chattanooga Mocs
+      - NCAA FOOTBALL - Cincinnati Bearcats
+      - NCAA FOOTBALL - Clemson Tigers
+      - NCAA FOOTBALL - Clemson Tigers
+      - NCAA FOOTBALL - Coastal Carolina Chanticleers
+      - NCAA FOOTBALL - Colgate Raiders
+      - NCAA FOOTBALL - Colorado Buffaloes
+      - NCAA FOOTBALL - Colorado Buffaloes
+      - NCAA FOOTBALL - Colorado State Rams
+      - NCAA FOOTBALL - Delaware Blue Hens
+      - NCAA FOOTBALL - Delaware State Hornets
+      - NCAA FOOTBALL - Duke Blue Devils
+      - NCAA FOOTBALL - Duquesne Dukes
+      - NCAA FOOTBALL - East Carolina Pirates
+      - NCAA FOOTBALL - East Tennessee State Buccaneers
+      - NCAA FOOTBALL - East Texas A&M Lions
+      - NCAA FOOTBALL - Eastern Illinois Panthers
+      - NCAA FOOTBALL - Eastern Kentucky Colonels
+      - NCAA FOOTBALL - Eastern Michigan Eagles
+      - NCAA FOOTBALL - Eastern Washington Eagles
+      - NCAA FOOTBALL - Elon Phoenix
+      - NCAA FOOTBALL - Florida A&M Rattlers
+      - NCAA FOOTBALL - Florida Atlantic Owls
+      - NCAA FOOTBALL - Florida Gators
+      - NCAA FOOTBALL - Florida International Panthers
+      - NCAA FOOTBALL - Florida State Seminoles
+      - NCAA FOOTBALL - Fordham Rams
+      - NCAA FOOTBALL - Fresno State Bulldogs
+      - NCAA FOOTBALL - Furman Paladins
+      - NCAA FOOTBALL - Gardner-Webb Runnin' Bulldogs
+      - NCAA FOOTBALL - Georgia Bulldogs
+      - NCAA FOOTBALL - Georgia Bulldogs
+      - NCAA FOOTBALL - Georgia Southern Eagles
+      - NCAA FOOTBALL - Georgia State Panthers
+      - NCAA FOOTBALL - Georgia Tech Yellow Jackets
+      - NCAA FOOTBALL - Grambling Tigers
+      - NCAA FOOTBALL - Hampton Pirates
+      - NCAA FOOTBALL - Hawai'i Rainbow Warriors
+      - NCAA FOOTBALL - Holy Cross Crusaders
+      - NCAA FOOTBALL - Houston Christian Huskies
+      - NCAA FOOTBALL - Houston Cougars
+      - NCAA FOOTBALL - Houston Cougars
+      - NCAA FOOTBALL - Howard Bison
+      - NCAA FOOTBALL - Idaho State Bengals
+      - NCAA FOOTBALL - Idaho Vandals
+      - NCAA FOOTBALL - Illinois Fighting Illini
+      - NCAA FOOTBALL - Illinois State Redbirds
+      - NCAA FOOTBALL - Incarnate Word Cardinals
+      - NCAA FOOTBALL - Indiana Hoosiers
+      - NCAA FOOTBALL - Indiana State Sycamores
+      - NCAA FOOTBALL - Iowa Hawkeyes
+      - NCAA FOOTBALL - Iowa Hawkeyes
+      - NCAA FOOTBALL - Iowa State Cyclones
+      - NCAA FOOTBALL - Jacksonville State Gamecocks
+      - NCAA FOOTBALL - James Madison Dukes
+      - NCAA FOOTBALL - Kansas Jayhawks
+      - NCAA FOOTBALL - Kansas State Wildcats
+      - NCAA FOOTBALL - Kennesaw State Owls
+      - NCAA FOOTBALL - Kent State Golden Flashes
+      - NCAA FOOTBALL - Kentucky Wildcats
+      - NCAA FOOTBALL - LSU Tigers
+      - NCAA FOOTBALL - LSU Tigers
+      - NCAA FOOTBALL - Lafayette Leopards
+      - NCAA FOOTBALL - Lamar Cardinals
+      - NCAA FOOTBALL - Liberty Flames
+      - NCAA FOOTBALL - Lindenwood Lions
+      - NCAA FOOTBALL - Long Island University Sharks
+      - NCAA FOOTBALL - Louisiana Ragin' Cajuns
+      - NCAA FOOTBALL - Louisiana Tech Bulldogs
+      - NCAA FOOTBALL - Louisville Cardinals
+      - NCAA FOOTBALL - Maine Black Bears
+      - NCAA FOOTBALL - Marshall Thundering Herd
+      - NCAA FOOTBALL - Maryland Terrapins
+      - NCAA FOOTBALL - Massachusetts Minutemen
+      - NCAA FOOTBALL - McNeese Cowboys
+      - NCAA FOOTBALL - Memphis Tigers
+      - NCAA FOOTBALL - Mercer Bears
+      - NCAA FOOTBALL - Mercyhurst Lakers
+      - NCAA FOOTBALL - Merrimack Warriors
+      - NCAA FOOTBALL - Miami (OH) RedHawks
+      - NCAA FOOTBALL - Miami Hurricanes
+      - NCAA FOOTBALL - Michigan State Spartans
+      - NCAA FOOTBALL - Michigan Wolverines
+      - NCAA FOOTBALL - Middle Tennessee Blue Raiders
+      - NCAA FOOTBALL - Minnesota Golden Gophers
+      - NCAA FOOTBALL - Mississippi State Bulldogs
+      - NCAA FOOTBALL - Mississippi State Bulldogs
+      - NCAA FOOTBALL - Mississippi Valley State Delta Devils
+      - NCAA FOOTBALL - Missouri State Bears
+      - NCAA FOOTBALL - Missouri Tigers
+      - NCAA FOOTBALL - Missouri Tigers
+      - NCAA FOOTBALL - Monmouth Hawks
+      - NCAA FOOTBALL - Montana Grizzlies
+      - NCAA FOOTBALL - Montana State Bobcats
+      - NCAA FOOTBALL - Morgan State Bears
+      - NCAA FOOTBALL - Murray State Racers
+      - NCAA FOOTBALL - NC State Wolfpack
+      - NCAA FOOTBALL - Navy Midshipmen
+      - NCAA FOOTBALL - Nebraska Cornhuskers
+      - NCAA FOOTBALL - Nevada Wolf Pack
+      - NCAA FOOTBALL - New Hampshire Wildcats
+      - NCAA FOOTBALL - New Mexico Lobos
+      - NCAA FOOTBALL - New Mexico State Aggies
+      - NCAA FOOTBALL - Nicholls Colonels
+      - NCAA FOOTBALL - Norfolk State Spartans
+      - NCAA FOOTBALL - North Alabama Lions
+      - NCAA FOOTBALL - North Carolina A&T Aggies
+      - NCAA FOOTBALL - North Carolina Central Eagles
+      - NCAA FOOTBALL - North Carolina Tar Heels
+      - NCAA FOOTBALL - North Carolina Tar Heels
+      - NCAA FOOTBALL - North Dakota Fighting Hawks
+      - NCAA FOOTBALL - North Dakota State Bison
+      - NCAA FOOTBALL - North Texas Mean Green
+      - NCAA FOOTBALL - Northern Arizona Lumberjacks
+      - NCAA FOOTBALL - Northern Colorado Bears
+      - NCAA FOOTBALL - Northern Illinois Huskies
+      - NCAA FOOTBALL - Northern Iowa Panthers
+      - NCAA FOOTBALL - Northwestern State Demons
+      - NCAA FOOTBALL - Northwestern Wildcats
+      - NCAA FOOTBALL - Notre Dame Fighting Irish
+      - NCAA FOOTBALL - Ohio Bobcats
+      - NCAA FOOTBALL - Ohio State Buckeyes
+      - NCAA FOOTBALL - Oklahoma Sooners
+      - NCAA FOOTBALL - Oklahoma State Cowboys
+      - NCAA FOOTBALL - Old Dominion Monarchs
+      - NCAA FOOTBALL - Ole Miss Rebels
+      - NCAA FOOTBALL - Oregon Ducks
+      - NCAA FOOTBALL - Oregon State Beavers
+      - NCAA FOOTBALL - Penn State Nittany Lions
+      - NCAA FOOTBALL - Pittsburgh Panthers
+      - NCAA FOOTBALL - Portland State Vikings
+      - NCAA FOOTBALL - Prairie View A&M Panthers
+      - NCAA FOOTBALL - Purdue Boilermakers
+      - NCAA FOOTBALL - Rhode Island Rams
+      - NCAA FOOTBALL - Rice Owls
+      - NCAA FOOTBALL - Richmond Spiders
+      - NCAA FOOTBALL - Robert Morris Colonials
+      - NCAA FOOTBALL - Rutgers Scarlet Knights
+      - NCAA FOOTBALL - Rutgers Scarlet Knights
+      - NCAA FOOTBALL - SE Louisiana Lions
+      - NCAA FOOTBALL - SMU Mustangs
+      - NCAA FOOTBALL - SMU Mustangs
+      - NCAA FOOTBALL - Sacramento State Hornets
+      - NCAA FOOTBALL - Sacred Heart Pioneers
+      - NCAA FOOTBALL - Sam Houston Bearkats
+      - NCAA FOOTBALL - Samford Bulldogs
+      - NCAA FOOTBALL - San Diego State Aztecs
+      - NCAA FOOTBALL - San José State Spartans
+      - NCAA FOOTBALL - South Alabama Jaguars
+      - NCAA FOOTBALL - South Carolina Gamecocks
+      - NCAA FOOTBALL - South Carolina Gamecocks
+      - NCAA FOOTBALL - South Dakota Coyotes
+      - NCAA FOOTBALL - South Dakota State Jackrabbits
+      - NCAA FOOTBALL - South Florida Bulls
+      - NCAA FOOTBALL - Southeast Missouri State Redhawks
+      - NCAA FOOTBALL - Southern Illinois Salukis
+      - NCAA FOOTBALL - Southern Jaguars
+      - NCAA FOOTBALL - Southern Miss Golden Eagles
+      - NCAA FOOTBALL - Southern Utah Thunderbirds
+      - NCAA FOOTBALL - Stanford Cardinal
+      - NCAA FOOTBALL - Stonehill Skyhawks
+      - NCAA FOOTBALL - Stony Brook Seawolves
+      - NCAA FOOTBALL - Syracuse Orange
+      - NCAA FOOTBALL - TCU Horned Frogs
+      - NCAA FOOTBALL - TCU Horned Frogs
+      - NCAA FOOTBALL - Tarleton State Texans
+      - NCAA FOOTBALL - Temple Owls
+      - NCAA FOOTBALL - Tennessee State Tigers
+      - NCAA FOOTBALL - Tennessee Tech Golden Eagles
+      - NCAA FOOTBALL - Tennessee Volunteers
+      - NCAA FOOTBALL - Tennessee Volunteers
+      - NCAA FOOTBALL - Texas A&M Aggies
+      - NCAA FOOTBALL - Texas Longhorns
+      - NCAA FOOTBALL - Texas Southern Tigers
+      - NCAA FOOTBALL - Texas State Bobcats
+      - NCAA FOOTBALL - Texas Tech Red Raiders
+      - NCAA FOOTBALL - The Citadel Bulldogs
+      - NCAA FOOTBALL - Toledo Rockets
+      - NCAA FOOTBALL - Towson Tigers
+      - NCAA FOOTBALL - Troy Trojans
+      - NCAA FOOTBALL - Tulane Green Wave
+      - NCAA FOOTBALL - Tulsa Golden Hurricane
+      - NCAA FOOTBALL - UAB Blazers
+      - NCAA FOOTBALL - UAlbany Great Danes
+      - NCAA FOOTBALL - UC Davis Aggies
+      - NCAA FOOTBALL - UCF Knights
+      - NCAA FOOTBALL - UCLA Bruins
+      - NCAA FOOTBALL - UConn Huskies
+      - NCAA FOOTBALL - UL Monroe Warhawks
+      - NCAA FOOTBALL - UNLV Rebels
+      - NCAA FOOTBALL - USC Trojans
+      - NCAA FOOTBALL - USC Trojans
+      - NCAA FOOTBALL - UT Martin Skyhawks
+      - NCAA FOOTBALL - UT Rio Grande Valley Vaqueros
+      - NCAA FOOTBALL - UTEP Miners
+      - NCAA FOOTBALL - UTSA Roadrunners
+      - NCAA FOOTBALL - Utah State Aggies
+      - NCAA FOOTBALL - Utah Tech Trailblazers
+      - NCAA FOOTBALL - Utah Utes
+      - NCAA FOOTBALL - VMI Keydets
+      - NCAA FOOTBALL - Vanderbilt Commodores
+      - NCAA FOOTBALL - Villanova Wildcats
+      - NCAA FOOTBALL - Virginia Cavaliers
+      - NCAA FOOTBALL - Virginia Tech Hokies
+      - NCAA FOOTBALL - Wagner Seahawks
+      - NCAA FOOTBALL - Wake Forest Demon Deacons
+      - NCAA FOOTBALL - Washington Huskies
+      - NCAA FOOTBALL - Washington State Cougars
+      - NCAA FOOTBALL - Weber State Wildcats
+      - NCAA FOOTBALL - West Georgia Wolves
+      - NCAA FOOTBALL - West Virginia Mountaineers
+      - NCAA FOOTBALL - Western Carolina Catamounts
+      - NCAA FOOTBALL - Western Illinois Leathernecks
+      - NCAA FOOTBALL - Western Kentucky Hilltoppers
+      - NCAA FOOTBALL - Western Michigan Broncos
+      - NCAA FOOTBALL - William & Mary Tribe
+      - NCAA FOOTBALL - Wisconsin Badgers
+      - NCAA FOOTBALL - Wofford Terriers
+      - NCAA FOOTBALL - Wyoming Cowboys
+      - NCAA FOOTBALL - Youngstown State Penguins
+      - NFL - Arizona Cardinals
+      - NFL - Atlanta Falcons
+      - NFL - Baltimore Ravens
+      - NFL - Buffalo Bills
+      - NFL - Carolina Panthers
+      - NFL - Chicago Bears
+      - NFL - Cincinnati Bengals
+      - NFL - Cleveland Browns
+      - NFL - Dallas Cowboys
+      - NFL - Denver Broncos
+      - NFL - Detroit Lions
+      - NFL - Green Bay Packers
+      - NFL - Houston Texans
+      - NFL - Indianapolis Colts
+      - NFL - Jacksonville Jaguars
+      - NFL - Kansas City Chiefs
+      - NFL - Las Vegas Raiders
+      - NFL - Los Angeles Chargers
+      - NFL - Los Angeles Rams
+      - NFL - Miami Dolphins
+      - NFL - Minnesota Vikings
+      - NFL - New England Patriots
+      - NFL - New Orleans Saints
+      - NFL - New York Giants
+      - NFL - New York Jets
+      - NFL - Philadelphia Eagles
+      - NFL - Pittsburgh Steelers
+      - NFL - San Francisco 49ers
+      - NFL - Seattle Seahawks
+      - NFL - Tampa Bay Buccaneers
+      - NFL - Tennessee Titans
+      - NFL - Washington Commanders
+      - NHL - Anaheim Ducks
+      - NHL - Boston Bruins
+      - NHL - Buffalo Sabres
+      - NHL - Calgary Flames
+      - NHL - Carolina Hurricanes
+      - NHL - Chicago Blackhawks
+      - NHL - Colorado Avalanche
+      - NHL - Columbus Blue Jackets
+      - NHL - Dallas Stars
+      - NHL - Detroit Red Wings
+      - NHL - Edmonton Oilers
+      - NHL - Florida Panthers
+      - NHL - Los Angeles Kings
+      - NHL - Minnesota Wild
+      - NHL - Montreal Canadiens
+      - NHL - Nashville Predators
+      - NHL - New Jersey Devils
+      - NHL - New York Islanders
+      - NHL - New York Rangers
+      - NHL - Ottawa Senators
+      - NHL - Philadelphia Flyers
+      - NHL - Pittsburgh Penguins
+      - NHL - San Jose Sharks
+      - NHL - Seattle Kraken
+      - NHL - St. Louis Blues
+      - NHL - Tampa Bay Lightning
+      - NHL - Toronto Maple Leafs
+      - NHL - Utah Mammoth
+      - NHL - Vancouver Canucks
+      - NHL - Vegas Golden Knights
+      - NHL - Washington Capitals
+      - NHL - Winnipeg Jets

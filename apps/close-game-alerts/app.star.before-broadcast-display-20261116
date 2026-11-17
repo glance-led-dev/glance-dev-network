@@ -1,0 +1,866 @@
+def _endpoint(sport):
+    if sport == "NFL":
+        return "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+
+    if sport == "NCAA FOOTBALL":
+        return "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard"
+        
+    if sport == "NCAA BASKETBALL":
+              return "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard"
+
+    if sport == "NBA":
+        return "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
+
+    if sport == "NHL":
+        return "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard"
+
+    if sport == "MLB":
+        return "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard"
+
+    return ""
+
+
+
+def _category_config(value):
+    category = str(value).strip().upper()
+    sports = {
+        "ALL SPORTS": ["NFL", "NCAA FOOTBALL", "NCAA BASKETBALL", "NBA", "NHL", "MLB"],
+        "NFL": ["NFL"],
+        "NCAAF": ["NCAA FOOTBALL"],
+        "NCAAF TOP 25": ["NCAA FOOTBALL"],
+        "NCAAB": ["NCAA BASKETBALL"],
+        "NCAAB TOP 25": ["NCAA BASKETBALL"],
+        "NBA": ["NBA"],
+        "NHL": ["NHL"],
+        "MLB": ["MLB"]
+    }
+    top25_sports = []
+    if category == "NCAAF TOP 25":
+        top25_sports = ["NCAA FOOTBALL"]
+    elif category == "NCAAB TOP 25":
+        top25_sports = ["NCAA BASKETBALL"]
+    return sports.get(category, []), top25_sports
+
+def _normalize(value):
+    text = str(value).upper()
+    text = text.replace("&", "AND")
+    text = text.replace(".", "")
+    text = text.replace("'", "")
+    text = text.replace("-", " ")
+    text = text.replace("/", " ")
+
+    return " ".join(text.split())
+
+
+
+def _team_selected(ctx, sport, team):
+    selected = str(ctx.inputs.get("team", "ALL TEAMS")).strip()
+
+    if selected == "" or selected.upper() == "ALL TEAMS":
+        return True
+
+    prefixes = {
+        "NFL": "NFL",
+        "NCAAF": "NCAA FOOTBALL",
+        "NCAAB": "NCAA BASKETBALL",
+        "NBA": "NBA",
+        "NHL": "NHL",
+        "MLB": "MLB"
+    }
+
+    if " — " in selected:
+        prefix, team_name = selected.split(" — ", 1)
+        expected_sport = prefixes.get(prefix.strip().upper())
+
+        if expected_sport != None and expected_sport != sport:
+            return False
+
+        choice = _normalize(team_name)
+    else:
+        choice = _normalize(selected)
+
+    values = [
+        team.get("displayName", ""),
+        team.get("location", ""),
+        team.get("shortDisplayName", ""),
+        team.get("name", ""),
+        team.get("abbreviation", "")
+    ]
+
+    for value in values:
+        if choice in _normalize(value):
+            return True
+
+    return False
+
+def _ncaa_scope_config(sport):
+    if sport == "NCAA FOOTBALL":
+        top25 = [
+            "2390", "61", "254", "84", "333", "96", "251", "26",
+            "252", "145", "87", "194", "2633", "99", "2641", "154",
+            "248", "142", "2294", "30", "2579", "12", "2483", "57", "68"
+        ]
+        return top25, "80"
+
+    if sport == "NCAA BASKETBALL":
+        top25 = [
+            "57", "150", "356", "41", "12", "127", "251", "2633",
+            "258", "248", "97", "8", "2599", "2390", "2250", "130",
+            "2305", "66", "2641", "333", "30", "26", "96", "238", "252"
+        ]
+        return top25, "50"
+
+    return [], ""
+
+def _clock_seconds(clock):
+    text = str(clock).strip()
+    parts = text.split(":")
+
+    if len(parts) == 1:
+        decimal_parts = text.split(".")
+        if len(decimal_parts) == 2:
+            if decimal_parts[0].isdigit() and decimal_parts[1].isdigit():
+                return int(decimal_parts[0])
+        if text.isdigit():
+            return int(text)
+        return -1
+
+    if len(parts) != 2:
+        return -1
+
+    if not parts[0].isdigit() or not parts[1].isdigit():
+        return -1
+
+    return int(parts[0]) * 60 + int(parts[1])
+
+
+def _qualifies(sport, comp):
+    competitors = comp["competitors"]
+
+    if len(competitors) < 2:
+        return False
+
+    status = comp["status"]
+    status_type = status["type"]
+
+    state = str(
+        status_type.get("state", "")
+    )
+
+    if state != "in":
+        return False
+
+    away = competitors[0]
+    home = competitors[1]
+
+    away_score = int(
+        away.get("score", "0")
+    )
+
+    home_score = int(
+        home.get("score", "0")
+    )
+
+    margin = abs(
+        away_score - home_score
+    )
+
+    period = int(
+        status.get("period", 0)
+    )
+
+    clock = str(
+        status.get("displayClock", "")
+    )
+
+    if sport == "MLB":
+        return (
+            period >= 8
+            and margin <= 1
+        )
+
+    seconds = _clock_seconds(clock)
+
+    is_overtime = (
+            (sport == "NFL" and period > 4)
+            or (sport == "NCAA FOOTBALL" and period > 4)
+            or (sport == "NCAA BASKETBALL" and period > 2)
+            or (sport == "NBA" and period > 4)
+            or (sport == "NHL" and period > 3)
+    )
+
+    if seconds < 0 and not is_overtime:
+            return False
+
+    if seconds > 300 and not ((sport == "NFL" and period > 4) or (sport == "NCAA BASKETBALL" and period > 2) or (sport == "NBA" and period > 4)):
+        return False
+
+    if sport == "NFL":
+        return (
+            period >= 4
+            and margin <= 8
+        )
+
+    if sport == "NCAA FOOTBALL":
+        return (
+            period >= 4
+            and margin <= 8
+        )
+
+    if sport == "NCAA BASKETBALL":
+        return (
+            period >= 2
+            and margin <= 6
+        )
+
+    if sport == "NBA":
+        return (
+            period >= 4
+            and margin <= 6
+        )
+
+    if sport == "NHL":
+        return (
+            period >= 3
+            and margin <= 1
+        )
+
+    return False
+
+
+def _date_from_unix(unix_seconds):
+    days = unix_seconds // 86400 + 719468
+    era = days // 146097
+    day_of_era = days - era * 146097
+    year_of_era = (day_of_era - day_of_era // 1460 + day_of_era // 36524 - day_of_era // 146096) // 365
+    year = year_of_era + era * 400
+    day_of_year = day_of_era - (365 * year_of_era + year_of_era // 4 - year_of_era // 100)
+    month_part = (5 * day_of_year + 2) // 153
+    day = day_of_year - (153 * month_part + 2) // 5 + 1
+    month = month_part + (3 if month_part < 10 else -9)
+    year += 1 if month <= 2 else 0
+    month_text = ("0" if month < 10 else "") + str(month)
+    day_text = ("0" if day < 10 else "") + str(day)
+    return str(year) + month_text + day_text
+
+
+
+def _mlb_play_state(event_id):
+      url = "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=" + str(event_id)
+      response = http.get(url, headers={}, ttl_seconds=60)
+
+      if response["status_code"] != 200:
+            return {"half": "", "inning": 0, "outs": -1}
+
+      plays = response["json"].get("plays", [])
+      for play in reversed(plays):
+            period = play.get("period", {})
+            half = str(period.get("type", ""))
+            play_type = play.get("type", {}).get("type", "")
+            
+            if half in ("Top", "Bottom") and play.get("outs") != None and play_type not in ("start-inning", "end-inning"): 
+                  return {
+                        "half": half,
+                        "inning": int(period.get("number", 0)),
+                        "outs": int(play.get("outs", 0))
+                  }
+
+      return {"half": "", "inning": 0, "outs": -1}
+
+
+def _find_alerts(ctx, sport, top25_only=False):
+    url = _endpoint(sport)
+    if url == "":
+        return []
+
+    params = {"dates": _date_from_unix(ctx.now.unix - 21600)}
+    ncaa_top25 = []
+
+    if sport == "NCAA FOOTBALL" or sport == "NCAA BASKETBALL":
+        ncaa_top25, parent_group = _ncaa_scope_config(sport)
+        params["groups"] = parent_group
+
+        if sport == "NCAA BASKETBALL":
+            params["limit"] = "1000"
+
+    response = http.get(
+        url,
+        headers={},
+        params=params,
+        ttl_seconds=60
+    )
+
+    if response["status_code"] != 200:
+        return None
+
+    data = response["json"]
+    if not data:
+        return []
+
+    events = data.get("events", [])
+    alerts = []
+
+    for event in events:
+        if not event:
+            continue
+
+        competitions = event.get("competitions", [])
+        if len(competitions) == 0:
+            continue
+
+        comp = competitions[0]
+        competitors = comp.get("competitors", [])
+        if len(competitors) < 2:
+            continue
+
+        if str(competitors[0].get("homeAway", "")).lower() == "home":
+            home = competitors[0]
+            away = competitors[1]
+        else:
+            away = competitors[0]
+            home = competitors[1]
+
+        away_team = away["team"]
+        home_team = home["team"]
+
+        if top25_only:
+            away_id = str(away_team.get("id", ""))
+            home_id = str(home_team.get("id", ""))
+            if away_id not in ncaa_top25 and home_id not in ncaa_top25:
+                continue
+
+        if not _team_selected(ctx, sport, away_team):
+            if not _team_selected(ctx, sport, home_team):
+                continue
+
+        if not _qualifies(sport, comp):
+            continue
+
+        status = comp["status"]
+        status_type = status.get("type", {})
+
+        mlb_state = {"half": "", "inning": 0, "outs": -1}
+        if sport == "MLB":
+            mlb_state = _mlb_play_state(event.get("id", ""))
+
+        alerts.append({
+            "sport": sport,
+            "away_id": str(away_team.get("id", "")),
+            "home_id": str(home_team.get("id", "")),
+            "away": str(away_team.get("abbreviation", "AWY")),
+            "home": str(home_team.get("abbreviation", "HOME")),
+            "away_name": str(away_team.get("displayName", "")),
+            "home_name": str(home_team.get("displayName", "")),
+            "away_score": int(away.get("score", "0")),
+            "home_score": int(home.get("score", "0")),
+            "clock": str(status.get("displayClock", "")),
+            "broadcast": str(comp.get("broadcast", "")).strip(),
+            "period": int(status.get("period", 0)),
+            "detail": str(status_type.get("detail", "")),
+            "short_detail": str(status_type.get("shortDetail", "")),
+            "half": mlb_state["half"],
+            "inning": mlb_state["inning"],
+            "outs": mlb_state["outs"]
+        })
+
+    return alerts
+
+def _logo_asset(sport, team_name, team_id):
+    if sport == "NFL":
+        logos = {
+            "Arizona Cardinals": "ari.png",
+            "Atlanta Falcons": "atl.png",
+            "Baltimore Ravens": "bal.png",
+            "Buffalo Bills": "buf.png",
+            "Carolina Panthers": "car.png",
+            "Chicago Bears": "chi.png",
+            "Cincinnati Bengals": "cin.png",
+            "Cleveland Browns": "cle.png",
+            "Dallas Cowboys": "dal.png",
+            "Denver Broncos": "den.png",
+            "Detroit Lions": "det.png",
+            "Green Bay Packers": "gb.png",
+            "Houston Texans": "hou.png",
+            "Indianapolis Colts": "ind.png",
+            "Jacksonville Jaguars": "jax.png",
+            "Kansas City Chiefs": "kc.png",
+            "Las Vegas Raiders": "lv.png",
+            "Los Angeles Chargers": "lac.png",
+            "Los Angeles Rams": "lar.png",
+            "Miami Dolphins": "mia.png",
+            "Minnesota Vikings": "min.png",
+            "New England Patriots": "ne.png",
+            "New Orleans Saints": "no.png",
+            "New York Giants": "nyg.png",
+            "New York Jets": "nyj.png",
+            "Philadelphia Eagles": "phi.png",
+            "Pittsburgh Steelers": "pit.png",
+            "San Francisco 49ers": "sf.png",
+            "Seattle Seahawks": "sea.png",
+            "Tampa Bay Buccaneers": "tb.png",
+            "Tennessee Titans": "titans.png",
+            "Washington Commanders": "was.png"
+        }
+        return logos.get(team_name, "")
+
+    if sport == "NCAA FOOTBALL":
+        return "cfb_" + str(team_id) + ".png"
+
+    if sport == "NCAA BASKETBALL":
+        if str(team_id) not in ('103', '112358', '113', '12', '120', '127', '130', '135', '139', '142', '145', '150', '152', '153', '154', '156', '158', '164', '179', '183', '189', '193', '194', '195', '197', '2', '2006', '201', '204', '2084', '2086', '2116', '213', '2132', '2166', '2168', '2184', '219', '2199', '221', '222', '2244', '2250', '2253', '227', '2272', '2275', '228', '2294', '2305', '2306', '2309', '231', '2325', '2329', '2350', '2351', '2377', '2378', '238', '239', '2390', '24', '2440', '2449', '245', '2459', '2460', '248', '2483', '2492', '25', '2501', '2504', '2507', '2509', '251', '2511', '252', '2539', '254', '2541', '2547', '2550', '2561', '2567', '2579', '258', '259', '2599', '26', '2608', '2628', '2633', '2634', '264', '2641', '2649', '265', '2653', '2670', '269', '2711', '275', '2750', '2752', '276', '277', '279', '2856', '30', '305', '328', '333', '338', '344', '356', '38', '41', '45', '46', '47', '52', '57', '58', '59', '61', '62', '66', '70', '77', '8', '84', '87', '9', '96', '97', '99') and str(team_id) in ('103', '107', '113', '119', '12', '120', '127', '13', '130', '135', '142', '145', '147', '149', '150', '151', '152', '153', '154', '155', '158', '16', '160', '164', '166', '167', '183', '189', '193', '194', '195', '197', '2', '2000', '2005', '2006', '201', '2011', '2016', '202', '2026', '2029', '2032', '204', '2046', '2050', '2065', '2083', '2084', '2097', '21', '2110', '2115', '2116', '2117', '2127', '213', '2132', '2142', '2169', '218', '2184', '2193', '2197', '2198', '2199', '221', '2210', '222', '2226', '2229', '2230', '2241', '2247', '2261', '227', '2277', '228', '2287', '2294', '23', '2305', '2306', '2309', '231', '2320', '233', '2335', '2341', '2348', '235', '236', '2377', '238', '2382', '2385', '239', '2390', '2393', '24', '2400', '2405', '2415', '242', '2426', '2428', '2429', '2433', '2439', '2440', '2447', '2448', '2449', '245', '2450', '2453', '2458', '2459', '2460', '2464', '2466', '248', '2483', '249', '25', '2502', '2504', '2509', '251', '252', '2523', '2529', '253', '2534', '2535', '254', '2545', '2546', '256', '2567', '257', '2571', '2572', '2579', '258', '2582', '259', '26', '2619', '2623', '2627', '2628', '2630', '2633', '2634', '2635', '2636', '2638', '264', '2640', '2641', '2643', '2649', '265', '2653', '2655', '2678', '2681', '2692', '2698', '2710', '2711', '2717', '2729', '2747', '275', '2751', '2754', '2755', '276', '277', '2771', '278', '2803', '2815', '282', '2837', '284', '290', '2916', '292', '295', '30', '302', '304', '309', '3101', '311', '322', '324', '326', '328', '331', '333', '338', '344', '349', '356', '36', '38', '399', '41', '47', '48', '5', '50', '52', '55', '57', '58', '59', '6', '61', '62', '66', '68', '70', '77', '79', '8', '84', '87', '9', '93', '96', '97', '98', '99'):
+            return "cfb_" + str(team_id) + ".png"
+        cbb_ids = "5,6,13,16,21,23,27,28,36,43,44,48,50,55,56,68,71,79,82,85,91,93,94,98,104,107,108,111,116,119,140,147,149,151,155,159,160,161,163,166,167,171,172,198,202,218,225,232,233,235,236,242,249,250,253,256,257,261,270,278,282,284,288,290,292,294,295,299,300,301,302,304,309,311,314,315,322,324,325,326,331,339,349,350,357,399,526,2000,2005,2010,2011,2016,2026,2029,2031,2032,2046,2050,2057,2065,2066,2083,2097,2099,2110,2115,2117,2127,2130,2142,2154,2169,2172,2174,2181,2182,2193,2197,2198,2210,2217,2226,2229,2230,2239,2241,2247,2261,2277,2287,2296,2320,2330,2335,2344,2348,2349,2352,2363,2368,2379,2382,2385,2393,2400,2405,2413,2415,2426,2427,2428,2429,2430,2433,2437,2439,2441,2443,2447,2448,2450,2453,2454,2458,2463,2464,2466,2473,2502,2506,2514,2515,2520,2523,2529,2534,2535,2540,2545,2546,2565,2569,2571,2572,2582,2603,2612,2617,2619,2623,2627,2630,2635,2636,2638,2640,2643,2655,2674,2678,2681,2692,2697,2698,2710,2717,2724,2729,2737,2739,2747,2751,2754,2755,2771,2803,2837,2870,2885,2900,2908,2916,2934,3084,3101,103,112358,113,12,120,127,130,135,139,142,145,150,152,153,154,156,158,164,179,183,189,193,194,195,197,2,2006,201,204,2084,2086,2116,213,2132,2166,2168,2184,219,2199,221,222,2244,2250,2253,227,2272,2275,228,2294,2305,2306,2309,231,2325,2329,2350,2351,2377,2378,238,239,2390,24,2440,2449,245,2459,2460,248,2483,2492,25,2501,2504,2507,2509,251,2511,252,2539,254,2541,2547,2550,2561,2567,2579,258,259,2599,26,2608,2628,2633,2634,264,2641,2649,265,2653,2670,269,2711,275,2750,2752,276,277,279,2856,30,305,328,333,338,344,356,38,41,45,46,47,52,57,58,59,61,62,66,70,77,8,84,87,9,96,97,99".split(",")
+        if str(team_id) in cbb_ids:
+            return "cbb_" + str(team_id) + ".png"
+        return "cbb_placeholder.png"
+
+    if sport == "NBA":
+        nba_logos = {
+            "Atlanta Hawks": "nba_atl.png",
+            "Boston Celtics": "nba_bos.png",
+            "Brooklyn Nets": "nba_bkn.png",
+            "Charlotte Hornets": "nba_cha.png",
+            "Chicago Bulls": "nba_chi.png",
+            "Cleveland Cavaliers": "nba_cle.png",
+            "Dallas Mavericks": "nba_dal.png",
+            "Denver Nuggets": "nba_den.png",
+            "Detroit Pistons": "nba_det.png",
+            "Golden State Warriors": "nba_gsw.png",
+            "Houston Rockets": "nba_hou.png",
+            "Indiana Pacers": "nba_ind.png",
+            "LA Clippers": "nba_lac.png",
+            "Los Angeles Lakers": "nba_lal.png",
+            "Memphis Grizzlies": "nba_mem.png",
+            "Miami Heat": "nba_mia.png",
+            "Milwaukee Bucks": "nba_mil.png",
+            "Minnesota Timberwolves": "nba_min.png",
+            "New Orleans Pelicans": "nba_nop.png",
+            "New York Knicks": "nba_nyk.png",
+            "Oklahoma City Thunder": "nba_okc.png",
+            "Orlando Magic": "nba_orl.png",
+            "Philadelphia 76ers": "nba_phi.png",
+            "Phoenix Suns": "nba_phx.png",
+            "Portland Trail Blazers": "nba_por.png",
+            "Sacramento Kings": "nba_sac.png",
+            "San Antonio Spurs": "nba_sas.png",
+            "Toronto Raptors": "nba_tor.png",
+            "Utah Jazz": "nba_uta.png",
+            "Washington Wizards": "nba_was.png"
+        }
+        return nba_logos.get(team_name, "")
+
+    if sport == "NHL":
+        nhl_logos = {
+            "Anaheim Ducks": "nhl_ana.png",
+            "Boston Bruins": "nhl_bos.png",
+            "Buffalo Sabres": "nhl_buf.png",
+            "Calgary Flames": "nhl_cgy.png",
+            "Carolina Hurricanes": "nhl_car.png",
+            "Chicago Blackhawks": "nhl_chi.png",
+            "Colorado Avalanche": "nhl_col.png",
+            "Columbus Blue Jackets": "nhl_cbj.png",
+            "Dallas Stars": "nhl_dal.png",
+            "Detroit Red Wings": "nhl_det.png",
+            "Edmonton Oilers": "nhl_edm.png",
+            "Florida Panthers": "nhl_fla.png",
+            "Los Angeles Kings": "nhl_lak.png",
+            "Minnesota Wild": "nhl_min.png",
+            "Montreal Canadiens": "nhl_mtl.png",
+            "Nashville Predators": "nhl_nsh.png",
+            "New Jersey Devils": "nhl_njd.png",
+            "New York Islanders": "nhl_nyi.png",
+            "New York Rangers": "nhl_nyr.png",
+            "Ottawa Senators": "nhl_ott.png",
+            "Philadelphia Flyers": "nhl_phi.png",
+            "Pittsburgh Penguins": "nhl_pit.png",
+            "San Jose Sharks": "nhl_sjs.png",
+            "Seattle Kraken": "nhl_sea.png",
+            "St. Louis Blues": "nhl_stl.png",
+            "Tampa Bay Lightning": "nhl_tbl.png",
+            "Toronto Maple Leafs": "nhl_tor.png",
+            "Utah Mammoth": "nhl_uta.png",
+            "Vancouver Canucks": "nhl_van.png",
+            "Vegas Golden Knights": "nhl_vgk.png",
+            "Winnipeg Jets": "nhl_wpg.png",
+            "Washington Capitals": "nhl_wsh.png"
+        }
+        return nhl_logos.get(team_name, "")
+
+    if sport == "MLB":
+        mlb_logos = {
+            "Arizona Diamondbacks": "mlb_ari.png",
+            "Atlanta Braves": "mlb_atl.png",
+            "Baltimore Orioles": "mlb_bal.png",
+            "Boston Red Sox": "mlb_bos.png",
+            "Chicago Cubs": "mlb_chc.png",
+            "Chicago White Sox": "mlb_chw.png",
+            "Cincinnati Reds": "mlb_cin.png",
+            "Cleveland Guardians": "mlb_cle.png",
+            "Colorado Rockies": "mlb_col.png",
+            "Detroit Tigers": "mlb_det.png",
+            "Houston Astros": "mlb_hou.png",
+            "Kansas City Royals": "mlb_kc.png",
+            "Los Angeles Angels": "mlb_laa.png",
+            "Los Angeles Dodgers": "mlb_lad.png",
+            "Miami Marlins": "mlb_mia.png",
+            "Milwaukee Brewers": "mlb_mil.png",
+            "Minnesota Twins": "mlb_min.png",
+            "New York Mets": "mlb_nym.png",
+            "New York Yankees": "mlb_nyy.png",
+            "Athletics": "mlb_oak.png",
+            "Philadelphia Phillies": "mlb_phi.png",
+            "Pittsburgh Pirates": "mlb_pit.png",
+            "San Diego Padres": "mlb_sd.png",
+            "San Francisco Giants": "mlb_sf.png",
+            "Seattle Mariners": "mlb_sea.png",
+            "St. Louis Cardinals": "mlb_stl.png",
+            "Tampa Bay Rays": "mlb_tb.png",
+            "Texas Rangers": "mlb_tex.png",
+            "Toronto Blue Jays": "mlb_tor.png",
+            "Washington Nationals": "mlb_wsh.png"
+        }
+        return mlb_logos.get(team_name, "")
+
+    return ""
+
+def _period_label(alert):
+    sport = alert["sport"]
+    period = alert["period"]
+
+    if sport == "NFL":
+        return "OT" if period > 4 else "Q" + str(period)
+
+    if sport == "NCAA FOOTBALL":
+        return "OT" if period > 4 else "Q" + str(period)
+
+    if sport == "NCAA BASKETBALL":
+        if period > 2:
+            return "OT" if period == 3 else str(period - 2) + "OT"
+        return "2H"
+
+    if sport == "NBA":
+        return "OT" if period > 4 else "Q" + str(period)
+
+    if sport == "NHL":
+        detail = str(alert.get("detail", "")).lower()
+        short_detail = str(alert.get("short_detail", "")).lower()
+        if (
+            "shootout" in detail
+            or "shoot-out" in detail
+            or "in so" in detail
+            or "in so" in short_detail
+        ):
+            return "SO"
+        return "OT" if period >= 4 else "P" + str(period)
+
+    return ""
+
+def _mlb_label(alert):
+    inning = int(alert.get("inning", 0))
+    if inning <= 0:
+        inning = int(alert["period"])
+
+    inning_text = str(inning)
+    half = str(alert.get("half", "")).upper()
+    outs = int(alert.get("outs", -1))
+
+    if half == "TOP":
+        half_text = "↑"
+    elif half == "BOTTOM":
+        half_text = "↓"
+    else:
+        half_text = ""
+
+    if half_text != "":
+        if outs >= 0:
+            out_text = "OUT"
+            return inning_text + " • " + str(outs) + " " + out_text
+        return inning_text
+
+    return inning_text
+
+def _team_font(team):
+    if len(str(team)) >= 4:
+        return "4x5"
+    return "5x7"
+
+def _team_x(team):
+    return 25
+
+
+
+
+def _team_y(team):
+ return 10
+
+
+def _draw_alert(c, alert):
+    c.clear()
+
+    c.progress_bar(
+        0,
+        0,
+        128,
+        8,
+        100,
+        color="red"
+    )
+
+    c.text_center(
+        "CLOSE GAME ALERT",
+        0,
+        font="6x8",
+        color="white"
+    )
+
+    away_logo = _logo_asset(
+        alert["sport"],
+        alert["away_name"],
+        alert["away_id"]
+    )
+
+    home_logo = _logo_asset(
+        alert["sport"],
+        alert["home_name"],
+        alert["home_id"]
+    )
+
+    if away_logo != "":
+        c.image(
+            away_logo,
+            2,
+            8
+        )
+
+    if home_logo != "":
+        c.image(
+            home_logo,
+            112 if alert["sport"] == "NBA" else 108,
+            8
+        )
+
+    if alert["sport"] == "MLB":
+        away_text = alert["away"]
+        away_score = str(alert["away_score"])
+        home_score = str(alert["home_score"])
+        home_text = alert["home"]
+
+        away_font = _team_font(away_text)
+        home_font = _team_font(home_text)
+        score_font = "6x8"
+        dash_text = "-"
+
+        away_w = c.text_width(away_text, font=away_font)
+        away_score_w = c.text_width(away_score, font=score_font)
+        dash_w = c.text_width(dash_text, font=score_font)
+        home_score_w = c.text_width(home_score, font=score_font)
+        home_w = c.text_width(home_text, font=home_font)
+
+        gap = 5
+        score_gap = 1
+        total_w = away_w + gap + away_score_w + score_gap + dash_w + score_gap + home_score_w + gap + home_w
+        x = (128 - total_w) // 2
+
+        c.text(away_text, x, 12, font=away_font, color="white")
+        x += away_w + gap
+
+        c.text(away_score, x, 11, font=score_font, color="yellow")
+        x += away_score_w + score_gap
+
+        c.text(dash_text, x, 12, font=score_font, color="yellow")
+        x += dash_w + score_gap
+
+        c.text(home_score, x, 11, font=score_font, color="yellow")
+        x += home_score_w + gap
+
+        c.text(home_text, x, 12, font=home_font, color="white")
+    elif alert["sport"] == "NCAA BASKETBALL":
+        away_text = alert["away"]
+        home_text = alert["home"]
+        away_score = str(alert["away_score"])
+        home_score = str(alert["home_score"])
+        away_font = "4x7"
+        home_font = "4x7"
+        score_font = "6x8"
+        gap = 3
+        score_gap = 5
+
+        away_w = c.text_width(away_text, font=away_font)
+        away_score_w = c.text_width(away_score, font=score_font)
+        home_score_w = c.text_width(home_score, font=score_font)
+        home_w = c.text_width(home_text, font=home_font)
+
+        total_w = away_w + gap + away_score_w + score_gap + home_score_w + gap + home_w
+        x = (128 - total_w) // 2
+
+        c.text(away_text, x, 10, font=away_font, color="white")
+        x += away_w + gap
+        c.text(away_score, x, 10, font=score_font, color="yellow")
+        x += away_score_w + score_gap
+        c.text(home_score, x, 10, font=score_font, color="yellow")
+        x += home_score_w + gap
+        c.text(home_text, x, 10, font=home_font, color="white")
+    else:
+                away_text = alert["away"]
+                home_text = alert["home"]
+                away_score = str(alert["away_score"])
+                home_score = str(alert["home_score"])
+                team_gap = 3
+                score_gap = 2
+                away_font = _team_font(away_text)
+                home_font = _team_font(home_text)
+                score_font = "6x8"
+                dash = "-"
+                dash_font = score_font
+
+                away_w = c.text_width(away_text, font=away_font)
+                away_score_w = c.text_width(away_score, font=score_font)
+                dash_w = c.text_width(dash, font=dash_font)
+                home_score_w = c.text_width(home_score, font=score_font)
+                home_w = c.text_width(home_text, font=home_font)
+
+                total_w = away_w + team_gap + away_score_w + score_gap + dash_w + score_gap + home_score_w + team_gap + home_w
+                x = (128 - total_w) // 2
+
+                c.text(away_text, x, 10, font=away_font, color="white")
+                x += away_w + team_gap
+                c.text(away_score, x, 10, font=score_font, color="yellow")
+                x += away_score_w + score_gap
+                c.text(dash, x, 10, font=dash_font, color="yellow")
+                x += dash_w + score_gap
+                c.text(home_score, x, 10, font=score_font, color="yellow")
+                x += home_score_w + team_gap
+                c.text(home_text, x, 10, font=home_font, color="white")
+    if alert["sport"] == "MLB":
+        status_text = _mlb_label(
+            alert
+        )
+
+    else:
+        status_text = (
+            alert["clock"]
+            + " "
+            + _period_label(alert)
+        )
+
+    if alert["sport"] == "MLB" and str(alert.get("half", "")).upper() == "TOP":
+        c.image("inning_up.png", ((128 - c.text_width(status_text)) // 2) - 8, 21)
+    elif alert["sport"] == "MLB" and str(alert.get("half", "")).upper() == "BOTTOM":
+        c.image("inning_down.png", ((128 - c.text_width(status_text)) // 2) - 8, 21)
+
+    c.text_center(
+        status_text,
+        21,
+        color="green"
+    )
+
+    broadcast = str(alert.get("broadcast", "")).strip()
+    if broadcast:
+        broadcast_width = c.text_width(broadcast, font="4x5")
+        status_width = c.text_width(status_text)
+        broadcast_x = 84
+        status_right = (128 + status_width) // 2
+        if broadcast_x > status_right + 3:
+            c.text(
+                broadcast,
+                broadcast_x,
+                22,
+                font="4x5",
+                color="white"
+            )
+
+def _draw_empty(c):
+    c.clear()
+
+    c.progress_bar(
+        0,
+        0,
+        128,
+        8,
+        100,
+        color="red"
+    )
+
+    c.text_center(
+        "CLOSE GAME ALERT",
+        0,
+        font="6x8",
+        color="white"
+    )
+
+    c.text_center(
+        "ALL CLEAR",
+        13,
+          font="6x8",
+        color="white"
+    )
+
+
+def _draw_unavailable(c):
+    c.clear()
+
+    c.progress_bar(
+        0,
+        0,
+        128,
+        8,
+        100,
+        color="red"
+    )
+
+    c.text_center(
+        "CLOSE GAME ALERT",
+        0,
+        font="6x8",
+        color="white"
+    )
+
+    c.text_center(
+        "DATA UNAVAILABLE",
+        13,
+        font="6x8",
+        color="white"
+    )
+
+
+
+def main(c, ctx):
+    sports, top25_sports = _category_config(ctx.inputs["sport_category"])
+
+    if len(sports) == 0:
+        _draw_empty(c)
+        return
+
+    alerts = []
+    scoreboard_failed = False
+
+    for sport in sports:
+        sport_alerts = _find_alerts(
+            ctx,
+            sport,
+            sport in top25_sports
+        )
+
+        if sport_alerts == None:
+            scoreboard_failed = True
+            continue
+
+        for alert in sport_alerts:
+            alerts.append(alert)
+
+    if len(alerts) == 0:
+        if scoreboard_failed:
+            _draw_unavailable(c)
+        else:
+            _draw_empty(c)
+        return
+
+    index = (
+        (ctx.now.unix // 60) % len(alerts)
+    )
+
+    _draw_alert(
+        c,
+        alerts[index]
+    )
+
