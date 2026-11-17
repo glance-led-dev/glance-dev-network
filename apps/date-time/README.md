@@ -2,8 +2,7 @@
 
 **TODAY:** the weekday over a big date on the left; on the right, the place,
 a drawn condition icon, the temperature with what it feels like beside it,
-today's high, low, and
-current humidity in a column, and the condition by name.
+today's high, low, and current humidity in a column, and the condition by name.
 
 **SKY:** sunrise (yellow) stacked over sunset (orange) beside the forecast you
 pick. **Next 6 hours** puts the hours three over three, each with its hour, a
