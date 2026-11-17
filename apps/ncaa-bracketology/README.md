@@ -27,7 +27,7 @@ The app refreshes hourly. The approved feed has a 15-minute request cache; suppl
 
 ## Supplemental data
 
-- Overall team records: one shared current-season ESPN standings response, matched by exact team ID.
+- Overall team records: shared current-season ESPN standings, matched by exact team ID. The approved feed's record snapshot is refreshed independently of the bracket. Valid new values replace individual records; a blank, missing, or failed ESPN response leaves those teams' previous values in place. A confirmed `0-0` is valid. If the approved feed has no record snapshot yet or cannot be read, the app still tries the U.S. and U.K. standings directly.
 - NET and Q1/Q2 records: NCAA NET table.
 - WAB: NCAA WAB table.
 - SOR: ESPN resume table.
@@ -39,6 +39,6 @@ All five pages share their source reads. The release's full-app cold-cache audit
 
 ## Release
 
-Package: `ncaa-bracketology`, version 0.3.1. The bundled approved projection is October 27, 2026, revision 2: 76 unique selected schools, 64 regional slots, twelve opening games, and 32 automatic qualifiers.
+Package: `ncaa-bracketology`. The bundled approved projection is October 27, 2026, revision 2: 76 unique selected schools, 64 regional slots, twelve opening games, and 32 automatic qualifiers.
 
 The catalog thumbnail (`preview/preview.png`) shows the opening My Team screen using Texas, enlarged 5x with exact pixels. The individual page previews remain available. Catalog previews show the approved projection; supplemental metrics depend on provider availability at preview generation time. Team marks identify their respective schools.
