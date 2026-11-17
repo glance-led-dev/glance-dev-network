@@ -17,6 +17,21 @@ so each page reads in both a live session and between sessions:
 | 6 | `order4` | ORDER P37–40 | SCHEDULE — continued |
 | 7 | `movers` | the biggest gainers and losers vs. their starting spot | SCHEDULE — the next race and the three after it: date, track, TV network |
 
+### Off-season
+
+Once a season is over (and until the next one's first weekend starts), the
+pages switch to:
+
+| page | off-season |
+|------|------------|
+| `logo` | the series logo, full height |
+| `event` | countdown in days to the Daytona opener (DAYTONA 500 with the Duels' date, UNITED RENTALS 300, FRESH FROM FLORIDA 250) |
+| `order1` | the series champion: car number in its livery, name in team colours, manufacturer |
+| `order2`–`order5`, `movers` | every race of the season (Clash, Duels and All-Star included) and its winner in team colours |
+
+TV networks show in their own colours: NBC with its peacock, FOX blue, USA
+red, CW orange, FS1 / FS2 / TNT white.
+
 Lapped runners show `-N LAP(S)` in the live order and the last-race result.
 Stage winners carry a small green-and-white checkered flag beside their name,
 one per stage won, on the race order and LAST RACE boards.
