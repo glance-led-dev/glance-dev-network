@@ -13,6 +13,13 @@ one for between sessions:
 | 3 | **LAST RACE** — P9–16 | **ORDER P9–16** |
 | 4 | **CALENDAR** — the four grands prix after the next | **ORDER P17–22** |
 
+In the **off-season** — after the last grand prix, until next season's opener
+runs — the same four pages become: the F1 mark with a countdown to the opener
+(days to go, race day, circuit outline; "DATES TBA" until the calendar is
+published), the **WDC** and **WCC** side by side, and every race of the season
+with its winner (first three letters of the surname, in team colours) over two
+pages.
+
 Once a race weekend starts, the latest session stays on the panel until the
 next one begins, so qualifying's order shows until the race starts. A finished
 race stays up until 11:59 PM in the chosen time zone, then the panel moves on
@@ -27,8 +34,9 @@ dropdown (°C / °F).
   Free, no key. There is no "current session" endpoint, so the app pulls the
   latest session and holds it until the next one starts (a finished race
   only until local midnight) before falling back to the between-sessions cards.
-- **Jolpica-Ergast** (`api.jolpi.ca`) — the calendar, the last result, and
-  the last winner at the next circuit.
+- **Jolpica-Ergast** (`api.jolpi.ca`) — the calendar, the last result, the
+  last winner at the next circuit, and the off-season's final standings and
+  race winners.
 
 ## Configuration
 
