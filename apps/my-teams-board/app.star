@@ -18,7 +18,7 @@
 #
 # DATA. ESPN's public team-schedule endpoint, no key:
 #   site.api.espn.com/apis/site/v2/sports/<path>/teams/<id>/schedule
-# One fetch per page per render, cached 300s. Kickoff times are converted
+# One fetch per team per render, cached 300s. Kickoff times are converted
 # from ESPN's UTC stamps to US Eastern by hand (fixed DST rules; there is no
 # tz database here).
 #
@@ -30,8 +30,11 @@
 # with a small arrow between them pointing up at a sterner test and
 # down at a softer one. The spectrum compares win percentages (points
 # percentage in the NHL) and reads records from ESPN's standings feed,
-# one cached fetch per league; an opponent the standings miss (an FCS
-# school) falls back to its own schedule feed. A side with fewer than
+# one cached fetch per league. The feed is only read for a league showing
+# one team (slot 2 NONE), so every league costs at most two requests and
+# the whole board stays inside the 8-uncached-requests-per-render budget;
+# a league with two teams keeps the plain NEXT page. An opponent the
+# standings miss (an FCS school) shows no record. A side with fewer than
 # three games played keeps a plain gray record and no chip: a 1-0
 # start proves nothing.
 #
@@ -1098,7 +1101,7 @@ def standings(lg):
     at most two deep (league, conference, division)."""
     url = ("https://site.api.espn.com/apis/v2/sports/%s/standings"
            % LEAGUES[lg]["path"])
-    r = http.get(url, ttl_seconds = 300)
+    r = http.get(url, ttl_seconds = 1800)
     if r["status_code"] != 200 or not r["json"]:
         return None
     nodes = [r["json"]]
@@ -1122,22 +1125,21 @@ def standings(lg):
 
 
 def opp_record(lg, oid, table):
-    """[record, win pct, games] for an opponent: the league standings
-    first, its own schedule feed when the standings miss it (an FCS
-    school), None when neither knows it."""
+    """[record, win pct, games] for an opponent from the league standings,
+    or None when the standings miss it (an FCS school). No per-opponent
+    fetch: that would break the per-render request budget."""
     if table != None and str(oid) in table:
         return table[str(oid)]
-    data = fetch(lg, oid)
-    if data == None:
+    return None
+
+
+def league_table(ctx, lg):
+    """The league's standings, but only when it shows a single team (slot 2
+    NONE). Each league then costs at most two requests (two schedules, or
+    one schedule plus standings), keeping all eight pages within 8."""
+    if chosen(ctx, lg + "2") != None:
         return None
-    rec = record_of(data)
-    parts = parse_record(rec)
-    if parts == None:
-        return None
-    pg = record_pct(lg, parts)
-    if pg == None:
-        return None
-    return [rec, pg[0], pg[1]]
+    return standings(lg)
 
 
 def threat_delta(lg, my_rec, opp):
@@ -1475,7 +1477,7 @@ def board(c, ctx, slot):
         notice(c, lg, tid, "NO FEED", "WILL RETRY")
         return
     if sched:
-        draw_schedule(c, lg, tid, data, ctx.now.unix, standings(lg))
+        draw_schedule(c, lg, tid, data, ctx.now.unix, league_table(ctx, lg))
         return
     got = pick(scan(data.get("events") or [], tid), ctx.now.unix)
     kind = got[0]
@@ -1484,7 +1486,7 @@ def board(c, ctx, slot):
         notice(c, lg, tid, "NO GAMES", "NONE POSTED")
     elif kind == "NEXT":
         draw_next(c, lg, tid, ev, record_of(data), ctx.now.unix,
-                  standings(lg))
+                  league_table(ctx, lg))
     else:
         draw_scores(c, lg, tid, ev, kind)
 
