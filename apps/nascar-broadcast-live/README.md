@@ -30,7 +30,7 @@ pages switch to:
 | `order2`–`order5`, `movers` | every race of the season (Clash, Duels and All-Star included) and its winner in team colours |
 
 TV networks show in their own colours: NBC with its peacock, FOX blue, USA
-red, CW green, FS1 / FS2 / TNT white.
+red, CW orange, FS1 / FS2 / TNT white.
 
 Lapped runners show `-N LAP(S)` in the live order and the last-race result.
 Stage winners carry a small green-and-white checkered flag beside their name,

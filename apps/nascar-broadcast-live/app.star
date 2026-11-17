@@ -318,17 +318,24 @@ def series_logo(series, small):
     big, sm = SERIES_LOGO.get(series, SERIES_LOGO["NASCAR"])
     return sm if small else big
 
-# TV networks in their own colours. NBC gets its peacock; CW its green;
-# FOX its blue; USA its red; black-and-white logos (FS1, FS2, TNT) white. Drawn in 4x5 so a network fits the schedule's 6px rows.
+# TV networks in their brand colours: NBC's peacock, FOX blue (as a block), USA red, CW
+# orange (its 2024 "hot sauce"), Prime blue; black-and-white logos (FS1,
+# FS2, TNT) stay white. Drawn in 4x5 so a network fits the schedule's 6px rows.
 PEACOCK = ["#FCB711", "#F37021", "#CC004C", "#6460AA", "#0089D0", "#0DB14B"]
 PEACOCK_H = [3, 4, 5, 5, 4, 3]
-TV_COLOR = {"FOX": "#2F80ED", "USA": "#E4002B", "CW": "#00A651", "PRIME": "#1FA2E8"}
+TV_COLOR = {"USA": "#D91E25", "CW": "#FF4500", "PRIME": "#00A8E1"}
+
+# Networks whose brand colour is too dark to read as text on a black panel
+# get white letters on a block of that colour instead.
+TV_BLOCK = {"FOX": "#003087"}
 
 def tv_width(c, tv):
     if tv == "":
         return 0
     w = c.text_width(tv, "4x5")
-    return w + 7 if tv == "NBC" else w
+    if tv == "NBC":
+        return w + 7
+    return w + 4 if tv in TV_BLOCK else w
 
 def draw_tv(c, tv, x, y):
     # A network at (x, y), 5px tall; returns its width.
@@ -339,6 +346,10 @@ def draw_tv(c, tv, x, y):
         for k in range(6):
             c.rect(x + k, y + 5 - PEACOCK_H[k], x + k, y + 4, fill = PEACOCK[k])
         tx = x + 7
+    if tv in TV_BLOCK:
+        c.rect(x, y - 1, x + tv_width(c, tv) - 1, y + 5, fill = TV_BLOCK[tv])
+        c.text(tv, x + 2, y, font = "4x5", color = "#FFFFFF")
+        return tv_width(c, tv)
     c.text(tv, tx, y, font = "4x5", color = TV_COLOR.get(tv, "#FFFFFF"))
     return tv_width(c, tv)
 
