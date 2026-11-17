@@ -3,6 +3,7 @@ gdn: 1
 id: fantasy-football-tracker
 version: 0.1.0
 name: Fantasy Football Tracker
+author: SportsTechPro
 description: Live Sleeper fantasy football scoreboard
 category: Sports
 entry: app.star

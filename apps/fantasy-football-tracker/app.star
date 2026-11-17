@@ -7,139 +7,26 @@ def main(c, ctx):
     c.text_center("SKOKIE FRESHMAN", 12, font="5x7", color="white")
     c.text_center("SLEEPER LIVE TRACKER", 23, font="4x5", color="yellow")
 
-def starters1(c, ctx):
-    c.fill("black")
-    c.text_center("STARTERS1", 12, font="6x8", color="green")
-
-
-def starters1(c, ctx):
-    c.clear()
-
+def week_stats():
     resp = http.get("https://api.sleeper.app/v1/state/nfl")
-
     if resp["status_code"] != 200:
-        c.text_center("SLEEPER ERROR", 12, font="5x7", color="red")
-        return
-
+        return None
     week = resp["json"].get("week", 10)
     season = resp["json"].get("season", "2026")
-
-    players = [
-        ("DAK PRESCOTT", "13276"),
-        ("DERRICK HENRY", "3198"),
-        ("AARON JONES", "8131"),
-    ]
-
-    c.text("PLAYERS", 1, 1, font="4x5", color="green")
-    c.text("PTS", 103, 1, font="4x5", color="green")
-
-    y = 10
-
-    for name, player_id in players:
-        stats_resp = http.get(
-            "https://api.sleeper.com/stats/nfl/player/" + player_id,
-            params={
-                "season": str(season),
-                "season_type": "regular",
-                "grouping": "week"
-            }
-        )
-
-        points = 0
-
-        if stats_resp["status_code"] == 200:
-            week_data = stats_resp["json"].get(str(week), {})
-            if week_data != None:
-                player_stats = week_data.get("stats", {})
-                if player_stats != None:
-                    points = player_stats.get("pts_ppr", 0)
-
-        c.text(name, 1, y, font="4x5", color="white")
-        c.text(str(points), 103, y, font="4x5", color="yellow")
-
-        y = y + 8
-
-
-def starters2(c, ctx):
-    c.fill("black")
-    c.text_center("STARTERS2", 12, font="6x8", color="green")
-
-def starters2(c, ctx):
-    c.clear()
-
-    resp = http.get("https://api.sleeper.app/v1/state/nfl")
-
-    if resp["status_code"] != 200:
-        c.text_center("SLEEPER ERROR", 12, font="5x7", color="red")
-        return
-
-    week = resp["json"].get("week", 10)
-    season = resp["json"].get("season", "2026")
-
-    players = [
-        ("RACHAAD WHITE", "2747"),
-        ("OMAR COOPER", "3294"),
-        ("JORDYN TYSON", "4199"),
-    ]
-
-    c.text("PLAYERS", 1, 1, font="4x5", color="green")
-    c.text("PTS", 103, 1, font="4x5", color="green")
-
-    y = 10
-
-    for name, player_id in players:
-        stats_resp = http.get(
-            "https://api.sleeper.com/stats/nfl/player/" + player_id,
-            params={
-                "season": str(season),
-                "season_type": "regular",
-                "grouping": "week"
-            }
-        )
-
-        points = 0
-
-        if stats_resp["status_code"] == 200:
-            week_data = stats_resp["json"].get(str(week), {})
-            if week_data != None:
-                player_stats = week_data.get("stats", {})
-                if player_stats != None:
-                    points = player_stats.get("pts_ppr", 0)
-
-        c.text(name, 1, y, font="4x5", color="white")
-        c.text(str(points), 103, y, font="4x5", color="yellow")
-
-        y = y + 8
-
-
-
-def starters3(c, ctx):
-    c.clear()
-
-    resp = http.get("https://api.sleeper.app/v1/state/nfl")
-
-    if resp["status_code"] != 200:
-        c.text_center("SLEEPER ERROR", 12, font="5x7", color="red")
-        return
-
-    week = resp["json"].get("week", 10)
-    season = resp["json"].get("season", "2026")
-    
     stats_resp = http.get(
-    "https://api.sleeper.app/v1/stats/nfl/regular/"
-    + str(season) + "/" + str(week)
-)
+        "https://api.sleeper.app/v1/stats/nfl/regular/" + str(season) + "/" + str(week)
+    )
     if stats_resp["status_code"] != 200:
-        c.text_center("STATS ERROR", 12, font="5x7", color="red")
+        return None
+    return stats_resp["json"]
+
+def draw_starters(c, players):
+    c.clear()
+
+    all_stats = week_stats()
+    if all_stats == None:
+        c.text_center("SLEEPER ERROR", 12, font="5x7", color="red")
         return
-
-    all_stats = stats_resp["json"]
-
-    players = [
-        ("ISAIAH LIKELY", "8136"),
-        ("JASON MYERS", "13281"),
-        ("SF 49ERS DEF", "TEAM_SF"),
-    ]
 
     c.text("PLAYERS", 1, 1, font="4x5", color="green")
     c.text("PTS", 103, 1, font="4x5", color="green")
@@ -148,12 +35,10 @@ def starters3(c, ctx):
 
     for name, player_id in players:
         player_data = all_stats.get(player_id, {})
-
         if player_data == None:
             player_data = {}
 
         player_stats = player_data.get("stats", player_data)
-
         if player_stats == None:
             player_stats = {}
 
@@ -164,9 +49,26 @@ def starters3(c, ctx):
 
         y = y + 8
 
-def scoreboard(c, ctx):
-    c.fill("black")
-    c.text_center("SCOREBOARD", 12, font="6x8", color="green")
+def starters1(c, ctx):
+    draw_starters(c, [
+        ("DAK PRESCOTT", "13276"),
+        ("DERRICK HENRY", "3198"),
+        ("AARON JONES", "8131"),
+    ])
+
+def starters2(c, ctx):
+    draw_starters(c, [
+        ("RACHAAD WHITE", "2747"),
+        ("OMAR COOPER", "3294"),
+        ("JORDYN TYSON", "4199"),
+    ])
+
+def starters3(c, ctx):
+    draw_starters(c, [
+        ("ISAIAH LIKELY", "8136"),
+        ("JASON MYERS", "13281"),
+        ("SF 49ERS DEF", "TEAM_SF"),
+    ])
 
 def scoreboard(c, ctx):
     c.clear()
