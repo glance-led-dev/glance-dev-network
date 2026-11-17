@@ -1,0 +1,431 @@
+gdn: 1
+id: international-football-scores
+version: 0.1.0
+name: "International Football Scores"
+author: "Gary Coulter"
+description: Follow a national team or a group across the UEFA Nations League, the FIFA World Cup and its qualifiers, and the UEFA European Championship and its qualifiers - live scores, fixtures, results with goalscorers, and the group table.
+category: Sports
+entry: app.star
+
+width: 192
+height: 32
+# Live scores move fast; the live feed is fetched with a 60-120 s ttl to match.
+refresh: 120
+
+assets:
+  - ALB_l.png
+  - ALB_s.png
+  - ALG_l.png
+  - ALG_s.png
+  - AND_l.png
+  - AND_s.png
+  - ARG_l.png
+  - ARG_s.png
+  - ARM_l.png
+  - ARM_s.png
+  - AUS_l.png
+  - AUS_s.png
+  - AUT_l.png
+  - AUT_s.png
+  - AZE_l.png
+  - AZE_s.png
+  - BEL_l.png
+  - BEL_s.png
+  - BIH_l.png
+  - BIH_s.png
+  - BLR_l.png
+  - BLR_s.png
+  - BRA_l.png
+  - BRA_s.png
+  - BUL_l.png
+  - BUL_s.png
+  - CAN_l.png
+  - CAN_s.png
+  - CIV_l.png
+  - CIV_s.png
+  - COD_l.png
+  - COD_s.png
+  - COL_l.png
+  - COL_s.png
+  - CPV_l.png
+  - CPV_s.png
+  - CRO_l.png
+  - CRO_s.png
+  - CUW_l.png
+  - CUW_s.png
+  - CYP_l.png
+  - CYP_s.png
+  - CZE_l.png
+  - CZE_s.png
+  - DEN_l.png
+  - DEN_s.png
+  - ECU_l.png
+  - ECU_s.png
+  - EGY_l.png
+  - EGY_s.png
+  - ENG_l.png
+  - ENG_s.png
+  - ESP_l.png
+  - ESP_s.png
+  - EST_l.png
+  - EST_s.png
+  - FIN_l.png
+  - FIN_s.png
+  - FRA_l.png
+  - FRA_s.png
+  - FRO_l.png
+  - FRO_s.png
+  - GEO_l.png
+  - GEO_s.png
+  - GER_l.png
+  - GER_s.png
+  - GHA_l.png
+  - GHA_s.png
+  - GIB_l.png
+  - GIB_s.png
+  - GRE_l.png
+  - GRE_s.png
+  - HAI_l.png
+  - HAI_s.png
+  - HUN_l.png
+  - HUN_s.png
+  - IRL_l.png
+  - IRL_s.png
+  - IRN_l.png
+  - IRN_s.png
+  - IRQ_l.png
+  - IRQ_s.png
+  - ISL_l.png
+  - ISL_s.png
+  - ISR_l.png
+  - ISR_s.png
+  - ITA_l.png
+  - ITA_s.png
+  - JOR_l.png
+  - JOR_s.png
+  - JPN_l.png
+  - JPN_s.png
+  - KAZ_l.png
+  - KAZ_s.png
+  - KOR_l.png
+  - KOR_s.png
+  - KOS_l.png
+  - KOS_s.png
+  - KSA_l.png
+  - KSA_s.png
+  - LIE_l.png
+  - LIE_s.png
+  - LTU_l.png
+  - LTU_s.png
+  - LUX_l.png
+  - LUX_s.png
+  - LVA_l.png
+  - LVA_s.png
+  - MAR_l.png
+  - MAR_s.png
+  - MDA_l.png
+  - MDA_s.png
+  - MEX_l.png
+  - MEX_s.png
+  - MKD_l.png
+  - MKD_s.png
+  - MLT_l.png
+  - MLT_s.png
+  - MNE_l.png
+  - MNE_s.png
+  - NED_l.png
+  - NED_s.png
+  - NIR_l.png
+  - NIR_s.png
+  - NOR_l.png
+  - NOR_s.png
+  - NZL_l.png
+  - NZL_s.png
+  - PAN_l.png
+  - PAN_s.png
+  - PAR_l.png
+  - PAR_s.png
+  - POL_l.png
+  - POL_s.png
+  - POR_l.png
+  - POR_s.png
+  - QAT_l.png
+  - QAT_s.png
+  - ROU_l.png
+  - ROU_s.png
+  - RSA_l.png
+  - RSA_s.png
+  - SCO_l.png
+  - SCO_s.png
+  - SEN_l.png
+  - SEN_s.png
+  - SMR_l.png
+  - SMR_s.png
+  - SRB_l.png
+  - SRB_s.png
+  - SUI_l.png
+  - SUI_s.png
+  - SVK_l.png
+  - SVK_s.png
+  - SVN_l.png
+  - SVN_s.png
+  - SWE_l.png
+  - SWE_s.png
+  - TUN_l.png
+  - TUN_s.png
+  - TUR_l.png
+  - TUR_s.png
+  - UKR_l.png
+  - UKR_s.png
+  - URU_l.png
+  - URU_s.png
+  - USA_l.png
+  - USA_s.png
+  - UZB_l.png
+  - UZB_s.png
+  - WAL_l.png
+  - WAL_s.png
+
+pages:
+  - now
+  - result
+  - table
+
+inputs:
+  - key: follow
+    app_input_type: dropdown
+    type: choice
+    label: Follow
+    default: "A team"
+    choices:
+      - "A team"
+      - "A group"
+    help: Pick "A team" to follow one country in every competition, or "A group" to follow every match in one group. Only the matching setting below is used.
+  - key: team
+    app_input_type: dropdown
+    type: choice
+    label: Team (when following a team)
+    default: "England"
+    choices:
+      - "Albania"
+      - "Algeria"
+      - "Andorra"
+      - "Argentina"
+      - "Armenia"
+      - "Australia"
+      - "Austria"
+      - "Azerbaijan"
+      - "Belarus"
+      - "Belgium"
+      - "Bosnia and Herzegovina"
+      - "Brazil"
+      - "Bulgaria"
+      - "Canada"
+      - "Cape Verde"
+      - "Colombia"
+      - "Croatia"
+      - "Curacao"
+      - "Cyprus"
+      - "Czechia"
+      - "DR Congo"
+      - "Denmark"
+      - "Ecuador"
+      - "Egypt"
+      - "England"
+      - "Estonia"
+      - "Faroe Islands"
+      - "Finland"
+      - "France"
+      - "Georgia"
+      - "Germany"
+      - "Ghana"
+      - "Gibraltar"
+      - "Greece"
+      - "Haiti"
+      - "Hungary"
+      - "Iceland"
+      - "Iran"
+      - "Iraq"
+      - "Israel"
+      - "Italy"
+      - "Ivory Coast"
+      - "Japan"
+      - "Jordan"
+      - "Kazakhstan"
+      - "Kosovo"
+      - "Latvia"
+      - "Liechtenstein"
+      - "Lithuania"
+      - "Luxembourg"
+      - "Malta"
+      - "Mexico"
+      - "Moldova"
+      - "Montenegro"
+      - "Morocco"
+      - "Netherlands"
+      - "New Zealand"
+      - "North Macedonia"
+      - "Northern Ireland"
+      - "Norway"
+      - "Panama"
+      - "Paraguay"
+      - "Poland"
+      - "Portugal"
+      - "Qatar"
+      - "Republic of Ireland"
+      - "Romania"
+      - "San Marino"
+      - "Saudi Arabia"
+      - "Scotland"
+      - "Senegal"
+      - "Serbia"
+      - "Slovakia"
+      - "Slovenia"
+      - "South Africa"
+      - "South Korea"
+      - "Spain"
+      - "Sweden"
+      - "Switzerland"
+      - "Tunisia"
+      - "Turkiye"
+      - "Ukraine"
+      - "United States"
+      - "Uruguay"
+      - "Uzbekistan"
+      - "Wales"
+    help: Every UEFA nation, plus every other team that played at the 2026 World Cup.
+  - key: group
+    app_input_type: dropdown
+    type: choice
+    label: Group (when following a group)
+    default: "Nations League - Group A3"
+    choices:
+      - "Nations League - Group A1"
+      - "Nations League - Group A2"
+      - "Nations League - Group A3"
+      - "Nations League - Group A4"
+      - "Nations League - Group B1"
+      - "Nations League - Group B2"
+      - "Nations League - Group B3"
+      - "Nations League - Group B4"
+      - "Nations League - Group C1"
+      - "Nations League - Group C2"
+      - "Nations League - Group C3"
+      - "Nations League - Group C4"
+      - "Nations League - Group D1"
+      - "Nations League - Group D2"
+      - "World Cup - Group A"
+      - "World Cup - Group B"
+      - "World Cup - Group C"
+      - "World Cup - Group D"
+      - "World Cup - Group E"
+      - "World Cup - Group F"
+      - "World Cup - Group G"
+      - "World Cup - Group H"
+      - "World Cup - Group I"
+      - "World Cup - Group J"
+      - "World Cup - Group K"
+      - "World Cup - Group L"
+      - "World Cup Qualifying (Europe) - Group A"
+      - "World Cup Qualifying (Europe) - Group B"
+      - "World Cup Qualifying (Europe) - Group C"
+      - "World Cup Qualifying (Europe) - Group D"
+      - "World Cup Qualifying (Europe) - Group E"
+      - "World Cup Qualifying (Europe) - Group F"
+      - "World Cup Qualifying (Europe) - Group G"
+      - "World Cup Qualifying (Europe) - Group H"
+      - "World Cup Qualifying (Europe) - Group I"
+      - "World Cup Qualifying (Europe) - Group J"
+      - "World Cup Qualifying (Europe) - Group K"
+      - "World Cup Qualifying (Europe) - Group L"
+      - "Euro - Group A"
+      - "Euro - Group B"
+      - "Euro - Group C"
+      - "Euro - Group D"
+      - "Euro - Group E"
+      - "Euro - Group F"
+      - "Euro Qualifying - Group A"
+      - "Euro Qualifying - Group B"
+      - "Euro Qualifying - Group C"
+      - "Euro Qualifying - Group D"
+      - "Euro Qualifying - Group E"
+      - "Euro Qualifying - Group F"
+      - "Euro Qualifying - Group G"
+      - "Euro Qualifying - Group H"
+      - "Euro Qualifying - Group I"
+      - "Euro Qualifying - Group J"
+      - "Euro Qualifying - Group K"
+      - "Euro Qualifying - Group L"
+    help: Groups appear once the draw has been made. Until then the panel says the group has not been drawn yet.
+  - key: friendlies
+    app_input_type: checkbox
+    label: Include friendlies
+    default: false
+    help: Off by default, so only Nations League, World Cup and Euro matches (and their qualifiers) are shown.
+  - key: clock
+    app_input_type: dropdown
+    type: choice
+    label: Kickoff time format
+    default: "24-hour"
+    choices:
+      - "24-hour"
+      - "12-hour"
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "Europe/London"
+    help: Kickoff times are shown in this zone, with daylight saving applied automatically.
+    choices:
+      - "Pacific/Honolulu"
+      - "America/Anchorage"
+      - "America/Los_Angeles"
+      - "America/Phoenix"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/Mexico_City"
+      - "America/New_York"
+      - "America/Bogota"
+      - "America/Halifax"
+      - "America/Sao_Paulo"
+      - "America/Argentina/Buenos_Aires"
+      - "UTC"
+      - "Europe/Lisbon"
+      - "Europe/Dublin"
+      - "Europe/London"
+      - "Europe/Madrid"
+      - "Europe/Paris"
+      - "Europe/Amsterdam"
+      - "Europe/Berlin"
+      - "Europe/Rome"
+      - "Europe/Stockholm"
+      - "Europe/Warsaw"
+      - "Africa/Lagos"
+      - "Europe/Athens"
+      - "Europe/Helsinki"
+      - "Africa/Johannesburg"
+      - "Europe/Moscow"
+      - "Africa/Nairobi"
+      - "Asia/Dubai"
+      - "Asia/Karachi"
+      - "Asia/Kolkata"
+      - "Asia/Dhaka"
+      - "Asia/Bangkok"
+      - "Asia/Jakarta"
+      - "Asia/Shanghai"
+      - "Asia/Singapore"
+      - "Asia/Hong_Kong"
+      - "Australia/Perth"
+      - "Asia/Tokyo"
+      - "Asia/Seoul"
+      - "Australia/Adelaide"
+      - "Australia/Brisbane"
+      - "Australia/Sydney"
+      - "Australia/Melbourne"
+      - "Pacific/Auckland"
+      - "Atlantic/Reykjavik"
+      - "Europe/Kyiv"
+      - "Europe/Istanbul"
+      - "Africa/Cairo"
+      - "Asia/Jerusalem"
+      - "Asia/Manila"
