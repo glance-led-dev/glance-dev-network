@@ -1,0 +1,865 @@
+LOGOS = {
+    "CUMBERLAND CO.": "cumberland_co.jpg",
+    "GLENCLIFF": "glencliff.jpg",
+    "HOWARD": "howard.jpg",
+    "KING'S ACADEMY": "kings_academy.jpg",
+    "LIBERTY MAGNET": "liberty_magnet.jpg",
+    "PICKETT CO.": "pickett_co.jpg",
+    "TRI-CITIES CHRISTIAN": "tri_cities_christian.jpg",
+    "WARREN CO.": "warren_co.jpg",
+    "ZION CHRISTIAN": "zion_christian.jpg",
+    "ADAMSVILLE": "adamsville.png",
+    "ALCOA": "alcoa.png",
+    "ANDERSON CO.": "anderson_co.png",
+    "ANTIOCH": "antioch.png",
+    "BGA": "bga.png",
+    "BARTLETT": "bartlett.png",
+    "BEECH": "beech.png",
+    "BLACKMAN": "blackman.png",
+    "BLEDSOE CO.": "bledsoe_co.png",
+    "BOLIVAR CENTRAL": "bolivar_central.png",
+    "BOLTON": "bolton.png",
+    "BOYD BUCHANAN": "boyd_buchanan.png",
+    "BRENTWOOD": "brentwood.png",
+    "BRIGHTON": "brighton.png",
+    "CAK": "cak.png",
+    "CPA": "cpa.png",
+    "CANE RIDGE": "cane_ridge.png",
+    "CANNON CO.": "cannon_co.png",
+    "CHATTANOOGA PREP": "chattanooga_prep.png",
+    "CHEATHAM CO.": "cheatham_co.png",
+    "CHEROKEE": "cherokee.png",
+    "CHRISTIAN BROTHERS": "christian_brothers.png",
+    "CHUCKEY-DOAK": "chuckey_doak.png",
+    "CLARKSVILLE": "clarksville.png",
+    "CLARKSVILLE NORTHEAST": "clarksville_northeast.png",
+    "CLAY CO.": "clay_co.png",
+    "CLEVELAND": "cleveland.png",
+    "CLOUDLAND": "cloudland.png",
+    "COALFIELD": "coalfield.png",
+    "COLLIERVILLE": "collierville.png",
+    "COLUMBIA": "columbia.png",
+    "CONCORD CHRISTIAN": "concord_christian.png",
+    "COOKEVILLE": "cookeville.png",
+    "COPPER BASIN": "copper_basin.png",
+    "CORDOVA": "cordova.png",
+    "CORNERSVILLE": "cornersville.png",
+    "COSBY": "cosby.png",
+    "COVINGTON": "covington.png",
+    "CREEK WOOD": "creek_wood.png",
+    "CROCKETT CO.": "crockett_co.png",
+    "CUMBERLAND GAP": "cumberland_gap.png",
+    "DAVID CROCKETT": "david_crockett.png",
+    "DAVIDSON ACADEMY": "davidson_academy.png",
+    "DICKSON CO.": "dickson_co.png",
+    "DOBYNS BENNETT": "dobyns_bennett.png",
+    "DRESDEN": "dresden.png",
+    "DYERSBURG": "dyersburg.png",
+    "ECS": "ecs.png",
+    "EAGLETON": "eagleton.png",
+    "EAGLEVILLE": "eagleville.png",
+    "EAST NASHVILLE": "east_nashville.png",
+    "EAST RIDGE": "east_ridge.png",
+    "EAST ROBERTSON": "east_robertson.png",
+    "ELIZABETHTON": "elizabethton.png",
+    "EZELL-HARDING": "ezell_harding.png",
+    "FRA": "fra.png",
+    "FAIRLEY": "fairley.png",
+    "FAIRVIEW": "fairview.png",
+    "FATHER RYAN": "father_ryan.png",
+    "FAYETTE ACADEMY": "fayette_academy.png",
+    "FAYETTEVILLE": "fayetteville.png",
+    "FRANKLIN": "franklin.png",
+    "FRANKLIN CHRISTIAN": "franklin_christian.png",
+    "FRANKLIN GRACE": "franklin_grace.png",
+    "FRIENDSHIP CHRISTIAN": "friendship_christian.png",
+    "GALLATIN": "gallatin.png",
+    "GATLINBURG-PITTMAN": "gatlinburg_pittman.png",
+    "GERMANTOWN": "germantown.png",
+    "GIBBS": "gibbs.png",
+    "GOODPASTURE": "goodpasture.png",
+    "GORDONSVILLE": "gordonsville.png",
+    "GREEN HILL": "green_hill.png",
+    "GREENBACK": "greenback.png",
+    "GREENEVILLE": "greeneville.png",
+    "GREENFIELD": "greenfield.png",
+    "GRUNDY CO.": "grundy_co.png",
+    "HAMPTON": "hampton.png",
+    "HAPPY VALLEY": "happy_valley.png",
+    "HARDIN VALLEY": "hardin_valley.png",
+    "HAYWOOD": "haywood.png",
+    "HENDERSONVILLE": "hendersonville.png",
+    "HENRY CO.": "henry_co.png",
+    "HICKMAN CO.": "hickman_co.png",
+    "HILLSBORO": "hillsboro.png",
+    "HOUSTON": "houston.png",
+    "HOUSTON CO.": "houston_co.png",
+    "HUMBOLDT": "humboldt.png",
+    "HUNTINGDON": "huntingdon.png",
+    "HUNTLAND": "huntland.png",
+    "INDEPENDENCE": "independence.png",
+    "JCM": "jcm.png",
+    "JPII": "jpii.png",
+    "JACKSON CHRISTIAN": "jackson_christian.png",
+    "JACKSON CO.": "jackson_co.png",
+    "JACKSON NORTH SIDE": "jackson_north_side.png",
+    "JAMES LAWSON": "james_lawson.png",
+    "JEFFERSON CO.": "jefferson_co.png",
+    "JELLICO": "jellico.png",
+    "JO BYRNS": "jo_byrns.png",
+    "KIPP MEMPHIS COLLEGIATE": "kipp_memphis_collegiate.png",
+    "KINGSTON": "kingston.png",
+    "KIRBY": "kirby.png",
+    "KIRKWOOD": "kirkwood.png",
+    "KNOXVILLE CENTRAL": "knoxville_central.png",
+    "KNOXVILLE FULTON": "knoxville_fulton.png",
+    "KNOXVILLE GRACE": "knoxville_grace.png",
+    "KNOXVILLE HALLS": "knoxville_halls.png",
+    "KNOXVILLE WEBB": "knoxville_webb.png",
+    "KNOXVILLE WEST": "knoxville_west.png",
+    "LAKELAND PREP": "lakeland_prep.png",
+    "LAKEWAY CHRISTIAN": "lakeway_christian.png",
+    "LAUSANNE": "lausanne.png",
+    "LAWRENCE CO.": "lawrence_co.png",
+    "LEBANON": "lebanon.png",
+    "LEXINGTON": "lexington.png",
+    "LIBERTY CREEK": "liberty_creek.png",
+    "LINCOLN CO.": "lincoln_co.png",
+       "FRANK HUGHES": "frank_hughes.png",
+    "LIVINGSTON ACADEMY": "livingston_academy.png",
+    "LOUDON": "loudon.png",
+    "MASE": "mase.png",
+    "MBA": "mba.png",
+    "MUS": "mus.png",
+    "MACON CO.": "macon_co.png",
+    "MARION CO.": "marion_co.png",
+    "MARSHALL CO.": "marshall_co.png",
+    "MARYVILLE": "maryville.png",
+    "MCCALLIE": "mccallie.png",
+    "MCEWEN": "mcewen.png",
+    "MCKENZIE": "mckenzie.png",
+    "MCMINN CENTRAL": "mcminn_central.png",
+    "MCMINN CO.": "mcminn_co.png",
+    "MEIGS CO.": "meigs_co.png",
+    "MELROSE": "melrose.png",
+    "MEMPHIS BUSINESS": "memphis_business.png",
+    "MEMPHIS CENTRAL": "memphis_central.png",
+    "MEMPHIS MIDDLE COLLEGE": "memphis_middle_college.png",
+    "MEMPHIS OVERTON": "memphis_overton.png",
+    "MEMPHIS WESTWOOD": "memphis_westwood.png",
+    "MIDWAY": "midway.png",
+    "MILAN": "milan.png",
+    "MILLINGTON": "millington.png",
+    "MITCHELL": "mitchell.png",
+    "MONTGOMERY CENTRAL": "montgomery_central.png",
+    "MORRISTOWN WEST": "morristown_west.png",
+    "MT. PLEASANT": "mt_pleasant.png",
+    "MUNFORD": "munford.png",
+    "NOLENSVILLE": "nolensville.png",
+    "NORTHPOINT CHRISTIAN": "northpoint_christian.png",
+    "OAK RIDGE": "oak_ridge.png",
+    "OAKHAVEN": "oakhaven.png",
+    "OAKLAND": "oakland.png",
+    "ONEIDA": "oneida.png",
+    "PAGE": "page.png",
+    "PEARL COHN": "pearl_cohn.png",
+    "PERRY CO.": "perry_co.png",
+    "PIGEON FORGE": "pigeon_forge.png",
+    "POLK CO.": "polk_co.png",
+    "PORTLAND": "portland.png",
+    "POWELL": "powell.png",
+    "PROVIDENCE ACADEMY": "providence_academy.png",
+    "RALEIGH EGYPT": "raleigh_egypt.png",
+    "RAVENWOOD": "ravenwood.png",
+    "RED BANK": "red_bank.png",
+    "RED BOILING SPRINGS": "red_boiling_springs.png",
+    "RHEA CO.": "rhea_co.png",
+    "RIVERDALE": "riverdale.png",
+    "RIVERSIDE": "riverside.png",
+    "ROBERTSON INNOVATION": "robertson_innovation.png",
+    "ROCKWOOD": "rockwood.png",
+    "ROSSVIEW": "rossview.png",
+    "SALE CREEK": "sale_creek.png",
+    "SCIENCE HILL": "science_hill.png",
+    "SEQUATCHIE CO.": "sequatchie_co.png",
+    "SEVIER CO.": "sevier_co.png",
+    "SEYMOUR": "seymour.png",
+    "SIGNAL MOUNTAIN": "signal_mountain.png",
+    "SILVERDALE": "silverdale.png",
+    "SMYRNA": "smyrna.png",
+    "SODDY DAISY": "soddy_daisy.png",
+    "SOUTH FULTON": "south_fulton.png",
+    "SOUTH GIBSON": "south_gibson.png",
+    "SOUTH GREENE": "south_greene.png",
+    "SOUTH PITTSBURG": "south_pittsburg.png",
+    "SOUTHWIND": "southwind.png",
+    "SPRING HILL": "spring_hill.png",
+    "SPRINGFIELD": "springfield.png",
+    "ST. GEORGE'S": "st_george_s.png",
+    "STATION CAMP": "station_camp.png",
+    "STEWART CO.": "stewart_co.png",
+    "STRATFORD": "stratford.png",
+    "SUMMERTOWN": "summertown.png",
+    "SWEETWATER": "sweetwater.png",
+    "TELLICO PLAINS": "tellico_plains.png",
+    "TENNESSEE": "tennessee.png",
+    "TRINITY CHRISTIAN": "trinity_christian.png",
+    "TROUSDALE CO.": "trousdale_co.png",
+    "TULLAHOMA": "tullahoma.png",
+    "TYNER": "tyner.png",
+    "UNICOI CO.": "unicoi_co.png",
+    "UNION CITY": "union_city.png",
+    "UPPERMAN": "upperman.png",
+    "WH HERITAGE": "wh_heritage.png",
+    "WALKER VALLEY": "walker_valley.png",
+    "WATERTOWN": "watertown.png",
+    "WAVERLY": "waverly.png",
+    "WAYNE CO.": "wayne_co.png",
+    "WEST GREENE": "west_greene.png",
+    "WEST RIDGE": "west_ridge.png",
+    "WESTMORELAND": "westmoreland.png",
+    "WESTVIEW": "westview.png",
+    "WHITE CO.": "white_co.png",
+    "WHITE HOUSE": "white_house.png",
+    "WHITE STATION": "white_station.png",
+    "WHITEHAVEN": "whitehaven.png",
+    "WHITES CREEK": "whites_creek.png",
+    "WHITWELL": "whitwell.png",
+    "WOODDALE": "wooddale.png",
+    "YORK INSTITUTE": "york_institute.png",
+    "ARLINGTON": "arlington.png",
+    "AUSTIN-EAST": "austin_east.png",
+    "BATTLE CREEK": "battle_creek.png",
+    "BAYLOR": "baylor.png",
+    "BEARDEN": "bearden.png",
+    "BLUFF CITY": "bluff_city.png",
+    "BOOKER T. WASHINGTON": "booker_t_washington.png",
+    "BRADLEY CENTRAL": "bradley_central.png",
+    "BRAINERD": "brainerd.png",
+    "BRENTWOOD ACADEMY": "brentwood_academy.png",
+    "BRIARCREST CHRISTIAN": "briarcrest_christian.png",
+    "CAMDEN CENTRAL": "camden_central.png",
+    "CAMPBELL CO.": "campbell_co.png",
+    "CARTER": "carter.png",
+    "CASCADE": "cascade.png",
+    "CENTENNIAL": "centennial.png",
+    "CHATTANOOGA CENTRAL": "chattanooga_central.png",
+    "CHATTANOOGA CHRISTIAN": "chattanooga_christian.png",
+    "CHESTER CO.": "chester_co.png",
+    "CLAIBORNE": "claiborne.png",
+    "CLARKSVILLE ACADEMY": "clarksville_academy.png",
+    "CLINTON": "clinton.png",
+    "COCKE CO.": "cocke_co.png",
+    "COFFEE CO. CENTRAL": "coffee_co_central.png",
+    "COLLINWOOD": "collinwood.png",
+    "COLUMBIA CENTRAL": "columbia_central.png",
+    "COMMUNITY": "community.png",
+    "CRAIGMONT": "craigmont.png",
+    "DANIEL BOONE": "daniel_boone.png",
+    "DEKALB CO.": "dekalb_co.png",
+    "DONELSON CHRISTIAN ACADEMY": "donelson_christian_academy.png",
+    "DYER CO.": "dyer_co.png",
+    "EAST HAMILTON": "east_hamilton.png",
+    "EAST HICKMAN": "east_hickman.png",
+    "ENSWORTH": "ensworth.png",
+    "FARRAGUT": "farragut.png",
+    "FAYETTE-WARE": "fayette_ware.png",
+    "FIRST ASSEMBLY CHRISTIAN": "first_assembly_christian.png",
+    "FORREST": "forrest.png",
+    "FRANKLIN CO.": "franklin_co.png",
+    "FREDERICK DOUGLASS": "frederick_douglass.png",
+    "GIBSON CO.": "gibson_co.png",
+    "GILES CO.": "giles_co.png",
+    "GLEASON": "gleason.png",
+    "GRACE BAPTIST ACADEMY": "grace_baptist_academy.jpg",
+    "GRAINGER": "grainger.png",
+    "GREENBRIER": "greenbrier.png",
+    "HALLS": "halls.png",
+    "HAMILTON": "hamilton.png",
+    "HANCOCK CO.": "hancock_co.png",
+    "HARDIN CO.": "hardin_co.png",
+    "HARDING ACADEMY": "harding_academy.png",
+    "HARPETH": "harpeth.png",
+    "HARRIMAN": "harriman.png",
+    "HERITAGE": "heritage.png",
+    "HILLCREST": "hillcrest.png",
+    "HIXSON": "hixson.png",
+    "HOLLOW ROCK-BRUCETON CENTRAL": "hollow_rock_bruceton_central.png",
+    "HUNTERS LANE": "hunters_lane.png",
+    "JACKSON SOUTH SIDE": "jackson_south_side.png",
+    "JOHN OVERTON": "john_overton.png",
+    "JOHNSON CO.": "johnson_co.png",
+    "KARNS": "karns.png",
+    "KENWOOD": "kenwood.png",
+    "KINGSBURY": "kingsbury.png",
+    "KNOXVILLE CATHOLIC": "knoxville_catholic.png",
+    "LAKE CO.": "lake_co.png",
+    "LAVERGNE": "lavergne.png",
+    "LENOIR CITY": "lenoir_city.png",
+    "LEWIS CO.": "lewis_co.png",
+    "LIPSCOMB ACADEMY": "lipscomb_academy.png",
+    "LOOKOUT VALLEY": "lookout_valley.png",
+    "LORETTO": "loretto.png",
+    "MANASSAS": "manassas.png",
+    "MAPLEWOOD": "maplewood.png",
+    "MCGAVOCK": "mcgavock.png",
+    "MCNAIRY CENTRAL": "mcnairy_central.png",
+    "MEMPHIS EAST": "memphis_east.png",
+    "MIDDLE TENNESSEE CHRISTIAN": "middle_tennessee_christian.png",
+    "MIDDLETON": "middleton.png",
+    "MONTEREY": "monterey.png",
+    "MOORE CO.": "moore_co.png",
+    "MORRISTOWN-HAMBLEN HIGH SCHOOL EAST": "morristown_hamblen_high_school_east.png",
+    "MT. JULIET": "mt_juliet.png",
+    "MT. JULIET CHRISTIAN ACADEMY": "mt_juliet_christian_academy.png",
+    "NASHVILLE CHRISTIAN": "nashville_christian.png",
+    "NORTH GREENE": "north_greene.png",
+    "NORTHVIEW ACADEMY": "northview_academy.png",
+    "NORTHWEST": "northwest.png",
+    "NOTRE DAME": "notre_dame.png",
+    "OAKDALE": "oakdale.png",
+    "OBION CO. CENTRAL": "obion_co_central.png",
+    "OLIVER SPRINGS": "oliver_springs.png",
+    "OOLTEWAH": "ooltewah.png",
+    "PEABODY": "peabody.png",
+    "PROVIDENCE CHRISTIAN ACADEMY": "providence_christian_academy.png",
+    "RICHLAND": "richland.png",
+    "RIDGEWAY": "ridgeway.png",
+    "RIPLEY": "ripley.png",
+    "ROCKVALE": "rockvale.png",
+    "SCOTT": "scott.png",
+    "SCOTTS HILL": "scotts_hill.png",
+    "SEQUOYAH HIGH SCHOOL - MADISONVILLE": "sequoyah_high_school_madisonville.png",
+    "SHEFFIELD": "sheffield.png",
+    "SHELBYVILLE CENTRAL": "shelbyville_central.png",
+    "SIEGEL": "siegel.png",
+    "SMITH CO.": "smith_co.png",
+    "SOUTH-DOYLE": "south_doyle.png",
+    "ST. BENEDICT AT AUBURNDALE": "st_benedict_at_auburndale.png",
+    "STEWARTS CREEK": "stewarts_creek.png",
+    "STONE MEMORIAL": "stone_memorial.png",
+    "SULLIVAN EAST": "sullivan_east.png",
+    "SUMMIT": "summit.png",
+    "SUNBRIGHT": "sunbright.png",
+    "SYCAMORE": "sycamore.png",
+    "TIPTON-ROSEMARK ACADEMY": "tipton_rosemark_academy.png",
+    "TREZEVANT": "trezevant.png",
+    "UNAKA": "unaka.png",
+    "UNION CO.": "union_co.png",
+    "UNIVERSITY SCHOOL OF JACKSON": "university_school_of_jackson.png",
+    "VOLUNTEER": "volunteer.png",
+    "WARTBURG CENTRAL": "wartburg_central.png",
+    "WEST CARROLL": "west_carroll.png",
+    "WEST CREEK": "west_creek.png",
+    "WILLIAM BLOUNT": "william_blount.png",
+    "WILSON CENTRAL": "wilson_central.png",
+}
+
+def _draw_team(c, name, y, color):
+    team = name.strip().upper()
+    aliases = {
+        "SHELBYVILLE": "SHELBYVILLE CENTRAL",
+        "COFFEE CO.": "COFFEE CO. CENTRAL",
+        "COLUMBIA ACADEMY": "COLUMBIA CENTRAL",
+        "MTCS": "MIDDLE TENNESSEE CHRISTIAN",
+        "NASHVILLE OVERTON": "JOHN OVERTON",
+        "PROVIDENCE CHRISTIAN": "PROVIDENCE CHRISTIAN ACADEMY",
+        "B.T. WASHINGTON": "BOOKER T. WASHINGTON",
+        "BRIARCREST": "BRIARCREST CHRISTIAN",
+        "CAMDEN": "CAMDEN CENTRAL",
+        "CLARKSVILLE NORTHWEST": "NORTHWEST",
+        "DCA": "DONELSON CHRISTIAN ACADEMY",
+        "FACS": "FIRST ASSEMBLY CHRISTIAN",
+        "HOLLOW ROCK-BRUCETON": "HOLLOW ROCK-BRUCETON CENTRAL",
+        "KNOXVILLE CARTER": "CARTER",
+        "MORRISTOWN EAST": "MORRISTOWN-HAMBLEN HIGH SCHOOL EAST",
+        "MT. JULIET CHRISTIAN": "MT. JULIET CHRISTIAN ACADEMY",
+        "OBION CO.": "OBION CO. CENTRAL",
+        "SEQUOYAH": "SEQUOYAH HIGH SCHOOL - MADISONVILLE",
+        "ST. BENEDICT": "ST. BENEDICT AT AUBURNDALE",
+        "TIPTON-ROSEMARK": "TIPTON-ROSEMARK ACADEMY",
+        "USJ": "UNIVERSITY SCHOOL OF JACKSON",
+    }
+    logo = LOGOS.get(aliases.get(team, team), "")
+    if logo != "":
+        c.image(logo, 1, y)
+    c.text(name.upper()[:12], 20, y + 4, font="5x7b", color=color)
+
+
+DISTRICTS = {'FB - 1A Region 1': {'sport': 'FB', 'path': 'football', 'slug': '1a-region-1', 'id': '18418e6f-0210-4cfc-8f36-7b13e42f7da6'}, 'FB - 1A Region 2': {'sport': 'FB', 'path': 'football', 'slug': '1a-region-2', 'id': 'cd050db1-df8c-4fdf-bb64-ffe5af2984f4'}, 'FB - 1A Region 3': {'sport': 'FB', 'path': 'football', 'slug': '1a-region-3', 'id': 'f3616b29-daeb-469a-b04b-b1fc3a30a1df'}, 'FB - 1A Region 4': {'sport': 'FB', 'path': 'football', 'slug': '1a-region-4', 'id': '7843929b-bebf-4681-b144-9148b05dba8d'}, 'FB - 1A Region 5': {'sport': 'FB', 'path': 'football', 'slug': '1a-region-5', 'id': '58b47fee-1306-4ff3-8a3d-a0d2284dff25'}, 'FB - 1A Region 6': {'sport': 'FB', 'path': 'football', 'slug': '1a-region-6', 'id': '2f4d85ea-5190-48ae-be4a-af1a45787bdf'}, 'FB - 1A Region 7': {'sport': 'FB', 'path': 'football', 'slug': '1a-region-7', 'id': '834f041c-b238-4c35-a114-734bd0c5b44b'}, 'FB - 1A Region 8': {'sport': 'FB', 'path': 'football', 'slug': '1a-region-8', 'id': '6aa3b41f-57cb-4c29-bc42-484a06b11e18'}, 'FB - 2A Region 1': {'sport': 'FB', 'path': 'football', 'slug': '2a-region-1', 'id': '416136fd-8bc0-4a4d-8dfe-2dfb1ec00fbd'}, 'FB - 2A Region 2': {'sport': 'FB', 'path': 'football', 'slug': '2a-region-2', 'id': 'fdeae55a-bd1a-4ea9-9733-3d9f4390ec50'}, 'FB - 2A Region 3': {'sport': 'FB', 'path': 'football', 'slug': '2a-region-3', 'id': 'ab72b5ab-b0a0-4507-ab1f-c0635dcc8594'}, 'FB - 2A Region 4': {'sport': 'FB', 'path': 'football', 'slug': '2a-region-4', 'id': '767a4182-670e-4b84-a45a-529a0e49c331'}, 'FB - 2A Region 5': {'sport': 'FB', 'path': 'football', 'slug': '2a-region-5', 'id': '3161875f-3a61-4251-b459-c207beeee344'}, 'FB - 2A Region 6': {'sport': 'FB', 'path': 'football', 'slug': '2a-region-6', 'id': 'db0ff95b-ae0b-4909-8fc0-d2a20d03d386'}, 'FB - 2A Region 7': {'sport': 'FB', 'path': 'football', 'slug': '2a-region-7', 'id': '237f0e0b-3108-4899-8aae-260788a7adce'}, 'FB - 2A Region 8': {'sport': 'FB', 'path': 'football', 'slug': '2a-region-8', 'id': '41f667a5-d0ca-435e-b772-f3ab35c926cc'}, 'FB - 3A Region 1': {'sport': 'FB', 'path': 'football', 'slug': '3a-region-1', 'id': '81721c5b-7fdc-41c3-80ae-97f8e87a507d'}, 'FB - 3A Region 2': {'sport': 'FB', 'path': 'football', 'slug': '3a-region-2', 'id': '99623053-01c3-4980-a18e-85b5a3dc1846'}, 'FB - 3A Region 3': {'sport': 'FB', 'path': 'football', 'slug': '3a-region-3', 'id': '3d1d995d-2c63-4e6b-817e-ef8cedf1990d'}, 'FB - 3A Region 4': {'sport': 'FB', 'path': 'football', 'slug': '3a-region-4', 'id': '6b2c505a-fe05-4115-ba55-fea85ce2b819'}, 'FB - 3A Region 5': {'sport': 'FB', 'path': 'football', 'slug': '3a-region-5', 'id': '9ed59832-768f-4657-b2cf-f3ff59c7f568'}, 'FB - 3A Region 6': {'sport': 'FB', 'path': 'football', 'slug': '3a-region-6', 'id': '9c749a84-798b-4fdf-b828-bede5707653b'}, 'FB - 3A Region 7': {'sport': 'FB', 'path': 'football', 'slug': '3a-region-7', 'id': '36f6d5fe-af41-47c6-86db-deb27b162fc7'}, 'FB - 3A Region 8': {'sport': 'FB', 'path': 'football', 'slug': '3a-region-8', 'id': '5043d2cb-7bec-44da-8ea2-4dfb5c5e4264'}, 'FB - 4A Region 1': {'sport': 'FB', 'path': 'football', 'slug': '4a-region-1', 'id': 'd32fd28a-9373-4c35-bdf1-41accf012cb6'}, 'FB - 4A Region 2': {'sport': 'FB', 'path': 'football', 'slug': '4a-region-2', 'id': '5e80fb94-5913-4dd0-a4a3-5f2b10ef55dd'}, 'FB - 4A Region 3': {'sport': 'FB', 'path': 'football', 'slug': '4a-region-3', 'id': '7b704e37-4dca-4ca1-88bd-ee2696ce2c68'}, 'FB - 4A Region 4': {'sport': 'FB', 'path': 'football', 'slug': '4a-region-4', 'id': '0602f559-f9c8-4601-8989-a55f9e5b685d'}, 'FB - 4A Region 5': {'sport': 'FB', 'path': 'football', 'slug': '4a-region-5', 'id': 'eb8f576d-37d5-4166-9c8b-deba5fa9742d'}, 'FB - 4A Region 6': {'sport': 'FB', 'path': 'football', 'slug': '4a-region-6', 'id': '5356e657-841e-4c69-86dc-5664500e0d6a'}, 'FB - 4A Region 7': {'sport': 'FB', 'path': 'football', 'slug': '4a-region-7', 'id': '956f9f41-1fa6-4c6f-a428-8c75619502d9'}, 'FB - 4A Region 8': {'sport': 'FB', 'path': 'football', 'slug': '4a-region-8', 'id': '38e55dff-ece4-46a0-9de5-b401956666c6'}, 'FB - 5A Region 1': {'sport': 'FB', 'path': 'football', 'slug': '5a-region-1', 'id': '6da93489-fbf9-437b-bfcb-796fc681c2a5'}, 'FB - 5A Region 2': {'sport': 'FB', 'path': 'football', 'slug': '5a-region-2', 'id': 'ae729a0b-c2a3-4c0c-9f33-6ae5d00cd7af'}, 'FB - 5A Region 3': {'sport': 'FB', 'path': 'football', 'slug': '5a-region-3', 'id': '630204ee-f5d9-40d7-ba34-58502649241c'}, 'FB - 5A Region 4': {'sport': 'FB', 'path': 'football', 'slug': '5a-region-4', 'id': '7b633d0a-b693-4c17-8927-746290a6b520'}, 'FB - 5A Region 5': {'sport': 'FB', 'path': 'football', 'slug': '5a-region-5', 'id': '90455518-2608-477f-903c-f6f8a03b74d9'}, 'FB - 5A Region 6': {'sport': 'FB', 'path': 'football', 'slug': '5a-region-6', 'id': 'd46256fe-772d-47f4-967f-8a6fb872eb49'}, 'FB - 5A Region 7': {'sport': 'FB', 'path': 'football', 'slug': '5a-region-7', 'id': 'cbf6eceb-b1b1-48e1-85cc-5b1ace8a91e2'}, 'FB - 5A Region 8': {'sport': 'FB', 'path': 'football', 'slug': '5a-region-8', 'id': 'e7ffed95-8284-4059-8931-0253e30a95fd'}, 'FB - 6A Region 1': {'sport': 'FB', 'path': 'football', 'slug': '6a-region-1', 'id': 'b1480347-cd67-49d2-83b7-4f041d34ec6e'}, 'FB - 6A Region 2': {'sport': 'FB', 'path': 'football', 'slug': '6a-region-2', 'id': '7b5f649d-684f-422c-96e6-3eeb5c192731'}, 'FB - 6A Region 3': {'sport': 'FB', 'path': 'football', 'slug': '6a-region-3', 'id': '473b76e1-00b3-4247-aecf-50f1d4f0cc5a'}, 'FB - 6A Region 4': {'sport': 'FB', 'path': 'football', 'slug': '6a-region-4', 'id': 'e53e95b8-4d6d-4af3-b421-5d19c7f782e0'}, 'FB - 6A Region 5': {'sport': 'FB', 'path': 'football', 'slug': '6a-region-5', 'id': 'f1214f3d-49ea-4955-948a-43684f3c4f10'}, 'FB - 6A Region 6': {'sport': 'FB', 'path': 'football', 'slug': '6a-region-6', 'id': '98b95844-4b3f-4f61-9036-c9a783614c02'}, 'FB - 6A Region 7': {'sport': 'FB', 'path': 'football', 'slug': '6a-region-7', 'id': '9cee4ab0-1796-4ec0-a45e-84dd971ac81a'}, 'FB - 6A Region 8': {'sport': 'FB', 'path': 'football', 'slug': '6a-region-8', 'id': 'f7458b32-497b-460e-a1e1-214cab7b980a'}, 'FB - 8-Man Freelance (8 Man)': {'sport': 'FB', 'path': 'football', 'slug': '8-man-freelance-8-man-', 'id': '7dadef3f-fed3-4d9c-95f8-5a2d8f8ddc3b'}, 'FB - Division II-A East': {'sport': 'FB', 'path': 'football', 'slug': 'division-ii-a-east', 'id': '07f0ff22-6c43-4606-a616-b7412d558bd5'}, 'FB - Division II-A Middle': {'sport': 'FB', 'path': 'football', 'slug': 'division-ii-a-middle', 'id': 'b80d9db9-fd50-4d1b-a6f7-df573c6dfc1e'}, 'FB - Division II-A West': {'sport': 'FB', 'path': 'football', 'slug': 'division-ii-a-west', 'id': 'c004c234-cc3a-4120-9e3a-bc49488fb64f'}, 'FB - Division II-AA East': {'sport': 'FB', 'path': 'football', 'slug': 'division-ii-aa-east', 'id': '6a7d100b-d71a-411a-bbb5-d2f91fdfbe10'}, 'FB - Division II-AA Middle': {'sport': 'FB', 'path': 'football', 'slug': 'division-ii-aa-middle', 'id': 'd88661dd-6ac5-4b53-bf88-78b61dd66b5f'}, 'FB - Division II-AA West': {'sport': 'FB', 'path': 'football', 'slug': 'division-ii-aa-west', 'id': 'fc3b3fe3-8e9f-4df0-aa52-c45e04f1c645'}, 'FB - Division II-AAA East': {'sport': 'FB', 'path': 'football', 'slug': 'division-ii-aaa-east', 'id': '8fb82917-cb9d-41a1-a805-455c9f56c94a'}, 'FB - Division II-AAA West': {'sport': 'FB', 'path': 'football', 'slug': 'division-ii-aaa-west', 'id': '86762f67-e4fa-46af-b3c1-485eb5e4d787'}, 'FB - Freelance': {'sport': 'FB', 'path': 'football', 'slug': 'freelance', 'id': '0bf2ec3f-f889-404c-b09a-72c684bca78e'}, 'FB - Southeastern Extreme - Central (8 Man)': {'sport': 'FB', 'path': 'football', 'slug': 'southeastern-extreme-central-8-man', 'id': 'a4e0a00c-c380-4775-b795-96e827372f27'}, 'FB - Southeastern Extreme - North (8 Man)': {'sport': 'FB', 'path': 'football', 'slug': 'southeastern-extreme-north-8-man', 'id': '11d774ff-1d2f-49ca-bf4c-fb7810243700'}, 'FB - Southeastern Extreme - South (8 Man)': {'sport': 'FB', 'path': 'football', 'slug': 'southeastern-extreme-south-8-man', 'id': '469acf04-9fd7-4da7-80ba-ad0a9a256c4d'}, 'BBB - 1A District 1': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-1', 'id': 'c0febd6f-dc0b-4511-b119-ffc129e90209'}, 'BBB - 1A District 2': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-2', 'id': '176e5cd7-dc3a-4625-b08b-7efe88704e9c'}, 'BBB - 1A District 3': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-3', 'id': '1ca615e0-e187-432f-ae2f-704ef3eba6a3'}, 'BBB - 1A District 4': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-4', 'id': '1525a9bc-1218-410d-86bc-5b3575fa878a'}, 'BBB - 1A District 5': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-5', 'id': 'ab756b14-b7ba-497e-9b85-41e2d59773c5'}, 'BBB - 1A District 6': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-6', 'id': 'e6b9d4a3-867f-4c81-828e-ae40b0e09a79'}, 'BBB - 1A District 7': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-7', 'id': '30a4234a-6416-4c75-badc-c448cdc29379'}, 'BBB - 1A District 8': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-8', 'id': '25b46cd2-6ee3-4cd5-a3c7-371f1c6e256c'}, 'BBB - 1A District 9': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-9', 'id': 'bddf2ce5-b9fa-4e67-a00b-f6681fdc7172'}, 'BBB - 1A District 10': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-10', 'id': '48bb639a-4e1a-40f5-b9a0-5b27cd0c5a40'}, 'BBB - 1A District 11': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-11', 'id': '39d48a9e-d175-4102-8e67-56713b010324'}, 'BBB - 1A District 12': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-12', 'id': '981343c9-870e-44cf-a57c-57486f90bf5a'}, 'BBB - 1A District 13': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-13', 'id': 'cc558495-33b4-4553-8176-054b8d832ce2'}, 'BBB - 1A District 14': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-14', 'id': 'b57f9034-eeb0-4af1-adc5-b5f9a8ff09a7'}, 'BBB - 1A District 15': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-15', 'id': 'd8086015-9b9f-43c2-97e9-f1cafbbc3f16'}, 'BBB - 1A District 16': {'sport': 'BBB', 'path': 'basketball', 'slug': '1a-district-16', 'id': 'f6fdb3a5-3428-4791-824f-4c91761014f3'}, 'BBB - 2A District 1': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-1', 'id': 'dbd808dd-571c-4e6a-b7a4-ad55afc6abc0'}, 'BBB - 2A District 2': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-2', 'id': '596e0140-5108-4847-830e-9f7c56825e9a'}, 'BBB - 2A District 3': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-3', 'id': 'f4fb2e10-24c2-49e7-8c0d-842f90503f09'}, 'BBB - 2A District 4': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-4', 'id': '943e27f0-bf96-4fb0-9ff6-f123fc4bcbc6'}, 'BBB - 2A District 5': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-5', 'id': '07590a99-e8e3-485e-b2d7-6c7a5ba51170'}, 'BBB - 2A District 6': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-6', 'id': '46087c9c-aaa4-49f2-8ac2-7e7e064a07fa'}, 'BBB - 2A District 7': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-7', 'id': '564300ee-4e06-4b3d-b85c-0bae97353927'}, 'BBB - 2A District 8': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-8', 'id': '5a04691c-0a41-41df-824c-4f5b084899ad'}, 'BBB - 2A District 9': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-9', 'id': '361ef9af-a872-4ce3-a571-7e39cce4b2b8'}, 'BBB - 2A District 10': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-10', 'id': 'ae57123f-1383-4c01-b469-f85adbb306ad'}, 'BBB - 2A District 11': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-11', 'id': 'd01f9285-0001-4616-86ab-28e94d0dc248'}, 'BBB - 2A District 12': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-12', 'id': '449f16bd-5ec2-474b-a9cd-95ffe2a60815'}, 'BBB - 2A District 13': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-13', 'id': '4a39f4b8-c906-479a-9ab4-8f8d0d0044a2'}, 'BBB - 2A District 14': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-14', 'id': 'd22e5460-2a3e-44b2-b82b-0f77c3bab084'}, 'BBB - 2A District 15': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-15', 'id': 'aa69ec3c-336d-454f-8fca-24d4e17a8628'}, 'BBB - 2A District 16': {'sport': 'BBB', 'path': 'basketball', 'slug': '2a-district-16', 'id': '27b5a1e0-3353-4884-8ef4-57ed564de24e'}, 'BBB - 3A District 1': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-1', 'id': '24fbd4ed-4b55-4d2b-88d7-bb4ab7420f4a'}, 'BBB - 3A District 2': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-2', 'id': '7c20b583-2cc9-4cee-84c6-6c1e7649b6f8'}, 'BBB - 3A District 3': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-3', 'id': '386b1c4e-fd0e-4210-bdc1-6762bfffca92'}, 'BBB - 3A District 4': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-4', 'id': '94778031-d395-4c8b-a659-9a23e6c7fdea'}, 'BBB - 3A District 5': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-5', 'id': 'fc72f40d-91b1-4e6c-97df-2e0ee5ae78d2'}, 'BBB - 3A District 6': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-6', 'id': 'afc1ad69-70d4-40f1-b13e-be01c7608a48'}, 'BBB - 3A District 7': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-7', 'id': 'a8707917-6a75-4d7d-9a2e-5be619752dfc'}, 'BBB - 3A District 8': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-8', 'id': '8a4b3336-9f3f-44b3-970f-b940aeffa6c3'}, 'BBB - 3A District 9': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-9', 'id': '994041a6-c6f9-4fe4-8d68-43604a5260f5'}, 'BBB - 3A District 10': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-10', 'id': '1e50633e-a450-46d8-beef-5013ed0ceb5d'}, 'BBB - 3A District 11': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-11', 'id': '1c8de931-a75a-40a7-8bbd-6b2f0cbd0a20'}, 'BBB - 3A District 12': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-12', 'id': '74262db0-55af-4773-95d8-b6ae18193c47'}, 'BBB - 3A District 13': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-13', 'id': '070529a3-e9ec-47e0-928b-05a19b9c8304'}, 'BBB - 3A District 14': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-14', 'id': 'dd557bc1-9d1c-4541-8d72-4e5fde1d3d70'}, 'BBB - 3A District 15': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-15', 'id': 'af069345-ef3b-4827-8faf-dd492a60357a'}, 'BBB - 3A District 16': {'sport': 'BBB', 'path': 'basketball', 'slug': '3a-district-16', 'id': '3c3d1f30-6c99-4f19-b477-3ffa6d75435f'}, 'BBB - 4A District 1': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-1', 'id': 'f0683c0f-6f21-4542-b295-5f54379c7647'}, 'BBB - 4A District 2': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-2', 'id': 'b339b361-d12a-400e-a6eb-f61629e7bf9d'}, 'BBB - 4A District 3': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-3', 'id': '8f54364a-d5d4-4f9a-99a8-99a04b98a51f'}, 'BBB - 4A District 4': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-4', 'id': 'd7388e35-9f07-4d09-9f87-d9e4b57dc45c'}, 'BBB - 4A District 5': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-5', 'id': '211ff461-81b1-4d5d-9497-f31dd8fe1804'}, 'BBB - 4A District 6': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-6', 'id': 'f4ef1312-8f93-4630-b911-7f45154a0e15'}, 'BBB - 4A District 7': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-7', 'id': 'fa6563f8-488a-4954-b3a7-876e2965470b'}, 'BBB - 4A District 8': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-8', 'id': 'b77dc583-6a34-482b-aeac-1bbf7b7fe880'}, 'BBB - 4A District 9': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-9', 'id': '30689d21-bd63-4d2c-9705-81dfc61c4b05'}, 'BBB - 4A District 10': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-10', 'id': 'c4056e97-cd58-411f-988a-a6c6e01a57d7'}, 'BBB - 4A District 11': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-11', 'id': '86ac095b-ff8b-4ef0-b82e-cb5c24d55d81'}, 'BBB - 4A District 12': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-12', 'id': 'ae215b2a-afb6-48e8-948c-6b5ecdc2d3aa'}, 'BBB - 4A District 13': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-13', 'id': '1c05a00e-6669-4627-b40a-6b9a86107bfa'}, 'BBB - 4A District 14': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-14', 'id': '6d30c89e-f586-410e-aea6-77ca28c68e52'}, 'BBB - 4A District 15': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-15', 'id': '1e35f80b-9043-47f8-9f4f-371fc493eb8a'}, 'BBB - 4A District 16': {'sport': 'BBB', 'path': 'basketball', 'slug': '4a-district-16', 'id': '12550db5-4f9f-477f-87eb-f7b27f6b7b33'}, 'BBB - Division II-A East District 1': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-a-east-district-1', 'id': 'd508c077-0f20-484a-bd0e-78c5f9d97848'}, 'BBB - Division II-A East District 2': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-a-east-district-2', 'id': '1c15a79d-e8fa-47d3-abf8-eabd13860e10'}, 'BBB - Division II-A Middle District 3': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-a-middle-district-3', 'id': 'b5036bc2-6359-4c8e-ae93-f9be93ac615d'}, 'BBB - Division II-A Middle District 4': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-a-middle-district-4', 'id': '479c651f-b483-4c66-880b-d176f2413581'}, 'BBB - Division II-A West District 5': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-a-west-district-5', 'id': '9f3b8558-5292-4173-9a78-02c87ae87a04'}, 'BBB - Division II-A West District 6': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-a-west-district-6', 'id': 'cb4d75a9-e232-4405-bb0f-c83badc6c1d8'}, 'BBB - Division II-AA East': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-aa-east', 'id': 'bb4c8b29-5d2d-4eeb-ab0d-87d05cb26f40'}, 'BBB - Division II-AA Middle': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-aa-middle', 'id': 'e40d3d4d-52c1-4610-a0a4-a58253112db0'}, 'BBB - Division II-AA West': {'sport': 'BBB', 'path': 'basketball', 'slug': 'division-ii-aa-west', 'id': '3599e094-b474-4cb8-b0f0-cf6e2dfa48fc'}, 'BBB - Freelance': {'sport': 'BBB', 'path': 'basketball', 'slug': 'freelance', 'id': 'f62e616d-fac3-40b1-9b91-64d7032e9017'}, 'BBB - Mid South HomeSchool': {'sport': 'BBB', 'path': 'basketball', 'slug': 'mid-south-homeschool', 'id': '9d70da97-ad2d-41a5-9b17-12a078af179d'}, 'BBB - Middle Tennessee - North': {'sport': 'BBB', 'path': 'basketball', 'slug': 'middle-tennessee-north', 'id': 'c3a0e192-3181-4b8c-9537-a24142dfc3bd'}, 'BBB - Middle Tennessee - South': {'sport': 'BBB', 'path': 'basketball', 'slug': 'middle-tennessee-south', 'id': 'a13893e2-48ab-43a6-9204-9b3d27802f6f'}, 'BBB - Southern Christian': {'sport': 'BBB', 'path': 'basketball', 'slug': 'southern-christian', 'id': 'eecc4052-e1da-494a-b052-8a867be74a48'}, 'BBB - Tennessee Christian - North': {'sport': 'BBB', 'path': 'basketball', 'slug': 'tennessee-christian-north', 'id': 'ca52659f-4394-4b4b-ae56-29f443553918'}, 'BBB - Tennessee Christian - South': {'sport': 'BBB', 'path': 'basketball', 'slug': 'tennessee-christian-south', 'id': '1fc84bad-703c-4c4b-ae78-74d04768fcbd'}, 'BBB - Tennessee Private': {'sport': 'BBB', 'path': 'basketball', 'slug': 'tennessee-private', 'id': 'b1c24339-2f50-4346-8fb2-f25e650bb288'}, 'BBB - Tennessee State Independent': {'sport': 'BBB', 'path': 'basketball', 'slug': 'tennessee-state-independent', 'id': '62b93033-b971-480a-b0c8-7d9e707cde69'}, 'BBB - TSIAA North District 1': {'sport': 'BBB', 'path': 'basketball', 'slug': 'tsiaa-north-district-1', 'id': '8d04264c-5b4b-44d9-a3a8-5dba69490d19'}, 'GBB - 1A District 1': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-1', 'id': 'c03e5308-e891-4f4f-866c-5dd1667c6bc4'}, 'GBB - 1A District 2': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-2', 'id': 'e7ff6970-d269-4d6d-be00-dcab2180ccc7'}, 'GBB - 1A District 3': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-3', 'id': '006b2621-5eaa-484e-b4bc-3cb3cd7cb170'}, 'GBB - 1A District 4': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-4', 'id': 'c50779b6-5c5b-4d7d-97e6-f032cf55a50e'}, 'GBB - 1A District 5': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-5', 'id': 'd2715dd2-a977-48bf-bfbd-d1032caea0b8'}, 'GBB - 1A District 6': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-6', 'id': 'eae45b22-8f7a-47e4-a5c0-477e4d7d9913'}, 'GBB - 1A District 7': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-7', 'id': 'd6aaee68-834e-4c34-ab77-6415e3bb3317'}, 'GBB - 1A District 8': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-8', 'id': '67d02a02-d947-424f-9701-60424e41e686'}, 'GBB - 1A District 9': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-9', 'id': '4ce62b0a-e3a0-498c-87c0-81e4d81fa82c'}, 'GBB - 1A District 10': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-10', 'id': '0a6bd711-a40a-4b92-81bc-37956980b0cf'}, 'GBB - 1A District 11': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-11', 'id': '327e0cd2-6ebf-4e3d-bf13-2946c5d9b18f'}, 'GBB - 1A District 12': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-12', 'id': '95b3b240-3d40-4456-9cfe-6b725d7d2222'}, 'GBB - 1A District 13': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-13', 'id': 'ac0a5441-8ec1-4fa2-821b-04ea9c4bc0d8'}, 'GBB - 1A District 14': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-14', 'id': 'ba83c795-2cef-499f-bcb4-549966e54189'}, 'GBB - 1A District 15': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-15', 'id': '2137d45d-4788-4f67-9bf0-52c871c9e6d4'}, 'GBB - 1A District 16': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '1a-district-16', 'id': 'ab00cb7b-b277-4bea-889c-7a71bc44501d'}, 'GBB - 2A District 1': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-1', 'id': 'a96496c0-d03a-4847-9d53-612d6e775a18'}, 'GBB - 2A District 2': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-2', 'id': 'db38668d-7e58-4fbe-9d76-a4b0260d102b'}, 'GBB - 2A District 3': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-3', 'id': '42cf98ee-76dc-4ecc-add2-985d63dac3bf'}, 'GBB - 2A District 4': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-4', 'id': '3f92fad1-a3c6-477a-9ab6-93fa79625d56'}, 'GBB - 2A District 5': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-5', 'id': 'e26858e5-2858-4233-a1d6-f9adb90bb689'}, 'GBB - 2A District 6': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-6', 'id': '54fd8198-60c5-4005-9787-47b345ed8be1'}, 'GBB - 2A District 7': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-7', 'id': '2deeb2c7-7813-44f3-b01e-b675773102b6'}, 'GBB - 2A District 8': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-8', 'id': '388c0207-9df9-457a-bc2f-0bceae6b68d5'}, 'GBB - 2A District 9': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-9', 'id': '5a988e6b-656a-4e95-b5d2-00240ac9d23b'}, 'GBB - 2A District 10': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-10', 'id': '14f473f9-5dc6-44ce-a1e7-86916a787244'}, 'GBB - 2A District 11': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-11', 'id': '1c30aadd-1763-48d8-a577-a571dd6c1771'}, 'GBB - 2A District 12': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-12', 'id': '3ea792c9-654a-4182-ac83-5e43fd667e59'}, 'GBB - 2A District 13': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-13', 'id': 'b73f2ce0-bbef-44ac-8c75-71ca585f6a69'}, 'GBB - 2A District 14': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-14', 'id': '7524a915-6af2-4f19-a0cb-0add942d53c3'}, 'GBB - 2A District 15': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-15', 'id': 'd6f8e2ec-c23e-4261-b08e-c1267a41fa8b'}, 'GBB - 2A District 16': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '2a-district-16', 'id': 'a993a108-5929-40af-b20d-76ca05c06b61'}, 'GBB - 3A District 1': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-1', 'id': '16095e16-39be-4b95-8cad-04114474fef2'}, 'GBB - 3A District 2': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-2', 'id': '85dfa2e5-e89b-46f6-a56a-328ec7d3601e'}, 'GBB - 3A District 3': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-3', 'id': 'fbfc14be-8d4c-4bd0-936e-2988a695431c'}, 'GBB - 3A District 4': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-4', 'id': '4b2f2cd1-261d-4b33-8d10-ffc25f364654'}, 'GBB - 3A District 5': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-5', 'id': '8a4c7f01-9241-4427-9726-5c512105a10b'}, 'GBB - 3A District 6': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-6', 'id': 'b8ee9585-369f-4cd0-8892-1d0b93f03176'}, 'GBB - 3A District 7': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-7', 'id': '3a550884-59c2-426e-88f9-afb973e53eba'}, 'GBB - 3A District 8': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-8', 'id': '16eafd92-f6be-4c7d-b60b-c376a0843e82'}, 'GBB - 3A District 9': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-9', 'id': 'd0c14997-1cba-47fe-a6ce-f05921c331c5'}, 'GBB - 3A District 10': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-10', 'id': '1b02ba97-0f0e-470e-a892-338c1b68566c'}, 'GBB - 3A District 11': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-11', 'id': 'b516b765-f3a8-4bb2-be28-6978874f1646'}, 'GBB - 3A District 12': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-12', 'id': 'a678c8d5-2212-44ea-a486-b434d2c9bf82'}, 'GBB - 3A District 13': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-13', 'id': '1a32ff16-3530-44fb-80c9-7cc1a005970c'}, 'GBB - 3A District 14': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-14', 'id': '98665718-0fad-456c-b9f9-daccb59e3229'}, 'GBB - 3A District 15': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-15', 'id': '36f2ae82-b40f-44f9-b682-ab642c39f18c'}, 'GBB - 3A District 16': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '3a-district-16', 'id': '752b95f8-146f-4672-a758-7e05cafed816'}, 'GBB - 4A District 1': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-1', 'id': '3ba4979c-1a62-473c-b850-634c2558d183'}, 'GBB - 4A District 2': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-2', 'id': '241c6a6c-31bf-4911-b7f0-f927aac8eea8'}, 'GBB - 4A District 3': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-3', 'id': 'bc4a2c4d-fd7e-4652-89d0-6b37aa93787a'}, 'GBB - 4A District 4': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-4', 'id': 'd7021828-71c5-4c13-8a1a-86a44f404a61'}, 'GBB - 4A District 5': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-5', 'id': 'cee64874-e2be-43bc-af48-9e9ec1ad9df9'}, 'GBB - 4A District 6': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-6', 'id': 'bf911046-8342-4b1d-b17d-0613edc26e69'}, 'GBB - 4A District 7': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-7', 'id': '4a703413-3931-4bcb-b23d-638c6fbeef9f'}, 'GBB - 4A District 8': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-8', 'id': '1084fccf-4957-4186-96cb-d940dc388753'}, 'GBB - 4A District 9': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-9', 'id': '837d02a5-f915-491a-acd6-c186afcd7ad2'}, 'GBB - 4A District 10': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-10', 'id': '73e4752a-260c-4f2b-956b-1d29aa63eb27'}, 'GBB - 4A District 11': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-11', 'id': 'fdd67647-25d6-40a9-a1e5-4c90a8d092d3'}, 'GBB - 4A District 12': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-12', 'id': '1573c2ce-5a2d-41a3-9dcb-78a8e31de7f4'}, 'GBB - 4A District 13': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-13', 'id': 'f30b1ee4-1b53-4d63-aa15-5cfe623ddf48'}, 'GBB - 4A District 14': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-14', 'id': '17309a4d-b52f-46bf-8eba-fc3b0eb7baa4'}, 'GBB - 4A District 15': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-15', 'id': 'c7f8d7d1-9a86-48c0-8f4b-e296d0049156'}, 'GBB - 4A District 16': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': '4a-district-16', 'id': 'a70389c2-9704-4770-9039-4fc6a780e5da'}, 'GBB - Division II-A East District 1': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-a-east-district-1', 'id': 'e849da4a-3c76-4e10-b7ba-7c0d353135a6'}, 'GBB - Division II-A East District 2': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-a-east-district-2', 'id': 'a0043251-a9a2-41f4-ad4a-272905514ad0'}, 'GBB - Division II-A Middle District 3': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-a-middle-district-3', 'id': '94a01dd7-364b-4750-b437-5d23bbf86a49'}, 'GBB - Division II-A Middle District 4': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-a-middle-district-4', 'id': 'c8595bbb-0f4e-4f95-82da-96932620e32b'}, 'GBB - Division II-A West District 5': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-a-west-district-5', 'id': 'f9d6c21d-9b27-43bf-8c04-b8e4b258ddf1'}, 'GBB - Division II-A West District 6': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-a-west-district-6', 'id': 'f6cb4056-13a7-4af6-98d7-e505dbc33e5f'}, 'GBB - Division II-AA East': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-aa-east', 'id': '58938159-b18b-4869-a668-8aa548fd16ef'}, 'GBB - Division II-AA Middle': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-aa-middle', 'id': '03c431b7-7b01-4fce-b778-7b2a278e290d'}, 'GBB - Division II-AA West': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'division-ii-aa-west', 'id': 'b84e5308-ece4-45ea-be3b-8831270a8e49'}, 'GBB - Freelance': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'freelance', 'id': '121dd4b4-08e0-4286-9c12-f38cafcbb244'}, 'GBB - Mid-South HomeSchool': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'mid-south-homeschool', 'id': '9e5a0d9b-a7f2-47ea-a887-91f6803a951b'}, 'GBB - Tennessee Christian': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'tennessee-christian', 'id': '2a366e55-b9f8-4b5c-8776-c5d94aa0bc46'}, 'GBB - Tennessee State Independent': {'sport': 'GBB', 'path': 'basketball/girls', 'slug': 'tennessee-state-independent', 'id': 'd528dd0b-bacf-4f4c-ac1c-d3bd6cfe0edd'}, 'BASE - 1A District 1': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-1', 'id': '62368851-950f-4ddf-b3ab-c0e7d7f15e0e'}, 'BASE - 1A District 2': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-2', 'id': 'c27364bf-2237-4c0a-b494-62465dccdafb'}, 'BASE - 1A District 3': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-3', 'id': '1c1e9c58-104a-4391-bf35-5c962173b2e7'}, 'BASE - 1A District 4': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-4', 'id': '2ae8325a-8bad-4b31-ba8e-636ce164798d'}, 'BASE - 1A District 5': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-5', 'id': 'cc1784e5-c920-4ecb-af99-df9e7b66fd31'}, 'BASE - 1A District 6': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-6', 'id': 'aeb474d3-0fff-4e49-bb5b-5cfe19410ac4'}, 'BASE - 1A District 7': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-7', 'id': 'f557fc7f-a34f-4b07-8a22-5b38e0221e60'}, 'BASE - 1A District 8': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-8', 'id': '18d23abb-8d11-484c-b5a1-0dc52f52e43e'}, 'BASE - 1A District 9': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-9', 'id': '22891a85-14a9-46c8-a9bc-d0efab8acade'}, 'BASE - 1A District 10': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-10', 'id': '7e4fabcc-e612-4cd1-a1fd-16f8921cc23b'}, 'BASE - 1A District 11': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-11', 'id': '40f0bef2-4a3d-4498-8fb5-b0d93a97b7a9'}, 'BASE - 1A District 12': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-12', 'id': '57fc0e7f-3310-41e8-b9a1-13c3d6eb0790'}, 'BASE - 1A District 13': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-13', 'id': '75ffba84-0e2b-4067-9fe4-02aa8b5755a8'}, 'BASE - 1A District 14': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-14', 'id': 'cb37b43f-1088-4736-8a35-687060046ab6'}, 'BASE - 1A District 15': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-15', 'id': '4d415e0a-e9c1-4ae6-9020-c684fa6cbde9'}, 'BASE - 1A District 16': {'sport': 'BASE', 'path': 'baseball', 'slug': '1a-district-16', 'id': '03cc16ac-c384-4ccc-8f4a-839066d5dcda'}, 'BASE - 2A District 1': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-1', 'id': 'd1793fd0-7e14-4629-bb96-47a02ba9338d'}, 'BASE - 2A District 2': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-2', 'id': '2afbb407-7b24-470b-8569-d82572bebe8c'}, 'BASE - 2A District 3': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-3', 'id': '45d9f17c-535c-4dfe-8982-962c9752a2c0'}, 'BASE - 2A District 4': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-4', 'id': '6551c5fe-16a4-4006-b09f-63230049b2cc'}, 'BASE - 2A District 5': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-5', 'id': '59bdf18b-7b65-4427-a712-58470b29ad5e'}, 'BASE - 2A District 6': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-6', 'id': '739bbf3d-c015-4919-891d-e8de824cf541'}, 'BASE - 2A District 7': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-7', 'id': '6390c1c4-afc6-4eb4-867c-67d60627ef65'}, 'BASE - 2A District 8': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-8', 'id': '3f8e3d16-cf57-4395-9b12-cf0348ea39d1'}, 'BASE - 2A District 9': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-9', 'id': '10437c3d-cbe4-4fc6-bf9e-7ef7b0926f3f'}, 'BASE - 2A District 10': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-10', 'id': '66fe20f0-5951-4204-993c-4b72c7ed0e15'}, 'BASE - 2A District 11': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-11', 'id': 'c02b3fdb-5819-4444-95ed-e9c011a03c0d'}, 'BASE - 2A District 12': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-12', 'id': '321f0ceb-ee6b-4ee0-879b-ff2087264296'}, 'BASE - 2A District 13': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-13', 'id': '5e91c176-02d2-4542-ba89-d0439243869e'}, 'BASE - 2A District 14': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-14', 'id': 'ff7cfaaf-de2a-4a6a-87c9-17da5fd594cb'}, 'BASE - 2A District 15': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-15', 'id': '5d90849f-cd51-4b22-8e42-9ff83e3dc318'}, 'BASE - 2A District 16': {'sport': 'BASE', 'path': 'baseball', 'slug': '2a-district-16', 'id': '0d62cfb9-1561-498e-a611-7bdd23315167'}, 'BASE - 3A District 1': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-1', 'id': '1cfc432b-c321-4a7a-9643-ab9705caa7bc'}, 'BASE - 3A District 2': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-2', 'id': '0739ca94-80df-4290-a4c3-5262ac7a52b3'}, 'BASE - 3A District 3': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-3', 'id': 'f96dce58-c861-46e0-8c39-bd8279743088'}, 'BASE - 3A District 4': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-4', 'id': 'a63eb025-57c3-4a3a-b991-ff76a2cdcd71'}, 'BASE - 3A District 5': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-5', 'id': 'af20d2ac-4e9c-4aaa-b544-62f600049976'}, 'BASE - 3A District 6': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-6', 'id': 'c6ca25f4-f9b9-4bb4-879e-16d7e6e6a002'}, 'BASE - 3A District 7': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-7', 'id': '6603958c-403c-4752-ae71-5f6e1ad0861b'}, 'BASE - 3A District 8': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-8', 'id': 'e492701b-d2e1-4763-86a9-aa9fc55444ba'}, 'BASE - 3A District 9': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-9', 'id': 'b0446f5e-4768-4ba7-b6e2-62a8d3864c29'}, 'BASE - 3A District 10': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-10', 'id': 'd84ecbe6-e749-4888-948b-4439648ed904'}, 'BASE - 3A District 11': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-11', 'id': 'db4335fd-8592-4090-a79a-a6489da1eae7'}, 'BASE - 3A District 12': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-12', 'id': '6536bb45-5eb8-449a-9bfa-973a35097a15'}, 'BASE - 3A District 13': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-13', 'id': '1bb5b191-4b1b-4c1d-b766-19d8f1553378'}, 'BASE - 3A District 14': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-14', 'id': '02625b41-e66c-4242-98c8-da18e157ae74'}, 'BASE - 3A District 15': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-15', 'id': '16e6d5d3-f416-4499-943e-d3adb43a1980'}, 'BASE - 3A District 16': {'sport': 'BASE', 'path': 'baseball', 'slug': '3a-district-16', 'id': '9bc87328-7cd1-49ba-9a31-397b0f182311'}, 'BASE - 4A District 1': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-1', 'id': 'a868eb4e-d05a-4728-b8da-59c7a6d1be0a'}, 'BASE - 4A District 2': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-2', 'id': 'beb4d44f-0535-43a1-8b32-5c4ff1381b42'}, 'BASE - 4A District 3': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-3', 'id': '52f5848b-cd4d-4506-9878-0a739935d6e9'}, 'BASE - 4A District 4': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-4', 'id': '6b32e45e-fd61-4b64-bb5c-f95e4322a66b'}, 'BASE - 4A District 5': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-5', 'id': 'b99b6f0d-9978-4a0a-b672-44e97af143a2'}, 'BASE - 4A District 6': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-6', 'id': '2fc11176-0dc2-4500-a155-a7160131e3ac'}, 'BASE - 4A District 7': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-7', 'id': '862bb5cb-2051-44b7-a882-8dc2de1d9637'}, 'BASE - 4A District 8': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-8', 'id': '21728fbf-4059-4eee-ae5f-a2af47aeb1dc'}, 'BASE - 4A District 9': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-9', 'id': '621caab1-a781-416b-82f6-aae22e66192b'}, 'BASE - 4A District 10': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-10', 'id': '6a2b9a7b-16f7-4970-ad0c-f1b032a51772'}, 'BASE - 4A District 11': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-11', 'id': '8b3ecfe0-9ceb-4d73-ae45-0189c5d96b86'}, 'BASE - 4A District 12': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-12', 'id': '92c828e8-a775-44ec-83ea-8a0d86ab6e72'}, 'BASE - 4A District 13': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-13', 'id': '11e18db6-e0c5-452f-87e0-b6c8ffa28df0'}, 'BASE - 4A District 14': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-14', 'id': '5bf8abbe-99df-48e6-9ed2-95f825c99b52'}, 'BASE - 4A District 15': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-15', 'id': 'd4705cf6-86b9-4398-87f5-2c399b839ca3'}, 'BASE - 4A District 16': {'sport': 'BASE', 'path': 'baseball', 'slug': '4a-district-16', 'id': '53814ef3-17aa-4b74-b2eb-9a1dfeebc99d'}, 'BASE - D II-A East 1': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-a-east-1', 'id': 'e719c0f1-851b-44ec-b7a4-748279514c58'}, 'BASE - D II-A East 2': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-a-east-2', 'id': '9f2e73f0-a6fb-46c0-9e74-cc77abb698ef'}, 'BASE - D II-A Middle 3': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-a-middle-3', 'id': 'a14536ac-bcc9-4e41-bb38-048727116686'}, 'BASE - D II-A Middle 4': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-a-middle-4', 'id': '062a7741-9bfd-4a79-a1f4-a9525651eebc'}, 'BASE - D II-A West 5': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-a-west-5', 'id': '17922da6-c6be-45b8-b9a7-1b4bddb3392f'}, 'BASE - D II-A West 6': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-a-west-6', 'id': 'c9ba2735-65ea-4d4d-999f-c7a853d83762'}, 'BASE - D II-AA East': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-aa-east', 'id': '939966d9-21fa-48bc-a69e-83b9d35fa900'}, 'BASE - D II-AA Middle': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-aa-middle', 'id': '6095e950-9b9a-44f9-8e89-1d48a332f19a'}, 'BASE - D II-AA West': {'sport': 'BASE', 'path': 'baseball', 'slug': 'd-ii-aa-west', 'id': 'c4a570ca-2367-4b89-8df2-204d601d8a8f'}, 'SB - 1A District 1': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-1', 'id': '94b845bb-83a4-4bd1-ac50-2e55e6004a68'}, 'SB - 1A District 2': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-2', 'id': '959a4293-c79a-4432-8101-61083f495a66'}, 'SB - 1A District 3': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-3', 'id': '7495da71-fafc-415d-b704-f22ddb7123db'}, 'SB - 1A District 4': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-4', 'id': '796eadeb-fd65-4787-ae87-f0d670a271f6'}, 'SB - 1A District 5': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-5', 'id': 'a93ad3d2-4730-4811-af44-d7857a424ec8'}, 'SB - 1A District 6': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-6', 'id': 'ab66aa77-495e-4a06-ada1-d93fff7e5a27'}, 'SB - 1A District 7': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-7', 'id': '95b8bea3-7be8-4b7e-bde7-5aaa65a255fa'}, 'SB - 1A District 8': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-8', 'id': '5ef543c0-3a7e-4f3f-bd22-ae2a3d93f2eb'}, 'SB - 1A District 9': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-9', 'id': 'e25941b3-bd28-433a-b4ea-b290cb358161'}, 'SB - 1A District 10': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-10', 'id': '67a08f3d-8734-4639-9a9c-21b8bd969aff'}, 'SB - 1A District 11': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-11', 'id': 'c0a1ef78-15b6-4384-8723-30beef898766'}, 'SB - 1A District 12': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-12', 'id': '6abcac45-2999-4fd8-8bf4-2c2ad97ecad4'}, 'SB - 1A District 13': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-13', 'id': '4de3c553-6a7e-4b36-b78f-eb15e8f27d30'}, 'SB - 1A District 14': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-14', 'id': '6fedf9e5-cb74-48f6-80b9-950d406a4c2a'}, 'SB - 1A District 15': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-15', 'id': '09eecb63-9ae8-4871-b979-9aefd696df29'}, 'SB - 1A District 16': {'sport': 'SB', 'path': 'softball', 'slug': '1a-district-16', 'id': '0735ff7a-cd3a-4816-aec3-555f4746ab54'}, 'SB - 2A District 1': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-1', 'id': 'f907094d-960a-4c41-9896-939b223f2be1'}, 'SB - 2A District 2': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-2', 'id': 'e59afdb7-a083-4e16-8b3c-491c5dee8e63'}, 'SB - 2A District 3': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-3', 'id': '128a7dbb-dc86-4c7d-9ad9-86ea705764e5'}, 'SB - 2A District 4': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-4', 'id': 'fe7139a6-b8de-4073-a809-8f6ba619c7fb'}, 'SB - 2A District 5': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-5', 'id': 'bbf7e658-353c-4810-b954-12e28a4b2d1d'}, 'SB - 2A District 6': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-6', 'id': '30ab1380-1b84-4f7d-beef-4c99ab4a01a8'}, 'SB - 2A District 7': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-7', 'id': '33d7ac98-7814-4647-a966-677283e78144'}, 'SB - 2A District 8': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-8', 'id': '243b6d1f-d0ef-447a-a718-b64168a53970'}, 'SB - 2A District 9': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-9', 'id': '4ef0739c-db1b-4937-bc13-29b90bea6501'}, 'SB - 2A District 10': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-10', 'id': '1840976c-7057-485c-9a5e-b8e0427864b4'}, 'SB - 2A District 11': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-11', 'id': 'ca7a8adb-7ca6-42d3-861d-41490955ba82'}, 'SB - 2A District 12': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-12', 'id': 'a925f22c-747c-4bd4-ae45-a19ab14668c5'}, 'SB - 2A District 13': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-13', 'id': 'ef7fc277-02c3-4d48-b76e-9f3e92d01601'}, 'SB - 2A District 14': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-14', 'id': 'bb110632-bb49-4c94-8e59-cb0c2ac012a8'}, 'SB - 2A District 15': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-15', 'id': '1de7f2d1-3347-40a4-815e-f0cff457cb23'}, 'SB - 2A District 16': {'sport': 'SB', 'path': 'softball', 'slug': '2a-district-16', 'id': '1f426bd9-663d-4339-80c1-cb6063be584b'}, 'SB - 3A District 1': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-1', 'id': 'dbb160f9-7158-4046-ba74-a09f8c45efb8'}, 'SB - 3A District 2': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-2', 'id': '7ebedbca-0c24-439f-9cbb-b97b8faac608'}, 'SB - 3A District 3': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-3', 'id': '6683a96e-9eac-4029-b43a-b4374206a16d'}, 'SB - 3A District 4': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-4', 'id': '55e22ca2-4642-4464-a3b7-d7b77e6269b2'}, 'SB - 3A District 5': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-5', 'id': '12f08745-3943-45ff-9291-9c297b192e2a'}, 'SB - 3A District 6': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-6', 'id': '528feb12-254b-4bdf-8d08-17fcace9703e'}, 'SB - 3A District 7': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-7', 'id': '3d05aa73-2ce9-4a8e-b62a-035d1efae574'}, 'SB - 3A District 8': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-8', 'id': 'b51d984e-033b-43a1-b25e-4309c5894279'}, 'SB - 3A District 9': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-9', 'id': '76e69d28-76b0-4b5b-a8bf-bd36550884b6'}, 'SB - 3A District 10': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-10', 'id': '585e888f-dc86-4d62-ac74-5e92e6e7abb2'}, 'SB - 3A District 11': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-11', 'id': 'aa281c7d-c883-4326-b721-e5fa82169689'}, 'SB - 3A District 12': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-12', 'id': '5687191d-7e25-4b9d-8737-e77cc3d815ec'}, 'SB - 3A District 13': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-13', 'id': '48e181fb-4a7c-437c-a597-65ead92342ac'}, 'SB - 3A District 14': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-14', 'id': '7f0b6c97-4c6d-40bb-907f-df8e182d1f11'}, 'SB - 3A District 15': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-15', 'id': '00610ee2-bfbd-4310-89d6-ba0702d109e9'}, 'SB - 3A District 16': {'sport': 'SB', 'path': 'softball', 'slug': '3a-district-16', 'id': 'b3f5bbcb-db12-497f-8f4d-d66a90e34dd5'}, 'SB - 4A District 1': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-1', 'id': 'a74b679f-ebd2-41d7-9d51-4aeaf7c07047'}, 'SB - 4A District 2': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-2', 'id': '3a4d2db4-71bc-41fc-b00c-b197cbf1c009'}, 'SB - 4A District 3': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-3', 'id': 'bee9e190-93fe-47f9-9fbe-4704059132f3'}, 'SB - 4A District 4': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-4', 'id': '25e5612c-2fee-49e4-955a-9fdde186547e'}, 'SB - 4A District 5': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-5', 'id': '4ad803d1-d06f-4010-a00c-ccdf6dbabda1'}, 'SB - 4A District 6': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-6', 'id': 'a3c83606-c353-4b30-b790-3c5a6457ced6'}, 'SB - 4A District 7': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-7', 'id': '70a4528d-b766-496a-9aac-32f142898bb1'}, 'SB - 4A District 8': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-8', 'id': '380b7965-a4f6-4347-a9cd-f382fa3a4dd2'}, 'SB - 4A District 9': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-9', 'id': '9db067d7-b5b4-4f28-a45d-7e1cb1e739d1'}, 'SB - 4A District 10': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-10', 'id': 'd18df3f3-2650-4c72-8f79-c056a658087e'}, 'SB - 4A District 11': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-11', 'id': 'ab4d4867-ed57-4464-97da-d57b678e1d62'}, 'SB - 4A District 12': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-12', 'id': '6670608f-0c0d-400f-9dba-7c2c060a6cf3'}, 'SB - 4A District 13': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-13', 'id': '9d019dff-1eaf-4653-89ae-5d3138ec8605'}, 'SB - 4A District 14': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-14', 'id': 'f1d04000-712a-4dc9-aa8c-9993bee4b7eb'}, 'SB - 4A District 15': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-15', 'id': 'c4170cb3-56c1-456d-95f1-b242fc7fa09d'}, 'SB - 4A District 16': {'sport': 'SB', 'path': 'softball', 'slug': '4a-district-16', 'id': '7cbffc0f-aae0-4e01-a40c-eb71471046ee'}, 'SB - A District 7': {'sport': 'SB', 'path': 'softball', 'slug': 'a-district-7', 'id': '7b84202d-ff8d-49f4-aec2-854446ecf184'}, 'SB - D II-A East 1': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-a-east-1', 'id': 'a61efd43-da6d-47ee-ba21-80402ba8d078'}, 'SB - D II-A East 2': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-a-east-2', 'id': 'd620cf13-093a-42da-8c59-e4ac6cde1f86'}, 'SB - D II-A Middle 3': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-a-middle-3', 'id': '480c51c3-d186-4f3f-9054-cf04ac75cacd'}, 'SB - D II-A Middle 4': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-a-middle-4', 'id': 'fbe9789a-f03f-4da0-ae1d-f10a4adceac5'}, 'SB - D II-A West 5': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-a-west-5', 'id': 'abd25953-c835-4959-95d1-d5ddd464aa36'}, 'SB - D II-A West 6': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-a-west-6', 'id': '9fea6f87-fdd9-41be-a05e-8b94063270e5'}, 'SB - D II-AA East': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-aa-east', 'id': '1af9109d-4414-4cd1-b316-4f314da44365'}, 'SB - D II-AA Middle': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-aa-middle', 'id': 'a3294e2a-c15d-4de8-a3a3-e3f52b994ece'}, 'SB - D II-AA West': {'sport': 'SB', 'path': 'softball', 'slug': 'd-ii-aa-west', 'id': 'a3e80868-ee77-4c95-bf29-8dff2fd96074'}}
+
+
+def main(c, ctx):
+    c.clear()
+
+    sport = str(ctx.inputs.get("sport", "FOOTBALL")).strip().upper()
+    selected_region_raw = str(ctx.inputs.get("region", "ALL REGIONS")).strip()
+    selected_region = selected_region_raw.upper()
+    selected_school = str(ctx.inputs.get("school", "ALL SCHOOLS")).strip().upper()
+
+    urls = {
+        "FOOTBALL": "https://www.maxpreps.com/tn/football/scores/",
+        "BOYS BASKETBALL": "https://www.maxpreps.com/tn/basketball/scores/",
+        "GIRLS BASKETBALL": "https://www.maxpreps.com/tn/basketball/girls/scores/",
+        "BASEBALL": "https://www.maxpreps.com/tn/baseball/scores/",
+        "SOFTBALL": "https://www.maxpreps.com/tn/softball/scores/",
+    }
+
+    url = urls.get(sport, urls["FOOTBALL"])
+
+    if sport == "FOOTBALL" and selected_region == "ALL REGIONS":
+        local = central_datetime(ctx.now.unix)
+        local_day = days_from_civil(local[0], local[1], local[2])
+        if show_upcoming_week(ctx.now.unix):
+            week_start = local_day - weekday(local_day)
+        else:
+            week_start = local_day - weekday(local_day) - 7
+        friday = civil_from_days(week_start + 4)
+        date_param = ("0" + str(friday[1]))[-2:] + "/" + ("0" + str(friday[2]))[-2:] + "/" + str(friday[0])
+        url += "?date=" + date_param
+
+    if selected_region != "ALL REGIONS":
+        district = DISTRICTS.get(selected_region_raw)
+        sport_prefixes = {
+            "FOOTBALL": "FB",
+            "BOYS BASKETBALL": "BBB",
+            "GIRLS BASKETBALL": "GBB",
+            "BASEBALL": "BASE",
+            "SOFTBALL": "SB",
+        }
+        expected_prefix = sport_prefixes.get(sport, "FB")
+
+        if district == None:
+            c.text("DISTRICT NOT FOUND", 2, 12)
+            c.text(sport, 2, 23, font="4x5")
+            return
+
+        if district["sport"] != expected_prefix:
+            c.text("DISTRICT SPORT MISMATCH", 2, 12, font="4x5")
+            c.text(sport, 2, 23, font="4x5")
+            return
+
+        url = (
+            "https://www.maxpreps.com/tn/"
+            + district["path"]
+            + "/26-27/district/"
+            + district["slug"]
+            + "/scores/?leagueid="
+            + district["id"]
+        )
+
+    response = http.get(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html",
+        },
+        ttl_seconds=300
+    )
+
+    if response["status_code"] != 200:
+        c.text("MAXPREPS UNAVAILABLE", 2, 12)
+        c.text(sport, 2, 23, font="4x5")
+        return
+
+    page_html = str(response["body"])
+    cards = page_html.split('<li class="c"')
+    games = []
+
+    school_aliases = {
+        "SHELBYVILLE CENTRAL": "SHELBYVILLE",
+        "COFFEE CO. CENTRAL": "COFFEE CO.",
+        "COLUMBIA CENTRAL": "COLUMBIA ACADEMY",
+        "MIDDLE TENNESSEE CHRISTIAN": "MTCS",
+        "JOHN OVERTON": "NASHVILLE OVERTON",
+    }
+    selected_school_match = school_aliases.get(selected_school, selected_school)
+
+    for card_part in cards[1:]:
+        card = '<li class="c"' + card_part
+
+        status = ""
+        status_pos = card.find('data-contest-state="')
+        if status_pos >= 0:
+            status_start = status_pos + len('data-contest-state="')
+            status_end = card.find('"', status_start)
+            if status_end > status_start:
+                status = card[status_start:status_end].strip().lower()
+
+        if status == "placeholder":
+            continue
+
+        link_pos = card.find('href="')
+        if link_pos < 0:
+            continue
+
+        link_start = link_pos + len('href="')
+        link_end = card.find('"', link_start)
+        if link_end <= link_start:
+            continue
+
+        game_url = card[link_start:link_end]
+
+        if "/game/" not in game_url:
+            continue
+
+        if "/inter-state/" in game_url:
+            slug_start = game_url.find("/game/") + len("/game/")
+            slug = game_url[slug_start:].split("/")[0]
+            sides = slug.split("-vs-")
+            if len(sides) != 2:
+                continue
+            if not sides[0].endswith("-tn") and not sides[1].endswith("-tn"):
+                continue
+        elif "/tn/" not in game_url:
+            continue
+
+        names = []
+        name_parts = card.split('<div class="name"')
+
+        for name_part in name_parts[1:]:
+            tag_end = name_part.find(">")
+            name_end = name_part.find("</div>")
+
+            if tag_end < 0 or name_end < 0:
+                continue
+
+            raw_name = name_part[tag_end + 1:name_end]
+            clean_name = ""
+            parts = raw_name.split("<")
+
+            for part in parts:
+                if ">" in part:
+                    clean_name += part.split(">", 1)[1]
+                elif len(parts) == 1:
+                    clean_name += part
+
+            clean_name = clean_name.replace("&amp;", "&")
+            clean_name = clean_name.replace("&#39;", "'")
+            clean_name = clean_name.replace("&quot;", '"')
+            clean_name = clean_name.strip()
+
+            if clean_name.startswith("(#") and ")" in clean_name:
+                clean_name = clean_name.split(")", 1)[1].strip()
+
+            names.append(clean_name)
+
+        if len(names) < 2:
+            continue
+
+        team1 = names[0]
+        team2 = names[1]
+        scores = []
+        score_search = 0
+        for _ in range(2):
+            score_pos = card.find('<div class="score"', score_search)
+            if score_pos < 0:
+                break
+            score_tag_end = card.find(">", score_pos)
+            score_end = card.find("</div>", score_tag_end)
+            if score_tag_end < 0 or score_end < 0:
+                break
+            scores.append(card[score_tag_end + 1:score_end].strip())
+            score_search = score_end + 6
+        score1 = scores[0] if len(scores) > 0 else ""
+        score2 = scores[1] if len(scores) > 1 else ""
+
+        if team1 == "" or team2 == "":
+            continue
+
+        if team1.upper() in ("TBA", "VARSITY OPPONENT"):
+            continue
+        if team2.upper() in ("TBA", "VARSITY OPPONENT"):
+            continue
+
+        if selected_school != "ALL SCHOOLS":
+            if selected_school_match != team1.strip().upper() and selected_school_match != team2.strip().upper():
+                continue
+
+        date_label = ""
+        for part in game_url.split("/"):
+            if part.count("-") == 2 and len(part) >= 8:
+                date_label = part
+                break
+
+        details = ""
+        details_pos = card.find('<div class="details"')
+        if details_pos >= 0:
+            details_tag_end = card.find(">", details_pos)
+            details_end = card.find("</div>", details_tag_end)
+            if details_tag_end >= 0 and details_end > details_tag_end:
+                details = card[details_tag_end + 1:details_end]
+                details = details.replace("<span>", "").replace("</span>", "")
+                details = details.strip()
+
+        if status == "boxscore" and "final" in details.lower():
+            status = "final"
+        games.append({
+            "team1": team1,
+            "team2": team2,
+            "score1": score1,
+            "score2": score2,
+            "status": status,
+            "date": date_label,
+            "details": details,
+        })
+
+
+    local = central_datetime(ctx.now.unix)
+    local_day = days_from_civil(local[0], local[1], local[2])
+
+    if sport == "FOOTBALL":
+        if show_upcoming_week(ctx.now.unix):
+            week_start = local_day - weekday(local_day)
+        else:
+            week_start = local_day - weekday(local_day) - 7
+
+        display_dates = []
+        for offset in range(7):
+            parts = civil_from_days(week_start + offset)
+            date_text = ("0" + str(parts[1]))[-2:] + "-" + ("0" + str(parts[2]))[-2:] + "-" + str(parts[0])
+            display_dates.append(date_text)
+    else:
+        display_day = local_day if local[3] >= 12 else local_day - 1
+        parts = civil_from_days(display_day)
+        display_date = ("0" + str(parts[1]))[-2:] + "-" + ("0" + str(parts[2]))[-2:] + "-" + str(parts[0])
+        display_dates = [display_date]
+
+    filtered_games = []
+    for item in games:
+        if item["date"] in display_dates:
+            filtered_games.append(item)
+    games = filtered_games
+
+    if len(games) == 0:
+        c.text("NO GAMES FOUND", 2, 12)
+        c.text(sport, 2, 23, font="4x5")
+        return
+
+    page_index = int(ctx.now.unix // 60) % len(games)
+    game = games[page_index]
+
+    status = game["status"]
+    color1 = "#FFFFFF"
+    color2 = "#FFFFFF"
+    if status == "final" and game["score1"] != "" and game["score2"] != "":
+        if int(game["score1"]) > int(game["score2"]):
+            color1 = "#00FF00"
+        elif int(game["score2"]) > int(game["score1"]):
+            color2 = "#00FF00"
+
+    _draw_team(c, game["team1"], 0, color1)
+    _draw_team(c, game["team2"], 16, color2)
+
+    if game["score1"] != "":
+        c.text(game["score1"], 106, 4, font="5x7b", color=color1)
+    if game["score2"] != "":
+        c.text(game["score2"], 106, 20, font="5x7b", color=color2)
+
+    sport_labels = {
+        "FOOTBALL": "FB",
+        "BOYS BASKETBALL": "BBB",
+        "GIRLS BASKETBALL": "GBB",
+        "BASEBALL": "BASE",
+        "SOFTBALL": "SB",
+    }
+    sport_label = sport_labels.get(sport, sport)
+
+    date_parts = game["date"].split("-")
+    date_short = game["date"]
+    if len(date_parts) == 3:
+        date_short = date_parts[0] + "-" + date_parts[1]
+
+    footer = sport_label + " " + date_short
+    if game["details"] != "":
+        footer = footer + " " + game["details"]
+
+    if status == "final":
+        footer = "FINAL " + sport_label + " " + date_short
+    elif status == "in-progress":
+        footer = "LIVE " + sport_label + " " + date_short
+
+    c.text(footer[:28], 20, 27, font="4x5", color="#888888")
+
+def days_from_civil(y, m, d):
+    yy = y - 1 if m <= 2 else y
+    era = (yy if yy >= 0 else yy - 399) // 400
+    yoe = yy - era * 400
+    doy = (153 * (m + (-3 if m > 2 else 9)) + 2) // 5 + d - 1
+    doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
+    return era * 146097 + doe - 719468
+
+
+def civil_from_days(z):
+    zz = z + 719468
+    era = (zz if zz >= 0 else zz - 146096) // 146097
+    doe = zz - era * 146097
+    yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    y = yoe + era * 400
+    doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp = (5 * doy + 2) // 153
+    d = doy - (153 * mp + 2) // 5 + 1
+    m = mp + (3 if mp < 10 else -9)
+    return [y + 1 if m <= 2 else y, m, d]
+
+
+def weekday(z):
+    return (z + 3) % 7
+
+
+def nth_sunday(y, m, n):
+    first = 1 + ((6 - weekday(days_from_civil(y, m, 1))) % 7)
+    return first + 7 * (n - 1)
+
+
+def _utcmin(y, m, d, hh):
+    return days_from_civil(y, m, d) * 1440 + hh * 60
+
+
+def central_offset_minutes(unix_seconds):
+    t = unix_seconds // 60
+    y = civil_from_days(t // 1440)[0]
+    standard = -360
+    start = _utcmin(y, 3, nth_sunday(y, 3, 2), 2) - standard
+    end = _utcmin(y, 11, nth_sunday(y, 11, 1), 2) - standard - 60
+    return standard + 60 if start <= t and t < end else standard
+
+
+def central_datetime(unix_seconds):
+    local_minutes = unix_seconds // 60 + central_offset_minutes(unix_seconds)
+    day = local_minutes // 1440
+    year, month, date = civil_from_days(day)
+    minute_of_day = local_minutes % 1440
+    return [year, month, date, minute_of_day // 60, minute_of_day % 60, weekday(day)]
+
+
+
+def show_upcoming_week(unix_seconds):
+    local = central_datetime(unix_seconds)
+    day = local[5]
+    hour = local[3]
+
+    return day > 2 or (day == 2 and hour >= 8)
+
+
+def _tssaa_clean(raw):
+    out = ""
+    parts = raw.split("<")
+
+    for i in range(len(parts)):
+        part = parts[i]
+        if i == 0:
+            out += part
+        else:
+            gt = part.find(">")
+            if gt >= 0:
+                out += part[gt + 1:]
+
+    out = out.replace("&nbsp;", " ")
+    out = out.replace("&#160;", " ")
+    out = out.replace("&amp;", "&")
+    out = out.replace("&#39;", "'")
+    out = out.replace("&#x27;", "'")
+    return " ".join(out.lstrip(">").split()).strip()
+
+
+def _tssaa_number(value):
+    if value == "" or not value.isdigit():
+        return None
+    return int(value)
+
+
+def _tssaa_team_score(raw):
+    clean = _tssaa_clean(raw).replace("*", "")
+    for day in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"):
+        clean = clean.replace("(" + day + ")", "")
+    clean = " ".join(clean.split()).strip()
+    parts = clean.split()
+    if len(parts) < 2:
+        return [clean, None]
+
+    score = _tssaa_number(parts[-1])
+    if score == None:
+        return [clean, None]
+
+    return [" ".join(parts[:-1]), score]
+
+
+def _tssaa_parse_row(row, region):
+    if "<strong" in row:
+        start = row.find("<strong")
+        tag_end = row.find(">", start)
+        tag_close = row.find("</strong>", tag_end)
+
+        if start < 0 or tag_end < 0 or tag_close < 0:
+            return None
+
+        first = _tssaa_team_score(row[tag_end + 1:tag_close])
+        second = _tssaa_team_score(row[tag_close + 9:])
+
+        if first[1] == None or second[1] == None:
+            return None
+
+        return {
+            "region": region,
+            "status": "FINAL",
+            "team1": first[0],
+            "score1": first[1],
+            "team2": second[0].lstrip(", "),
+            "score2": second[1],
+        }
+
+    clean = _tssaa_clean(row)
+    lower = clean.lower()
+    at = lower.find(" at ")
+
+    if at < 0:
+        return None
+
+    away = clean[:at].strip()
+    home = clean[at + 4:].strip()
+
+    if away == "" or home == "":
+        return None
+
+    return {
+        "region": region,
+        "status": "UPCOMING",
+        "team1": away,
+        "team2": home,
+        "score1": None,
+        "score2": None,
+    }
+
+
+def _tssaa_parse_region(html, region):
+    lower = html.lower()
+    heading = ">" + region.lower() + "</h4>"
+    heading_pos = lower.find(heading)
+
+    if heading_pos < 0:
+        return []
+
+    table_start = lower.find("<table", heading_pos)
+    if table_start < 0:
+        return []
+
+    table_end = lower.find("</table>", table_start)
+    if table_end < 0:
+        return []
+
+    table = html[table_start:table_end]
+    games = []
+
+    for part in table.split("<tr")[1:]:
+        row_end = part.lower().find("</tr>")
+        if row_end < 0:
+            continue
+
+        row = part[:row_end]
+        game = _tssaa_parse_row(row, region)
+
+        if game != None:
+            games.append(game)
+
+    return games

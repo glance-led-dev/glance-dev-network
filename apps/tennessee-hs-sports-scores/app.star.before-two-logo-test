@@ -1,0 +1,82 @@
+def main(c, ctx):
+    c.clear()
+
+    url = "https://d2sgc57sw7l730.cloudfront.net/realtime/app/app.f97afd9d62f7fe39b99c.bundle.js"
+
+    response = http.get(
+        url,
+        headers={"Accept": "application/javascript"},
+        params={},
+        ttl_seconds=30
+    )
+
+    body = str(response["body"])
+
+    section = body[488000:488800]
+
+    c.text(section[0:35], 2, 2)
+    c.text(section[35:70], 2, 11)
+    c.text(section[70:105], 2, 20)
+def days_from_civil(y, m, d):
+    yy = y - 1 if m <= 2 else y
+    era = (yy if yy >= 0 else yy - 399) // 400
+    yoe = yy - era * 400
+    doy = (153 * (m + (-3 if m > 2 else 9)) + 2) // 5 + d - 1
+    doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
+    return era * 146097 + doe - 719468
+
+
+def civil_from_days(z):
+    zz = z + 719468
+    era = (zz if zz >= 0 else zz - 146096) // 146097
+    doe = zz - era * 146097
+    yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    y = yoe + era * 400
+    doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp = (5 * doy + 2) // 153
+    d = doy - (153 * mp + 2) // 5 + 1
+    m = mp + (3 if mp < 10 else -9)
+    return [y + 1 if m <= 2 else y, m, d]
+
+
+def weekday(z):
+    return (z + 3) % 7
+
+
+def nth_sunday(y, m, n):
+    first = 1 + ((6 - weekday(days_from_civil(y, m, 1))) % 7)
+    return first + 7 * (n - 1)
+
+
+def _utcmin(y, m, d, hh):
+    return days_from_civil(y, m, d) * 1440 + hh * 60
+
+
+def central_offset_minutes(unix_seconds):
+    t = unix_seconds // 60
+    y = civil_from_days(t // 1440)[0]
+    standard = -360
+    start = _utcmin(y, 3, nth_sunday(y, 3, 2), 2) - standard
+    end = _utcmin(y, 11, nth_sunday(y, 11, 1), 2) - standard - 60
+    return standard + 60 if start <= t and t < end else standard
+
+
+def central_datetime(unix_seconds):
+    local_minutes = unix_seconds // 60 + central_offset_minutes(unix_seconds)
+    day = local_minutes // 1440
+    year, month, date = civil_from_days(day)
+    minute_of_day = local_minutes % 1440
+    return [year, month, date, minute_of_day // 60, minute_of_day % 60, weekday(day)]
+
+
+
+def show_upcoming_week(unix_seconds):
+    local = central_datetime(unix_seconds)
+    day = local[5]
+    hour = local[3]
+
+    if day == 2 and hour >= 8:
+        return True
+    if day == 3 or day == 4 or day == 5:
+        return True
+    return False

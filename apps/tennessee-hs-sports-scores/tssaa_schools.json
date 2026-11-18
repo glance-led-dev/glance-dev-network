@@ -1,0 +1,1790 @@
+[
+  {
+    "id": "1",
+    "name": "Adamsville High School (Adamsville, TN)"
+  },
+  {
+    "id": "3",
+    "name": "Alcoa High School (Alcoa, TN)"
+  },
+  {
+    "id": "6",
+    "name": "Alvin C. York Institute (Jamestown, TN)"
+  },
+  {
+    "id": "7",
+    "name": "Anderson Co. High School (Clinton, TN)"
+  },
+  {
+    "id": "200",
+    "name": "Annoor Academy of Knoxville (Knoxville, TN)"
+  },
+  {
+    "id": "8",
+    "name": "Antioch High School (Antioch, TN)"
+  },
+  {
+    "id": "180",
+    "name": "Apostolic Christian Academy (Maryville, TN)"
+  },
+  {
+    "id": "5",
+    "name": "Arlington High School (Arlington, TN)"
+  },
+  {
+    "id": "13",
+    "name": "Austin-East High School (Knoxville, TN)"
+  },
+  {
+    "id": "15",
+    "name": "Bartlett High School (Bartlett, TN)"
+  },
+  {
+    "id": "197",
+    "name": "Battle Creek High School (Spring Hill, TN)"
+  },
+  {
+    "id": "16",
+    "name": "Battle Ground Academy (Franklin, TN)"
+  },
+  {
+    "id": "507",
+    "name": "Baylor School (Chattanooga, TN)"
+  },
+  {
+    "id": "17",
+    "name": "Bearden High School (Knoxville, TN)"
+  },
+  {
+    "id": "19",
+    "name": "Beech Senior High School (Hendersonville, TN)"
+  },
+  {
+    "id": "25",
+    "name": "Berean Christian School (Knoxville, TN)"
+  },
+  {
+    "id": "27",
+    "name": "Big Picture High School (Nashville, TN)"
+  },
+  {
+    "id": "33",
+    "name": "Blackman High School (Murfreesboro, TN)"
+  },
+  {
+    "id": "26",
+    "name": "Bledsoe Co. High School (Pikeville, TN)"
+  },
+  {
+    "id": "57",
+    "name": "Bluff City High School (Memphis, TN)"
+  },
+  {
+    "id": "47",
+    "name": "Bolivar Central High School (Bolivar, TN)"
+  },
+  {
+    "id": "28",
+    "name": "Bolton High School (Arlington, TN)"
+  },
+  {
+    "id": "14",
+    "name": "Booker T. Washington High School (Memphis, TN)"
+  },
+  {
+    "id": "35",
+    "name": "Bowie Reading & Learning Center (Memphis, TN)"
+  },
+  {
+    "id": "29",
+    "name": "Boyd Buchanan High School (Chattanooga, TN)"
+  },
+  {
+    "id": "30",
+    "name": "Bradford High School (Bradford, TN)"
+  },
+  {
+    "id": "31",
+    "name": "Bradley Central High School (Cleveland, TN)"
+  },
+  {
+    "id": "34",
+    "name": "Brainerd High School (Chattanooga, TN)"
+  },
+  {
+    "id": "36",
+    "name": "Brentwood Academy (Brentwood, TN)"
+  },
+  {
+    "id": "37",
+    "name": "Brentwood High School (Brentwood, TN)"
+  },
+  {
+    "id": "38",
+    "name": "Briarcrest Christian School (Eads, TN)"
+  },
+  {
+    "id": "753",
+    "name": "Brighton High School (Brighton, TN)"
+  },
+  {
+    "id": "39",
+    "name": "Camden Central High School (Camden, TN)"
+  },
+  {
+    "id": "40",
+    "name": "Campbell Co. High School (Jacksboro, TN)"
+  },
+  {
+    "id": "45",
+    "name": "Cane Ridge High School (Antioch, TN)"
+  },
+  {
+    "id": "41",
+    "name": "Cannon Co. High School (Woodbury, TN)"
+  },
+  {
+    "id": "96",
+    "name": "Career Magnet Academy (Knoxville, TN)"
+  },
+  {
+    "id": "18",
+    "name": "Carroll Academy (Huntingdon, TN)"
+  },
+  {
+    "id": "42",
+    "name": "Carter High School (Strawberry Plains, TN)"
+  },
+  {
+    "id": "44",
+    "name": "Cascade High School (Bell Buckle, TN)"
+  },
+  {
+    "id": "752",
+    "name": "Centennial High School (Franklin, TN)"
+  },
+  {
+    "id": "198",
+    "name": "Chapel Hill Christian Academy (Clarksville, TN)"
+  },
+  {
+    "id": "585",
+    "name": "Chatt. School for the Arts & Sciences (Chattanooga, TN)"
+  },
+  {
+    "id": "59",
+    "name": "Chattanooga Central High School (Harrison, TN)"
+  },
+  {
+    "id": "184",
+    "name": "Chattanooga Charter School of Excellence High (Chattanooga, TN)"
+  },
+  {
+    "id": "60",
+    "name": "Chattanooga Christian School (Chattanooga, TN)"
+  },
+  {
+    "id": "61",
+    "name": "Chattanooga High Center for Creative Arts (Chattanooga, TN)"
+  },
+  {
+    "id": "174",
+    "name": "Chattanooga Preparatory School (Chattanooga, TN)"
+  },
+  {
+    "id": "593",
+    "name": "Chattanooga School for the Liberal Arts (Chattanooga, TN)"
+  },
+  {
+    "id": "62",
+    "name": "Cheatham Co. Central High School (Ashland City, TN)"
+  },
+  {
+    "id": "64",
+    "name": "Cherokee High School (Rogersville, TN)"
+  },
+  {
+    "id": "65",
+    "name": "Chester Co. High School (Henderson, TN)"
+  },
+  {
+    "id": "594",
+    "name": "Christ Presbyterian Academy (Nashville, TN)"
+  },
+  {
+    "id": "68",
+    "name": "Christian Academy of Knoxville (Knoxville, TN)"
+  },
+  {
+    "id": "69",
+    "name": "Christian Brothers High School (Memphis, TN)"
+  },
+  {
+    "id": "70",
+    "name": "Chuckey-Doak High School (Afton, TN)"
+  },
+  {
+    "id": "72",
+    "name": "City University School of Liberal Arts (Memphis, TN)"
+  },
+  {
+    "id": "71",
+    "name": "Claiborne High School (New Tazewell, TN)"
+  },
+  {
+    "id": "73",
+    "name": "Clarkrange High School (Clarkrange, TN)"
+  },
+  {
+    "id": "74",
+    "name": "Clarksburg High School (Huntingdon, TN)"
+  },
+  {
+    "id": "75",
+    "name": "Clarksville Academy (Clarksville, TN)"
+  },
+  {
+    "id": "76",
+    "name": "Clarksville High School (Clarksville, TN)"
+  },
+  {
+    "id": "46",
+    "name": "Clay Co. High School (Celina, TN)"
+  },
+  {
+    "id": "183",
+    "name": "Clayton-Bradley Academy (Maryville, TN)"
+  },
+  {
+    "id": "77",
+    "name": "Cleveland High School (Cleveland, TN)"
+  },
+  {
+    "id": "78",
+    "name": "Clinch High School (Sneedville, TN)"
+  },
+  {
+    "id": "80",
+    "name": "Clinton High School (Clinton, TN)"
+  },
+  {
+    "id": "81",
+    "name": "Cloudland High School (Roan Mountain, TN)"
+  },
+  {
+    "id": "82",
+    "name": "Coalfield High School (Coalfield, TN)"
+  },
+  {
+    "id": "83",
+    "name": "Cocke Co. High School (Newport, TN)"
+  },
+  {
+    "id": "51",
+    "name": "Coffee Co. Central High School (Manchester, TN)"
+  },
+  {
+    "id": "603",
+    "name": "Collegedale Academy (Collegedale, TN)"
+  },
+  {
+    "id": "84",
+    "name": "Collierville High School (Collierville, TN)"
+  },
+  {
+    "id": "86",
+    "name": "Collinwood High School (Collinwood, TN)"
+  },
+  {
+    "id": "88",
+    "name": "Columbia Academy (Columbia, TN)"
+  },
+  {
+    "id": "89",
+    "name": "Columbia Central High School (Columbia, TN)"
+  },
+  {
+    "id": "90",
+    "name": "Community High School (Unionville, TN)"
+  },
+  {
+    "id": "150",
+    "name": "Compass School - Midtown High School (Memphis, TN)"
+  },
+  {
+    "id": "87",
+    "name": "Concord Christian School (Knoxville, TN)"
+  },
+  {
+    "id": "91",
+    "name": "Cookeville High School (Cookeville, TN)"
+  },
+  {
+    "id": "93",
+    "name": "Copper Basin High School (Copperhill, TN)"
+  },
+  {
+    "id": "4",
+    "name": "Cordova High School (Cordova, TN)"
+  },
+  {
+    "id": "94",
+    "name": "Cornersville High School (Cornersville, TN)"
+  },
+  {
+    "id": "97",
+    "name": "Cosby High School (Cosby, TN)"
+  },
+  {
+    "id": "98",
+    "name": "Covington High School (Covington, TN)"
+  },
+  {
+    "id": "99",
+    "name": "Craigmont High School (Memphis, TN)"
+  },
+  {
+    "id": "103",
+    "name": "Creek Wood High School (Charlotte, TN)"
+  },
+  {
+    "id": "100",
+    "name": "Crockett Co. High School (Alamo, TN)"
+  },
+  {
+    "id": "122",
+    "name": "Crosstown High School (Memphis, TN)"
+  },
+  {
+    "id": "101",
+    "name": "Culleoka High School (Culleoka, TN)"
+  },
+  {
+    "id": "102",
+    "name": "Cumberland Co. High School (Crossville, TN)"
+  },
+  {
+    "id": "95",
+    "name": "Cumberland Gap High School (Cumberland Gap, TN)"
+  },
+  {
+    "id": "104",
+    "name": "Daniel Boone High School (Gray, TN)"
+  },
+  {
+    "id": "105",
+    "name": "David Crockett High School (Jonesborough, TN)"
+  },
+  {
+    "id": "107",
+    "name": "Davidson Academy (Nashville, TN)"
+  },
+  {
+    "id": "111",
+    "name": "Dayspring Academy (White House, TN)"
+  },
+  {
+    "id": "110",
+    "name": "DeKalb Co. High School (Smithville, TN)"
+  },
+  {
+    "id": "109",
+    "name": "Decatur Co. Riverside High School (Decaturville, TN)"
+  },
+  {
+    "id": "207",
+    "name": "Devout Academy (Memphis, TN)"
+  },
+  {
+    "id": "112",
+    "name": "Dickson Co. High School (Dickson, TN)"
+  },
+  {
+    "id": "114",
+    "name": "Dobyns Bennett High School (Kingsport, TN)"
+  },
+  {
+    "id": "116",
+    "name": "Donelson Christian Academy (Nashville, TN)"
+  },
+  {
+    "id": "211",
+    "name": "Dr. Paul L. Kelley Volunteer Academy (Knoxville, TN)"
+  },
+  {
+    "id": "119",
+    "name": "Dresden High School (Dresden, TN)"
+  },
+  {
+    "id": "120",
+    "name": "Dyer Co. High School (Newbern, TN)"
+  },
+  {
+    "id": "121",
+    "name": "Dyersburg High School (Dyersburg, TN)"
+  },
+  {
+    "id": "758",
+    "name": "E.W. Grove Junior High School (Paris, TN)"
+  },
+  {
+    "id": "175",
+    "name": "Eagleton College and Career Academy (Maryville, TN)"
+  },
+  {
+    "id": "123",
+    "name": "Eagleville High School (Eagleville, TN)"
+  },
+  {
+    "id": "130",
+    "name": "East Hamilton High School (Ooltewah, TN)"
+  },
+  {
+    "id": "124",
+    "name": "East Hickman High School (Lyles, TN)"
+  },
+  {
+    "id": "599",
+    "name": "East Nashville Magnet School (Nashville, TN)"
+  },
+  {
+    "id": "125",
+    "name": "East Ridge High School (Chattanooga, TN)"
+  },
+  {
+    "id": "126",
+    "name": "East Robertson High School (Cross Plains, TN)"
+  },
+  {
+    "id": "128",
+    "name": "Elizabethton High School (Elizabethton, TN)"
+  },
+  {
+    "id": "129",
+    "name": "Ensworth High School (Nashville, TN)"
+  },
+  {
+    "id": "132",
+    "name": "Evangelical Christian School (Cordova, TN)"
+  },
+  {
+    "id": "133",
+    "name": "Ezell-Harding Christian School (Antioch, TN)"
+  },
+  {
+    "id": "134",
+    "name": "Fairley High School (Memphis, TN)"
+  },
+  {
+    "id": "131",
+    "name": "Fairview Christian Academy (Athens, TN)"
+  },
+  {
+    "id": "135",
+    "name": "Fairview High School (Fairview, TN)"
+  },
+  {
+    "id": "145",
+    "name": "Family Christian School (Denmark, TN)"
+  },
+  {
+    "id": "137",
+    "name": "Farragut High School (Knoxville, TN)"
+  },
+  {
+    "id": "138",
+    "name": "Father Ryan High School (Nashville, TN)"
+  },
+  {
+    "id": "2",
+    "name": "Fayette Academy (Somerville, TN)"
+  },
+  {
+    "id": "139",
+    "name": "Fayette-Ware Comprehensive High School (Somerville, TN)"
+  },
+  {
+    "id": "142",
+    "name": "Fayetteville High School (Fayetteville, TN)"
+  },
+  {
+    "id": "143",
+    "name": "First Assembly Christian School (Cordova, TN)"
+  },
+  {
+    "id": "144",
+    "name": "First Baptist Academy (Powell, TN)"
+  },
+  {
+    "id": "146",
+    "name": "Forrest High School (Chapel Hill, TN)"
+  },
+  {
+    "id": "147",
+    "name": "Frank Hughes High School (Clifton, TN)"
+  },
+  {
+    "id": "199",
+    "name": "Franklin Christian Academy (Franklin, TN)"
+  },
+  {
+    "id": "149",
+    "name": "Franklin Co. High School (Winchester, TN)"
+  },
+  {
+    "id": "151",
+    "name": "Franklin High School (Franklin, TN)"
+  },
+  {
+    "id": "153",
+    "name": "Franklin Road Academy (Nashville, TN)"
+  },
+  {
+    "id": "113",
+    "name": "Frederick Douglass High School (Memphis, TN)"
+  },
+  {
+    "id": "154",
+    "name": "Freedom Preparatory Academy (Memphis, TN)"
+  },
+  {
+    "id": "158",
+    "name": "Friendship Christian School (Lebanon, TN)"
+  },
+  {
+    "id": "159",
+    "name": "Fulton High School (Knoxville, TN)"
+  },
+  {
+    "id": "160",
+    "name": "Gallatin High School (Gallatin, TN)"
+  },
+  {
+    "id": "164",
+    "name": "Gary Hardin Academy (Sevierville, TN)"
+  },
+  {
+    "id": "162",
+    "name": "Gatlinburg-Pittman High School (Gatlinburg, TN)"
+  },
+  {
+    "id": "166",
+    "name": "Germantown High School (Germantown, TN)"
+  },
+  {
+    "id": "168",
+    "name": "Gibbs High School (Corryton, TN)"
+  },
+  {
+    "id": "170",
+    "name": "Gibson Co. High School (Dyer, TN)"
+  },
+  {
+    "id": "173",
+    "name": "Giles Co. High School (Pulaski, TN)"
+  },
+  {
+    "id": "176",
+    "name": "Girls Preparatory School (Chattanooga, TN)"
+  },
+  {
+    "id": "177",
+    "name": "Gleason High School (Gleason, TN)"
+  },
+  {
+    "id": "179",
+    "name": "Glencliff High School (Nashville, TN)"
+  },
+  {
+    "id": "181",
+    "name": "Goodpasture Christian School (Madison, TN)"
+  },
+  {
+    "id": "182",
+    "name": "Gordonsville High School (Gordonsville, TN)"
+  },
+  {
+    "id": "118",
+    "name": "Grace Baptist Academy (Chattanooga, TN)"
+  },
+  {
+    "id": "185",
+    "name": "Grace Christian Academy - Franklin (Franklin, TN)"
+  },
+  {
+    "id": "187",
+    "name": "Grace Christian Academy - Knoxville (Knoxville, TN)"
+  },
+  {
+    "id": "435",
+    "name": "Grainger High School (Rutledge, TN)"
+  },
+  {
+    "id": "191",
+    "name": "Green Hill High School (Mt. Juliet, TN)"
+  },
+  {
+    "id": "188",
+    "name": "Greenback High School (Greenback, TN)"
+  },
+  {
+    "id": "189",
+    "name": "Greenbrier High School (Greenbrier, TN)"
+  },
+  {
+    "id": "190",
+    "name": "Greeneville High School (Greeneville, TN)"
+  },
+  {
+    "id": "192",
+    "name": "Greenfield High School (Greenfield, TN)"
+  },
+  {
+    "id": "193",
+    "name": "Grundy Co. High School (Coalmont, TN)"
+  },
+  {
+    "id": "196",
+    "name": "Halls High School (Halls, TN)"
+  },
+  {
+    "id": "201",
+    "name": "Hamilton Co. Collegiate High School (Chattanooga, TN)"
+  },
+  {
+    "id": "202",
+    "name": "Hamilton High School (Memphis, TN)"
+  },
+  {
+    "id": "203",
+    "name": "Hampshire High School (Hampshire, TN)"
+  },
+  {
+    "id": "205",
+    "name": "Hampton High School (Hampton, TN)"
+  },
+  {
+    "id": "206",
+    "name": "Hancock Co. High School (Sneedville, TN)"
+  },
+  {
+    "id": "208",
+    "name": "Happy Valley High School (Elizabethton, TN)"
+  },
+  {
+    "id": "209",
+    "name": "Hardin Co. High School (Savannah, TN)"
+  },
+  {
+    "id": "210",
+    "name": "Hardin Valley Academy (Knoxville, TN)"
+  },
+  {
+    "id": "212",
+    "name": "Harding Academy (Memphis, TN)"
+  },
+  {
+    "id": "214",
+    "name": "Harpeth Hall School (Nashville, TN)"
+  },
+  {
+    "id": "215",
+    "name": "Harpeth High School (Kingston Springs, TN)"
+  },
+  {
+    "id": "216",
+    "name": "Harriman High School (Harriman, TN)"
+  },
+  {
+    "id": "222",
+    "name": "Haywood High School (Brownsville, TN)"
+  },
+  {
+    "id": "223",
+    "name": "Hendersonville High School (Hendersonville, TN)"
+  },
+  {
+    "id": "226",
+    "name": "Henry Co. High School (Paris, TN)"
+  },
+  {
+    "id": "228",
+    "name": "Heritage High School (Maryville, TN)"
+  },
+  {
+    "id": "231",
+    "name": "Hickman Co. High School (Centerville, TN)"
+  },
+  {
+    "id": "232",
+    "name": "Highland Rim Academy (Cookeville, TN)"
+  },
+  {
+    "id": "233",
+    "name": "Hillcrest High School (Memphis, TN)"
+  },
+  {
+    "id": "234",
+    "name": "Hillsboro High School (Nashville, TN)"
+  },
+  {
+    "id": "237",
+    "name": "Hixson High School (Hixson, TN)"
+  },
+  {
+    "id": "241",
+    "name": "Hollis F. Price Middle College High School (Memphis, TN)"
+  },
+  {
+    "id": "48",
+    "name": "Hollow Rock-Bruceton Central High School (Bruceton, TN)"
+  },
+  {
+    "id": "242",
+    "name": "Houston Co. High School (Erin, TN)"
+  },
+  {
+    "id": "590",
+    "name": "Houston High School (Germantown, TN)"
+  },
+  {
+    "id": "245",
+    "name": "Humboldt High School (Humboldt, TN)"
+  },
+  {
+    "id": "247",
+    "name": "Hume-Fogg Academic Magnet (Nashville, TN)"
+  },
+  {
+    "id": "252",
+    "name": "Hunters Lane High School (Nashville, TN)"
+  },
+  {
+    "id": "253",
+    "name": "Huntingdon High School (Huntingdon, TN)"
+  },
+  {
+    "id": "254",
+    "name": "Huntland High School (Huntland, TN)"
+  },
+  {
+    "id": "255",
+    "name": "Hutchison School (Memphis, TN)"
+  },
+  {
+    "id": "251",
+    "name": "Independence Academy High School (Antioch, TN)"
+  },
+  {
+    "id": "434",
+    "name": "Innovation Academy of Robertson County (Springfield, TN)"
+  },
+  {
+    "id": "260",
+    "name": "Ivy Academy (Soddy-Daisy, TN)"
+  },
+  {
+    "id": "602",
+    "name": "J. Frank White Academy (Harrogate, TN)"
+  },
+  {
+    "id": "263",
+    "name": "Jackson Central Merry Early College High School (Jackson, TN)"
+  },
+  {
+    "id": "268",
+    "name": "Jackson Central-Merry High School (Jackson, TN)"
+  },
+  {
+    "id": "258",
+    "name": "Jackson Christian School (Jackson, TN)"
+  },
+  {
+    "id": "259",
+    "name": "Jackson Co. High School (Gainesboro, TN)"
+  },
+  {
+    "id": "365",
+    "name": "Jackson North Side High School (Jackson, TN)"
+  },
+  {
+    "id": "469",
+    "name": "Jackson South Side High School (Jackson, TN)"
+  },
+  {
+    "id": "250",
+    "name": "James Lawson High School (Nashville, TN)"
+  },
+  {
+    "id": "262",
+    "name": "Jefferson Co. High School (Dandridge, TN)"
+  },
+  {
+    "id": "264",
+    "name": "Jellico High School (Jellico, TN)"
+  },
+  {
+    "id": "265",
+    "name": "Jo Byrns High School (Cedar Hill, TN)"
+  },
+  {
+    "id": "266",
+    "name": "John Overton High School (Nashville, TN)"
+  },
+  {
+    "id": "267",
+    "name": "Johnson Co. High School (Mountain City, TN)"
+  },
+  {
+    "id": "249",
+    "name": "KIPP Antioch Global High School (Antioch, TN)"
+  },
+  {
+    "id": "875",
+    "name": "KIPP Memphis Collegiate School (Memphis, TN)"
+  },
+  {
+    "id": "273",
+    "name": "KIPP Nashville Collegiate High School (Nashville, TN)"
+  },
+  {
+    "id": "269",
+    "name": "Karns High School (Knoxville, TN)"
+  },
+  {
+    "id": "10",
+    "name": "Kenwood High School (Clarksville, TN)"
+  },
+  {
+    "id": "272",
+    "name": "Kingsbury High School (Memphis, TN)"
+  },
+  {
+    "id": "427",
+    "name": "Kingston High School (Kingston, TN)"
+  },
+  {
+    "id": "274",
+    "name": "Kirby High School (Memphis, TN)"
+  },
+  {
+    "id": "353",
+    "name": "Kirkwood High School (Clarksville, TN)"
+  },
+  {
+    "id": "279",
+    "name": "Knowledge Academies (Antioch, TN)"
+  },
+  {
+    "id": "277",
+    "name": "Knoxville Catholic High School (Knoxville, TN)"
+  },
+  {
+    "id": "50",
+    "name": "Knoxville Central High School (Knoxville, TN)"
+  },
+  {
+    "id": "195",
+    "name": "Knoxville Halls High School (Knoxville, TN)"
+  },
+  {
+    "id": "276",
+    "name": "L&N STEM Academy (Knoxville, TN)"
+  },
+  {
+    "id": "290",
+    "name": "LEAD Academy (Nashville, TN)"
+  },
+  {
+    "id": "282",
+    "name": "LEAD Southeast High School (Nashville, TN)"
+  },
+  {
+    "id": "587",
+    "name": "LaVergne High School (La Vergne, TN)"
+  },
+  {
+    "id": "281",
+    "name": "Lake Co. High School (Tiptonville, TN)"
+  },
+  {
+    "id": "275",
+    "name": "Lakeland Preparatory School (Lakeland, TN)"
+  },
+  {
+    "id": "280",
+    "name": "Lakeway Christian Academy (White Pine, TN)"
+  },
+  {
+    "id": "285",
+    "name": "Lausanne Collegiate School (Memphis, TN)"
+  },
+  {
+    "id": "286",
+    "name": "Lawrence Co. High School (Lawrenceburg, TN)"
+  },
+  {
+    "id": "287",
+    "name": "Lebanon High School (Lebanon, TN)"
+  },
+  {
+    "id": "288",
+    "name": "Lenoir City High School (Lenoir City, TN)"
+  },
+  {
+    "id": "289",
+    "name": "Lewis Co. High School (Hohenwald, TN)"
+  },
+  {
+    "id": "291",
+    "name": "Lexington High School (Lexington, TN)"
+  },
+  {
+    "id": "299",
+    "name": "Liberty Creek High School (Gallatin, TN)"
+  },
+  {
+    "id": "292",
+    "name": "Liberty Technology Magnet High School (Jackson, TN)"
+  },
+  {
+    "id": "293",
+    "name": "Lincoln Co. High School (Fayetteville, TN)"
+  },
+  {
+    "id": "106",
+    "name": "Lipscomb Academy (Nashville, TN)"
+  },
+  {
+    "id": "296",
+    "name": "Livingston Academy (Livingston, TN)"
+  },
+  {
+    "id": "297",
+    "name": "Lookout Valley High School (Chattanooga, TN)"
+  },
+  {
+    "id": "300",
+    "name": "Loretto High School (Loretto, TN)"
+  },
+  {
+    "id": "301",
+    "name": "Loudon High School (Loudon, TN)"
+  },
+  {
+    "id": "379",
+    "name": "Macon Christian Academy (Lafayette, TN)"
+  },
+  {
+    "id": "303",
+    "name": "Macon Co. High School (Lafayette, TN)"
+  },
+  {
+    "id": "304",
+    "name": "Madison Academic Magnet High School (Jackson, TN)"
+  },
+  {
+    "id": "306",
+    "name": "Manassas High School (Memphis, TN)"
+  },
+  {
+    "id": "308",
+    "name": "Maplewood Comprehensive High School (Nashville, TN)"
+  },
+  {
+    "id": "309",
+    "name": "Marion Co. High School (Jasper, TN)"
+  },
+  {
+    "id": "311",
+    "name": "Marshall Co. High School (Lewisburg, TN)"
+  },
+  {
+    "id": "575",
+    "name": "Martin Luther King High School (Nashville, TN)"
+  },
+  {
+    "id": "246",
+    "name": "Maryville Christian School (Maryville, TN)"
+  },
+  {
+    "id": "314",
+    "name": "Maryville High School (Maryville, TN)"
+  },
+  {
+    "id": "315",
+    "name": "Maryville Junior High School (Maryville, TN)"
+  },
+  {
+    "id": "316",
+    "name": "McCallie School (Chattanooga, TN)"
+  },
+  {
+    "id": "317",
+    "name": "McEwen High School (McEwen, TN)"
+  },
+  {
+    "id": "318",
+    "name": "McGavock High School (Nashville, TN)"
+  },
+  {
+    "id": "319",
+    "name": "McKenzie High School (McKenzie, TN)"
+  },
+  {
+    "id": "53",
+    "name": "McMinn Central High School (Englewood, TN)"
+  },
+  {
+    "id": "320",
+    "name": "McMinn Co. High School (Athens, TN)"
+  },
+  {
+    "id": "322",
+    "name": "McNairy Central High School (Selmer, TN)"
+  },
+  {
+    "id": "349",
+    "name": "Medical District High School (Memphis, TN)"
+  },
+  {
+    "id": "323",
+    "name": "Meigs Co. High School (Decatur, TN)"
+  },
+  {
+    "id": "325",
+    "name": "Melrose High School (Memphis, TN)"
+  },
+  {
+    "id": "321",
+    "name": "Memphis Academy of Science & Engineering (Memphis, TN)"
+  },
+  {
+    "id": "330",
+    "name": "Memphis Business Academy (Memphis, TN)"
+  },
+  {
+    "id": "52",
+    "name": "Memphis Central High School (Memphis, TN)"
+  },
+  {
+    "id": "327",
+    "name": "Memphis East High School (Memphis, TN)"
+  },
+  {
+    "id": "597",
+    "name": "Memphis Middle College High School (Memphis, TN)"
+  },
+  {
+    "id": "346",
+    "name": "Memphis Rise Academy (Memphis, TN)"
+  },
+  {
+    "id": "337",
+    "name": "Memphis School of Excellence (Memphis, TN)"
+  },
+  {
+    "id": "348",
+    "name": "Memphis School of Excellence - Cordova (Cordova, TN)"
+  },
+  {
+    "id": "332",
+    "name": "Memphis University School (Memphis, TN)"
+  },
+  {
+    "id": "328",
+    "name": "Merrol Hyde Magnet School (Hendersonville, TN)"
+  },
+  {
+    "id": "333",
+    "name": "Middle Tennessee Christian School (Murfreesboro, TN)"
+  },
+  {
+    "id": "334",
+    "name": "Middleton High School (Middleton, TN)"
+  },
+  {
+    "id": "335",
+    "name": "Midway High School (Kingston, TN)"
+  },
+  {
+    "id": "336",
+    "name": "Milan High School (Milan, TN)"
+  },
+  {
+    "id": "338",
+    "name": "Millington Central High School (Millington, TN)"
+  },
+  {
+    "id": "340",
+    "name": "Mitchell High School (Memphis, TN)"
+  },
+  {
+    "id": "342",
+    "name": "Monterey High School (Monterey, TN)"
+  },
+  {
+    "id": "343",
+    "name": "Montgomery Bell Academy (Nashville, TN)"
+  },
+  {
+    "id": "344",
+    "name": "Montgomery Central High School (Cunningham, TN)"
+  },
+  {
+    "id": "347",
+    "name": "Moore Co. High School (Lynchburg, TN)"
+  },
+  {
+    "id": "351",
+    "name": "Morristown-Hamblen High School East (Morristown, TN)"
+  },
+  {
+    "id": "352",
+    "name": "Morristown-Hamblen High School West (Morristown, TN)"
+  },
+  {
+    "id": "751",
+    "name": "Mt. Juliet Christian Academy (Mt. Juliet, TN)"
+  },
+  {
+    "id": "356",
+    "name": "Mt. Juliet High School (Mt. Juliet, TN)"
+  },
+  {
+    "id": "357",
+    "name": "Mt. Pleasant High School (Mt. Pleasant, TN)"
+  },
+  {
+    "id": "358",
+    "name": "Munford High School (Munford, TN)"
+  },
+  {
+    "id": "355",
+    "name": "Murfreesboro Central Magnet School (Murfreesboro, TN)"
+  },
+  {
+    "id": "360",
+    "name": "Nashville Christian School (Nashville, TN)"
+  },
+  {
+    "id": "377",
+    "name": "Nashville Collegiate Prep (Antioch, TN)"
+  },
+  {
+    "id": "331",
+    "name": "Nashville Early College High School (Nashville, TN)"
+  },
+  {
+    "id": "361",
+    "name": "Nashville School of the Arts (Nashville, TN)"
+  },
+  {
+    "id": "366",
+    "name": "Nolensville High School (Nolensville, TN)"
+  },
+  {
+    "id": "362",
+    "name": "North Greene High School (Greeneville, TN)"
+  },
+  {
+    "id": "367",
+    "name": "Northeast High School (Clarksville, TN)"
+  },
+  {
+    "id": "472",
+    "name": "Northpoint Christian School (Southaven, MS)"
+  },
+  {
+    "id": "369",
+    "name": "Northview Academy (Kodak, TN)"
+  },
+  {
+    "id": "370",
+    "name": "Northwest High School (Clarksville, TN)"
+  },
+  {
+    "id": "372",
+    "name": "Notre Dame High School (Chattanooga, TN)"
+  },
+  {
+    "id": "378",
+    "name": "Nurses Middle College Nashville (Nashville, TN)"
+  },
+  {
+    "id": "373",
+    "name": "Oak Ridge High School (Oak Ridge, TN)"
+  },
+  {
+    "id": "374",
+    "name": "Oakdale High School (Oakdale, TN)"
+  },
+  {
+    "id": "375",
+    "name": "Oakhaven High School (Memphis, TN)"
+  },
+  {
+    "id": "380",
+    "name": "Oakland High School (Murfreesboro, TN)"
+  },
+  {
+    "id": "382",
+    "name": "Obion Co. Central High School (Troy, TN)"
+  },
+  {
+    "id": "386",
+    "name": "Oliver Springs High School (Oliver Springs, TN)"
+  },
+  {
+    "id": "387",
+    "name": "Oneida High School (Oneida, TN)"
+  },
+  {
+    "id": "389",
+    "name": "Ooltewah High School (Ooltewah, TN)"
+  },
+  {
+    "id": "391",
+    "name": "Overton High School (Memphis, TN)"
+  },
+  {
+    "id": "157",
+    "name": "Page High School (Franklin, TN)"
+  },
+  {
+    "id": "395",
+    "name": "Peabody High School (Trenton, TN)"
+  },
+  {
+    "id": "397",
+    "name": "Pearl Cohn High School (Nashville, TN)"
+  },
+  {
+    "id": "398",
+    "name": "Perry Co. High School (Linden, TN)"
+  },
+  {
+    "id": "400",
+    "name": "Pickett Co. High School (Byrdstown, TN)"
+  },
+  {
+    "id": "20",
+    "name": "Pigeon Forge High School (Pigeon Forge, TN)"
+  },
+  {
+    "id": "402",
+    "name": "Pleasant View School (Memphis, TN)"
+  },
+  {
+    "id": "403",
+    "name": "Polk Co. High School (Benton, TN)"
+  },
+  {
+    "id": "404",
+    "name": "Pope Saint John Paul II Preparatory School (Hendersonville, TN)"
+  },
+  {
+    "id": "408",
+    "name": "Portland High School (Portland, TN)"
+  },
+  {
+    "id": "410",
+    "name": "Powell High School (Powell, TN)"
+  },
+  {
+    "id": "411",
+    "name": "Power Center Academy High School (Memphis, TN)"
+  },
+  {
+    "id": "409",
+    "name": "Providence Academy (Johnson City, TN)"
+  },
+  {
+    "id": "412",
+    "name": "Providence Christian Academy (Murfreesboro, TN)"
+  },
+  {
+    "id": "414",
+    "name": "Raleigh Egypt High School (Memphis, TN)"
+  },
+  {
+    "id": "413",
+    "name": "Ravenwood High School (Brentwood, TN)"
+  },
+  {
+    "id": "417",
+    "name": "RePublic High School (Nashville, TN)"
+  },
+  {
+    "id": "415",
+    "name": "Red Bank High School (Chattanooga, TN)"
+  },
+  {
+    "id": "416",
+    "name": "Red Boiling Springs High School (Red Boiling Springs, TN)"
+  },
+  {
+    "id": "407",
+    "name": "Redemption School of Worship (Powell, TN)"
+  },
+  {
+    "id": "419",
+    "name": "Rhea Co. High School (Evensville, TN)"
+  },
+  {
+    "id": "9",
+    "name": "Richard Hardy Memorial School (South Pittsburg, TN)"
+  },
+  {
+    "id": "420",
+    "name": "Richland High School (Lynnville, TN)"
+  },
+  {
+    "id": "456",
+    "name": "Ridgeview High School (Lenoir City, TN)"
+  },
+  {
+    "id": "422",
+    "name": "Ridgeway High School (Memphis, TN)"
+  },
+  {
+    "id": "423",
+    "name": "Ripley High School (Ripley, TN)"
+  },
+  {
+    "id": "49",
+    "name": "River Academy (Greeneville, TN)"
+  },
+  {
+    "id": "424",
+    "name": "Riverdale High School (Murfreesboro, TN)"
+  },
+  {
+    "id": "429",
+    "name": "Rockvale High School (Rockvale, TN)"
+  },
+  {
+    "id": "430",
+    "name": "Rockwood High School (Rockwood, TN)"
+  },
+  {
+    "id": "431",
+    "name": "Rossview High School (Clarksville, TN)"
+  },
+  {
+    "id": "479",
+    "name": "STEM Prep Academy (Nashville, TN)"
+  },
+  {
+    "id": "480",
+    "name": "STEM School of Chattanooga (Chattanooga, TN)"
+  },
+  {
+    "id": "436",
+    "name": "Sale Creek High School (Sale Creek, TN)"
+  },
+  {
+    "id": "441",
+    "name": "Samuel Everett School of Innovation (Maryville, TN)"
+  },
+  {
+    "id": "438",
+    "name": "Santa Fe High School (Santa Fe, TN)"
+  },
+  {
+    "id": "439",
+    "name": "Science Hill High School (Johnson City, TN)"
+  },
+  {
+    "id": "440",
+    "name": "Scott High School (Huntsville, TN)"
+  },
+  {
+    "id": "442",
+    "name": "Scotts Hill High School (Reagan, TN)"
+  },
+  {
+    "id": "444",
+    "name": "Sequatchie Co. High School (Dunlap, TN)"
+  },
+  {
+    "id": "600",
+    "name": "Sequoyah High School - Madisonville (Madisonville, TN)"
+  },
+  {
+    "id": "443",
+    "name": "Sequoyah High School - Soddy-Daisy (Soddy-Daisy, TN)"
+  },
+  {
+    "id": "445",
+    "name": "Sevier Co. High School (Sevierville, TN)"
+  },
+  {
+    "id": "447",
+    "name": "Seymour High School (Seymour, TN)"
+  },
+  {
+    "id": "449",
+    "name": "Sheffield High School (Memphis, TN)"
+  },
+  {
+    "id": "450",
+    "name": "Shelbyville Central High School (Shelbyville, TN)"
+  },
+  {
+    "id": "451",
+    "name": "Siegel High School (Murfreesboro, TN)"
+  },
+  {
+    "id": "453",
+    "name": "Signal Mountain High School (Signal Mountain, TN)"
+  },
+  {
+    "id": "452",
+    "name": "Silverdale Baptist Academy (Chattanooga, TN)"
+  },
+  {
+    "id": "455",
+    "name": "Skyuka Hall (Chattanooga, TN)"
+  },
+  {
+    "id": "454",
+    "name": "Smith Co. High School (Carthage, TN)"
+  },
+  {
+    "id": "457",
+    "name": "Smyrna High School (Smyrna, TN)"
+  },
+  {
+    "id": "460",
+    "name": "Soddy Daisy High School (Soddy-Daisy, TN)"
+  },
+  {
+    "id": "461",
+    "name": "Soulsville Charter School (Memphis, TN)"
+  },
+  {
+    "id": "462",
+    "name": "South Fulton High School (South Fulton, TN)"
+  },
+  {
+    "id": "465",
+    "name": "South Gibson Co. High School (Medina, TN)"
+  },
+  {
+    "id": "463",
+    "name": "South Greene High School (Greeneville, TN)"
+  },
+  {
+    "id": "467",
+    "name": "South Pittsburg High School (South Pittsburg, TN)"
+  },
+  {
+    "id": "117",
+    "name": "South-Doyle High School (Knoxville, TN)"
+  },
+  {
+    "id": "471",
+    "name": "Southwind High School (Memphis, TN)"
+  },
+  {
+    "id": "474",
+    "name": "Spring Hill High School (Columbia, TN)"
+  },
+  {
+    "id": "475",
+    "name": "Springfield High School (Springfield, TN)"
+  },
+  {
+    "id": "477",
+    "name": "St. Agnes Academy (Memphis, TN)"
+  },
+  {
+    "id": "478",
+    "name": "St. Andrews School (Sevierville, TN)"
+  },
+  {
+    "id": "12",
+    "name": "St. Benedict at Auburndale (Cordova, TN)"
+  },
+  {
+    "id": "482",
+    "name": "St. Cecilia Academy (Nashville, TN)"
+  },
+  {
+    "id": "476",
+    "name": "Station Camp High School (Gallatin, TN)"
+  },
+  {
+    "id": "485",
+    "name": "Stewart Co. High School (Dover, TN)"
+  },
+  {
+    "id": "481",
+    "name": "Stewarts Creek High School (Smyrna, TN)"
+  },
+  {
+    "id": "487",
+    "name": "Stone Memorial High School (Crossville, TN)"
+  },
+  {
+    "id": "486",
+    "name": "Stratford High School (Nashville, TN)"
+  },
+  {
+    "id": "489",
+    "name": "Sullivan East High School (Bluff City, TN)"
+  },
+  {
+    "id": "494",
+    "name": "Summertown High School (Summertown, TN)"
+  },
+  {
+    "id": "492",
+    "name": "Summit High School (Spring Hill, TN)"
+  },
+  {
+    "id": "495",
+    "name": "Sunbright High School (Sunbright, TN)"
+  },
+  {
+    "id": "496",
+    "name": "Sweetwater High School (Sweetwater, TN)"
+  },
+  {
+    "id": "497",
+    "name": "Sycamore High School (Pleasant View, TN)"
+  },
+  {
+    "id": "498",
+    "name": "Tellico Plains High School (Tellico Plains, TN)"
+  },
+  {
+    "id": "504",
+    "name": "Tennessee High School (Bristol, TN)"
+  },
+  {
+    "id": "499",
+    "name": "Tennessee Nature Academy (Nashville, TN)"
+  },
+  {
+    "id": "500",
+    "name": "Tennessee School for the Blind (Nashville, TN)"
+  },
+  {
+    "id": "502",
+    "name": "Tennessee School for the Deaf (Knoxville, TN)"
+  },
+  {
+    "id": "244",
+    "name": "The Howard School (Chattanooga, TN)"
+  },
+  {
+    "id": "509",
+    "name": "The Phoenix School (Crossville, TN)"
+  },
+  {
+    "id": "543",
+    "name": "The Webb School (Bell Buckle, TN)"
+  },
+  {
+    "id": "511",
+    "name": "Tipton Christian Academy (Covington, TN)"
+  },
+  {
+    "id": "508",
+    "name": "Tipton-Rosemark Academy (Millington, TN)"
+  },
+  {
+    "id": "515",
+    "name": "Trezevant High School (Memphis, TN)"
+  },
+  {
+    "id": "519",
+    "name": "Tri-Cities Christian Academy (Kingsport, TN)"
+  },
+  {
+    "id": "601",
+    "name": "Trinity Christian Academy (Jackson, TN)"
+  },
+  {
+    "id": "517",
+    "name": "Trousdale Co. High School (Hartsville, TN)"
+  },
+  {
+    "id": "518",
+    "name": "Tullahoma High School (Tullahoma, TN)"
+  },
+  {
+    "id": "520",
+    "name": "Tyner Academy (Chattanooga, TN)"
+  },
+  {
+    "id": "523",
+    "name": "Unaka High School (Elizabethton, TN)"
+  },
+  {
+    "id": "524",
+    "name": "Unicoi Co. High School (Erwin, TN)"
+  },
+  {
+    "id": "526",
+    "name": "Union City High School (Union City, TN)"
+  },
+  {
+    "id": "240",
+    "name": "Union Co. High School (Maynardville, TN)"
+  },
+  {
+    "id": "522",
+    "name": "University High School - Memphis (Memphis, TN)"
+  },
+  {
+    "id": "527",
+    "name": "University School (Johnson City, TN)"
+  },
+  {
+    "id": "583",
+    "name": "University School of Jackson (Jackson, TN)"
+  },
+  {
+    "id": "528",
+    "name": "University School of Nashville (Nashville, TN)"
+  },
+  {
+    "id": "529",
+    "name": "Upperman High School (Baxter, TN)"
+  },
+  {
+    "id": "521",
+    "name": "Valley Christian Academy (Riceville, TN)"
+  },
+  {
+    "id": "531",
+    "name": "Valor College Prep (Nashville, TN)"
+  },
+  {
+    "id": "530",
+    "name": "Van Buren Co. High School (Spencer, TN)"
+  },
+  {
+    "id": "533",
+    "name": "Volunteer High School (Church Hill, TN)"
+  },
+  {
+    "id": "536",
+    "name": "Walker Valley High School (Cleveland, TN)"
+  },
+  {
+    "id": "535",
+    "name": "Warren Co. High School (McMinnville, TN)"
+  },
+  {
+    "id": "54",
+    "name": "Wartburg Central High School (Wartburg, TN)"
+  },
+  {
+    "id": "538",
+    "name": "Washburn High School (Washburn, TN)"
+  },
+  {
+    "id": "539",
+    "name": "Watertown High School (Watertown, TN)"
+  },
+  {
+    "id": "541",
+    "name": "Waverly Central High School (Waverly, TN)"
+  },
+  {
+    "id": "542",
+    "name": "Wayne Co. High School (Waynesboro, TN)"
+  },
+  {
+    "id": "572",
+    "name": "Webb School of Knoxville (Knoxville, TN)"
+  },
+  {
+    "id": "544",
+    "name": "West Carroll High School (Atwood, TN)"
+  },
+  {
+    "id": "548",
+    "name": "West Creek High School (Clarksville, TN)"
+  },
+  {
+    "id": "545",
+    "name": "West Greene High School (Mosheim, TN)"
+  },
+  {
+    "id": "546",
+    "name": "West High School (Knoxville, TN)"
+  },
+  {
+    "id": "552",
+    "name": "West Ridge High School (Blountville, TN)"
+  },
+  {
+    "id": "549",
+    "name": "Westminster Academy (Memphis, TN)"
+  },
+  {
+    "id": "550",
+    "name": "Westmoreland High School (Westmoreland, TN)"
+  },
+  {
+    "id": "313",
+    "name": "Westview High School (Martin, TN)"
+  },
+  {
+    "id": "553",
+    "name": "Westwood High School (Memphis, TN)"
+  },
+  {
+    "id": "555",
+    "name": "White Co. High School (Sparta, TN)"
+  },
+  {
+    "id": "556",
+    "name": "White House Heritage High School (White House, TN)"
+  },
+  {
+    "id": "557",
+    "name": "White House High School (White House, TN)"
+  },
+  {
+    "id": "558",
+    "name": "White Station High School (Memphis, TN)"
+  },
+  {
+    "id": "559",
+    "name": "Whitehaven High School (Memphis, TN)"
+  },
+  {
+    "id": "560",
+    "name": "Whites Creek High School (Whites Creek, TN)"
+  },
+  {
+    "id": "562",
+    "name": "Whitwell High School (Whitwell, TN)"
+  },
+  {
+    "id": "564",
+    "name": "William Blount High School (Maryville, TN)"
+  },
+  {
+    "id": "565",
+    "name": "Wilson Central High School (Lebanon, TN)"
+  },
+  {
+    "id": "563",
+    "name": "Winchester Christian Academy (Winchester, TN)"
+  },
+  {
+    "id": "566",
+    "name": "Wooddale High School (Memphis, TN)"
+  },
+  {
+    "id": "573",
+    "name": "Zion Christian Academy (Columbia, TN)"
+  }
+]
