@@ -1,0 +1,747 @@
+gdn: 1
+
+id: tennessee-high-school-fb-scores
+version: "1.0.0"
+name: Tennessee High School Football
+author: Justin Morrison
+description: Statewide Tennessee high school football scores and schedules.
+category: Sports
+entry: app.star
+
+width: 128
+height: 32
+refresh: 60
+
+pages: [main]
+
+assets:
+  - adamsville.png
+  - alcoa.png
+  - anderson_co.png
+  - antioch.png
+  - bartlett.png
+  - beech.png
+  - bga.png
+  - blackman.png
+  - bledsoe_co.png
+  - bolivar_central.png
+  - bolton.png
+  - boyd_buchanan.png
+  - brentwood.png
+  - brighton.png
+  - cak.png
+  - cane_ridge.png
+  - cannon_co.png
+  - chattanooga_prep.png
+  - cheatham_co.png
+  - cherokee.png
+  - christian_brothers.png
+  - chuckey_doak.png
+  - clarksville.png
+  - clarksville_northeast.png
+  - clay_co.png
+  - cleveland.png
+  - cloudland.png
+  - coalfield.png
+  - collierville.png
+  - columbia.png
+  - concord_christian.png
+  - cookeville.png
+  - copper_basin.png
+  - cordova.png
+  - cornersville.png
+  - cosby.png
+  - covington.png
+  - cpa.png
+  - creek_wood.png
+  - crockett_co.png
+  - cumberland_gap.png
+  - david_crockett.png
+  - davidson_academy.png
+  - dickson_co.png
+  - dobyns_bennett.png
+  - dresden.png
+  - dyersburg.png
+  - eagleton.png
+  - eagleville.png
+  - east_nashville.png
+  - east_ridge.png
+  - east_robertson.png
+  - ecs.png
+  - elizabethton.png
+  - ezell_harding.png
+  - fairley.png
+  - fairview.png
+  - father_ryan.png
+  - fayette_academy.png
+  - fayetteville.png
+  - fra.png
+  - franklin.png
+  - franklin_christian.png
+  - franklin_grace.png
+  - friendship_christian.png
+  - gallatin.png
+  - gatlinburg_pittman.png
+  - germantown.png
+  - gibbs.png
+  - goodpasture.png
+  - gordonsville.png
+  - green_hill.png
+  - greenback.png
+  - greeneville.png
+  - greenfield.png
+  - grundy_co.png
+  - hampton.png
+  - happy_valley.png
+  - hardin_valley.png
+  - haywood.png
+  - hendersonville.png
+  - henry_co.png
+  - hickman_co.png
+  - hillsboro.png
+  - houston.png
+  - houston_co.png
+  - humboldt.png
+  - huntingdon.png
+  - huntland.png
+  - independence.png
+  - jackson_christian.png
+  - jackson_co.png
+  - jackson_north_side.png
+  - james_lawson.png
+  - jcm.png
+  - jefferson_co.png
+  - jellico.png
+  - jo_byrns.png
+  - jpii.png
+  - kingston.png
+  - kipp_memphis_collegiate.png
+  - kirby.png
+  - kirkwood.png
+  - knoxville_central.png
+  - knoxville_fulton.png
+  - knoxville_grace.png
+  - knoxville_halls.png
+  - knoxville_webb.png
+  - knoxville_west.png
+  - lakeland_prep.png
+  - lakeway_christian.png
+  - lausanne.png
+  - lawrence_co.png
+  - lebanon.png
+  - lexington.png
+  - liberty_creek.png
+  - lincoln_co.png
+  - livingston_academy.png
+  - loudon.png
+  - macon_co.png
+  - marion_co.png
+  - marshall_co.png
+  - maryville.png
+  - mase.png
+  - mba.png
+  - mccallie.png
+  - mcewen.png
+  - mckenzie.png
+  - mcminn_central.png
+  - mcminn_co.png
+  - meigs_co.png
+  - melrose.png
+  - memphis_business.png
+  - memphis_central.png
+  - memphis_middle_college.png
+  - memphis_overton.png
+  - memphis_westwood.png
+  - midway.png
+  - milan.png
+  - millington.png
+  - mitchell.png
+  - montgomery_central.png
+  - morristown_west.png
+  - mt_pleasant.png
+  - munford.png
+  - mus.png
+  - nolensville.png
+  - northpoint_christian.png
+  - oak_ridge.png
+  - oakhaven.png
+  - oakland.png
+  - oneida.png
+  - page.png
+  - pearl_cohn.png
+  - perry_co.png
+  - pigeon_forge.png
+  - polk_co.png
+  - portland.png
+  - powell.png
+  - providence_academy.png
+  - raleigh_egypt.png
+  - ravenwood.png
+  - red_bank.png
+  - red_boiling_springs.png
+  - rhea_co.png
+  - riverdale.png
+  - riverside.png
+  - robertson_innovation.png
+  - rockwood.png
+  - rossview.png
+  - sale_creek.png
+  - science_hill.png
+  - sequatchie_co.png
+  - sevier_co.png
+  - seymour.png
+  - signal_mountain.png
+  - silverdale.png
+  - smyrna.png
+  - soddy_daisy.png
+  - south_fulton.png
+  - south_gibson.png
+  - south_greene.png
+  - south_pittsburg.png
+  - southwind.png
+  - spring_hill.png
+  - springfield.png
+  - st_george_s.png
+  - station_camp.png
+  - stewart_co.png
+  - stratford.png
+  - summertown.png
+  - sweetwater.png
+  - tellico_plains.png
+  - tennessee.png
+  - trinity_christian.png
+  - trousdale_co.png
+  - tullahoma.png
+  - tyner.png
+  - unicoi_co.png
+  - union_city.png
+  - upperman.png
+  - walker_valley.png
+  - watertown.png
+  - waverly.png
+  - wayne_co.png
+  - west_greene.png
+  - west_ridge.png
+  - westmoreland.png
+  - westview.png
+  - wh_heritage.png
+  - white_co.png
+  - white_house.png
+  - white_station.png
+  - whitehaven.png
+  - whites_creek.png
+  - whitwell.png
+  - wooddale.png
+  - york_institute.png
+  - arlington.png
+  - austin_east.png
+  - battle_creek.png
+  - baylor.png
+  - bearden.png
+  - bluff_city.png
+  - booker_t_washington.png
+  - bradley_central.png
+  - brainerd.png
+  - brentwood_academy.png
+  - briarcrest_christian.png
+  - camden_central.png
+  - campbell_co.png
+  - carter.png
+  - cascade.png
+  - centennial.png
+  - chattanooga_central.png
+  - chattanooga_christian.png
+  - chester_co.png
+  - claiborne.png
+  - clarksville_academy.png
+  - clinton.png
+  - cocke_co.png
+  - coffee_co_central.png
+  - collinwood.png
+  - columbia_central.png
+  - community.png
+  - craigmont.png
+  - daniel_boone.png
+  - dekalb_co.png
+  - donelson_christian_academy.png
+  - dyer_co.png
+  - east_hamilton.png
+  - east_hickman.png
+  - ensworth.png
+  - farragut.png
+  - fayette_ware.png
+  - first_assembly_christian.png
+  - forrest.png
+  - franklin_co.png
+  - frederick_douglass.png
+  - gibson_co.png
+  - giles_co.png
+  - gleason.png
+  - grace_baptist_academy.png
+  - grainger.png
+  - greenbrier.png
+  - halls.png
+  - hamilton.png
+  - hancock_co.png
+  - hardin_co.png
+  - harding_academy.png
+  - harpeth.png
+  - harriman.png
+  - heritage.png
+  - hillcrest.png
+  - hixson.png
+  - hollow_rock_bruceton_central.png
+  - hunters_lane.png
+  - jackson_south_side.png
+  - john_overton.png
+  - johnson_co.png
+  - karns.png
+  - kenwood.png
+  - kingsbury.png
+  - knoxville_catholic.png
+  - lake_co.png
+  - lavergne.png
+  - lenoir_city.png
+  - lewis_co.png
+  - lipscomb_academy.png
+  - lookout_valley.png
+  - loretto.png
+  - manassas.png
+  - maplewood.png
+  - mcgavock.png
+  - mcnairy_central.png
+  - memphis_east.png
+  - middle_tennessee_christian.png
+  - middleton.png
+  - monterey.png
+  - moore_co.png
+  - morristown_hamblen_high_school_east.png
+  - mt_juliet.png
+  - mt_juliet_christian_academy.png
+  - nashville_christian.png
+  - north_greene.png
+  - northview_academy.png
+  - northwest.png
+  - notre_dame.png
+  - oakdale.png
+  - obion_co_central.png
+  - oliver_springs.png
+  - ooltewah.png
+  - peabody.png
+  - providence_christian_academy.png
+  - richland.png
+  - ridgeway.png
+  - ripley.png
+  - rockvale.png
+  - scott.png
+  - scotts_hill.png
+  - sequoyah_high_school_madisonville.png
+  - sheffield.png
+  - shelbyville_central.png
+  - siegel.png
+  - smith_co.png
+  - south_doyle.png
+  - st_benedict_at_auburndale.png
+  - stewarts_creek.png
+  - stone_memorial.png
+  - sullivan_east.png
+  - summit.png
+  - sunbright.png
+  - sycamore.png
+  - tipton_rosemark_academy.png
+  - trezevant.png
+  - unaka.png
+  - union_co.png
+  - university_school_of_jackson.png
+  - volunteer.png
+  - wartburg_central.png
+  - west_carroll.png
+  - west_creek.png
+  - william_blount.png
+  - wilson_central.png
+
+inputs:
+  - key: week
+    type: choice
+    app_input_type: dropdown
+    label: Week
+    default: "AUTO"
+    choices:
+      - "AUTO"
+      - "WEEK 1"
+      - "WEEK 2"
+      - "WEEK 3"
+      - "WEEK 4"
+      - "WEEK 5"
+      - "WEEK 6"
+      - "WEEK 7"
+      - "WEEK 8"
+      - "WEEK 9"
+      - "WEEK 10"
+      - "WEEK 11"
+      - "WEEK 12"
+      - "WEEK 13"
+      - "WEEK 14"
+      - "WEEK 15"
+      - "WEEK 16"
+  - key: area
+    type: choice
+    app_input_type: dropdown
+    label: State Area
+    default: "ALL"
+    choices:
+      - "ALL"
+      - "WEST"
+      - "MIDDLE"
+      - "EAST"
+  - key: school
+    type: choice
+    app_input_type: dropdown
+    label: School
+    default: "ALL SCHOOLS"
+    choices:
+      - "ALL SCHOOLS"
+      - "ADAMSVILLE"
+      - "ALCOA"
+      - "ANDERSON CO."
+      - "ANTIOCH"
+      - "ARLINGTON"
+      - "AUSTIN-EAST"
+      - "BARTLETT"
+      - "BATTLE CREEK"
+      - "BAYLOR"
+      - "BEARDEN"
+      - "BEECH"
+      - "BGA"
+      - "BLACKMAN"
+      - "BLEDSOE CO."
+      - "BLUFF CITY"
+      - "BOLIVAR CENTRAL"
+      - "BOLTON"
+      - "BOOKER T. WASHINGTON"
+      - "BOYD BUCHANAN"
+      - "BRADLEY CENTRAL"
+      - "BRAINERD"
+      - "BRENTWOOD"
+      - "BRENTWOOD ACADEMY"
+      - "BRIARCREST CHRISTIAN"
+      - "BRIGHTON"
+      - "CAK"
+      - "CAMDEN CENTRAL"
+      - "CAMPBELL CO."
+      - "CANE RIDGE"
+      - "CANNON CO."
+      - "CARTER"
+      - "CASCADE"
+      - "CENTENNIAL"
+      - "CHATTANOOGA CENTRAL"
+      - "CHATTANOOGA CHRISTIAN"
+      - "CHATTANOOGA PREP"
+      - "CHEATHAM CO."
+      - "CHEROKEE"
+      - "CHESTER CO."
+      - "CHRISTIAN BROTHERS"
+      - "CHUCKEY-DOAK"
+      - "CLAIBORNE"
+      - "CLARKSVILLE"
+      - "CLARKSVILLE ACADEMY"
+      - "CLARKSVILLE NORTHEAST"
+      - "CLAY CO."
+      - "CLEVELAND"
+      - "CLINTON"
+      - "CLOUDLAND"
+      - "COALFIELD"
+      - "COCKE CO."
+      - "COFFEE CO. CENTRAL"
+      - "COLLIERVILLE"
+      - "COLLINWOOD"
+      - "COLUMBIA"
+      - "COLUMBIA CENTRAL"
+      - "COMMUNITY"
+      - "CONCORD CHRISTIAN"
+      - "COOKEVILLE"
+      - "COPPER BASIN"
+      - "CORDOVA"
+      - "CORNERSVILLE"
+      - "COSBY"
+      - "COVINGTON"
+      - "CPA"
+      - "CRAIGMONT"
+      - "CREEK WOOD"
+      - "CROCKETT CO."
+      - "CUMBERLAND GAP"
+      - "DANIEL BOONE"
+      - "DAVID CROCKETT"
+      - "DAVIDSON ACADEMY"
+      - "DEKALB CO."
+      - "DICKSON CO."
+      - "DOBYNS BENNETT"
+      - "DONELSON CHRISTIAN ACADEMY"
+      - "DRESDEN"
+      - "DYER CO."
+      - "DYERSBURG"
+      - "EAGLETON"
+      - "EAGLEVILLE"
+      - "EAST HAMILTON"
+      - "EAST HICKMAN"
+      - "EAST NASHVILLE"
+      - "EAST RIDGE"
+      - "EAST ROBERTSON"
+      - "ECS"
+      - "ELIZABETHTON"
+      - "ENSWORTH"
+      - "EZELL-HARDING"
+      - "FAIRLEY"
+      - "FAIRVIEW"
+      - "FARRAGUT"
+      - "FATHER RYAN"
+      - "FAYETTE ACADEMY"
+      - "FAYETTE-WARE"
+      - "FAYETTEVILLE"
+      - "FIRST ASSEMBLY CHRISTIAN"
+      - "FORREST"
+      - "FRA"
+      - "FRANKLIN"
+      - "FRANKLIN CHRISTIAN"
+      - "FRANKLIN CO."
+      - "FRANKLIN GRACE"
+      - "FREDERICK DOUGLASS"
+      - "FRIENDSHIP CHRISTIAN"
+      - "GALLATIN"
+      - "GATLINBURG-PITTMAN"
+      - "GERMANTOWN"
+      - "GIBBS"
+      - "GIBSON CO."
+      - "GILES CO."
+      - "GLEASON"
+      - "GOODPASTURE"
+      - "GORDONSVILLE"
+      - "GRACE BAPTIST ACADEMY"
+      - "GRAINGER"
+      - "GREEN HILL"
+      - "GREENBACK"
+      - "GREENBRIER"
+      - "GREENEVILLE"
+      - "GREENFIELD"
+      - "GRUNDY CO."
+      - "HALLS"
+      - "HAMILTON"
+      - "HAMPTON"
+      - "HANCOCK CO."
+      - "HAPPY VALLEY"
+      - "HARDIN CO."
+      - "HARDIN VALLEY"
+      - "HARDING ACADEMY"
+      - "HARPETH"
+      - "HARRIMAN"
+      - "HAYWOOD"
+      - "HENDERSONVILLE"
+      - "HENRY CO."
+      - "HERITAGE"
+      - "HICKMAN CO."
+      - "HILLCREST"
+      - "HILLSBORO"
+      - "HIXSON"
+      - "HOLLOW ROCK-BRUCETON CENTRAL"
+      - "HOUSTON"
+      - "HOUSTON CO."
+      - "HUMBOLDT"
+      - "HUNTERS LANE"
+      - "HUNTINGDON"
+      - "HUNTLAND"
+      - "INDEPENDENCE"
+      - "JACKSON CHRISTIAN"
+      - "JACKSON CO."
+      - "JACKSON NORTH SIDE"
+      - "JACKSON SOUTH SIDE"
+      - "JAMES LAWSON"
+      - "JCM"
+      - "JEFFERSON CO."
+      - "JELLICO"
+      - "JO BYRNS"
+      - "JOHN OVERTON"
+      - "JOHNSON CO."
+      - "JPII"
+      - "KARNS"
+      - "KENWOOD"
+      - "KINGSBURY"
+      - "KINGSTON"
+      - "KIPP MEMPHIS COLLEGIATE"
+      - "KIRBY"
+      - "KIRKWOOD"
+      - "KNOXVILLE CATHOLIC"
+      - "KNOXVILLE CENTRAL"
+      - "KNOXVILLE FULTON"
+      - "KNOXVILLE GRACE"
+      - "KNOXVILLE HALLS"
+      - "KNOXVILLE WEBB"
+      - "KNOXVILLE WEST"
+      - "LAKE CO."
+      - "LAKELAND PREP"
+      - "LAKEWAY CHRISTIAN"
+      - "LAUSANNE"
+      - "LAVERGNE"
+      - "LAWRENCE CO."
+      - "LEBANON"
+      - "LENOIR CITY"
+      - "LEWIS CO."
+      - "LEXINGTON"
+      - "LIBERTY CREEK"
+      - "LINCOLN CO."
+      - "LIPSCOMB ACADEMY"
+      - "LIVINGSTON ACADEMY"
+      - "LOOKOUT VALLEY"
+      - "LORETTO"
+      - "LOUDON"
+      - "MACON CO."
+      - "MANASSAS"
+      - "MAPLEWOOD"
+      - "MARION CO."
+      - "MARSHALL CO."
+      - "MARYVILLE"
+      - "MASE"
+      - "MBA"
+      - "MCCALLIE"
+      - "MCEWEN"
+      - "MCGAVOCK"
+      - "MCKENZIE"
+      - "MCMINN CENTRAL"
+      - "MCMINN CO."
+      - "MCNAIRY CENTRAL"
+      - "MEIGS CO."
+      - "MELROSE"
+      - "MEMPHIS BUSINESS"
+      - "MEMPHIS CENTRAL"
+      - "MEMPHIS EAST"
+      - "MEMPHIS MIDDLE COLLEGE"
+      - "MEMPHIS OVERTON"
+      - "MEMPHIS WESTWOOD"
+      - "MIDDLE TENNESSEE CHRISTIAN"
+      - "MIDDLETON"
+      - "MIDWAY"
+      - "MILAN"
+      - "MILLINGTON"
+      - "MITCHELL"
+      - "MONTEREY"
+      - "MONTGOMERY CENTRAL"
+      - "MOORE CO."
+      - "MORRISTOWN WEST"
+      - "MORRISTOWN-HAMBLEN HIGH SCHOOL EAST"
+      - "MT. JULIET"
+      - "MT. JULIET CHRISTIAN ACADEMY"
+      - "MT. PLEASANT"
+      - "MUNFORD"
+      - "MUS"
+      - "NASHVILLE CHRISTIAN"
+      - "NOLENSVILLE"
+      - "NORTH GREENE"
+      - "NORTHPOINT CHRISTIAN"
+      - "NORTHVIEW ACADEMY"
+      - "NORTHWEST"
+      - "NOTRE DAME"
+      - "OAK RIDGE"
+      - "OAKDALE"
+      - "OAKHAVEN"
+      - "OAKLAND"
+      - "OBION CO. CENTRAL"
+      - "OLIVER SPRINGS"
+      - "ONEIDA"
+      - "OOLTEWAH"
+      - "PAGE"
+      - "PEABODY"
+      - "PEARL COHN"
+      - "PERRY CO."
+      - "PIGEON FORGE"
+      - "POLK CO."
+      - "PORTLAND"
+      - "POWELL"
+      - "PROVIDENCE ACADEMY"
+      - "PROVIDENCE CHRISTIAN ACADEMY"
+      - "RALEIGH EGYPT"
+      - "RAVENWOOD"
+      - "RED BANK"
+      - "RED BOILING SPRINGS"
+      - "RHEA CO."
+      - "RICHLAND"
+      - "RIDGEWAY"
+      - "RIPLEY"
+      - "RIVERDALE"
+      - "RIVERSIDE"
+      - "ROBERTSON INNOVATION"
+      - "ROCKVALE"
+      - "ROCKWOOD"
+      - "ROSSVIEW"
+      - "SALE CREEK"
+      - "SCIENCE HILL"
+      - "SCOTT"
+      - "SCOTTS HILL"
+      - "SEQUATCHIE CO."
+      - "SEQUOYAH HIGH SCHOOL - MADISONVILLE"
+      - "SEVIER CO."
+      - "SEYMOUR"
+      - "SHEFFIELD"
+      - "SHELBYVILLE CENTRAL"
+      - "SIEGEL"
+      - "SIGNAL MOUNTAIN"
+      - "SILVERDALE"
+      - "SMITH CO."
+      - "SMYRNA"
+      - "SODDY DAISY"
+      - "SOUTH FULTON"
+      - "SOUTH GIBSON"
+      - "SOUTH GREENE"
+      - "SOUTH PITTSBURG"
+      - "SOUTH-DOYLE"
+      - "SOUTHWIND"
+      - "SPRING HILL"
+      - "SPRINGFIELD"
+      - "ST. BENEDICT AT AUBURNDALE"
+      - "ST. GEORGE'S"
+      - "STATION CAMP"
+      - "STEWART CO."
+      - "STEWARTS CREEK"
+      - "STONE MEMORIAL"
+      - "STRATFORD"
+      - "SULLIVAN EAST"
+      - "SUMMERTOWN"
+      - "SUMMIT"
+      - "SUNBRIGHT"
+      - "SWEETWATER"
+      - "SYCAMORE"
+      - "TELLICO PLAINS"
+      - "TENNESSEE"
+      - "TIPTON-ROSEMARK ACADEMY"
+      - "TREZEVANT"
+      - "TRINITY CHRISTIAN"
+      - "TROUSDALE CO."
+      - "TULLAHOMA"
+      - "TYNER"
+      - "UNAKA"
+      - "UNICOI CO."
+      - "UNION CITY"
+      - "UNION CO."
+      - "UNIVERSITY SCHOOL OF JACKSON"
+      - "UPPERMAN"
+      - "VOLUNTEER"
+      - "WALKER VALLEY"
+      - "WARTBURG CENTRAL"
+      - "WATERTOWN"
+      - "WAVERLY"
+      - "WAYNE CO."
+      - "WEST CARROLL"
+      - "WEST CREEK"
+      - "WEST GREENE"
+      - "WEST RIDGE"
+      - "WESTMORELAND"
+      - "WESTVIEW"
+      - "WH HERITAGE"
+      - "WHITE CO."
+      - "WHITE HOUSE"
+      - "WHITE STATION"
+      - "WHITEHAVEN"
+      - "WHITES CREEK"
+      - "WHITWELL"
+      - "WILLIAM BLOUNT"
+      - "WILSON CENTRAL"
+      - "WOODDALE"
+      - "YORK INSTITUTE"
