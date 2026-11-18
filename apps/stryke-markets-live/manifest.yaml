@@ -1,0 +1,26 @@
+gdn: 1
+id: stryke-markets-live
+version: 0.8.0
+name: "Stryke Markets Live"
+author: "Stryke Markets"
+description: "Stryke Markets display with TOMS quotes, strategy performance, volume, trade ideas, news, and insights."
+category: Finance
+entry: app.star
+width: 128
+height: 32
+refresh: 300
+pages: [main, markets, strategies, volume, brand_interlude, halo, market_news_and_insights]
+inputs:
+  - key: instruments
+    type: string
+    app_input_type: free-text
+    label: Instrument lineup
+    default: ""
+    help: Enter exact TOMS symbols separated by commas. Leave blank for all available symbols.
+  - key: strategies
+    type: string
+    app_input_type: free-text
+    label: Strategy lineup
+    default: ""
+    help: Enter Marketplace strategy names or IDs separated by commas. Leave blank for all strategies.
+assets: [stryke-logo.png, transition-out.png, transition-in.png]
