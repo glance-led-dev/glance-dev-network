@@ -1,0 +1,17 @@
+gdn: 1
+id: vt-wrestling
+version: 0.1.0
+name: Hokies Wrestling
+author: Blake Harris
+description: Virginia Tech wrestling. Next dual or tournament, NCAA projection and trophy odds, and every ranked Hokie with Flo and InterMat ranks from MatSavant.
+category: Sports
+entry: app.star
+width: 64
+height: 32
+# 60s is the fastest Glance allows; it also rotates the wrestler cards. The
+# MatSavant rankings file changes about weekly, so it is cached for an hour.
+refresh: 60
+pages: [next, team, card1, card2, card3]
+assets:
+  - vt22.png
+  - vt30.png
