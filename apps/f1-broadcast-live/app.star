@@ -19,6 +19,12 @@
 #   3 last race  P9-16 / P13-22     3 order  P9-16 / P10-18
 #   4 calendar                      4 order  P17-22 / P19-22
 #
+#   OFF-SEASON (season over, or next season's opener not yet run)
+#   1 event  F1 mark + countdown to the opener
+#   2 WDC and WCC side by side
+#   3 winners  rounds 1-12
+#   4 winners  rounds 13-24
+#
 # On a 192 panel, order1-2's last-race pages cover P1-16 only -- P17-22 don't
 # have a between-sessions slot (order3 is needed for the calendar instead of
 # a third last-race page). On 384/640, order1-2 already covers the full
@@ -142,7 +148,7 @@ SESSION_SHORT = {"QUALIFYING": "QUALI"}
 
 # Lit glyph height per font, measured off the rendered previews. Rows that mix
 # fonts share a bottom edge: draw each at top_for(font, row_bottom).
-FONT_H = {"6x8": 8, "5x7": 7, "4x5": 5, "picopixel": 5}
+FONT_H = {"8x10": 10, "6x8": 8, "5x7": 7, "4x5": 5, "picopixel": 5}
 
 def top_for(font, bottom):
     return bottom - FONT_H[font] + 1
@@ -167,28 +173,30 @@ F1_HOLD_SECONDS = 4 * 86400
 # Each asset is pre-sized in Python so it is drawn at its own dimensions, not
 # stretched into a fixed box.
 F1_TRACK_ASSET = {
-    "albert_park": ("track-albert-park.png", 51, 26),
-    "americas": ("track-americas.png", 36, 26),
-    "bahrain": ("track-bahrain.png", 39, 26),
-    "baku": ("track-baku.png", 40, 26),
-    "catalunya": ("track-catalunya.png", 60, 19),
-    "hungaroring": ("track-hungaroring.png", 24, 26),
-    "imola": ("track-imola.png", 46, 26),
-    "interlagos": ("track-interlagos.png", 42, 26),
-    "istanbul": ("track-istanbul.png", 40, 26),
-    "jeddah": ("track-jeddah.png", 44, 26),
-    "losail": ("track-losail.png", 36, 26),
-    "marina_bay": ("track-marina-bay.png", 40, 26),
-    "miami": ("track-miami.png", 60, 23),
-    "monaco": ("track-monaco.png", 39, 26),
-    "monza": ("track-monza.png", 51, 26),
-    "nurburgring": ("track-nurburgring.png", 28, 26),
-    "red_bull_ring": ("track-red-bull-ring.png", 40, 26),
-    "ricard": ("track-ricard.png", 59, 26),
-    "rodriguez": ("track-rodriguez.png", 40, 26),
-    "silverstone": ("track-silverstone.png", 26, 26),
-    "villeneuve": ("track-villeneuve.png", 46, 26),
-    "zandvoort": ("track-zandvoort.png", 30, 26),
+    "albert_park": ("track-albert-park.png", 50, 25),
+    "americas": ("track-americas.png", 35, 25),
+    "bahrain": ("track-bahrain.png", 38, 25),
+    "baku": ("track-baku.png", 39, 25),
+    "catalunya": ("track-catalunya.png", 59, 18),
+    "hungaroring": ("track-hungaroring.png", 23, 25),
+    "imola": ("track-imola.png", 45, 25),
+    "interlagos": ("track-interlagos.png", 41, 25),
+    "istanbul": ("track-istanbul.png", 39, 25),
+    "jeddah": ("track-jeddah.png", 43, 25),
+    "losail": ("track-losail.png", 35, 25),
+    "marina_bay": ("track-marina-bay.png", 39, 25),
+    "miami": ("track-miami.png", 59, 23),
+    "monaco": ("track-monaco.png", 38, 25),
+    "monza": ("track-monza.png", 50, 25),
+    "nurburgring": ("track-nurburgring.png", 27, 25),
+    "red_bull_ring": ("track-red-bull-ring.png", 38, 25),
+    "ricard": ("track-ricard.png", 58, 25),
+    "rodriguez": ("track-rodriguez.png", 39, 25),
+    "silverstone": ("track-silverstone.png", 25, 25),
+    "vegas": ("track-vegas.png", 44, 25),
+    "villeneuve": ("track-villeneuve.png", 45, 25),
+    "yas_marina": ("track-yas-marina.png", 59, 24),
+    "zandvoort": ("track-zandvoort.png", 29, 25),
 }
 FALLBACK_TRACK_W, FALLBACK_TRACK_H = 31, 26
 
@@ -221,7 +229,7 @@ CIRCUIT_ALIAS = {
     "mexico city": "rodriguez",
     "interlagos": "interlagos",
     "sao paulo": "interlagos",
-    "las vegas": "las_vegas",
+    "las vegas": "vegas",
     "lusail": "losail",
     "losail": "losail",
     "yas marina": "yas_marina",
@@ -914,9 +922,24 @@ def get_state(ctx):
     dbg = safe_input(ctx, "_debug", "")
     if dbg == "race" or dbg == "quali":
         return _mock_live(ctx, "race" if dbg == "race" else "quali")
+    if dbg == "season":
+        # Preview harness: the off-season pages for this year's results so far.
+        return season_state(ctx, ctx.now.year, None)
     live = fetch_f1_live(ctx)
     if live != None:
         return live
+    tbl = race_table("https://api.jolpi.ca/ergast/f1/current/next.json", 1800)
+    if tbl == None:
+        return {"mode": "error", "title": "F1 SCHEDULE ERROR", "sub": "JOLPICA DOWN"}
+    # Off-season: this season has no race left, or next season's opener
+    # hasn't run yet. A live weekend and the finale's day-of hold (both in
+    # fetch_f1_live above) still come first.
+    races = tbl.get("Races", [])
+    season = int(str(tbl.get("season", ctx.now.year)) or ctx.now.year)
+    if len(races) == 0:
+        return season_state(ctx, season, None)
+    if str(races[0].get("round", "")) == "1":
+        return season_state(ctx, season - 1, races[0])
     nxt = fetch_f1_next(ctx)
     if not nxt["ok"]:
         return {"mode": "error", "title": nxt["title"], "sub": nxt["sub"]}
@@ -930,6 +953,39 @@ def get_state(ctx):
         "has_next": True,
         "prev_winner": fetch_f1_prev_winner(nxt["circuit_id"]),
     }
+
+# ---------- off-season (Jolpica) ----------
+
+def race_table(url, ttl):
+    resp = http_json(url, ttl)
+    if not resp["ok"]:
+        return None
+    return resp["data"].get("MRData", {}).get("RaceTable", {})
+
+def season_winners(season):
+    # Every race of the season that has a winner, in round order.
+    tbl = race_table("https://api.jolpi.ca/ergast/f1/" + str(season) + "/results/1.json?limit=40", 86400)
+    return tbl.get("Races", []) if tbl != None else []
+
+def season_state(ctx, season, opener):
+    # Early in the new year Jolpica's "current" season is the one that hasn't
+    # started, so step back to the last season with results.
+    if len(season_winners(season)) == 0:
+        season = season - 1
+    if opener == None:
+        tbl = race_table("https://api.jolpi.ca/ergast/f1/" + str(season + 1) + "/1.json", 86400)
+        races = tbl.get("Races", []) if tbl != None else []
+        opener = races[0] if len(races) > 0 else None
+    return {"mode": "season", "season": season, "opener": opener}
+
+def final_standings(season, kind):
+    # The season's final driver or constructor standings, or [].
+    key = "DriverStandings" if kind == "driver" else "ConstructorStandings"
+    resp = http_json("https://api.jolpi.ca/ergast/f1/" + str(season) + "/" + kind + "Standings.json", 86400)
+    if not resp["ok"]:
+        return []
+    lists = resp["data"].get("MRData", {}).get("StandingsTable", {}).get("StandingsLists", [])
+    return lists[0].get(key, []) if len(lists) > 0 else []
 
 # ---------- drawing: chrome + rows ----------
 
@@ -1057,6 +1113,9 @@ def event(c, ctx):
     c.fill(COLORS["bg"])
     if st["mode"] == "error":
         draw_error(c, st["title"], st["sub"])
+        return
+    if st["mode"] == "season":
+        _draw_countdown(c, ctx, st)
         return
     live = st["mode"] == "live"
     wide = c.width >= 320
@@ -1222,6 +1281,8 @@ def order1(c, ctx):
     c.fill(COLORS["bg"])
     if st["mode"] == "error":
         draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "season":
+        _draw_champions(c, st)
     elif st["mode"] == "live":
         _draw_running_order(c, st, 0)
     else:
@@ -1232,6 +1293,8 @@ def order2(c, ctx):
     c.fill(COLORS["bg"])
     if st["mode"] == "error":
         draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "season":
+        _draw_winners(c, st, 0)
     elif st["mode"] == "live":
         _draw_running_order(c, st, 1)
     else:
@@ -1242,6 +1305,8 @@ def order3(c, ctx):
     c.fill(COLORS["bg"])
     if st["mode"] == "error":
         draw_error(c, st["title"], st["sub"])
+    elif st["mode"] == "season":
+        _draw_winners(c, st, 1)
     elif st["mode"] == "live":
         _draw_running_order(c, st, 2)
     else:
@@ -1331,3 +1396,161 @@ def _draw_last_page(c, ctx, page):
         # Driver name in the team's livery colour (falls back to white if the
         # constructorId isn't in the table).
         c.text(fit_text(c, name, "4x5", cx1 - cx0 - pw - gw - 3), cx0 + pw, ry, font = "4x5", color = name_color)
+
+# ---------- off-season pages ----------
+# Once the season is over (and until next season's opener runs) the four
+# pages become: the F1 mark with a countdown to the opener, the drivers' and
+# constructors' champions side by side, then every race and its winner over
+# two pages.
+
+WEEKDAYS = ["THU", "FRI", "SAT", "SUN", "MON", "TUE", "WED"]   # day 0 = 1970-01-01, a Thursday
+
+def local_day(ctx, date_str, time_str):
+    t = time_str if time_str != "" else "00:00:00Z"
+    y, mo, d, h, mi = parse_iso(date_str + "T" + t)
+    utc_unix = _days_from_civil(y, mo, d) * 86400 + h * 3600 + mi * 60
+    return (utc_unix + panel_offset_seconds(ctx)) // 86400
+
+# The F1 mark (tagged with the coming season) on the left, the opener's
+# outline on the right, and between them the grand prix, the days to go in
+# F1 red and the race day. Before Jolpica publishes next season, the opener
+# is unknown: the text says so and the outline is left out.
+def _draw_countdown(c, ctx, st):
+    wide = c.width >= 320
+    gap = 10 if wide else 6
+    opener = st.get("opener", None)
+    tw, th, asset = 0, 0, ""
+    if opener != None:
+        asset, nw, nh = track_asset_dims(str(opener.get("Circuit", {}).get("circuitId", "")))
+        if asset != "":
+            tw, th = cap_track_dims(nw, nh, 52 if wide else 36, 28 if wide else 26)
+    fixed = LOGO_W + gap + (gap + tw if tw > 0 else 0)
+    text_w = min(c.width - 2 * EDGE - fixed, 150)
+    x0 = (c.width - fixed - text_w) // 2
+    draw_logo_block(c, x0, str(st["season"] + 1))
+    tx0 = x0 + LOGO_W + gap
+    cx = tx0 + text_w // 2
+    if tw > 0:
+        draw_f1_track(c, asset, tx0 + text_w + gap, (32 - th) // 2, tw, th)
+
+    if opener == None:
+        c.text(str(st["season"] + 1) + " SEASON", cx, top_for("6x8", 9), font = "6x8", color = COLORS["text"], align = "center")
+        c.text("DATES TBA", cx, top_for("5x7", 20), font = "5x7", color = DATE_COLOR, align = "center")
+        return
+
+    name, nf = fit_ladder(c, race_variants(up(opener.get("raceName", "GRAND PRIX"))), ["6x8", "5x7", "4x5", "picopixel"], text_w)
+    c.text(name, cx, top_for(nf, 9), font = nf, color = COLORS["text"], align = "center")
+
+    day = local_day(ctx, str(opener.get("date", "")), str(opener.get("time", "")))
+    left = day - (ctx.now.unix + panel_offset_seconds(ctx)) // 86400
+    if left <= 0:
+        c.text("RACE DAY", cx, top_for("8x10", 20), font = "8x10", color = DATE_COLOR, align = "center")
+    else:
+        num = str(left)
+        unit = " DAY" if left == 1 else " DAYS"
+        nw2 = c.text_width(num, "8x10")
+        x = cx - (nw2 + c.text_width(unit, "5x7")) // 2
+        c.text(num, x, top_for("8x10", 20), font = "8x10", color = DATE_COLOR)
+        c.text(unit, x + nw2, top_for("5x7", 20), font = "5x7", color = COLORS["text"])
+    y, m, d = _civil_from_days(day)
+    when = WEEKDAYS[day % 7] + " " + MONTHS_FULL[m - 1][:3] + " " + str(d)
+    c.text(when, cx, top_for("4x5", 27), font = "4x5", color = COLORS["muted"], align = "center")
+
+# Champions' art: ("driver", season, car number) or ("team", season,
+# constructorId) -> (asset, w, h). A champion without art is text only.
+CHAMP_ART = {
+    ("driver", 2026, "12"): ("champ-wdc-12.png", 29, 26),
+    ("team", 2026, "mercedes"): ("wcc-mercedes.png", 26, 26),
+}
+
+# One champion in a half of the page: the art on the left, then the season +
+# WDC / WCC in gold, the name in team colours and the points.
+def _champ_half(c, x0, x1, art, title, name, color, pts):
+    w = x1 - x0 + 1
+    aw = art[1] + 5 if art != None else 0
+    nf = "5x7" if c.text_width(name, "5x7") <= w - aw else "4x5"
+    text_w = min(max(c.text_width(title, "4x5"), c.text_width(name, nf), c.text_width(pts, "4x5")), w - aw)
+    bx = x0 + (w - aw - text_w) // 2
+    if art != None:
+        c.image(art[0], bx, (32 - art[2]) // 2, w = art[1], h = art[2])
+    cx = bx + aw + text_w // 2
+    c.text(title, cx, 4, font = "4x5", color = GOLD, align = "center")
+    c.text(fit_text(c, name, nf, text_w), cx, top_for(nf, 19), font = nf, color = color, align = "center")
+    c.text(pts, cx, 23, font = "4x5", color = COLORS["muted"], align = "center")
+
+def _draw_champions(c, st):
+    season = st["season"]
+    mid = c.width // 2
+    c.line(mid, 3, mid, 28, COLORS["line"])
+    drivers = final_standings(season, "driver")
+    teams = final_standings(season, "constructor")
+    if len(drivers) > 0:
+        p = drivers[0]
+        drv = p.get("Driver", {})
+        cons = p.get("Constructors", [{}])
+        cid = str(cons[0].get("constructorId", "")) if len(cons) > 0 else ""
+        num = str(drv.get("permanentNumber", ""))
+        _champ_half(c, EDGE, mid - 4, CHAMP_ART.get(("driver", season, num), None),
+                    str(season) + " WDC", up(drv.get("familyName", "")),
+                    team_color(cid, COLORS["text"]), str(p.get("points", "")) + " PTS")
+    else:
+        c.text(str(season) + " WDC", mid // 2, 13, font = "4x5", color = GOLD, align = "center")
+    if len(teams) > 0:
+        p = teams[0]
+        con = p.get("Constructor", {})
+        cid = str(con.get("constructorId", ""))
+        _champ_half(c, mid + 4, c.width - 1 - EDGE, CHAMP_ART.get(("team", season, cid), None),
+                    str(season) + " WCC", up(con.get("name", "")),
+                    team_color(cid, COLORS["text"]), str(p.get("points", "")) + " PTS")
+    else:
+        c.text(str(season) + " WCC", mid + mid // 2, 13, font = "4x5", color = GOLD, align = "center")
+
+# A grand prix as fans call it, short enough to sit beside its winner.
+RACE_LABEL = {
+    "AUSTRALIAN": "AUSTRALIA",
+    "AZERBAIJAN": "BAKU",
+    "UNITED STATES": "USA",
+    "MEXICO CITY": "MEXICO",
+    "SAUDI ARABIAN": "SAUDI",
+    "EMILIA ROMAGNA": "IMOLA",
+}
+
+def race_label(name):
+    n = up(name)
+    if " GRAND PRIX IN " in n:
+        return n.split(" GRAND PRIX IN ")[1]     # BAHRAIN GRAND PRIX IN MALAYSIA
+    if n.endswith(" GRAND PRIX"):
+        n = n[:len(n) - len(" GRAND PRIX")]
+    return RACE_LABEL.get(n, n)
+
+# Every race of the season over two pages, twelve a page in three columns:
+# the race in gray, its winner as the first three letters of the surname in
+# team colours at the right of the column.
+WIN_PER_PAGE = 12
+
+def _draw_winners(c, st, page):
+    season = st["season"]
+    draw_page_tab(c, str(season) + " WINNERS", DATE_COLOR)
+    races = season_winners(season)
+    lo = page * WIN_PER_PAGE
+    hi = min(lo + WIN_PER_PAGE, len(races))
+    if lo >= len(races):
+        c.text("--", c.width // 2, 18, font = "6x8", color = COLORS["muted"], align = "center")
+        return
+    rounds = "ROUNDS " + str(races[lo].get("round", "")) + "-" + str(races[hi - 1].get("round", ""))
+    c.text(rounds, c.width - 1 - EDGE, 1, font = "picopixel", color = COLORS["muted"], align = "right")
+    ncols = 3
+    col_w = (c.width - 2 * EDGE - 6 * (ncols - 1)) // ncols
+    for i in range(lo, hi):
+        r = races[i]
+        res = r.get("Results", [{}])[0]
+        who = up(res.get("Driver", {}).get("familyName", ""))[:3]
+        col = team_color(res.get("Constructor", {}).get("constructorId", ""), COLORS["text"])
+        j = i - lo
+        x0 = EDGE + (j // 4) * (col_w + 6)
+        x1 = x0 + col_w - 1
+        y = 8 + (j % 4) * 6
+        ww = c.text_width(who, "4x5")
+        c.text(who, x1, y, font = "4x5", color = col, align = "right")
+        lbl = fit_text(c, race_label(r.get("raceName", "")), "picopixel", col_w - ww - 5)
+        c.text(lbl, x0, top_for("picopixel", y + FONT_H["4x5"] - 1), font = "picopixel", color = COLORS["muted"])

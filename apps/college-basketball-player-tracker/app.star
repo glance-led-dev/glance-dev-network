@@ -2,6 +2,7 @@
 # Eight compact live-stat pages: five starters plus the top three bench scorers.
 
 INK = "#F4F7FF"
+LEADER_INK = "#75F297"
 DIM = "#738096"
 LINE = "#263241"
 LIVE = "#49D17D"
@@ -1663,6 +1664,29 @@ def draw_decimal_stat(c, value, center, y, color_value):
     # Splitting '4' and '.5' let the second outline erase two pixels of the 4.
     c.text_stroke(text, center, y, font = font, color = color_value, stroke = "#0B1424", thickness = 1, align = "center")
 
+def leader_stat_number(value):
+    text = clean(value)
+    parts = text.split(".")
+    if len(text) > 12 or len(parts) > 2 or not parts[0].isdigit():
+        return 0
+    if len(parts) == 2 and not parts[1].isdigit():
+        return 0
+    return float(text)
+
+def team_leader_values(players, keys):
+    # Compare against the entire team, not just the eight displayed players.
+    leaders = {}
+    for player in players:
+        for key in keys:
+            number = leader_stat_number(player.get(key))
+            if number > leaders.get(key, 0):
+                leaders[key] = number
+    return leaders
+
+def leader_ink(leaders, key, value):
+    # Equal positive values share the lead; blank and all-zero categories do not.
+    return LEADER_INK if key in leaders and leader_stat_number(value) == leaders[key] else INK
+
 def player_page(c, ctx, page_index, force_average = False, preview_game = False, mark_style = "native"):
     # STUDIO DESIGN: identity above context above stats. Keep the same geometry
     # for averages and game results, so the card does not jump at the final horn.
@@ -1753,6 +1777,7 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
     show_shooting = game.get("mode") == "GAME" and state in ["IN", "POST"]
     labels = ["PTS", "REB", "AST", "STL", "BLK"]
     keys = ["pts", "reb", "ast", "stl", "blk"]
+    leaders = team_leader_values(game.get("players", []), keys) if show_shooting or game.get("mode") == "AVERAGES" else {}
     centers = [37, 61, 80, 99, 118]
     if show_shooting:
         labels += ["FGS"]
@@ -1761,6 +1786,7 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
     for index in range(len(labels)):
         center = centers[index]
         value = clean(athlete.get(keys[index]), "--")
+        value_ink = leader_ink(leaders, keys[index], value)
         if index == 0 and show_shooting:
             # Draw the points hero after measuring the footer. No clearing
             # rectangle: it would erase REB now that the stats sit closer.
@@ -1768,14 +1794,14 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
         elif index == 0:
             # Dedicated points column stays full-height in every mode.
             tracker_text(c, labels[index], center, 11, 24, ["4x5"], accent, "center")
-            points_width = tracker_text(c, value, center, 18, 28, ["scoretext", "6x8", "5x7"], INK, "center")
+            points_width = tracker_text(c, value, center, 18, 28, ["scoretext", "6x8", "5x7"], value_ink, "center")
         elif show_shooting:
             shooting = keys[index] == "fg"
             tracker_text(c, labels[index], center, 11, 15, ["4x5"], "#A4B0BF", "center")
             if shooting:
                 draw_game_fgs(c, live_field_goals(value), center)
             else:
-                tracker_text(c, value, center, 18, 13, ["4x5", "picopixel"], INK, "center")
+                tracker_text(c, value, center, 18, 13, ["4x5", "picopixel"], value_ink, "center")
         else:
             live_layout = game.get("mode") != "AVERAGES"
             tracker_text(c, labels[index], center, 11 if live_layout else 13, 17, ["4x5"], "#A4B0BF", "center")
@@ -1783,7 +1809,7 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
                 stat_font = "4x5" if c.text_width(value, "4x5") <= 17 else "picopixel"
                 tracker_text(c, value, center, 18, 18, [stat_font], INK, "center")
             else:
-                draw_decimal_stat(c, value, center, 21, INK)
+                draw_decimal_stat(c, value, center, 21, value_ink)
     if game.get("mode") != "AVERAGES":
         own = upper(team.get("abbreviation"), "TEAM")
         opp = upper(game.get("opponent", {}).get("abbreviation"), "OPP")
@@ -1850,7 +1876,7 @@ def player_page(c, ctx, page_index, force_average = False, preview_game = False,
             # even with a 15px-wide value and its 1px outline.
             compact = away_x <= points_center + (min(15, c.text_width(points, "scoretext")) + 1) // 2 + 1
             points_fonts = ["6x8", "5x7", "4x5", "picopixel"] if compact else ["scoretext", "6x8", "5x7", "4x5", "picopixel"]
-            tracker_text(c, points, points_center, 17, 15, points_fonts, INK, "center")
+            tracker_text(c, points, points_center, 17, 15, points_fonts, leader_ink(leaders, "pts", points), "center")
         elif away_x < 37 + (points_width + 1) // 2 + 2:
             c.rect(24, 10, 51, 31, fill = background)
             points_center = min(37, away_x - (points_width + 1) // 2 - 2)

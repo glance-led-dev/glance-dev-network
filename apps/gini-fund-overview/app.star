@@ -36,10 +36,13 @@
 # gaat mee als ?screen= . Een leeg veld laat de parameter weg, want een
 # lege screen= geeft 400. De code is hoofdlettergevoelig: letters,
 # cijfers, koppelteken en underscore, hooguit 40 tekens.
-# Antwoord 200 bepaalt de fondsen en de meldingen. Bij 401, 403, 429 of
-# een dode verbinding komt het foutscherm. Bij een ander antwoord bouwt
-# de app dezelfde strook uit getGlanceFundValue, een fonds per gekozen
-# code, zonder meldingen.
+# Antwoord 200 bepaalt de fondsen, hun top 5 holdings en de meldingen.
+# Direct na elk fonds volgen tot vijf holdings: ticker, dagrendement
+# (slot of mark t.o.v. vorige slot) en weging. Een holding blijft heel
+# op een pagina, net als een fonds. Bij 401, 403, 429 of een dode
+# verbinding komt het foutscherm. Bij een ander antwoord bouwt de app
+# dezelfde strook uit getGlanceFundValue, een fonds per gekozen code,
+# zonder holdings en zonder meldingen.
 #
 # Vier schermen. Live: antwoord 200 met fondsen of meldingen.
 # Het eerste blok is GINI / FONDS, zodat de band zichzelf noemt.
@@ -77,11 +80,40 @@ SUB = "#6A7090"
 TTL = 300
 
 DEMO_FUNDS = [
-    {"fund_code": "GCF", "name": "CORE FUND", "nav": "100.00", "nav_date": "2026-01-01", "daily_return": "+1.00%", "mtd_return": "-1.00%", "peildatum": "2026-01-15"},
-    {"fund_code": "DFF", "name": "DIGITAL FUTURE", "nav": "110.00", "nav_date": "2026-01-01", "daily_return": "-1.00%", "mtd_return": "+1.00%", "peildatum": "2026-01-15"},
-    {"fund_code": "SCF", "name": "SUPER COMMODITIES", "nav": "120.00", "nav_date": "2026-01-01", "daily_return": "-2.00%", "mtd_return": "+2.00%", "peildatum": "2026-01-15"},
-    {"fund_code": "IVF", "name": "INCOME VALUE", "nav": "130.00", "nav_date": "2026-01-01", "daily_return": "+0.00%", "mtd_return": "+0.00%", "peildatum": "2026-01-15"},
-    {"fund_code": "GSF", "name": "GLOBAL SOUTH", "nav": "140.00", "nav_date": "2026-01-01", "daily_return": "+0.50%", "mtd_return": "-0.50%", "peildatum": "2026-01-15"},
+    {"fund_code": "GCF", "name": "CORE FUND", "nav": "100.00", "nav_date": "2026-01-01", "daily_return": "+1.00%", "mtd_return": "-1.00%", "peildatum": "2026-01-15", "holdings": [
+        {"ticker": "IVF", "daily_return": "+0.00%", "weight_pct": "27.3%"},
+        {"ticker": "GSF", "daily_return": "+0.50%", "weight_pct": "25.3%"},
+        {"ticker": "SCF", "daily_return": "-2.00%", "weight_pct": "24.0%"},
+        {"ticker": "DFF", "daily_return": "-1.00%", "weight_pct": "23.4%"},
+    ]},
+    {"fund_code": "DFF", "name": "DIGITAL FUTURE", "nav": "110.00", "nav_date": "2026-01-01", "daily_return": "-1.00%", "mtd_return": "+1.00%", "peildatum": "2026-01-15", "holdings": [
+        {"ticker": "MAGS", "daily_return": "-0.04%", "weight_pct": "16.9%"},
+        {"ticker": "XLK", "daily_return": "-0.34%", "weight_pct": "16.0%"},
+        {"ticker": "IGV", "daily_return": "-0.76%", "weight_pct": "11.3%"},
+        {"ticker": "QQQ", "daily_return": "-0.32%", "weight_pct": "10.5%"},
+        {"ticker": "ETH", "daily_return": "-3.08%", "weight_pct": "9.4%"},
+    ]},
+    {"fund_code": "SCF", "name": "SUPER COMMODITIES", "nav": "120.00", "nav_date": "2026-01-01", "daily_return": "-2.00%", "mtd_return": "+2.00%", "peildatum": "2026-01-15", "holdings": [
+        {"ticker": "GLD", "daily_return": "-2.82%", "weight_pct": "12.3%"},
+        {"ticker": "URA", "daily_return": "-3.80%", "weight_pct": "11.2%"},
+        {"ticker": "LIT", "daily_return": "-2.69%", "weight_pct": "9.3%"},
+        {"ticker": "COPX", "daily_return": "-3.28%", "weight_pct": "7.7%"},
+        {"ticker": "GDX", "daily_return": "-3.91%", "weight_pct": "6.7%"},
+    ]},
+    {"fund_code": "IVF", "name": "INCOME VALUE", "nav": "130.00", "nav_date": "2026-01-01", "daily_return": "+0.00%", "mtd_return": "+0.00%", "peildatum": "2026-01-15", "holdings": [
+        {"ticker": "MOO", "daily_return": "-1.09%", "weight_pct": "10.2%"},
+        {"ticker": "XLV", "daily_return": "-0.59%", "weight_pct": "8.0%"},
+        {"ticker": "XLE", "daily_return": "+1.51%", "weight_pct": "7.9%"},
+        {"ticker": "KIE", "daily_return": "-0.64%", "weight_pct": "7.4%"},
+        {"ticker": "IXG", "daily_return": "-0.85%", "weight_pct": "7.1%"},
+    ]},
+    {"fund_code": "GSF", "name": "GLOBAL SOUTH", "nav": "140.00", "nav_date": "2026-01-01", "daily_return": "+0.50%", "mtd_return": "-0.50%", "peildatum": "2026-01-15", "holdings": [
+        {"ticker": "UAE", "daily_return": "+2.38%", "weight_pct": "9.5%"},
+        {"ticker": "COLO", "daily_return": "-2.67%", "weight_pct": "9.2%"},
+        {"ticker": "EWW", "daily_return": "-0.12%", "weight_pct": "8.7%"},
+        {"ticker": "AFK", "daily_return": "-1.99%", "weight_pct": "8.6%"},
+        {"ticker": "EWS", "daily_return": "-0.69%", "weight_pct": "8.5%"},
+    ]},
 ]
 DEMO_MESSAGES = [
     {"text": "SAMPLE NOTICE", "kleur": "oranje"},
@@ -249,23 +281,40 @@ def _metrics(width, spec):
     return {"pad": 2, "sep": 4}
 
 
-def _ys(spec):
-    """Twee regels in 32 px, met minstens 1 px tussen de blokken."""
-    th = HEIGHTS[spec["top"]]
-    sh = HEIGHTS[spec["sub"]]
+def _ys_for(top_font, sub_font, lines=2):
+    """2 of 3 regels in 32 px. Drie regels als er holdings onder de kern staan."""
+    th = HEIGHTS[top_font]
+    sh = HEIGHTS[sub_font]
+    nsub = lines - 1
+    if nsub < 1:
+        nsub = 1
     gap = 3
-    if th + gap + sh > 32:
+    if th + nsub * (gap + sh) > 32:
+        gap = 2
+    if th + nsub * (gap + sh) > 32:
         gap = 1
-    block = th + gap + sh
+    if th + nsub * (gap + sh) > 32:
+        gap = 0
+    block = th + nsub * (gap + sh)
     y0 = (32 - block) // 2
     if y0 < 0:
         y0 = 0
-    y1 = y0 + th + gap
-    if y1 + sh > 32:
-        y1 = 32 - sh
-    if y1 < y0 + th:
-        y1 = y0 + th
-    return [y0, y1]
+    ys = [y0]
+    y = y0 + th + gap
+    for i in range(nsub):
+        if y + sh > 32:
+            y = 32 - sh
+        prev_h = th if i == 0 else sh
+        min_y = ys[len(ys) - 1] + prev_h
+        if y < min_y:
+            y = min_y
+        ys.append(y)
+        y = y + sh + gap
+    return ys
+
+
+def _ys(spec, lines=2):
+    return _ys_for(spec["top"], spec["sub"], lines)
 
 
 def _push(c, runs, x, y, text, font, color):
@@ -412,8 +461,27 @@ def _paint_sub(c, runs, y, parts, font, maxw):
 
 
 def _fund_item(c, spec, y0, y1, fund, maxw):
+    """Kernregel, daaronder de top 5 holdings als die er zijn, anders naam en datum."""
     top = spec["top"]
     sub = spec["sub"]
+    holds = fund.get("holdings", [])
+    has = type(holds) == "list" and len(holds) > 0
+    hold_font = sub
+    if has:
+        hold_font = _pick_hold_font(top, sub)
+    packed = _pack_holding_rows(c, fund, hold_font, maxw)
+    lines = 2
+    if type(packed) == "list" and len(packed) > 0:
+        rows = packed[0]
+        if len(rows) >= 2:
+            lines = 3
+        elif len(rows) == 1:
+            lines = 2
+    else:
+        hold_font = sub
+    ys = _ys_for(top, hold_font, lines)
+    y0 = ys[0]
+    y1 = ys[1]
     plan = _choose_plan(c, _fund_plans(fund), spec["gaps"], top, maxw)
     runs = []
     top_w = _paint_line(c, runs, y0, plan["parts"], plan["colors"], spec["gaps"], top)
@@ -421,9 +489,218 @@ def _fund_item(c, spec, y0, y1, fund, maxw):
         top_w = maxw
     if top_w < 1:
         return None
-    parts = _sub_parts(c, fund, sub, top_w)
-    _paint_sub(c, runs, y1, parts, sub, top_w)
-    return _item(c, runs, top_w)
+    used = top_w
+    if type(packed) == "list" and len(packed) > 0:
+        rows = packed[0]
+        inner = packed[1]
+        outer = packed[2]
+        for ri in range(len(rows)):
+            yi = ys[ri + 1]
+            rw = _paint_holding_row(c, runs, yi, rows[ri], hold_font, inner, outer)
+            if rw > used:
+                used = rw
+    else:
+        parts = _sub_parts(c, fund, sub, top_w)
+        sw = _paint_sub(c, runs, y1, parts, sub, top_w)
+        if sw > used:
+            used = sw
+    if used > maxw:
+        used = maxw
+    return _item(c, runs, used)
+
+
+def _weight(v):
+    """Weging als percentage, zonder plus-teken (dat is geen rendement)."""
+    if v == "--":
+        return v
+    if not v.endswith("%"):
+        v = v + "%"
+    if v.startswith("+"):
+        v = v[1:]
+    return v
+
+
+def _parse_holdings(d):
+    raw = d.get("holdings")
+    if type(raw) != "list":
+        return []
+    out = []
+    for i in range(len(raw)):
+        row = raw[i]
+        if type(row) != "dict":
+            continue
+        ticker = _s(row, "ticker", 8)
+        if ticker == "--":
+            continue
+        out.append({
+            "ticker": ticker,
+            "daily": _pct(_s(row, "daily_return", 12)),
+            "weight": _weight(_s(row, "weight_pct", 12)),
+        })
+        if len(out) >= 5:
+            break
+    return out
+
+
+def _short_pct(v):
+    """Eén cijfer achter de komma, behalve als dat 0.0 zou worden."""
+    if v == "--":
+        return v
+    out = ""
+    seen_dot = False
+    nonzero_before = False
+    kept = []
+    n = len(v)
+    for i in range(n):
+        ch = v[i]
+        if seen_dot:
+            if ch >= "0" and ch <= "9":
+                kept.append(ch)
+                continue
+            take = 1
+            if not nonzero_before and len(kept) >= 2 and kept[0] == "0" and kept[1] != "0":
+                take = 2
+            for j in range(len(kept)):
+                if j < take:
+                    out = out + kept[j]
+            out = out + ch
+            seen_dot = False
+            kept = []
+            continue
+        if ch >= "1" and ch <= "9" and not seen_dot:
+            nonzero_before = True
+        if ch == ".":
+            seen_dot = True
+        out = out + ch
+    if seen_dot and len(kept) > 0:
+        take = 1
+        if not nonzero_before and len(kept) >= 2 and kept[0] == "0" and kept[1] != "0":
+            take = 2
+        for j in range(len(kept)):
+            if j < take:
+                out = out + kept[j]
+    return out
+
+
+def _pick_hold_font(top_font, preferred):
+    """Onderfont dat samen met de kernregel en twee holdingsregels in 32 px past."""
+    th = HEIGHTS[top_font]
+    if preferred == "6x8":
+        fonts = ["6x8", "5x7", "4x5"]
+    elif preferred == "5x7":
+        fonts = ["5x7", "4x5"]
+    else:
+        fonts = ["4x5"]
+    for i in range(len(fonts)):
+        f = fonts[i]
+        sh = HEIGHTS[f]
+        if th + 2 * (1 + sh) <= 32:
+            return f
+    return "4x5"
+
+
+def _holding_chunk(h, mode):
+    """Eén holding als drie stukken: ticker, rendement, weging."""
+    ticker = h["ticker"]
+    daily = h["daily"]
+    weight = h["weight"]
+    if mode == "short":
+        daily = _short_pct(daily)
+        weight = _short_pct(weight)
+    elif mode == "nowt" or mode == "nowt_short":
+        if mode == "nowt_short":
+            daily = _short_pct(daily)
+        if weight.endswith("%"):
+            weight = weight[:-1]
+    elif mode == "slash":
+        if daily.endswith("%"):
+            daily = daily[:-1]
+        if weight.endswith("%"):
+            weight = weight[:-1]
+        daily = daily + "/"
+    return [ticker, daily, weight]
+
+
+def _holding_chunk_width(c, font, parts, inner_gap, outer_gap):
+    w = 0
+    n = len(parts)
+    for i in range(n):
+        if parts[i] != "":
+            w = w + c.text_width(parts[i], font)
+        if i < n - 1:
+            w = w + inner_gap
+    return w
+
+
+def _try_pack_holdings(c, holds, font, maxw, mode, inner, outer):
+    rows = []
+    row = []
+    used = 0
+    for i in range(len(holds)):
+        parts = _holding_chunk(holds[i], mode)
+        w = _holding_chunk_width(c, font, parts, inner, outer)
+        gap = 0
+        if len(row) > 0:
+            gap = outer
+        if w > maxw:
+            return []
+        if used + gap + w > maxw:
+            if len(row) == 0:
+                return []
+            rows.append(row)
+            row = []
+            used = 0
+            gap = 0
+            if len(rows) >= 2:
+                return []
+        row.append({"parts": parts, "daily": holds[i]["daily"], "w": w})
+        used = used + gap + w
+    if len(row) > 0:
+        rows.append(row)
+    if len(rows) == 0 or len(rows) > 2:
+        return []
+    return [rows, inner, outer]
+
+
+def _pack_holding_rows(c, fund, font, maxw):
+    """Verdeel tot vijf holdings over hooguit twee onderregels."""
+    holds = fund.get("holdings", [])
+    if type(holds) != "list" or len(holds) == 0:
+        return []
+    # Inner nooit onder 3 px, anders plakken rendement en weging aan elkaar.
+    attempts = [
+        ["full", 3, 8],
+        ["full", 3, 6],
+        ["nowt", 3, 6],
+        ["nowt", 3, 4],
+        ["nowt_short", 3, 6],
+        ["short", 3, 6],
+        ["slash", 3, 6],
+    ]
+    for i in range(len(attempts)):
+        a = attempts[i]
+        packed = _try_pack_holdings(c, holds, font, maxw, a[0], a[1], a[2])
+        if type(packed) == "list" and len(packed) > 0:
+            return packed
+    return []
+
+
+def _paint_holding_row(c, runs, y, row, font, inner, outer):
+    x = 0
+    n = len(row)
+    for i in range(n):
+        if i > 0:
+            x = x + outer
+        h = row[i]
+        parts = h["parts"]
+        daily = h["daily"]
+        colors = [ORANGE, _color(daily), LABEL]
+        for pi in range(len(parts)):
+            if parts[pi] != "":
+                x = _push(c, runs, x, y, parts[pi], font, colors[pi])
+            if pi < len(parts) - 1:
+                x = x + inner
+    return x
 
 
 def _parse_fund(d):
@@ -441,6 +718,7 @@ def _parse_fund(d):
         "mtd": _pct(_s(d, "mtd_return", 12)),
         "peil": _datum(d, "peildatum"),
         "navd": _datum(d, "nav_date"),
+        "holdings": _parse_holdings(d),
     }
 
 

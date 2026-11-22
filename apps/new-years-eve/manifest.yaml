@@ -1,0 +1,22 @@
+gdn: 1
+id: new-years-eve
+version: 1.0.0
+name: New Year's Eve
+author: reyos86
+description: Midnight around the world - the countdown to your New Year, the sweep of midnight through all 38 time zones, and the great celebrations from Sydney's harbour to the Times Square ball drop, with fireworks.
+category: Lifestyle
+entry: app.star
+width: 192
+height: 32
+refresh: 60
+pages: [midnight, world, party]
+
+inputs:
+  - key: zone
+    type: choice
+    app_input_type: dropdown
+    label: Your time zone
+    default: EASTERN
+    choices: [EASTERN, CENTRAL, MOUNTAIN, PACIFIC, ALASKA, HAWAII, ATLANTIC, NEWFOUNDLAND, UK AND IRELAND]
+    options: [EASTERN, CENTRAL, MOUNTAIN, PACIFIC, ALASKA, HAWAII, ATLANTIC, NEWFOUNDLAND, UK AND IRELAND]
+    help: The countdown runs to midnight in this time zone, and the celebrations page shows when each one happens in your time.

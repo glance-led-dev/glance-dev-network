@@ -180,11 +180,11 @@ TRUCK_DRIVER_COLOR = {
 #   live board  -> the position badge takes the series colour
 #   last race   -> the driver's NAME takes the series colour (the position
 #                  number there already carries the finish-order colour)
-# Cup = championship gold, O'Reilly (Xfinity) = series green, Trucks = series red.
+# Cup = championship gold, O'Reilly (Xfinity) = series green, Trucks = FedEx purple.
 CHASE_COLOR = {
     "NASCAR": ("#D4AF37", "#000000"),
     "NASCAR - O'Reilly": ("#009D57", "#FFFFFF"),
-    "NASCAR - Trucks": ("#E20514", "#FFFFFF"),
+    "NASCAR - Trucks": ("#4D148C", "#FFFFFF"),
 }
 
 POS_BADGE_BG = "#000000"
@@ -204,11 +204,12 @@ def chase_name_color(series, chase):
     return entry[0] if entry else ""
 
 # Race dates on the next-race page and the schedule, in each series' own
-# colour: NASCAR yellow for Cup, O'Reilly green, Craftsman red for Trucks.
+# colour: NASCAR yellow for Cup, O'Reilly green, FedEx purple for Trucks
+# (brightened a step so it reads as text on a black panel).
 SERIES_DATE_COLOR = {
     "NASCAR": "#FFD100",
     "NASCAR - O'Reilly": "#009D57",
-    "NASCAR - Trucks": "#E20514",
+    "NASCAR - Trucks": "#7C3AED",
 }
 
 def date_color(series):
@@ -259,34 +260,37 @@ TRACK_SHAPE = {
 # Python so no runtime distortion. Only used on the big `track` page and the
 # off-season cards; the live boards have no room for a raster outline.
 NASCAR_TRACK_ASSET = {
-    "CHARLOTTE MOTOR SPEEDWAY": ("track-charlotte.png", 51, 26),
-    "CHICAGOLAND SPEEDWAY": ("track-chicagoland.png", 41, 26),
-    "DAYTONA INTERNATIONAL SPEEDWAY": ("track-daytona.png", 52, 26),
-    "TALLADEGA SUPERSPEEDWAY": ("track-talladega.png", 51, 26),
-    "ATLANTA MOTOR SPEEDWAY": ("track-atlanta.png", 46, 26),
-    "HOMESTEAD-MIAMI SPEEDWAY": ("track-homestead-miami.png", 54, 26),
-    "POCONO RACEWAY": ("track-pocono.png", 43, 26),
-    "INDIANAPOLIS MOTOR SPEEDWAY": ("track-indianapolis-oval.png", 53, 26),
-    "MARTINSVILLE SPEEDWAY": ("track-martinsville.png", 60, 22),
-    "BRISTOL MOTOR SPEEDWAY": ("track-bristol.png", 33, 26),
-    "RICHMOND RACEWAY": ("track-richmond.png", 48, 26),
-    "NORTH WILKESBORO SPEEDWAY": ("track-north-wilkesboro.png", 49, 26),
-    "SONOMA RACEWAY": ("track-sonoma.png", 60, 22),
+    "CHARLOTTE MOTOR SPEEDWAY": ("track-charlotte.png", 50, 25),
+    "CHICAGOLAND SPEEDWAY": ("track-chicagoland.png", 40, 25),
+    "DAYTONA INTERNATIONAL SPEEDWAY": ("track-daytona.png", 51, 25),
+    "TALLADEGA SUPERSPEEDWAY": ("track-talladega.png", 50, 25),
+    "ATLANTA MOTOR SPEEDWAY": ("track-atlanta.png", 46, 25),
+    "HOMESTEAD-MIAMI SPEEDWAY": ("track-homestead-miami.png", 56, 25),
+    "POCONO RACEWAY": ("track-pocono.png", 43, 25),
+    "INDIANAPOLIS MOTOR SPEEDWAY": ("track-indianapolis-oval.png", 52, 25),
+    "MARTINSVILLE SPEEDWAY": ("track-martinsville.png", 59, 20),
+    "BRISTOL MOTOR SPEEDWAY": ("track-bristol.png", 48, 26),
+    "RICHMOND RACEWAY": ("track-richmond.png", 47, 25),
+    "NORTH WILKESBORO SPEEDWAY": ("track-north-wilkesboro.png", 48, 25),
+    "PHOENIX RACEWAY": ("track-phoenix.png", 45, 25),
+    "CIRCUIT OF THE AMERICAS": ("track-cota.png", 35, 25),
+    "GRAND PRIX OF ST. PETERSBURG": ("track-st-petersburg.png", 26, 25),
+    "SONOMA RACEWAY": ("track-sonoma.png", 59, 21),
     "WATKINS GLEN INTERNATIONAL": ("track-watkins-glen.png", 56, 26),
-    "LIME ROCK PARK": ("track-lime-rock.png", 41, 26),
+    "LIME ROCK PARK": ("track-lime-rock.png", 40, 25),
     "LUCAS OIL INDIANAPOLIS RACEWAY PARK": ("track-lucas-oil-irp.png", 39, 26),
-    "SAN DIEGO STREET COURSE": ("track-coronado.png", 36, 26),
-    "DOVER MOTOR SPEEDWAY": ("track-dover.png", 49, 26),
-    "ROCKINGHAM SPEEDWAY": ("track-rockingham.png", 50, 26),
-    "IOWA SPEEDWAY": ("track-iowa-oval.png", 46, 26),
-    "TEXAS MOTOR SPEEDWAY": ("track-texas.png", 44, 26),
-    "KANSAS SPEEDWAY": ("track-kansas.png", 45, 26),
-    "MICHIGAN INTERNATIONAL SPEEDWAY": ("track-michigan.png", 51, 26),
-    "NASHVILLE SUPERSPEEDWAY": ("track-nashville.png", 47, 26),
-    "LAS VEGAS MOTOR SPEEDWAY": ("track-las-vegas.png", 41, 26),
-    "DARLINGTON RACEWAY": ("track-darlington.png", 51, 26),
-    "WORLD WIDE TECHNOLOGY RACEWAY": ("track-wwt-raceway.png", 60, 24),
-    "NEW HAMPSHIRE MOTOR SPEEDWAY": ("track-new-hampshire.png", 60, 24),
+    "SAN DIEGO STREET COURSE": ("track-coronado.png", 35, 25),
+    "DOVER MOTOR SPEEDWAY": ("track-dover.png", 50, 25),
+    "ROCKINGHAM SPEEDWAY": ("track-rockingham.png", 49, 25),
+    "IOWA SPEEDWAY": ("track-iowa-oval.png", 45, 25),
+    "TEXAS MOTOR SPEEDWAY": ("track-texas.png", 46, 25),
+    "KANSAS SPEEDWAY": ("track-kansas.png", 44, 25),
+    "MICHIGAN INTERNATIONAL SPEEDWAY": ("track-michigan.png", 52, 25),
+    "NASHVILLE SUPERSPEEDWAY": ("track-nashville.png", 49, 25),
+    "LAS VEGAS MOTOR SPEEDWAY": ("track-las-vegas.png", 41, 25),
+    "DARLINGTON RACEWAY": ("track-darlington.png", 53, 25),
+    "WORLD WIDE TECHNOLOGY RACEWAY": ("track-wwt-raceway.png", 60, 23),
+    "NEW HAMPSHIRE MOTOR SPEEDWAY": ("track-new-hampshire.png", 59, 24),
 }
 
 SHAPE_POINTS = {
@@ -302,11 +306,52 @@ SHAPE_POINTS = {
     "street": [(0.0, 0.2), (0.4, 0.0), (0.4, 0.3), (0.8, 0.3), (0.8, 0.0), (1.0, 0.2), (1.0, 0.8), (0.8, 1.0), (0.8, 0.5), (0.4, 0.5), (0.4, 1.0), (0.0, 0.8)],
 }
 
+# Series badges, pre-sized: (asset, w, h) full height for the off-season
+# logo page, and a 24px version that leaves room for the LIVE / NEXT UP tag.
 SERIES_LOGO = {
-    "NASCAR": ("nascar-logo.png", 128.0 / 22.0),
-    "NASCAR - O'Reilly": ("oreilly-logo.png", 57.0 / 24.0),
-    "NASCAR - Trucks": ("trucks-logo.png", 99.0 / 22.0),
+    "NASCAR": (("cup-logo.png", 66, 32), ("cup-logo-sm.png", 50, 24)),
+    "NASCAR - O'Reilly": (("ors-logo.png", 66, 32), ("ors-logo-sm.png", 50, 24)),
+    "NASCAR - Trucks": (("trk-logo.png", 66, 32), ("trk-logo-sm.png", 50, 24)),
 }
+
+def series_logo(series, small):
+    big, sm = SERIES_LOGO.get(series, SERIES_LOGO["NASCAR"])
+    return sm if small else big
+
+# TV networks in their brand colours: NBC's peacock, FOX blue (as a block), USA red, CW
+# orange (its 2024 "hot sauce"), Prime blue; black-and-white logos (FS1,
+# FS2, TNT) stay white. Drawn in 4x5 so a network fits the schedule's 6px rows.
+PEACOCK = ["#FCB711", "#F37021", "#CC004C", "#6460AA", "#0089D0", "#0DB14B"]
+PEACOCK_H = [3, 4, 5, 5, 4, 3]
+TV_COLOR = {"USA": "#D91E25", "CW": "#FF4500", "PRIME": "#00A8E1"}
+
+# Networks whose brand colour is too dark to read as text on a black panel
+# get white letters on a block of that colour instead.
+TV_BLOCK = {"FOX": "#003087"}
+
+def tv_width(c, tv):
+    if tv == "":
+        return 0
+    w = c.text_width(tv, "4x5")
+    if tv == "NBC":
+        return w + 7
+    return w + 4 if tv in TV_BLOCK else w
+
+def draw_tv(c, tv, x, y):
+    # A network at (x, y), 5px tall; returns its width.
+    if tv == "":
+        return 0
+    tx = x
+    if tv == "NBC":
+        for k in range(6):
+            c.rect(x + k, y + 5 - PEACOCK_H[k], x + k, y + 4, fill = PEACOCK[k])
+        tx = x + 7
+    if tv in TV_BLOCK:
+        c.rect(x, y - 1, x + tv_width(c, tv) - 1, y + 5, fill = TV_BLOCK[tv])
+        c.text(tv, x + 2, y, font = "4x5", color = "#FFFFFF")
+        return tv_width(c, tv)
+    c.text(tv, tx, y, font = "4x5", color = TV_COLOR.get(tv, "#FFFFFF"))
+    return tv_width(c, tv)
 
 # ---------- small helpers ----------
 
@@ -586,6 +631,16 @@ def format_ampm(lh, lm):
     mm_txt = "0" + str(lm) if lm < 10 else str(lm)
     return str(h12) + ":" + mm_txt + ampm
 
+def local_unix(ctx, race_date_str):
+    # NASCAR's Eastern race time as unix seconds shifted to the panel's zone.
+    y, mo, d, h, mi = parse_iso(race_date_str)
+    naive_unix = _days_from_civil(y, mo, d) * 86400 + h * 3600 + mi * 60
+    et_off = eastern_offset_seconds()
+    panel_off = panel_offset_seconds(ctx)
+    if panel_off == None:
+        panel_off = et_off
+    return naive_unix - et_off + panel_off
+
 def local_race_date(ctx, race_date_str):
     if race_date_str == "":
         return "TBD"
@@ -649,23 +704,14 @@ def draw_nascar_track(c, track_name, asset, x, y, w, h):
         draw_track_icon(c, track_name, x, y, w, h, COLORS["muted"])
 
 def cap_track_dims(native_w, native_h, max_w, max_h):
+    # Never enlarge a traced outline -- that only blurs its line.
+    max_w, max_h = min(max_w, native_w), min(max_h, native_h)
     w, h = float(max_w), float(max_w) * float(native_h) / float(native_w)
     if h > max_h:
         h = float(max_h)
         w = float(max_h) * float(native_w) / float(native_h)
     return max(1, int(w + 0.5)), max(1, int(h + 0.5))
 
-def series_logo_dims(series, max_w, max_h):
-    asset, ratio = SERIES_LOGO.get(series, SERIES_LOGO["NASCAR"])
-    w, h = float(max_w), float(max_w) / ratio
-    if h > max_h:
-        h = float(max_h)
-        w = float(max_h) * ratio
-    return asset, max(1, int(w + 0.5)), max(1, int(h + 0.5))
-
-def draw_series_logo(c, series, x, y, w, h):
-    asset, _, _ = series_logo_dims(series, w, h)
-    c.image(asset, x, y, w = w, h = h)
 
 # ---------- CF feed parsing ----------
 
@@ -752,13 +798,36 @@ def vehicle_rows(feed, series, live_race):
 
 # ---------- state ----------
 
-def fetch_schedule(ctx):
-    series = safe_input(ctx, "series", "NASCAR")
-    year = ctx.now.year
+def season_schedule(ctx, year):
     resp = http_json("https://cf.nascar.com/cacher/" + str(year) + "/race_list_basic.json", 3600)
     if not resp["ok"]:
-        return None, series, "CF " + str(resp["status"])
-    return resp["data"], series, None
+        return None, "CF " + str(resp["status"])
+    data = resp["data"]
+    if safe_input(ctx, "_debug", "") == "asof":
+        # Preview harness: races after `now` count as not yet run.
+        data = _as_of(data, ctx.now.unix)
+    return data, None
+
+def _as_of(data, now_unix):
+    out = {}
+    for k, races in data.items():
+        if type(races) != "list":
+            out[k] = races
+            continue
+        rs = []
+        for r in races:
+            d = str(r.get("race_date", "") or "")
+            if len(d) >= 16 and _utc_unix(d) > now_unix:
+                r = dict(r)
+                r["winner_driver_id"] = 0
+            rs.append(r)
+        out[k] = rs
+    return out
+
+def fetch_schedule(ctx):
+    series = safe_input(ctx, "series", "NASCAR")
+    data, err = season_schedule(ctx, ctx.now.year)
+    return data, series, err
 
 def _has_winner(race):
     w = race.get("winner_driver_id", 0)
@@ -1001,10 +1070,32 @@ def fetch_state(ctx):
     if dbg == "race" or dbg == "quali":
         return _mock_live(ctx, "race" if dbg == "race" else "quali")
     schedule, series, err = fetch_schedule(ctx)
+    race, last = None, None
+    if err == None:
+        race = pick_next(schedule, series)
+        last = pick_last_completed(schedule, series)
+
+    # Off-season: this year's season is over, or next year's hasn't started
+    # (its schedule may not even be published yet). The pages turn into the
+    # series logo, the Daytona countdown, the champion and every race winner.
+    # A weekend under way and the finale's day-of hold still come first.
+    if race == None or last == None:
+        if last != None:
+            done, nxt, season = schedule, None, ctx.now.year
+        else:
+            done, _ = season_schedule(ctx, ctx.now.year - 1)
+            nxt, season = schedule, ctx.now.year - 1
+        ws = weekend_start(race) if race != None else None
+        weekend_on = ws != None and ctx.now.unix >= ws
+        rs = race_start(last) if last != None else None
+        held = rs != None and ctx.now.unix <= keep_until_end_of_day(ctx, rs + 3 * 3600)
+        if done != None and len(done.get(series_key(series), [])) > 0 and not weekend_on and not held:
+            if nxt == None:
+                nxt, _ = season_schedule(ctx, ctx.now.year + 1)
+            return {"mode": "season", "series": series, "season": season, "done": done, "next": nxt}
+
     if err != None:
         return {"mode": "error", "title": "SCHEDULE ERROR", "sub": err}
-    race = pick_next(schedule, series)
-    last = pick_last_completed(schedule, series)
     if race == None and last == None:
         return {"mode": "error", "title": "NO RACE", "sub": "SCHEDULE EMPTY"}
 
@@ -1226,6 +1317,11 @@ def logo(c, ctx):
         draw_error(c, st["title"], st["sub"])
         return
     series = st["series"]
+    if st["mode"] == "season":
+        # Off-season: just the series badge, full height.
+        asset, w, h = series_logo(series, False)
+        c.image(asset, (c.width - w) // 2, (32 - h) // 2, w = w, h = h)
+        return
     live = st["mode"] == "live"
     tag = ("FINAL" if st.get("over", False) else "LIVE") if live else "NEXT UP"
     tcol = COLORS["error"] if tag == "LIVE" else COLORS["muted"]
@@ -1235,10 +1331,8 @@ def logo(c, ctx):
     if len(winners) > 0:
         _draw_logo_with_stages(c, series, winners, tag, tcol)
         return
-    _, logo_w, logo_h = series_logo_dims(series, c.width - 40, 19)
-    logo_x = (c.width - logo_w) // 2
-    logo_y = (28 - logo_h) // 2
-    draw_series_logo(c, series, logo_x, logo_y, logo_w, logo_h)
+    asset, logo_w, logo_h = series_logo(series, True)
+    c.image(asset, (c.width - logo_w) // 2, 1, w = logo_w, h = logo_h)
     c.text(tag, c.width // 2, 27, font = "picopixel", color = tcol, align = "center")
 
 # During a race, the logo moves left once a stage has finished, and each
@@ -1249,10 +1343,9 @@ STAGE_COL_W = 76
 def _draw_logo_with_stages(c, series, winners, tag, tcol):
     col_x = c.width - 4 - STAGE_COL_W
     zone_w = col_x - 10 - 4
-    _, logo_w, logo_h = series_logo_dims(series, zone_w, 19)
+    asset, logo_w, logo_h = series_logo(series, True)
     logo_x = 4 + (zone_w - logo_w) // 2
-    logo_y = (28 - logo_h) // 2
-    draw_series_logo(c, series, logo_x, logo_y, logo_w, logo_h)
+    c.image(asset, logo_x, 1, w = logo_w, h = logo_h)
     c.text(tag, logo_x + logo_w // 2, 27, font = "picopixel", color = tcol, align = "center")
     c.line(col_x - 5, 3, col_x - 5, 28, COLORS["line"])
     n = len(winners)
@@ -1274,6 +1367,9 @@ def event(c, ctx):
         return
     if st["mode"] == "off":
         _draw_next_card(c, ctx, st, big = True)
+        return
+    if st["mode"] == "season":
+        _draw_countdown(c, ctx, st)
         return
 
     if c.width < 320:
@@ -1383,6 +1479,8 @@ def order1(c, ctx):
         draw_error(c, st["title"], st["sub"])
     elif st["mode"] == "live":
         _draw_running_order(c, st, 0)
+    elif st["mode"] == "season":
+        _draw_champion(c, st)
     else:
         _draw_last_page(c, ctx, 0)
 
@@ -1393,6 +1491,8 @@ def order2(c, ctx):
         draw_error(c, st["title"], st["sub"])
     elif st["mode"] == "live":
         _draw_running_order(c, st, 1)
+    elif st["mode"] == "season":
+        _draw_winners(c, st, 0)
     else:
         _draw_last_page(c, ctx, 1)
 
@@ -1403,6 +1503,8 @@ def order3(c, ctx):
         draw_error(c, st["title"], st["sub"])
     elif st["mode"] == "live":
         _draw_running_order(c, st, 2)
+    elif st["mode"] == "season":
+        _draw_winners(c, st, 1)
     else:
         _draw_last_page(c, ctx, 2)
 
@@ -1413,6 +1515,8 @@ def order4(c, ctx):
         draw_error(c, st["title"], st["sub"])
     elif st["mode"] == "live":
         _draw_running_order(c, st, 3)
+    elif st["mode"] == "season":
+        _draw_winners(c, st, 2)
     else:
         _draw_last_page(c, ctx, 3)
 
@@ -1423,6 +1527,8 @@ def order5(c, ctx):
         draw_error(c, st["title"], st["sub"])
     elif st["mode"] == "live":
         _draw_running_order(c, st, 4)
+    elif st["mode"] == "season":
+        _draw_winners(c, st, 3)
     else:
         _draw_last_page(c, ctx, 4)
 
@@ -1433,6 +1539,8 @@ def movers(c, ctx):
         draw_error(c, st["title"], st["sub"])
     elif st["mode"] == "live":
         _draw_gains_losses(c, st)
+    elif st["mode"] == "season":
+        _draw_winners(c, st, 4)
     else:
         _draw_schedule(c, ctx, st, 0)
 
@@ -1527,14 +1635,14 @@ def _draw_next_card(c, ctx, st, big):
     when = local_race_date(ctx, st["race_date"])
     tv = st.get("tv", "")
     ww = c.text_width(when, "5x7")
-    tvw = c.text_width(tv, "4x5") if tv != "" else 0
+    tvw = tv_width(c, tv)
     if tvw > 0 and ww + 6 + tvw > text_w:
         tv, tvw = "", 0
     gw = ww + (6 + tvw if tvw > 0 else 0)
     gx = cx - gw // 2
     c.text(fit_text(c, when, "5x7", text_w), gx, date_y, font = "5x7", color = date_color(st["series"]))
     if tvw > 0:
-        c.text(tv, gx + ww + 6, date_y + 2, font = "4x5", color = COLORS["text"])
+        draw_tv(c, tv, gx + ww + 6, date_y + 2)
 
     if prev != None:
         season, name, name_col = prev
@@ -1557,7 +1665,7 @@ def _draw_schedule(c, ctx, st, skip):
         c.text(msg, c.width // 2, 14, font = "5x7", color = COLORS["muted"], align = "center")
         return
     dx = 4 + c.text_width("SEP 00", "4x5") + 6
-    tv_w = max([c.text_width(tv_name(r), "4x5") for r in races])
+    tv_w = max([tv_width(c, tv_name(r)) for r in races])
     trk_max = c.width - 4 - tv_w - 8 - dx
     tracks = [fit_text(c, short_track(r.get("track_name", "")), "4x5", trk_max) for r in races]
     tv_x = dx + max([c.text_width(t, "4x5") for t in tracks]) + 8
@@ -1567,9 +1675,7 @@ def _draw_schedule(c, ctx, st, skip):
         dt = local_race_daydate(ctx, r.get("race_date", r.get("date_scheduled", "")))
         c.text(dt, 4, y, font = "4x5", color = date_color(st["series"]))
         c.text(tracks[i], dx, y, font = "4x5", color = COLORS["text"])
-        tv = tv_name(r)
-        if tv != "":
-            c.text(tv, tv_x, y, font = "4x5", color = COLORS["muted"])
+        draw_tv(c, tv_name(r), tv_x, y)
         y += 6
 
 
@@ -1622,3 +1728,254 @@ def _draw_last_page(c, ctx, page):
         c.text(who, cx0 + pw, ry, font = "4x5", color = name_color or COLORS["text"])
         if fw > 0:
             draw_mini_flags(c, nwins, cx0 + pw + c.text_width(who, "4x5") + 2, ry)
+
+# ---------- off-season pages ----------
+
+# The opener at Daytona, until NASCAR publishes next year's schedule:
+# (race, its date, the Duels' date, the Clash's date) -- Cup only has the last two.
+DAYTONA_FALLBACK = {
+    2027: {
+        "NASCAR": ("DAYTONA 500", (2027, 2, 21), (2027, 2, 18), (2027, 2, 13)),
+        "NASCAR - O'Reilly": ("UNITED RENTALS 300", (2027, 2, 20), None, None),
+        "NASCAR - Trucks": ("FRESH FROM FLORIDA 250", (2027, 2, 19), None, None),
+    },
+}
+
+def _civil(t):
+    return _days_from_civil(t[0], t[1], t[2]) if t != None else None
+
+WEEKDAYS = ["THU", "FRI", "SAT", "SUN", "MON", "TUE", "WED"]   # day 0 = 1970-01-01, a Thursday
+
+def daytona_target(ctx, st):
+    # (race name, local day number, Duels' day, Clash's day, TV), or None.
+    nxt = st.get("next", None)
+    if nxt != None:
+        duels, clash = None, None
+        for r in nxt.get(series_key(st["series"]), []):
+            d = str(r.get("race_date", r.get("date_scheduled", "")) or "")
+            if len(d) < 16:
+                continue
+            day = local_unix(ctx, d) // 86400
+            rname = str(r.get("race_name", "")).upper()
+            if clash == None and "CLASH" in rname:
+                clash = day
+            if "DAYTONA" not in str(r.get("track_name", "")).upper():
+                continue
+            if r.get("race_type_id", None) == 1:
+                return (short_race(r.get("race_name", ""), r.get("track_name", "")), day, duels, clash, tv_name(r))
+            if duels == None and "DUEL" in rname:
+                duels = day
+    fb = DAYTONA_FALLBACK.get(st["season"] + 1, {}).get(st["series"], None)
+    if fb == None:
+        return None
+    name, ymd, duel, clash = fb
+    return (name, _civil(ymd), _civil(duel), _civil(clash), "")
+
+def day_label(day, weekday = True):
+    y, m, d = _civil_from_days(day)
+    md = MONTHS_FULL[m - 1][:3] + " " + str(d)
+    return (WEEKDAYS[day % 7] + " " + md) if weekday else md
+
+# The Daytona countdown: race name, days to go in the series colour, the date
+# (and for Cup the Duels), with Daytona's outline on the right.
+def _draw_countdown(c, ctx, st):
+    tgt = daytona_target(ctx, st)
+    asset, nw, nh = nascar_track_dims("DAYTONA INTERNATIONAL SPEEDWAY")
+    tw, th = cap_track_dims(nw, nh, 40 if c.width < 320 else 52, 28)
+    gap = 10
+    text_w = c.width - tw - gap - 16
+    tx0 = (c.width - (text_w + gap + tw)) // 2
+    cx = tx0 + text_w // 2
+    draw_nascar_track(c, "DAYTONA INTERNATIONAL SPEEDWAY", asset, tx0 + text_w + gap, (32 - th) // 2, tw, th)
+    col = date_color(st["series"])
+    if tgt == None:
+        c.text("DAYTONA", cx, 4, font = "6x8", color = COLORS["text"], align = "center")
+        c.text("FEBRUARY", cx, 17, font = "5x7", color = col, align = "center")
+        return
+    name, day, duel_day, clash_day, tv = tgt
+    nf = "6x8" if c.text_width(name, "6x8") <= text_w else "5x7"
+    c.text(fit_text(c, name, nf, text_w), cx, 1 if nf == "6x8" else 2, font = nf, color = COLORS["text"], align = "center")
+
+    off = panel_offset_seconds(ctx)
+    today = (ctx.now.unix + (off if off != None else eastern_offset_seconds())) // 86400
+    left = day - today
+    if left <= 0:
+        num, unit = "RACE DAY", ""
+    else:
+        num, unit = str(left), (" DAY" if left == 1 else " DAYS")
+    when = day_label(day)
+
+    # Cup's lead-in races go on the bottom row (CLASH ... DUELS ...), which
+    # moves the race date up beside the count; otherwise the date sits below.
+    extras = []
+    if clash_day != None and clash_day > today:
+        extras.append("CLASH " + day_label(clash_day, False))
+    if duel_day != None and duel_day > today:
+        extras.append("DUELS " + day_label(duel_day, False))
+
+    numw = c.text_width(num, "8x10")
+    uw = c.text_width(unit, "5x7") if unit != "" else 0
+    side = when if len(extras) > 0 else ""
+    sw = c.text_width(side, "4x5") if side != "" else 0
+    gx = cx - (numw + uw + (8 + sw if sw > 0 else 0)) // 2
+    c.text(num, gx, 11, font = "8x10", color = col)
+    if uw > 0:
+        c.text(unit, gx + numw, 14, font = "5x7", color = COLORS["text"])
+    if sw > 0:
+        c.text(side, gx + numw + uw + 8, 15, font = "4x5", color = COLORS["text"])
+
+    items = [(e, COLORS["muted"]) for e in extras] if len(extras) > 0 else [(when, COLORS["text"])]
+    tvw = tv_width(c, tv)
+    total = 8 * (len(items) - 1) + (8 + tvw if tvw > 0 else 0)
+    for t, _ in items:
+        total += c.text_width(t, "4x5")
+    x = cx - total // 2
+    for t, tc in items:
+        c.text(t, x, 25, font = "4x5", color = tc)
+        x += c.text_width(t, "4x5") + 8
+    if tvw > 0:
+        draw_tv(c, tv, x, 25)
+
+def final_points(st):
+    # The finished season's final driver standings, or [].
+    sid = str(SERIES_IDS.get(st["series"], 1))
+    resp = http_json("https://cf.nascar.com/cacher/" + str(st["season"]) + "/" + sid + "/final/" + sid + "-drivers-points.json", 86400)
+    if not resp["ok"] or type(resp["data"]) != "list":
+        return []
+    return resp["data"]
+
+MFG_COLOR = {"CHEVROLET": "#D9A62E", "FORD": "#4A8CF0", "TOYOTA": "#EB0A1E"}
+
+# Each champion's door number, drawn as art: (series, season, car) ->
+# (asset, w, h). A champion without art gets a livery-coloured number box.
+CHAMP_NUMBER = {
+    ("NASCAR", 2026, "5"): ("champ-cup-5.png", 37, 28),
+    ("NASCAR - O'Reilly", 2026, "7"): ("champ-ors-7.png", 33, 28),
+    ("NASCAR - Trucks", 2026, "11"): ("champ-trk-11.png", 40, 28),
+}
+
+# The series champion: the car number in its livery on the left, then the
+# season + CHAMPION, the driver in team colours and the manufacturer.
+def _draw_champion(c, st):
+    champ = None
+    for p in final_points(st):
+        if int(p.get("position", 0) or 0) == 1:
+            champ = p
+    series = st["series"]
+    title = str(st["season"]) + " CHAMPION"
+    if champ == None:
+        c.text(title, c.width // 2, 8, font = "6x8", color = GOLD, align = "center")
+        c.text("STANDINGS UNAVAILABLE", c.width // 2, 20, font = "4x5", color = COLORS["muted"], align = "center")
+        return
+    num = str(champ.get("car_no", ""))
+    name = str(champ.get("driver_name", "")).upper()
+    mfg = str(champ.get("manufacturer", "")).upper()
+    bg, txt = driver_colors(num, series)
+    art = CHAMP_NUMBER.get((series, st["season"], num), None)
+    box = art[1] if art != None else 24
+    max_w = c.width - box - 16
+    nf = "6x8" if c.text_width(name, "6x8") <= max_w else "5x7"
+    text_w = min(max(c.text_width(name, nf), c.text_width(title, "4x5"), c.text_width(mfg, "5x7")), max_w)
+    x0 = (c.width - (box + 8 + text_w)) // 2
+    if art != None:
+        c.image(art[0], x0, (32 - art[2]) // 2, w = art[1], h = art[2])
+    else:
+        by = (32 - box) // 2
+        c.rect(x0, by, x0 + box - 1, by + box - 1, fill = bg, outline = COLORS["line"] if bg == "#000000" else bg)
+        c.text(num, x0 + box // 2, by + (box - 10) // 2, font = "8x10", color = txt, align = "center")
+    cx = x0 + box + 8 + text_w // 2
+    c.text(title, cx, 2, font = "4x5", color = GOLD, align = "center")
+    c.text(fit_chars(c, name, nf, text_w), cx, 11 if nf == "6x8" else 12, font = nf, color = team_name_color(num, series), align = "center")
+    c.text(mfg, cx, 23, font = "5x7", color = MFG_COLOR.get(mfg, COLORS["text"]), align = "center")
+
+# Track names for the winners list, as fans say them, short enough to sit
+# beside a winner in a 4x5 column.
+TRACK_LABEL = {
+    "CIRCUIT OF THE AMERICAS": "COTA",
+    "WATKINS GLEN INTERNATIONAL": "WATKINS GLEN",
+    "MICHIGAN INTERNATIONAL SPEEDWAY": "MICHIGAN",
+    "SAN DIEGO STREET COURSE": "SAN DIEGO",
+    "NORTH WILKESBORO SPEEDWAY": "N. WILKESBORO",
+    "INDIANAPOLIS MOTOR SPEEDWAY": "INDIANAPOLIS",
+    "WORLD WIDE TECHNOLOGY RACEWAY": "GATEWAY",
+    "HOMESTEAD-MIAMI SPEEDWAY": "HOMESTEAD",
+    "BOWMAN GRAY STADIUM": "BOWMAN GRAY",
+    "GRAND PRIX OF ST. PETERSBURG": "ST. PETERSBURG",
+    "LIME ROCK PARK": "LIME ROCK",
+    "LUCAS OIL INDIANAPOLIS RACEWAY PARK": "LUCAS OIL",
+}
+
+def race_label(race, duel_n):
+    name = str(race.get("race_name", "")).upper()
+    if "CLASH" in name:
+        return "CLASH"
+    if "DUEL" in name:
+        return "DUEL " + str(duel_n)
+    if "ALL-STAR" in name:
+        return "ALL-STAR"
+    track = str(race.get("track_name", "")).upper()
+    return TRACK_LABEL.get(track, short_track(track))
+
+def comment_winner(race):
+    # "Tyler Reddick has won the DAYTONA 500 at ..." -> "REDDICK".
+    cmt = str(race.get("race_comments", "") or "")
+    for key in (" has won", " won "):
+        k = cmt.find(key)
+        if k > 0:
+            return last_name(cmt[:k])
+    return ""
+
+# Every race of the finished season and its winner, spread evenly over the
+# five pages (8 a page at most on 192): the track in grey, the winner in team
+# colours at the right of the column.
+def _draw_winners(c, st, page):
+    series = st["series"]
+    col = date_color(series)
+    draw_page_tab(c, str(st["season"]) + " WINNERS", col)
+    races = st["done"].get(series_key(series), [])
+    by_id = {}
+    for p in final_points(st):
+        by_id[p.get("driver_id", None)] = p
+    ncols = board_cols(c.width)
+    cap = ncols * 4
+    per = min(cap, (len(races) + 4) // 5)
+    lo = page * per
+    hi = min(lo + per, len(races)) if page < 4 else min(lo + cap, len(races))
+    if lo >= len(races):
+        c.text("--", c.width // 2, 18, font = "6x8", color = COLORS["muted"], align = "center")
+        return
+    # Two different winners with one surname (C. and S. Smith) get initials.
+    owners = {}
+    for r in races:
+        p = by_id.get(r.get("winner_driver_id", None), None)
+        if p != None:
+            ln = last_name(p.get("driver_name", ""))
+            owners[ln] = owners.get(ln, []) + [p.get("driver_id", None)]
+    rows = []
+    duel = 0
+    for i in range(hi):
+        r = races[i]
+        if "DUEL" in str(r.get("race_name", "")).upper():
+            duel += 1
+        if i < lo:
+            continue
+        p = by_id.get(r.get("winner_driver_id", None), None)
+        if p != None:
+            full = str(p.get("driver_name", "")).strip().upper()
+            who, num = last_name(full), str(p.get("car_no", ""))
+            if len([d for d in owners.get(who, []) if d != p.get("driver_id", None)]) > 0 and full != "":
+                who = full[0] + "." + who
+        else:
+            who, num = comment_winner(r), ""
+        rows.append((race_label(r, duel), who if who != "" else "TBD", num))
+    col_w = (c.width - 8 - 8 * (ncols - 1)) // ncols
+    for j in range(len(rows)):
+        label, who, num = rows[j]
+        x0 = 4 + (j // 4) * (col_w + 8)
+        x1 = x0 + col_w - 1
+        y = 8 + (j % 4) * 6
+        ncol = team_name_color(num, series) if num != "" else COLORS["text"]
+        lw = c.text_width(label, "4x5")
+        who = fit_chars(c, who, "4x5", col_w - lw - 4)
+        c.text(label, x0, y, font = "4x5", color = COLORS["muted"])
+        c.text(who, x1, y, font = "4x5", color = ncol, align = "right")

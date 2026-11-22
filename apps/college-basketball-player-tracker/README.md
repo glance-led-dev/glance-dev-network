@@ -10,6 +10,8 @@ Game scores sit below the supporting stats. Status labels include 1H, 2H, HT, OT
 
 Each stat is centered beneath its label. LIVE and FINAL add FGS on the right, with made/attempted field goals (for example, `9/17`) from the existing box score. Zero attempts show `0/0`; unavailable values show `--`. Season-average cards retain their five stat columns and decimal formatting.
 
+Green values mark team leaders in PTS, REB, AST, STL, and BLK. Season averages compare players across the full team; LIVE and FINAL compare players in that game's box score. Tied positive leaders all get the highlight. FGS, missing values, and categories where nobody has recorded a positive value are not highlighted.
+
 Long scoreboards stay on one line without shortening team codes. The points column stays in place; when a long footer needs the space below it, the points value uses a compact font above the footer.
 
 ## Illustrative previews
