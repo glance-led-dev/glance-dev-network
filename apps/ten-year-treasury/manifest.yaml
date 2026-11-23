@@ -1,0 +1,16 @@
+gdn: 1
+id: ten-year-treasury
+version: 0.1.0
+name: 10-Year Treasury Yield
+author: Luan Celaj
+description: The benchmark US 10-year Treasury yield with its 1-day, 1-week and 1-month moves in basis points, plus the 2Y-10Y spread (normal, flat or inverted). Keyless, from treasury.gov.
+category: Finance
+entry: app.star
+
+width: 64
+height: 32
+# treasury.gov posts once a business day, so hourly is the fastest a
+# refresh can show something new; the fetch ttl (3600) matches.
+refresh: 3600
+
+pages: [ten_page, spread_page]
