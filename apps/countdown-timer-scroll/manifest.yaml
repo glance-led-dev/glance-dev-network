@@ -1,0 +1,166 @@
+gdn: 1
+id: countdown-timer-scroll
+version: 0.1.0
+name: Countdown Timer (Scroll)
+author: cfsmp3
+description: Time left until a date and time, or time since it - "6 DAYS, 10 HOURS, 23 MINUTES" - coloured by how close it is.
+category: Lifestyle
+entry: app.star
+
+# SCROLL. The same app.star lays itself out for 64 (LED V2).
+width: 192
+height: 32
+
+# Glance requires refresh >= 300 for apps with free-text inputs (the
+# event name), so the minute count can lag by up to five minutes.
+refresh: 300
+
+pages: [countdown]
+
+inputs:
+  - key: event
+    type: string
+    app_input_type: free-text
+    label: Event name
+    default: GOING HOME
+    help: Shown above the countdown, e.g. GOING HOME.
+  - key: namecolor
+    type: choice
+    app_input_type: dropdown
+    label: Name color
+    default: WHITE
+    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
+    help: Colour of the event name.
+  - key: date
+    type: string
+    app_input_type: date
+    label: Date
+    default: "2027-01-01"
+  - key: hour
+    type: choice
+    app_input_type: dropdown
+    label: Hour
+    default: "00"
+    help: 24-hour clock, in the time zone below.
+    choices: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"]
+  - key: minute
+    type: choice
+    app_input_type: dropdown
+    label: Minute
+    default: "00"
+    choices: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59"]
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "America/New_York"
+    help: Pick the city nearest you. Daylight saving is applied automatically, so this never needs changing twice a year.
+    choices:
+      - "Pacific/Honolulu"
+      - "America/Anchorage"
+      - "America/Los_Angeles"
+      - "America/Phoenix"
+      - "America/Denver"
+      - "America/Chicago"
+      - "America/Mexico_City"
+      - "America/New_York"
+      - "America/Bogota"
+      - "America/Halifax"
+      - "America/Sao_Paulo"
+      - "America/Argentina/Buenos_Aires"
+      - "UTC"
+      - "Europe/Lisbon"
+      - "Europe/Dublin"
+      - "Europe/London"
+      - "Europe/Madrid"
+      - "Europe/Paris"
+      - "Europe/Amsterdam"
+      - "Europe/Berlin"
+      - "Europe/Rome"
+      - "Europe/Stockholm"
+      - "Europe/Warsaw"
+      - "Africa/Lagos"
+      - "Europe/Athens"
+      - "Europe/Helsinki"
+      - "Africa/Johannesburg"
+      - "Europe/Moscow"
+      - "Africa/Nairobi"
+      - "Asia/Dubai"
+      - "Asia/Karachi"
+      - "Asia/Kolkata"
+      - "Asia/Dhaka"
+      - "Asia/Bangkok"
+      - "Asia/Jakarta"
+      - "Asia/Shanghai"
+      - "Asia/Singapore"
+      - "Asia/Hong_Kong"
+      - "Australia/Perth"
+      - "Asia/Tokyo"
+      - "Asia/Seoul"
+      - "Australia/Adelaide"
+      - "Australia/Brisbane"
+      - "Australia/Sydney"
+      - "Australia/Melbourne"
+      - "Pacific/Auckland"
+      - "Atlantic/Reykjavik"
+      - "Europe/Kyiv"
+      - "Europe/Istanbul"
+      - "Africa/Cairo"
+      - "Asia/Jerusalem"
+      - "Asia/Manila"
+  - key: largest
+    type: choice
+    app_input_type: dropdown
+    label: Largest unit
+    default: DAYS
+    choices: [WEEKS, DAYS]
+    help: DAYS shows "16 DAYS, 4 HOURS"; WEEKS shows "2 WEEKS, 2 DAYS".
+  - key: detail
+    type: choice
+    app_input_type: dropdown
+    label: Detail
+    default: 3 UNITS
+    choices: [1 UNIT, 2 UNITS, 3 UNITS]
+    help: How many units to show, counting from the largest one that is not zero.
+  - key: warnat
+    type: choice
+    app_input_type: dropdown
+    label: Soon from
+    default: 1 WEEK
+    choices: [1 HOUR, 3 HOURS, 6 HOURS, 12 HOURS, 1 DAY, 2 DAYS, 3 DAYS, 1 WEEK, 2 WEEKS, 4 WEEKS]
+    help: Below this much time left, the countdown switches to the Soon colour.
+  - key: alarmat
+    type: choice
+    app_input_type: dropdown
+    label: Imminent from
+    default: 1 DAY
+    choices: [1 HOUR, 3 HOURS, 6 HOURS, 12 HOURS, 1 DAY, 2 DAYS, 3 DAYS, 1 WEEK, 2 WEEKS, 4 WEEKS]
+    help: Below this much time left, the countdown switches to the Imminent colour.
+  - key: farcolor
+    type: choice
+    app_input_type: dropdown
+    label: Far-off color
+    default: GREEN
+    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
+    help: More time left than Soon from.
+  - key: sooncolor
+    type: choice
+    app_input_type: dropdown
+    label: Soon color
+    default: DARK YELLOW
+    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
+    help: Between Soon from and Imminent from.
+  - key: alarmcolor
+    type: choice
+    app_input_type: dropdown
+    label: Imminent color
+    default: RED
+    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
+    help: Less time left than Imminent from.
+  - key: pastcolor
+    type: choice
+    app_input_type: dropdown
+    label: Past color
+    default: GRAY
+    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
+    help: Once the moment has passed (the count then reads AGO).
