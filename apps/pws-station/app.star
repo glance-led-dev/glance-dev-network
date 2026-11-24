@@ -107,6 +107,16 @@ MUTED = "#8b93a7"
 ACCENT = "#5b8def"  # cool blue — not the humidity yellow
 WINTER_BLUE = "#3f7fff"
 WINTER_LIGHT = "#65d9ff"
+
+# The comfort reading's word and colour come from one place, so the two can
+# never disagree — an orange CHILL would be the board contradicting itself.
+# Long phrase first, short fallback second, for the narrow slot left of the
+# divider. Cold and calm both read light blue; only heat gets to be warm.
+FEEL_BANDS = {
+    "CHILL": ["WIND CHILL", "CHILL", WINTER_LIGHT],
+    "HEAT": ["HEAT INDEX", "HEAT", "orange"],
+    "FEEL": ["FEELS LIKE", "FEEL", WINTER_LIGHT],
+}
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
@@ -137,6 +147,31 @@ def clamp(v, lo, hi):
 def upper(s):
     return str(s).upper()
 
+def clip(c, text, font, maxw):
+    # Longest prefix that actually fits, measured in glyphs rather than
+    # counted in characters. Nothing in the draw API clips: a string one
+    # pixel too wide loses that column silently and keeps going.
+    t = str(text)
+    if maxw <= 0:
+        return ""
+    if c.text_width(t, font) <= maxw:
+        return t
+    for k in range(len(t), 0, -1):
+        if c.text_width(t[:k], font) <= maxw:
+            return t[:k]
+    return ""
+
+def fit_clip(c, text, fonts, maxw):
+    # [font, text] for the largest font that fits, hard-clipped if none do.
+    # text_fit shrinks and then draws anyway when even its smallest option
+    # overflows, which is how an alert name walks off the right edge.
+    pick = fonts[len(fonts) - 1]
+    for f in fonts:
+        if c.text_width(text, f) <= maxw:
+            pick = f
+            break
+    return [pick, clip(c, text, pick, maxw)]
+
 def unit_block(obs, units):
     # WU nests readings under imperial / metric / uk_hybrid.
     if units == "m":
@@ -148,14 +183,20 @@ def unit_block(obs, units):
     return block
 
 def feel_temp(block, temp):
-    # Prefer heat index when hot, wind chill when cold, else temp.
+    # [which number it is, the number]. Prefer heat index when hot, wind
+    # chill when cold, else the temperature itself.
+    #
+    # The name has to travel with the value. A 19-degree wind chill labelled
+    # FEEL reads like the thermometer is broken, and the two are never both
+    # true at once -- WU only fills heatIndex above about 80F and windChill
+    # below about 50F, and returns the dry temperature for the other.
     hi = _f(block.get("heatIndex", temp))
     wc = _f(block.get("windChill", temp))
     if hi > temp + 0.5:
-        return hi
+        return ["HEAT", hi]
     if wc < temp - 0.5:
-        return wc
-    return temp
+        return ["CHILL", wc]
+    return ["FEEL", temp]
 
 def pressure_pct(pres, metric):
     # Map a typical range onto the 0-100 gauge.
@@ -183,9 +224,17 @@ def cardinal(deg):
 def fmt_wind(speed, deg, metric):
     # Compact for the narrow wind column: "SW8" or "SW13".
     # The selected app units already determine mph vs km/h.
+    #
+    # At three digits the direction is dropped. "NW123" measures 24px at
+    # 4x5 and the column holds 23, so it would cross the divider -- and
+    # text_fit, having run out of ladder, draws it anyway. A hundred-plus
+    # reading is the news; which way it is blowing can wait. Reachable in
+    # km/h in any serious storm.
     dir = cardinal(deg)
-    sp = _i(speed)
-    return dir + str(sp)
+    sp = str(_i(speed))
+    if len(sp) >= 3:
+        return sp
+    return dir + sp
 
 def fmt_local_datetime(obs, now):
     # PWS current supplies local observation time as YYYY-MM-DD HH:MM:SS.
@@ -501,7 +550,7 @@ def fetch_pws(ctx):
     obs = obs_list[0]
     block = unit_block(obs, units)
     temp = _f(block.get("temp", 0))
-    feel = feel_temp(block, temp)
+    feelpair = feel_temp(block, temp)
     dew = _f(block.get("dewpt", 0))
     pres = _f(block.get("pressure", 0))
     precip_rate = _f(block.get("precipRate", 0))
@@ -527,7 +576,8 @@ def fetch_pws(ctx):
         "ok": True,
         "label": label,
         "temp": temp,
-        "feel": feel,
+        "feel": feelpair[1],
+        "feelkind": feelpair[0],
         "dew": dew,
         "pres": pres,
         "precip_rate": precip_rate,
@@ -608,15 +658,21 @@ def fetch_alerts(lat, lon):
 
 def draw_header(c, title, accent, center_text = ""):
     # Title only — no underline under the glyphs (that was crowding the letters).
-    name = title
-    if len(name) > 12:
-        name = name[0:12]
-    c.text(name, 3, 1, font = "5x7", color = "white")
+    #
+    # The stamp is measured first and the name is fitted into what is left.
+    # A 12-character slice was close enough for "MY STATION", but it is the
+    # glyphs that collide, not the characters: twelve wide ones at 5x7 run to
+    # x=63, and a station named in a hurry can be anything.
+    swid = 0
     if center_text != "":
         # Observation stamp, right-aligned 10 px in from the edge, same row.
         # The board refreshes every 30 minutes, so this is the as-of.
-        c.text("UPDATED: " + center_text, c.width - 10, 2, font = "4x5",
-               color = MUTED, align = "right")
+        stamp = "UPDATED: " + center_text
+        swid = c.text_width(stamp, "4x5") + 4
+        c.text(stamp, c.width - 10, 2, font = "4x5", color = MUTED,
+               align = "right")
+    c.text(clip(c, upper(str(title)), "5x7", c.width - 13 - swid), 3, 1,
+           font = "5x7", color = "white")
     c.line(0, 11, c.width - 1, 11, LINE)
 
 def _err(c, d, accent):
@@ -648,7 +704,20 @@ def station(c, ctx):
     wtxt = fmt_wind(d["wind"], d["wdir"], d["metric"])
     c.text("WIND", 45, 13, font = "4x5", color = MUTED)
     c.text_fit(wtxt, 45, 19, ["5x7", "4x5"], color = "white", maxw = 23)
-    c.text("FEEL " + str(_i(d["feel"])), 14, 27, font = "4x5", color = "orange")
+    # Comfort reading. The band carries the word and the colour together.
+    #
+    # It starts at x=3, not under the temperature at x=14: the condition art
+    # above it stops at y=21, so the bottom row owns the icon column too.
+    # That is what makes the full phrase possible -- "WIND CHILL -12" and
+    # "HEAT INDEX 103" both measure 62px, and the 54 left beside the
+    # temperature could only ever hold the short form.
+    # Measured to x=68, one clear pixel short of the divider at x=70.
+    band = FEEL_BANDS.get(d["feelkind"], FEEL_BANDS["FEEL"])
+    fval = str(_i(d["feel"]))
+    ftxt = band[0] + " " + fval
+    if c.text_width(ftxt, "4x5") > 65:
+        ftxt = band[1] + " " + fval
+    c.text(clip(c, ftxt, "4x5", 65), 3, 27, font = "4x5", color = band[2])
 
     # Dividers
     c.line(70, 13, 70, 30, LINE)
@@ -695,7 +764,9 @@ def alerts(c, ctx):
 
     if a["count"] == 0:
         draw_header(c, "ALERTS", "#3ecf6a")
-        c.text("ALL CLEAR", c.width // 2, 15, font = "7x12", color = "#3ecf6a",
+        # y=14, not 15: a 12-row glyph at 15 ends on row 26 and the line
+        # below starts on 27, leaving the two rows touching.
+        c.text("ALL CLEAR", c.width // 2, 14, font = "7x12", color = "#3ecf6a",
                align = "center")
         c.text("NO ACTIVE WARNINGS", c.width // 2, 27, font = "4x5", color = MUTED,
                align = "center")
@@ -705,9 +776,12 @@ def alerts(c, ctx):
     top = a["items"][0]
     draw_header(c, "ALERTS (" + str(a["count"]) + ")", top["color"])
 
-    c.text_fit(top["event"], 5, 14, ["6x8", "5x7", "4x5"],
-               color = top["color"], maxw = c.width - 10)
+    # fit_clip, not text_fit: an unusually long event name reaching the end
+    # of the ladder still draws, and the renderer loses the overflow without
+    # saying so. The worst NWS names survive short_alert_event intact.
+    t1 = fit_clip(c, top["event"], ["6x8", "5x7", "4x5"], c.width - 10)
+    c.text(t1[1], 5, 14, font = t1[0], color = top["color"])
     if len(a["items"]) > 1:
         second = a["items"][1]
-        c.text_fit(second["event"], 5, 25, ["5x7", "4x5"],
-                   color = second["color"], maxw = c.width - 10)
+        t2 = fit_clip(c, second["event"], ["5x7", "4x5"], c.width - 10)
+        c.text(t2[1], 5, 25, font = t2[0], color = second["color"])

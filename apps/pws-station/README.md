@@ -1,89 +1,135 @@
 # PWS Dashboard
 
-PWS Dashboard is a GLANCE weather app by reyos86. It shows live readings from a Weather Underground personal weather station, condition icons for the station location, and National Weather Service alerts for that same point.
+Live readings from your own Weather Underground personal weather station, with
+National Weather Service alerts for the same point on the map.
 
 ![PWS Dashboard preview](preview/preview.png)
 
-## Preview
+A 192x32 SCROLL app by reyos86. Everything on the board comes from your
+station and your key — no shared feed, no third-party scrape.
 
-From the GLANCE Developer Network repository:
+## Requirements
 
-```powershell
-pip install -e .
-gdn studio apps/pws-station
-```
+A **Weather Underground PWS contributor key**, free from
+[wunderground.com/member/api-keys](https://www.wunderground.com/member/api-keys).
+You have to be contributing data from a station to get one. Without a key the
+board shows `NO DATA / ADD WU API KEY` rather than sample numbers — this app
+has no demo mode by design, because a weather board showing invented weather
+is worse than one that says it has nothing.
 
-The browser-only preview is also available with:
+## Settings
 
-```powershell
-gdn preview apps/pws-station
-```
+| Setting | What it does |
+|---|---|
+| **Weather Underground API key** | Required. See above. |
+| **Station ID** | Your PWS ID, e.g. `KTXDALLAS123`. It's on your WU station page. |
+| **Station name** | The header label. Uppercase suits the bitmap fonts. Long names are fitted to the space left by the update stamp, not cut at a fixed length. |
+| **Units** | `e` for imperial (°F, inHg, mph), `m` for metric (°C, mb, km/h). |
 
-If the `gdn` executable is not on `PATH`, use `python -m gdn.cli` in its place.
+## The two pages
 
-## Configuration
+**station** — condition icon, temperature with trend, wind, the comfort
+reading, pressure and humidity gauges with trends, and dew point.
 
-- **Weather Underground API key** — free PWS contributor key from [wunderground.com/member/api-keys](https://www.wunderground.com/member/api-keys). Required.
-- **Station ID** — your PWS ID (for example `KTXDALLAS123`). Find it on your Weather Underground station page.
-- **Station name** — header label on the board (default `MY STATION`). Uppercase fits the bitmap fonts best; the header truncates to 12 characters.
-- **Units** — `e` for imperial (°F, inHg, mph) or `m` for metric (°C, mb, km/h). Default `e`.
+**alerts** — active NWS alerts for the station's coordinates, ordered
+WARNING → ADVISORY → WATCH → other. Two titles fit on screen out of up to
+three fetched. Nothing active reads `ALL CLEAR`.
 
-## Pages
+## The comfort reading
 
-| Page | Contents |
-|------|----------|
-| **station** | Station label, observation time, condition icon, temperature with trend, wind (cardinal + speed), feels-like, pressure gauge with value and trend, humidity gauge with trend, and dew point. |
-| **alerts** | Header `ALERTS` (with count when active). Up to two event titles on screen from up to three fetched alerts, prioritized WARNING → ADVISORY → WATCH → other. Empty → `ALL CLEAR` / `NO ACTIVE WARNINGS`. |
+The bottom-left figure is not always the same quantity, so it does not always
+carry the same name:
 
-Panel size is **192×32**. Refresh is **300 seconds**.
+| Shown | When | Colour |
+|---|---|---|
+| `WIND CHILL 12` | wind chill is more than half a degree below air temperature | light blue |
+| `HEAT INDEX 103` | heat index is more than half a degree above it | orange |
+| `FEELS LIKE 41` | neither applies — the air temperature stands on its own | light blue |
+
+WU only fills `heatIndex` above roughly 80°F and `windChill` below roughly
+50°F, returning the dry temperature otherwise, so the two are never both true
+at once. The word and the colour come from a single table in `app.star`
+(`FEEL_BANDS`) so they cannot drift apart — an orange `WIND CHILL` would be
+the board contradicting itself.
+
+The phrase is measured before it is drawn and falls back to a short form
+(`CHILL`, `HEAT`, `FEEL`) if a reading ever runs long.
+
+## Display behaviour
+
+- **Temperature** — integer with a degree mark, and a trend chevron against
+  roughly the last hour of station history.
+- **Wind** — eight-point cardinal plus integer speed (`SW13`). At three
+  digits the cardinal is dropped and the number takes the column: `123` is
+  the news, and `NW123` does not fit in the 23 px available.
+- **Pressure / humidity** — arc gauges with numeric readouts and trends,
+  when history or the WU pressure trend is available.
+- **Condition icon** — from the TWC icon code, cross-checked against
+  Open-Meteo, with rain or snow forced whenever the station's own gauge
+  reports precipitation. The station's rain gauge is more local than a
+  gridded forecast icon, so it wins.
+- **Night art** — clear-sky art does not switch to the moon before 9 PM
+  station-local, even when the vendor marks the period as night earlier.
+- **Observation time** — the station's own local timestamp where present,
+  otherwise panel time.
+
+Icons are procedural bitmaps in `app.star`; no image assets ship with the app.
 
 ## Data sources
 
-- **Weather Underground / weather.com** — PWS current observation and ~1-day history for trends (`api.weather.com` PWS endpoints), using your API key and station ID.
-- **The Weather Company currents** — location condition icon codes from station lat/lon (same API key).
-- **Open-Meteo** — weather-code cross-check when modeled sky conditions are needed.
-- **National Weather Service** — active alerts for the station’s latitude/longitude (`api.weather.gov`).
+| Source | Used for |
+|---|---|
+| `api.weather.com` PWS current | The live observation |
+| `api.weather.com` PWS 1-day history | Temperature, pressure and humidity trends |
+| The Weather Company currents | Condition icon code for the station's coordinates |
+| Open-Meteo | Weather-code cross-check for modelled sky conditions |
+| `api.weather.gov` | Active alerts for the station's latitude/longitude |
 
-HTTP responses for these calls are cached on the order of five minutes.
+Five calls at most per render, each cached for 300 seconds.
 
-## Display behavior
+## Error states
 
-- **Temperature** — integer with degree mark; trend chevron vs roughly the last hour of PWS history.
-- **Feels-like** — heat index when hot, wind chill when cold, otherwise air temperature (`FEEL`).
-- **Wind** — eight-point cardinal plus integer speed.
-- **Pressure / humidity** — arc gauges with numeric readouts and trends when history or WU pressure trend is available.
-- **Condition icon** — derived from TWC icon code and Open-Meteo, with rain/snow forced when the station reports precip. Clear-night moon art uses local hour (late evening / early morning) rather than relying only on the vendor day/night flag.
-- **Observation time** — from the station’s local obs timestamp when present; otherwise panel time.
+Each failure is named separately, so the screen says what to do about it:
 
-Icons are procedural bitmaps in `app.star` (no image assets required at runtime).
+| Screen | Meaning |
+|---|---|
+| `NO DATA` / `ADD WU API KEY` | No key set |
+| `NO STATION` | No station ID set |
+| `BAD API KEY` | WU rejected the key (401/403) |
+| `BAD STATION` | Station ID not found (404) |
+| `RATE LIMITED` | WU returned 429 |
+| `WU ERROR` | Any other HTTP status |
+| `DATA EXPIRED` / `STATION OFFLINE` | WU answered with an errors object |
+| `NO OBS` | No recent reading |
+| `NO LOCATION` | The station reports no latitude/longitude |
 
-## Errors and empty states
+Both pages share the observation fetch, so a station failure takes both down
+together.
 
-Labeled screens cover common failures:
+## Running it
 
-- Missing key → `NO DATA` / `ADD WU API KEY`
-- Missing station → `NO STATION`
-- Auth failure → `BAD API KEY`
-- Unknown station → `BAD STATION`
-- Rate limit → `RATE LIMITED`
-- Other WU/HTTP problems → `WU ERROR` or related `NO DATA` messages
-- Alerts without lat/lon → `NO LOCATION`; NWS failure → `NWS ERROR`
+From the repository root:
 
-If the station observation cannot be loaded, both pages share that error path.
-
-Command-line example:
-
-```powershell
-gdn render apps/pws-station --input "station=KTXDALLAS123" --input "apikey=YOUR_KEY" --input "units=e"
-gdn validate apps/pws-station
+```bash
+gdn studio apps/pws-station
 ```
 
-## Current technical limitations
+Rendering a page with your own station:
 
-- A Weather Underground API key that can call the weather.com PWS and observation endpoints is required.
-- Sky icons are not read from PWS camera/hardware; they come from location weather services plus precip overrides.
-- The alerts page shows at most two titles even when the header count is higher.
-- Station label is truncated to 12 characters in the header.
-- Frames are still images redrawn on the refresh timer.
+```bash
+gdn render apps/pws-station --input "station=KTXDALLAS123" --input "apikey=YOUR_KEY" --page 1
+```
+
+If `gdn` is not on `PATH`, use `python -m gdn.cli` in its place.
+
+## Known limitations
+
+- A contributor key is required; there is no keyless or demo path.
+- Sky conditions come from location weather services plus the station's
+  precipitation override, not from any camera or sky sensor on the station.
+- The alerts page shows two titles even when the header count is higher.
+- `refresh` is 1800s while the fetches cache for 300s. The panel only draws
+  on refresh, so this costs nothing in practice, but the two are not in step.
+- Pages are still images redrawn on the refresh timer.
 
 Built for the [GLANCE Developer Network](https://github.com/glance-led-dev/glance-dev-network).

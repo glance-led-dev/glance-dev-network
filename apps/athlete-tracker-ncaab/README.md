@@ -1,5 +1,15 @@
 # Athlete Tracker (NCAAB)
 
+## Version 0.2.4
+
+- LIVE and FINAL add made/attempted FGS with the Team Tracker's six-column spacing. Averages retain the Next row and five decimal stat columns.
+- Green PTS/REB/AST/STL/BLK values identify the tracked team's leaders, not merely the selected player. Tied positive leads are highlighted; missing and all-zero columns are not. FGS is not highlighted.
+- Verified box-score DNP rows retain the selected player's identity and game footer, replacing stat columns with DNP after a final, or YET TO PLAY while live. Zero minutes alone, a missing athlete row, or an unavailable feed cannot manufacture DNP.
+- Season averages use current-season team-wide structured ESPN data with the validated team-stat-page fallback. A matching box score can recover missing roster identities, including Lucas Morillo. No additional request is made just for shooting or leader highlighting.
+- First initials are added only when the existing name/bio spacing permits. Team-colored jerseys, gray supporting labels, score order, halftime/overtime handling, and absence of rankings are retained.
+- The November 18 roster audit adds 80 current team/player or name/jersey choices (58 additional athlete IDs), for 6,035 total choices. ESPN current rosters covered 361 schools; current-season game box scores supplied verified identities for Mercer, Miami (OH), New Hampshire, SIU Edwardsville, and Illinois's omitted Morillo. All 5,955 prior labels/IDs remain available; old em-dash saves are still normalized.
+- The two pages remain season averages then Live/latest Final; no minute-based rotation or team-app 24-hour cutoff. Same selection key, ASCII hyphen separators, JSW41 author, five-minute refresh, logos, and assets.
+
 Opponent rankings are not displayed. No AP badge, reserved badge space, or additional rankings request is included.
 
 Track one men's Division I college basketball player on two consecutive pages. Page 1 always shows the selected player's season averages. Page 2 shows live statistics during a game, then the most recent ESPN final after it ends.
@@ -12,7 +22,7 @@ Both pages use the same approved layout as Team Tracker (NCAAB), including the p
 
 ## Preview
 
-The averages image is a captured ESPN snapshot. The live/final examples are illustrative layouts, not current game results.
+These images use archived ESPN statistics and simulated game states to demonstrate the layout. They are not current game results.
 
 ### Page 1 — Season averages
 
@@ -30,11 +40,15 @@ The averages image is a captured ESPN snapshot. The live/final examples are illu
 
 ![Overtime final](preview/overtime-final.png)
 
+### Page 2 — Did not play
+
+![DNP final](preview/dnp-final.png)
+
 ## Settings
 
 - **Team + Player:** Search one combined dropdown, then choose the player from that school's current roster. Every selection includes the jersey number; no team, player, or game ID is required.
 
-Version 0.2.3 replaces the em-dash separator in every dropdown value with an ASCII hyphen, for example `Illinois Fighting Illini - A. Stojakovic (#2)`. The default and athlete-ID lookup use the same separator. Previously saved em-dash values are normalized on both pages and still resolve to the same athlete IDs. This addresses the separator issue reported by Glance; its separate server-side selection-formatting fix is managed by Glance. The app ID, `selection` input key, 5,955 choices, artwork, two-page layout, and five-minute refresh are unchanged.
+Version 0.2.3 replaced the em-dash separator in every dropdown value with an ASCII hyphen, for example `Illinois Fighting Illini - A. Stojakovic (#2)`. The default and athlete-ID lookup use the same separator. Previously saved em-dash values are normalized on both pages and still resolve to the same athlete IDs. Version 0.2.4 preserves that fix, the same `selection` key, all 5,955 existing choices, and adds 80 verified current options. Glance's separate server-side selection-formatting fix remains managed by Glance.
 
 There are no public testing controls. Saved demo/game overrides from earlier versions are ignored. Automated layout test scenarios are kept outside the app folder; the production Studio uses this app's real settings and data path.
 
@@ -55,7 +69,7 @@ Version 0.2.1's final local audit passed 27,081 layout renders, 135,405 category
 Platform limitation recorded during edge testing: a nonstandard bare NaN literal can fail inside Glance's HTTP-to-Starlark bridge before the app receives the response. The app cannot catch that host-level failure. The tested ESPN responses use ordinary JSON; this limitation is not reported as a passing app test.
 
 
-## Reliability update
+## Earlier reliability update (retained)
 
 Game discovery uses the selected school's ESPN schedule instead of the oversized
 national NCAA scoreboard. Today's summary is checked even when a cached schedule
