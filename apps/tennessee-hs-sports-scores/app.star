@@ -720,9 +720,9 @@ def main(c, ctx):
     _draw_team(c, game["team2"], 16, color2)
 
     if game["score1"] != "":
-        c.text(game["score1"], 106, 4, font="7x12", color=color1)
+        c.text(game["score1"], 106, 1, font="7x12", color=color1)
     if game["score2"] != "":
-        c.text(game["score2"], 106, 20, font="7x12", color=color2)
+        c.text(game["score2"], 106, 17, font="7x12", color=color2)
 
     sport_labels = {
         "FOOTBALL": "FB",
