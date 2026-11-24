@@ -10,7 +10,7 @@ width: 64
 height: 32
 # 60s is the fastest Glance allows; it also rotates the wrestler cards. The
 # MatSavant rankings file changes about weekly, so it is cached for an hour.
-refresh: 60
+refresh: 300
 pages: [next, team, card1, card2, card3]
 assets:
   - vt22.png
