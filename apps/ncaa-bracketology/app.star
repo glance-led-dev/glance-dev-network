@@ -1732,9 +1732,9 @@ def draw_mrmk_native(c, x, y, w, h, align = "center"):
     c.image(frame[0], x + inset, y + (h - frame[2]) // 2)
 
 RESUME_TEAM_IDS = {"ACU":"2000","AF":"2005","AKR":"2006","AAMU":"2010","BAMA":"333","ALST":"2011","ALCN":"2016","AMER":"44","APP":"2026","ASU":"9","ARIZ":"12","ARK":"8","ARST":"2032","UAPB":"2029","ARMY":"349","AUB":"2","APSU":"2046","BALL":"2050","BAY":"239","BELL":"91","BEL":"2057","BCU":"2065","BING":"2066","BOIS":"68","BC":"103","BU":"104","BGSU":"189","BRAD":"71","BRWN":"225","BRY":"2803","BUCK":"2083","BUF":"2084","BTLR":"2086","BYU":"252","CP":"13","CSUB":"2934","CSUF":"2239","CSUN":"2463","CBU":"2856","CAL":"25","CAM":"2097","CAN":"2099","UCA":"2110","CCSU":"2115","CMU":"2117","COFC":"232","CHSO":"2127","CLT":"2429","UTC":"236","CHST":"2130","CIN":"2132","CLEM":"228","CLE":"325","CCU":"324","COLG":"2142","COLO":"38","CSU":"36","COLU":"171","COPP":"2154","COR":"172","CREI":"156","DART":"159","DAV":"2166","DAY":"2168","DEL":"48","DSU":"2169","DEN":"2172","DEP":"305","DETM":"2174","DRKE":"2181","DREX":"2182","DUKE":"150","DUQ":"2184","ECU":"151","ETSU":"2193","ETAM":"2837","EIU":"2197","EKU":"2198","EMU":"2199","EWU":"331","ELON":"2210","EVAN":"339","FAIR":"2217","FDU":"161","FAMU":"50","FAU":"2226","FLA":"57","FGCU":"526","FIU":"2229","FSU":"52","FOR":"2230","FRES":"278","FUR":"231","GWEB":"2241","GMU":"2244","GW":"45","GTWN":"46","UGA":"61","GASO":"290","GAST":"2247","GT":"59","GONZ":"2250","GRAM":"2755","GCU":"2253","GB":"2739","HAMP":"2261","HARV":"108","HAW":"62","HPU":"2272","HOF":"2275","HC":"107","HCU":"2277","HOU":"248","HOW":"47","IDST":"304","IDHO":"70","ILL":"356","ILST":"2287","UIW":"2916","IND":"84","INST":"282","IONA":"314","IOWA":"2294","ISU":"66","IUIN":"85","JKST":"2296","JAX":"294","JXST":"55","JMU":"256","KC":"140","KU":"2305","KSU":"2306","KENN":"338","KENT":"2309","UK":"96","LAS":"2325","LAF":"322","LAM":"2320","LEM":"2330","LEH":"2329","LIB":"2335","LIN":"2815","LIP":"288","LR":"2031","LBSU":"299","LIU":"112358","LONG":"2344","UL":"309","LT":"2348","LOU":"97","LUC":"2350","LMD":"2352","LMU":"2351","NOLA":"2443","LSU":"99","ME":"311","MAN":"2363","MRST":"2368","MARQ":"269","MRSH":"276","UMES":"2379","MD":"120","MASS":"113","MCN":"2377","MEM":"235","MER":"2382","MERC":"2385","MRMK":"2771","MOH":"193","MIA":"2390","MSU":"127","MICH":"130","MTSU":"2393","MILW":"270","MINN":"135","MSST":"344","MVSU":"2400","MOST":"2623","MIZ":"142","MONM":"2405","MONT":"149","MTST":"147","MORE":"2413","MORG":"2415","MSM":"116","MUR":"93","NAVY":"2426","NCST":"152","NEB":"158","NEV":"2440","UNH":"160","NHVN":"2441","UNM":"167","NMSU":"166","NIA":"315","NICH":"2447","NJIT":"2885","NORF":"2450","UNA":"2453","NCAT":"2448","NCCU":"2428","UNC":"153","UND":"155","NDSU":"2449","UNF":"2454","UNT":"249","NE":"111","NAU":"2464","UNCO":"2458","NIU":"2459","UNI":"2460","NKU":"94","NWST":"2466","NU":"77","ND":"87","OAK":"2473","OHIO":"195","OSU":"194","OU":"201","OKST":"197","ODU":"295","MISS":"145","OMA":"2437","ORU":"198","ORE":"2483","ORST":"204","PAC":"279","PSU":"213","PENN":"219","PEPP":"2492","PITT":"221","PORT":"2501","PRST":"2502","PV":"2504","PRES":"2506","PRIN":"163","PROV":"2507","PUR":"2509","PFW":"2870","QUC":"2511","QUIN":"2514","RAD":"2515","URI":"227","RICE":"242","RICH":"257","RID":"2520","RMU":"2523","RUTG":"164","SAC":"16","SHU":"2529","SFPA":"2598","JOES":"2603","SLU":"139","SMC":"2608","SPU":"2612","SHSU":"2534","SAM":"2535","SDSU":"21","USD":"301","SF":"2539","SJSU":"23","SCU":"2541","SELA":"2545","SEA":"2547","HALL":"2550","SIE":"2561","SIUE":"2565","SMU":"2567","USA":"6","SC":"2579","SCST":"2569","UPST":"2908","SDAK":"233","SDST":"2571","USF":"58","SEMO":"2546","SIU":"79","USI":"88","SOU":"2582","USM":"2572","SUU":"253","SBU":"179","SJU":"2599","STMN":"2900","STAN":"24","SFA":"2617","STET":"56","STO":"284","STBK":"2619","SYR":"183","TAR":"2627","TCU":"2628","TEM":"218","TNST":"2634","TNTC":"2635","TENN":"2633","TAMU":"245","AMCC":"357","TEX":"251","TXSO":"2640","TXST":"326","TTU":"2641","CIT":"2643","TOL":"2649","TOW":"119","TROY":"2653","TULN":"2655","TLSA":"202","UAB":"5","UALB":"399","UCD":"302","UCI":"300","UCR":"27","UCSD":"28","UCSB":"2540","UCF":"2116","UCLA":"26","CONN":"41","UIC":"82","ULM":"2433","UML":"2349","UMBC":"2378","UNCA":"2427","UNCG":"2430","UNCW":"350","UNLV":"2439","USC":"30","UTA":"250","UTM":"2630","RGV":"292","USU":"328","UTU":"3101","UTAH":"254","UVU":"3084","UTEP":"2638","UTSA":"2636","VAL":"2674","VAND":"238","VCU":"2670","UVM":"261","NOVA":"222","UVA":"258","VT":"259","VMI":"2678","WAG":"2681","WAKE":"154","WASH":"264","WSU":"265","WEB":"2692","WGA":"2698","WVU":"277","WCU":"2717","WIU":"2710","WKU":"98","WMU":"2711","WICH":"2724","WM":"2729","WIN":"2737","WIS":"275","WOF":"2747","WRST":"2750","WYO":"2751","XAV":"2752","YALE":"43","YSU":"2754"}
-RESUME_AP_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/rankings?season=2027"
 RESUME_NET_URL = "https://www.ncaa.com/rankings/basketball-men/d1/ncaa-mens-basketball-net-rankings"
 RESUME_WAB_URL = "https://www.ncaa.com/rankings/basketball-men/d1/wab-ranking"
+RESUME_SOR_URLS = ["https://www.espn.com/mens-college-basketball/bpi/_/view/resume/season/2027/limit/500", "https://www.espn.co.uk/mens-college-basketball/bpi/_/view/resume/season/2027/limit/500"]
 RESUME_TORVIK_URL = "https://barttorvik.com/2027_team_results.csv"
 # Explicit NCAA table labels, independent of our compact display names.
 # Do not fuzzy-match Miami campuses or collapse similarly named schools.
@@ -1911,9 +1911,49 @@ def resume_sor(html, team_id):
         if '"name":"sorrank","value":"' not in entry:
             return {}
         value = entry.split('"name":"sorrank","value":"', 1)[1].split('"', 1)[0]
-        if value.isdigit() and int(value) >= 1 and int(value) <= 400:
+        if valid_resume_metric("SOR", value):
             return {"SOR": value}
     return {}
+
+def valid_resume_metric(field, value):
+    if type(value) != "string" or not value: return False
+    if field == "SOR":
+        if len(value) > 3 or value[0] == "0": return False
+        for digit in value.elems():
+            if digit not in "0123456789": return False
+        return int(value) >= 1 and int(value) <= 400
+    if field != "WAB" or len(value) > 7: return False
+    digits = value[1:] if value.startswith("-") or value.startswith("+") else value
+    parts = digits.split(".")
+    if len(parts) > 2 or len(parts[0]) < 1 or len(parts[0]) > 2: return False
+    if len(parts) == 2 and (len(parts[1]) < 1 or len(parts[1]) > 3): return False
+    for digit in digits.elems():
+        if digit not in "0123456789.": return False
+    return True
+
+def saved_team_resume(snapshot, team):
+    # Durable per-team values live in the existing approved feed, not this
+    # stateless renderer. Missing/malformed fields can still try their source.
+    if type(snapshot) != "dict" or snapshot.get("season") != "2026-27": return {}
+    result = {}
+    for field, source in [["SOR", "ESPN"], ["WAB", "NCAA"]]:
+        table = snapshot.get(field)
+        if type(table) != "dict" or table.get("source") != source: continue
+        rows = table.get("teams")
+        if type(rows) != "dict": continue
+        if field == "WAB":
+            date = table.get("as_of", "")
+            if not projection_date_label(date) or resume_source_season(date) != "26-27": continue
+        keys = [RESUME_TEAM_IDS.get(team, "")] if field == "SOR" else resume_ncaa_variants(team)
+        matches = []
+        for key in keys:
+            entry = rows.get(key)
+            if type(entry) != "list" or len(entry) != 2: continue
+            verified = entry[1]
+            if type(verified) != "int" or verified < 1782864000 or verified >= 1814400000: continue
+            if valid_resume_metric(field, entry[0]): matches.append(entry[0])
+        if len(matches) == 1: result[field] = matches[0]
+    return result
 
 RESUME_RECORDS_URL = "https://www.espn.com/mens-college-basketball/standings/_/season/2027/group/50"
 RESUME_RECORDS_BACKUP_URL = "https://www.espn.co.uk/mens-college-basketball/standings/_/season/2027/group/50"
@@ -1960,10 +2000,11 @@ def current_team_record(team_id, saved_records = None):
     if team_id == "":
         return {}
     # The published snapshot is updated per team and only with valid records.
-    # Once present, use it consistently instead of briefly displaying a
-    # direct response that has not yet been saved anywhere.
+    # Prefer each valid saved value consistently. An incomplete saved map
+    # must not block recovery for missing/invalid rows from BOTH ESPN hosts.
     if saved_records != None:
-        return valid_team_record(saved_records.get(team_id))
+        record = valid_team_record(saved_records.get(team_id))
+        if record: return record
     # Both URLs cover the entire league. Use at most one additional shared
     # fetch, not one request per team on multi-team projections.
     for url in [RESUME_RECORDS_URL, RESUME_RECORDS_BACKUP_URL]:
@@ -1974,17 +2015,20 @@ def current_team_record(team_id, saved_records = None):
                 return record
     return {}
 
-def your_team_resume(team, include_wab = False, saved_records = None):
+def your_team_resume(team, include_wab = False, saved_records = None, saved_resume = None):
     # Full metrics are requested by the team snapshot and the single R64
     # opponent card, never for each possible future-round opponent.
     # Shared key-free ranking reads are cached for an hour.
     metrics = current_team_record(RESUME_TEAM_IDS.get(team, ""), saved_records)
+    if include_wab: metrics.update(saved_team_resume(saved_resume, team))
     seasons = []
     # Full-metric cards use one shared whole-table SOR read, not an AP read.
-    if include_wab:
-        sor = http.get("https://www.espn.com/mens-college-basketball/bpi/_/view/resume/season/2027/limit/500", headers = {"User-Agent": "Mozilla/5.0"}, ttl_seconds = 3600)
-        if sor["status_code"] == 200:
-            metrics.update(resume_sor(sor.get("body", ""), RESUME_TEAM_IDS.get(team, "")))
+    if include_wab and "SOR" not in metrics:
+        for url in RESUME_SOR_URLS:
+            sor = http.get(url, headers = {"User-Agent": "Mozilla/5.0"}, ttl_seconds = 3600)
+            if sor["status_code"] == 200:
+                metrics.update(resume_sor(sor.get("body", ""), RESUME_TEAM_IDS.get(team, "")))
+            if "SOR" in metrics: break
     net = http.get(RESUME_NET_URL, ttl_seconds = 3600)
     if net["status_code"] == 200:
         html = net.get("body", "")
@@ -2011,9 +2055,10 @@ def your_team_resume(team, include_wab = False, saved_records = None):
             metrics["AP"] = "--"
     metrics["_season"] = max(seasons) if len(seasons) > 0 else "--"
     if include_wab:
-        wab = http.get(RESUME_WAB_URL, ttl_seconds = 3600)
-        if wab["status_code"] == 200:
-            metrics.update(resume_wab(wab.get("body", ""), team))
+        if "WAB" not in metrics:
+            wab = http.get(RESUME_WAB_URL, ttl_seconds = 3600)
+            if wab["status_code"] == 200:
+                metrics.update(resume_wab(wab.get("body", ""), team))
         sos = http.get(RESUME_TORVIK_URL, ttl_seconds = 3600)
         if sos["status_code"] == 200:
             metrics.update(resume_torvik_sos(sos.get("body", ""), team))
@@ -2252,7 +2297,7 @@ def your_team_notice(c, team, title, line1, line2):
 def your_team_round64_opponent(_projection, c, opponent, seed):
     # Keep the opening-round winner's single-opponent identity treatment.
     # Three larger resume columns keep the opponent card easy to read.
-    metrics = your_team_resume(opponent, include_wab = True, saved_records = _projection.get("TEAM_RECORDS"))
+    metrics = your_team_resume(opponent, include_wab = True, saved_records = _projection.get("TEAM_RECORDS"), saved_resume = _projection.get("TEAM_RESUME"))
     your_team_text(c, "ROUND OF 64", 96, 0, font = "4x5", color = BLUE, align = "center")
     c.line(8, 6, 184, 6, color = "#12345c")
     your_team_mark(c, opponent, 8, 8, 38, 24)
@@ -2351,26 +2396,33 @@ def round32_candidate_width(_projection, c, code, seed, region):
     record_width = tight_width(c, record, "4x5")
     return future_seed_width(c, seed) + 1 + future_logo_width(code) + 5 + max(record_width, 12)
 
+def round32_pair_column_width(c, record):
+    # A 33-12 record is 19px in picopixel. Reserve it plus one blank
+    # pixel and the 11px NET heading/value column. Never lose its hyphen.
+    return max(23, tight_width(c, record, "picopixel") + 12)
+
 def round32_mixed_pair_width(_projection, c, pair, seed, resumes = None):
-    # Full native marks plus three compact identity rows per candidate.
-    # NET + one-pixel gap + a three-digit value needs a 23-pixel column.
-    width = future_seed_width(c, seed) + 2 + 9
+    # The seed is now inside the data column, not an extra corner gutter.
+    # Count exactly what drawing uses, including the 7px OR + two gaps.
+    width = 9
     for index, code in enumerate(pair):
         metrics = resumes[index] if resumes != None else your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS"))
         record = str(metrics.get("RECORD", "--"))
-        width += future_logo_width(code) + 2 + max(23, tight_width(c, code, "4x5"), tight_width(c, record, "picopixel"))
+        width += future_logo_width(code) + 2 + round32_pair_column_width(c, record)
     return width
 
 def your_team_round32_mixed_single(_projection, c, code, seed, left, width, metrics = None):
     if metrics == None: metrics = your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS"))
     your_team_mark(c, code, left - SWEET_SINGLE_LEFT_INK[code], 8, 26, 23)
-    identity = left + future_logo_width(code) + 2
-    net_center = left + width - 7
-    name_width = net_center - 8 - identity - 1
-    name_font = "6x8" if tight_width(c, code, "6x8") <= name_width else "5x7" if tight_width(c, code, "5x7") <= name_width else "4x5"
+    compact = width < 66
+    identity = left + future_logo_width(code) + (1 if compact else 2)
+    net_center = left + width - (6 if compact else 7)
+    name_width = net_center - (5 if compact else 8) - identity - 1
+    name_font = "6x8" if tight_width(c, code, "6x8") <= name_width else "5x7" if tight_width(c, code, "5x7") <= name_width else "4x5" if tight_width(c, code, "4x5") <= name_width else "picopixel" if tight_width(c, code, "picopixel") <= name_width else "3x4"
     your_team_text(c, code, identity, 10, font = name_font, color = full_field_color(code))
     seed_label = str(seed) + " SEED"
-    seed_font = "4x5" if tight_width(c, seed_label, "4x5") <= net_center - 7 - identity - 1 else "picopixel"
+    seed_font = "4x5" if tight_width(c, seed_label, "4x5") <= name_width else "picopixel"
+    if tight_width(c, seed_label, seed_font) > name_width: seed_label = str(seed)
     your_team_text(c, seed_label, identity, 20, font = seed_font, color = BLUE)
     record = str(metrics.get("RECORD", "--"))
     your_team_text(c, record, identity, 27, font = "picopixel", color = LIGHT)
@@ -2380,33 +2432,25 @@ def your_team_round32_mixed_single(_projection, c, code, seed, left, width, metr
     record_right = your_team_text_edges(c, record, "picopixel", identity, "left")[1]
     if overall_left > record_right + 1:
         your_team_text(c, overall_label, left + width - 1, 27, font = "picopixel", color = MUTED, align = "right")
-    your_team_text(c, "NET", net_center, 9, font = "4x5", color = BLUE, align = "center")
+    your_team_text(c, "NET", net_center, 9, font = "picopixel" if compact else "4x5", color = BLUE, align = "center")
     net = str(metrics.get("NET", "--")) if metrics.get("_season") == "26-27" else "--"
     your_team_text(c, net, net_center, 19, font = "picopixel", color = LIGHT, align = "center")
 
 def your_team_round32_mixed_pair(_projection, c, pair, seed, left, resumes = None):
-    # Keep the existing box allocation (and the single-team side) unchanged.
-    # Split the removed corner-seed space between the two metadata columns.
-    extra = (future_seed_width(c, seed) + 2) // 2
+    # All play-in pairs keep their metadata; wide art/long records must not
+    # silently select the legacy logo-and-record-only renderer.
     logo_left = left
     for index, code in enumerate(pair):
         metrics = resumes[index] if resumes != None else your_team_resume(code, saved_records = _projection.get("TEAM_RECORDS"))
         record = str(metrics.get("RECORD", "--"))
-        column_width = max(23, tight_width(c, code, "4x5"), tight_width(c, record, "picopixel")) + extra
+        column_width = round32_pair_column_width(c, record)
         your_team_mark(c, code, logo_left - SWEET_SINGLE_LEFT_INK[code], 8, 26, 23)
         text_left = logo_left + future_logo_width(code) + 2
         # Human-approved three-row, two-column order:
         # record / seed / OVR at left; NET / NET value / overall at right.
         net_center = text_left + column_width - 6
-        value_left = net_center - 5
-        # The record now shares a row with NET's heading rather than its
-        # value. Keep the same two-pixel clearance from the heading's ink.
-        record_font = "picopixel" if tight_width(c, record, "picopixel") <= value_left - text_left - 2 else "3x4"
         your_team_text(c, str(seed), text_left, 18, font = "picopixel", color = BLUE)
-        if record_font == "3x4":
-            tight_text(c, record, text_left, 9, font = record_font, color = LIGHT)
-        else:
-            your_team_text(c, record, text_left, 9, font = record_font, color = LIGHT)
+        your_team_text(c, record, text_left, 9, font = "picopixel", color = LIGHT)
         your_team_text(c, "NET", net_center, 9, font = "picopixel", color = BLUE, align = "center")
         net = str(metrics.get("NET", "--")) if metrics.get("_season") == "26-27" else "--"
         your_team_text(c, net, net_center, 18, font = "picopixel", color = LIGHT, align = "center")
@@ -2438,14 +2482,15 @@ def your_team_round32_candidates(_projection, c, game, region):
         pair_width = round32_mixed_pair_width(_projection, c, pair, pair_seed, resumes)
         single_width = 181 - pair_width
         other_seed = game[2] if pair_index == 0 else game[0]
-        minimum_single = future_logo_width(other_code) + max(40, tight_width(c, str(other_seed) + " SEED", "picopixel") + 15)
+        other_metrics = your_team_resume(other_code, saved_records = _projection.get("TEAM_RECORDS"))
+        minimum_single = future_logo_width(other_code) + 1 + max(23, tight_width(c, other_code, "3x4") + 12, tight_width(c, str(other_metrics.get("RECORD", "--")), "picopixel"))
         if single_width >= minimum_single:
             first_width = pair_width if pair_index == 0 else single_width
             divider = 5 + first_width + 2
             c.line(divider, 9, divider, 30, color = "#12345c")
             pair_left = 5 if pair_index == 0 else divider + 3
             single_left = divider + 3 if pair_index == 0 else 5
-            your_team_round32_mixed_single(_projection, c, other_code, other_seed, single_left, single_width)
+            your_team_round32_mixed_single(_projection, c, other_code, other_seed, single_left, single_width, other_metrics)
             your_team_round32_mixed_pair(_projection, c, pair, pair_seed, pair_left, resumes)
             return
     widths = [round32_candidate_width(_projection, c, game[1], game[0], region), round32_candidate_width(_projection, c, game[3], game[2], region)]
@@ -2572,6 +2617,10 @@ def snapshot_text_edges(c, label, font, anchor, align):
     for i in range(len(label)):
         letter = label[i]
         ink = SNAPSHOT_FONT_INK.get(font, {}).get(letter)
+        if ink == None and font == "3x4":
+            rows = APPROVED_FONT_GLYPHS[font].get(letter, [])
+            columns = [column for row in rows for column in range(len(row)) if row[column]]
+            if columns: ink = [min(columns), max(columns)]
         if ink != None:
             offset = app_text_width(c, label[:i + 1], font) - app_text_width(c, letter, font) - reduction
             lo = min(lo, start + offset + ink[0])
@@ -2612,7 +2661,7 @@ def your_team_page(_projection, c, ctx, slot):
         your_team_text(c, name, 19, 0, font = name_font, color = LIGHT, align = "center")
         your_team_mark(c, team, 0, 8, 38, 24)
         seed = str(info[1]) if info != None else str(opening[0]) if opening != None else "--"
-        metrics = your_team_resume(team, include_wab = True, saved_records = _projection.get("TEAM_RECORDS"))
+        metrics = your_team_resume(team, include_wab = True, saved_records = _projection.get("TEAM_RECORDS"), saved_resume = _projection.get("TEAM_RESUME"))
         # Shared centers keep identity, seed, and metadata independent.
         record = str(metrics.get("RECORD", "--"))
         record_font = "4x5" if tight_width(c, record, "4x5") <= 27 else "picopixel"
@@ -3214,6 +3263,9 @@ def projection_state():
         teams_by_id = records.get("teams")
         if type(teams_by_id) == "dict" and teams_by_id:
             result["TEAM_RECORDS"] = teams_by_id
+    resume = data.get("team_resume")
+    if type(resume) == "dict" and resume.get("season") == data["season"]:
+        result["TEAM_RESUME"] = resume
     return result
 
 # Wright State's official standalone wolf, proportional native frames.
