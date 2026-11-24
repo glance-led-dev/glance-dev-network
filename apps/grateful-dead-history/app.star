@@ -209,26 +209,62 @@ GUEST_INSTRUMENT = {
     "zakir hussain": "TABLA",
 }
 
-# Who was in the band, by gdsets' lineup id (its 14 Grateful Dead lineups
-# rarely change, so they live here rather than costing a request; when
-# gdsets renumbered them in Oct 2026, &v=2 on the cached URLs flushed
-# listings still carrying the old ids).
+# Who was in the band, by DATE (11/23/26). This used to key on gdsets' lineup
+# ids, but gdsets renumbers them now and then (Oct 2026 +5, Nov 2026 +6) and
+# old ids came to point at other lineups - wrong bands on the Band page. Who
+# was in the band on a date never changes, so the eras live here, built from
+# gdsets' full show list on 11/23/26 (every GD show, 1965-95, matched its
+# lineup's first and last dates). "w/o X" and "X substituted for Phil" in a
+# show's notes still adjust single nights (show_members).
+ERAS = [
+    ("0000-00-00", "A"),    # 1965: Jerry, Bobby, Phil, Pigpen, Billy
+    ("1967-09-30", "B"),    # Mickey joins
+    ("1968-11-25", "C"),    # Tom Constanten joins
+    ("1970-01-31", "D"),    # TC's last show 1/30/70
+    ("1971-02-19", "E"),    # Mickey's leave (last 2/18/71)
+    ("1971-10-19", "F"),    # Keith joins
+    ("1971-12-31", "G"),    # Donna joins
+    ("1972-06-30", "H"),    # Pigpen's last show 6/17/72
+    ("1975-03-23", "I"),    # Mickey back
+    ("1979-04-16", "J"),    # Brent (Keith & Donna's last 2/17/79)
+    ("1990-08-28", "K"),    # Vince
+    ("1990-09-15", "L"),    # Bruce joins
+    ("1992-05-19", "K"),    # Bruce's last 3/24/92
+]
 LINEUPS = {
-    "1789": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "BILLY"],
-    "1790": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "MICKEY", "BILLY"],
-    "1791": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "TC", "MICKEY", "BILLY"],
-    "1792": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "MICKEY", "BILLY"],
-    "1793": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "BILLY"],
-    "1794": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "KEITH", "BILLY"],
-    "1795": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "KEITH", "DONNA", "BILLY"],
-    "1796": ["JERRY", "BOBBY", "PHIL", "KEITH", "DONNA", "BILLY"],
-    "1797": ["JERRY", "BOBBY", "PHIL", "KEITH", "DONNA", "BILLY"],
-    "1798": ["JERRY", "BOBBY", "PHIL", "KEITH", "DONNA", "MICKEY", "BILLY"],
-    "1799": ["JERRY", "BOBBY", "PHIL", "BRENT", "MICKEY", "BILLY"],
-    "1800": ["JERRY", "BOBBY", "PHIL", "VINCE", "MICKEY", "BILLY"],
-    "1801": ["JERRY", "BOBBY", "PHIL", "VINCE", "BRUCE", "MICKEY", "BILLY"],
-    "1802": ["JERRY", "BOBBY", "PHIL", "VINCE", "MICKEY", "BILLY"],
+    "A": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "BILLY"],
+    "B": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "MICKEY", "BILLY"],
+    "C": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "TC", "MICKEY", "BILLY"],
+    "D": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "MICKEY", "BILLY"],
+    "E": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "BILLY"],
+    "F": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "KEITH", "BILLY"],
+    "G": ["JERRY", "BOBBY", "PHIL", "PIGPEN", "KEITH", "DONNA", "BILLY"],
+    "H": ["JERRY", "BOBBY", "PHIL", "KEITH", "DONNA", "BILLY"],
+    "NED": ["JERRY", "BOBBY", "PHIL", "KEITH", "DONNA", "BILLY"],
+    "I": ["JERRY", "BOBBY", "PHIL", "KEITH", "DONNA", "MICKEY", "BILLY"],
+    "J": ["JERRY", "BOBBY", "PHIL", "BRENT", "MICKEY", "BILLY"],
+    "K": ["JERRY", "BOBBY", "PHIL", "VINCE", "MICKEY", "BILLY"],
+    "L": ["JERRY", "BOBBY", "PHIL", "VINCE", "BRUCE", "MICKEY", "BILLY"],
 }
+
+# Ned Lagin's 1974 nights (he and Phil played "Seastones"); he was never a
+# member, so these shows list him as a guest.
+NED_DATES = [
+    "1974-06-23", "1974-06-26", "1974-06-28", "1974-06-30", "1974-07-19", "1974-07-21",
+    "1974-07-25", "1974-07-27", "1974-07-29", "1974-07-31", "1974-08-04", "1974-08-05",
+    "1974-08-06", "1974-09-10", "1974-09-11", "1974-09-14", "1974-09-18", "1974-09-21",
+    "1974-10-16", "1974-10-17", "1974-10-18", "1974-10-19", "1974-10-20",
+]
+
+def lineup_of(date):
+    # The ERAS key for a show date ("YYYY-MM-DD").
+    if date in NED_DATES:
+        return "NED"
+    key = "A"
+    for start, k in ERAS:
+        if date >= start:
+            key = k
+    return key
 
 # How the notes name each member ("w/o Bruce Hornsby", "John Kahn
 # substituted for Phil").
@@ -278,9 +314,7 @@ def birthday_note(show, members):
             return m + "'S " + ordinal(age_on(m, show["date"])) + " BIRTHDAY"
     return None
 
-# gdsets gives Ned Lagin's 1974 shows (he and Phil played "Seastones")
-# a lineup of their own, but he was never a member, so he shows as a guest.
-NED_LINEUP = "1797"
+NED_LINEUP = "NED"
 
 JOIN_COLOR = "#3DDC84"
 LEAVE_COLOR = "#FF3B3B"
@@ -564,8 +598,8 @@ def parse_head(date, b):
     else:
         venue = place
         city = ""
-    # gdsets' ids for the show's lineup and its guest list.
-    lineup = attr(b[:hd_end], "data-lineup")
+    # Who played comes from the date (ERAS); gdsets' id for the guest list.
+    lineup = lineup_of(date) if len(date) == 10 else ""
     guests_id = attr(b[:hd_end], "data-guests")
     y = int(date[0:4]) if is_digits(date[0:4]) else 0
     return {"date": date, "y": y, "dow": dow, "venue": venue, "venue_q": venue_q or venue, "city": city, "lineup": lineup, "guests_id": guests_id}
@@ -657,7 +691,7 @@ def fetch_heads(query):
     # cancelled ones and anything after LAST_SHOW left out; None if the
     # lookup fails. Past shows never change, so it's cached for 30 days.
     resp = http.get(
-        "https://gdsets.com/scripts/q-events-classic.pl?" + query + "&band=Grateful%20Dead&v=2",
+        "https://gdsets.com/scripts/q-events-classic.pl?" + query + "&band=Grateful%20Dead&v=3",
         headers = {"User-Agent": USER_AGENT},
         ttl_seconds = 2592000,
     )
@@ -701,7 +735,7 @@ def fetch_guests(show):
     if not show["guests_id"]:
         return []
     resp = http.get(
-        "https://gdsets.com/scripts/tips.pl?guests=" + show["guests_id"] + "&v=2",
+        "https://gdsets.com/scripts/tips.pl?guests=" + show["guests_id"] + "&v=3",
         headers = {"User-Agent": USER_AGENT},
         ttl_seconds = 2592000,
     )
@@ -795,7 +829,7 @@ def year_shows(show):
     # Every Grateful Dead show that year with its setlist, from the same
     # cached request as year_heads; [] if the lookup fails.
     resp = http.get(
-        "https://gdsets.com/scripts/q-events-classic.pl?" + year_query(show) + "&band=Grateful%20Dead&v=2",
+        "https://gdsets.com/scripts/q-events-classic.pl?" + year_query(show) + "&band=Grateful%20Dead&v=3",
         headers = {"User-Agent": USER_AGENT},
         ttl_seconds = 2592000,
     )
