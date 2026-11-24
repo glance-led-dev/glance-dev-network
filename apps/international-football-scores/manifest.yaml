@@ -10,7 +10,7 @@ entry: app.star
 width: 192
 height: 32
 # Live scores move fast; the live feed is fetched with a 60-120 s ttl to match.
-refresh: 120
+refresh: 300
 
 assets:
   - ALB_l.png
