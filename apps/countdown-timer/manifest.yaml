@@ -128,39 +128,11 @@ inputs:
     label: Soon from
     default: 1 WEEK
     choices: [1 HOUR, 3 HOURS, 6 HOURS, 12 HOURS, 1 DAY, 2 DAYS, 3 DAYS, 1 WEEK, 2 WEEKS, 4 WEEKS]
-    help: Below this much time left, the countdown switches to the Soon colour.
+    help: Below this much time left, the countdown turns yellow (green before that).
   - key: alarmat
     type: choice
     app_input_type: dropdown
     label: Imminent from
     default: 1 DAY
     choices: [1 HOUR, 3 HOURS, 6 HOURS, 12 HOURS, 1 DAY, 2 DAYS, 3 DAYS, 1 WEEK, 2 WEEKS, 4 WEEKS]
-    help: Below this much time left, the countdown switches to the Imminent colour.
-  - key: farcolor
-    type: choice
-    app_input_type: dropdown
-    label: Far-off color
-    default: GREEN
-    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
-    help: More time left than Soon from.
-  - key: sooncolor
-    type: choice
-    app_input_type: dropdown
-    label: Soon color
-    default: DARK YELLOW
-    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
-    help: Between Soon from and Imminent from.
-  - key: alarmcolor
-    type: choice
-    app_input_type: dropdown
-    label: Imminent color
-    default: RED
-    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
-    help: Less time left than Imminent from.
-  - key: pastcolor
-    type: choice
-    app_input_type: dropdown
-    label: Past color
-    default: GRAY
-    choices: [GREEN, YELLOW, DARK YELLOW, AMBER, ORANGE, RED, PINK, PURPLE, SKYBLUE, WHITE, GRAY]
-    help: Once the moment has passed (the count then reads AGO).
+    help: Below this much time left, the countdown turns red.

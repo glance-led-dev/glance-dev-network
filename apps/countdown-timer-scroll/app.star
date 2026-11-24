@@ -421,12 +421,12 @@ def nodata(c, title, sub):
 def state_color(ctx, delta):
     """Colour for a signed span (target minus now)."""
     if delta < 0:
-        return color_for(ctx, "pastcolor", DEFAULT_PAST)
+        return PALETTE[DEFAULT_PAST]
     if delta < span_for(ctx, "alarmat", DEFAULT_ALARM):
-        return color_for(ctx, "alarmcolor", DEFAULT_IMMINENT)
+        return PALETTE[DEFAULT_IMMINENT]
     if delta < span_for(ctx, "warnat", DEFAULT_WARN):
-        return color_for(ctx, "sooncolor", DEFAULT_SOON)
-    return color_for(ctx, "farcolor", DEFAULT_FAR)
+        return PALETTE[DEFAULT_SOON]
+    return PALETTE[DEFAULT_FAR]
 
 def countdown(c, ctx):
     target = target_unix(ctx)
