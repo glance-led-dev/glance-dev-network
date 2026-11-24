@@ -42,33 +42,33 @@ ALL_ZONES = NEAR_ZONES + OPEN_ZONES
 OUTLOOK_PAGES = 4
 
 WIND_CHOICES = {
-    "Calumet Harbor (CMTI2)": "CMTI2",
-    "Harrison-Dever Crib (CHII2)": "CHII2",
-    "Navy Pier (CNII2)": "CNII2",
-    "Chicago Buoy (45198)": "45198",
-    "Wilmette Buoy (45174)": "45174",
-    "Michigan City Buoy (45170)": "45170",
+    "Calumet Harbor": "CMTI2",
+    "Chicago Crib": "CHII2",
+    "Navy Pier": "CNII2",
+    "Chicago Buoy": "45198",
+    "Wilmette Buoy": "45174",
+    "Mich City Buoy": "45170",
 }
 
 BUOY_CHOICES = {
-    "South Michigan Spotter (45214)": "45214",
-    "Chicago Buoy (45198)": "45198",
-    "Wilmette Buoy (45174)": "45174",
-    "Michigan City Buoy (45170)": "45170",
+    "Spotter": "45214",
+    "Chicago Buoy": "45198",
+    "Wilmette Buoy": "45174",
+    "Mich City Buoy": "45170",
 }
 
 ZONE_CHOICES = {
-    "Winthrop - Wilmette (LMZ740)": "LMZ740",
-    "Wilmette - Northerly Island (LMZ741)": "LMZ741",
-    "Northerly Island - Calumet (LMZ742)": "LMZ742",
-    "Calumet - Gary (LMZ743)": "LMZ743",
-    "Gary - Burns Harbor (LMZ744)": "LMZ744",
-    "Burns Harbor - Michigan City (LMZ745)": "LMZ745",
-    "Michigan City - New Buffalo (LMZ046)": "LMZ046",
-    "New Buffalo - St. Joseph (LMZ043)": "LMZ043",
-    "Offshore Winthrop - Wilmette (LMZ777)": "LMZ777",
-    "Offshore Wilmette - Michigan City (LMZ779)": "LMZ779",
-    "Offshore Michigan City - St. Joseph (LMZ080)": "LMZ080",
+    "LMZ740": "LMZ740",
+    "LMZ741": "LMZ741",
+    "LMZ742": "LMZ742",
+    "LMZ743": "LMZ743",
+    "LMZ744": "LMZ744",
+    "LMZ745": "LMZ745",
+    "LMZ046": "LMZ046",
+    "LMZ043": "LMZ043",
+    "LMZ777": "LMZ777",
+    "LMZ779": "LMZ779",
+    "LMZ080": "LMZ080",
 }
 
 
@@ -108,20 +108,20 @@ def _pick(
 
 def _winds(ctx):
     return _pick(
-        ctx, "windstation",
-        "Calumet Harbor (CMTI2)",
+        ctx, "wind",
+        "Calumet Harbor",
         WIND_CHOICES,
-        "All wind stations",
+        "All",
         WIND_ALL
     )
 
 
 def _buoys(ctx):
     return _pick(
-        ctx, "wavebuoy",
-        "South Michigan Spotter (45214)",
+        ctx, "buoy",
+        "Spotter",
         BUOY_CHOICES,
-        "All wave buoys",
+        "All",
         BUOY_ALL
     )
 
@@ -136,15 +136,15 @@ def _zone_select(ctx, key, default):
     for name in str(raw).split(","):
         name = name.strip()
 
-        if name == "All supported areas":
+        if name == "All":
             return ALL_ZONES
 
-        if name == "All nearshore areas":
+        if name == "Nearshore":
             for code in NEAR_ZONES:
                 if code not in selected:
                     selected.append(code)
 
-        elif name == "All offshore areas":
+        elif name == "Offshore":
             for code in OPEN_ZONES:
                 if code not in selected:
                     selected.append(code)
@@ -157,7 +157,7 @@ def _zone_select(ctx, key, default):
                 if code not in selected:
                     selected.append(code)
 
-        elif name == "Use my warning areas":
+        elif name == "Same as warnings":
             for code in _warnings_zones(ctx):
                 if code not in selected:
                     selected.append(code)
@@ -179,15 +179,15 @@ def _zone_select(ctx, key, default):
 
 def _warnings_zones(ctx):
     return _zone_select(
-        ctx, "marinezones",
-        "Northerly Island - Calumet (LMZ742)"
+        ctx, "wzones",
+        "LMZ742"
     )
 
 
 def _forecast_zones(ctx):
     return _zone_select(
-        ctx, "forecastzones",
-        "Calumet - Gary (LMZ743)"
+        ctx, "fzones",
+        "LMZ743"
     )
 
 
@@ -735,10 +735,10 @@ def _history_temp(code, now):
 def _history_budget(ctx):
     fixed = 1
 
-    if _enabled(ctx, "showwarnings"):
+    if _enabled(ctx, "warn"):
         fixed += 1
 
-    if _enabled(ctx, "showforecast"):
+    if _enabled(ctx, "fcst"):
         selected = _forecast_zones(ctx)
 
         for source in [
@@ -1516,7 +1516,7 @@ def _wave_forecast(ctx):
 # PAGE 1 - CURRENT CONDITIONS
 
 def conditions(c, ctx):
-    if not _enabled(ctx, "showconditions"):
+    if not _enabled(ctx, "cond"):
         _off(c, "CONDITIONS")
         return
 
@@ -1686,7 +1686,7 @@ def conditions(c, ctx):
     else:
         value = ""
 
-        if _enabled(ctx, "showforecast"):
+        if _enabled(ctx, "fcst"):
             value = _wave_forecast(ctx)
 
             if value != "":
@@ -2004,7 +2004,7 @@ def _alert_group(item):
 # PAGE 2: WARNINGS BY AREA
 
 def advisories(c, ctx):
-    if not _enabled(ctx, "showwarnings"):
+    if not _enabled(ctx, "warn"):
         _off(c, "WARNINGS")
         return
 
@@ -2352,7 +2352,7 @@ def _alert_brief(item):
 # PAGE 3: ACTIVE WARNING LIST
 
 def alert_list(c, ctx):
-    if not _enabled(ctx, "showwarnings"):
+    if not _enabled(ctx, "warn"):
         _off(c, "WARNINGS")
         return
 
@@ -2436,7 +2436,7 @@ def alert_list(c, ctx):
 # PAGE 4: WARNING DETAILS
 
 def details(c, ctx):
-    if not _enabled(ctx, "showwarnings"):
+    if not _enabled(ctx, "warn"):
         _off(c, "WARNINGS")
         return
 
@@ -2518,26 +2518,18 @@ def details(c, ctx):
 # ADAPTIVE FORECAST PERIODS
 
 def _period_focus(ctx):
-    value = str(
-        ctx.inputs.get(
-            "forecastperiod",
-            "Auto (adaptive)"
-        )
-    )
+    value = str(ctx.inputs.get("period", "Auto"))
 
-    allowed = [
-        "Auto (adaptive)",
-        "Today",
-        "Tonight",
-        "Tomorrow",
-        "Tomorrow Night",
-        "Rotate periods",
-    ]
+    allowed = {
+        "Auto": "Auto (adaptive)",
+        "Today": "Today",
+        "Tonight": "Tonight",
+        "Tomorrow": "Tomorrow",
+        "Tmrw Night": "Tomorrow Night",
+        "Rotate": "Rotate periods",
+    }
 
-    if value in allowed:
-        return value
-
-    return "Auto (adaptive)"
+    return allowed.get(value.strip(), "Auto (adaptive)")
 
 
 def _is_night(name):
@@ -2729,7 +2721,7 @@ def _forecast_slots(groups, now, focus):
 # PAGES 5-8: MARINE OUTLOOK
 
 def _outlook(c, ctx, page):
-    if not _enabled(ctx, "showforecast"):
+    if not _enabled(ctx, "fcst"):
         _off(c, "FORECAST")
         return
 

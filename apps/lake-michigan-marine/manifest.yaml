@@ -14,110 +14,110 @@ refresh: 300
 pages: [conditions, advisories, alert_list, details, outlook1, outlook2, outlook3, outlook4]
 
 inputs:
-  - key: showconditions
+  - key: cond
     type: string
     app_input_type: checkbox
     label: Show current conditions
     default: "true"
     help: "Wind and gusts at left; waves and water temperature at right. Current wind and wave readings expire at 60 minutes, water at 4 hours. WAVE FCST means predicted waves; WAVE means a measured buoy reading."
 
-  - key: showwarnings
+  - key: warn
     type: string
     app_input_type: checkbox
     label: Show NWS marine warnings
     default: "true"
     help: "Includes area summary, grouped active bulletins, and details. NONE means no active NWS warning found, not safe conditions. N/A means feed unavailable."
 
-  - key: showforecast
+  - key: fcst
     type: string
     app_input_type: checkbox
     label: Show marine forecasts
     default: "true"
     help: "Four adaptive forecast screens show weather, wind in knots, waves in feet, and changes. 1 group shows four periods; 2 groups show two each; 3 groups show one each plus an extra; 4 or more show one per group. More than four groups rotate across refreshes."
 
-  - key: forecastperiod
+  - key: period
     type: choice
-    app_input_type: selection
+    app_input_type: dropdown
     label: Forecast period (all selected areas)
-    default: "Auto (adaptive)"
+    default: "Auto"
     choices:
-      - "Auto (adaptive)"
+      - "Auto"
       - "Today"
       - "Tonight"
       - "Tomorrow"
-      - "Tomorrow Night"
-      - "Rotate periods"
-    help: "Auto uses the earliest NWS forecast periods, then allocates any remaining screens to later periods. Select Today, Tonight, Tomorrow, or Tomorrow Night to focus those periods, if NWS publishes them. Rotate periods cycles displayed time windows on five-minute updates when four or more distinct groups are selected."
+      - "Tmrw Night"
+      - "Rotate"
+    help: "Auto uses the earliest NWS forecast periods, then allocates any remaining screens to later periods. Pick Today, Tonight, Tomorrow, or Tmrw Night (tomorrow night) to focus those periods, if NWS publishes them. Rotate cycles displayed time windows on five-minute updates when four or more distinct groups are selected."
 
-  - key: windstation
+  - key: wind
     type: choice
     app_input_type: selection
     label: Wind stations (choose any)
-    default: "Calumet Harbor (CMTI2)"
+    default: "Calumet Harbor"
     choices:
-      - "All wind stations"
-      - "Calumet Harbor (CMTI2)"
-      - "Harrison-Dever Crib (CHII2)"
-      - "Navy Pier (CNII2)"
-      - "Chicago Buoy (45198)"
-      - "Wilmette Buoy (45174)"
-      - "Michigan City Buoy (45170)"
-    help: "Uses the freshest selected station reporting usable wind within the last 60 minutes. KT = knots."
+      - "All"
+      - "Calumet Harbor"
+      - "Chicago Crib"
+      - "Navy Pier"
+      - "Chicago Buoy"
+      - "Wilmette Buoy"
+      - "Mich City Buoy"
+    help: "Uses the freshest selected station reporting usable wind within the last 60 minutes. KT = knots. Stations: Calumet Harbor (CMTI2), Harrison-Dever Crib (CHII2), Navy Pier (CNII2), Chicago Buoy (45198), Wilmette Buoy (45174), Michigan City Buoy (45170)."
 
-  - key: wavebuoy
+  - key: buoy
     type: choice
     app_input_type: selection
     label: Wave and water-temperature buoys
-    default: "South Michigan Spotter (45214)"
+    default: "Spotter"
     choices:
-      - "All wave buoys"
-      - "South Michigan Spotter (45214)"
-      - "Chicago Buoy (45198)"
-      - "Wilmette Buoy (45174)"
-      - "Michigan City Buoy (45170)"
-    help: "Waves in feet and water temperature in Fahrenheit. If no recent buoy wave exists, a labeled nearshore forecast can be shown. Water history checks are capped to avoid GLANCE's HTTP limit."
+      - "All"
+      - "Spotter"
+      - "Chicago Buoy"
+      - "Wilmette Buoy"
+      - "Mich City Buoy"
+    help: "Waves in feet and water temperature in Fahrenheit. Spotter is the South Michigan Spotter (45214); also Chicago (45198), Wilmette (45174), Michigan City (45170). If no recent buoy wave exists, a labeled nearshore forecast can be shown. Water history checks are capped to avoid GLANCE's HTTP limit."
 
-  - key: marinezones
+  - key: wzones
     type: choice
     app_input_type: selection
     label: Marine warning areas (select any)
-    default: "Northerly Island - Calumet (LMZ742), Calumet - Gary (LMZ743)"
+    default: "LMZ742,LMZ743"
     choices:
-      - "All supported areas"
-      - "All nearshore areas"
-      - "All offshore areas"
-      - "Winthrop - Wilmette (LMZ740)"
-      - "Wilmette - Northerly Island (LMZ741)"
-      - "Northerly Island - Calumet (LMZ742)"
-      - "Calumet - Gary (LMZ743)"
-      - "Gary - Burns Harbor (LMZ744)"
-      - "Burns Harbor - Michigan City (LMZ745)"
-      - "Michigan City - New Buffalo (LMZ046)"
-      - "New Buffalo - St. Joseph (LMZ043)"
-      - "Offshore Winthrop - Wilmette (LMZ777)"
-      - "Offshore Wilmette - Michigan City (LMZ779)"
-      - "Offshore Michigan City - St. Joseph (LMZ080)"
-    help: "Selected NWS warning zones, including waters more than 5 nautical miles offshore. Warnings for more than six selected zones use alternating summary screens. An O suffix indicates an offshore zone."
+      - "All"
+      - "Nearshore"
+      - "Offshore"
+      - "LMZ740"
+      - "LMZ741"
+      - "LMZ742"
+      - "LMZ743"
+      - "LMZ744"
+      - "LMZ745"
+      - "LMZ046"
+      - "LMZ043"
+      - "LMZ777"
+      - "LMZ779"
+      - "LMZ080"
+    help: "Selected NWS warning zones, including waters more than 5 nautical miles offshore. Nearshore: 740 Winthrop-Wilmette, 741 Wilmette-Northerly Island, 742 Northerly Island-Calumet, 743 Calumet-Gary, 744 Gary-Burns Harbor, 745 Burns Harbor-Michigan City, 046 Michigan City-New Buffalo, 043 New Buffalo-St. Joseph. Offshore: 777 Winthrop-Wilmette, 779 Wilmette-Michigan City, 080 Michigan City-St. Joseph. Warnings for more than six selected zones use alternating summary screens. An O suffix indicates an offshore zone."
 
-  - key: forecastzones
+  - key: fzones
     type: choice
     app_input_type: selection
     label: Marine forecast areas (select any)
-    default: "Wilmette - Northerly Island (LMZ741), Northerly Island - Calumet (LMZ742), Calumet - Gary (LMZ743), Gary - Burns Harbor (LMZ744), Burns Harbor - Michigan City (LMZ745), Michigan City - New Buffalo (LMZ046)"
+    default: "LMZ741,LMZ742,LMZ743,LMZ744,LMZ745,LMZ046"
     choices:
-      - "All supported areas"
-      - "All nearshore areas"
-      - "All offshore areas"
-      - "Use my warning areas"
-      - "Winthrop - Wilmette (LMZ740)"
-      - "Wilmette - Northerly Island (LMZ741)"
-      - "Northerly Island - Calumet (LMZ742)"
-      - "Calumet - Gary (LMZ743)"
-      - "Gary - Burns Harbor (LMZ744)"
-      - "Burns Harbor - Michigan City (LMZ745)"
-      - "Michigan City - New Buffalo (LMZ046)"
-      - "New Buffalo - St. Joseph (LMZ043)"
-      - "Offshore Winthrop - Wilmette (LMZ777)"
-      - "Offshore Wilmette - Michigan City (LMZ779)"
-      - "Offshore Michigan City - St. Joseph (LMZ080)"
-    help: "Pick waters along your route, or offshore for crossings. NWS can publish one forecast for several adjacent zones. The title shows a single chosen area when possible, or its shared shoreline. This is not an entire-lake route forecast. With four or more distinct groups, use Forecast period to see Tonight or Tomorrow; Rotate periods changes the period automatically."
+      - "All"
+      - "Nearshore"
+      - "Offshore"
+      - "Same as warnings"
+      - "LMZ740"
+      - "LMZ741"
+      - "LMZ742"
+      - "LMZ743"
+      - "LMZ744"
+      - "LMZ745"
+      - "LMZ046"
+      - "LMZ043"
+      - "LMZ777"
+      - "LMZ779"
+      - "LMZ080"
+    help: "Pick waters along your route, or offshore for crossings (zone codes are listed under warning areas). Same as warnings reuses your warning areas. NWS can publish one forecast for several adjacent zones. The title shows a single chosen area when possible, or its shared shoreline. This is not an entire-lake route forecast. With four or more distinct groups, use Forecast period to see Tonight or Tomorrow; Rotate changes the period automatically."
