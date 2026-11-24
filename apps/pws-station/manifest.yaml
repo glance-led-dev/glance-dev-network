@@ -1,6 +1,6 @@
 gdn: 1
 id: pws-station
-version: 0.1.0
+version: 0.2.0
 name: PWS Dashboard
 author: reyos86
 description: Personal weather station board from Weather Underground, plus NWS alerts for the station location.
