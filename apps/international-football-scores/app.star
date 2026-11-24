@@ -49,11 +49,11 @@ COMPS = {
 
 # Group dropdown label prefix -> ESPN competition slug.
 GROUP_PREFIX = [
-    ["World Cup Qualifying (Europe) - ", "fifa.worldq.uefa"],
-    ["Nations League - ", "uefa.nations"],
-    ["Euro Qualifying - ", "uefa.euroq"],
-    ["World Cup - ", "fifa.world"],
-    ["Euro - ", "uefa.euro"],
+    ["WC Qual Europe ", "fifa.worldq.uefa"],
+    ["Nations League ", "uefa.nations"],
+    ["Euro Qual ", "uefa.euroq"],
+    ["World Cup ", "fifa.world"],
+    ["Euro ", "uefa.euro"],
 ]
 
 # Dropdown name -> [ESPN team id, code, primary colour, alternate colour].
@@ -442,7 +442,7 @@ def settings(ctx):
     zone = str(ctx.inputs.get("timezone", "Europe/London")).strip()
     return {
         "zone": zone if zone in TZ else "UTC",
-        "twelve": str(ctx.inputs.get("clock", "24-hour")).startswith("12"),
+        "twelve": str(ctx.inputs.get("clock", "24h")).startswith("12"),
         "friendlies": truthy(ctx.inputs.get("friendlies", False)),
         "now": ctx.now.unix // 60,
     }
@@ -589,7 +589,7 @@ def team_data(ctx, s):
             "live": by_time(live), "upcoming": by_time(upcoming), "results": results}
 
 def group_target(ctx):
-    label = str(ctx.inputs.get("group", "Nations League - Group A3"))
+    label = str(ctx.inputs.get("group", "Nations League Group A3"))
     for p in GROUP_PREFIX:
         if label.startswith(p[0]):
             return [p[1], label[len(p[0]):].strip()]

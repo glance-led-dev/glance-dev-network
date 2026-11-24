@@ -55,7 +55,7 @@ Euros.
 | **Team** | 86 national teams: every UEFA nation, plus every other team at the 2026 World Cup. Used when following a team. |
 | **Group** | Nations League groups A1 to D2, World Cup groups A to L, World Cup qualifying (Europe) groups A to L, Euro groups A to F, and Euro qualifying groups A to L. Used when following a group. |
 | **Include friendlies** | Off by default, so only the competitions above are shown. Turn it on to include friendlies too. |
-| **Kickoff time format** | 24-hour or 12-hour. |
+| **Kickoff time format** | 24h or 12h. |
 | **Time zone** | Kickoff times are shown in this zone, with daylight saving applied automatically. |
 
 ## Good to know
