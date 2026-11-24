@@ -25,8 +25,28 @@ def _rows(snapshot, section, key):
     rows = group.get(key)
     return [row for row in rows if type(row) == "dict"] if type(rows) == "list" else []
 
+# Friendly names shown in the setup app, mapped to the exact TOMS symbols.
+MARKETS = {
+    "EUR/USD": "EURUSD.SMX",
+    "GBP/USD": "GBPUSD.SMX",
+    "USD/JPY": "USDJPY.SMX",
+    "USD/CHF": "USDCHF.SMX",
+    "AUD/USD": "AUDUSD.SMX",
+    "GOLD": "XAUUSD.SMM",
+    "SILVER": "XAGUSD.SMM",
+    "S&P 500": "US500.SMI",
+    "NASDAQ 100": "USTECH.SMI",
+    "WTI OIL": "XTIUSD.SME",
+    "APPLE": "AAPL.CFD",
+    "NVIDIA": "NVDA.CFD",
+}
+
 def _selected(ctx, key, rows, fields):
-    requested = [value.strip().upper() for value in ctx.inputs.get(key, "").split(",") if value.strip()]
+    # A selection arrives as "GOLD, S&P 500" (or a list); unknown names drop out.
+    raw = ctx.inputs.get(key, "")
+    parts = raw if type(raw) == "list" else str(raw or "").split(",")
+    requested = [str(value).strip().upper() for value in parts if str(value).strip()]
+    requested = [MARKETS.get(name, name) for name in requested]
     if not requested:
         return rows
     by_name = {}
@@ -107,7 +127,7 @@ def _brand(c, transitions=True):
     for x in [8, 111]:
         c.line(x, 8, x + 8, 8, color=GRID)
         c.line(x + 2, 10, x + 6, 10, color=CYAN)
-    c.text_center("THE FUTURE OF TRADING", 19, font="3x4", color=GOLD)
+    c.text_center("THE FUTURE OF TRADING", 19, font="4x5", color=GOLD)
     c.text_center("WWW.STRYKEMARKETS.COM", 26, font="4x5", color=WHITE)
 
 def main(c, ctx):

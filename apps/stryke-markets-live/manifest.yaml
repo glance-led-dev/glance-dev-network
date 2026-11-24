@@ -12,15 +12,17 @@ refresh: 300
 pages: [main, markets, strategies, volume, brand_interlude, halo, market_news_and_insights]
 inputs:
   - key: instruments
-    type: string
-    app_input_type: free-text
-    label: Instrument lineup
+    type: choice
+    app_input_type: selection
+    label: Markets to show
     default: ""
-    help: Enter exact TOMS symbols separated by commas. Leave blank for all available symbols.
+    choices: ["EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "GOLD", "SILVER", "S&P 500", "NASDAQ 100", "WTI OIL", "APPLE", "NVIDIA"]
+    help: Pick the markets for Market Pulse and Tick Volume. Pick none to cycle through every market Stryke publishes.
   - key: strategies
-    type: string
-    app_input_type: free-text
-    label: Strategy lineup
+    type: choice
+    app_input_type: selection
+    label: Strategies to show
     default: ""
-    help: Enter Marketplace strategy names or IDs separated by commas. Leave blank for all strategies.
+    choices: ["BITTOOMUCH", "COINCRUSHER", "GOLDEN GATES", "TECHYTECH", "DOWLEGEND", "PROFITPULSE - LEGACY", "PROFITPULSE - HRE", "CURRENCY COMPASS", "FOREX PULSE", "ROBOGOLD", "GOLDEN HOUR", "EL DORADO"]
+    help: Pick the Marketplace strategies for Strategy Spotlight. Pick none to cycle through every strategy.
 assets: [stryke-logo.png, transition-out.png, transition-in.png]
