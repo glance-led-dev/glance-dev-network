@@ -1,0 +1,28 @@
+gdn: 1
+id: stryke-markets-live
+version: 0.8.0
+name: "Stryke Markets Live"
+author: "Stryke Markets"
+description: "Stryke Markets display with TOMS quotes, strategy performance, volume, trade ideas, news, and insights."
+category: Finance
+entry: app.star
+width: 128
+height: 32
+refresh: 300
+pages: [main, markets, strategies, volume, brand_interlude, halo, market_news_and_insights]
+inputs:
+  - key: instruments
+    type: choice
+    app_input_type: selection
+    label: Markets to show
+    default: ""
+    choices: ["EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "GOLD", "SILVER", "S&P 500", "NASDAQ 100", "WTI OIL", "APPLE", "NVIDIA"]
+    help: Pick the markets for Market Pulse and Tick Volume. Pick none to cycle through every market Stryke publishes.
+  - key: strategies
+    type: choice
+    app_input_type: selection
+    label: Strategies to show
+    default: ""
+    choices: ["BITTOOMUCH", "COINCRUSHER", "GOLDEN GATES", "TECHYTECH", "DOWLEGEND", "PROFITPULSE - LEGACY", "PROFITPULSE - HRE", "CURRENCY COMPASS", "FOREX PULSE", "ROBOGOLD", "GOLDEN HOUR", "EL DORADO"]
+    help: Pick the Marketplace strategies for Strategy Spotlight. Pick none to cycle through every strategy.
+assets: [stryke-logo.png, transition-out.png, transition-in.png]
