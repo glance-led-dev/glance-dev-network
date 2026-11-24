@@ -1,0 +1,30 @@
+gdn: 1
+id: prime-time-time-machine
+version: 0.1.0
+name: Prime Time Time Machine
+author: scottkle
+description: What was on network TV at this exact minute in the 1980s year you pick. The show on the air right now, every network in the same time slot, what comes on next, and tonight's lineup, with Nielsen season rankings. Covers the 1979-80 through 1989-90 seasons. No API key.
+category: Entertainment
+entry: app.star
+
+width: 192
+height: 32
+refresh: 60
+
+pages: [now, lineup, next]
+
+inputs:
+  - key: year
+    type: choice
+    app_input_type: dropdown
+    label: Year
+    default: "1986"
+    choices: ["1980", "1981", "1982", "1983", "1984", "1985", "1986", "1987", "1988", "1989", "SURPRISE ME"]
+    help: The 1980s year to tune in to. Surprise Me picks a different year each day.
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "EASTERN"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "ARIZONA", "PACIFIC"]
+    help: Your time zone, so the shows line up with your clock. Prime time aired an hour earlier in Central and Mountain.
