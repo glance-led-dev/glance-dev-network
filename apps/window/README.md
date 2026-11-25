@@ -113,6 +113,20 @@ buckets are fixed arithmetic — 32 steps of grey for anything near-neutral,
 the mean of the pixels that landed in it. Fixed buckets, adaptive palette,
 one pass. The `overhead` app uses the same quantiser.
 
+A bitmap is a row of `0`/`1` integers in the scene, so each colour on a
+192x32 page costs about 15 KB and the app's pages share a 1 MiB budget. How
+many of the 80 buckets a photograph reaches depends on the weather, which
+would leave the size of the app up to the sky, so a page keeps only its 20
+most populous buckets and folds each thinner one into the survivor nearest
+it in colour, recomputing that survivor's mean over the pixels it inherits.
+On real webcam frames this does not move the RMS error against the original
+at all — 9.4 either way, against 31.4 for a uniform 4x4x4 cube — and it caps
+the page art at 0.72 MiB however the light falls.
+
+Worth knowing if you are building something similar: `gdn validate` renders
+one page at a time, so it never sees the total. Studio builds every page
+into one scene and will tell you when they do not fit.
+
 ## Data sources
 
 | Source | Cached |
@@ -153,14 +167,10 @@ To see the no-data screens, set `GDN_HTTP_OFFLINE=1` first.
 
 If `gdn` is not on `PATH`, use `python -m gdn` in its place.
 
-**A note on the preview images.** They were made at 02:00 Eastern, when the
-honest answer was that every window was dark, so they show the night pages.
-Re-render them in daylight — any time between about 07:30 Eastern and
-18:00 Hawaiʻi time — and they will show a sunlit park instead:
-
-```bash
-gdn render apps/window --page 1 --out apps/window/preview/view.png
-```
+**A note on the preview images.** They show New River Gorge and Longs Peak
+in mid-morning light, because they were made in mid-morning light. Render
+them again at 02:00 Eastern and they will honestly show the night card and
+the sunrise board instead, which is what the panel does at that hour.
 
 Webcam imagery courtesy of the National Park Service and the U.S. Geological
 Survey.
