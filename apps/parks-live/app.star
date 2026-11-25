@@ -1,4 +1,4 @@
-# Window (192x32)
+# Parks Live (192x32)
 #
 # A window onto a national park, live. Eight public webcams, and the panel
 # shows whichever one the sun is highest over at this minute -- first light
@@ -41,7 +41,7 @@
 # focal point before the resize. Every camera carries its own NN, set by eye.
 
 WESERV = "https://images.weserv.nl/"
-UA = "GDN-Window (glance-led-panel)"
+UA = "GDN-Parks-Live (glance-led-panel)"
 NPS = "https://www.nps.gov/webcams-"
 HVO = "https://volcanoes.usgs.gov/cams/"
 

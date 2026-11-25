@@ -1,11 +1,11 @@
-# Window
+# Parks Live
 
 A window onto a national park, live, on a **192x32** panel. Eighteen public
 webcams, and the panel shows whichever one the sun is highest over at this
 minute — first light over Acadia, mid-morning on the rim of the Grand
 Canyon, afternoon in Denali, the last of the day on Kīlauea.
 
-![Window](preview/preview.png)
+![Parks Live](preview/preview.png)
 
 No key, no account. Every camera is a US federal feed in the public domain.
 
@@ -147,7 +147,7 @@ The quantiser runs in Starlark, which rules out a nearest-colour search. The
 buckets are fixed arithmetic — 32 steps of grey for anything near-neutral,
 48 coarse chroma cells for everything else — while each bucket's colour is
 the mean of the pixels that landed in it. Fixed buckets, adaptive palette,
-one pass. The `overhead` app uses the same quantiser.
+one pass. The `cloud-cover` app uses the same quantiser.
 
 A bitmap is a row of `0`/`1` integers in the scene, so each colour on a
 192x32 page costs about 15 KB and the app's pages share a 1 MiB budget. How
@@ -192,13 +192,13 @@ No demo mode. A window that invents a view is not a window.
 From the repository root:
 
 ```bash
-gdn studio apps/window
+gdn studio apps/parks-live
 ```
 
 Rendering one page:
 
 ```bash
-gdn render apps/window --page 1 --input "place=GRAND CANYON"
+gdn render apps/parks-live --page 1 --input "place=GRAND CANYON"
 ```
 
 To see the no-data screens, set `GDN_HTTP_OFFLINE=1` first.
