@@ -45,24 +45,59 @@ UA = "GDN-Window (glance-led-panel)"
 NPS = "https://www.nps.gov/webcams-"
 HVO = "https://volcanoes.usgs.gov/cams/"
 
+# The Air Resources Division network. These are visibility-monitoring
+# cameras, which means every one of them is pointed at the best view in the
+# park on purpose, and the whole network answers to one URL template. They
+# are the reason this app has eighteen windows rather than eight: the first
+# sweep only found the cameras that parks embed as plain <img> tags, and
+# missed both these and everything behind nps.gov/media/webcam/view.htm.
+ARD = "https://www.nps.gov/featurecontent/ard/webcams/images/"
+
+# Grand Canyon Conservancy, by way of the park's own webcam pages.
+PIX = "https://cdn.pixelcaster.com/public.pixelcaster.com/snapshots/"
+
 # [name, state, url, lat, lon, vertical focal point %, UTC offset, US DST?]
+#
+# Ordered east to west, which is the order the sun reaches them. The spread
+# is the point: from Acadia at 68W to Kilauea at 156W is 88 degrees, close
+# to six hours, so the stretch when nowhere in the list is lit is as short
+# as public American cameras allow.
 CAMS = [
-    ["NEW RIVER GORGE", "WV", NPS + "neri/image.jpg", 38.07, -81.08, 32, -5, True],
-    ["YELLOWSTONE", "WY", NPS + "yell/mammoth_arch.jpg", 44.98, -110.70, 42, -7, True],
-    ["LONGS PEAK", "CO", NPS + "romo/longs_peak.jpg", 40.27, -105.60, 44, -7, True],
-    ["GRAND CANYON", "AZ", NPS + "grca/camera.jpg", 36.06, -112.14, 50, -7, False],
-    ["LAKE MCDONALD", "MT", NPS + "glac/LakeMcDonald1.jpg", 48.52, -113.99, 46, -7, True],
-    ["CRATER LAKE", "OR", NPS + "crla/camerasinnott.jpg", 42.91, -122.14, 50, -8, True],
-    ["MOUNT RAINIER", "WA", NPS + "mora/mountain.jpg", 46.79, -121.74, 42, -8, True],
+    ["ACADIA", "ME", ARD + "acad.jpg", 44.35, -68.21, 55, -5, True],
+    ["SHENANDOAH", "VA", ARD + "shen.jpg", 38.53, -78.44, 52, -5, True],
+    ["GREAT SMOKY MTNS", "TN", ARD + "grsm.jpg", 35.56, -83.50, 55, -5, True],
+    ["MAMMOTH CAVE", "KY", ARD + "maca.jpg", 37.19, -86.10, 50, -6, True],
+    ["THEODORE ROOSEVELT", "ND", ARD + "thro.jpg", 46.98, -103.54, 55, -6, True],
+    ["BIG BEND", "TX", ARD + "bibe.jpg", 29.30, -103.25, 55, -6, True],
+    ["GLACIER BASIN", "CO", NPS + "romo/glacier_basin.jpeg", 40.33, -105.60, 50, -7, True],
+    ["YELLOWSTONE", "WY", NPS + "yell/west_into.jpg", 44.66, -111.10, 50, -7, True],
+    ["GRAND CANYON", "AZ", ARD + "grca.jpg", 36.07, -112.12, 58, -7, False],
+    ["KOLB STUDIO", "AZ", PIX + "grandcanyon-2/latest.jpg", 36.06, -112.14, 55, -7, False],
+    ["GLACIER", "MT", NPS + "glac/StMaryPTZ.jpg", 48.75, -113.44, 50, -7, True],
+    ["YOSEMITE", "CA", ARD + "yose.jpg", 37.75, -119.60, 55, -8, True],
+    ["LASSEN VOLCANIC", "CA", NPS + "lavo/kyvc_webcam1.jpg", 40.54, -121.42, 50, -8, True],
+    ["MOUNT RAINIER", "WA", ARD + "mora.jpg", 46.79, -121.74, 50, -8, True],
+    ["NORTH CASCADES", "WA", ARD + "noca.jpg", 48.68, -121.30, 50, -8, True],
+    ["OLYMPIC", "WA", ARD + "olym.jpg", 47.80, -123.40, 50, -8, True],
+    ["DENALI", "AK", ARD + "dena.jpg", 63.33, -150.50, 50, -9, True],
     ["KILAUEA", "HI", HVO + "KPcam/images/M.jpg", 19.45, -155.60, 56, -10, False],
 ]
 
 AUTO = "FOLLOW THE SUN"
+NEXT = "THE NEXT BEST LIT"
 TRIES = 3                   # how many cameras to try before giving up
 DAY = 0.09                  # sin(altitude) above this is proper daylight
 DUSK = -0.10                # below this the sun is past civil twilight
 DARK_FLOOR = 14             # a daylit frame this dim is a dead camera
 BRIGHT_CEIL = 95            # a night frame this bright is a stale one
+LEAN = 8                    # fewer colours than this and there is no picture
+
+# weserv's unsharp mask. Averaging a 1920-pixel frame down to 192 leaves a
+# landscape looking like fog; at 3 this lifts the standard deviation of
+# brightness from 55 to 67 without the haloing that appears at 5. It costs
+# nothing, because more local contrast would otherwise mean more colour
+# buckets and the cap already bounds those.
+SHARP = "3"
 
 BG = "#05070C"
 INK = "#F4F7FF"
@@ -446,6 +481,7 @@ def shot(cam):
     resp = http.get(WESERV, headers = {"User-Agent": UA}, ttl_seconds = 240,
                     params = {"url": cam[2], "w": "192", "h": "32",
                               "fit": "cover", "a": "crop-50-" + str(cam[5]),
+                              "sharp": SHARP,
                               "output": "png", "l": "0", "encoding": "base64"})
     if resp["status_code"] != 200:
         return None
@@ -455,9 +491,24 @@ def shot(cam):
     return png_quant(b64_bytes(body[22:]), 192, CAP)
 
 def honest(got, alt):
-    """Does this frame match where the sun actually is?"""
+    """Is there a picture here, and does it match where the sun actually is?
+
+    Three ways a camera lies, and none of them is an HTTP error. It can be
+    dead and serve black. It can be frozen and serve yesterday's sunshine at
+    midnight. And it can serve a flat card that says IMAGE UNAVAILABLE,
+    which is bright, plausible and has no landscape in it whatever -- the
+    Bryce Canyon camera was doing exactly that when this was written, and a
+    whited-out lens at Crater Lake came through as three colours.
+
+    The first two are caught by comparing the frame with the sun. The third
+    is caught by counting colours: the quantiser is allowed twenty and a
+    real landscape uses all of them, while a flat card or a white-out uses a
+    handful. Nothing here needs a second request or a clock the camera owns.
+    """
     if got[2] == 0:
         return False
+    if len(got[1]) < LEAN:
+        return False        # a flat card, a white-out, or a lens cap
     if alt > DAY and got[3] < DARK_FLOOR:
         return False        # broad daylight and the lens is black
     if alt < DUSK and got[3] > BRIGHT_CEIL:
@@ -525,40 +576,44 @@ def sunrise_board(c, ctx, h24):
 def h24_on(ctx):
     return str(ctx.inputs.get("clock", "12 HOUR")).strip().upper().startswith("24")
 
-def chosen(ctx):
-    want = str(ctx.inputs.get("place", AUTO)).strip().upper()
-    if want == AUTO or want == "":
+def named(ctx, key, fallback):
+    """The camera a setting names, or None for 'let the sun decide'."""
+    want = str(ctx.inputs.get(key, fallback)).strip().upper()
+    if want == "" or want == AUTO or want == NEXT:
         return None
     for cam in CAMS:
         if cam[0] == want:
             return cam
     return None
 
+def pinned(c, ctx, cam, h24):
+    """A camera the viewer asked for by name, shown whatever the light."""
+    s = sun(cam[3], cam[4], ctx.now.unix)
+    got = shot(cam)
+    if got == None:
+        nodata(c, "NO PICTURE", cam[0] + " DID NOT ANSWER")
+        return
+    if not honest(got, s[0]):
+        nodata(c, "NOT LIVE", "THE " + cam[0] + " FEED HAS STOPPED")
+        return
+    paint(c, got, 0, 0, 64)
+    caption(c, cam, ctx.now.unix, h24, s[0] > DUSK)
+
 def show(c, ctx, slot):
     c.fill(BG)
     h24 = h24_on(ctx)
-    pick = chosen(ctx)
+    pick = named(ctx, "place", AUTO) if slot == 0 else named(ctx, "second", NEXT)
+    if pick != None:
+        pinned(c, ctx, pick, h24)
+        return
+
     order = ranked(ctx.now.unix)
     start = slot
-
-    if pick != None:
-        if slot == 0:
-            # The viewer asked for this one, so show it whatever the light.
-            s = sun(pick[3], pick[4], ctx.now.unix)
-            got = shot(pick)
-            if got == None:
-                nodata(c, "NO PICTURE", pick[0] + " DID NOT ANSWER")
-                return
-            if not honest(got, s[0]):
-                nodata(c, "NOT LIVE", "THE " + pick[0] + " FEED HAS STOPPED")
-                return
-            paint(c, got, 0, 0, 64)
-            caption(c, pick, ctx.now.unix, h24, s[0] > DUSK)
-            return
-        # Second page: the best-lit camera that is not the pinned one. The
-        # pinned one is gone from the list, so this page wants its first
-        # entry, not its second.
-        order = [r for r in order if r[0][0] != pick[0]]
+    # Whatever the other page is showing is not a candidate here, or a
+    # viewer who pinned one window would see it twice.
+    other = named(ctx, "second", NEXT) if slot == 0 else named(ctx, "place", AUTO)
+    if other != None:
+        order = [r for r in order if r[0][0] != other[0]]
         start = 0
 
     if order[0][1][0] < DUSK:

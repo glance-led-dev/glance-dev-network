@@ -1,9 +1,9 @@
 # Window
 
-A window onto a national park, live, on a **192x32** panel. Eight public
+A window onto a national park, live, on a **192x32** panel. Eighteen public
 webcams, and the panel shows whichever one the sun is highest over at this
-minute — first light over the New River Gorge, mid-morning on the rim of the
-Grand Canyon, the last of the day on Kīlauea.
+minute — first light over Acadia, mid-morning on the rim of the Grand
+Canyon, afternoon in Denali, the last of the day on Kīlauea.
 
 ![Window](preview/preview.png)
 
@@ -19,59 +19,95 @@ rectangle for the other half.
 
 So the app ranks the cameras by the sun's altitude over each one and shows
 the brightest. That costs nothing — solar position is arithmetic, not an API
-call — and it means the panel is lit from about 12:15 UTC, when the sun
-clears the ridge in West Virginia, until about 04:00 UTC, when it leaves
-Kīlauea.
+call — and it means the panel is lit from about 11:30 UTC, when the sun
+clears the Maine coast, until about 04:00 UTC, when it leaves Kīlauea.
 
-The gap is real and the app does not pretend otherwise. For roughly eight
+The gap is real and the app does not pretend otherwise. For roughly seven
 hours a night there is genuinely nothing in the United States to look at, so
 those hours get a card naming the next window to catch the light and how
 long until it does, and a board of the three closest behind it. Both are
 drawn from arithmetic alone, so they work even with the network down.
 
-## The eight windows
+## The eighteen windows
 
 | Window | Where | Local zone |
 |---|---|---|
-| **New River Gorge** | West Virginia | Eastern |
-| **Yellowstone** | Mammoth Hot Springs, Wyoming | Mountain |
-| **Longs Peak** | Rocky Mountain NP, Colorado | Mountain |
-| **Grand Canyon** | Arizona | Mountain, no DST |
-| **Lake McDonald** | Glacier NP, Montana | Mountain |
-| **Crater Lake** | Sinnott Overlook, Oregon | Pacific |
+| **Acadia** | Maine | Eastern |
+| **Shenandoah** | Virginia | Eastern |
+| **Great Smoky Mtns** | Tennessee | Eastern |
+| **Mammoth Cave** | Kentucky | Central |
+| **Theodore Roosevelt** | North Dakota | Central |
+| **Big Bend** | Texas | Central |
+| **Glacier Basin** | Rocky Mountain NP, Colorado | Mountain |
+| **Yellowstone** | West entrance, Wyoming | Mountain |
+| **Grand Canyon** | Yavapai Point, looking northwest | Mountain, no DST |
+| **Kolb Studio** | Grand Canyon, north over the Battleship | Mountain, no DST |
+| **Glacier** | St Mary, Montana | Mountain |
+| **Yosemite** | California | Pacific |
+| **Lassen Volcanic** | California | Pacific |
 | **Mount Rainier** | Washington | Pacific |
+| **North Cascades** | Washington | Pacific |
+| **Olympic** | Washington | Pacific |
+| **Denali** | Alaska | Alaska |
 | **Kīlauea** | Hawaiʻi | Hawaiʻi, no DST |
+
+Most of these are the Park Service's **air-quality cameras**. They exist to
+measure visibility, which means every one is pointed at the best view in the
+park on purpose, and the whole network answers to a single URL template.
+They were missed the first time round: a sweep of park pages only finds the
+cameras embedded as plain `<img>` tags, and misses both these and everything
+behind `nps.gov/media/webcam/view.htm`. Sixty-one cameras turned out to be
+reachable in all; these eighteen are the ones that are both worth looking at
+and spread out enough to keep the panel lit.
+
+Acadia at 68W to Kīlauea at 156W is 88 degrees of longitude — close to six
+hours — so the stretch when nowhere in the list is lit is about as short as
+public American cameras allow.
 
 The time on the picture is the local time **at the camera**, not yours.
 Arizona and Hawaiʻi do not keep daylight saving and the app knows it.
 
 ## Not every camera tells the truth
 
-Two cameras I tried — Zion and Isle Royale — serve a bright, sunlit frame
-all night long. The feed has stopped and the last good picture is still
-sitting there; fetch it twice fifteen minutes apart and you get byte-for-byte
-the same image. Both are left out of the set.
+A camera can fail in three ways, and not one of them is an HTTP error.
 
-But that can happen to any camera at any time, and `http.get` hands back no
-`Last-Modified` to check against. So every frame is weighed against where
-the sun actually is:
+**It can be dead** and serve black. **It can be frozen** and serve
+yesterday's sunshine at midnight — Zion and Isle Royale both do this; fetch
+twice, fifteen minutes apart, and you get byte-for-byte the same image.
+**Or it can serve a flat card that says IMAGE UNAVAILABLE**, which is
+bright, plausible and has no landscape in it at all. The Bryce Canyon
+camera was doing exactly that when this was written, and a whited-out lens
+at Crater Lake came through as a frame with three colours in it.
+
+Of 61 cameras checked, 12 served byte-identical frames seven minutes apart.
+The worst offenders are left out of the set — but any camera can fail this
+way at any time, and `http.get` hands back no `Last-Modified` to check
+against. So every frame is tested on arrival:
 
 - the sun is well up and the frame is nearly black → the camera is down,
-- the sun is well past dusk and the frame is sunlit → the frame is stale.
+- the sun is well past dusk and the frame is sunlit → the frame is stale,
+- the frame uses fewer than 8 of its 20 allowed colours → there is no
+  landscape in it: a flat card, a white-out, or a lens cap.
+
+That last test is free. The quantiser has already counted the colours, and
+a real landscape uses all twenty.
 
 Either way the app moves to the next camera rather than pass it off as live.
-If you have pinned a camera and its frame fails that test, you get
-`NOT LIVE` rather than a pretty lie.
+If you have pinned a camera and its frame fails, you get `NOT LIVE` rather
+than a pretty lie.
 
 ## Settings
 
 | Setting | What it does |
 |---|---|
 | **Which window** | `FOLLOW THE SUN`, or pin one park and stay there, dark or not. |
+| **The other window** | The second page. `THE NEXT BEST LIT`, or pin a second park. |
 | **Clock** | 12 or 24 hour, for the time shown on the picture. |
 
-With a park pinned, the first page stays there and the second page still
-shows the best-lit of the others, so you keep one foot in the daylight.
+The two settings are independent, so you can pin one window and let the
+other follow the sun, pin both, or let both roam. Whatever one page is
+showing is never offered to the other, so you will not get the same park
+twice.
 
 ## How a photograph gets onto a panel
 
@@ -131,7 +167,9 @@ into one scene and will tell you when they do not fit.
 
 | Source | Cached |
 |---|---|
-| `nps.gov/webcams-*` — seven National Park Service cameras | 240s |
+| `nps.gov/featurecontent/ard/webcams` — eleven air-quality cameras | 240s |
+| `nps.gov/webcams-*` — four park cameras embedded directly | 240s |
+| `cdn.pixelcaster.com` — Kolb Studio, via the Grand Canyon Conservancy | 240s |
 | `volcanoes.usgs.gov` — Kīlauea, from the Hawaiian Volcano Observatory | 240s |
 
 `refresh` is 300s. One page makes one call when the first camera answers
@@ -142,7 +180,7 @@ make none at all.
 
 | Screen | Meaning |
 |---|---|
-| `EVERY WINDOW IS DARK` | the sun is below the horizon at all eight, with the next sunrise named |
+| `EVERY WINDOW IS DARK` | the sun is below the horizon at all eighteen, with the next sunrise named |
 | `NEXT LIGHT` | the three windows closest to catching the sun |
 | `NO PICTURE` | the camera did not answer |
 | `NOT LIVE` | a pinned camera's frame does not match where the sun is |

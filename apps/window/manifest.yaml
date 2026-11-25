@@ -1,9 +1,9 @@
 gdn: 1
 id: window
-version: 1.0.0
+version: 1.1.0
 name: Window
 author: reyos86
-description: A window onto a national park, live. Eight public webcams from New River Gorge to Kilauea, and the panel shows whichever one the sun is highest over right now. No key, no account.
+description: A window onto a national park, live. Eighteen public webcams from Acadia to Kilauea - most of them the air-quality cameras the Park Service points at the best view in each park - and the panel shows whichever one the sun is highest over right now. No key, no account.
 category: Travel
 entry: app.star
 width: 192
@@ -17,9 +17,17 @@ inputs:
     app_input_type: dropdown
     label: Which window
     default: FOLLOW THE SUN
-    choices: [FOLLOW THE SUN, NEW RIVER GORGE, YELLOWSTONE, LONGS PEAK, GRAND CANYON, LAKE MCDONALD, CRATER LAKE, MOUNT RAINIER, KILAUEA]
-    options: [FOLLOW THE SUN, NEW RIVER GORGE, YELLOWSTONE, LONGS PEAK, GRAND CANYON, LAKE MCDONALD, CRATER LAKE, MOUNT RAINIER, KILAUEA]
-    help: FOLLOW THE SUN shows whichever camera has the sun highest over it right now, so the panel is lit from first light in West Virginia to dusk in Hawaii. Pick a park instead to stay there, dark or not.
+    choices: [FOLLOW THE SUN, ACADIA, SHENANDOAH, GREAT SMOKY MTNS, MAMMOTH CAVE, THEODORE ROOSEVELT, BIG BEND, GLACIER BASIN, YELLOWSTONE, GRAND CANYON, KOLB STUDIO, GLACIER, YOSEMITE, LASSEN VOLCANIC, MOUNT RAINIER, NORTH CASCADES, OLYMPIC, DENALI, KILAUEA]
+    options: [FOLLOW THE SUN, ACADIA, SHENANDOAH, GREAT SMOKY MTNS, MAMMOTH CAVE, THEODORE ROOSEVELT, BIG BEND, GLACIER BASIN, YELLOWSTONE, GRAND CANYON, KOLB STUDIO, GLACIER, YOSEMITE, LASSEN VOLCANIC, MOUNT RAINIER, NORTH CASCADES, OLYMPIC, DENALI, KILAUEA]
+    help: FOLLOW THE SUN shows whichever camera has the sun highest over it right now, so the panel is lit from first light in Maine to dusk in Hawaii. Pick a park instead to stay there, dark or not. GRAND CANYON looks northwest from Yavapai Point; KOLB STUDIO looks north across the Battleship from the head of the Bright Angel trail.
+  - key: second
+    type: choice
+    app_input_type: dropdown
+    label: The other window
+    default: THE NEXT BEST LIT
+    choices: [THE NEXT BEST LIT, ACADIA, SHENANDOAH, GREAT SMOKY MTNS, MAMMOTH CAVE, THEODORE ROOSEVELT, BIG BEND, GLACIER BASIN, YELLOWSTONE, GRAND CANYON, KOLB STUDIO, GLACIER, YOSEMITE, LASSEN VOLCANIC, MOUNT RAINIER, NORTH CASCADES, OLYMPIC, DENALI, KILAUEA]
+    options: [THE NEXT BEST LIT, ACADIA, SHENANDOAH, GREAT SMOKY MTNS, MAMMOTH CAVE, THEODORE ROOSEVELT, BIG BEND, GLACIER BASIN, YELLOWSTONE, GRAND CANYON, KOLB STUDIO, GLACIER, YOSEMITE, LASSEN VOLCANIC, MOUNT RAINIER, NORTH CASCADES, OLYMPIC, DENALI, KILAUEA]
+    help: The second page. Left alone it follows the sun too, showing the next best lit camera after the first page. Pick a park to pin it, and the two pages will never show you the same place twice.
   - key: clock
     type: choice
     app_input_type: dropdown
