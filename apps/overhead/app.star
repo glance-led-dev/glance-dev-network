@@ -54,18 +54,33 @@
 WESERV = "https://images.weserv.nl/"
 GIBS_WMS = "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
 GIBS_TIMES = "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/1.0.0/"
-STAR = "https://cdn.star.nesdis.noaa.gov/"
 ZIP_URL = "https://api.zippopotam.us/us/"
 UA = "GDN-Overhead (glance-led-panel)"
 
-# [GIBS layer, NOAA STAR folder, name, sub-satellite longitude]
-EAST = ["GOES-East_ABI_GeoColor", "GOES19", "GOES-EAST", "75.2W"]
-WEST = ["GOES-West_ABI_GeoColor", "GOES18", "GOES-WEST", "137.0W"]
+# [GeoColor layer, infrared layer, name, sub-satellite longitude]
+#
+# GeoColor is the photograph: cloud by day, and by night the city lights,
+# which is the best thing on the panel. Band 13 is clean infrared, which
+# measures how cold the cloud tops are -- grey where the sky is quiet, then
+# green, yellow and red as the tops climb. It is the same sky through a
+# different eye, it means something page one cannot say, and because it
+# reads temperature rather than light it is just as good at 3am.
+EAST = ["GOES-East_ABI_GeoColor", "GOES-East_ABI_Band13_Clean_Infrared",
+        "GOES-EAST", "75.2W"]
+WEST = ["GOES-West_ABI_GeoColor", "GOES-West_ABI_Band13_Clean_Infrared",
+        "GOES-WEST", "137.0W"]
 
 ZOOM = {"TIGHT": 3.0, "NORMAL": 5.0, "WIDE": 8.0}
-CONTINENT = 10.0            # degrees of latitude on the wide page
+STORM = 9.0                 # degrees of latitude on the storm-tops page
 WMAX = 120.0                # the widest longitude span worth asking for
 STALE = 3 * 3600            # past this, say how old the picture is
+
+# weserv's unsharp mask, applied before the image is handed over. A 192x32
+# panel throws away almost everything a 1920-pixel frame knows, and the
+# averaging that does it leaves cloud looking like fog. Measured on real
+# frames this lifts the standard deviation of brightness from 53 to 70
+# without the haloing that shows up at 5.
+SHARP = "3"
 
 # GIBS lists a frame in its index a little before the pixels exist, and the
 # placeholder is a 104-byte transparent PNG -- which weserv dutifully
@@ -75,10 +90,13 @@ STALE = 3 * 3600            # past this, say how old the picture is
 BACKOFF = 600
 TRIES = 3
 
-# NOAA's full-disk JPEG carries a caption bar across its bottom 14 rows of
-# 339, so the last two rows of the 32-pixel version are dropped.
-FD_SRC = 339
-FD_ROWS = 30
+# The state lines. Solid amber looked like a road atlas laid over the sky:
+# at 192x32 a one-pixel line is proportionally six times the weight it has on
+# a screen, and it won rather than helped. Copper, and dotted on alternate
+# pixels, places the weather without swallowing it -- and the dotting keys
+# off (x + y) rather than distance along a segment, so the pattern stays
+# aligned where outlines meet instead of beating against itself.
+LINE = "#B87333"
 
 BG = "#05070C"
 INK = "#F4F7FF"
@@ -102,20 +120,72 @@ NB = 80
 # 0/1 integers in the scene JSON, so a 192x32 page costs about 15 KB per
 # colour -- and the whole app, all three pages together, gets 1 MiB. Rendering
 # one page at a time never shows this; three pages of photograph came to
-# 1.31 MiB and would not load at all.
+# 1.31 MiB and would not load at all. Two pages and a line budget fit.
 #
 # The ceiling is not a quality setting. A frame that lands in forty buckets
 # does not look twice as good as one held to twenty; the tail is a handful of
 # pixels each. Measured on real GOES frames, capping at 20 moves the RMS
 # error against the original from 5.6 to 8.7, against 31.4 for a uniform
 # 4x4x4 cube. Twenty is chosen from the worst case rather than from a frame
-# that happened to look fine: the two wide pages can never exceed 0.72 MiB of
-# art however the cloud falls.
+# that happened to look fine: the two pages can never exceed 0.72 MiB of art
+# however the cloud falls, which leaves room for the state lines.
 CAP = 20
 
-# The disk is 32 wide and 30 tall, a sixth of the cells, so a colour there
-# costs a sixth as much and the limb keeps its gradient.
-CAP_DISK = 32
+# THE STATE LINES. Without them a 192x32 strip of cloud is a grey smear --
+# beautiful, but you cannot tell whether the weather is over you or over the
+# next state. NASA's own reference layers are no help: Reference_Features
+# draws nothing at all through WMS, and the Coastlines layer put 19 pixels on
+# a 6144-pixel panel. So the outlines are carried here and drawn directly, in
+# a colour chosen to read over both grey cloud and the infrared palette.
+#
+# Source: the US Census cartographic boundary file, simplified with
+# Douglas-Peucker at 0.15 degrees and quantised to sixteenths of a degree --
+# about 7 km, well inside one pixel at any zoom this app offers. Each ring is
+# "<lat>,<lon>|<dlat><dlon>..." in sixteenths, two characters per step.
+#
+# It costs one line op per visible segment: 138 of them at the close zoom,
+# 432 at the storm zoom, against a 4096-op page limit.
+BORDER_CH = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-./:;<=>?@[]^_{}~'
+BORDER_BIAS = 45
+BORDERS = (
+    '560,-1398|i.0ubeVki2Zmfepccgje)g~npiiv;882,-2106|ljglfike;887,-2109|djnh;903,-2128|fnld;902,-2138|hp' +
+    'ZtZqaioTfnferchfmnrchgpi;889,-2140|ipfgld;911,-2143|jgixdqeRoike;904,-2146|odgtWcofkl;901,-2154|qVre' +
+    'lmgrQm;932,-2155|hqcnhecmcY(bfm;917,-2174|dmieni;931,-2180|g!ZnlWeiidqXmn;963,-2353|cVov;969,-2361|c' +
+    'fjfno;1124,-2365|e~iqk!a_0i0i0iRij;dgV*dlmwpnluH[K&a-UkZXqckkhalcmkgaojhfobjpoiqPsgtLteSmlUpgkVZvfZv' +
+    'KqIlmohcWo8hNpTgbmZdVmijtqUdOmgffcpfdemiLWJiSpwjWsrogm-nTYMSSdRdhfwcWdhW9beaGffinddgUeemfaLiemhZaibm' +
+    'fdjjZgkgdgmeGlhmoi#y*kxejirmdmlr.mhrywmlolhfPmdZerWgdmcaLjfklsfkmrZfDtRklohjbpchflmkeionjqwrog&pvi!n' +
+    'ouYjrndYHmVgMlModnlmJy~iyiscfglh;ntjVkjoWbzmdnlkBqbt4mpnjk?%>jzp#i*r)dzeanxcwj;ffe$k.e+;928,-2447|jc' +
+    'qsesfigU;921,-2463|kmkehomniqgmeiioUEqWpqgn;906,-2473|felm;895,-2490|ekjdll;885,-2558|bcpo;886,-2568' +
+    '|glgamiin;880,-2596|hfjl;1018,-2599|ifil;872,-2605|glkf;869,-2649|fhlj;866,-2652|icio;966,-2662|gtej' +
+    'ebpMlz;864,-2662|hlecjpbHoykdkjjt;851,-2701|nrgpbUmg;846,-2716|ieim;916,-2722|gfkl;843,-2731|ggkk;10' +
+    '19,-2748|i)c*cTqOhUni;838,-2759|gfkl;834,-2778|hqja;836,-2789|jneTls;830,-2824|glgalgjp;831,-2834|eg' +
+    'mk;831,-2850|gnfgnf;848,-2994|eGmmi);592,-1745|0i0ifiiC#0iSnnseqlopra$ggsyji~i[;584,-1512|i~i-fjddis' +
+    'fiHPZdglbgi0igrijb~ili;672,-1972|i~ir0iei0~O~XqUYXmf2ucpTngqBri#OthmawjfgjbxVwgpa#nrgix;656,-1727|i~' +
+    'i~iq0iOii0i0iK~i%ii!;673,-1169|h$ZibFzkip;637,-1207|cgSqiY%gjo;624,-1233|fili;496,-1368|iqdkg~fipmgq' +
+    '0(QiRgZchZtdidzcgftbongclgymySmcbNtSgPlkrei>;560,-1330|dfH/TsMZkabglgk1reripm~Wjii_;303,-2490|ketfql' +
+    'WzZV;336,-2505|cqicog;339,-2512|hdjn;347,-2527|cjiemgkn;356,-2551|dkjbmn;784,-1857|SiZnV(RejuWoaro)e' +
+    'n4ii0i0ib?klc$vuY}iiy;680,-1450|i~ikVn0ifiabWggbdhkbfdtfqUtmjZ!Vqkopqgowniob;668,-1376|i#0ifihYVYmec' +
+    'Vlafcpjqp~imij);696,-1462|enaiWxbegXakZamdh0iO(ctavli~i];640,-1630|i~i~i#fpeecq9ii0i0iD~lni;620,-134' +
+    '2|iyVocqSHk0iIfiiMtpgpvshvovemvsjsnicx;528,-1498|i^WlYaYgi:dgaoedhqccdtgdpZcelbeeuRebkK$nzZyiip;689,' +
+    '-1131|me<gptxouueolsfngkMihodhaqaRlfeglYchdWkfVX;636,-1272|i~iyNkisbfhYmikcvipmecZfXlnVqmlarchTcWri;' +
+    '686,-1135|flbebpisghfQqejAtmh;lo;668,-1335|i0iYxsxdzmpsckyrY+ViYYgmqufnOkidUY;732,-1368|fglk;722,-14' +
+    '01|vZs7w@hmZakrcqgtn+ejiwbkhqjPfimVbPlgWW;768,-1421|fcosfe;747,-1472|idYidZdmXfW&ami0i4/inblnqh~Yi>o' +
+    'iilXofukvZ(lue#cQTO;560,-1416|go0ceiKkfQqcnkiEsksq%e(xi/;650,-1469|eoYjasdjhrXeawbieoSYiYnnlhi0iG~io' +
+    'ammkdsZj~i$;784,-1665|0iOii0i0iKaimdcKqZuchWzmvLrdyii~i~i~i~i$;688,-1653|i~i>d/XrOmWri0i0iOyiiC<iiu;' +
+    '672,-1872|i~im0i0idifhkYQk~0%2~inii~in;725,-1137|CkemcYjQ*omqtljn;658,-1188|goachmXgWXsWrvobpjopep;5' +
+    '92,-1719|i~i.0h8ii0iVfkiHaiiU~i~inii+;720,-1174|8kJeheeqnxflbFpjpSrai0iImirwpfj]lpthtyk;;585,-1296|i' +
+    '~i^bkfTixejcVcmeehXWViZxQiQneg0iarrr-poit;784,-1556|0tdii0i0iC~ioii~i~i(;672,-1288|MiTdbUcfkfZenZgVq' +
+    'Q{ij&cxs<;592,-1601|i~i~ij0kYinWeQmZfes4ld;ii0ieqii~im;739,-1971|gnckgqp~iri=eoMXfo9gi0i0iHvcyo>lnph' +
+    'o;676,-1276|eii~i-YtXaapbRi0iD@imu;667,-1139|fjiflk;672,-1144|dmdehctjin;561,-1324|j-dmi!T!UVTKxY-Fo' +
+    'r;735,-1665|i~i~i>dddp9ibffloWgWmZi0i0ih~imi;584,-1409|lig~i~iybcZHZZi0i0ia)ui);584,-1629|i/DifnY_lm' +
+    'erm!c#JiRrOdgXmeTYeYjXenicPVOojSqSxd@DkUUTsOxc%Gk~iw~i/ii$;672,-1795|i!Sii<0iOii0i8~i[ii:;720,-1144|' +
+    'bheaWdVhiV@gi:;608,-1206|ikUWpjpr;631,-1254|drlmcpYfbzViibgtckj0i0i7x-cnn&!tfnuxmi;784,-1873|0keid0i' +
+    '0idogmPml+Vljd/fnZjtlyai~i~in;773,-1963|fjlh;777,-1968|kjekkf;650,-1288|UiiyZiq%cpfhnZeiWTldQXdMuVqg' +
+    'inrmglolpwxn;745,-1447|U~dgenZatzMWMhi0ihmbqiucuMtlnenrsim)fhfp;720,-1745|i~i[0iOii0i0iK~i%ii<;288,-' +
+    '1063|hWphkkg)cfiY' +
+    '')
+
+BORDER_VAL = {BORDER_CH[i]: i for i in range(len(BORDER_CH))}
 
 B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 B64_VAL = {B64[i]: i for i in range(64)}
@@ -471,15 +541,69 @@ def mark_xy(box, lat, lon, w, h):
     y = int(((box[0] + box[2]) - lat) / (2.0 * box[2]) * h)
     return [min(w - 3, max(2, x)), min(h - 3, max(2, y))]
 
-def one_frame(sat, box, w, h, when):
+def coastlines(c, box, w, h, color):
+    """Draw the state and coast outlines that fall inside this frame.
+
+    One pass over the packed table, straight into panel coordinates. A
+    segment is skipped when both ends land on the same pixel, which at this
+    scale is most of them, and when both ends are off the same edge -- so
+    the op count follows what is actually visible rather than the size of
+    the table.
+    """
+    lat0 = box[0] + box[2]
+    lon0 = box[1] - box[3]
+    sx = w / (2.0 * box[3])
+    sy = h / (2.0 * box[2])
+    for ring in BORDERS.split(";"):
+        bar = ring.find("|")
+        if bar < 0:
+            continue
+        comma = ring.find(",")
+        la = int(ring[:comma])
+        lo = int(ring[comma + 1:bar])
+        body = ring[bar + 1:]
+        px = int((lo / 16.0 - lon0) * sx)
+        py = int((lat0 - la / 16.0) * sy)
+        for i in range(0, len(body) - 1, 2):
+            la += BORDER_VAL[body[i]] - BORDER_BIAS
+            lo += BORDER_VAL[body[i + 1]] - BORDER_BIAS
+            x = int((lo / 16.0 - lon0) * sx)
+            y = int((lat0 - la / 16.0) * sy)
+            if x != px or y != py:
+                if not ((x < 0 and px < 0) or (x >= w and px >= w) or
+                        (y < 0 and py < 0) or (y >= h and py >= h)):
+                    dotted(c, px, py, x, y, color, w, h)
+            px = x
+            py = y
+
+def dotted(c, x0, y0, x1, y1, color, w, h):
+    """One segment, drawn on alternate pixels of a checkerboard."""
+    dx = x1 - x0
+    dy = y1 - y0
+    steps = dx if dx >= 0 else -dx
+    ady = dy if dy >= 0 else -dy
+    if ady > steps:
+        steps = ady
+    if steps == 0:
+        if x0 >= 0 and x0 < w and y0 >= 0 and y0 < h and (x0 + y0) % 2 == 0:
+            c.pixel(x0, y0, color)
+        return
+    for s in range(steps + 1):
+        x = x0 + dx * s // steps
+        y = y0 + dy * s // steps
+        if x >= 0 and x < w and y >= 0 and y < h and (x + y) % 2 == 0:
+            c.pixel(x, y, color)
+
+def one_frame(layer, box, w, h, when):
     # WMS 1.3.0 with CRS=EPSG:4326 wants minlat,minlon,maxlat,maxlon.
     bbox = (f4(box[0] - box[2]) + "," + f4(box[1] - box[3]) + "," +
             f4(box[0] + box[2]) + "," + f4(box[1] + box[3]))
-    src = (GIBS_WMS + "?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=" + sat[0] +
+    src = (GIBS_WMS + "?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=" + layer +
            "&STYLES=&CRS=EPSG:4326&BBOX=" + bbox +
            "&WIDTH=" + str(w) + "&HEIGHT=" + str(h) +
            "&FORMAT=image/png&TIME=" + when)
-    b = grab({"url": src, "output": "png", "l": "0", "encoding": "base64"}, 300)
+    b = grab({"url": src, "output": "png", "l": "0", "encoding": "base64",
+              "sharp": SHARP}, 300)
     if b == None:
         return None
     got = png_quant(b, w, CAP)
@@ -487,31 +611,15 @@ def one_frame(sat, box, w, h, when):
         return None          # nothing in it at all: the frame is a placeholder
     return got
 
-def region(sat, box, w, h, newest):
+def region(layer, box, w, h, newest):
     at = when_unix(newest) - BACKOFF
     for _ in range(TRIES):
         when = iso_time(at)
-        got = one_frame(sat, box, w, h, when)
+        got = one_frame(layer, box, w, h, when)
         if got != None:
             return got, when
         at -= BACKOFF
     return None, ""
-
-def hemisphere(sat):
-    # weserv applies a manual crop *after* resizing, which would clamp a
-    # 32-pixel image rather than trim the source, so the banner is dropped
-    # here instead: NOAA's caption occupies the last 14 of 339 rows, which
-    # lands below row 30 once the disk is 32 across. The disk itself spans
-    # rows 0 to 30, so nothing of the Earth is lost.
-    src = STAR + sat[1] + "/ABI/FD/GEOCOLOR/" + str(FD_SRC) + "x" + str(FD_SRC) + ".jpg"
-    b = grab({"url": src, "w": "32", "h": "32",
-              "output": "png", "l": "0", "encoding": "base64"}, 300)
-    if b == None:
-        return None
-    got = png_quant(b, 32, CAP_DISK)
-    if got == None or got[2] == 0:
-        return None
-    return [got[0][:FD_ROWS], got[1], got[2]]
 
 # ---------- reading the inputs ----------
 
@@ -520,6 +628,9 @@ def zoom_deg(ctx):
 
 def marker_on(ctx):
     return str(ctx.inputs.get("marker", "ON")).strip().upper() != "OFF"
+
+def lines_on(ctx):
+    return str(ctx.inputs.get("lines", "ON")).strip().upper() != "OFF"
 
 def age_secs(when, ctx):
     return ctx.now.unix - when_unix(when)
@@ -546,7 +657,7 @@ def stamp(c, left, right, right_color):
         c.text_stroke(right, 190, 26, font = "4x5", color = right_color,
                       stroke = SHADOW, align = "right")
 
-def picture(c, ctx, hdeg, label_place):
+def picture(c, ctx, which, hdeg, label):
     c.fill(BG)
     loc, err = location(ctx)
     if loc == None:
@@ -558,17 +669,21 @@ def picture(c, ctx, hdeg, label_place):
         nodata(c, "NO FRAME INDEX", "GIBS DID NOT ANSWER")
         return
     box = frame_box(loc[2], loc[3], hdeg, 192, 32)
-    got, used = region(sat, box, 192, 32, when)
+    got, used = region(sat[which], box, 192, 32, when)
     if got == None:
         nodata(c, "NO PICTURE", "THE " + sat[2] + " FRAME DID NOT ARRIVE")
         return
 
     paint(c, got, 0, 0, 64)
+    # Lines over the picture but under the marker and the caption, so the
+    # place you live is never hidden by a state boundary running through it.
+    if lines_on(ctx):
+        coastlines(c, box, 192, 32, LINE)
     if marker_on(ctx):
         at = mark_xy(box, loc[2], loc[3], 192, 32)
         target(c, at[0], at[1])
 
-    left = loc[0] + " " + loc[1] if label_place else sat[2]
+    left = loc[0] + " " + loc[1] if label == "" else label
     age = age_secs(used, ctx)
     if age > STALE:
         stamp(c, left, str(age // 3600) + "H OLD", AMBER)
@@ -578,24 +693,10 @@ def picture(c, ctx, hdeg, label_place):
 # ---------- pages ----------
 
 def close(c, ctx):
-    picture(c, ctx, zoom_deg(ctx), True)
+    # GeoColor: cloud by day, city lights by night, your ZIP in the middle.
+    picture(c, ctx, 0, zoom_deg(ctx), "")
 
-def wide(c, ctx):
-    picture(c, ctx, CONTINENT, False)
-
-def disk(c, ctx):
-    c.fill(BG)
-    loc, err = location(ctx)
-    sat = bird(loc[3] if loc != None else -75.0)
-    got = hemisphere(sat)
-    if got == None:
-        nodata(c, "NO DISK", "NOAA STAR DID NOT ANSWER")
-        return
-    paint(c, got, 6, 1, 32)
-    c.text("THE WHOLE HEMISPHERE", 48, 2, font = "5x7", color = GOLD)
-    c.text(clip(c, sat[2] + ", 35,786 KM UP", "4x5", 143), 48, 12,
-           font = "4x5", color = INK)
-    c.text(clip(c, "PARKED OVER " + sat[3], "4x5", 143), 48, 19,
-           font = "4x5", color = DIM)
-    c.text(clip(c, "A NEW PICTURE EVERY 10 MIN", "4x5", 143), 48, 26,
-           font = "4x5", color = DIM)
+def storm(c, ctx):
+    # The same sky as cloud-top temperature, pulled back a little because
+    # weather you care about is usually still a state away.
+    picture(c, ctx, 1, STORM, "STORM TOPS")

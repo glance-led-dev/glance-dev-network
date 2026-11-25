@@ -9,17 +9,23 @@ that picture on the glass, full bleed.
 
 No key, no account. Both sources are public.
 
-## The three pages
+## The two pages
 
 **close** — your region, centred on your ZIP code, with a small target
-marking the spot. The clouds are where they actually are: look out of the
-window, then look at the panel.
+marking the spot. GeoColor, so it is cloud by day and city lights by night.
+The clouds are where they actually are: look out of the window, then look at
+the panel.
 
-**wide** — the same place pulled back to a continental strip, so you can
-see the system your weather is part of rather than just the edge of it.
+**storm** — the same sky as cloud-top temperature, pulled back a little.
+Grey where the air is quiet, then green, yellow and red as the tops climb.
+It says something the photograph cannot, and because it reads temperature
+rather than light it is just as good at three in the morning.
 
-**disk** — the whole hemisphere as the satellite sees it, with a note on
-where the thing taking the picture is parked.
+Both pages carry the state and coast outlines, because a 192x32 strip of
+cloud is beautiful and completely unplaceable without them.
+
+There used to be a third page showing the whole hemisphere. A 5,424-pixel
+disk resampled to 32 across is a blur, and it has been dropped.
 
 ## How a photograph gets onto a panel
 
@@ -79,6 +85,7 @@ admit to being stale than quietly pretend.
 | **US ZIP code** | Where the view is centred. GOES-East is used east of about 112W and GOES-West beyond it, so Alaska and Hawaii work. |
 | **How close** | `TIGHT`, `NORMAL` or `WIDE` on the first page — about 330, 550 or 890 km from top to bottom. |
 | **Mark your spot** | The target at your ZIP code, on or off. |
+| **State lines** | The outlines, on or off. On by default. |
 
 A 6:1 panel is wider than it feels: 32 rows of 5 degrees is 555 km tall,
 which at the same scale makes the picture some 3300 km across. `NORMAL`
@@ -88,10 +95,12 @@ already spans most of the width of the lower 48.
 
 | Source | Used for | Cached |
 |---|---|---|
-| `gibs.earthdata.nasa.gov` (WMS) | the regional and continental frames | 300s |
+| `gibs.earthdata.nasa.gov` (WMS) | both frames, GeoColor and band 13 | 300s |
 | `gibs.earthdata.nasa.gov` (time index) | which frame is the newest | 300s |
-| `cdn.star.nesdis.noaa.gov` | the full-disk picture | 300s |
 | `api.zippopotam.us` | ZIP code to latitude and longitude | 30 days |
+
+The outlines are not fetched. They are carried in the app, from the US
+Census cartographic boundary file.
 
 `refresh` is 600s, matching the satellite's ten-minute cadence. The region
 pages make two calls on a good render and at most four if the newest frames
@@ -106,10 +115,29 @@ come back empty; the limit is eight.
 | `NO LOCATION` / `ZIP LOOKUP DID NOT ANSWER` | zippopotam did not answer |
 | `NO FRAME INDEX` / `GIBS DID NOT ANSWER` | the time index did not answer |
 | `NO PICTURE` / `THE GOES-EAST FRAME DID NOT ARRIVE` | three frames in a row came back empty |
-| `NO DISK` / `NOAA STAR DID NOT ANSWER` | the full-disk image did not answer |
 
 There is no demo mode. A panel whose whole purpose is to show you the real
 sky has no business inventing one.
+
+## The state lines
+
+NASA is no help here. `Reference_Features` draws nothing at all through
+WMS, and the `Coastlines` layer put 19 lit pixels on a 6144-pixel panel —
+anti-aliased hairlines do not survive a downscale to 32 rows. So the
+outlines are carried in the app instead: the US Census cartographic
+boundary file, simplified with Douglas-Peucker at 0.15 degrees and quantised
+to sixteenths of a degree, which is about 7 km and comfortably inside one
+pixel at any zoom offered here. That packs to a 3.4 KB string.
+
+Drawing them is one pass: decode, project into the frame, skip any segment
+whose ends land on the same pixel or that falls entirely off one edge. What
+is left is 474 lit pixels on the close page and 611 on the storm page.
+
+Solid amber was the first attempt and it looked like a road atlas laid over
+the sky — at this size a one-pixel line carries roughly six times the weight
+it would on a screen. Copper, dotted on alternate pixels, places the weather
+without swallowing it. The dots key off `(x + y)` rather than distance along
+a segment, so the pattern stays in step where outlines meet.
 
 ## Notes on the drawing
 
