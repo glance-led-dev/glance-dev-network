@@ -1,0 +1,30 @@
+gdn: 1
+id: ham-shack-led
+version: 1.0.0
+name: Ham Shack
+author: reyos86
+description: A ham radio shack display for 64x32 - HF band conditions for the time of day it is where you are, the solar numbers and how high the flux will carry you, live Parks on the Air activators and the hottest DX on the cluster.
+category: Science
+entry: app.star
+width: 64
+height: 32
+refresh: 120
+pages: [bands, solar, pota, dx]
+
+inputs:
+  - key: area
+    type: choice
+    app_input_type: dropdown
+    label: Your area
+    default: USA
+    choices: [WORLDWIDE, USA, CANADA, W1 NEW ENGLAND, W2 NY NJ, W3 MID ATLANTIC, W4 SOUTHEAST, W5 SOUTH CENTRAL, W6 CALIFORNIA, W7 NORTHWEST, W8 MI OH WV, W9 IL IN WI, W0 PLAINS]
+    options: [WORLDWIDE, USA, CANADA, W1 NEW ENGLAND, W2 NY NJ, W3 MID ATLANTIC, W4 SOUTHEAST, W5 SOUTH CENTRAL, W6 CALIFORNIA, W7 NORTHWEST, W8 MI OH WV, W9 IL IN WI, W0 PLAINS]
+    help: Which POTA activators to show, and whether the band page reads day or night. DX from your own continent is left off the hot DX page. WORLDWIDE reads UTC for day and night.
+  - key: mode
+    type: choice
+    app_input_type: dropdown
+    label: Mode
+    default: ALL MODES
+    choices: [ALL MODES, CW, PHONE, DIGITAL]
+    options: [ALL MODES, CW, PHONE, DIGITAL]
+    help: Show POTA and DX spots for every mode, or only CW, phone (SSB, FM, AM) or digital (FT8, FT4, RTTY...).
