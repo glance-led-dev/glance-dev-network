@@ -467,6 +467,7 @@ def show(c, ctx, slot):
     h24 = h24_on(ctx)
     pick = chosen(ctx)
     order = ranked(ctx.now.unix)
+    start = slot
 
     if pick != None:
         if slot == 0:
@@ -482,8 +483,11 @@ def show(c, ctx, slot):
             paint(c, got, 0, 0, 64)
             caption(c, pick, ctx.now.unix, h24, s[0] > DUSK)
             return
-        # Second page: the best-lit camera that is not the pinned one.
+        # Second page: the best-lit camera that is not the pinned one. The
+        # pinned one is gone from the list, so this page wants its first
+        # entry, not its second.
         order = [r for r in order if r[0][0] != pick[0]]
+        start = 0
 
     if order[0][1][0] < DUSK:
         if slot == 0:
@@ -492,7 +496,7 @@ def show(c, ctx, slot):
             sunrise_board(c, ctx, h24)
         return
 
-    found = best(order, slot)
+    found = best(order, start)
     if found == None:
         nodata(c, "NO PICTURE", "NO CAMERA ANSWERED WITH A LIVE FRAME")
         return
