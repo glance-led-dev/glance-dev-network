@@ -1,0 +1,36 @@
+gdn: 1
+id: overhead
+version: 1.0.0
+name: Overhead
+author: reyos86
+description: A live satellite view of your own patch of the Earth, photographed by GOES from 35,786 km up - your region, your corner of the continent, and the whole hemisphere. No key, no account.
+category: Weather
+entry: app.star
+width: 192
+height: 32
+refresh: 600
+pages: [close, wide, disk]
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: US ZIP code
+    default: "10101"
+    help: The satellite view is centred here. GOES-East is used east of about 112W and GOES-West beyond it, so Alaska and Hawaii work too.
+  - key: zoom
+    type: choice
+    app_input_type: dropdown
+    label: How close
+    default: NORMAL
+    choices: [TIGHT, NORMAL, WIDE]
+    options: [TIGHT, NORMAL, WIDE]
+    help: How much ground the first page covers, top to bottom - about 330 km, 550 km or 890 km. A 6:1 panel is six times as wide as that, so NORMAL already spans some 3300 km. The second page is always the wider continental view.
+  - key: marker
+    type: choice
+    app_input_type: dropdown
+    label: Mark your spot
+    default: "ON"
+    choices: ["ON", "OFF"]
+    options: ["ON", "OFF"]
+    help: A small target at the centre of the frame, where your ZIP code is. Turn it off for an uninterrupted picture.
