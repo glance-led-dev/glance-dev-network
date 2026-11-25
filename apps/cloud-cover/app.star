@@ -90,15 +90,10 @@ SHARP = "3"
 BACKOFF = 600
 TRIES = 3
 
-# The state lines. Copper: it reads over grey cloud and over the infrared
-# palette, where amber was loud enough to look like a road atlas laid over
-# the sky.
-#
-# These were dotted for a while, which was treating a symptom. The real
-# fault was in the table -- see the note on it below -- and once that was
-# fixed a solid line turned out to be both quieter and clearer, because
-# every line is now a single stroke instead of two.
-LINE = "#B87333"
+# The state lines. Copper, dark enough to sit under the weather rather than
+# on top of it: amber read like a road atlas, and brighter copper still won
+# the frame.
+LINE = "#925C2A"
 
 BG = "#05070C"
 INK = "#F4F7FF"
@@ -139,6 +134,15 @@ CAP = 20
 # draws nothing at all through WMS, and the Coastlines layer put 19 pixels on
 # a 6144-pixel panel. So the outlines are carried here and drawn directly.
 #
+# ONLY the borders between states. A segment belonging to two states is the
+# line between them, which nothing in a photograph from orbit can show. A
+# segment belonging to one state is an outside edge -- coast, lake shore,
+# national boundary -- and the satellite already draws all of those, by the
+# water being darker than the land. Tracing them again added no information
+# and two thirds of the table, all of it in the wiggliest places: Long
+# Island, Cape Cod, the Chesapeake, the Great Lakes. That is what made the
+# panel look like a thicket rather than a map.
+#
 # Source: the US Census cartographic boundary file. The first version of
 # this table simplified each state's ring on its own, and that was a real
 # mistake rather than a rough edge: Kansas and Nebraska each carry the line
@@ -162,61 +166,26 @@ BORDER_CH = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&
 BORDER_BIAS = 45
 BORDER_GRID = 8.0
 BORDERS = (
-    '336,-912|iK;336,-912|4i;336,-912|i);292,-607|lhkdhkjjihkjkhkjlcjiig;292,-607|fjjggdinhijkfigfifgihkf' +
-    'gjhhdedghie;292,-607|i3jd;465,-1073|laohfhel;465,-1073|kb;465,-1073|hifneihmfmikghhfgjjjgjjkghgkjijk' +
-    'ghgo;465,-1073|fkjghihkgifcrhkg;280,-917|rhhnkjoi;280,-917|!LwO)i;280,-917|cmhgdhhgfjijgiig;320,-762' +
-    '|hiilfgfmRi;320,-762|iHiH;320,-762|ne;264,-752|mijhhgjh;264,-752|aiejflgighihbh;264,-752|i(;325,-766' +
-    '|jhoiigkjoe;325,-766|i<gl;452,-1064|hh;452,-1064|ikgjje;452,-1064|iljilejchhhkgi;452,-1064|idjh;302,' +
-    '-704|ghhfgjjdgh;302,-704|jljigmklhiikjijkhiilkijkjiikkihkjkli;302,-704|liijjhijmllhkj#i;292,-824|mi;' +
-    '292,-824|i)Tiijgjimhihminhihkjjgnkkhiikhkhikkipjifo;292,-824|8hiGgj;334,-571|kiif;334,-571|fhif;334,' +
-    '-571|ijhi;336,-574|iU;336,-574|diih;459,-1086|glfidoningigkggf;459,-1086|fjigli;459,-1086|ih;459,-10' +
-    '86|jkjhhokiihkjjd;445,-1067|kijhhhkhikkhim;445,-1067|hfhljjjh;445,-1067|ikgiifhiikelhkkiigjigpmiihji' +
-    'jgjiihjilekh;331,-598|fpgh;331,-598|ghhghjhghifmed;331,-598|ihkgjjkfi9ki;269,-756|wjrg;332,-569|ikji' +
-    'hlknifjglgigmkjh;332,-569|jh;332,-569|igjj;338,-638|knkjijkiihkhjnhukomjjgorjliu;338,-638|gc;392,-93' +
-    '6|iq;392,-936|iLiLhiglhhekdhmhihkhiYkdghgjhkfidkgkhghn;392,-936|Nifj;300,-656|lemh;300,-656|gjiljjhl' +
-    'kmhijkkillmkgkmlhjlmlifmkj;300,-656|fcghgc;360,-587|fihjghWj;360,-587|ix;467,-1080|hhjgiekikghhkdhii' +
-    'kenhf;438,-1305|ig;453,-1070|ihgifgjhljihlhikjiglhi;311,-617|hj;311,-617|jjhjhh;311,-617|md;264,-729' +
-    '|cjghhgbgixfhhkfj;264,-729|liijjgljjkjhklkiijlk;464,-1085|jj;533,-1297|kehnhh;533,-1297|hk;310,-616|' +
-    'hh;246,-652|jeeiihkhjNkh;246,-652|olkikk;246,-652|VmdmfhXnahihghhjgeifogigoekjhgmfkhllhfjhmkmikhigod' +
-    'kfhfhihbkhlbhY;318,-636|i:;318,-636|eiikkjjlhkklhkgj;318,-636|iapi;336,-588|cihghj;336,-588|ok;280,-' +
-    '675|is;280,-675|kjmqikllhijnml;280,-675|iY;362,-569|kmihlmmiiklioohkgjkngmWiikgjhhhlfjhgjifcjghjhgjh' +
-    'hfkidfjghihfihjibc;362,-569|djYihkhhhj;362,-569|iggh;331,-575|hagc;334,-695|hgjf;334,-695|iz;334,-69' +
-    '5|jknlmingkjkhkklilnfiijjjlijlkhjjfugjhhgkcfigghhjiklljlgkbkfhhhkifghggihfhi;360,-832|qi;360,-832|Si' +
-    ';360,-832|iGiGei;293,-669|iy;293,-669|i8hjiX;440,-1306|hhjhhagfgilu;440,-1306|jiikgjjkkhikgiik;440,-' +
-    '1306|jhimlklpjpgjjihmjijgkjnthljhoqpkkljigbifjijfhhgjhflgjgihhijekhdXjgjkngjknefVpXjkjijgjjiejiigkii' +
-    'gjiikkgiljimonljkinglilmoirkljilgkfjnjijfhgiefcjghgkegXkXjhjjjfjkkiiakdmwinkhkuhnhhfjjkhljlhljkhkloi' +
-    'cji;440,-1306|ikgf;296,-713|kfjjlhjejikflkjhjjjfhhlhmdkhlj;296,-713|eg;296,-912|i_;368,-832|h:i:;368' +
-    ',-832|)i;242,-700|ljlgi%;242,-700|jfkiihghig;328,-832|yi;328,-832|iyai;328,-832|i4;374,-737|ptlrjZjh' +
-    'gckhigjihfkhhhkfiehiigjhifjiiengihfiiR;374,-737|hheifdhihkgheiglhmfkikej;374,-737|kshjhhhm;342,-586|' +
-    'io;256,-647|llmpjiiklkmn;256,-647|jgogkflhjfkhkflhjelk;271,-628|pZjZkhhhjijYgb;292,-715|ihgigg;370,-' +
-    '988|hjimhjfihmkmhnkripjjiz;370,-988|hePhcfbjhj;308,-600|eg;308,-600|qdjiij;308,-600|icsi;360,-572|gh' +
-    'hjggiggiefbh;254,-852|ijgjfmepgicldsijomikjihkiogjfngigjijfjglgiglfjhhhkfjgngkjlgljkpflkihjiijljnmjl' +
-    'kghjimknlmmhhjjjhihkkn;254,-852|iUfiic;466,-1091|fgikgjgl;466,-1091|jghijenamVjiikkhjjgbiejdjijahXkb' +
-    'khgfkegbjhjjjnjdkhhfjhhhifhiigkhggikej;466,-1091|inhk;348,-772|wilfkl;348,-772|i};348,-772|ihfkfggj;' +
-    '392,-928|aigkfihlfmhihmfhfjhggjkmhkhhdlhlfkknhjjkhiikkkgl;392,-928|i<i<i<;317,-604|hieoonnjjgkk;317,' +
-    '-604|jj;320,-816|Ki;296,-816|ia;296,-816|i/i:;326,-592|gjjjimlrihjihbhhjf;343,-567|hgiX;343,-567|jj;' +
-    '336,-936|xikjkflkijkinljikf;336,-936|iK;441,-1280|ihghkk;441,-1280|jj;304,-602|if;304,-602|fffhhgmil' +
-    'l;307,-661|lghgjfhhjdlhie;307,-661|kmjhkkhjmlikllpkij;334,-668|iY;334,-668|gnjigljoms;280,-685|iN;28' +
-    '0,-685|Pmfkfgfjghgj;243,-707|icgf;243,-707|uh)ljh;367,-772|mhihshmgph;313,-679|%j;442,-1053|hhkhhk;4' +
-    '42,-1053|giikjijg;336,-888|aiiy;336,-888|$i;392,-832|i-i-;288,-718|idkkkii8;288,-718|gigfeh;340,-772' +
-    '|lcidhhkeiMiM;361,-701|nmjlhlkjhlklgnijjihljkhmjjjhhfjhlihfjhifkhhfjffbjdlehdkilmjhebfaif;361,-701|h' +
-    'iigghgjlkikkjjkhihgegfiihghdhcj;361,-701|jhjjigkjkfmSkg;296,-757|ei;323,-731|jijkkiijlhmqlile;334,-7' +
-    '00|lhjgkj;532,-1295|ilkfkjjSlgkenQilmjiykoklmklqimmwiqkslohjhqhegilqhlhihmjkivghgrjmilhijsgojlgpiuhl' +
-    'jygrhjhq6i7ihqkkinghbvfjkpljikjijohmghhjikepdohicphhhlhhhkhigoilfoghejihfghgjhhhmg;309,-617|gh;309,-' +
-    '617|hghj;482,-1184|hkmkfe;482,-1184|jgfkiZjjhghijhhghjiehihgiegghdjfkljmjihfjfkjlmlhilknhljkkeiegfif' +
-    'gfigeghfijghighihfjhfgifghhphjgfighiighjfeidhiighigfjghiigegifgfjhgghchhhkgghbggkiigfdjhhihdigkhhhhj' +
-    'fd;238,-751|ipgokjjkhiikgjfmiljihmlkgiilgjikjjkgjekjiljijghhjgjl;318,-606|jjhk;464,-1226|hjjlhkgiilg' +
-    'gjfhjhhjhgiifhhjhfekhhglhigkjjqjgjihlkihkji;464,-1226|injjiljijfkhdd;307,-618|jkgjikgkshkmfgdiihgmhh' +
-    'ijgijk;280,-706|iS;453,-1236|gg;296,-872|i)i);296,-872|LiMi;296,-872|<i;325,-644|ti;440,-1298|hhijji' +
-    ';340,-702|iL;430,-1336|ikhijg;430,-1336|jhjjilhjjjhjhgjlghiggfhcjhjkhjjkkj;251,-872|iRrEkj;262,-918|' +
-    'gPngnclZjijgjajhmijgkijfodljkhjelhnjihgijemhmdphlekilkpiihki;336,-960|iA;442,-1049|ikjihg;348,-730|h' +
-    'ihkhhfigm;505,-1362|hnjjinjkjalbhejcghgljngn;415,-1412|ikhihejhkjhk;170,-1265|lhjkfjhg;478,-1329|jll' +
-    'jjghWhihkgq;446,-1244|jihfil;432,-1328|jhjjhkhg;152,-1247|ikmpkfkhkdfihhcj;148,-536|hthigghfjghfjfkj' +
-    'jhjk;167,-1254|jlglhiiejijg;418,-1381|jiikhiig;418,-1392|jiifhigdjpjiij;508,-1301|jkighi;384,-710|jk' +
-    'gcjm;388,-982|khghhkji;366,-685|ijhiihji;413,-1424|khhlhg;169,-1258|jiikhg;457,-1362|jhikhh;175,-127' +
-    '6|jgjijlhjgg;420,-1366|kjhghj;422,-1360|ikjiighi;427,-1347|klhjhifcjhkl;413,-1418|kkjhfh;441,-1284|j' +
-    'ghikhimgh;435,-1302|ijjiihhi;416,-1388|jhimhf;385,-981|jhjjgi;481,-1179|jkgfhihfkjjl;422,-1511|jkjii' +
-    'uhhhV;433,-1325|jiijhiih' +
+    '336,-912|iK;336,-912|4i;336,-912|i);292,-607|i3jd;374,-736|hgeifdhihkgheiglhmfkikej;280,-917|!LwO)i;' +
+    '280,-917|rhhnkjoi;280,-917|cmhgdhhgfjijgiig;320,-762|hiilfgfmRi;320,-762|iHiH;320,-762|ne;264,-752|a' +
+    'iejflgighihbh;264,-752|mijhhgjh;264,-752|i(;325,-766|jhoiigkjoe;325,-766|i<gl;302,-704|ghhfgjjdgh;30' +
+    '2,-704|jljigmklhiikjijkhiilkijkjiikkihkjkli;302,-704|liijjhijmllhkj#i;292,-824|i)Tiijgjimhihminhihkj' +
+    'jgnkkhiikhkhikkipjifo;292,-824|8hiGgj;292,-824|mi;336,-574|iU;336,-574|ilgiij;336,-574|diih;331,-598' +
+    '|fpgh;331,-598|ihkgjjkfi9ki;331,-598|ghhghjhghifmed;269,-756|wjrg;332,-569|jh;392,-936|Nifj;300,-656' +
+    '|fcghgc;300,-656|gjiljjhlkmhijkkillmkgkmlhjlmlifmkj;300,-656|lemh;360,-587|fihjghWj;311,-617|hj;311,' +
+    '-617|jjhjhh;311,-617|md;264,-729|cjghhgbgixfhhkfj;264,-729|liijjgljjkjhklkiijlk;310,-616|hh;246,-652' +
+    '|jeeiihkhjNkh;318,-636|i:;318,-636|iapi;318,-636|eiikkjjlhkklhkgj;336,-588|cihghj;336,-588|ok;280,-6' +
+    '75|iY;280,-675|is;280,-675|kjmqikllhijnml;362,-569|djYihkhhhj;360,-832|Si;360,-832|iGiGei;360,-832|q' +
+    'i;334,-695|iz;293,-669|iy;293,-669|i8hjiX;296,-713|kfjjlhjejikflkjhjjjfhhlhmdkhlj;296,-713|eg;296,-9' +
+    '12|i_;368,-832|h:i:;368,-832|)i;242,-700|ljlgi%;328,-832|i4;328,-832|yi;328,-832|iyai;342,-586|io;27' +
+    '1,-628|pZjZkhhhjijYgb;256,-647|jgogkflhjfkhkflhjelk;292,-715|ihgigg;370,-988|hjimhjfihmkmhnkripjjiz;' +
+    '308,-600|icsi;360,-572|ghhjggiggiefbh;348,-772|wilfkl;348,-772|ihfkfggj;348,-772|i};392,-928|aigkfih' +
+    'lfmhihmfhfjhggjkmhkhhdlhlfkknhjjkhiikkkgl;317,-604|jj;320,-816|Ki;296,-816|i/i:;296,-816|ia;343,-567' +
+    '|hgiX;336,-936|iK;336,-936|xikjkflkijkinljikf;304,-602|if;307,-661|lghgjfhhjdlhie;307,-661|kmjhkkhjm' +
+    'likllpkij;334,-668|iY;280,-685|Pmfkfgfjghgj;280,-685|iN;243,-707|uh)ljh;367,-772|mhihshmgph;313,-679' +
+    '|%j;336,-888|$i;336,-888|aiiy;288,-718|idkkkii8;288,-718|gigfeh;340,-772|lcidhhkeiMiM;361,-701|jhjji' +
+    'gkjkfmSkg;296,-757|ei;323,-731|jijkkiijlhmqlile;318,-606|jjhk;280,-706|iS;296,-872|i)i);296,-872|LiM' +
+    'i;296,-872|<i;325,-644|ti;340,-702|iL;336,-960|iA;348,-730|hihkhhfigm' +
     '')
 
 BORDER_VAL = {BORDER_CH[i]: i for i in range(len(BORDER_CH))}

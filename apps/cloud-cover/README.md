@@ -127,9 +127,18 @@ anti-aliased hairlines do not survive a downscale to 32 rows. So the
 outlines are carried in the app instead, from the US Census cartographic
 boundary file.
 
-Packing a map into a few thousand points took three goes, and every failure
-looked like a styling problem right up until it was measured against the
-source.
+**Only the borders between states are drawn.** A segment belonging to two
+states is the line between them, and nothing in a photograph from orbit can
+show it. A segment belonging to one state is an outside edge — coast, lake
+shore, national boundary — and the satellite draws every one of those
+already, by the water being darker than the land. Tracing them a second
+time added no information and two thirds of the table, all of it in the
+wiggliest places: Long Island, Cape Cod, the Chesapeake, the Great Lakes.
+That is what made the panel look like a thicket. Dropping them took the
+close page from 218 line ops to 96.
+
+Getting the rest of it right took three goes, and every failure looked like
+a styling problem right up until it was measured against the source.
 
 **Rings are the wrong unit.** The first version simplified each state's
 boundary on its own. Kansas and Nebraska each carry the line between them;
@@ -158,16 +167,16 @@ with the raw Census file pixel-for-pixel 63% of the time at panel
 resolution, and almost all of the rest is a one-pixel grid offset.
 
 An eighth of a degree is about 14 km — under one pixel at the close zoom,
-where one pixel is 0.2°. The table packs into a 5.3 KB string.
+where one pixel is 0.2°. The table packs into a 1.9 KB string.
 
 Drawing is one pass: decode, project, skip any segment whose ends land on
-the same pixel or that falls entirely off one edge. That leaves 218 line
-ops on the close page, against a 4096 limit, and lights about 8% of the
-panel.
+the same pixel or that falls entirely off one edge. That leaves 96 line ops
+on the close page, against a 4096 limit.
 
 The lines were dotted for a while, which was treating the symptom. With the
-geometry right, a solid line is both quieter and clearer. Copper, because
-amber read like a road atlas.
+geometry right, a solid line is both quieter and clearer. Dark copper, so
+it sits under the weather rather than on top of it — amber read like a road
+atlas, and brighter copper still won the frame.
 
 **If you build something like this: render your table against the source
 data at six times panel resolution before trusting it.** Every one of these
