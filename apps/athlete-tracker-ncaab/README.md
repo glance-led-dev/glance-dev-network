@@ -12,7 +12,7 @@
 
 Opponent rankings are not displayed. No AP badge, reserved badge space, or additional rankings request is included.
 
-Track one men's Division I college basketball player on two consecutive pages. Page 1 always shows the selected player's season averages. Page 2 shows live statistics during a game, then the most recent ESPN final after it ends.
+Track one men's Division I college basketball player on two consecutive pages. Page 1 always shows the selected player's season averages. Page 2 keeps the most recent ESPN final on game day until the next game is live, including when tipoff is delayed. After the live game ends, page 2 shows its final stats.
 
 Page 1 also has a Next row: NXT, opponent abbreviation, weekday, date, then tip time in Eastern time, with daylight saving and date rollover handled together. Games today or tomorrow replace weekday/date with TODAY or TMRW, based on the Eastern calendar date (including midnight, year rollover and daylight-saving changes). Later games retain weekday/date. The team schedule is cached for five minutes. Longer rows use measured spacing and adjust PTS only when needed. Unconfirmed tip times show TBD, no listed upcoming game shows NXT TBD, and an unavailable schedule source shows NXT OFFLINE. Missing schedules never replace season averages with invented game statistics.
 
@@ -72,8 +72,8 @@ Platform limitation recorded during edge testing: a nonstandard bare NaN literal
 ## Earlier reliability update (retained)
 
 Game discovery uses the selected school's ESPN schedule instead of the oversized
-national NCAA scoreboard. Today's summary is checked even when a cached schedule
-still says pregame. Live games, halftime, overtime, finals, overnight transitions,
+national NCAA scoreboard. After scheduled tipoff, the summary is checked even
+when a cached schedule still says pregame. Live games, halftime, overtime, finals, overnight transitions,
 and conflicting or unavailable feeds have explicit handling. A failed feed does
 not silently become season averages. Malformed or duplicate box-score rows are
 rejected; missing individual statistics remain unknown (`--`), not invented zeroes.

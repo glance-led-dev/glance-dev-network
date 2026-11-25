@@ -671,12 +671,11 @@ def tracker_now_minute(ctx):
     now = ctx.now
     return schedule_day_index(now.year, now.month, now.day) * 1440 + now.hour * 60 + now.minute
 
-def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = False, requests = None, schedule_source = None):
+def tracker_event_context(ctx, league, team_id, preferred = None, requests = None, schedule_source = None):
     source = schedule_source if schedule_source != None else tracker_schedule_source(league, team_id, preferred, requests)
     if source.get("error") != None:
         return source
     current = tracker_now_minute(ctx)
-    today = (current - schedule_eastern_offset(current, ctx.now.year)) // 1440
     live = None
     today_pre = None
     latest = None
@@ -709,7 +708,6 @@ def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = F
         event_id = clean(event.get("id"))
         if state not in ["in", "pre", "post"] or start == None or not event_id.isdigit():
             return {"error": "SCHEDULE NOT POSTED"}
-        day = (start - schedule_eastern_offset(start, int(date[:4]))) // 1440
         item = {"id": event_id, "state": state, "start": start, "year": int(date[:4]), "host": source["host"]}
         if state == "in":
             # A multi-day stale IN flag must not masquerade as a fresh live game.
@@ -719,10 +717,9 @@ def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = F
                 return {"error": "GAME STATUS DELAYED"}
             live = item
         elif state == "pre":
-            # Probe today's game summary even if the 5-minute schedule cache
-            # still says PRE after tipoff. Include previous-night tips so UTC
-            # or Eastern midnight cannot make a live game vanish.
-            if day == today or (start <= current and current - start <= 12 * 60):
+            # An upcoming tip belongs in the Next row, not on page 2.
+            # After tip time, probe a possibly stale PRE across midnight.
+            if start <= current and current - start <= 12 * 60:
                 if today_pre == None or abs(start - current) < abs(today_pre["start"] - current):
                     today_pre = item
         else:
@@ -734,19 +731,11 @@ def tracker_event_context(ctx, league, team_id, preferred = None, keep_final = F
         return live
     season = tracker_season_year(source["document"])
     if today_pre != None:
-        # Probe today's summary first in case PRE is stale after tipoff. A
-        # confirmed PRE must not erase yesterday's still-retained team final.
-        if not keep_final and latest != None and current - latest["start"] < 24 * 60:
-            today_pre["retained_final"] = latest
         today_pre["season"] = season
         today_pre["latest_final"] = latest
         return today_pre
     if latest != None:
-        # Athlete page 2 keeps its existing last-final behavior. Team pages
-        # retain a final until 24 elapsed hours after tipoff, then averages.
-        # UTC elapsed time avoids adding/subtracting an hour at DST changes.
-        if keep_final or current - latest["start"] < 24 * 60:
-            return latest
+        return latest
     return {"id": None, "host": source["host"], "season": season, "latest_final": latest}
 
 def tracker_summary_context(league, event, team_id, requests = None):
@@ -1147,19 +1136,20 @@ def athlete_data(ctx):
     team_id = str(selected_team.get("id"))
     schedule = tracker_schedule_source(league, team_id, requests = requests)
     following = next_scheduled_game(ctx, selected_team, schedule_source = schedule)
-    event = tracker_event_context(ctx, league, team_id, keep_final = True, requests = requests, schedule_source = schedule)
+    event = tracker_event_context(ctx, league, team_id, requests = requests, schedule_source = schedule)
     event = dict(event, season = tracker_season_year(schedule.get("document")))
     if event.get("error") != None:
         return {"average": season_data(league, selected_team, event, requests), "game": event, "team": selected_team, "next_game": following}
     if event.get("id") == None:
         return {"average": season_data(league, selected_team, event, requests), "game": {"error": "NO GAME YET"}, "team": selected_team, "next_game": following}
     source = tracker_summary_context(league, event, team_id, requests)
+    # A delayed tip or unposted summary does not displace the last final
+    # while the schedule still says PRE. Never do this for a known live game.
+    if event["state"] == "pre" and event.get("latest_final") != None and (source.get("error") != None or source["competition"]["status"]["type"]["state"] == "pre"):
+        event = dict(event["latest_final"], season = event["season"])
+        source = tracker_summary_context(league, event, team_id, requests)
     if source.get("error") != None:
         return {"average": season_data(league, selected_team, event, requests), "game": source, "team": selected_team, "next_game": following}
-    if source["competition"]["status"]["type"]["state"] == "pre" and event.get("retained_final") != None:
-        source = tracker_summary_context(league, event["retained_final"], team_id, requests)
-        if source.get("error") != None:
-            return {"average": season_data(league, selected_team, event, requests), "game": source, "team": selected_team, "next_game": following}
     data = source["data"]
     competition = source["competition"]
     team = source["team"]
@@ -1167,8 +1157,7 @@ def athlete_data(ctx):
     status = competition["status"]
     status_type = status["type"]
     state = upper(status_type["state"])
-    # Only a successfully decoded, matching PRE summary may show averages.
-    # A failed summary or a PRE/IN conflict never silently changes mode.
+    # Before the first completed game there may be no final to keep.
     if state == "PRE":
         return {"average": season_data(league, selected_team, event, requests), "game": {"error": "NO GAME YET"}, "team": selected_team, "next_game": following}
     table = tracker_game_table(data, team_id)
