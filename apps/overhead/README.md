@@ -124,20 +124,34 @@ sky has no business inventing one.
 NASA is no help here. `Reference_Features` draws nothing at all through
 WMS, and the `Coastlines` layer put 19 lit pixels on a 6144-pixel panel —
 anti-aliased hairlines do not survive a downscale to 32 rows. So the
-outlines are carried in the app instead: the US Census cartographic
-boundary file, simplified with Douglas-Peucker at 0.15 degrees and quantised
-to sixteenths of a degree, which is about 7 km and comfortably inside one
-pixel at any zoom offered here. That packs to a 3.4 KB string.
+outlines are carried in the app instead, from the US Census cartographic
+boundary file.
 
-Drawing them is one pass: decode, project into the frame, skip any segment
-whose ends land on the same pixel or that falls entirely off one edge. What
-is left is 474 lit pixels on the close page and 611 on the storm page.
+**Rings are the wrong unit, and getting that wrong is very visible.** The
+first version simplified each state's boundary on its own. Kansas and
+Nebraska each carry the line between them; Douglas-Peucker kept different
+vertices on each pass; the two copies landed a pixel apart. Most of what
+looked like a map was railroad track — 18% of the panel lit, and
+unreadable.
 
-Solid amber was the first attempt and it looked like a road atlas laid over
-the sky — at this size a one-pixel line carries roughly six times the weight
-it would on a screen. Copper, dotted on alternate pixels, places the weather
-without swallowing it. The dots key off `(x + y)` rather than distance along
-a segment, so the pattern stays in step where outlines meet.
+What works instead: snap every point to an eighth of a degree first, so a
+shared boundary becomes the *same* sequence of points on both sides; break
+the rings into segments; drop the duplicates (838 of them); chain the
+survivors back into polylines; and only then simplify, which is now safe
+because no two chains run alongside each other. Same country, **11% of the
+panel instead of 18%**, and every line a single stroke.
+
+An eighth of a degree is about 14 km — under one pixel at the close zoom,
+where one pixel is 0.2°, and well under it on the storm page. The whole
+table packs into a 3.3 KB string.
+
+Drawing is one pass: decode, project, skip any segment whose ends land on
+the same pixel or that falls entirely off one edge. That leaves 164 line
+ops on the close page and 295 on the storm page, against a 4096 limit.
+
+The lines were dotted for a while, which was treating the symptom. Once the
+table was fixed, a solid line turned out to be both quieter and clearer —
+there is only one of it now. Copper, because amber read like a road atlas.
 
 ## Notes on the drawing
 

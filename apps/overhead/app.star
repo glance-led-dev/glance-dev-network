@@ -90,12 +90,14 @@ SHARP = "3"
 BACKOFF = 600
 TRIES = 3
 
-# The state lines. Solid amber looked like a road atlas laid over the sky:
-# at 192x32 a one-pixel line is proportionally six times the weight it has on
-# a screen, and it won rather than helped. Copper, and dotted on alternate
-# pixels, places the weather without swallowing it -- and the dotting keys
-# off (x + y) rather than distance along a segment, so the pattern stays
-# aligned where outlines meet instead of beating against itself.
+# The state lines. Copper: it reads over grey cloud and over the infrared
+# palette, where amber was loud enough to look like a road atlas laid over
+# the sky.
+#
+# These were dotted for a while, which was treating a symptom. The real
+# fault was in the table -- see the note on it below -- and once that was
+# fixed a solid line turned out to be both quieter and clearer, because
+# every line is now a single stroke instead of two.
 LINE = "#B87333"
 
 BG = "#05070C"
@@ -135,54 +137,64 @@ CAP = 20
 # beautiful, but you cannot tell whether the weather is over you or over the
 # next state. NASA's own reference layers are no help: Reference_Features
 # draws nothing at all through WMS, and the Coastlines layer put 19 pixels on
-# a 6144-pixel panel. So the outlines are carried here and drawn directly, in
-# a colour chosen to read over both grey cloud and the infrared palette.
+# a 6144-pixel panel. So the outlines are carried here and drawn directly.
 #
-# Source: the US Census cartographic boundary file, simplified with
-# Douglas-Peucker at 0.15 degrees and quantised to sixteenths of a degree --
-# about 7 km, well inside one pixel at any zoom this app offers. Each ring is
-# "<lat>,<lon>|<dlat><dlon>..." in sixteenths, two characters per step.
+# Source: the US Census cartographic boundary file. The first version of
+# this table simplified each state's ring on its own, and that was a real
+# mistake rather than a rough edge: Kansas and Nebraska each carry the line
+# between them, Douglas-Peucker kept different vertices on each pass, and
+# the two copies landed a pixel apart. Most of what looked like a map was
+# railroad track -- 18 percent of the panel lit, and unreadable.
 #
-# It costs one line op per visible segment: 138 of them at the close zoom,
-# 432 at the storm zoom, against a 4096-op page limit.
+# So rings are not the unit any more. Every point is snapped to an eighth of
+# a degree first, which makes a shared boundary the SAME sequence on both
+# sides; the rings are broken into segments; 838 duplicates are dropped; the
+# survivors are chained back into polylines; and only then simplified, which
+# is safe because no two chains run alongside each other. Same country, 11
+# percent of the panel instead of 18, and every line a single stroke.
+#
+# An eighth of a degree is about 14 km, which is under one pixel at the
+# close zoom (0.2 deg/px) and well under it at the storm zoom. Each chain is
+# "<lat>,<lon>|<dlat><dlon>..." in eighths, two characters per step.
+#
+# It costs one line op per visible segment, against a 4096-op page limit.
 BORDER_CH = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-./:;<=>?@[]^_{}~'
 BORDER_BIAS = 45
+BORDER_GRID = 8.0
 BORDERS = (
-    '560,-1398|i.0ubeVki2Zmfepccgje)g~npiiv;882,-2106|ljglfike;887,-2109|djnh;903,-2128|fnld;902,-2138|hp' +
-    'ZtZqaioTfnferchfmnrchgpi;889,-2140|ipfgld;911,-2143|jgixdqeRoike;904,-2146|odgtWcofkl;901,-2154|qVre' +
-    'lmgrQm;932,-2155|hqcnhecmcY(bfm;917,-2174|dmieni;931,-2180|g!ZnlWeiidqXmn;963,-2353|cVov;969,-2361|c' +
-    'fjfno;1124,-2365|e~iqk!a_0i0i0iRij;dgV*dlmwpnluH[K&a-UkZXqckkhalcmkgaojhfobjpoiqPsgtLteSmlUpgkVZvfZv' +
-    'KqIlmohcWo8hNpTgbmZdVmijtqUdOmgffcpfdemiLWJiSpwjWsrogm-nTYMSSdRdhfwcWdhW9beaGffinddgUeemfaLiemhZaibm' +
-    'fdjjZgkgdgmeGlhmoi#y*kxejirmdmlr.mhrywmlolhfPmdZerWgdmcaLjfklsfkmrZfDtRklohjbpchflmkeionjqwrog&pvi!n' +
-    'ouYjrndYHmVgMlModnlmJy~iyiscfglh;ntjVkjoWbzmdnlkBqbt4mpnjk?%>jzp#i*r)dzeanxcwj;ffe$k.e+;928,-2447|jc' +
-    'qsesfigU;921,-2463|kmkehomniqgmeiioUEqWpqgn;906,-2473|felm;895,-2490|ekjdll;885,-2558|bcpo;886,-2568' +
-    '|glgamiin;880,-2596|hfjl;1018,-2599|ifil;872,-2605|glkf;869,-2649|fhlj;866,-2652|icio;966,-2662|gtej' +
-    'ebpMlz;864,-2662|hlecjpbHoykdkjjt;851,-2701|nrgpbUmg;846,-2716|ieim;916,-2722|gfkl;843,-2731|ggkk;10' +
-    '19,-2748|i)c*cTqOhUni;838,-2759|gfkl;834,-2778|hqja;836,-2789|jneTls;830,-2824|glgalgjp;831,-2834|eg' +
-    'mk;831,-2850|gnfgnf;848,-2994|eGmmi);592,-1745|0i0ifiiC#0iSnnseqlopra$ggsyji~i[;584,-1512|i~i-fjddis' +
-    'fiHPZdglbgi0igrijb~ili;672,-1972|i~ir0iei0~O~XqUYXmf2ucpTngqBri#OthmawjfgjbxVwgpa#nrgix;656,-1727|i~' +
-    'i~iq0iOii0i0iK~i%ii!;673,-1169|h$ZibFzkip;637,-1207|cgSqiY%gjo;624,-1233|fili;496,-1368|iqdkg~fipmgq' +
-    '0(QiRgZchZtdidzcgftbongclgymySmcbNtSgPlkrei>;560,-1330|dfH/TsMZkabglgk1reripm~Wjii_;303,-2490|ketfql' +
-    'WzZV;336,-2505|cqicog;339,-2512|hdjn;347,-2527|cjiemgkn;356,-2551|dkjbmn;784,-1857|SiZnV(RejuWoaro)e' +
-    'n4ii0i0ib?klc$vuY}iiy;680,-1450|i~ikVn0ifiabWggbdhkbfdtfqUtmjZ!Vqkopqgowniob;668,-1376|i#0ifihYVYmec' +
-    'Vlafcpjqp~imij);696,-1462|enaiWxbegXakZamdh0iO(ctavli~i];640,-1630|i~i~i#fpeecq9ii0i0iD~lni;620,-134' +
-    '2|iyVocqSHk0iIfiiMtpgpvshvovemvsjsnicx;528,-1498|i^WlYaYgi:dgaoedhqccdtgdpZcelbeeuRebkK$nzZyiip;689,' +
-    '-1131|me<gptxouueolsfngkMihodhaqaRlfeglYchdWkfVX;636,-1272|i~iyNkisbfhYmikcvipmecZfXlnVqmlarchTcWri;' +
-    '686,-1135|flbebpisghfQqejAtmh;lo;668,-1335|i0iYxsxdzmpsckyrY+ViYYgmqufnOkidUY;732,-1368|fglk;722,-14' +
-    '01|vZs7w@hmZakrcqgtn+ejiwbkhqjPfimVbPlgWW;768,-1421|fcosfe;747,-1472|idYidZdmXfW&ami0i4/inblnqh~Yi>o' +
-    'iilXofukvZ(lue#cQTO;560,-1416|go0ceiKkfQqcnkiEsksq%e(xi/;650,-1469|eoYjasdjhrXeawbieoSYiYnnlhi0iG~io' +
-    'ammkdsZj~i$;784,-1665|0iOii0i0iKaimdcKqZuchWzmvLrdyii~i~i~i~i$;688,-1653|i~i>d/XrOmWri0i0iOyiiC<iiu;' +
-    '672,-1872|i~im0i0idifhkYQk~0%2~inii~in;725,-1137|CkemcYjQ*omqtljn;658,-1188|goachmXgWXsWrvobpjopep;5' +
-    '92,-1719|i~i.0h8ii0iVfkiHaiiU~i~inii+;720,-1174|8kJeheeqnxflbFpjpSrai0iImirwpfj]lpthtyk;;585,-1296|i' +
-    '~i^bkfTixejcVcmeehXWViZxQiQneg0iarrr-poit;784,-1556|0tdii0i0iC~ioii~i~i(;672,-1288|MiTdbUcfkfZenZgVq' +
-    'Q{ij&cxs<;592,-1601|i~i~ij0kYinWeQmZfes4ld;ii0ieqii~im;739,-1971|gnckgqp~iri=eoMXfo9gi0i0iHvcyo>lnph' +
-    'o;676,-1276|eii~i-YtXaapbRi0iD@imu;667,-1139|fjiflk;672,-1144|dmdehctjin;561,-1324|j-dmi!T!UVTKxY-Fo' +
-    'r;735,-1665|i~i~i>dddp9ibffloWgWmZi0i0ih~imi;584,-1409|lig~i~iybcZHZZi0i0ia)ui);584,-1629|i/DifnY_lm' +
-    'erm!c#JiRrOdgXmeTYeYjXenicPVOojSqSxd@DkUUTsOxc%Gk~iw~i/ii$;672,-1795|i!Sii<0iOii0i8~i[ii:;720,-1144|' +
-    'bheaWdVhiV@gi:;608,-1206|ikUWpjpr;631,-1254|drlmcpYfbzViibgtckj0i0i7x-cnn&!tfnuxmi;784,-1873|0keid0i' +
-    '0idogmPml+Vljd/fnZjtlyai~i~in;773,-1963|fjlh;777,-1968|kjekkf;650,-1288|UiiyZiq%cpfhnZeiWTldQXdMuVqg' +
-    'inrmglolpwxn;745,-1447|U~dgenZatzMWMhi0ihmbqiucuMtlnenrsim)fhfp;720,-1745|i~i[0iOii0i0iK~i%ii<;288,-' +
-    '1063|hWphkkg)cfiY' +
+    '304,-605|ilbcmillhgkhjjkeqlgeYjmdhgnkhjhh;532,-1295|hiiofcjghVkhkjjdgWgjideUgniqgihghlhhhjgtktgmjjhl' +
+    'lojohlgddnffiZeckXXXifgkhgikgihkimhhgkhgbtlvdmhgdkhghkntgjhpfkjlkhjjglkshigfbgfdffhjjfdXghgkjghgkhhb' +
+    'fbfgiehjhhjhhagfgikslnjgikgjjkkhikgihkmnjhjjgjikknhjlnikgikkjpkkjgjjmxmkjkhkmninkljjjhlpkakjillkhjkn' +
+    'kjihjlmkmtimgmgVfjddhljlhifbhljnkkksjhjkhjkkhhirlggmmkfemhigkkgjksgjhnhdhhhjkognklgjgpjtfvkthhgjhgev' +
+    'dqhofgikemfiiklhglfidoningkege;532,-1295|lchnhh;532,-1295|ilkfkjjSlgkenQilmjiykoklmklqm!k!logrhegilq' +
+    'fpjxghgrjzgojlgphxjye!0iDihqkkinghbvfjkpljjkjohmghhjerdobphhhlhhgkewbjffhemgjkhekekjggkgkjhglfjlkjmY' +
+    'nhoWohfhcnZjijlnogkbhhjcmghhkddphfgughgjjchjhg;336,-936|i)0igighjdZj<1)iiAjhphol#jjmhnejhmkmhnlziz)h' +
+    'iqaigkfidphmfhfjhggjkmhkhhdlhlfkknhnkkglmii~ivqih~izgfflUii}mhoXojkglnnjptlrkYgclfhfkhhhkfhckeiengfh' +
+    'iRNmek;336,-936|zjkfllpllf;336,-936|iK;336,-912|i)aii~ivyii~ijgmjofocmghikcibnilfgfmRii0iT)ii~it;292' +
+    ',-757|ZkUhhmWiejflXfgdkeejfegdjdgkhfdebfblhgkfhfmblhjgjjlhocpfncjabbnYqfsUjii._ji0ie0ihiiRrEkjgPngnc' +
+    'lZkgkZmijgkijfodljkhjelhnjghjemhmdphlenkrh;292,-757|i@eginsohnkhnpgmklhkkkhlkikmkihkjk)jisqpgijjljpg' +
+    'kgecjfkjikolkgjjkhlWhhgjhfehlhfdfiggVkdfgejfNhfjeehjfh;292,-757|mi;288,-718|aehzKfWjicgflhjgljiTnjnm' +
+    'ohiL;323,-731|mllhmqlilei(mhpjtoffigfgkhqpjlhlkjhlklgnjtjhhfmhhfjekhhfjffbjdlehdkilmjhebfXgkeyglghik' +
+    'hhhj;323,-731|hhejenfjjjhldgflhmfjhhgl;323,-731|kfiC;392,-936|i0igflhhekdhofiYkdghflfibmhghn;392,-92' +
+    '8|i~i~isKi;280,-665|fghmfjdpfjglckhkqsikonjooojnhjlkjgkikolihgjiidknhkogkdhkjjihojnZjk;280,-665|kphs' +
+    'hijjgjhrbr;280,-665|iYkjmsllhijnmlh0iQ;392,-778|i0iY;304,-602|mkrddponnjjgmllbdeemdc;280,-722|ffgigf' +
+    'hjhgfhhkfh;318,-636|i:Yiio;318,-636|eimtbq;318,-636|ia!idSla;318,-606|jjhk;336,-574|iUcihghjlxniildh' +
+    'if;451,-1238|kk;360,-587|Qjcg;360,-587|ixghhjgecfbhjvhjegikemilgdjghfkg;360,-587|hTcZhkehgcjchXekebg' +
+    'ii?dn;241,-716|hfhkjjgkifghhmgkhhkckifgjghdobffkcib;296,-816|ia;320,-816|qiiS;332,-569|igjj;246,-652' +
+    '|jeeiihkhjNkhiNfkfhjfkige;246,-652|sn;246,-652|VmdmfhXnahgghjgeifogigoekjhgmfkhllhfjhmkmiqakfgfhbkhl' +
+    'bhY;453,-1070|kijgjjhofmhihagjiggjjjhjgihfhljjjhikgihfikelhkkijggpmirZhmkhjZehhhjhljlgjkfl;328,-872|' +
+    'Cii4;374,-737|kshjhhhm;465,-1084|hh;356,-888|Oi;430,-1336|hkkfjjhmjjhjhgjlghgdhcjhjkhjll;441,-1280|g' +
+    'gll;307,-661|lghcjdlhie;307,-661|ejdnjmhlkokipngkmlhjlmlifmkj;307,-661|twpl;280,-675|iD;348,-772|ihf' +
+    'kfggj;292,-607|j0ig;334,-700|lhjgkj;362,-569|npmiikliooflkngmWiikgjhhhlfjfajghjhgjhhfkidfjggfjhbcjhj' +
+    'jjgxhiggh;280,-917|cmhgdhhgfkgiig;344,-566|hh;334,-695|iz;342,-586|io;360,-832|Si;248,-680|phlklg#e;' +
+    '326,-592|gjmwjhgajf;336,-644|ko;300,-656|fcghgc;251,-872|ioliiw;464,-1226|hjjlhkgiilggjfhjhhjhgihejh' +
+    'fekhhglhigkjjqkghlkihklrjfkhdd;340,-725|kemjkg;438,-1307|ik;269,-756|lchiibggleggkdhhkgkVkgxiiK;442,' +
+    '-1053|hhkhhkgiikkg;505,-1362|hnkqjalbhejcghgljngn;415,-1412|hkhejhkjhk;170,-1265|lhjkfjhg;478,-1329|' +
+    'jlljjghWgkgq;446,-1244|jihfil;432,-1328|jhjjhkhg;152,-1247|mrmekdehcj;148,-536|hthifdjghfjfkjjhjk;16' +
+    '7,-1254|jlfliekg;418,-1381|jkhg;418,-1392|jffdkq;508,-1301|jkhg;384,-710|jkgcjm;388,-982|khghhkji;36' +
+    '6,-685|hjjh;413,-1424|khhlhg;169,-1258|jkhg;457,-1362|jhikhh;175,-1276|kgjlhjgg;420,-1366|kjhghj;422' +
+    ',-1360|jkhg;427,-1347|klhjecjhkl;413,-1418|kkjhfh;441,-1284|jghikhimgh;435,-1302|jjhh;416,-1388|jhim' +
+    'hf;385,-981|jhjjgi;481,-1179|jkeckjjl;422,-1511|kkiugU;433,-1325|jjhh' +
     '')
 
 BORDER_VAL = {BORDER_CH[i]: i for i in range(len(BORDER_CH))}
@@ -554,45 +566,27 @@ def coastlines(c, box, w, h, color):
     lon0 = box[1] - box[3]
     sx = w / (2.0 * box[3])
     sy = h / (2.0 * box[2])
-    for ring in BORDERS.split(";"):
-        bar = ring.find("|")
+    for chain in BORDERS.split(";"):
+        bar = chain.find("|")
         if bar < 0:
             continue
-        comma = ring.find(",")
-        la = int(ring[:comma])
-        lo = int(ring[comma + 1:bar])
-        body = ring[bar + 1:]
-        px = int((lo / 16.0 - lon0) * sx)
-        py = int((lat0 - la / 16.0) * sy)
+        comma = chain.find(",")
+        la = int(chain[:comma])
+        lo = int(chain[comma + 1:bar])
+        body = chain[bar + 1:]
+        px = int((lo / BORDER_GRID - lon0) * sx)
+        py = int((lat0 - la / BORDER_GRID) * sy)
         for i in range(0, len(body) - 1, 2):
             la += BORDER_VAL[body[i]] - BORDER_BIAS
             lo += BORDER_VAL[body[i + 1]] - BORDER_BIAS
-            x = int((lo / 16.0 - lon0) * sx)
-            y = int((lat0 - la / 16.0) * sy)
+            x = int((lo / BORDER_GRID - lon0) * sx)
+            y = int((lat0 - la / BORDER_GRID) * sy)
             if x != px or y != py:
                 if not ((x < 0 and px < 0) or (x >= w and px >= w) or
                         (y < 0 and py < 0) or (y >= h and py >= h)):
-                    dotted(c, px, py, x, y, color, w, h)
+                    c.line(px, py, x, y, color)
             px = x
             py = y
-
-def dotted(c, x0, y0, x1, y1, color, w, h):
-    """One segment, drawn on alternate pixels of a checkerboard."""
-    dx = x1 - x0
-    dy = y1 - y0
-    steps = dx if dx >= 0 else -dx
-    ady = dy if dy >= 0 else -dy
-    if ady > steps:
-        steps = ady
-    if steps == 0:
-        if x0 >= 0 and x0 < w and y0 >= 0 and y0 < h and (x0 + y0) % 2 == 0:
-            c.pixel(x0, y0, color)
-        return
-    for s in range(steps + 1):
-        x = x0 + dx * s // steps
-        y = y0 + dy * s // steps
-        if x >= 0 and x < w and y >= 0 and y < h and (x + y) % 2 == 0:
-            c.pixel(x, y, color)
 
 def one_frame(layer, box, w, h, when):
     # WMS 1.3.0 with CRS=EPSG:4326 wants minlat,minlon,maxlat,maxlon.
