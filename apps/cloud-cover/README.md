@@ -1,11 +1,11 @@
-# Overhead
+# Cloud Cover
 
 A live satellite view of your own patch of the Earth on a **192x32** panel.
 GOES-19 sits over 75.2W and GOES-18 over 137.0W, both 35,786 km up, and
 they photograph the Americas every ten minutes. This puts your corner of
 that picture on the glass, full bleed.
 
-![Overhead](preview/preview.png)
+![Cloud Cover](preview/preview.png)
 
 No key, no account. Both sources are public.
 
@@ -127,31 +127,52 @@ anti-aliased hairlines do not survive a downscale to 32 rows. So the
 outlines are carried in the app instead, from the US Census cartographic
 boundary file.
 
-**Rings are the wrong unit, and getting that wrong is very visible.** The
-first version simplified each state's boundary on its own. Kansas and
-Nebraska each carry the line between them; Douglas-Peucker kept different
-vertices on each pass; the two copies landed a pixel apart. Most of what
-looked like a map was railroad track — 18% of the panel lit, and
-unreadable.
+Packing a map into a few thousand points took three goes, and every failure
+looked like a styling problem right up until it was measured against the
+source.
 
-What works instead: snap every point to an eighth of a degree first, so a
-shared boundary becomes the *same* sequence of points on both sides; break
-the rings into segments; drop the duplicates (838 of them); chain the
-survivors back into polylines; and only then simplify, which is now safe
-because no two chains run alongside each other. Same country, **11% of the
-panel instead of 18%**, and every line a single stroke.
+**Rings are the wrong unit.** The first version simplified each state's
+boundary on its own. Kansas and Nebraska each carry the line between them;
+Douglas-Peucker kept different vertices on each pass; the two copies landed
+a pixel apart. Most of what looked like a map was railroad track — 18% of
+the panel lit, and unreadable.
+
+**A long step has to be broken up along the line.** Each step is two
+characters, so anything wider gets split. Clamping each axis separately
+walks as far as it can in latitude, then in longitude — turning a long
+diagonal into a dogleg that wanders degrees from the border it is meant to
+be drawing. Subdividing into equal steps fixes it. This stayed invisible
+while points were close together and appeared the moment chaining made the
+runs long.
+
+**A chain must stop where borders meet.** Walk through a junction and the
+chain runs up one border and down another; simplify that and the corner
+gets cut — a clean diagonal straight across the map where no border exists.
+Nodes of any degree other than two are terminals.
+
+So: snap every point to an eighth of a degree, which makes a shared
+boundary the *same* sequence on both sides; break the rings into segments;
+drop the 838 duplicates; chain the survivors between junctions; simplify
+each arc at 0.08°; and split long steps along the line. The result agrees
+with the raw Census file pixel-for-pixel 63% of the time at panel
+resolution, and almost all of the rest is a one-pixel grid offset.
 
 An eighth of a degree is about 14 km — under one pixel at the close zoom,
-where one pixel is 0.2°, and well under it on the storm page. The whole
-table packs into a 3.3 KB string.
+where one pixel is 0.2°. The table packs into a 5.3 KB string.
 
 Drawing is one pass: decode, project, skip any segment whose ends land on
-the same pixel or that falls entirely off one edge. That leaves 164 line
-ops on the close page and 295 on the storm page, against a 4096 limit.
+the same pixel or that falls entirely off one edge. That leaves 218 line
+ops on the close page, against a 4096 limit, and lights about 8% of the
+panel.
 
-The lines were dotted for a while, which was treating the symptom. Once the
-table was fixed, a solid line turned out to be both quieter and clearer —
-there is only one of it now. Copper, because amber read like a road atlas.
+The lines were dotted for a while, which was treating the symptom. With the
+geometry right, a solid line is both quieter and clearer. Copper, because
+amber read like a road atlas.
+
+**If you build something like this: render your table against the source
+data at six times panel resolution before trusting it.** Every one of these
+faults was obvious in that comparison and invisible on the panel, where
+each just looked like ugly styling.
 
 ## Notes on the drawing
 
@@ -203,13 +224,13 @@ Nothing on these pages is a label standing in for a thing. It is the thing.
 From the repository root:
 
 ```bash
-gdn studio apps/overhead
+gdn studio apps/cloud-cover
 ```
 
 Rendering one page:
 
 ```bash
-gdn render apps/overhead --page 2 --input "zip=80202"
+gdn render apps/cloud-cover --page 2 --input "zip=80202"
 ```
 
 To see the no-data screens, set `GDN_HTTP_OFFLINE=1` first — every

@@ -1,7 +1,7 @@
 gdn: 1
-id: overhead
+id: cloud-cover
 version: 1.0.0
-name: Overhead
+name: Cloud Cover
 author: reyos86
 description: A live satellite view of your own patch of the Earth, photographed by GOES from 35,786 km up - cloud by day, city lights by night, and the same sky again as storm-top temperature. State lines drawn on, so you can see whose weather it is. No key, no account.
 category: Weather
