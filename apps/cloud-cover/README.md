@@ -1,285 +1,188 @@
 # Cloud Cover
 
-A live satellite view of your own patch of the Earth on a **192x32** panel.
-GOES-19 sits over 75.2W and GOES-18 over 137.0W, both 35,786 km up, and
-they photograph the Americas every ten minutes. This puts your corner of
-that picture on the glass, full bleed.
+**Created by Reyos** · Weather · 192×32 SCROLL · No API key needed
 
-![Cloud Cover](preview/preview.png)
+A live satellite view of your own patch of the Earth. GOES-19 sits over 75.2W and GOES-18 over 137.0W, both 35,786 km up, photographing the Americas every ten minutes. Two pages put your corner of that picture on the glass, full bleed: **the sky over your ZIP code**, and **the same sky as storm-top temperature**. State lines are drawn on, so you can tell whose weather you are looking at.
 
-No key, no account. Both sources are public.
+![Cloud Cover: the sky over your ZIP code](preview/preview.png)
 
-## The two pages
+> 💬 **Comments or suggestions?** Reach out to **Reyos** on Discord.
 
-**close** — your region, centred on your ZIP code, with a small target
-marking the spot. GeoColor, so it is cloud by day and city lights by night.
-The clouds are where they actually are: look out of the window, then look at
-the panel.
+---
 
-**storm** — the same sky as cloud-top temperature, pulled back a little.
-Grey where the air is quiet, then green, yellow and red as the tops climb.
-It says something the photograph cannot, and because it reads temperature
-rather than light it is just as good at three in the morning.
+## Contents
 
-Both pages carry the state and coast outlines, because a 192x32 strip of
-cloud is beautiful and completely unplaceable without them.
+- [At a glance](#at-a-glance)
+- [Page 1: Your sky](#page-1-your-sky)
+- [Page 2: Storm tops](#page-2-storm-tops)
+- [Reading the panel](#reading-the-panel)
+- [Settings](#settings)
+- [Why these two pages](#why-these-two-pages)
+- [How it works](#how-it-works)
+- [Screens for every situation](#screens-for-every-situation)
+- [Limitations](#limitations)
+- [Credits](#credits)
+- [For developers](#for-developers)
 
-There used to be a third page showing the whole hemisphere. A 5,424-pixel
-disk resampled to 32 across is a blur, and it has been dropped.
+---
 
-## How a photograph gets onto a panel
+## At a glance
 
-This is the part worth knowing about, because at first glance it is
-impossible. `http.get` carries text, not bytes, and `c.image()` only reads
-files shipped inside the app — so an image from the internet has no way in.
+| Page | What it shows |
+|---|---|
+| **1 · close** | **The sky over your ZIP code**, photographed in natural colour. Cloud by day, **city lights by night**. A small target marks your spot, and the frame's own time is in the corner |
+| **2 · storm** | **The same sky as cloud-top temperature**, pulled back a little. Grey where the air is quiet, then green, yellow and red as the tops climb. It works as well at 3am as at noon |
 
-The way through is [images.weserv.nl](https://images.weserv.nl). It will
-fetch any public image, resize it to exactly 192x32 and re-encode it as a
-PNG with **stored** (uncompressed) deflate blocks, handed back as base64
-text. That last part is the trick: with `l=0` there is nothing to inflate,
-so the decoder in `app.star` is forty lines rather than a zlib
-implementation. The technique is cfdmb's — [`rain-watch`](../rain-watch)
-reads weather radar exactly this way, and it is the reason this app exists
-at all.
+---
 
-## Which picture, and which frame
+## Page 1: Your sky
 
-NASA's [GIBS](https://nasa-gibs.github.io/gibs-api-docs/) serves GOES
-imagery over WMS, which takes an arbitrary bounding box and output size. So
-the frame can be centred on a ZIP code at any scale, with no tile stitching
-and no projection maths beyond one cosine to stop the longitude span from
-stretching.
+![The sky over your ZIP code](preview/close.png)
 
-GIBS lists a frame in its time index slightly **before** the pixels exist,
-and the placeholder is a 104-byte transparent PNG — which the proxy
-faithfully re-encodes into a full-size black one, so no response-size check
-can catch it. Two things follow, and both are in the code:
+GOES **GeoColor**, which is as close to a photograph as satellite imagery gets.
 
-- the newest listed frame is skipped by default, and
-- a frame with no light in it at all is treated as missing and the app
-  steps back ten minutes and asks again, up to three times.
+- **The picture:** real cloud, where it actually is. Look out of the window, then look at the panel.
+- **At night it changes entirely.** GeoColor switches to a night-time rendering, and **city lights come through** — the eastern seaboard, Chicago, the Front Range, all picked out in amber against the dark.
+- **Your spot:** a small outlined target at the centre, on your ZIP code.
+- **The caption:** your town and state on the left, and on the right **the time of the frame you are looking at**, in UTC (`17:40Z`) — not the clock's time. If the newest frame is more than three hours old, that is replaced by how old it is, in amber.
 
-Asking for an explicit timestamp matters too. Letting GIBS pick the default
-time failed **two renders in ten** in testing; an explicit timestamp did not
-fail once in ten.
+How much ground the page covers is yours to set: about **330, 550 or 890 km** from top to bottom. A 6:1 panel is six times as wide as it is tall, so even the middle setting spans most of the width of the lower 48.
 
-## How current is it
+---
 
-However far behind GIBS is running, which is not a fixed number: measured at
-twenty minutes one morning and two hours forty the next. The app always
-draws the newest frame GIBS admits to, less one ten-minute step, and prints
-that frame's own time on the panel rather than the clock's — so what you are
-looking at is never in doubt, even on a slow day.
+## Page 2: Storm tops
 
-An hour of lag sounds worse than it is: at the `NORMAL` setting one pixel is
-17 km, so an hour of a weather system's travel is two or three pixels.
+![Cloud-top temperature](preview/storm.png)
 
-If the newest frame ever falls more than three hours behind, the panel stops
-showing a time and says how old the picture is, in amber. It would rather
-admit to being stale than quietly pretend.
+The same sky through a different eye: **GOES band 13**, clean infrared, which measures how cold the cloud tops are.
+
+- **Grey** is quiet air and low cloud.
+- **Green, yellow and red** are tops climbing into the cold upper atmosphere — which is what a thunderstorm looks like from above. The redder it is, the taller the storm.
+- **It is pulled back** a little wider than page 1, because weather worth knowing about is usually still a state away.
+- **It reads temperature, not light**, so it is exactly as useful in the middle of the night as at midday.
+
+---
+
+## Reading the panel
+
+| Colour | Meaning |
+|---|---|
+| ⚪ White / grey | Cloud on page 1; quiet air on page 2 |
+| 🔵 Dark blue | Water, and clear night sky |
+| 🟡 Amber specks | City lights, at night, on page 1 |
+| 🟢 Green → 🟡 Yellow → 🔴 Red | Rising cloud tops on page 2: the colder and taller, the hotter the colour |
+| 🟤 Copper | State and coast lines |
+| ⬜ White target | Your ZIP code |
+
+The copper is deliberately dark. The lines are there to tell you whose weather it is, not to be the thing you look at.
+
+---
 
 ## Settings
 
-| Setting | What it does |
-|---|---|
-| **US ZIP code** | Where the view is centred. GOES-East is used east of about 112W and GOES-West beyond it, so Alaska and Hawaii work. |
-| **How close** | `TIGHT`, `NORMAL` or `WIDE` on the first page — about 330, 550 or 890 km from top to bottom. |
-| **Mark your spot** | The target at your ZIP code, on or off. |
-| **State lines** | The outlines, on or off. On by default. |
-
-A 6:1 panel is wider than it feels: 32 rows of 5 degrees is 555 km tall,
-which at the same scale makes the picture some 3300 km across. `NORMAL`
-already spans most of the width of the lower 48.
-
-## Data sources
-
-| Source | Used for | Cached |
+| Setting | Options | What it does |
 |---|---|---|
-| `gibs.earthdata.nasa.gov` (WMS) | both frames, GeoColor and band 13 | 300s |
-| `gibs.earthdata.nasa.gov` (time index) | which frame is the newest | 300s |
-| `api.zippopotam.us` | ZIP code to latitude and longitude | 30 days |
+| **US ZIP code** | Any five digits · *default `10101`* | Where the view is centred. **GOES-East** is used east of about 112W and **GOES-West** beyond it, so Alaska and Hawaii work too |
+| **How close** | **TIGHT**, **NORMAL** *(default)*, **WIDE** | How much ground page 1 covers, top to bottom: about 330, 550 or 890 km |
+| **Mark your spot** | **ON** *(default)*, **OFF** | The target at your ZIP code. Turn it off for an uninterrupted picture |
+| **State lines** | **ON** *(default)*, **OFF** | The state and coast outlines. Without them a strip of cloud is beautiful and completely unplaceable |
 
-The outlines are not fetched. They are carried in the app, from the US
-Census cartographic boundary file.
+---
 
-`refresh` is 600s, matching the satellite's ten-minute cadence. The region
-pages make two calls on a good render and at most four if the newest frames
-come back empty; the limit is eight.
+## Why these two pages
 
-## When something is missing
+A satellite picture of your own sky is worth looking at on its own, but one view of it is not enough and three is too many.
 
-| Screen | Meaning |
+- **The photograph is the hook.** Everyone understands cloud. And the night view, with the cities lit up, is the single best thing this app draws.
+- **Infrared says what the photograph cannot.** A white blob in visible light might be fog or might be a supercell. Cloud-top temperature tells you which, and keeps telling you after dark.
+- **There was a third page** showing the whole hemisphere as a disk. A 5,424-pixel disk resampled to 32 rows is a blur, and it has been dropped.
+
+---
+
+## How it works
+
+**Data:** two free, public sources, with no account or API key:
+
+| Used for | Source | Cached |
+|---|---|---|
+| Both frames | [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) (WMS), GeoColor and band 13 | 5 min |
+| Which frame is newest | NASA GIBS time index | 5 min |
+| ZIP code to latitude and longitude | [zippopotam.us](https://api.zippopotam.us) | 30 days |
+
+**Refresh:** every **10 minutes**, matching the satellite's own cadence.
+
+**The state lines are not fetched.** They are carried inside the app, from the US Census cartographic boundary file.
+
+**Which satellite:** GOES-East for longitudes east of about 112W, GOES-West beyond it. The app picks for you from your ZIP code.
+
+---
+
+## Screens for every situation
+
+| Situation | What you see |
 |---|---|
-| `NO LOCATION` / `CHECK THE ZIP CODE` | the ZIP is not five digits |
-| `NO LOCATION` / `NO SUCH US ZIP CODE` | the lookup does not know it |
-| `NO LOCATION` / `ZIP LOOKUP DID NOT ANSWER` | zippopotam did not answer |
-| `NO FRAME INDEX` / `GIBS DID NOT ANSWER` | the time index did not answer |
-| `NO PICTURE` / `THE GOES-EAST FRAME DID NOT ARRIVE` | three frames in a row came back empty |
+| The ZIP is not five digits | `NO LOCATION` · `CHECK THE ZIP CODE` |
+| The lookup does not know that ZIP | `NO LOCATION` · `NO SUCH US ZIP CODE` |
+| The ZIP service is unreachable | `NO LOCATION` · `ZIP LOOKUP DID NOT ANSWER` |
+| The frame index is unreachable | `NO FRAME INDEX` · `GIBS DID NOT ANSWER` |
+| Three frames in a row come back empty | `NO PICTURE` · `THE GOES-EAST FRAME DID NOT ARRIVE` |
+| The newest frame is over three hours old | The time is replaced by its age, in amber: `4H OLD` |
 
-There is no demo mode. A panel whose whole purpose is to show you the real
-sky has no business inventing one.
+**There is no demo mode.** A panel whose whole purpose is to show you the real sky has no business inventing one.
 
-## The state lines
+---
 
-NASA is no help here. `Reference_Features` draws nothing at all through
-WMS, and the `Coastlines` layer put 19 lit pixels on a 6144-pixel panel —
-anti-aliased hairlines do not survive a downscale to 32 rows. So the
-outlines are carried in the app instead, from the US Census cartographic
-boundary file.
+## Limitations
 
-This took several goes, and every failure looked like a styling problem
-right up until it was measured. The thing that finally settled it was not
-another opinion but a scoring script, run over four frames — a coastal
-city, an interior one, a tight zoom and a wide one — against the same map
-drawn straight from the Census file at full detail:
+- **It is as current as NASA is.** The lag is whatever GIBS is running, and that varies — measured at twenty minutes one morning and two hours forty the next. The panel always prints the time of the frame you are actually looking at, so it is never in doubt.
+- **One pixel is a long way.** At the middle zoom a pixel is about 17 km, so an hour of a weather system's travel is two or three pixels.
+- **US ZIP codes only.** The location lookup is American.
+- **State lines, not county lines.** At 192 pixels for most of a continent, counties would be a smear.
+- **No radar, no forecast.** This is what the satellite sees, not what anyone thinks will happen next.
 
-| | what it catches |
+---
+
+## Credits
+
+- **Imagery:** [NASA GIBS / EOSDIS](https://nasa-gibs.github.io/gibs-api-docs/), serving **NOAA GOES-19 and GOES-18** ABI data.
+- **State and coast outlines:** the **US Census Bureau** cartographic boundary files.
+- **ZIP code lookup:** [zippopotam.us](https://api.zippopotam.us).
+- **Image resizing:** [images.weserv.nl](https://images.weserv.nl).
+- **The trick that makes photographs possible on a panel at all** is **cfdmb's**, from `rain-watch`.
+
+---
+
+## For developers
+
+| | |
 |---|---|
-| **stubs** | lit pixels with one neighbour, away from the frame edge: a border that stops in open country |
-| **specks** | runs under four pixels: confetti |
-| **ink** | share of the panel lit, capped at what the reference itself uses |
-| **straight** | share of pixels in a straight run of four or more: low means staircase |
-| **invented** | drawn pixels with no reference pixel within one: line that is not on the map |
-| **missed** | reference pixels with nothing drawn within one: map that is not on the panel |
+| **Size** | 192×32 (SCROLL) |
+| **Pages** | `close`, `storm` |
+| **Refresh** | 600 seconds |
+| **Requests** | 2 per page at most: the frame index, then the frame |
+| **Scene** | 0.75 MiB of the 1 MiB budget |
 
-The thresholds come from the reference, not from taste. Drawn at full
-detail it scores **zero stubs and zero specks on every frame**, and its ink
-runs from 4.5% over Denver to 11.1% over the Plains — so an absolute ink
-ceiling was always going to be wrong, because how much line a frame needs
-is set by how many states are in it.
+**Getting a photograph onto a panel.** `http.get` carries text, not bytes, and `c.image()` only reads files shipped inside the app — so a picture from the internet looks impossible. It is not. `images.weserv.nl` fetches any public image, resizes it to exactly 192×32 and re-encodes it as a PNG whose deflate blocks are **stored** (`l=0`), handed back as base64 (`encoding=base64`). With nothing to inflate, the decoder is about forty lines instead of a zlib implementation. The technique is cfdmb's, from `rain-watch`.
 
-Straight overlap turned out to be useless as a measure. A one-pixel-wide
-line shifted by one pixel scores zero while being visually perfect, so
-agreement is counted with a one-pixel tolerance instead.
+**The quantiser.** A page may emit at most 4096 draw ops and no bitmap may hold more than 4096 cells, so the frame is laid down in three 64-wide chunks. Buckets are fixed arithmetic — 32 steps of grey for anything near-neutral, 48 coarse chroma cells for the rest — while each bucket's *colour* is the mean of the pixels that landed in it. Fixed buckets, adaptive palette, one pass, no nearest-colour search. Each page then keeps only its **20 most populous** buckets and folds the rest into the nearest survivor: every colour costs one bitmap per chunk, and the two pages share a 1 MiB budget.
 
-Current score: **0–1 stubs, 0–1 specks, under 2.1% invented, under 1.6%
-missed**, passing on all four frames.
+**The state lines** come from the US Census file, snapped to an eighth of a degree, de-duplicated so a shared border is not drawn twice, chained between junctions, and simplified per arc — borders at 0.10°, the coast at 0.45°, since the coast is far wigglier and carries less per point. That packs to a 3.3 KB string and costs 140 line ops on page 1.
 
-**Rings are the wrong unit.** The first version simplified each state's
-boundary on its own. Kansas and Nebraska each carry the line between them;
-Douglas-Peucker kept different vertices on each pass; the two copies landed
-a pixel apart. Most of what looked like a map was railroad track — 18% of
-the panel lit, and unreadable.
+**They are scored, not eyeballed.** `_tools/border-critic/` holds a harness that renders the table over four frames — a coastal city, an interior one, a tight zoom and a wide one — and compares it against the same map drawn straight from the Census file, checking for dangling ends, confetti, staircase, invented line and missing line. Thresholds come from the reference rather than from taste. Three separate faults were found that way, every one of which looked like a styling problem on the panel and was obvious in the score.
 
-**A long step has to be broken up along the line.** Each step is two
-characters, so anything wider gets split. Clamping each axis separately
-walks as far as it can in latitude, then in longitude — turning a long
-diagonal into a dogleg that wanders degrees from the border it is meant to
-be drawing. Subdividing into equal steps fixes it. This stayed invisible
-while points were close together and appeared the moment chaining made the
-runs long.
+**Preview and check it locally:**
 
-**A chain must stop where borders meet.** Walk through a junction and the
-chain runs up one border and down another; simplify that and the corner
-gets cut — a clean diagonal straight across the map where no border exists.
-Nodes of any degree other than two are terminals.
-
-So: snap every point to an eighth of a degree, which makes a shared
-boundary the *same* sequence on both sides; break the rings into segments;
-drop the 838 duplicates; chain the survivors between junctions; simplify
-each arc at 0.08°; and split long steps along the line. The result agrees
-with the raw Census file pixel-for-pixel 63% of the time at panel
-resolution, and almost all of the rest is a one-pixel grid offset.
-
-**The decoder's constants must come from the same place as the data.** For
-two rounds the table was generated with an alphabet bias of 44 and read
-back with 45, because the script that pasted it in replaced the data and
-left the header alone. One step off in both axes, on every point. Nothing
-about that is visible in the source — it shows up only as lines in the
-wrong place, which is indistinguishable from bad cartography. It is why
-two "fixes" changed nothing.
-
-The coast stays, and is simplified harder than the borders (0.45° against
-0.10°) because it is far wigglier and carries less per point. Dropping it
-entirely was tried and was worse: borders that run to the sea then stop in
-mid-air, which the scorer counts as 12.5 stubs a frame against 0.5 with the
-coast in place.
-
-An eighth of a degree is about 14 km — under one pixel at the close zoom,
-where one pixel is 0.2°. The table packs into a 3.3 KB string.
-
-Drawing is one pass: decode, project, skip any segment whose ends land on
-the same pixel or that falls entirely off one edge. That leaves 140 line
-ops on the close page, against a 4096 limit.
-
-The lines were dotted for a while, which was treating the symptom. With the
-geometry right, a solid line is both quieter and clearer. Dark copper, so
-it sits under the weather rather than on top of it — amber read like a road
-atlas, and brighter copper still won the frame.
-
-**If you build something like this: render your table against the source
-data at six times panel resolution before trusting it.** Every one of these
-faults was obvious in that comparison and invisible on the panel, where
-each just looked like ugly styling.
-
-## Notes on the drawing
-
-192x32 is 6144 pixels, while a page may emit at most 4096 draw ops and no
-single bitmap may hold more than 4096 cells. `c.sprite` emits one bitmap per
-colour in its legend, so the frame is quantised to at most 80 colours and
-laid down in three 64-wide chunks — a few dozen bitmaps of 2048 cells each,
-inside both limits.
-
-The quantiser has to run in Starlark, which rules out a nearest-colour
-search: 6144 pixels against 80 colours is half a million comparisons. So the
-buckets are **fixed** and cheap — 32 steps of grey for anything
-near-neutral, which is most of a satellite picture, and 48 coarse chroma
-cells for land, city lights and the sunlit limb — while the **colour** of
-each bucket is the mean of the pixels that landed in it, which costs one
-running total. Fixed buckets, adaptive palette, one pass. Measured against
-the original frame it lands about three times closer than a uniform 4x4x4
-colour cube, which turns cloud into confetti.
-
-Eighty buckets is what the scheme can distinguish, not what a page may
-spend. A bitmap is a row of `0`/`1` integers in the scene, so each colour on
-a wide page costs about 15 KB, and the three pages share a 1 MiB budget —
-which three photographs blew through at 1.31 MiB. How many buckets a frame
-reaches is decided by the cloud, so each wide page now keeps its 20 most
-populous and folds every thinner one into the survivor nearest it in colour,
-recomputing that survivor's mean over the pixels it inherits. RMS error
-against the original goes from 5.6 to 8.7 — still far better than the 31.4
-of the uniform cube — and the app is 0.80 MiB with a ceiling of 0.81 MiB
-that no weather can push past. The disk page keeps 32 colours, because at
-32x30 its cells cost a sixth as much and the limb needs the gradient.
-
-Worth knowing if you are building something similar: `gdn validate` renders
-one page at a time, so it never sees the total and passed throughout.
-Studio builds every page into one scene and will tell you when they do not
-fit.
-
-Near the end of the map — Alaska, Hawaii — the bounding box is slid back
-onto it rather than narrowed, because narrowing it would collapse the wide
-page onto the close one. The viewer stops being dead centre when that
-happens, which is why the target is positioned from the bounding box rather
-than pinned to the middle. At the far edge of what a satellite can see you
-may catch the curve of the disk itself in a corner, black and sharp. That is
-the edge of the world as GOES can see it, not a fault.
-
-Nothing on these pages is a label standing in for a thing. It is the thing.
-
-## Running it
-
-From the repository root:
-
-```bash
+```powershell
 gdn studio apps/cloud-cover
+gdn render apps/cloud-cover --page 1 --input "zip=80202" --input "zoom=TIGHT"
+gdn render apps/cloud-cover --page 2 --input "zip=64108"
+gdn validate apps/cloud-cover
 ```
 
-Rendering one page:
+To see the failure screens, set `GDN_HTTP_OFFLINE=1` first.
 
-```bash
-gdn render apps/cloud-cover --page 2 --input "zip=80202"
-```
+---
 
-To see the no-data screens, set `GDN_HTTP_OFFLINE=1` first — every
-`http.get` then fails, which is what the publish-time validator does.
+**Created by Reyos** · Comments or suggestions? Reach out to **Reyos** on Discord.
 
-If `gdn` is not on `PATH`, use `python -m gdn` in its place.
-
-The preview images show a daylight pass over Colorado; the app renders
-whatever the satellite is looking at when your panel asks.
-
-Imagery courtesy of NOAA and NASA's Global Imagery Browse Services, part of
-the Earth Observing System Data and Information System.
-
-Built for the [GLANCE Developer Network](https://github.com/glance-led-dev/glance-dev-network).
+Built for the [Glance Developer Network](https://github.com/glance-led-dev/glance-dev-network).
