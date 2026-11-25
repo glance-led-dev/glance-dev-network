@@ -127,18 +127,33 @@ anti-aliased hairlines do not survive a downscale to 32 rows. So the
 outlines are carried in the app instead, from the US Census cartographic
 boundary file.
 
-**Only the borders between states are drawn.** A segment belonging to two
-states is the line between them, and nothing in a photograph from orbit can
-show it. A segment belonging to one state is an outside edge — coast, lake
-shore, national boundary — and the satellite draws every one of those
-already, by the water being darker than the land. Tracing them a second
-time added no information and two thirds of the table, all of it in the
-wiggliest places: Long Island, Cape Cod, the Chesapeake, the Great Lakes.
-That is what made the panel look like a thicket. Dropping them took the
-close page from 218 line ops to 96.
+This took several goes, and every failure looked like a styling problem
+right up until it was measured. The thing that finally settled it was not
+another opinion but a scoring script, run over four frames — a coastal
+city, an interior one, a tight zoom and a wide one — against the same map
+drawn straight from the Census file at full detail:
 
-Getting the rest of it right took three goes, and every failure looked like
-a styling problem right up until it was measured against the source.
+| | what it catches |
+|---|---|
+| **stubs** | lit pixels with one neighbour, away from the frame edge: a border that stops in open country |
+| **specks** | runs under four pixels: confetti |
+| **ink** | share of the panel lit, capped at what the reference itself uses |
+| **straight** | share of pixels in a straight run of four or more: low means staircase |
+| **invented** | drawn pixels with no reference pixel within one: line that is not on the map |
+| **missed** | reference pixels with nothing drawn within one: map that is not on the panel |
+
+The thresholds come from the reference, not from taste. Drawn at full
+detail it scores **zero stubs and zero specks on every frame**, and its ink
+runs from 4.5% over Denver to 11.1% over the Plains — so an absolute ink
+ceiling was always going to be wrong, because how much line a frame needs
+is set by how many states are in it.
+
+Straight overlap turned out to be useless as a measure. A one-pixel-wide
+line shifted by one pixel scores zero while being visually perfect, so
+agreement is counted with a one-pixel tolerance instead.
+
+Current score: **0–1 stubs, 0–1 specks, under 2.1% invented, under 1.6%
+missed**, passing on all four frames.
 
 **Rings are the wrong unit.** The first version simplified each state's
 boundary on its own. Kansas and Nebraska each carry the line between them;
@@ -166,12 +181,26 @@ each arc at 0.08°; and split long steps along the line. The result agrees
 with the raw Census file pixel-for-pixel 63% of the time at panel
 resolution, and almost all of the rest is a one-pixel grid offset.
 
+**The decoder's constants must come from the same place as the data.** For
+two rounds the table was generated with an alphabet bias of 44 and read
+back with 45, because the script that pasted it in replaced the data and
+left the header alone. One step off in both axes, on every point. Nothing
+about that is visible in the source — it shows up only as lines in the
+wrong place, which is indistinguishable from bad cartography. It is why
+two "fixes" changed nothing.
+
+The coast stays, and is simplified harder than the borders (0.45° against
+0.10°) because it is far wigglier and carries less per point. Dropping it
+entirely was tried and was worse: borders that run to the sea then stop in
+mid-air, which the scorer counts as 12.5 stubs a frame against 0.5 with the
+coast in place.
+
 An eighth of a degree is about 14 km — under one pixel at the close zoom,
-where one pixel is 0.2°. The table packs into a 1.9 KB string.
+where one pixel is 0.2°. The table packs into a 3.3 KB string.
 
 Drawing is one pass: decode, project, skip any segment whose ends land on
-the same pixel or that falls entirely off one edge. That leaves 96 line ops
-on the close page, against a 4096 limit.
+the same pixel or that falls entirely off one edge. That leaves 140 line
+ops on the close page, against a 4096 limit.
 
 The lines were dotted for a while, which was treating the symptom. With the
 geometry right, a solid line is both quieter and clearer. Dark copper, so

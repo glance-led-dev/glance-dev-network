@@ -163,29 +163,43 @@ CAP = 20
 #
 # It costs one line op per visible segment, against a 4096-op page limit.
 BORDER_CH = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-./:;<=>?@[]^_{}~'
-BORDER_BIAS = 45
-BORDER_GRID = 8.0
+BORDER_BIAS = 44
+BORDER_GRID = 8
 BORDERS = (
-    '336,-912|iK;336,-912|4i;336,-912|i);292,-607|i3jd;374,-736|hgeifdhihkgheiglhmfkikej;280,-917|!LwO)i;' +
-    '280,-917|rhhnkjoi;280,-917|cmhgdhhgfjijgiig;320,-762|hiilfgfmRi;320,-762|iHiH;320,-762|ne;264,-752|a' +
-    'iejflgighihbh;264,-752|mijhhgjh;264,-752|i(;325,-766|jhoiigkjoe;325,-766|i<gl;302,-704|ghhfgjjdgh;30' +
-    '2,-704|jljigmklhiikjijkhiilkijkjiikkihkjkli;302,-704|liijjhijmllhkj#i;292,-824|i)Tiijgjimhihminhihkj' +
-    'jgnkkhiikhkhikkipjifo;292,-824|8hiGgj;292,-824|mi;336,-574|iU;336,-574|ilgiij;336,-574|diih;331,-598' +
-    '|fpgh;331,-598|ihkgjjkfi9ki;331,-598|ghhghjhghifmed;269,-756|wjrg;332,-569|jh;392,-936|Nifj;300,-656' +
-    '|fcghgc;300,-656|gjiljjhlkmhijkkillmkgkmlhjlmlifmkj;300,-656|lemh;360,-587|fihjghWj;311,-617|hj;311,' +
-    '-617|jjhjhh;311,-617|md;264,-729|cjghhgbgixfhhkfj;264,-729|liijjgljjkjhklkiijlk;310,-616|hh;246,-652' +
-    '|jeeiihkhjNkh;318,-636|i:;318,-636|iapi;318,-636|eiikkjjlhkklhkgj;336,-588|cihghj;336,-588|ok;280,-6' +
-    '75|iY;280,-675|is;280,-675|kjmqikllhijnml;362,-569|djYihkhhhj;360,-832|Si;360,-832|iGiGei;360,-832|q' +
-    'i;334,-695|iz;293,-669|iy;293,-669|i8hjiX;296,-713|kfjjlhjejikflkjhjjjfhhlhmdkhlj;296,-713|eg;296,-9' +
-    '12|i_;368,-832|h:i:;368,-832|)i;242,-700|ljlgi%;328,-832|i4;328,-832|yi;328,-832|iyai;342,-586|io;27' +
-    '1,-628|pZjZkhhhjijYgb;256,-647|jgogkflhjfkhkflhjelk;292,-715|ihgigg;370,-988|hjimhjfihmkmhnkripjjiz;' +
-    '308,-600|icsi;360,-572|ghhjggiggiefbh;348,-772|wilfkl;348,-772|ihfkfggj;348,-772|i};392,-928|aigkfih' +
-    'lfmhihmfhfjhggjkmhkhhdlhlfkknhjjkhiikkkgl;317,-604|jj;320,-816|Ki;296,-816|i/i:;296,-816|ia;343,-567' +
-    '|hgiX;336,-936|iK;336,-936|xikjkflkijkinljikf;304,-602|if;307,-661|lghgjfhhjdlhie;307,-661|kmjhkkhjm' +
-    'likllpkij;334,-668|iY;280,-685|Pmfkfgfjghgj;280,-685|iN;243,-707|uh)ljh;367,-772|mhihshmgph;313,-679' +
-    '|%j;336,-888|$i;336,-888|aiiy;288,-718|idkkkii8;288,-718|gigfeh;340,-772|lcidhhkeiMiM;361,-701|jhjji' +
-    'gkjkfmSkg;296,-757|ei;323,-731|jijkkiijlhmqlile;318,-606|jjhk;280,-706|iS;296,-872|i)i);296,-872|LiM' +
-    'i;296,-872|<i;325,-644|ti;340,-702|iL;336,-960|iA;348,-730|hihkhhfigm' +
+    '336,-912|iK;336,-912|4i;336,-912|i);292,-607|ncolma;292,-607|ecipXccS;292,-607|i3jd;465,-1073|rZbk;4' +
+    '65,-1073|kb;465,-1073|Wxdfcu;465,-1073|ckfctf;280,-917|rhhnqj;280,-917|<1)i;280,-917|cmhgdhhgfjijgii' +
+    'g;320,-762|hiilfgfmRi;320,-762|iHiH;320,-762|ne;264,-752|mije;264,-752|Wjflgiggbh;264,-752|i(;325,-7' +
+    '66|jhoiigkjoe;325,-766|i<gl;452,-1064|hh;452,-1064|glje;452,-1064|nbej;452,-1064|jc;302,-704|ghhfgjj' +
+    'dgh;302,-704|jljigmklhiikkkhiilkikkikkihkjkli;302,-704|liijjhmmlhkj#i;292,-824|mi;292,-824|i)Tigkgvg' +
+    'kjjgnkkfmkkipjifo;292,-824|8hiGgj;334,-571|kiif;334,-571|fe;334,-571|hj;336,-574|iU;336,-574|diih;45' +
+    '9,-1086|Yrsgib;459,-1086|ih;459,-1086|ih;459,-1086|jpnd;445,-1067|mfkn;445,-1067|bmipvZ;331,-598|fpg' +
+    'h;331,-598|ffhjhgemed;331,-598|ndi9ki;269,-756|wjrg;332,-569|ksmZnj;332,-569|jh;332,-569|jh;338,-638' +
+    '|mpmgizvwjx;338,-638|gc;392,-936|iq;392,-936|iLiLVlofkTSmhn;392,-936|Nifj;300,-656|lemh;300,-656|gjj' +
+    'mhlkmhijkkipngkmlhjlmlifmkj;300,-656|fcghgc;360,-587|Qj;360,-587|ix;467,-1080|nTcm;438,-1305|ig;453,' +
+    '-1070|dfpggn;311,-617|hj;311,-617|jjhjhh;311,-617|md;264,-729|cjffbgixfhhkfj;264,-729|liijjgljjkjhkl' +
+    'kill;464,-1085|jj;533,-1297|kegm;533,-1297|hk;310,-616|hh;246,-652|jeeiihkhjNkh;246,-652|sn;246,-652' +
+    '|CuVczTviqalD;318,-636|i:;318,-636|eiikkjjlhkklfl;318,-636|iapi;336,-588|cihghj;336,-588|ok;280,-675' +
+    '|is;280,-675|kjmsllhijnml;280,-675|iY;362,-569|!xfuWibogTWT;362,-569|Tjhkhhhj;362,-569|gf;331,-575|f' +
+    'U;334,-695|id;334,-695|iz;334,-695|on!iioqmfuUfksYjba;360,-832|qi;360,-832|Si;360,-832|iGiGei;293,-6' +
+    '69|iy;293,-669|hLiL;440,-1306|dVlu;440,-1306|iq;440,-1306|w[zueSoYdXvefVwQwwk+llndknfAsJq:dnl%jc;440' +
+    ',-1306|gh;296,-713|kfjjlhjelfnkjfhhlhmdkhlj;296,-713|eg;296,-912|i_;368,-832|h:i:;368,-832|)i;242,-7' +
+    '00|ljlgi%;242,-700|jb;328,-832|yi;328,-832|iyai;328,-832|i4;374,-737|s$o3ngfQ;374,-737|dhfdgkchfpfki' +
+    'kej;374,-737|hw;342,-586|io;256,-647|x#;256,-647|jgogkflhjfmelhjelk;271,-628|pZjZkhhhjijYgb;292,-715' +
+    '|ef;370,-988|hnejhmkmhnkripjjiz;370,-988|heBg;308,-600|eg;308,-600|re;308,-600|icsi;360,-572|ghhjggi' +
+    'ggiefbh;254,-852|M+pphqI!dv(pq&;254,-852|fO;466,-1091|bm;466,-1091|sHmkjFjGlnlciXcj;466,-1091|hp;348' +
+    ',-772|wilfkl;348,-772|i};348,-772|ihfkfggj;392,-928|aigkfihlemhmfhfjhggjkmhkhhdlhlfkknhnkkgl;392,-92' +
+    '8|i<i<i<;317,-604|dowo;317,-604|jj;320,-816|Ki;296,-816|ia;296,-816|i/i:;326,-592|kxiW;343,-567|hgiX' +
+    ';343,-567|jj;336,-936|xikjkfllpllf;336,-936|iK;441,-1280|jj;304,-602|if;304,-602|bcpl;307,-661|lghgj' +
+    'fhhjdlhie;307,-661|kmjhkkhjmlikllpkij;334,-668|iY;334,-668|fqny;280,-685|iN;280,-685|Pmfkfgbj;243,-7' +
+    '07|gZ;243,-707|uh)ljh;367,-772|mhihshmgph;313,-679|%j;336,-888|aiiy;336,-888|$i;392,-832|i-i-;288,-7' +
+    '18|idkkkii8;288,-718|gigfeh;340,-772|lcidhhkeiMiM;361,-701|pti&oViHolbQ;361,-701|dgopMc;361,-701|jhj' +
+    'jigkjkfmSkg;296,-757|ei;323,-731|mllhmqlile;334,-700|og;532,-1295|mjt4u_u{grfef_f_f_6i7ijxWvo$K*dxZf' +
+    'lc;309,-617|gh;309,-617|gh;482,-1184|lmfe;482,-1184|ZFvkkviUVNepbYWDWD;238,-751|c]rf;318,-606|jjhk;4' +
+    '64,-1226|frbTmcou;464,-1226|krledd;307,-618|fpulafeo;280,-706|iS;453,-1236|gg;296,-872|i)i);296,-872' +
+    '|LiMi;296,-872|<i;325,-644|ti;340,-702|iL;430,-1336|jpeVlo;251,-872|iRtF;262,-918|gPsaoP%TqipX)e;336' +
+    ',-960|iA;348,-730|gkehgm;505,-1362|jvkIfv;170,-1265|mjeh;478,-1329|mmiUes;152,-1247|mroZYi;148,-536|' +
+    'gtfYnh;167,-1254|gokc;418,-1392|gakq;384,-710|hejm;427,-1347|jmeclk;441,-1284|kfgl;481,-1179|felm;42' +
+    '2,-1511|kwgU' +
     '')
 
 BORDER_VAL = {BORDER_CH[i]: i for i in range(len(BORDER_CH))}
