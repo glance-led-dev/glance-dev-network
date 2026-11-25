@@ -59,9 +59,14 @@ fail once in ten.
 
 ## How current is it
 
-About an hour behind the satellite, which is how far behind GIBS runs. That
-sounds worse than it is: at the `NORMAL` setting one pixel is 17 km, so an
-hour of a weather system's travel is two or three pixels.
+However far behind GIBS is running, which is not a fixed number: measured at
+twenty minutes one morning and two hours forty the next. The app always
+draws the newest frame GIBS admits to, less one ten-minute step, and prints
+that frame's own time on the panel rather than the clock's — so what you are
+looking at is never in doubt, even on a slow day.
+
+An hour of lag sounds worse than it is: at the `NORMAL` setting one pixel is
+17 km, so an hour of a weather system's travel is two or three pixels.
 
 If the newest frame ever falls more than three hours behind, the panel stops
 showing a time and says how old the picture is, in amber. It would rather
@@ -123,6 +128,23 @@ each bucket is the mean of the pixels that landed in it, which costs one
 running total. Fixed buckets, adaptive palette, one pass. Measured against
 the original frame it lands about three times closer than a uniform 4x4x4
 colour cube, which turns cloud into confetti.
+
+Eighty buckets is what the scheme can distinguish, not what a page may
+spend. A bitmap is a row of `0`/`1` integers in the scene, so each colour on
+a wide page costs about 15 KB, and the three pages share a 1 MiB budget —
+which three photographs blew through at 1.31 MiB. How many buckets a frame
+reaches is decided by the cloud, so each wide page now keeps its 20 most
+populous and folds every thinner one into the survivor nearest it in colour,
+recomputing that survivor's mean over the pixels it inherits. RMS error
+against the original goes from 5.6 to 8.7 — still far better than the 31.4
+of the uniform cube — and the app is 0.80 MiB with a ceiling of 0.81 MiB
+that no weather can push past. The disk page keeps 32 colours, because at
+32x30 its cells cost a sixth as much and the limb needs the gradient.
+
+Worth knowing if you are building something similar: `gdn validate` renders
+one page at a time, so it never sees the total and passed throughout.
+Studio builds every page into one scene and will tell you when they do not
+fit.
 
 Near the end of the map — Alaska, Hawaii — the bounding box is slid back
 onto it rather than narrowed, because narrowing it would collapse the wide
