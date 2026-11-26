@@ -1,0 +1,76 @@
+gdn: 1
+id: weather-unrolled
+version: 0.1.0
+name: Weather Unrolled
+author: scottkle
+description: "The next 24 hours drawn as one moving scene for a U.S. ZIP code. An opening card gives the high, low and the headline, then the sky moves from night to dawn to day with clouds, rain and snow by chance, wind, fog, the real moon, snow and ice totals, and Weather Service alerts in their official colors. From the National Weather Service. No API key."
+category: Weather
+entry: app.star
+
+width: 192
+height: 32
+refresh: 1200
+
+pages: [card, sky1, sky2, sky3]
+
+assets:
+  - ICON_SUN.png
+  - ICON_PARTLY.png
+  - ICON_CLOUDY.png
+  - ICON_RAIN.png
+  - ICON_SNOW.png
+  - ICON_ICE.png
+  - ICON_SLEET.png
+  - ICON_MIX.png
+  - ICON_STORM.png
+  - ICON_FOG.png
+  - ICON_WIND.png
+  - ICON_PIN.png
+  - ICON_WAIT.png
+  - FOG_DAY_A.png
+  - FOG_DAY_B.png
+  - FOG_NIGHT_A.png
+  - FOG_NIGHT_B.png
+  - BOLT_A.png
+  - BOLT_B.png
+  - CLOUD_WISP_STORM.png
+  - CLOUD_SMALL_STORM.png
+  - CLOUD_MEDIUM_STORM.png
+  - CLOUD_LARGE_STORM.png
+  - CLOUD_WISP_DAY.png
+  - CLOUD_WISP_GRAY.png
+  - CLOUD_WISP_DUSK.png
+  - CLOUD_WISP_NIGHT.png
+  - CLOUD_SMALL_DAY.png
+  - CLOUD_SMALL_GRAY.png
+  - CLOUD_SMALL_DUSK.png
+  - CLOUD_SMALL_NIGHT.png
+  - CLOUD_MEDIUM_DAY.png
+  - CLOUD_MEDIUM_GRAY.png
+  - CLOUD_MEDIUM_DUSK.png
+  - CLOUD_MEDIUM_NIGHT.png
+  - CLOUD_LARGE_DAY.png
+  - CLOUD_LARGE_GRAY.png
+  - CLOUD_LARGE_DUSK.png
+  - CLOUD_LARGE_NIGHT.png
+
+inputs:
+  - key: zip
+    type: string
+    app_input_type: free-text
+    label: ZIP code
+    default: "15213"
+    help: A 5-digit U.S. ZIP code. The app shows the town name and its forecast.
+  - key: units
+    type: choice
+    app_input_type: dropdown
+    label: Temperature
+    default: "F"
+    choices: ["F", "C"]
+    help: Fahrenheit or Celsius. Celsius shows snow in centimeters.
+  - key: town
+    type: string
+    app_input_type: free-text
+    label: Town name to display (optional)
+    default: ""
+    help: Leave blank to use the name that comes with the ZIP code. Fill it in if your ZIP shows a neighborhood instead of your town.
