@@ -2,11 +2,10 @@
 #
 # DESIGN. The event name sits in a header strip; under it, the time
 # left until a date and time -- "6 DAYS, 10 HOURS, 23 MINUTES" -- in a
-# colour that says how close it is: far off, soon, imminent (each one a
-# dropdown, green / dark yellow / red by default, with the two
-# thresholds also dropdowns). Once the moment passes the same count
-# reads "... AGO" in the past colour. A hairline under the header wears
-# the state colour too.
+# colour that says how close it is: green far off, dark yellow soon,
+# red imminent (the two thresholds are dropdowns). Once the moment
+# passes the same count reads "... AGO" in gray. A hairline under the
+# header wears the state colour too.
 #
 #   64x32                    128+ (SCROLL)
 #   +------------------+     +--------------------------------+

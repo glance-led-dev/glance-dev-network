@@ -22,7 +22,7 @@ anywhere; the feed id is the whole configuration.
     elapsed bar along the bottom edge.
   - *All-day* (sky blue) — it is an all-day event.
 
-  Defaults are the four above. OFFLINE and ALL CLEAR keep amber and
+  Defaults are the four above. OFFLINE and CLEAR keep amber and
   green whatever you pick — those are the app's own states, not an
   event's phase.
 - **Feed ID** — in the calfeed console, open the view you want on the
