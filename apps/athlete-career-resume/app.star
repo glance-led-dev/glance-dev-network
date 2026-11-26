@@ -90,11 +90,6 @@ def dig(obj, path, fallback = None):
         cur = cur.get(k, None)
     return fallback if cur == None else cur
 
-def frame(c, color):
-    """The app's own edges. Per-app, not per-page: both rails, every page."""
-    c.rect(0, 0, 1, 31, fill = color)
-    c.rect(c.width - 2, 0, c.width - 1, 31, fill = color)
-
 def meta_fit(c, parts, maxw):
     """Join `parts` with " . ", dropping whole trailing parts until it fits.
 
