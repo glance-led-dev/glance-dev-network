@@ -1,0 +1,24 @@
+id: nba-playoff-picture
+name: NBA Playoff Picture
+author: cfdmb
+description: One conference's NBA playoff picture all year (pick East or West - add the app twice for both). In the regular season, the first round if the season ended today, the top 6, the play-in, the teams chasing it, and the races for the No. 1 seed, a top-6 spot and the play-in, with magic numbers from March 1. During play-in week, the real play-in games. In the playoffs, the full bracket - every series score, next game and TV network, the conference finals and NBA Finals, and the latest results - with last spring's bracket and champion kept up through the summer.
+category: Sports
+width: 192
+height: 32
+refresh: 3600
+pages:
+  - intro
+  - round1a
+  - round1b
+  - leaders
+  - top1
+  - top2
+  - playin
+  - chasers_page
+inputs:
+  - key: conference
+    type: string
+    app_input_type: dropdown
+    label: Conference
+    choices: [East, West]
+    default: East
