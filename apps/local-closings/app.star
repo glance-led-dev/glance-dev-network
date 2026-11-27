@@ -51,6 +51,10 @@ ZIP_URL = "https://api.zippopotam.us/us/"
 ZIP_TTL = 2592000  # a ZIP code doesn't move
 LEFT = 10
 RIGHT = 181
+# Two list screens in the rotation. Each page re-reads the same cached URLs, so
+# the extra screen costs no request: http.get only counts a fetch after both the
+# disk cache and the per-render memo miss.
+LIST_SLOTS = 2
 SCAN = 250
 TOWNNEWS_TRIES = 3
 GSYNC_PATH = "/pf/api/v3/content/fetch/gsync-closings"
@@ -3411,7 +3415,7 @@ def school_line(c, st, x, y):
 # ---- screens ----------------------------------------------------------------------
 
 def draw_problem(c, st, title, sub):
-    header(c, "CLOSINGS", FAIL, station_name(st))
+    header(c, "LOCAL CLOSINGS", FAIL, station_name(st))
     c.sprite(WARN, LEFT, 12, legend = WARN_LEGEND)
     x = LEFT + 16
     f = "6x8" if c.text_width(title, "6x8") <= RIGHT - x and "'" not in title else "5x7"
@@ -3438,7 +3442,7 @@ def board_for(c, st):
 
 
 def draw_clear(c, st):
-    header(c, "CLOSINGS", GREEN, station_name(st))
+    header(c, "LOCAL CLOSINGS", GREEN, station_name(st))
     c.sprite(BUS, LEFT, 13, legend = BUS_LEGEND)
     c.sprite(CHECK, LEFT + 27, 7, legend = CHECK_LEGEND)
     x = LEFT + 42
@@ -3451,7 +3455,7 @@ def draw_board(c, st):
     found = st.get("all", st["rows"])
     groups = tally(found)
     col = status_color(groups[0][0])
-    header(c, "CLOSINGS", col, station_name(st))
+    header(c, "LOCAL CLOSINGS", col, station_name(st))
     hero(c, found)
     x = LEFT + 33
     num = str(st.get("total", len(found)))
@@ -3469,33 +3473,72 @@ def draw_board(c, st):
         school_line(c, st, x, 26)
 
 
-def page_rows(st, now):
-    # Three closings per refresh; the list rolls on every five minutes so the
-    # whole list comes round. A matched school stays at the top.
+def page_rows(st, now, slot):
+    # Two list screens per render, three closings each, so six come round in one
+    # pass of the rotation instead of three. Anything past six still rolls on
+    # every five minutes until the whole list has been round. A matched school
+    # stays pinned at the top of both screens.
+    #
+    # Returns None when this screen has nothing of its own to show -- a short
+    # list fills the first screen and leaves the second with nothing, and the
+    # caller draws the station card there instead of a blank panel.
     rows = st["rows"]
     pinned = [r for r in rows if r.get("matched", False)][:1]
     rest = [r for r in rows if not r.get("matched", False)]
     per = 3 - len(pinned)
-    if len(rest) <= per:
-        return [pinned + rest, 0, len(rows)]
-    # Spread the rows evenly over the pages (13 -> 3,3,3,2,2), so the last
-    # page isn't a lone row.
-    pages = (len(rest) + per - 1) // per
-    k = (now // 300) % pages
-    base = len(rest) // pages
-    extra = len(rest) % pages
-    start = k * base + min(k, extra)
-    size = base + (1 if k < extra else 0)
-    return [pinned + rest[start:start + size], start, len(rows)]
+    span = per * LIST_SLOTS
+    if len(rest) <= span:
+        chunk = rest
+        start = 0
+    else:
+        # Spread the rows evenly over the rounds (26 -> 6,5,5,5,5) so the last
+        # round isn't a lone row. A round never exceeds `span`, because
+        # len(rest) // rounds <= span whenever rounds = ceil(len(rest) / span).
+        rounds = (len(rest) + span - 1) // span
+        k = (now // 300) % rounds
+        base = len(rest) // rounds
+        extra = len(rest) % rounds
+        start = k * base + min(k, extra)
+        size = base + (1 if k < extra else 0)
+        chunk = rest[start:start + size]
+    # Split the round between the two screens evenly rather than filling the
+    # first and leaving a lone row on the second: four closings read better as
+    # 2 + 2 than as 3 + 1. A round that fits on one screen stays on one screen.
+    if len(chunk) <= per:
+        take = len(chunk) if slot == 0 else 0
+        off = 0
+    else:
+        take = (len(chunk) + LIST_SLOTS - 1) // LIST_SLOTS
+        if take > per:
+            take = per
+        off = slot * take
+    if take == 0 or off >= len(chunk):
+        if slot == 0 and pinned != []:
+            return [pinned, start, len(rows)]
+        return None
+    return [pinned + chunk[off:off + take], start + off, len(rows)]
 
 
-def draw_list(c, st, now):
-    got = page_rows(st, now)
+def draw_list(c, st, now, slot):
+    got = page_rows(st, now, slot)
+    if got == None:
+        return False
     show = got[0]
-    first = got[1] + 1
     n = st.get("total", got[2])
     col = status_color(show[0]["kind"])
-    last = min(n, first + len(show) - 1)
+    # The range describes the rolling window, so it reads the same on every
+    # screen. A pinned school sits outside it -- it is always on top and drawn
+    # in cyan, which says "yours" more clearly than any number could, and
+    # counting it into a range would make the range non-contiguous and wrong.
+    npin = len([r for r in show if r.get("matched", False)])
+    shown = len(show) - npin
+    if shown == 0:
+        # The pinned school is the only thing on the list.
+        first = 1
+        last = 1
+    else:
+        first = got[1] + 1 + npin
+        last = min(n, first + shown - 1)
     tag = (str(first) if last <= first else str(first) + "-" + str(last)) + " OF " + str(n)
     header(c, "CLOSINGS", col, tag)
     for i in range(len(show)):
@@ -3509,13 +3552,17 @@ def draw_list(c, st, now):
         if c.text_width(name, "5x7") > room:
             name = compact_school(name)
         c.text(clip_line(c, name, "5x7", room), LEFT + 13, y, font = "5x7", color = CYAN if r.get("matched", False) else TITLE)
+    return True
 
 
-def draw_station(c, st):
-    # The station the app is watching, and how far it is from you.
+def draw_station(c, st, note = "CHECKED EVERY 5 MIN"):
+    # The station the app is watching, and how far it is from you. `note` is the
+    # header's right-hand text: the second list screen passes something else so
+    # that on a clear day, when both list screens fall back here, the panel does
+    # not look like it has frozen on one picture.
     src = st.get("src", {})
     kind = st["kind"]
-    header(c, "WATCHING", DIM, "CHECKED EVERY 5 MIN")
+    header(c, "WATCHING", DIM, note)
     c.sprite(TV, LEFT, 9, legend = TV_LEGEND)
     x = LEFT + 20
     if kind == "nozip" or kind == "badzip":
@@ -3546,12 +3593,24 @@ def board(c, ctx):
     board_for(c, load_state(ctx))
 
 
-def closings(c, ctx):
+def list_page(c, ctx, slot):
     c.fill(BG)
     st = load_state(ctx)
     if st["kind"] == "ok" and st["rows"] != []:
-        draw_list(c, st, ctx.now.unix)
-    else:
-        # Nothing to list: show which station is being watched instead of
-        # repeating the board.
-        draw_station(c, st)
+        if draw_list(c, st, ctx.now.unix, slot):
+            return
+        # The list ran out before this screen: say so, rather than claim to be
+        # watching when the screen before has just shown the whole list.
+        draw_station(c, st, "THAT IS THE WHOLE LIST")
+        return
+    # Nothing to list at all. Both screens land here, so give them different
+    # headers; the first says what the app does, the second what it found.
+    draw_station(c, st, "CHECKED EVERY 5 MIN" if slot == 0 else "NO CLOSINGS OR DELAYS")
+
+
+def closings(c, ctx):
+    list_page(c, ctx, 0)
+
+
+def more(c, ctx):
+    list_page(c, ctx, 1)

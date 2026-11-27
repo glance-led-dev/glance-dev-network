@@ -15,12 +15,14 @@ School, business, church and government **closings and delays** from your local 
 - [At a glance](#at-a-glance)
 - [Page 1: The board](#page-1-the-board)
 - [Page 2: The closings list](#page-2-the-closings-list)
+- [Page 3: The rest of the list](#page-3-the-rest-of-the-list)
 - [Finding your station](#finding-your-station)
 - [Reading the panel](#reading-the-panel)
 - [Settings](#settings)
 - [Supported stations](#supported-stations)
 - [How it works](#how-it-works)
 - [Screens for every situation](#screens-for-every-situation)
+- [What's new in 1.2](#whats-new-in-12)
 - [What's new in 1.1](#whats-new-in-11)
 - [Limitations](#limitations)
 - [For developers](#for-developers)
@@ -32,7 +34,8 @@ School, business, church and government **closings and delays** from your local 
 | Page | What it shows |
 |---|---|
 | **1 · board** | **ALL CLEAR**, or **how many closings** your station lists and of which kind (closed, delayed, early dismissal, remote, other). With a school name set, **your school's status** on the bottom line. |
-| **2 · closings** | **Three closings at a time**, each with an icon for the kind of place and a **status chip**. The list rolls on every refresh so the whole list comes round. When nothing is listed, **the station the app is watching** and how far it is from you. |
+| **2 · closings** | **Up to three closings**, each with an icon for the kind of place and a **status chip**. |
+| **3 · more** | **The next three**, so **six come round in one pass** of the rotation. Beyond six the list rolls on every refresh until it has all been round. When there is nothing more to show, **the station the app is watching** and how far it is from you. |
 
 ---
 
@@ -50,7 +53,7 @@ School, business, church and government **closings and delays** from your local 
 - **Hero art:**
   - **the school bus** when schools lead the list
   - **a storefront with a CLOSED sign** when businesses do
-- **Header colour:** `CLOSINGS` takes the colour of the biggest group.
+- **Header colour:** `LOCAL CLOSINGS` takes the colour of the biggest group.
 
 ![Your school on the board](preview/board-school.png)
 
@@ -62,17 +65,28 @@ School, business, church and government **closings and delays** from your local 
 
 ![The closings list](preview/list.png)
 
-**Three closings at a time:**
+**Up to three closings:**
 - **Icon:** shows the kind of place.
 - **Name:** shortened to fit (`CENTRAL` → `CTRL`, `HIGH SCHOOL` → `HS`).
 - **Status chip:** on the right, in the status colour.
 - **Position:** the header shows where you are in the list (`61-63 OF 90`).
-- **Rolling:** each refresh shows the next three, so the whole list comes round.
-- **Your school:** when set and listed, it stays **pinned at the top** in cyan.
+- **Your school:** when set and listed, it stays **pinned at the top** in cyan, on this page and the next.
 
 ![The station being watched](preview/station.png)
 
 **When nothing is listed,** this page doesn't repeat the board. It shows **which station the app is watching**, its city, and **how far it is from your ZIP code** (`1 MI FROM 46802`), so you can check the app picked the right one.
+
+---
+
+## Page 3: The rest of the list
+
+![The next three closings](preview/list-more.png)
+
+**The next three closings,** read the same way as page 2. Because Glance plays every page of an app in turn, the two list screens mean **six closings come round in one pass** — you don't wait out a refresh to see the rest.
+
+- **Beyond six:** the list **rolls on every refresh**, five minutes at a time, until the whole thing has been round. A long list is split evenly rather than front-loaded, so thirteen closings read **2 + 2** per screen rather than 3 + 1.
+- **Shorter lists:** three or fewer all fit on page 2, and this page shows the station card with `THAT IS THE WHOLE LIST` instead.
+- **Nothing listed:** the station card again, headed `NO CLOSINGS OR DELAYS`.
 
 ---
 
@@ -183,16 +197,32 @@ A station whose page uses another system shows **CAN'T READ THIS PAGE**. Paste a
 
 ## Screens for every situation
 
-| Situation | Board | List page |
-|---|---|---|
-| Nothing listed | **ALL CLEAR** · `NO CLOSINGS OR DELAYS` | The station being watched, and how far away |
-| Closings listed | The count and breakdown | Three at a time, rolling |
-| Your school is listed | Its status on the bottom line | Pinned at the top in cyan |
-| Your school isn't listed | `NOT LISTED` in green | |
-| No ZIP code set | `ADD YOUR ZIP CODE` | `NO STATION YET` |
-| ZIP code not found | `ZIP CODE NOT FOUND` · `CHECK 00000…` | `CHECK YOUR ZIP CODE` |
-| Station page didn't load | `STATION OFFLINE` · `TRYING AGAIN SOON` | `PAGE DID NOT LOAD` |
-| Unsupported page | `CAN'T READ THIS PAGE` | `CAN'T READ THIS PAGE` |
+| Situation | Board | List page | The rest |
+|---|---|---|---|
+| Nothing listed | **ALL CLEAR** · `NO CLOSINGS OR DELAYS` | The station being watched, and how far away | The same, headed `NO CLOSINGS OR DELAYS` |
+| One to three listed | The count and breakdown | All of them | The station card · `THAT IS THE WHOLE LIST` |
+| Four to six listed | The count and breakdown | The first half | The second half |
+| More than six | The count and breakdown | Six per pass, rolling every refresh | |
+| Your school is listed | Its status on the bottom line | Pinned at the top in cyan | Pinned there too |
+| Your school isn't listed | `NOT LISTED` in green | | |
+| No ZIP code set | `ADD YOUR ZIP CODE` | `NO STATION YET` | `NO STATION YET` |
+| ZIP code not found | `ZIP CODE NOT FOUND` · `CHECK 00000…` | `CHECK YOUR ZIP CODE` | `CHECK YOUR ZIP CODE` |
+| Station page didn't load | `STATION OFFLINE` · `TRYING AGAIN SOON` | `PAGE DID NOT LOAD` | `PAGE DID NOT LOAD` |
+| Unsupported page | `CAN'T READ THIS PAGE` | `CAN'T READ THIS PAGE` | `CAN'T READ THIS PAGE` |
+
+---
+
+## What's new in 1.2
+
+**New**
+- **A second list screen.** The list used to roll three at a time on the refresh timer, so one slice sat on the panel for a full five minutes — with five closings you saw three and waited out the refresh for the rest. There are now two list screens, so **six closings come round in one pass** of the rotation. Anything past six still rolls until the whole list has been round.
+- **Long lists split evenly** between the two screens instead of filling the first: thirteen closings read 2 + 2 per screen rather than 3 + 1.
+- **The board says `LOCAL CLOSINGS`,** so the app names itself on the screen you see most. The list screens keep the short `CLOSINGS` — all the room the `2-3 OF 5` tag leaves.
+
+**Fixed**
+- **The position in the list, with a school pinned.** It counted into the rows *other than* your school, so the second slice read `3-5 OF 5` while actually showing items 1, 4 and 5. The range now describes the part of the list that rolls, and reads consistently on every screen; your school sits outside it, where the cyan already marks it as yours.
+
+**Costs nothing extra.** The second screen makes no new request: every page reads the same two cached URLs, and a render still makes at most one request once the ZIP is known.
 
 ---
 
@@ -264,9 +294,10 @@ A station whose page uses another system shows **CAN'T READ THIS PAGE**. Paste a
 | | |
 |---|---|
 | **Size** | 192×32 (SCROLL) |
-| **Pages** | `board`, `closings` |
+| **Pages** | `board`, `closings`, `more` |
 | **Refresh** | 300 seconds (free-text inputs need 300 s or more) |
 | **Requests** | 1 ZIP lookup (cached 30 days) + 1–5 for the station, never more than 8 |
+| **Scene** | 21 KiB of the 1 MiB budget |
 
 **ZIP lookup:** `GET https://api.zippopotam.us/us/<zip>` → `places[0].latitude/longitude`. The nearest entry in `STATIONS` is found with an equirectangular distance. Starlark has no math module, so `cos` uses a Taylor series and `sqrt` uses Newton's method.
 
@@ -274,12 +305,17 @@ A station whose page uses another system shows **CAN'T READ THIS PAGE**. Paste a
 
 **Storm lists:** a TownNews closings section (`/weather/closings/`) that has no closings app is read through its search feed, `/search/?f=json&t=article&c=weather/closings&l=1&s=start_time&sd=desc`. It returns the newest article with its `starttime` and its body as HTML lines. Each line is split at the first ` - ` piece that names a status, so `Eastern Wyoming College - Torrington Campus - 2 Hour Delay` keeps the campus in the name. An article over `STORM_LIST_HOURS` (20) old counts as ALL CLEAR.
 
+**Paging the list.** Each list screen takes `3 - pinned` rows, so two screens cover six (four with a school pinned). Longer lists are spread evenly over `ceil(rest / span)` rounds, one round per refresh, and each round is then halved between the screens — a round never exceeds `span`, because `len(rest) // rounds <= span` whenever `rounds = ceil(len(rest) / span)`. A screen with nothing of its own returns `None` and the caller draws the station card, so the panel is never blank. Checked over every list length from 1 to 39, with and without a pinned school: every row is shown, no screen takes more than three rows, and the first screen is never blank.
+
+**Why the extra page is free.** Every page calls `load_state`, so a three-page app calls `http.get` three times — but `http.get` only increments its per-render counter *after* both the disk cache and the in-render memo miss, and all three pages ask for the same two URLs. Page 1 pays for the fetch; pages 2 and 3 are served from memory. In the steady state a render makes one request, because the ZIP lookup is cached for a month.
+
 **Preview and check it locally:**
 
 ```powershell
 gdn studio apps/local-closings
 gdn render apps/local-closings --page 1 --input "zip=19901"
 gdn render apps/local-closings --page 2 --input "zip=98101"
+gdn render apps/local-closings --page 3 --input "zip=19901"
 gdn render apps/local-closings --page 1 --now 2025-02-19T14:00:00 --input "zip=82001"
 gdn render apps/local-closings --page 1 --input "closingsurl=www.wsbtv.com/weather/school-closings/"
 gdn validate apps/local-closings

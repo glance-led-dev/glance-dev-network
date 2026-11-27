@@ -1,6 +1,6 @@
 gdn: 1
 id: local-closings
-version: 1.1.0
+version: 1.2.0
 name: Local Closings
 author: reyos86
 description: "School, business, church and government closings and delays from your local TV station. Type your ZIP code and the app finds your station. Optional school name shows your school's status first. No API key."
@@ -10,7 +10,7 @@ width: 192
 height: 32
 # Closings pour in early on storm mornings; five minutes keeps up with them.
 refresh: 300
-pages: [board, closings]
+pages: [board, closings, more]
 inputs:
   - key: zip
     type: string
