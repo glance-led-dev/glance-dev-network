@@ -1,0 +1,18 @@
+gdn: 1
+version: 0.1.0
+id: norms-lounge
+name: Norm's Lounge
+author: Red Tail Land Co.
+description: Norm's Lounge game day board header - sunset, palms, and the week's dates.
+category: Sports
+entry: app.star
+width: 192
+height: 32
+refresh: 3600
+pages: [title, board, kickoff]
+inputs:
+  - key: week
+    label: Week dates
+    type: string
+    default: "NOV 24 - 30  2026"
+    help: Shown on the Game Day Board page. Update each week (no commas - the font skips them).
