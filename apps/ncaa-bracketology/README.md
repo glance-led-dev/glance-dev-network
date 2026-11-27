@@ -27,15 +27,23 @@ The app refreshes hourly. The approved feed has a 15-minute request cache; suppl
 
 ## Supplemental data
 
-- Overall team records: shared current-season ESPN standings, matched by exact team ID. The approved feed's record snapshot is refreshed independently of the bracket. Valid new values replace individual records; a blank, missing, or failed ESPN response leaves those teams' previous values in place. A confirmed `0-0` is valid. If the approved feed has no record snapshot yet or cannot be read, the app still tries the U.S. and U.K. standings directly.
+- Overall team records: shared current-season ESPN standings, matched by exact team ID. The approved feed's record snapshot is refreshed independently of the bracket. Valid new values replace individual records; a blank, missing, or failed ESPN response leaves those teams' previous values in place. A confirmed `0-0` is valid. If a school's valid saved record is absent, the app tries the U.S. and then U.K. standings directly, even when other schools have saved records.
 - NET and Q1/Q2 records: NCAA NET table.
-- WAB: NCAA WAB table.
-- SOR: ESPN resume table.
+- WAB: NCAA's official NET-based WAB table only, never Torvik WAB. A current-season value must first be published by NCAA; last season's values remain unavailable.
+- SOR: ESPN resume table, with the U.K. ESPN table as an alternate source.
 - SOS: this app's ranking of Bart Torvik's played-schedule SOS values, not a projected or NCAA SOS rank.
+
+All ESPN-backed data in this app (currently records and SOR) must have a validated ESPN U.K. recovery path, in both the reader and background publisher. A non-200 response, empty/malformed table, wrong season or missing/invalid school row counts as a failed lookup, not just connection errors. The U.K. response must pass the same exact-ID and current-season checks. ESPN U.K. is not a substitute for NCAA or Torvik data. AP rankings are not fetched by this app.
 
 Missing, malformed, prior-season, or not-yet-published statistics remain `--`. Source coverage does not guarantee every provider publishes every supported school: Saint Francis is absent from the checked ESPN standings and Torvik export. No other school's values or fabricated zero records are substituted. Seasonal provider changes can temporarily make metrics unavailable without removing the approved projection.
 
-All five pages share their source reads. The release's full-app cold-cache audit passed all 372 settings scenarios with at most six distinct requests against the host's eight-request limit.
+The retained-metrics reader uses the existing approved feed's `team_resume` snapshot. Its background publisher merges valid SOR and official NCAA WAB values per school, retaining an absent school's previous value and its original verification timestamp. It rejects the wrong season/provider, duplicate identities, malformed values, and NCAA table date rollbacks. Saved values are preferred consistently across pages; missing saved fields may still try their direct sources. No new visual labels, layouts, or projection revision changes are introduced by metric retention.
+
+The matching publisher was installed and verified November 21, 2026: ESPN U.S. returned HTTP 202 with no usable rows, ESPN U.K. recovered 365 SOR values, and the anonymous approved feed exposed all 365 saved values. Official NCAA WAB still had no current-season rows and was not published. Projection date, revision and content hash stayed unchanged. The existing two triggers were retained, with supplemental fetches still gated to one three-hour window.
+
+Retained metrics need the matching background publisher installed and an available approved feed. The app is stateless: a total feed outage plus unavailable direct sources cannot recover a later saved metric from the bundled bracket alone. Values are retained within the same season until replaced by valid data; they are not falsely marked freshly verified during an outage. The publisher records verification times for diagnostics but the small panel does not show those timestamps.
+
+All five pages share their source reads. The original release's full-app cold-cache audit passed all 372 settings scenarios with at most six distinct requests against the host's eight-request limit. The retained-metrics update also tests missing snapshots and both ESPN sources against the unchanged eight-request ceiling.
 
 ## Release
 
