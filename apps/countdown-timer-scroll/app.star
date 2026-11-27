@@ -2,11 +2,10 @@
 #
 # DESIGN. The event name sits in a header strip; under it, the time
 # left until a date and time -- "6 DAYS, 10 HOURS, 23 MINUTES" -- in a
-# colour that says how close it is: far off, soon, imminent (each one a
-# dropdown, green / dark yellow / red by default, with the two
-# thresholds also dropdowns). Once the moment passes the same count
-# reads "... AGO" in the past colour. A hairline under the header wears
-# the state colour too.
+# colour that says how close it is: green far off, dark yellow soon,
+# red imminent (the two thresholds are dropdowns). Once the moment
+# passes the same count reads "... AGO" in gray. A hairline under the
+# header wears the state colour too.
 #
 #   64x32                    128+ (SCROLL)
 #   +------------------+     +--------------------------------+
@@ -277,13 +276,20 @@ def _int_in(s, lo, hi, fallback):
         return fallback
     return n
 
-def target_unix(ctx):
-    """The target as a UTC unix time, or None when the date is unusable.
+def picked_day(raw, z):
+    """The day the person picked, as [y, m, d], or None when unusable.
 
-    The date picker's value reaches the app cut at the first ':' of its
-    time ("2026-08-14T01"), so the day is read as the first eight digits
-    rather than split on '-'."""
-    ds = _digits(_s(ctx, "date", ""))
+    The picker sends the picked day at the moment of picking as a UTC
+    stamp, cut at its first ':'. Dec 10 picked at 18:00 in California
+    arrives as "2026-12-11T01": the UTC date is a day late. The hour
+    survives the cut, so the stamp is read as a UTC instant and moved
+    into zone `z` before the day is taken:
+
+      "2026-12-11T01" -> Dec 11 01:00 UTC -> Dec 10 17:00 PST -> Dec 10
+
+    A plain "YYYY-MM-DD" (Studio, the manifest default) has no hour and
+    is taken as it is."""
+    ds = _digits(raw)
     if len(ds) < 8:
         return None
     y = int(ds[0:4])
@@ -291,15 +297,29 @@ def target_unix(ctx):
     d = int(ds[6:8])
     if m < 1 or m > 12 or d < 1 or d > month_days(y, m):
         return None
+    if raw.find("T") < 0 or len(ds) < 10:
+        return [y, m, d]
+
+    hh = int(ds[8:10])
+    if hh > 23:
+        return [y, m, d]
+    utc = _utcmin(y, m, d, hh)
+    return civil_from_days((utc + zone_offset_at(z, utc)) // 1440)
+
+def target_unix(ctx):
+    """The target as a UTC unix time, or None when the date is unusable."""
+    z = zone_row(_s(ctx, "timezone", "UTC"))
+    day = picked_day(_s(ctx, "date", ""), z)
+    if day == None:
+        return None
 
     hh = _int_in(_s(ctx, "hour", "0"), 0, 23, 0)
     mm = _int_in(_s(ctx, "minute", "0"), 0, 59, 0)
-    local = _utcmin(y, m, d, hh) + mm
+    local = _utcmin(day[0], day[1], day[2], hh) + mm
 
     # Two passes: the offset depends on the instant, which depends on
     # the offset. The first guess uses standard time; the second
     # corrects it when the target falls in daylight saving.
-    z = zone_row(_s(ctx, "timezone", "UTC"))
     off = zone_offset_at(z, local - z[0])
     off = zone_offset_at(z, local - off)
     return (local - off) * MINUTE

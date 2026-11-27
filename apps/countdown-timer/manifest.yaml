@@ -1,6 +1,6 @@
 gdn: 1
 id: countdown-timer
-version: 0.1.0
+version: 0.1.1
 name: Countdown Timer
 author: cfsmp3
 description: Time left until a date and time, or time since it - "6 DAYS, 10 HOURS, 23 MINUTES" - coloured by how close it is.
