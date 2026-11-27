@@ -1,9 +1,9 @@
 gdn: 1
-version: 0.1.0
+version: 0.2.0
 id: norms-lounge
-name: Norm's Lounge
+name: Sunset Game Day Board
 author: Red Tail Land Co.
-description: Norm's Lounge game day board header - sunset, palms, and the week's dates.
+description: Game day board header for your bar or watch party - your venue's name over a sunset, palms, and this week's dates.
 category: Sports
 entry: app.star
 width: 192
@@ -11,8 +11,23 @@ height: 32
 refresh: 3600
 pages: [title, board, kickoff]
 inputs:
-  - key: week
-    label: Week dates
+  - key: venue
+    app_input_type: free-text
     type: string
-    default: "NOV 24 - 30  2026"
-    help: Shown on the Game Day Board page. Update each week (no commas - the font skips them).
+    label: Venue name
+    default: "THE LOUNGE"
+    help: Your bar, team, or watch party name, shown big on the first page. Short names draw largest.
+  - key: weekstart
+    type: choice
+    app_input_type: dropdown
+    label: Week runs
+    default: "TUE-MON"
+    choices: ["TUE-MON", "MON-SUN", "SUN-SAT"]
+    help: Which days the dates on the Game Day Board cover. TUE-MON keeps Monday night football in the week.
+  - key: timezone
+    type: choice
+    app_input_type: dropdown
+    label: Time zone
+    default: "EASTERN"
+    choices: ["EASTERN", "CENTRAL", "MOUNTAIN", "PACIFIC"]
+    help: US time zone, so the week flips at your local midnight. Daylight saving is applied automatically.
