@@ -26,6 +26,7 @@ N_SIMS = 2000
 SEASON = 2026
 CFP_FIRST = (2026, 11, 3)    # first committee release
 TITLE_WEEK = 14              # ESPN week of the conference title games
+TITLE_BOARD = (2026, 11, 22)  # title matchups start appearing as the last regular week begins
 SELECTION_DAY = "2026-12-06"
 TITLE_DAY = (2027, 1, 25)    # national title game; offseason once it's final
 NEXT_KICKOFF = (2027, 8, 28) # next season's Week 0 Saturday
@@ -1734,15 +1735,17 @@ def shift_day(y, mo, d, k):
 def ymd(t):
     return str(t[0]) + ("0" if t[1] < 10 else "") + str(t[1]) + ("0" if t[2] < 10 else "") + str(t[2])
 
-def load_week(ctx, ttl, b):
-    """This week's Tue-Fri games (ESPN weeks run Tuesday-Monday), keyed like
-    load_scoreboard, from the compact header feed in one request. (Sat-Mon
-    is over the 1 MB cap here too; load_ncaa covers it.)"""
+def load_week(ctx, ttl, b, lo_hi = ((0, 3),)):
+    """This week's games (ESPN weeks run Tuesday-Monday), keyed like
+    load_scoreboard, from the compact header feed: Tue-Fri by default, or
+    the day spans in lo_hi (days after Tuesday). Sat-Mon carries video for
+    every finished game and can pass the 1 MB cap on a busy Saturday
+    evening; the request then fails and load_ncaa covers the results."""
     y, mo, d = ctx.now.year, ctx.now.month, ctx.now.day
     back = (day_number(y, mo, d) + 3) % 7          # days since Tuesday (2000-01-01 was a Saturday)
     tue = shift_day(y, mo, d, -back)
     out = {"week": None}
-    for lo, hi in ((0, 3),):
+    for lo, hi in lo_hi:
         span = ymd(shift_day(tue[0], tue[1], tue[2], lo)) + "-" + ymd(shift_day(tue[0], tue[1], tue[2], hi))
         resp = fetch(b, HEADER_URL, {"sport": "football", "league": "college-football", "groups": "80",
                                      "limit": "300", "dates": span}, ttl = ttl)
@@ -2035,7 +2038,7 @@ def set_probs(games, r, home):
         pre = r.get(pool(g["home"]), 0.0) - r.get(pool(g["away"]), 0.0) + (0.0 if g["neutral"] else home)
         g["p"] = game_prob(g, pre)
 
-def title_games(boards, r):
+def title_games(boards, r, home):
     """Conference title games ESPN has scheduled: conference -> game with
     its result or home win chance."""
     out = {}
@@ -2046,7 +2049,7 @@ def title_games(boards, r):
                 continue
             t = dict(g)
             t["hw"] = (g["margin"] > 0) if g["done"] else None
-            t["p"] = game_prob(g, r[h] - r[a])
+            t["p"] = game_prob(g, r[h] - r[a] + (0.0 if g.get("neutral") else home))
             out[CONF[h]] = t
     return out
 
@@ -2137,10 +2140,36 @@ def committee_offsets(scores, ranked):
             out[t] = CARRYOVER * (cut - scores[t])
     return out
 
-def select_field(order, champs):
+NEAR_TIE = 0.1               # average ranks this close are a coin flip in the sims
+
+def projected_order(avg_rank, official):
+    """Teams by average projected rank; where two neighbors are within
+    NEAR_TIE, the committee's current order (ranked before unranked) decides."""
+    order = sorted(CONF.keys(), key = lambda t: avg_rank.get(t, 99.0))
+    cfp = {t: i for i, t in enumerate(official)}
+    for _ in range(len(order)):
+        moved = False
+        for i in range(len(order) - 1):
+            a, b = order[i], order[i + 1]
+            if abs(avg_rank.get(a, 99.0) - avg_rank.get(b, 99.0)) < NEAR_TIE and cfp.get(b, 999) < cfp.get(a, 999):
+                order[i], order[i + 1] = b, a
+                moved = True
+        if not moved:
+            break
+    return order
+
+def g6_bid(make):
+    """The Group of Six team that holds the bid in the most simulated seasons."""
+    best = None
+    for t in CONF:
+        if CONF[t] in GROUP6 and make.get(t, 0.0) > 0.0 and (best == None or make[t] > make[best]):
+            best = t
+    return best
+
+def select_field(order, champs, g6_pick = None):
     """2026 rules: ACC/Big Ten/Big 12/SEC champions, the best-ranked team from
-    the other six conferences, Notre Dame if top 12, then at-large; straight
-    seeding by ranking."""
+    the other six conferences (or g6_pick), Notre Dame if top 12, then
+    at-large; straight seeding by ranking."""
     rank = {}
     for i, t in enumerate(order):
         rank[t] = i
@@ -2152,10 +2181,13 @@ def select_field(order, champs):
                 best = t
         if best != None:
             auto.append(best)
-    for t in order:
-        if CONF.get(t) in GROUP6:
-            auto.append(t)
-            break
+    if g6_pick != None:
+        auto.append(g6_pick)
+    else:
+        for t in order:
+            if CONF.get(t) in GROUP6:
+                auto.append(t)
+                break
     if rank.get(NOTRE_DAME, 999) < 12 and NOTRE_DAME not in auto:
         auto.append(NOTRE_DAME)
     field = list(auto)
@@ -2481,10 +2513,11 @@ def team_info(fpi, t):
 
 def model(ctx, watch = False):
     # Requests, must-haves first (GDN allows 8 uncached per render): FPI 1,
-    # this week's Tue-Fri 1, NCAA results 1-2, title week 1 (December),
-    # playoff games 1 (after Selection Day), CFP ranking 1, Sagarin 1 -
-    # at most 7. Fallbacks (FPI in two pages, the core-API ranking) only
-    # run when something failed, and the budget skips whatever is left.
+    # this week's Tue-Fri 1, NCAA results 1-2, title week 1 (from
+    # TITLE_BOARD), playoff games 1 (after Selection Day), CFP ranking 1,
+    # Sagarin 1, then this week's Sat-Mon lines 1 if any budget is left.
+    # Fallbacks (FPI in two pages, the core-API ranking) only run when
+    # something failed, and the budget skips whatever is left.
     b = {"n": 0}
     fpi = load_fpi(b)
     if not fpi:
@@ -2494,20 +2527,26 @@ def model(ctx, watch = False):
     selected = today >= (int(SELECTION_DAY[:4]), int(SELECTION_DAY[5:7]), int(SELECTION_DAY[8:10]))
     week = load_week(ctx, 600, b) if not selected else {}
     ncaa = load_ncaa(ctx, b)
-    title_week = load_scoreboard({"dates": str(SEASON), "seasontype": "2", "week": str(TITLE_WEEK)}, 600, b) if december else {}
+    title_week = load_scoreboard({"dates": str(SEASON), "seasontype": "2", "week": str(TITLE_WEEK)}, 600, b) if today >= TITLE_BOARD else {}
     playoff = load_scoreboard({"dates": str(SEASON), "seasontype": "3", "week": "999"}, 300, b) if selected else {}
     official, released = [], ""
     if today >= CFP_FIRST:
         wk = week.get("week") or 0
         official, released = load_cfp((TITLE_WEEK + 1,) if december and not selected else ((TITLE_WEEK + 1, TITLE_WEEK) if december else (wk + 1, wk)), b)
     sag, sag_home = load_sagarin(b)
+    if not selected:
+        # Sat-Mon lines (the NCAA board has scores but no odds), with whatever
+        # budget is left, so it never crowds out a request above.
+        for k, v in load_week(ctx, 600, b, ((4, 6),)).items():
+            if k != "week" and k not in week:
+                week[k] = v
     games = build_games(week, ncaa)
     # Results inferred from W-L need win chances first.
     r, home = blend_ratings(games, fpi, sag, sag_home)
     set_probs(games, r, home)
     infer_results(games, fpi)
     set_probs(games, r, home)
-    titles = title_games([title_week, week], r)
+    titles = title_games([title_week, week], r, home)
     ref, top25, bottom = cutoffs(r)
     final =len(official) > 0 and released[:10] >= SELECTION_DAY
     by_id = {t: team_info(fpi, t) for t in CONF}
@@ -2539,7 +2578,7 @@ def model(ctx, watch = False):
         sim = simulate(games, titles, r, home, offsets, watch)
         for t in by_id:
             by_id[t]["playoff"] = sim["make"].get(t, 0.0)
-        order = sorted(CONF.keys(), key = lambda t: sim["avg_rank"].get(t, 99.0))
+        order = projected_order(sim["avg_rank"], official)
         champs = {}
         for c in sim["members"]:
             best = None
@@ -2547,7 +2586,7 @@ def model(ctx, watch = False):
                 if best == None or sim["champ"].get(t, 0.0) > sim["champ"].get(best, 0.0):
                     best = t
             champs[best] = c
-        field = select_field(order, list(champs.keys()))
+        field = select_field(order, list(champs.keys()), g6_bid(sim["make"]))
     rank = {t: i + 1 for i, t in enumerate(order)}
     in_field = {t: True for t in field}
     return {
@@ -2762,7 +2801,7 @@ def games_to_watch(c, ctx):
         c.text(pct(100.0 * pf), 9 + c.text_width(nf, "4x5"), y, font = "4x5", color = GREEN)
         c.text("V", 63, y, font = "4x5", color = DIM)
         chip(c, 69, y, td, 3, 5)
-        c.text(fit_name(c, td, "4x5", 34), 74, y, font = "4x5", color = "#B8C0CC")
+        c.text(fit_name(c, td, "4x5", 31), 74, y, font = "4x5", color = "#B8C0CC")   # ends by x=105, clear of the PLAYOFF column
         # Team whose playoff odds swing most: odds if the favorite wins,
         # then if the underdog wins (each behind that winner's color).
         _, tid, ph, pa = x["moves"][0]
