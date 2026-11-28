@@ -1,0 +1,20 @@
+gdn: 1
+id: chiefs-gameday
+version: 0.1.0
+name: Chiefs Game Day
+author: community
+description: Public Kansas City Chiefs score, kickoff countdown, and next game.
+category: Sports
+entry: app.star
+width: 128
+height: 32
+refresh: 180
+pages: [gameday]
+inputs:
+  - key: scene
+    type: choice
+    app_input_type: dropdown
+    label: Scene
+    default: AUTO
+    choices: [AUTO, PREGAME, LIVE, FINAL, BYE, OFFSEASON, ERROR]
+    help: Leave on AUTO for the live public scoreboard. The other values only preview layouts and do not fetch data.
