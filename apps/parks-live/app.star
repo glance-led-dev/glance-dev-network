@@ -616,7 +616,16 @@ def show(c, ctx, slot):
         order = [r for r in order if r[0][0] != other[0]]
         start = 0
 
-    if order[0][1][0] < DUSK:
+    # Is there anything left for *this* page to show? The second page starts
+    # one camera down the list, so the question is whether the sun is up over
+    # order[start], not over order[0]. Checking order[0] for both pages meant
+    # that in the hour or two when Kilauea is the only window still in
+    # daylight -- the whole mainland dark, Hawaii alone in the sun -- page one
+    # showed the volcano and page two went hunting for a frame that could not
+    # exist, tried three dark cameras, and ended on NO PICTURE. There is
+    # nothing wrong in that case: the sun has simply run out, which is what
+    # the sunrise board is for.
+    if order[min(start, len(order) - 1)][1][0] < DUSK:
         if slot == 0:
             night_card(c, ctx, h24)
         else:

@@ -21,6 +21,7 @@ A window onto a national park, live. **Eighteen public webcams** from Acadia to 
 - [Why it follows the sun](#why-it-follows-the-sun)
 - [How it works](#how-it-works)
 - [Screens for every situation](#screens-for-every-situation)
+- [What's new in 1.1.1](#whats-new-in-111)
 - [Limitations](#limitations)
 - [Credits](#credits)
 - [For developers](#for-developers)
@@ -98,6 +99,8 @@ For about seven hours a night there is genuinely nothing in the United States to
 
 Both are drawn from arithmetic alone, so they work with the network down.
 
+There is a narrower version of the same thing. Kīlauea holds the sun for roughly an hour and a half after the last mainland camera has lost it, so there is a stretch each evening when **exactly one window is lit** — the volcano on page 1, and nothing legitimate left for page 2. Page 2 shows the same `NEXT LIGHT` board then, rather than claiming a camera failed.
+
 ---
 
 ## Settings
@@ -151,11 +154,18 @@ So every frame is checked on arrival against where the sun actually is, and agai
 |---|---|
 | The sun is below the horizon at all eighteen | `EVERY WINDOW IS DARK` · the next park to catch the sun, and the countdown |
 | The same, on page 2 | `NEXT LIGHT` · the three windows closest to sunrise |
+| Only one window is lit — Kīlauea after mainland dusk | Page 1 shows the volcano; page 2 shows `NEXT LIGHT` |
 | A pinned camera does not answer | `NO PICTURE` · `<PARK> DID NOT ANSWER` |
 | A pinned camera's frame fails the checks | `NOT LIVE` · `THE <PARK> FEED HAS STOPPED` |
 | No camera answers with a live frame | `NO PICTURE` · `NO CAMERA ANSWERED WITH A LIVE FRAME` |
 
 **There is no demo mode.** A window that invents a view is not a window.
+
+---
+
+## What's new in 1.1.1
+
+**Fixed: page 2 said `NO PICTURE` during the Hawaii-only hour.** Each page asks whether there is still daylight somewhere before it goes looking for a frame, but both pages were asking about the *best* lit camera rather than the one that page starts from. Page 2 starts one down the list, so on an evening when Kīlauea was the only window left in the sun it saw daylight at the top of the list, went hunting for a second lit camera, tried three dark ones and gave up with an error card. It now asks about its own camera and shows the `NEXT LIGHT` board instead — which is what the board was always for.
 
 ---
 
